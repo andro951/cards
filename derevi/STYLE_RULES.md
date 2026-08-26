@@ -13,3 +13,8 @@ Card Conjurer source of truth: `derevi_cards.cardconjurer`.
 - Footer notice: `Custom Proxy • Personal Use Only`.
 - No collector number, rarity, set code, language metadata, Wizards legal line, or CardConjurer.com footer.
 - Shared Derevi assets: `derevi_set_symbol.png` and `wings_emblem.png`.
+
+## Art fitting
+- New hosted art should default to Card Conjurer's built-in centered **Auto Fit Art** behavior.
+- Preserve the original image file; cropping is controlled only by `artX`, `artY`, and `artZoom`.
+- Manual repositioning is only needed when the centered crop is compositionally undesirable.
