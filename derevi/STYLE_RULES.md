@@ -202,6 +202,14 @@ Shared assets:
   - Uncommon: `https://raw.githubusercontent.com/andro951/cards/main/derevi/uncommon.png`
   - Common: `https://raw.githubusercontent.com/andro951/cards/main/derevi/common.png`
 - Do not revert cards to the old single `derevi_set_symbol.png` source.
+
+### Required rarity-symbol assets
+
+- A card is not considered correctly finished unless the project has the rarity-symbol asset matching that card's original printed rarity.
+- The complete expected set is `mythic.png`, `rare.png`, `uncommon.png`, and `common.png`.
+- Before finalizing a card, check its original printed rarity and verify that the matching rarity-symbol asset exists and is accessible.
+- If the needed rarity-symbol asset is missing, stop and ask the user for that symbol before finishing or committing the card.
+- Never substitute another rarity symbol, silently use a generic symbol, or fall back to the old single `derevi_set_symbol.png`.
 - Do not add a bottom wings emblem; it was intentionally removed from all cards.
 
 Set symbol placement:
