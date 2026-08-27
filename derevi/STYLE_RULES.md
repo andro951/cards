@@ -67,9 +67,9 @@ Text geometry copied from Derevi:
 
 ### Type width
 
-Type text box width is always exactly **1560 px**:
+Type text box width is always exactly **1540 px**:
 
-`1560 / 2010 = 0.7761194029850746`
+`1540 / 2010 = 0.7661691542288557`
 
 ### Title width
 
