@@ -197,7 +197,7 @@ For creatures, include the matching P/T frame. Noncreatures have blank P/T text 
 
 Shared assets:
 - Set symbol: `https://raw.githubusercontent.com/andro951/cards/main/derevi/derevi_set_symbol.png`
-- Bottom wings emblem: `https://raw.githubusercontent.com/andro951/cards/main/derevi/wings_emblem.png`
+- Do not add a bottom wings emblem; it was intentionally removed from all cards.
 
 Set symbol placement:
 - `setSymbolX = 0.8522388059701492`
@@ -205,11 +205,6 @@ Set symbol placement:
 - `setSymbolZoom ≈ 0.101`
 - `setSymbolBounds = {x:0.9213, y:0.591, width:0.12, height:0.041, vertical:'center', horizontal:'right'}`
 
-Bottom wings emblem bounds:
-- `width = 0.19701492537313434`
-- `height = 0.08443496801705758`
-- `x = 0.4223880597014925`
-- `y = 0.8906183368869937`
 
 Footer / metadata:
 - Artist is exactly `ChatGPT`.
@@ -237,7 +232,7 @@ Footer / metadata:
 6. Copy Derevi's canonical geometry; apply the dynamic title-width rule and fixed type width.
 7. Choose the correct base frame; use Nyx for enchantments; add a crown iff the current type line is legendary.
 8. Determine actual PNG dimensions and calculate official centered auto-fit values with the equations above unless the user has already approved/manual-fit that art.
-9. Preserve artist/footer/set-symbol/wings/no-metadata conventions.
+9. Preserve artist/footer/set-symbol/no-metadata conventions; do not restore the removed bottom wings emblem.
 10. Verify every expected PNG exists, every card key is unique, current Scryfall checklist entries are present, legendary/nonlegendary crown status is correct, enchantments use Nyx, and visible text contains no unsafe Unicode punctuation.
 11. Push the updated `derevi_cards.cardconjurer` directly. If the connector cannot conveniently update the large one-line JSON, use a temporary small Python script + path-triggered GitHub Action, let it modify/commit the file, then remove the temporary script/workflow/trigger.
 12. Re-fetch the final repo state and verify the resulting blob/commit before reporting completion.
