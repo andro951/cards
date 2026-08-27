@@ -196,7 +196,12 @@ For creatures, include the matching P/T frame. Noncreatures have blank P/T text 
 ## Shared project assets and footer
 
 Shared assets:
-- Set symbol: `https://raw.githubusercontent.com/andro951/cards/main/derevi/derevi_set_symbol.png`
+- Set symbols are rarity-specific and use each card's original printed rarity:
+  - Mythic: `https://raw.githubusercontent.com/andro951/cards/main/derevi/mythic.png`
+  - Rare: `https://raw.githubusercontent.com/andro951/cards/main/derevi/rare.png`
+  - Uncommon: `https://raw.githubusercontent.com/andro951/cards/main/derevi/uncommon.png`
+  - Common: `https://raw.githubusercontent.com/andro951/cards/main/derevi/common.png`
+- Do not revert cards to the old single `derevi_set_symbol.png` source.
 - Do not add a bottom wings emblem; it was intentionally removed from all cards.
 
 Set symbol placement:
@@ -232,7 +237,7 @@ Footer / metadata:
 6. Copy Derevi's canonical geometry; apply the dynamic title-width rule and fixed type width.
 7. Choose the correct base frame; use Nyx for enchantments; add a crown iff the current type line is legendary.
 8. Determine actual PNG dimensions and calculate official centered auto-fit values with the equations above unless the user has already approved/manual-fit that art.
-9. Preserve artist/footer/set-symbol/no-metadata conventions; do not restore the removed bottom wings emblem.
+9. Preserve artist/footer/rarity-specific set-symbol/no-metadata conventions; do not restore the removed bottom wings emblem.
 10. Verify every expected PNG exists, every card key is unique, current Scryfall checklist entries are present, legendary/nonlegendary crown status is correct, enchantments use Nyx, and visible text contains no unsafe Unicode punctuation.
 11. Push the updated `derevi_cards.cardconjurer` directly. If the connector cannot conveniently update the large one-line JSON, use a temporary small Python script + path-triggered GitHub Action, let it modify/commit the file, then remove the temporary script/workflow/trigger.
 12. Re-fetch the final repo state and verify the resulting blob/commit before reporting completion.
