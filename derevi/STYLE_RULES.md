@@ -30,3 +30,9 @@ Card Conjurer source of truth: `derevi_cards.cardconjurer`.
 - Enchantments use the M15 Nyx frame by default.
 - This includes enchantment creatures.
 - Keep Derevi-derived text/art geometry unless the card itself requires a small adjustment.
+
+## Legendary crowns
+- Every permanent whose current type line contains `Legendary` uses the appropriate M15 legendary crown.
+- Nonlegendary cards never use a legendary crown, regardless of rarity.
+- Crown color/type follows the active base frame (white, blue, black, red, green, multicolored, artifact, or land).
+- Nyx treatment and legendary crowns are independent: a legendary enchantment would use both.
