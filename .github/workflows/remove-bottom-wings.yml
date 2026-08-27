@@ -1,0 +1,25 @@
+name: Remove Derevi bottom wings
+
+on:
+  push:
+    paths:
+      - '.remove-bottom-wings'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove bottom wings
+        run: python derevi/remove_bottom_wings.py
+      - name: Commit bottom-wings removal
+        run: |
+          rm -f .remove-bottom-wings
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/STYLE_RULES.md .remove-bottom-wings
+          git commit -m "Remove Derevi bottom wings emblem"
+          git push
