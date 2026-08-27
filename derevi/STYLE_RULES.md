@@ -243,3 +243,12 @@ Footer / metadata:
 12. Re-fetch the final repo state and verify the resulting blob/commit before reporting completion.
 
 If the user supplies a newly exported `.cardconjurer` file containing official Card Conjurer Auto Fit or hand-tuned art changes, preserve those user-approved art placement values when merging into the GitHub master unless the user explicitly asks to recalculate them.
+
+## Land presentation
+- Savannah, Tropical Island, and Tundra use a multicolored M15 treatment rather than the plain generic land frame.
+- Their current Scryfall parenthetical mana abilities are shown in the rules box.
+- Gaea's Cradle uses a green-inflected frame and green legendary crown.
+- Sparse land rules text may be vertically repositioned/enlarged for intentional visual balance.
+
+## Repository write rule
+- If `derevi/derevi_cards.cardconjurer` is modified, commit/push the change to GitHub in the same task. A local-only edited copy is not considered completion unless the user explicitly asks for local-only work.
