@@ -18,3 +18,10 @@ Card Conjurer source of truth: `derevi_cards.cardconjurer`.
 - New hosted art should default to Card Conjurer's built-in centered **Auto Fit Art** behavior.
 - Preserve the original image file; cropping is controlled only by `artX`, `artY`, and `artZoom`.
 - Manual repositioning is only needed when the centered crop is compositionally undesirable.
+
+## Typography / character safety
+- Use Derevi's text-box geometry as the canonical template for every card; only card-specific text, title width, and rules font size should normally differ.
+- Visible card text must use ASCII punctuation for Card Conjurer compatibility.
+- Use a normal hyphen with spaces (` - `) instead of em/en dashes in type lines and ability labels.
+- Use straight apostrophes (`'`) and straight double quotes (`"`), not smart/curly quotes.
+- Do not allow replacement/square characters in title, mana, type, rules, or power/toughness text.
