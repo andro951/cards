@@ -25,3 +25,8 @@ Card Conjurer source of truth: `derevi_cards.cardconjurer`.
 - Use a normal hyphen with spaces (` - `) instead of em/en dashes in type lines and ability labels.
 - Use straight apostrophes (`'`) and straight double quotes (`"`), not smart/curly quotes.
 - Do not allow replacement/square characters in title, mana, type, rules, or power/toughness text.
+
+## Enchantment frames
+- Enchantments use the M15 Nyx frame by default.
+- This includes enchantment creatures.
+- Keep Derevi-derived text/art geometry unless the card itself requires a small adjustment.
