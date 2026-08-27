@@ -1,0 +1,25 @@
+name: Add remaining Derevi proxies
+
+on:
+  push:
+    paths:
+      - '.sync-remaining-derevi'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add remaining Card Conjurer entries
+        run: python derevi/add_remaining_proxy_cards.py
+      - name: Commit synced save
+        run: |
+          rm -f .sync-remaining-derevi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/PROXY_SYNC_STATUS.md .sync-remaining-derevi
+          git commit -m "Sync Derevi proxy checklist"
+          git push
