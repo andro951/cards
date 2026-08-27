@@ -1,0 +1,25 @@
+name: Apply exact art fit
+
+on:
+  push:
+    paths:
+      - '.apply-exact-autofit'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate and store art positions
+        run: node derevi/apply_exact_autofit.js
+      - name: Commit exact art positions
+        run: |
+          rm -f .apply-exact-autofit
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/ART_FIT_AUDIT.md derevi/PROXY_SYNC_STATUS.md .apply-exact-autofit
+          git commit -m "Apply exact Card Conjurer art fitting"
+          git push
