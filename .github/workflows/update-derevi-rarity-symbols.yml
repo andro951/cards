@@ -1,0 +1,32 @@
+name: Update Derevi rarity symbols
+
+on:
+  push:
+    paths:
+      - 'derevi/rarity_symbol_trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Update card set symbols
+        run: python derevi/update_rarity_symbols.py
+      - name: Commit update and clean temporary files
+        run: |
+          rm -f derevi/rarity_symbol_trigger.txt
+          rm -f derevi/update_rarity_symbols.py
+          rm -f .github/workflows/update-derevi-rarity-symbols.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/rarity_symbol_trigger.txt derevi/update_rarity_symbols.py .github/workflows/update-derevi-rarity-symbols.yml
+          git commit -m "Use original-rarity Derevi set symbols"
+          git push origin main
