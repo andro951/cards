@@ -1,348 +1,99 @@
-# Derevi proxy project handoff / style rules
+# Derevi project rules
 
-This file is the complete handoff for a fresh thread. Read it before modifying any Derevi proxy data.
+Read `../STYLE_RULES.md` first. That root file contains the repository-wide Card Conjurer rules, frame-discovery method, standard geometry, Auto Fit method, footer convention, land recipes, and shared tooling. This file contains **Derevi-specific** details only.
 
-## Source of truth and first steps
+## Project source of truth
 
-- Repository: `andro951/cards`, branch `main`.
-- Project folder: `derevi/`.
-- Card Conjurer source of truth: `derevi/derevi_cards.cardconjurer`.
-- GitHub is authoritative. Do not use old local `.cardconjurer` copies as the source of truth.
-- At the start of a new update, fetch the live recursive GitHub tree, then fetch the current `derevi_cards.cardconjurer` and this file before editing.
-- Scryfall deck/checklist: `https://scryfall.com/@andro951/decks/cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d` and `derevi/scryfall_proxy_decklist.txt`.
-- Do not hard-code the card count. Compare the live Scryfall list, live PNG files, and current Card Conjurer entries each time. Include any explicit user-requested extras.
-- `PROXY_SYNC_STATUS.md`, `SCRYFALL_RULES_AUDIT.md`, and `scryfall_current_cards.json` are useful audit snapshots, but they can become stale and must not replace a fresh Scryfall lookup.
+- Project folder: `derevi/`
+- Card Conjurer file: `derevi/derevi_cards.cardconjurer`
+- Art folder: `derevi/art/`
+- Set-symbol folder: `derevi/set_symbol/`
+- Scryfall deck/checklist: `https://scryfall.com/@andro951/decks/cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d`
+- Checklist file: `derevi/scryfall_proxy_decklist.txt`
+- Derevi itself is an intentional project extra beyond the fetched checklist.
+- `PROXY_SYNC_STATUS.md`, `SCRYFALL_RULES_AUDIT.md`, `ART_FIT_AUDIT.md`, and `scryfall_current_cards.json` are useful snapshots but can become stale. Fresh Scryfall data wins.
 
-## Current card data: always use Scryfall Oracle data
+At the start of a Derevi update, fetch the live repository tree, `../STYLE_RULES.md`, this file, and `derevi_cards.cardconjurer`.
 
-For every card being added or audited:
+## Derevi asset paths
 
-1. Look up the exact current card by name in Scryfall, preferably `https://api.scryfall.com/cards/named?exact=<name>`.
-2. Use the current Scryfall fields for:
-   - `name`
-   - `mana_cost`
-   - `type_line`
-   - `oracle_text`
-   - `power`
-   - `toughness`
-   - `colors`
-3. Fetch/check the returned `scryfall_uri` card page as a verification step.
-4. Use current Oracle wording, not original-printing text, old release-note wording, or remembered wording.
-5. If Scryfall changes wording later, update the proxy to the new current Oracle text.
-6. For multi-face/special-layout cards, inspect `card_faces` and handle the layout explicitly instead of guessing.
+New/current raw art URL pattern:
 
-The visible proxy wording should match current Scryfall semantically, with only the punctuation-safety substitutions below.
+`https://raw.githubusercontent.com/andro951/cards/main/derevi/art/<filename>.png`
 
-## Typography / character safety
+Set symbols:
+- Mythic: `https://raw.githubusercontent.com/andro951/cards/main/derevi/set_symbol/mythic.png`
+- Rare: `https://raw.githubusercontent.com/andro951/cards/main/derevi/set_symbol/rare.png`
+- Uncommon: `https://raw.githubusercontent.com/andro951/cards/main/derevi/set_symbol/uncommon.png`
+- Common: `https://raw.githubusercontent.com/andro951/cards/main/derevi/set_symbol/common.png`
 
-Card Conjurer has shown rendering problems with some Unicode punctuation, so visible card text uses safe ASCII punctuation after Scryfall data is fetched.
+Preserve existing asset filenames, including historical typos such as `savana.png` and `pyrexian_altar.png`, unless the card data is updated in the same change.
 
-- Convert em dash / en dash / minus (`—`, `–`, `−`) to a normal hyphen: ` - ` where used as a separator.
-- Convert smart apostrophes/quotes to straight ASCII `'` and `"`.
-- Convert unusual non-breaking spaces to ordinary spaces.
-- Do not allow replacement/square characters in title, mana, type, rules, or P/T text.
-- Example type line: `Creature - Human Cleric`, not `Creature — Human Cleric`.
+The old bottom wings emblem is intentionally not part of the current card design. Do not restore it.
 
-## Canonical Card Conjurer geometry
+## Derevi standard-card presentation
 
-Use Derevi's current card object as the canonical geometry/template. Other cards should differ only where the card itself requires it: card text, title width, rules font size, frames, P/T presence, and art placement.
+Ordinary cards use the repository root's standard M15 baseline geometry and footer convention unless a card's real layout requires another Card Conjurer frame.
 
-Card canvas:
-- Width: `2010`
-- Height: `2814`
-- Margins: `0`
+- Enchantments use the Nyx treatment described in the root rules.
+- Legendary permanents use the appropriate M15 crown unless a special frame defines a different legendary treatment.
+- Preserve user-approved/manual art placements; recalculate only for new/bad art placement or when explicitly requested.
 
-Art bounds:
-- `x = 0.0767`
-- `y = 0.1129`
-- `width = 0.8476`
-- `height = 0.4429`
+## Derevi lands
 
-Text geometry copied from Derevi:
-- Mana: `y=0.0613`, `width=0.9292`, `height=0.03380952380952381`, `size=0.043345543345543344`, right aligned, `shadowX=-0.001`, `shadowY=0.0029`, `manaCost=true`, `manaSpacing=0`.
-- Title: `x=0.0854`, `y=0.0522`, `height=0.0543`, font `belerenb`, size `0.0381`; width is dynamic by the formula below.
-- Type: `x=0.0854`, `y=0.5664`, `height=0.0543`, font `belerenb`, size `0.0324`; width is fixed by the rule below.
-- Rules: `x=0.086`, `y=0.6303`, `width=0.828`, `height=0.26297085998578534`; start from Derevi's current rules size and shrink only as needed for longer text. Do not change the rules box geometry merely to fit text.
-- P/T: `x=0.7928`, `y=0.902`, `width=0.1367`, `height=0.0372`, size `0.0372`, font `belerenbsc`, centered.
+The current special land cycle is:
 
-### Type width
+- `Savannah` — true-borderless Generic Showcase G/W
+- `Tropical Island` — true-borderless Generic Showcase G/U
+- `Tundra` — true-borderless Generic Showcase W/U
+- `Gaea's Cradle` — true-borderless Generic Showcase legendary land with the floating neutral Land Legend Crown
 
-Type text box width is always exactly **1540 px**:
+These use the repository-wide **full art land — “no” frame** recipes in `../STYLE_RULES.md`.
 
-`1540 / 2010 = 0.7661691542288557`
+For the three duals:
+- title/type use the neutral Generic Showcase land treatment
+- rules panel is split between the two land colors
+- one-line mana reminder text is italic and centered
+- keep the neutral Generic Showcase land `Border` mask for the solid black bottom/footer
 
-### Title width
+For Gaea's Cradle:
+- use the neutral floating land crown, not the green floating crown
+- do not use `Legend Crown Border Cover`
+- keep the crown outline and lower cutout treatment
+- keep the neutral Generic Showcase land `Border` mask for the same black bottom/footer as the duals
+- green identity comes from the pinline/rules treatment
+- Oracle rules text remains left-aligned
 
-Title text box width is:
+## Derevi set-symbol rule
 
-`1680 - (95 × number of mana symbols) px`
+Every card uses the Derevi custom set symbol matching its intended/original printed rarity. Do not substitute another rarity icon.
 
-Count each `{...}` mana symbol in the printed mana cost, including `{0}`. Lands with no mana cost have 0 symbols.
+The baseline set-symbol placement is inherited from `../STYLE_RULES.md`.
 
-Examples:
-- 0 symbols: `1680 px` = `0.835820895522388`
-- 1 symbol: `1585 px` = `0.7885572139303483`
-- 2 symbols: `1490 px` = `0.7412935323383084`
-- 3 symbols: `1395 px` = `0.6940298507462687`
+## Derevi Scryfall refresh
 
-## Exact centered art auto-fit calculation
+The reusable fetcher now lives at repository root:
 
-Preferred future behavior: calculate and store `artX`, `artY`, and `artZoom` directly from the source image dimensions. The user should not need to press Card Conjurer's Auto Fit button or manually run a script.
+`python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi`
 
-This reproduces Card Conjurer's official `autoFitArt()` behavior for the standard art box.
+The workflow `.github/workflows/fetch-derevi-scryfall.yml` calls that common helper.
 
-Let:
-- `IW` = source image width in pixels
-- `IH` = source image height in pixels
-- Card width `CW = 2010`
-- Card height `CH = 2814`
+Do not recreate a Derevi-only copy of the fetch script.
 
-Card Conjurer rounds the art-box dimensions to pixels first:
-- `BX = round(0.0767 × 2010) = 154`
-- `BY = round(0.1129 × 2814) = 318`
-- `BW = round(0.8476 × 2010) = 1704`
-- `BH = round(0.4429 × 2814) = 1246`
-- Art-box aspect ratio = `1704 / 1246 ≈ 1.367576244`
+## Derevi validation checklist
 
-Card Conjurer resets rotation to zero.
+Before calling a Derevi update complete:
 
-### If the source image is wider than the art box
+- every expected project art file exists under `derevi/art/`
+- card-data art URLs point to the current `derevi/art/` structure
+- set-symbol URLs point to `derevi/set_symbol/`
+- card keys are unique
+- current Scryfall mechanics are reflected correctly
+- legendary/nonlegendary crown status is correct
+- enchantments use Nyx where appropriate
+- special layouts use their actual Card Conjurer treatment
+- visible text has no unsafe punctuation/replacement glyphs
+- footer remains `ChatGPT` / `Custom Proxy • Personal Use Only`
+- temporary workflows/scripts used for a large-file update are removed afterward
 
-Condition:
-
-`IW / IH > BW / BH`
-
-Fit by height:
-
-1. `zoomPercent = round_to_1_decimal((BH / IH) × 100)` exactly like JavaScript `.toFixed(1)`.
-2. `Z = zoomPercent / 100` (`artZoom`).
-3. `Ypx = BY = 318`.
-4. `Xpx = Math.round(BX - ((Z × IW) - BW) / 2)`.
-5. `artX = Xpx / 2010`.
-6. `artY = Ypx / 2814`.
-7. `artZoom = Z`.
-8. `artRotate = "0"`.
-
-### If the source image is equal/narrower than the art box
-
-Condition:
-
-`IW / IH <= BW / BH`
-
-Fit by width:
-
-1. `zoomPercent = round_to_1_decimal((BW / IW) × 100)` exactly like JavaScript `.toFixed(1)`.
-2. `Z = zoomPercent / 100`.
-3. `Xpx = BX = 154`.
-4. `Ypx = Math.round(BY - ((Z × IH) - BH) / 2)`.
-5. `artX = Xpx / 2010`.
-6. `artY = Ypx / 2814`.
-7. `artZoom = Z`.
-8. `artRotate = "0"`.
-
-To mimic JavaScript `Math.round` in another language, remember that it rounds to the nearest integer with `.5` toward positive infinity; do not blindly use a language's banker's-rounding function for exact edge cases.
-
-Example for a `1536 × 1024` image:
-- Aspect = `1.5`, so fit by height.
-- `zoomPercent = 121.7`, so `artZoom = 1.217`.
-- `Xpx = 71`, `Ypx = 318`.
-- `artX = 71 / 2010 = 0.035323383084577116`.
-- `artY = 318 / 2814 = 0.11300639658848614`.
-
-If PNG dimensions are not exposed by the GitHub connector, read the PNG IHDR directly from repository bytes: width/height are big-endian unsigned 32-bit integers at bytes `16:24` (`struct.unpack('>II', data[16:24])`). A temporary GitHub Action can do this when necessary. Do not infer dimensions from file size or old local copies.
-
-`derevi/auto_fit_art.js` remains available as a fallback and calls Card Conjurer's own `autoFitArt()` on load, but precomputing/storing the values is preferred for deterministic saved-card data.
-
-Preserve user-approved or hand-adjusted art placement. Recalculate only when adding new art, when the user explicitly asks for official auto-fit, or when the existing values are known to be placeholders/bad.
-
-## Frames
-
-Default to M15-style frames and preserve the existing Card Conjurer mask/layer structure.
-
-Base frame follows card type/color:
-- White: `/img/frames/m15/regular/m15FrameW.png`
-- Blue: `/img/frames/m15/regular/m15FrameU.png`
-- Black: `/img/frames/m15/regular/m15FrameB.png`
-- Red: `/img/frames/m15/regular/m15FrameR.png`
-- Green: `/img/frames/m15/regular/m15FrameG.png`
-- Multicolor: `/img/frames/m15/regular/m15FrameM.png`
-- Artifact: `/img/frames/m15/regular/m15FrameA.png`
-- Land: `/img/frames/m15/regular/m15FrameL.png`
-
-For creatures, include the matching P/T frame. Noncreatures have blank P/T text and normally no P/T frame.
-
-### Enchantments / Nyx
-
-- Every enchantment uses the M15 Nyx frame by default, including enchantment creatures.
-- Nyx sources follow the same color code, e.g. blue `/img/frames/m15/nyx/m15FrameUNyx.png`, green `/img/frames/m15/nyx/m15FrameGNyx.png`, multicolor `M`, artifact `A`, etc.
-- Keep the same Derevi-derived geometry and masks unless the card itself genuinely requires a small adjustment.
-
-### Legendary crowns
-
-- Every permanent whose current Scryfall type line contains `Legendary` gets exactly one appropriate M15 legendary crown.
-- Nonlegendary cards never get a legendary crown, regardless of rarity.
-- Crown follows the active frame type/color:
-  - W: `/img/frames/m15/crowns/m15CrownW.png`
-  - U: `/img/frames/m15/crowns/m15CrownU.png`
-  - B: `/img/frames/m15/crowns/m15CrownB.png`
-  - R: `/img/frames/m15/crowns/m15CrownR.png`
-  - G: `/img/frames/m15/crowns/m15CrownG.png`
-  - M: `/img/frames/m15/crowns/m15CrownM.png`
-  - A: `/img/frames/m15/crowns/m15CrownA.png`
-  - L: `/img/frames/m15/crowns/m15CrownL.png`
-- Crown bounds: `height=0.1667`, `width=0.9454`, `x=0.0274`, `y=0.0191`.
-- Nyx and legendary status are independent: a legendary enchantment uses both Nyx and the appropriate crown.
-
-## Shared project assets and footer
-
-Shared assets:
-- Set symbols are rarity-specific and use each card's original printed rarity:
-  - Mythic: `https://raw.githubusercontent.com/andro951/cards/main/derevi/mythic.png`
-  - Rare: `https://raw.githubusercontent.com/andro951/cards/main/derevi/rare.png`
-  - Uncommon: `https://raw.githubusercontent.com/andro951/cards/main/derevi/uncommon.png`
-  - Common: `https://raw.githubusercontent.com/andro951/cards/main/derevi/common.png`
-- Do not revert cards to the old single `derevi_set_symbol.png` source.
-
-### Required rarity-symbol assets
-
-- A card is not considered correctly finished unless the project has the rarity-symbol asset matching that card's original printed rarity.
-- The complete expected set is `mythic.png`, `rare.png`, `uncommon.png`, and `common.png`.
-- Before finalizing a card, check its original printed rarity and verify that the matching rarity-symbol asset exists and is accessible.
-- If the needed rarity-symbol asset is missing, stop and ask the user for that symbol before finishing or committing the card.
-- Never substitute another rarity symbol, silently use a generic symbol, or fall back to the old single `derevi_set_symbol.png`.
-- Do not add a bottom wings emblem; it was intentionally removed from all cards.
-
-Set symbol placement:
-- `setSymbolX = 0.8522388059701492`
-- `setSymbolY = 0.5692963752665245`
-- `setSymbolZoom ≈ 0.101`
-- `setSymbolBounds = {x:0.9213, y:0.591, width:0.12, height:0.041, vertical:'center', horizontal:'right'}`
-
-
-Footer / metadata:
-- Artist is exactly `ChatGPT`.
-- Artist line uses Card Conjurer's paintbrush/artist glyph string: `{fontbelerenbsc}{fontsize3}{upinline1}￮{savex2}{elemidinfo-artist}`.
-- Footer legal line is exactly: `Custom Proxy • Personal Use Only`.
-- No collector number, rarity code, set code, language metadata, serial fields, Wizards legal text, or `CardConjurer.com` footer.
-- Keep `infoNumber`, `infoRarity`, `infoSet`, `infoLanguage`, `infoNote`, serial fields, Wizards line, and bottom-right line blank.
-- Watermark stays disabled (`watermarkOpacity = 0`, left/right `none`).
-
-## Artwork file handling
-
-- Do not resize, stretch, crop, or otherwise modify source PNG files merely to fit the card.
-- Use `artX`, `artY`, and `artZoom` for framing/cropping.
-- Raw art URL format: `https://raw.githubusercontent.com/andro951/cards/main/derevi/<filename>.png`.
-- Preserve existing filenames even if an old filename has a typo; do not rename assets casually because the card data may already reference them.
-- For new assets, prefer lowercase snake_case filenames.
-
-## Safe update workflow for a new thread
-
-1. Fetch the live repo tree (`main?recursive=1`).
-2. Fetch this file and the current `derevi_cards.cardconjurer`.
-3. Refresh the live Scryfall deck/checklist and identify cards/art not yet represented.
-4. For every affected card, fetch current Scryfall exact-name data and verify its current Scryfall page.
-5. Apply current mana/type/Oracle/P-T data, then perform the ASCII punctuation normalization.
-6. Copy Derevi's canonical geometry; apply the dynamic title-width rule and fixed type width.
-7. Choose the correct base frame; use Nyx for enchantments; add a crown iff the current type line is legendary.
-8. Determine actual PNG dimensions and calculate official centered auto-fit values with the equations above unless the user has already approved/manual-fit that art.
-9. Preserve artist/footer/rarity-specific set-symbol/no-metadata conventions; do not restore the removed bottom wings emblem.
-10. Verify every expected PNG exists, every card key is unique, current Scryfall checklist entries are present, legendary/nonlegendary crown status is correct, enchantments use Nyx, and visible text contains no unsafe Unicode punctuation.
-11. Push the updated `derevi_cards.cardconjurer` directly. If the connector cannot conveniently update the large one-line JSON, use a temporary small Python script + path-triggered GitHub Action, let it modify/commit the file, then remove the temporary script/workflow/trigger.
-12. Re-fetch the final repo state and verify the resulting blob/commit before reporting completion.
-
-If the user supplies a newly exported `.cardconjurer` file containing official Card Conjurer Auto Fit or hand-tuned art changes, preserve those user-approved art placement values when merging into the GitHub master unless the user explicitly asks to recalculate them.
-
-## Land presentation
-
-There are **four distinct approved full-art land layouts**. Treat them as separate Card Conjurer recipes and do not conflate them.
-
-### 1. Full art land - framed
-
-Use when the user wants a premium full-art land that still has a visible conventional outer land frame. This is the treatment that produced the approved earlier Tropical Island result.
-
-Card Conjurer recipe:
-- `version = "m15ClearTextboxes"`.
-- Use the M15 **Full Art** land family under `/img/frames/m15/new/fullart/`.
-- Use the tall portrait/full-art art window instead of the normal 3:2 land art window.
-- Keep the normal outer **Frame** and **Border** layers deliberately.
-- Use the dedicated land frame assets (`lw`, `lu`, `lb`, `lr`, `lg`, `lm`, `ll`) rather than ordinary colored permanent frames.
-- For a two-color land, split the relevant land-frame components between the two colors with left/right masks.
-- A one-line parenthetical mana reminder may be italic and centered horizontally/vertically.
-
-Visual result:
-- Tall/full artwork.
-- Clearly visible outer frame.
-- Still reads as a land, not a colored permanent.
-
-### 2. Full art land - framed legendary
-
-Use when the card should use the **framed full-art** recipe above but is legendary.
-
-Card Conjurer recipe:
-- Start from **Full art land - framed**.
-- Add the dedicated M15 **Land Legend Crown**, not a green/blue/etc. permanent crown.
-- Standard framed-land crown asset: `/img/frames/m15/crowns/m15CrownL.png`.
-- Preserve the framed full-art land layers underneath it.
-
-Legendary color rule:
-- The crown should communicate **legendary land first**.
-- Prefer the neutral land crown rather than recoloring the crown to the land's associated color.
-- The land's color association should come from the land frame/pinline/rules treatment.
-
-### 3. Full art land - "no" frame / true borderless
-
-Use when the user wants the modern borderless/showcase land appearance: artwork running to the card edges with only floating title/type/rules/pinline elements.
-
-Card Conjurer recipe:
-- `version = "genericShowcase"`.
-- Use the native **Generic Showcase** family under `/img/frames/m15/genericShowcase/`.
-- Do **not** use the older `Borderless (Alt)` family unless explicitly requested.
-- `artBounds = {x:0, y:0, width:1, height:0.9224}` for the true borderless art region.
-- Do **not** include the conventional outer `Frame` layer. Keep the neutral Generic Showcase land `Border` mask used by the approved duals; it supplies the clean black footer/bottom treatment without turning the card back into a framed Full Art layout.
-- Use masked Generic Showcase pieces for title, type, rules, and pinline.
-- Keep approved/manual art placement values unless the user asks to recalculate them.
-
-Two-color borderless land treatment:
-- Two-color identity should be visible in the pinline and the translucent rules panel.
-- Title bar: neutral/dark translucent treatment.
-- Type bar: neutral/dark translucent treatment.
-- Rules box: darker translucent split-color treatment, with one land color on each side.
-- The rules treatment should read as a real colored panel with the art faintly visible below it, not merely a weak tint over the artwork.
-- Examples: Savannah = G/W, Tropical Island = G/U, Tundra = W/U.
-
-Text:
-- Borderless title/type/rules text is normally light/white for legibility.
-- Only a one-line reminder-text rules box should be centered; normal Oracle rules text stays left-aligned.
-
-### 4. Full art land - "no" frame legendary
-
-Use for a legendary land that should belong visually to the same true-borderless/showcase land cycle.
-
-Card Conjurer recipe:
-- Start from **Full art land - "no" frame / true borderless**.
-- Use the same `/img/frames/m15/genericShowcase/` title/type/rules/pinline pieces.
-- Add the **floating Land Legend Crown** treatment rather than a normal colored permanent crown.
-- Floating crown asset: `/img/frames/m15/crowns/m15CrownLFloating.png`.
-- Integrate it with the floating-crown helper pieces:
-  - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`
-  - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)
-- **Do not use `Legend Crown Border Cover` on this true-borderless legendary-land recipe.** It is a literal black strip and creates a visible rectangular bar beneath the floating crown when art extends behind it.
-- Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.
-- Floating crown outline bounds: `x=.028, y=.0172, width=.944, height=.1062`.
-
-Legendary color rule:
-- Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.
-- Include the same neutral Generic Showcase **Border** layer used by the nonlegendary borderless dual lands. This produces the clean solid-black bottom/footer band and keeps the legendary land visually in the same cycle.
-- For a card such as **Gaea's Cradle**, green identity belongs in the green pinline/rules panel while the crown says **legendary land**.
-
-Text:
-- Real Oracle rules text remains left-aligned and should not be vertically centered as if it were reminder text.
-
-### Land layout matrix
-
-| Layout | Visible outer frame | True edge-to-edge art | Legendary treatment |
-| --- | --- | --- | --- |
-| Full art land - framed | Yes | No | None |
-| Full art land - framed legendary | Yes | No | Standard Land Legend Crown |
-| Full art land - "no" frame | No | Yes | None |
-| Full art land - "no" frame legendary | No | Yes | Floating Land Legend Crown |
+If a Derevi-specific rule becomes useful to all projects, move/generalize it into `../STYLE_RULES.md` rather than duplicating it here.

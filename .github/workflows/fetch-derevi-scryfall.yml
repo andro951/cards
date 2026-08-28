@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Fetch Scryfall checklist and card data
-        run: python derevi/fetch_scryfall_proxy_list.py
+        run: python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi
       - name: Commit fetched data
         run: |
           rm -f .fetch-derevi-scryfall
