@@ -254,78 +254,94 @@ If the user supplies a newly exported `.cardconjurer` file containing official C
 
 ## Land presentation
 
-There are two distinct approved full-art land layouts. Do not conflate them.
+There are **four distinct approved full-art land layouts**. Treat them as separate Card Conjurer recipes and do not conflate them.
 
-### Full art land — framed
+### 1. Full art land - framed
 
-Use this when the user asks for a **full art, framed land**. This is the layout that produced the approved Tropical Island result with the large artwork, visible outer land frame, split green/blue accents, dark translucent lower rules area, and centered reminder text.
+Use when the user wants a premium full-art land that still has a visible conventional outer land frame. This is the treatment that produced the approved earlier Tropical Island result.
 
-Card Conjurer profile:
-- `version = "m15ClearTextboxes"`
-- Card canvas remains `2010 × 2814` with zero margins.
-- Use the **Accurate → Full Art** asset family under `/img/frames/m15/new/fullart/`.
-- Art bounds: `{x:0.062, y:0.1129, width:0.876, height:0.8096}`.
-- Set-symbol bounds: `{x:1862/2010, y:0.5910, width:0.12, height:0.0410, vertical:'center', horizontal:'right'}`.
-- For portrait `1024 × 1536` art, the saved centered fit used `artX = 125/2010`, `artY = 137/2814`, `artZoom = 1.719`, `artRotate = "0"`.
+Card Conjurer recipe:
+- `version = "m15ClearTextboxes"`.
+- Use the M15 **Full Art** land family under `/img/frames/m15/new/fullart/`.
+- Use the tall portrait/full-art art window instead of the normal 3:2 land art window.
+- Keep the normal outer **Frame** and **Border** layers deliberately.
+- Use the dedicated land frame assets (`lw`, `lu`, `lb`, `lr`, `lg`, `lm`, `ll`) rather than ordinary colored permanent frames.
+- For a two-color land, split the relevant land-frame components between the two colors with left/right masks.
+- A one-line parenthetical mana reminder may be italic and centered horizontally/vertically.
 
-Full Art text geometry:
-- Mana: `y=176/2814`, `width=1864/2010`, `height=71/2100`, `size=70.5/1638`, right aligned.
-- Title: `x=168/2010`, `y=145/2814`, `width=0.8292`, `height=0.0543`, `size=0.0381`.
-- Type: `x=168/2010`, `y=1588/2814`, `width=0.8292`, `height=0.0543`, `size=0.0324`, `color='white'`.
-- Rules: `x=0.086`, `y=1780/2814`, `width=0.828`, `height=0.2875`, `size=0.0362`, `color='white'`.
+Visual result:
+- Tall/full artwork.
+- Clearly visible outer frame.
+- Still reads as a land, not a colored permanent.
 
-For a two-color full-art framed land, use land-specific Full Art assets and preserve the visible outer land frame:
-- Colored land assets: `/img/frames/m15/new/fullart/lw.png`, `lu.png`, `lb.png`, `lr.png`, `lg.png`, `lm.png`.
-- Neutral land asset: `/img/frames/m15/new/fullart/l.png`.
-- Layer order for a dual land with left color A and right color B:
-  1. B land `Pinline`, masked to `Right Half`.
-  2. A land `Pinline`.
-  3. Neutral land `Type`.
-  4. Neutral land `Title`.
-  5. B land `Rules`, masked to `Right Half`.
-  6. A land `Rules`.
-  7. Neutral land `Frame`.
-  8. Neutral land `Border`.
-- The `Frame` and `Border` layers are intentional here. They are what makes this the **framed** full-art version.
-- For Savannah use A=`G`, B=`W`; Tropical Island A=`G`, B=`U`; Tundra A=`W`, B=`U`.
-- Sparse parenthetical mana reminder text should be italic and centered horizontally and vertically in the rules box: set `align='center'` and leave `noVerticalCenter` unset.
+### 2. Full art land - framed legendary
 
-For a legendary full-art framed land such as Gaea's Cradle:
-- Use the new land legendary crown `/img/frames/m15/crowns/new/l.png` with bounds `{x:44/2010, y:53/2814, width:1922/2010, height:493/2814}`.
-- Use green-land Full Art accents (`lg.png`) for pinline/type/title/rules as appropriate, with the neutral Full Art land `Frame` and `Border` retained.
+Use when the card should use the **framed full-art** recipe above but is legendary.
 
-### Full art land — no frame / true borderless
+Card Conjurer recipe:
+- Start from **Full art land - framed**.
+- Add the dedicated M15 **Land Legend Crown**, not a green/blue/etc. permanent crown.
+- Standard framed-land crown asset: `/img/frames/m15/crowns/m15CrownL.png`.
+- Preserve the framed full-art land layers underneath it.
 
-Use this when the user asks for a **full art land with no frame**, **true borderless land**, or explicitly wants the art to run to the card edges instead of living inside the framed Full Art shell.
+Legendary color rule:
+- The crown should communicate **legendary land first**.
+- Prefer the neutral land crown rather than recoloring the crown to the land's associated color.
+- The land's color association should come from the land frame/pinline/rules treatment.
 
-Card Conjurer profile:
+### 3. Full art land - "no" frame / true borderless
+
+Use when the user wants the modern borderless/showcase land appearance: artwork running to the card edges with only floating title/type/rules/pinline elements.
+
+Card Conjurer recipe:
 - `version = "borderless"`.
-- Use Card Conjurer's actual **Borderless** frame version, not `m15ClearTextboxes` / Accurate Full Art.
-- Art bounds: `{x:0, y:0, width:1, height:0.9224}`. This is the critical difference: the artwork is genuinely edge-to-edge behind the card elements.
-- Set-symbol bounds: `{x:0.9213, y:0.5910, width:0.12, height:0.0410, vertical:'center', horizontal:'right'}`.
-- For portrait `1024 × 1536` art, the saved centered fit is `artZoom = 2010/1024 = 1.962890625`, `artX = 0`, `artY = -0.0745142857142857`, `artRotate = "0"`.
+- Use the native **Generic Showcase** family under `/img/frames/m15/genericShowcase/`.
+- Do **not** use the older `Borderless (Alt)` family unless explicitly requested.
+- `artBounds = {x:0, y:0, width:1, height:0.9224}` for the true borderless art region.
+- Do **not** include conventional outer `Frame` or `Border` layers.
+- Use masked Generic Showcase pieces for title, type, rules, and pinline.
+- Keep approved/manual art placement values unless the user asks to recalculate them.
 
-Borderless text geometry:
-- Mana: `y=0.0613`, `width=0.9292`, `height=71/2100`, `size=71/1638`, right aligned.
-- Title: `x=0.0854`, `y=0.0522`, `width=0.8292`, `height=0.0543`, `size=0.0381`, `color='white'`.
-- Type: `x=0.0854`, `y=0.5664`, `width=0.8292`, `height=0.0543`, `size=0.0324`, `color='white'`.
-- Rules: `x=0.086`, `y=0.6303`, `width=0.828`, `height=0.2875`, `size=0.0362`, `color='white'`.
+Two-color borderless land treatment:
+- Two-color identity should be visible in the pinline and the translucent rules panel.
+- Title bar: neutral/dark translucent treatment.
+- Type bar: neutral/dark translucent treatment.
+- Rules box: darker translucent split-color treatment, with one land color on each side.
+- The rules treatment should read as a real colored panel with the art faintly visible below it, not merely a weak tint over the artwork.
+- Examples: Savannah = G/W, Tropical Island = G/U, Tundra = W/U.
 
-Borderless assets:
-- Use `/img/frames/m15/borderless/m15GenericShowcaseFrameW.png`, `U.png`, `B.png`, `R.png`, `G.png`, `M.png`, `L.png`, etc.
-- Use the borderless pinline mask `/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png`.
-- Title/type/rules masks remain the standard M15 masks.
-- For two-color lands, split the pinline, type treatment, and rules treatment with `Right Half` masking so each half carries one land color.
-- Do **not** use `/img/frames/m15/new/fullart/...` assets for this profile.
-- Do **not** add the neutral Full Art `Frame` layer. That would turn it back into the framed Full Art profile.
-- The current Savannah, Tropical Island, Tundra, and Gaea's Cradle card-data entries use this **full art land — no frame / true borderless** profile unless the user explicitly asks to switch them back to the framed profile.
-- Sparse dual-land reminder text remains italic and centered horizontally and vertically (`align='center'`, `noVerticalCenter` unset).
+Text:
+- Borderless title/type/rules text is normally light/white for legibility.
+- Only a one-line reminder-text rules box should be centered; normal Oracle rules text stays left-aligned.
 
-### Shared land rules
+### 4. Full art land - "no" frame legendary
 
-- Savannah, Tropical Island, and Tundra show their current Scryfall parenthetical mana abilities in the rules box.
-- Gaea's Cradle remains visibly legendary and uses a land legendary crown rather than a creature-style or green-permanent crown.
-- Never call the framed Full Art and true Borderless layouts interchangeable. They use different Card Conjurer versions, art bounds, asset families, and auto-fit geometry.
+Use for a legendary land that should belong visually to the same true-borderless/showcase land cycle.
 
-## Repository write rule
-- If `derevi/derevi_cards.cardconjurer` is modified, commit/push the change to GitHub in the same task. A local-only edited copy is not considered completion unless the user explicitly asks for local-only work.
+Card Conjurer recipe:
+- Start from **Full art land - "no" frame / true borderless**.
+- Use the same `/img/frames/m15/genericShowcase/` title/type/rules/pinline pieces.
+- Add the **floating Land Legend Crown** treatment rather than a normal colored permanent crown.
+- Floating crown asset: `/img/frames/m15/crowns/m15CrownLFloating.png`.
+- Integrate it with the floating-crown helper pieces:
+  - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`
+  - `Legend Crown Border Cover` (`/img/black.png`, bounds `x=.0394, y=.0277, width=.9214, height=.0177`)
+  - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)
+- Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.
+- Floating crown outline bounds: `x=.028, y=.0172, width=.944, height=.1062`.
+
+Legendary color rule:
+- Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.
+- For a card such as **Gaea's Cradle**, green identity belongs in the green pinline/rules panel while the crown says **legendary land**.
+
+Text:
+- Real Oracle rules text remains left-aligned and should not be vertically centered as if it were reminder text.
+
+### Land layout matrix
+
+| Layout | Visible outer frame | True edge-to-edge art | Legendary treatment |
+| --- | --- | --- | --- |
+| Full art land - framed | Yes | No | None |
+| Full art land - framed legendary | Yes | No | Standard Land Legend Crown |
+| Full art land - "no" frame | No | Yes | None |
+| Full art land - "no" frame legendary | No | Yes | Floating Land Legend Crown |
