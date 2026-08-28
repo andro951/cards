@@ -294,11 +294,11 @@ Legendary color rule:
 Use when the user wants the modern borderless/showcase land appearance: artwork running to the card edges with only floating title/type/rules/pinline elements.
 
 Card Conjurer recipe:
-- `version = "borderless"`.
+- `version = "genericShowcase"`.
 - Use the native **Generic Showcase** family under `/img/frames/m15/genericShowcase/`.
 - Do **not** use the older `Borderless (Alt)` family unless explicitly requested.
 - `artBounds = {x:0, y:0, width:1, height:0.9224}` for the true borderless art region.
-- Do **not** include conventional outer `Frame` or `Border` layers.
+- Do **not** include the conventional outer `Frame` layer. Keep the neutral Generic Showcase land `Border` mask used by the approved duals; it supplies the clean black footer/bottom treatment without turning the card back into a framed Full Art layout.
 - Use masked Generic Showcase pieces for title, type, rules, and pinline.
 - Keep approved/manual art placement values unless the user asks to recalculate them.
 
@@ -325,13 +325,14 @@ Card Conjurer recipe:
 - Floating crown asset: `/img/frames/m15/crowns/m15CrownLFloating.png`.
 - Integrate it with the floating-crown helper pieces:
   - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`
-  - `Legend Crown Border Cover` (`/img/black.png`, bounds `x=.0394, y=.0277, width=.9214, height=.0177`)
   - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)
+- **Do not use `Legend Crown Border Cover` on this true-borderless legendary-land recipe.** It is a literal black strip and creates a visible rectangular bar beneath the floating crown when art extends behind it.
 - Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.
 - Floating crown outline bounds: `x=.028, y=.0172, width=.944, height=.1062`.
 
 Legendary color rule:
 - Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.
+- Include the same neutral Generic Showcase **Border** layer used by the nonlegendary borderless dual lands. This produces the clean solid-black bottom/footer band and keeps the legendary land visually in the same cycle.
 - For a card such as **Gaea's Cradle**, green identity belongs in the green pinline/rules panel while the crown says **legendary land**.
 
 Text:
