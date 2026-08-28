@@ -21,18 +21,16 @@ jobs:
         shell: bash
         run: |
           python - <<'PYBUILD'
-          import base64, lzma, time, urllib.request, urllib.error
+          import base64, io, json, lzma, time, urllib.request, urllib.error, urllib.parse
           from pathlib import Path
 
           original_urlopen = urllib.request.urlopen
           last_request = [0.0]
 
-          def polite_urlopen(*args, **kwargs):
-              # Scryfall asks clients to avoid burst traffic. Keep all calls spaced
-              # out and back off aggressively if a shared Actions IP is throttled.
+          def network_urlopen(*args, **kwargs):
               elapsed = time.monotonic() - last_request[0]
-              if elapsed < 0.15:
-                  time.sleep(0.15 - elapsed)
+              if elapsed < 0.20:
+                  time.sleep(0.20 - elapsed)
               for attempt in range(7):
                   try:
                       response = original_urlopen(*args, **kwargs)
@@ -43,13 +41,72 @@ jobs:
                           raise
                       retry_after = exc.headers.get('Retry-After')
                       try:
-                          delay = float(retry_after) if retry_after else 1.5 * (2 ** attempt)
+                          delay = float(retry_after) if retry_after else 2.0 * (2 ** attempt)
                       except ValueError:
-                          delay = 1.5 * (2 ** attempt)
+                          delay = 2.0 * (2 ** attempt)
                       time.sleep(min(delay, 30.0))
                       last_request[0] = time.monotonic()
 
-          urllib.request.urlopen = polite_urlopen
+          names = [
+              'Maskwood Nexus','Flooded Strand','Scalding Tarn','Crystal Quarry','Farewell',
+              "Raffine's Tower",'Tempt with Discovery','The World Tree','Jodah, the Unifier','Savannah',
+              'Misty Rainforest','Esika, God of the Tree // The Prismatic Bridge','Windswept Heath','Steam Vents',
+              'Marsh Flats',"Spara's Headquarters",'Cascading Cataracts','Sol Ring','Morophon, the Boundless',
+              'Polluted Delta','Arid Mesa','Propaganda','Forest',"Gaea's Cradle","Jetmir's Garden",'Everybody Lives!',
+              'Mountain','Tundra','Godless Shrine','Swamp','Tropical Island','Zagoth Triome','Indatha Triome','Elven Chorus',
+              'Ketria Triome','K-9, Mark I','Reflecting Pool','Brago, King Eternal','Watery Grave',"Akroma's Memorial",
+              'The Fourteenth Doctor','Sonic Screwdriver','Plaza of Heroes','RMS Titanic','Mana Confluence','Sacred Foundry',
+              'Raugrin Triome','Wedding Ring','Plains','Island'
+          ]
+          payload = json.dumps({'identifiers': [{'name': n} for n in names]}).encode('utf-8')
+          request = urllib.request.Request(
+              'https://api.scryfall.com/cards/collection',
+              data=payload,
+              headers={
+                  'User-Agent': 'DoctorWhoCardConjurerBuilder/1.0',
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+              },
+              method='POST',
+          )
+          with network_urlopen(request, timeout=60) as response:
+              collection = json.load(response)
+
+          scryfall_cache = {}
+          for obj in collection.get('data', []):
+              scryfall_cache[obj.get('name','').casefold()] = obj
+              for face in obj.get('card_faces', []) or []:
+                  face_name = face.get('name')
+                  if face_name:
+                      scryfall_cache[face_name.casefold()] = obj
+
+          class CachedResponse(io.BytesIO):
+              def __init__(self, obj, url):
+                  super().__init__(json.dumps(obj).encode('utf-8'))
+                  self.url = url
+                  self.status = 200
+                  self.headers = {'Content-Type': 'application/json'}
+              def __enter__(self):
+                  return self
+              def __exit__(self, exc_type, exc, tb):
+                  self.close()
+                  return False
+              def getcode(self):
+                  return 200
+              def info(self):
+                  return self.headers
+
+          def cached_urlopen(request, *args, **kwargs):
+              url = request.full_url if isinstance(request, urllib.request.Request) else str(request)
+              parsed = urllib.parse.urlparse(url)
+              if parsed.netloc == 'api.scryfall.com' and parsed.path == '/cards/named':
+                  query = urllib.parse.parse_qs(parsed.query)
+                  key = (query.get('exact') or query.get('fuzzy') or [''])[0].casefold()
+                  if key in scryfall_cache:
+                      return CachedResponse(scryfall_cache[key], url)
+              return network_urlopen(request, *args, **kwargs)
+
+          urllib.request.urlopen = cached_urlopen
 
           raw = Path('_doctor_who_builder.xz.b64').read_text().strip()
           code = lzma.decompress(base64.b64decode(raw))
