@@ -1,0 +1,123 @@
+name: Switch Derevi duals to Generic Showcase
+
+on:
+  push:
+    paths:
+      - '.github/workflows/switch-derevi-duals-to-generic-showcase.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Switch dual lands to native Generic Showcase pieces
+        shell: bash
+        run: |
+          python - <<'PY'
+          import copy
+          import json
+          from pathlib import Path
+
+          path = Path('derevi/derevi_cards.cardconjurer')
+          cards = json.loads(path.read_text(encoding='utf-8'))
+          before = copy.deepcopy(cards)
+          targets = {'Savannah', 'Tropical Island', 'Tundra'}
+          by_key = {entry['key']: entry['data'] for entry in cards}
+          missing = targets - set(by_key)
+          if missing:
+              raise SystemExit(f'Missing target cards: {sorted(missing)}')
+
+          frame_src = {
+              'W':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameW.png',
+              'U':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameU.png',
+              'B':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameB.png',
+              'R':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameR.png',
+              'G':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameG.png',
+              'L':'/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png',
+          }
+          frame_name = {'W':'White','U':'Blue','B':'Black','R':'Red','G':'Green','L':'Land'}
+          mask_src = {
+              'Pinline':'/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png',
+              'Title':'/img/frames/m15/regular/m15MaskTitle.png',
+              'Type':'/img/frames/m15/regular/m15MaskType.png',
+              'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+              'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+          }
+
+          def layer(letter, mask, right=False):
+              masks = [{'src': mask_src[mask], 'name': mask}]
+              if right:
+                  masks.append({'src':'/img/frames/maskRightHalf.png','name':'Right Half'})
+              return {
+                  'name': f"{frame_name[letter]} Frame",
+                  'src': frame_src[letter],
+                  'masks': masks,
+              }
+
+          def dual_frames(left, right):
+              # Use Card Conjurer's native Generic Showcase assets at native opacity.
+              # Neutral land title/type; split color rules and pinlines.
+              return [
+                  layer(right, 'Pinline', True),
+                  layer(left, 'Pinline'),
+                  layer('L', 'Title'),
+                  layer('L', 'Type'),
+                  layer(right, 'Rules', True),
+                  layer(left, 'Rules'),
+                  layer('L', 'Border'),
+              ]
+
+          for key, left, right in [
+              ('Savannah','G','W'),
+              ('Tropical Island','G','U'),
+              ('Tundra','W','U'),
+          ]:
+              card = by_key[key]
+              card['version'] = 'genericShowcase'
+              card['artBounds'] = {'x':0,'y':0,'width':1,'height':0.9224}
+              card['frames'] = dual_frames(left, right)
+              # Keep the already-approved true-borderless art placement and text geometry.
+              rules = card['text']['rules']
+              rules['align'] = 'center'
+              rules.pop('noVerticalCenter', None)
+
+          if len(cards) != len(before):
+              raise SystemExit('Card count changed unexpectedly')
+          for old, new in zip(before, cards):
+              if old['key'] not in targets and old != new:
+                  raise SystemExit(f"Unexpected change to {old['key']}")
+
+          path.write_text(json.dumps(cards, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cards = json.loads(Path('derevi/derevi_cards.cardconjurer').read_text(encoding='utf-8'))
+          by_key = {c['key']: c['data'] for c in cards}
+          for key in ('Savannah','Tropical Island','Tundra'):
+              c = by_key[key]
+              assert c['version'] == 'genericShowcase'
+              assert c['artBounds'] == {'x':0,'y':0,'width':1,'height':0.9224}
+              assert len(c['frames']) == 7
+              assert all('/m15/genericShowcase/' in f['src'] for f in c['frames'][:6])
+              assert c['frames'][6]['src'].endswith('/m15GenericShowcaseFrameL.png')
+              for f in c['frames']:
+                  assert 'opacity' not in f
+                  assert 'colorOverlayCheck' not in f
+                  assert 'colorOverlay' not in f
+              assert c['text']['rules']['align'] == 'center'
+              assert 'noVerticalCenter' not in c['text']['rules']
+          print('Validation passed')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Use native Generic Showcase layers for Derevi dual lands [skip ci]"
+          git push
