@@ -1,0 +1,124 @@
+name: Fix Gaea borderless legendary
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-gaea-borderless-legendary.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply Gaea and land-rule fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import copy
+          import json
+          from pathlib import Path
+
+          card_path = Path('derevi/derevi_cards.cardconjurer')
+          cards = json.loads(card_path.read_text(encoding='utf-8'))
+
+          gaea_entries = [c for c in cards if c.get('key') == "Gaea's Cradle"]
+          tropical_entries = [c for c in cards if c.get('key') == 'Tropical Island']
+          if len(gaea_entries) != 1 or len(tropical_entries) != 1:
+              raise SystemExit(f'Expected one Gaea and one Tropical Island; got {len(gaea_entries)} and {len(tropical_entries)}')
+
+          gaea = gaea_entries[0]['data']
+          tropical = tropical_entries[0]['data']
+
+          # Match the approved dual-land Generic Showcase profile exactly where
+          # applicable. This is important for the clean solid-black footer.
+          gaea['version'] = tropical['version']
+          gaea['artBounds'] = copy.deepcopy(tropical['artBounds'])
+
+          # The floating-crown Border Cover is a literal black strip. On a true
+          # borderless card it renders as an obvious rectangle under the crown,
+          # so omit it. Keep the crown, its outline, and the lower cutout.
+          gaea['frames'] = [
+              f for f in gaea.get('frames', [])
+              if f.get('name') != 'Legend Crown Border Cover'
+          ]
+
+          # Remove any existing Border layer so we can copy the exact neutral
+          # Generic Showcase land Border used by the approved duals.
+          def has_mask(frame, mask_name):
+              return any(m.get('name') == mask_name for m in frame.get('masks', []))
+
+          gaea['frames'] = [f for f in gaea['frames'] if not has_mask(f, 'Border')]
+          dual_border = next(
+              copy.deepcopy(f) for f in tropical['frames'] if has_mask(f, 'Border')
+          )
+          gaea['frames'].append(dual_border)
+
+          # Preserve the successful neutral land crown + green land identity.
+          crown_srcs = [f.get('src') for f in gaea['frames']]
+          assert '/img/frames/m15/crowns/m15CrownLFloating.png' in crown_srcs
+          assert '/img/frames/m15/crowns/m15CrownFloatingOutline.png' in crown_srcs
+          assert not any(f.get('name') == 'Legend Crown Border Cover' for f in gaea['frames'])
+
+          # Keep real Oracle text conventional rather than reminder-text centered.
+          gaea['text']['rules']['align'] = 'left'
+          gaea['text']['rules']['noVerticalCenter'] = True
+
+          card_path.write_text(json.dumps(cards, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+
+          rules_path = Path('derevi/STYLE_RULES.md')
+          rules = rules_path.read_text(encoding='utf-8')
+
+          # Generic Showcase is the currently approved no-frame profile, matching
+          # the actual saved dual-land data.
+          rules = rules.replace('- `version = "borderless"`.\n- Use the native **Generic Showcase** family',
+                                '- `version = "genericShowcase"`.\n- Use the native **Generic Showcase** family')
+
+          old = '''- Integrate it with the floating-crown helper pieces:\n  - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`\n  - `Legend Crown Border Cover` (`/img/black.png`, bounds `x=.0394, y=.0277, width=.9214, height=.0177`)\n  - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)\n- Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.'''
+          new = '''- Integrate it with the floating-crown helper pieces:\n  - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`\n  - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)\n- **Do not use `Legend Crown Border Cover` on this true-borderless legendary-land recipe.** It is a literal black strip and creates a visible rectangular bar beneath the floating crown when art extends behind it.\n- Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.'''
+          if old not in rules:
+              raise SystemExit('Could not find current floating-crown helper block in STYLE_RULES.md')
+          rules = rules.replace(old, new, 1)
+
+          anchor = '- Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.\n'
+          addition = ('- Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.\n'
+                      '- Include the same neutral Generic Showcase **Border** layer used by the nonlegendary borderless dual lands. This produces the clean solid-black bottom/footer band and keeps the legendary land visually in the same cycle.\n')
+          if anchor not in rules:
+              raise SystemExit('Could not find legendary color rule anchor')
+          rules = rules.replace(anchor, addition, 1)
+
+          # The no-frame recipe does use the Border mask for the clean footer;
+          # clarify that the forbidden layer is the conventional full outer Frame,
+          # not the Generic Showcase land Border mask used by the approved duals.
+          rules = rules.replace('- Do **not** include conventional outer `Frame` or `Border` layers.\n',
+                                '- Do **not** include the conventional outer `Frame` layer. Keep the neutral Generic Showcase land `Border` mask used by the approved duals; it supplies the clean black footer/bottom treatment without turning the card back into a framed Full Art layout.\n')
+
+          rules_path.write_text(rules, encoding='utf-8')
+
+          # Final validation against the requested visual behavior.
+          cards2 = json.loads(card_path.read_text(encoding='utf-8'))
+          g = next(c['data'] for c in cards2 if c['key'] == "Gaea's Cradle")
+          t = next(c['data'] for c in cards2 if c['key'] == 'Tropical Island')
+          assert g['version'] == t['version'] == 'genericShowcase'
+          assert not any(f.get('name') == 'Legend Crown Border Cover' for f in g['frames'])
+          assert any(has_mask(f, 'Border') for f in g['frames'])
+          assert next(f for f in g['frames'] if has_mask(f, 'Border')) == next(f for f in t['frames'] if has_mask(f, 'Border'))
+          assert '/img/frames/m15/crowns/m15CrownLFloating.png' in [f.get('src') for f in g['frames']]
+          assert g['text']['rules']['align'] == 'left'
+          assert g['text']['rules']['noVerticalCenter'] is True
+
+          rules2 = rules_path.read_text(encoding='utf-8')
+          assert 'Do not use `Legend Crown Border Cover`' in rules2
+          assert 'clean solid-black bottom/footer band' in rules2
+          print('Validation passed')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/STYLE_RULES.md
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Fix Gaea borderless crown and footer [skip ci]"
+          git push
