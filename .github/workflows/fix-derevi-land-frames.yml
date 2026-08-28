@@ -1,0 +1,135 @@
+name: Fix Derevi land frames
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-derevi-land-frames.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Card Conjurer land data
+        shell: bash
+        run: |
+          python - <<'PY'
+          import copy
+          import json
+          from pathlib import Path
+
+          path = Path('derevi/derevi_cards.cardconjurer')
+          cards = json.loads(path.read_text(encoding='utf-8'))
+          before = copy.deepcopy(cards)
+          targets = {"Gaea's Cradle", 'Savannah', 'Tropical Island', 'Tundra'}
+          found = {entry['key'] for entry in cards if entry.get('key') in targets}
+          if found != targets:
+              raise SystemExit(f'Missing target cards: {sorted(targets - found)}')
+
+          names = {
+              'W': 'White', 'U': 'Blue', 'B': 'Black', 'R': 'Red', 'G': 'Green',
+              'M': 'Multicolored', 'A': 'Artifact', 'L': 'Land', 'C': 'Colorless',
+              'V': 'Vehicle', 'WL': 'White Land', 'UL': 'Blue Land', 'BL': 'Black Land',
+              'RL': 'Red Land', 'GL': 'Green Land', 'ML': 'Multicolored Land'
+          }
+
+          def frame(letter, mask, right=False):
+              src = f'/img/frames/m15/regular/m15Frame{letter}.png'
+              if 'L' in letter and len(letter) > 1:
+                  src = f'/img/frames/m15/regular/l{letter[0].lower()}.png'
+              masks = [{
+                  'src': f'/img/frames/m15/regular/m15Mask{mask}.png',
+                  'name': mask,
+              }]
+              if right:
+                  masks.append({'src': '/img/frames/maskRightHalf.png', 'name': 'Right Half'})
+              return {'name': names[letter] + ' Frame', 'src': src, 'masks': masks}
+
+          def dual_land_frames(left, right):
+              # Mirrors Card Conjurer's own autoM15Frame/cardFrameProperties logic for a
+              # two-color land: colored land pinlines/rules, neutral land title/type/frame.
+              return [
+                  frame(right + 'L', 'Pinline', True),
+                  frame(left + 'L', 'Pinline'),
+                  frame('L', 'Type'),
+                  frame('L', 'Title'),
+                  frame(right + 'L', 'Rules', True),
+                  frame(left + 'L', 'Rules'),
+                  frame('L', 'Frame'),
+                  frame('L', 'Border'),
+              ]
+
+          def land_crown():
+              return {
+                  'name': 'Land Legend Crown',
+                  'src': '/img/frames/m15/crowns/m15CrownL.png',
+                  'masks': [],
+                  'bounds': {'height': 0.1667, 'width': 0.9454, 'x': 0.0274, 'y': 0.0191},
+              }
+
+          by_key = {entry['key']: entry['data'] for entry in cards}
+
+          cradle = by_key["Gaea's Cradle"]
+          cradle['frames'] = [
+              land_crown(),
+              frame('GL', 'Pinline'),
+              frame('GL', 'Type'),
+              frame('GL', 'Title'),
+              frame('GL', 'Rules'),
+              frame('L', 'Frame'),
+              frame('L', 'Border'),
+          ]
+
+          savannah = by_key['Savannah']
+          savannah['frames'] = dual_land_frames('G', 'W')
+          savannah['text']['rules']['text'] = '{i}({T}: Add {G} or {W}.){/i}'
+
+          tropical = by_key['Tropical Island']
+          tropical['frames'] = dual_land_frames('G', 'U')
+          tropical['text']['rules']['text'] = '{i}({T}: Add {G} or {U}.){/i}'
+
+          tundra = by_key['Tundra']
+          tundra['frames'] = dual_land_frames('W', 'U')
+          tundra['text']['rules']['text'] = '{i}({T}: Add {W} or {U}.){/i}'
+
+          if len(cards) != len(before):
+              raise SystemExit('Card count changed unexpectedly')
+          for old, new in zip(before, cards):
+              if old['key'] not in targets and old != new:
+                  raise SystemExit(f"Unexpected change to {old['key']}")
+
+          path.write_text(json.dumps(cards, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          print('Patched:', ', '.join(sorted(targets)))
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('derevi/derevi_cards.cardconjurer')
+          cards = json.loads(p.read_text(encoding='utf-8'))
+          by_key = {c['key']: c['data'] for c in cards}
+          assert len(cards) == 26
+          assert by_key['Savannah']['frames'][0]['src'].endswith('/lw.png')
+          assert by_key['Savannah']['frames'][1]['src'].endswith('/lg.png')
+          assert by_key['Tropical Island']['frames'][0]['src'].endswith('/lu.png')
+          assert by_key['Tropical Island']['frames'][1]['src'].endswith('/lg.png')
+          assert by_key['Tundra']['frames'][0]['src'].endswith('/lu.png')
+          assert by_key['Tundra']['frames'][1]['src'].endswith('/lw.png')
+          assert by_key["Gaea's Cradle"]['frames'][0]['src'].endswith('/m15CrownL.png')
+          assert by_key["Gaea's Cradle"]['frames'][1]['src'].endswith('/lg.png')
+          for key in ('Savannah', 'Tropical Island', 'Tundra'):
+              assert by_key[key]['text']['rules']['text'].startswith('{i}(')
+              assert by_key[key]['text']['rules']['text'].endswith('){/i}')
+          print('Validation passed')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Fix Derevi land frames [skip ci]"
+          git push
