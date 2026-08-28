@@ -1,56 +1,36 @@
-name: Build Doctor Who Card Conjurer data
+name: Audit Doctor Who Card Conjurer data
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/build-doctor-who-cards.yml'
-      - '_doctor_who_builder.xz.b64'
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Build Doctor Who card data
+      - name: Audit Doctor Who card data
         shell: bash
         run: |
-          python - <<'PYBUILD'
-          import base64, io, json, lzma, time, urllib.request, urllib.error, urllib.parse
+          python - <<'PYAUDIT'
+          import json
           from pathlib import Path
+          from urllib.parse import urlparse
 
-          original_urlopen = urllib.request.urlopen
-          last_request = [0.0]
+          source = Path('doctor_who/doctor_who_cards.cardconjurer')
+          entries = json.loads(source.read_text())
 
-          def network_urlopen(*args, **kwargs):
-              elapsed = time.monotonic() - last_request[0]
-              if elapsed < 0.20:
-                  time.sleep(0.20 - elapsed)
-              for attempt in range(7):
-                  try:
-                      response = original_urlopen(*args, **kwargs)
-                      last_request[0] = time.monotonic()
-                      return response
-                  except urllib.error.HTTPError as exc:
-                      if exc.code != 429 or attempt == 6:
-                          raise
-                      retry_after = exc.headers.get('Retry-After')
-                      try:
-                          delay = float(retry_after) if retry_after else 2.0 * (2 ** attempt)
-                      except ValueError:
-                          delay = 2.0 * (2 ** attempt)
-                      time.sleep(min(delay, 30.0))
-                      last_request[0] = time.monotonic()
-
-          names = [
+          expected = [
               'Maskwood Nexus','Flooded Strand','Scalding Tarn','Crystal Quarry','Farewell',
               "Raffine's Tower",'Tempt with Discovery','The World Tree','Jodah, the Unifier','Savannah',
-              'Misty Rainforest','Esika, God of the Tree // The Prismatic Bridge','Windswept Heath','Steam Vents',
+              'Misty Rainforest','Esika, God of the Tree','The Prismatic Bridge','Windswept Heath','Steam Vents',
               'Marsh Flats',"Spara's Headquarters",'Cascading Cataracts','Sol Ring','Morophon, the Boundless',
               'Polluted Delta','Arid Mesa','Propaganda','Forest',"Gaea's Cradle","Jetmir's Garden",'Everybody Lives!',
               'Mountain','Tundra','Godless Shrine','Swamp','Tropical Island','Zagoth Triome','Indatha Triome','Elven Chorus',
@@ -58,71 +38,136 @@ jobs:
               'The Fourteenth Doctor','Sonic Screwdriver','Plaza of Heroes','RMS Titanic','Mana Confluence','Sacred Foundry',
               'Raugrin Triome','Wedding Ring','Plains','Island'
           ]
-          payload = json.dumps({'identifiers': [{'name': n} for n in names]}).encode('utf-8')
-          request = urllib.request.Request(
-              'https://api.scryfall.com/cards/collection',
-              data=payload,
-              headers={
-                  'User-Agent': 'DoctorWhoCardConjurerBuilder/1.0',
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',
-              },
-              method='POST',
-          )
-          with network_urlopen(request, timeout=60) as response:
-              collection = json.load(response)
 
-          scryfall_cache = {}
-          for obj in collection.get('data', []):
-              scryfall_cache[obj.get('name','').casefold()] = obj
-              for face in obj.get('card_faces', []) or []:
-                  face_name = face.get('name')
-                  if face_name:
-                      scryfall_cache[face_name.casefold()] = obj
+          failures = []
+          passes = []
+          def check(condition, label):
+              (passes if condition else failures).append(label)
 
-          class CachedResponse(io.BytesIO):
-              def __init__(self, obj, url):
-                  super().__init__(json.dumps(obj).encode('utf-8'))
-                  self.url = url
-                  self.status = 200
-                  self.headers = {'Content-Type': 'application/json'}
-              def __enter__(self):
-                  return self
-              def __exit__(self, exc_type, exc, tb):
-                  self.close()
-                  return False
-              def getcode(self):
-                  return 200
-              def info(self):
-                  return self.headers
+          keys = [e.get('key') for e in entries]
+          check(len(entries) == 51, f'Exactly 51 entries (found {len(entries)})')
+          check(len(keys) == len(set(keys)), 'No duplicate card keys')
+          check(keys == expected, 'Exact 51-face card order, including both Esika faces')
 
-          def cached_urlopen(request, *args, **kwargs):
-              url = request.full_url if isinstance(request, urllib.request.Request) else str(request)
-              parsed = urllib.parse.urlparse(url)
-              if parsed.netloc == 'api.scryfall.com' and parsed.path == '/cards/named':
-                  query = urllib.parse.parse_qs(parsed.query)
-                  key = (query.get('exact') or query.get('fuzzy') or [''])[0].casefold()
-                  if key in scryfall_cache:
-                      return CachedResponse(scryfall_cache[key], url)
-              return network_urlopen(request, *args, **kwargs)
+          by_key = {e['key']: e['data'] for e in entries}
 
-          urllib.request.urlopen = cached_urlopen
+          def frame_paths(data):
+              result = []
+              for frame in data.get('frames', []):
+                  result.append(frame.get('src', ''))
+                  for mask in frame.get('masks', []) or []:
+                      result.append(mask.get('src', ''))
+              return result
 
-          raw = Path('_doctor_who_builder.xz.b64').read_text().strip()
-          code = lzma.decompress(base64.b64decode(raw))
-          pseudo = str(Path.cwd() / '_build_doctor_who_cards.py')
-          ns = {'__name__': '__main__', '__file__': pseudo}
-          exec(compile(code, pseudo, 'exec'), ns)
-          PYBUILD
-      - name: Commit generated project data
+          for key, data in by_key.items():
+              check(data.get('width') == 2010 and data.get('height') == 2814,
+                    f'{key}: 2010x2814 Card Conjurer canvas')
+              art = data.get('artSource', '')
+              check(art.startswith('https://raw.githubusercontent.com/andro951/cards/main/doctor_who/art/'),
+                    f'{key}: art source uses doctor_who/art raw URL')
+              if art:
+                  art_name = Path(urlparse(art).path).name
+                  check((Path('doctor_who/art') / art_name).is_file(),
+                        f'{key}: referenced art file exists ({art_name})')
+              symbol = data.get('setSymbolSource', '')
+              check(symbol.startswith('https://raw.githubusercontent.com/andro951/cards/main/doctor_who/set_icon/'),
+                    f'{key}: set symbol uses doctor_who/set_icon raw URL')
+              if symbol:
+                  symbol_name = Path(urlparse(symbol).path).name
+                  check(symbol_name in {'common.png','uncommon.png','rare.png','mythic.png'},
+                        f'{key}: recognized rarity icon ({symbol_name})')
+                  check((Path('doctor_who/set_icon') / symbol_name).is_file(),
+                        f'{key}: referenced rarity icon exists ({symbol_name})')
+              check(data.get('bottomInfo', {}).get('bottomLeft', {}).get('text') == 'Custom Proxy • Personal Use Only',
+                    f'{key}: proxy-only collector notice present')
+
+          borderless_lands = [
+              'Flooded Strand','Scalding Tarn','Crystal Quarry',"Raffine's Tower",'The World Tree','Savannah',
+              'Misty Rainforest','Windswept Heath','Steam Vents','Marsh Flats',"Spara's Headquarters",'Cascading Cataracts',
+              'Polluted Delta','Arid Mesa','Forest',"Gaea's Cradle","Jetmir's Garden",'Mountain','Tundra','Godless Shrine',
+              'Swamp','Tropical Island','Zagoth Triome','Indatha Triome','Ketria Triome','Reflecting Pool','Watery Grave',
+              'Plaza of Heroes','Mana Confluence','Sacred Foundry','Raugrin Triome','Plains','Island'
+          ]
+          for key in borderless_lands:
+              check(by_key[key].get('version') == 'genericShowcase', f'{key}: borderless Generic Showcase land treatment')
+
+          for key in ['Zagoth Triome','Indatha Triome','Ketria Triome','Raugrin Triome',"Raffine's Tower","Spara's Headquarters","Jetmir's Garden"]:
+              paths = frame_paths(by_key[key])
+              check(any('maskMiddleThird' in p for p in paths), f'{key}: middle-third mask is present')
+              check(any('maskRightHalf' in p for p in paths), f'{key}: right-half mask is present')
+
+          fourteenth = by_key['The Fourteenth Doctor']
+          check(fourteenth.get('version') == 'tardis', 'The Fourteenth Doctor: native TARDIS (WHO) version')
+          check(any('/img/frames/tardis/' in p for p in frame_paths(fourteenth)), 'The Fourteenth Doctor: native TARDIS frame assets')
+          check(any('Crown' in f.get('name','') for f in fourteenth.get('frames', [])), 'The Fourteenth Doctor: legendary crown present')
+
+          titanic = by_key['RMS Titanic']
+          check(any('m15FrameV' in p or '/vehicle' in p.lower() for p in frame_paths(titanic)), 'RMS Titanic: Vehicle frame treatment')
+          check(any('Crown' in f.get('name','') for f in titanic.get('frames', [])), 'RMS Titanic: legendary crown present')
+
+          k9 = by_key['K-9, Mark I']
+          check(any('FrameA' in p or '/regular/a.png' in p for p in frame_paths(k9)), 'K-9, Mark I: artifact frame treatment')
+          check(any('Crown' in f.get('name','') for f in k9.get('frames', [])), 'K-9, Mark I: legendary crown present')
+
+          esika = by_key['Esika, God of the Tree']
+          bridge = by_key['The Prismatic Bridge']
+          check(esika.get('version') == 'modalRegular', 'Esika: Modal DFC front version')
+          check(any('/img/frames/modal/regular/g.png' in p for p in frame_paths(esika)), 'Esika: green Modal DFC front frame')
+          check(any('Crown' in f.get('name','') for f in esika.get('frames', [])), 'Esika: legendary crown present')
+          check(bridge.get('version') == 'modalRegular', 'The Prismatic Bridge: Modal DFC back version')
+          check(any('/img/frames/modal/regular/mb.png' in p for p in frame_paths(bridge)), 'The Prismatic Bridge: multicolor Modal DFC back frame')
+          check(any('/img/frames/m15/nyx/' in p for p in frame_paths(bridge)), 'The Prismatic Bridge: Nyx/enchantment treatment')
+          check(any('Crown' in f.get('name','') for f in bridge.get('frames', [])), 'The Prismatic Bridge: legendary crown present')
+
+          for key in ['Jodah, the Unifier','Morophon, the Boundless',"Gaea's Cradle",'Brago, King Eternal',"Akroma's Memorial",'Wedding Ring']:
+              check(any('Crown' in f.get('name','') for f in by_key[key].get('frames', [])), f'{key}: legendary crown present')
+
+          report = []
+          report.append('# Doctor Who Card Conjurer Audit')
+          report.append('')
+          report.append(f'- Entries: **{len(entries)}**')
+          report.append(f'- Checks passed: **{len(passes)}**')
+          report.append(f'- Checks failed: **{len(failures)}**')
+          report.append('')
+          report.append('## Required checks')
+          report.append('')
+          if failures:
+              for item in failures:
+                  report.append(f'- ❌ {item}')
+          else:
+              report.append('- ✅ All required checks passed.')
+          report.append('')
+          report.append('## Per-card frame summary')
+          report.append('')
+          report.append('| # | Card face | Version | Rarity icon | Art file | Frames |')
+          report.append('|---:|---|---|---|---|---|')
+          for i, entry in enumerate(entries, 1):
+              key = entry['key']
+              data = entry['data']
+              art_name = Path(urlparse(data.get('artSource','')).path).name
+              symbol_name = Path(urlparse(data.get('setSymbolSource','')).path).name
+              frame_names = ', '.join(f.get('name','') for f in data.get('frames', []))
+              report.append(f'| {i} | {key.replace("|", "\\|")} | {data.get("version", "")} | {symbol_name} | {art_name} | {frame_names.replace("|", "\\|")} |')
+          report.append('')
+          report.append('## Detailed check log')
+          report.append('')
+          for item in passes:
+              report.append(f'- ✅ {item}')
+          for item in failures:
+              report.append(f'- ❌ {item}')
+
+          Path('doctor_who/CARD_CONJURER_AUDIT.md').write_text('\n'.join(report) + '\n')
+
+          if failures:
+              print('\n'.join('FAIL: ' + x for x in failures))
+              raise SystemExit(f'{len(failures)} audit check(s) failed')
+          print(f'PASS: {len(passes)} checks; {len(entries)} entries')
+          PYAUDIT
+      - name: Commit audit report
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add doctor_who/doctor_who_cards.cardconjurer
-          if git diff --cached --quiet; then
-            echo "No generated changes to commit."
-          else
-            git commit -m "Build Doctor Who Card Conjurer data"
-            git push origin HEAD:main
-          fi
+          git add doctor_who/CARD_CONJURER_AUDIT.md
+          git commit -m "Audit Doctor Who Card Conjurer data"
+          git push origin HEAD:main
