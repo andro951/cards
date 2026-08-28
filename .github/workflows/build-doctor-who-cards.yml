@@ -119,7 +119,7 @@ jobs:
           check(any('/img/frames/m15/nyx/' in p for p in frame_paths(bridge)), 'The Prismatic Bridge: Nyx/enchantment treatment')
           check(any('Crown' in f.get('name','') for f in bridge.get('frames', [])), 'The Prismatic Bridge: legendary crown present')
 
-          for key in ['Jodah, the Unifier','Morophon, the Boundless',"Gaea's Cradle",'Brago, King Eternal',"Akroma's Memorial",'Wedding Ring']:
+          for key in ['Jodah, the Unifier','Morophon, the Boundless',"Gaea's Cradle",'Brago, King Eternal',"Akroma's Memorial"]:
               check(any('Crown' in f.get('name','') for f in by_key[key].get('frames', [])), f'{key}: legendary crown present')
 
           report = []
