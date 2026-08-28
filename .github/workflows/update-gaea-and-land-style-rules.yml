@@ -1,0 +1,244 @@
+name: Update Gaea Cradle and land style rules
+
+on:
+  push:
+    paths:
+      - '.github/workflows/update-gaea-and-land-style-rules.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Gaea's Cradle card data and land presentation rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          card_path = Path('derevi/derevi_cards.cardconjurer')
+          cards = json.loads(card_path.read_text(encoding='utf-8'))
+          matches = [entry for entry in cards if entry.get('key') == "Gaea's Cradle"]
+          if len(matches) != 1:
+              raise SystemExit(f"Expected exactly one Gaea's Cradle entry, found {len(matches)}")
+
+          cradle = matches[0]['data']
+
+          # True borderless / Generic Showcase land geometry. Preserve the user's
+          # current artX/artY/artZoom so this does not disturb the approved crop.
+          cradle['version'] = 'borderless'
+          cradle['artBounds'] = {'x': 0, 'y': 0, 'width': 1, 'height': 0.9224}
+
+          generic = '/img/frames/m15/genericShowcase/'
+          regular = '/img/frames/m15/regular/'
+          crowns = '/img/frames/m15/crowns/'
+
+          # Borderless legendary land: same Generic Showcase family as the duals,
+          # but with the neutral LAND floating crown. The green identity comes
+          # from the pinline/rules panel, not from a green permanent crown.
+          cradle['frames'] = [
+              {
+                  'name': 'Legend Crown Outline',
+                  'src': crowns + 'm15CrownFloatingOutline.png',
+                  'masks': [],
+                  'bounds': {'x': 0.028, 'y': 0.0172, 'width': 0.944, 'height': 0.1062},
+              },
+              {
+                  'name': 'Land Legend Crown',
+                  'src': crowns + 'm15CrownLFloating.png',
+                  'masks': [],
+                  'bounds': {'x': 0.0307, 'y': 0.0191, 'width': 0.9387, 'height': 0.1024},
+              },
+              {
+                  'name': 'Legend Crown Border Cover',
+                  'src': '/img/black.png',
+                  'masks': [],
+                  'bounds': {'x': 0.0394, 'y': 0.0277, 'width': 0.9214, 'height': 0.0177},
+              },
+              {
+                  'name': 'Legend Crown Lower Cutout',
+                  'src': '/img/black.png',
+                  'masks': [],
+                  'bounds': {'x': 0.0734, 'y': 0.1096, 'width': 0.8532, 'height': 0.0143},
+                  'erase': True,
+              },
+              {
+                  'name': 'Green Generic Showcase Pinline',
+                  'src': generic + 'm15GenericShowcaseFrameG.png',
+                  'masks': [{'src': generic + 'm15GenericShowcaseMaskPinline.png', 'name': 'Pinline'}],
+              },
+              {
+                  'name': 'Neutral Land Generic Showcase Title',
+                  'src': generic + 'm15GenericShowcaseFrameL.png',
+                  'masks': [{'src': regular + 'm15MaskTitle.png', 'name': 'Title'}],
+              },
+              {
+                  'name': 'Neutral Land Generic Showcase Type',
+                  'src': generic + 'm15GenericShowcaseFrameL.png',
+                  'masks': [{'src': regular + 'm15MaskType.png', 'name': 'Type'}],
+              },
+              {
+                  'name': 'Green Generic Showcase Rules',
+                  'src': generic + 'm15GenericShowcaseFrameG.png',
+                  'masks': [{'src': regular + 'm15MaskRules.png', 'name': 'Rules'}],
+              },
+          ]
+
+          # Borderless treatment uses light text. Keep real rules text left-aligned.
+          cradle['text']['title']['color'] = 'white'
+          cradle['text']['type']['color'] = 'white'
+          cradle['text']['rules']['color'] = 'white'
+          cradle['text']['rules']['align'] = 'left'
+          cradle['text']['rules']['noVerticalCenter'] = True
+
+          card_path.write_text(json.dumps(cards, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+
+          rules_path = Path('derevi/STYLE_RULES.md')
+          rules = rules_path.read_text(encoding='utf-8')
+          marker = '## Land presentation'
+          if marker in rules:
+              rules = rules.split(marker, 1)[0].rstrip() + '\n\n'
+          else:
+              rules = rules.rstrip() + '\n\n'
+
+          rules += r'''## Land presentation
+
+There are **four distinct approved full-art land layouts**. Treat them as separate Card Conjurer recipes and do not conflate them.
+
+### 1. Full art land - framed
+
+Use when the user wants a premium full-art land that still has a visible conventional outer land frame. This is the treatment that produced the approved earlier Tropical Island result.
+
+Card Conjurer recipe:
+- `version = "m15ClearTextboxes"`.
+- Use the M15 **Full Art** land family under `/img/frames/m15/new/fullart/`.
+- Use the tall portrait/full-art art window instead of the normal 3:2 land art window.
+- Keep the normal outer **Frame** and **Border** layers deliberately.
+- Use the dedicated land frame assets (`lw`, `lu`, `lb`, `lr`, `lg`, `lm`, `ll`) rather than ordinary colored permanent frames.
+- For a two-color land, split the relevant land-frame components between the two colors with left/right masks.
+- A one-line parenthetical mana reminder may be italic and centered horizontally/vertically.
+
+Visual result:
+- Tall/full artwork.
+- Clearly visible outer frame.
+- Still reads as a land, not a colored permanent.
+
+### 2. Full art land - framed legendary
+
+Use when the card should use the **framed full-art** recipe above but is legendary.
+
+Card Conjurer recipe:
+- Start from **Full art land - framed**.
+- Add the dedicated M15 **Land Legend Crown**, not a green/blue/etc. permanent crown.
+- Standard framed-land crown asset: `/img/frames/m15/crowns/m15CrownL.png`.
+- Preserve the framed full-art land layers underneath it.
+
+Legendary color rule:
+- The crown should communicate **legendary land first**.
+- Prefer the neutral land crown rather than recoloring the crown to the land's associated color.
+- The land's color association should come from the land frame/pinline/rules treatment.
+
+### 3. Full art land - "no" frame / true borderless
+
+Use when the user wants the modern borderless/showcase land appearance: artwork running to the card edges with only floating title/type/rules/pinline elements.
+
+Card Conjurer recipe:
+- `version = "borderless"`.
+- Use the native **Generic Showcase** family under `/img/frames/m15/genericShowcase/`.
+- Do **not** use the older `Borderless (Alt)` family unless explicitly requested.
+- `artBounds = {x:0, y:0, width:1, height:0.9224}` for the true borderless art region.
+- Do **not** include conventional outer `Frame` or `Border` layers.
+- Use masked Generic Showcase pieces for title, type, rules, and pinline.
+- Keep approved/manual art placement values unless the user asks to recalculate them.
+
+Two-color borderless land treatment:
+- Two-color identity should be visible in the pinline and the translucent rules panel.
+- Title bar: neutral/dark translucent treatment.
+- Type bar: neutral/dark translucent treatment.
+- Rules box: darker translucent split-color treatment, with one land color on each side.
+- The rules treatment should read as a real colored panel with the art faintly visible below it, not merely a weak tint over the artwork.
+- Examples: Savannah = G/W, Tropical Island = G/U, Tundra = W/U.
+
+Text:
+- Borderless title/type/rules text is normally light/white for legibility.
+- Only a one-line reminder-text rules box should be centered; normal Oracle rules text stays left-aligned.
+
+### 4. Full art land - "no" frame legendary
+
+Use for a legendary land that should belong visually to the same true-borderless/showcase land cycle.
+
+Card Conjurer recipe:
+- Start from **Full art land - "no" frame / true borderless**.
+- Use the same `/img/frames/m15/genericShowcase/` title/type/rules/pinline pieces.
+- Add the **floating Land Legend Crown** treatment rather than a normal colored permanent crown.
+- Floating crown asset: `/img/frames/m15/crowns/m15CrownLFloating.png`.
+- Integrate it with the floating-crown helper pieces:
+  - `/img/frames/m15/crowns/m15CrownFloatingOutline.png`
+  - `Legend Crown Border Cover` (`/img/black.png`, bounds `x=.0394, y=.0277, width=.9214, height=.0177`)
+  - `Legend Crown Lower Cutout` (`/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`)
+- Floating land crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.
+- Floating crown outline bounds: `x=.028, y=.0172, width=.944, height=.1062`.
+
+Legendary color rule:
+- Use the **neutral land-colored crown** (charcoal/stone/earthy metallic appearance), not the green floating crown merely because the land is green-aligned.
+- For a card such as **Gaea's Cradle**, green identity belongs in the green pinline/rules panel while the crown says **legendary land**.
+
+Text:
+- Real Oracle rules text remains left-aligned and should not be vertically centered as if it were reminder text.
+
+### Land layout matrix
+
+| Layout | Visible outer frame | True edge-to-edge art | Legendary treatment |
+| --- | --- | --- | --- |
+| Full art land - framed | Yes | No | None |
+| Full art land - framed legendary | Yes | No | Standard Land Legend Crown |
+| Full art land - "no" frame | No | Yes | None |
+| Full art land - "no" frame legendary | No | Yes | Floating Land Legend Crown |
+'''
+
+          rules_path.write_text(rules, encoding='utf-8')
+          PY
+
+      - name: Validate and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          cards = json.loads(Path('derevi/derevi_cards.cardconjurer').read_text(encoding='utf-8'))
+          cradle = next(c['data'] for c in cards if c['key'] == "Gaea's Cradle")
+          assert cradle['version'] == 'borderless'
+          assert cradle['artBounds'] == {'x': 0, 'y': 0, 'width': 1, 'height': 0.9224}
+          srcs = [f['src'] for f in cradle['frames']]
+          assert '/img/frames/m15/crowns/m15CrownLFloating.png' in srcs
+          assert '/img/frames/m15/crowns/m15CrownFloatingOutline.png' in srcs
+          assert '/img/frames/m15/genericShowcase/m15GenericShowcaseFrameG.png' in srcs
+          assert '/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png' in srcs
+          assert not any('/img/frames/m15/borderless/' in s for s in srcs)
+          assert not any(s.endswith('m15CrownGFloating.png') for s in srcs)
+          assert cradle['text']['rules']['align'] == 'left'
+          assert cradle['text']['rules']['noVerticalCenter'] is True
+
+          rules = Path('derevi/STYLE_RULES.md').read_text(encoding='utf-8')
+          for heading in (
+              '### 1. Full art land - framed',
+              '### 2. Full art land - framed legendary',
+              '### 3. Full art land - "no" frame / true borderless',
+              '### 4. Full art land - "no" frame legendary',
+          ):
+              assert heading in rules
+          print('Validation passed')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/derevi_cards.cardconjurer derevi/STYLE_RULES.md
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Style Gaea's Cradle as borderless legendary land [skip ci]"
+          git push
