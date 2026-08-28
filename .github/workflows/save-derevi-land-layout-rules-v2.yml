@@ -1,0 +1,37 @@
+name: Save Derevi land layout rules v2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/save-derevi-land-layout-rules-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update STYLE_RULES.md
+        run: python derevi/update_land_layout_rules.py
+      - name: Validate and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t = Path('derevi/STYLE_RULES.md').read_text(encoding='utf-8')
+          assert '### Full art land — framed' in t
+          assert '### Full art land — no frame / true borderless' in t
+          assert 'version = "m15ClearTextboxes"' in t
+          assert 'version = "borderless"' in t
+          assert '/img/frames/m15/new/fullart/l.png' in t
+          assert '/img/frames/m15/borderless/m15GenericShowcaseFrameW.png' in t
+          print('Validation passed')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/STYLE_RULES.md
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Document framed and borderless full-art land layouts [skip ci]"
+          git push
