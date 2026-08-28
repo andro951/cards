@@ -1,0 +1,126 @@
+name: Save Derevi land layout rules
+
+on:
+  push:
+    paths:
+      - '.github/workflows/save-derevi-land-layout-rules.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Save framed and unframed full-art land rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('derevi/STYLE_RULES.md')
+          text = path.read_text(encoding='utf-8')
+          start = text.index('## Land presentation')
+          end = text.index('## Repository write rule', start)
+
+          section = r'''## Land presentation
+
+There are two distinct approved full-art land layouts. Do not conflate them.
+
+### Full art land — framed
+
+Use this when the user asks for a **full art, framed land**. This is the layout that produced the approved Tropical Island result with the large artwork, visible outer land frame, split green/blue accents, dark translucent lower rules area, and centered reminder text.
+
+Card Conjurer profile:
+- `version = "m15ClearTextboxes"`
+- Card canvas remains `2010 × 2814` with zero margins.
+- Use the **Accurate → Full Art** asset family under `/img/frames/m15/new/fullart/`.
+- Art bounds: `{x:0.062, y:0.1129, width:0.876, height:0.8096}`.
+- Set-symbol bounds: `{x:1862/2010, y:0.5910, width:0.12, height:0.0410, vertical:'center', horizontal:'right'}`.
+- For portrait `1024 × 1536` art, the saved centered fit used `artX = 125/2010`, `artY = 137/2814`, `artZoom = 1.719`, `artRotate = "0"`.
+
+Full Art text geometry:
+- Mana: `y=176/2814`, `width=1864/2010`, `height=71/2100`, `size=70.5/1638`, right aligned.
+- Title: `x=168/2010`, `y=145/2814`, `width=0.8292`, `height=0.0543`, `size=0.0381`.
+- Type: `x=168/2010`, `y=1588/2814`, `width=0.8292`, `height=0.0543`, `size=0.0324`, `color='white'`.
+- Rules: `x=0.086`, `y=1780/2814`, `width=0.828`, `height=0.2875`, `size=0.0362`, `color='white'`.
+
+For a two-color full-art framed land, use land-specific Full Art assets and preserve the visible outer land frame:
+- Colored land assets: `/img/frames/m15/new/fullart/lw.png`, `lu.png`, `lb.png`, `lr.png`, `lg.png`, `lm.png`.
+- Neutral land asset: `/img/frames/m15/new/fullart/l.png`.
+- Layer order for a dual land with left color A and right color B:
+  1. B land `Pinline`, masked to `Right Half`.
+  2. A land `Pinline`.
+  3. Neutral land `Type`.
+  4. Neutral land `Title`.
+  5. B land `Rules`, masked to `Right Half`.
+  6. A land `Rules`.
+  7. Neutral land `Frame`.
+  8. Neutral land `Border`.
+- The `Frame` and `Border` layers are intentional here. They are what makes this the **framed** full-art version.
+- For Savannah use A=`G`, B=`W`; Tropical Island A=`G`, B=`U`; Tundra A=`W`, B=`U`.
+- Sparse parenthetical mana reminder text should be italic and centered horizontally and vertically in the rules box: set `align='center'` and leave `noVerticalCenter` unset.
+
+For a legendary full-art framed land such as Gaea's Cradle:
+- Use the new land legendary crown `/img/frames/m15/crowns/new/l.png` with bounds `{x:44/2010, y:53/2814, width:1922/2010, height:493/2814}`.
+- Use green-land Full Art accents (`lg.png`) for pinline/type/title/rules as appropriate, with the neutral Full Art land `Frame` and `Border` retained.
+
+### Full art land — no frame / true borderless
+
+Use this when the user asks for a **full art land with no frame**, **true borderless land**, or explicitly wants the art to run to the card edges instead of living inside the framed Full Art shell.
+
+Card Conjurer profile:
+- `version = "borderless"`.
+- Use Card Conjurer's actual **Borderless** frame version, not `m15ClearTextboxes` / Accurate Full Art.
+- Art bounds: `{x:0, y:0, width:1, height:0.9224}`. This is the critical difference: the artwork is genuinely edge-to-edge behind the card elements.
+- Set-symbol bounds: `{x:0.9213, y:0.5910, width:0.12, height:0.0410, vertical:'center', horizontal:'right'}`.
+- For portrait `1024 × 1536` art, the saved centered fit is `artZoom = 2010/1024 = 1.962890625`, `artX = 0`, `artY = -0.0745142857142857`, `artRotate = "0"`.
+
+Borderless text geometry:
+- Mana: `y=0.0613`, `width=0.9292`, `height=71/2100`, `size=71/1638`, right aligned.
+- Title: `x=0.0854`, `y=0.0522`, `width=0.8292`, `height=0.0543`, `size=0.0381`, `color='white'`.
+- Type: `x=0.0854`, `y=0.5664`, `width=0.8292`, `height=0.0543`, `size=0.0324`, `color='white'`.
+- Rules: `x=0.086`, `y=0.6303`, `width=0.828`, `height=0.2875`, `size=0.0362`, `color='white'`.
+
+Borderless assets:
+- Use `/img/frames/m15/borderless/m15GenericShowcaseFrameW.png`, `U.png`, `B.png`, `R.png`, `G.png`, `M.png`, `L.png`, etc.
+- Use the borderless pinline mask `/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png`.
+- Title/type/rules masks remain the standard M15 masks.
+- For two-color lands, split the pinline, type treatment, and rules treatment with `Right Half` masking so each half carries one land color.
+- Do **not** use `/img/frames/m15/new/fullart/...` assets for this profile.
+- Do **not** add the neutral Full Art `Frame` layer. That would turn it back into the framed Full Art profile.
+- The current Savannah, Tropical Island, Tundra, and Gaea's Cradle card-data entries use this **full art land — no frame / true borderless** profile unless the user explicitly asks to switch them back to the framed profile.
+- Sparse dual-land reminder text remains italic and centered horizontally and vertically (`align='center'`, `noVerticalCenter` unset).
+
+### Shared land rules
+
+- Savannah, Tropical Island, and Tundra show their current Scryfall parenthetical mana abilities in the rules box.
+- Gaea's Cradle remains visibly legendary and uses a land legendary crown rather than a creature-style or green-permanent crown.
+- Never call the framed Full Art and true Borderless layouts interchangeable. They use different Card Conjurer versions, art bounds, asset families, and auto-fit geometry.
+
+'''
+
+          path.write_text(text[:start] + section + text[end:], encoding='utf-8')
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t = Path('derevi/STYLE_RULES.md').read_text(encoding='utf-8')
+          assert '### Full art land — framed' in t
+          assert '### Full art land — no frame / true borderless' in t
+          assert 'version = "m15ClearTextboxes"' in t
+          assert 'version = "borderless"' in t
+          assert '/img/frames/m15/new/fullart/l.png' in t
+          assert '/img/frames/m15/borderless/m15GenericShowcaseFrameW.png' in t
+          assert "The current Savannah, Tropical Island, Tundra, and Gaea's Cradle card-data entries use this" in t
+          print('Validation passed')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/STYLE_RULES.md
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m "Document framed and borderless full-art land layouts [skip ci]"
+          git push
