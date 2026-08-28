@@ -21,8 +21,36 @@ jobs:
         shell: bash
         run: |
           python - <<'PYBUILD'
-          import base64, lzma
+          import base64, lzma, time, urllib.request, urllib.error
           from pathlib import Path
+
+          original_urlopen = urllib.request.urlopen
+          last_request = [0.0]
+
+          def polite_urlopen(*args, **kwargs):
+              # Scryfall asks clients to avoid burst traffic. Keep all calls spaced
+              # out and back off aggressively if a shared Actions IP is throttled.
+              elapsed = time.monotonic() - last_request[0]
+              if elapsed < 0.15:
+                  time.sleep(0.15 - elapsed)
+              for attempt in range(7):
+                  try:
+                      response = original_urlopen(*args, **kwargs)
+                      last_request[0] = time.monotonic()
+                      return response
+                  except urllib.error.HTTPError as exc:
+                      if exc.code != 429 or attempt == 6:
+                          raise
+                      retry_after = exc.headers.get('Retry-After')
+                      try:
+                          delay = float(retry_after) if retry_after else 1.5 * (2 ** attempt)
+                      except ValueError:
+                          delay = 1.5 * (2 ** attempt)
+                      time.sleep(min(delay, 30.0))
+                      last_request[0] = time.monotonic()
+
+          urllib.request.urlopen = polite_urlopen
+
           raw = Path('_doctor_who_builder.xz.b64').read_text().strip()
           code = lzma.decompress(base64.b64decode(raw))
           pseudo = str(Path.cwd() / '_build_doctor_who_cards.py')
