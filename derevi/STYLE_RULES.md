@@ -97,3 +97,10 @@ Before calling a Derevi update complete:
 - temporary workflows/scripts used for a large-file update are removed afterward
 
 If a Derevi-specific rule becomes useful to all projects, move/generalize it into `../STYLE_RULES.md` rather than duplicating it here.
+
+## White borderless-land readability override
+
+For Derevi's true-borderless Generic Showcase lands, a white Rules-panel fill keeps the normal white frame asset but uses **`opacity: 60`**. Do not recolor the white asset and do not lower the opacity of the white pinline. This is specifically a Rules-panel readability adjustment for white text over white-associated translucent fills.
+
+All Derevi land rules text is vertically centered. Sparse mana reminder text remains horizontally centered; ordinary Oracle rules text remains left aligned.
+
