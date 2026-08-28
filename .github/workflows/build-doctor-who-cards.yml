@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-doctor-who-cards.yml'
+      - '_doctor_who_builder.xz.b64'
 
 permissions:
   contents: write
