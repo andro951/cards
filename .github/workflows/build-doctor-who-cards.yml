@@ -1,0 +1,42 @@
+name: Build Doctor Who Card Conjurer data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-doctor-who-cards.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build Doctor Who card data
+        shell: bash
+        run: |
+          python - <<'PYBUILD'
+          import base64, lzma
+          from pathlib import Path
+          raw = Path('_doctor_who_builder.xz.b64').read_text().strip()
+          code = lzma.decompress(base64.b64decode(raw))
+          pseudo = str(Path.cwd() / '_build_doctor_who_cards.py')
+          ns = {'__name__': '__main__', '__file__': pseudo}
+          exec(compile(code, pseudo, 'exec'), ns)
+          PYBUILD
+      - name: Commit generated project data
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add doctor_who/doctor_who_cards.cardconjurer
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+          else
+            git commit -m "Build Doctor Who Card Conjurer data"
+            git push origin HEAD:main
+          fi
