@@ -1,0 +1,24 @@
+name: Temporary export Esika card data
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-export-esika.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esika-card-data
+          path: |
+            doctor_who/doctor_who_cards.cardconjurer
+            doctor_who/STYLE_RULES.md
+          retention-days: 1
