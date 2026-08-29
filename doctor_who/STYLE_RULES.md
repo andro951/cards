@@ -56,11 +56,13 @@ Both faces use the real Modal DFC package (`version = "modalRegular"`).
 Front (`Esika, God of the Tree`):
 - green Modal front frame + modal green legendary crown
 - compact opposite-face helper: `Enchantment` and `{W}{U}{B}{R}{G}`
+- the helper ribbon/`Flipside` layer uses the **multicolor front** Modal source because it describes The Prismatic Bridge
 
 Back (`The Prismatic Bridge`):
 - use the native multicolor Modal **back** frame for every back-face component (Flipside, Pinline, Title, Type, Rules, MDFC Arrow, Frame, and Border) plus the modal multicolor legendary crown
 - do **not** hybridize the back face with M15 Nyx assets; the official Kaldheim MDFC back uses the native gold Modal back treatment
 - compact opposite-face helper: `God` and `{1}{G}{G}`
+- the helper ribbon/`Flipside` layer uses the **green back** Modal source because it describes Esika
 
 Do not put the full opposite face name/type in the tiny MDFC helper ribbon. Use the package's real Flipside/MDFC Arrow masks so the helper does not overlap itself.
 Reserve vertical space above the helper ribbon: the rules/flavor box must end before the ribbon so flavor text never prints through the opposite-face helper. On the Bridge back face, use the native Modal multicolor back asset throughout so the gold back frame, title/type/rules panels, and back-face indicator all render as one coherent official-style treatment.
