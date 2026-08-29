@@ -58,11 +58,12 @@ Front (`Esika, God of the Tree`):
 - compact opposite-face helper: `Enchantment` and `{W}{U}{B}{R}{G}`
 
 Back (`The Prismatic Bridge`):
-- multicolor Modal back frame + multicolor Nyx treatment + modal multicolor legendary crown
-- compact opposite-face helper: `Creature` and `{1}{G}{G}`
+- use the native multicolor Modal **back** frame for every back-face component (Flipside, Pinline, Title, Type, Rules, MDFC Arrow, Frame, and Border) plus the modal multicolor legendary crown
+- do **not** hybridize the back face with M15 Nyx assets; the official Kaldheim MDFC back uses the native gold Modal back treatment
+- compact opposite-face helper: `God` and `{1}{G}{G}`
 
 Do not put the full opposite face name/type in the tiny MDFC helper ribbon. Use the package's real Flipside/MDFC Arrow masks so the helper does not overlap itself.
-Reserve vertical space above the helper ribbon: the rules/flavor box must end before the ribbon so flavor text never prints through the opposite-face helper. On the Bridge back face, keep the Nyx interior treatment but use the actual Modal back title/frame/border assets so the double-triangle back-face indicator remains intact.
+Reserve vertical space above the helper ribbon: the rules/flavor box must end before the ribbon so flavor text never prints through the opposite-face helper. On the Bridge back face, use the native Modal multicolor back asset throughout so the gold back frame, title/type/rules panels, and back-face indicator all render as one coherent official-style treatment.
 
 ## Land text geometry and alignment
 
