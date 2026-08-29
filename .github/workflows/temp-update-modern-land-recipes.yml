@@ -1,0 +1,201 @@
+name: Temporary modern land recipe updater
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-update-modern-land-recipes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-land-recipes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update legendary land crowns and documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          ROOT = Path('STYLE_RULES.md')
+          DEREVI_RULES = Path('derevi/STYLE_RULES.md')
+          WHO_RULES = Path('doctor_who/STYLE_RULES.md')
+          WHO_AUDIT = Path('doctor_who/CARD_CONJURER_AUDIT.md')
+
+          def update_cradle(path):
+              cards = json.loads(path.read_text(encoding='utf-8'))
+              matches = [e for e in cards if e.get('key') == "Gaea's Cradle"]
+              assert len(matches) == 1, (path, len(matches))
+              data = matches[0]['data']
+              crowns = [f for f in data['frames'] if f.get('src') == '/img/frames/m15/crowns/m15CrownLFloating.png']
+              assert len(crowns) == 1, (path, 'expected one neutral floating land crown', len(crowns))
+              crown = crowns[0]
+              assert crown.get('bounds') == {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024}
+              crown['name'] = 'Green Legend Crown'
+              crown['src'] = '/img/frames/m15/crowns/m15CrownGFloating.png'
+              assert any(f.get('src') == '/img/frames/m15/crowns/m15CrownFloatingOutline.png' for f in data['frames'])
+              assert any(f.get('erase') is True and f.get('src') == '/img/black.png' for f in data['frames'])
+              assert not any(f.get('src') == '/img/frames/m15/crowns/m15CrownLFloating.png' for f in data['frames'])
+              path.write_text(json.dumps(cards, ensure_ascii=True, separators=(',', ':')), encoding='utf-8')
+              return len(cards)
+
+          derevi_count = update_cradle(Path('derevi/derevi_cards.cardconjurer'))
+          who_count = update_cradle(Path('doctor_who/doctor_who_cards.cardconjurer'))
+          assert who_count == 51
+
+          root = ROOT.read_text(encoding='utf-8')
+          old_framed = '''### 2. Full art land — framed legendary
+
+Start from the framed full-art recipe.
+
+- Add the dedicated land legendary crown rather than a colored-permanent crown.
+- The crown should communicate **legendary land first**.
+- Keep the full-art land `Frame` and `Border` layers underneath.
+- Color association should come mainly from the land accents/pinline/rules treatment.
+'''
+          new_framed = '''### 2. Full art land — framed legendary
+
+Start from the framed full-art recipe.
+
+- The legendary crown follows the land's **actual colored land-frame treatment**, not a blanket neutral-land rule. Card Conjurer's auto-frame logic represents a colored land with a compound code such as `WL` or `GL`; for Crown/Inner Crown it strips only the `L`, so `WL -> W`, `GL -> G`, etc. A truly neutral `L` land keeps the land crown.
+- For a one-color land, use the corresponding colored crown (for example, a white-producing/white-treated legendary land uses the white crown and a green-producing/green-treated legendary land uses the green crown).
+- A multicolor/gold-treated legendary land uses the multicolor crown. Use the neutral land crown only when the rest of the land treatment is genuinely neutral.
+- Keep the full-art land `Frame` and `Border` layers underneath.
+'''
+          assert old_framed in root
+          root = root.replace(old_framed, new_framed)
+
+          start = root.index('### 4. Full art land — “no” frame legendary')
+          end = root.index('\n## Generic Scryfall helper', start)
+          new_borderless = '''### 4. Full art land — “no” frame legendary
+
+Start from the true-borderless recipe.
+
+- Use the floating crown whose color matches the land's selected land-frame treatment:
+  - W: `/img/frames/m15/crowns/m15CrownWFloating.png`
+  - U: `/img/frames/m15/crowns/m15CrownUFloating.png`
+  - B: `/img/frames/m15/crowns/m15CrownBFloating.png`
+  - R: `/img/frames/m15/crowns/m15CrownRFloating.png`
+  - G: `/img/frames/m15/crowns/m15CrownGFloating.png`
+  - M/gold: `/img/frames/m15/crowns/m15CrownMFloating.png`
+  - genuinely neutral land: `/img/frames/m15/crowns/m15CrownLFloating.png`
+- This matches Card Conjurer's own land-crown logic: a compound land code such as `WL` or `GL` loses only its `L` for the Crown/Inner Crown layer. Do not automatically use `L` merely because the type line says Land.
+- Use `/img/frames/m15/crowns/m15CrownFloatingOutline.png` under the crown.
+- The `Legend Crown Lower Cutout` helper may use `/img/black.png`, bounds `x=.0734, y=.1096, width=.8532, height=.0143`, `erase=true`.
+- **Do not use `Legend Crown Border Cover` for edge-to-edge artwork.** It is a literal black strip and creates an obvious rectangular bar beneath the crown.
+- Floating crown bounds: `x=.0307, y=.0191, width=.9387, height=.1024`.
+- Crown outline bounds: `x=.028, y=.0172, width=.944, height=.1062`.
+- Keep the neutral land `Border` mask when the chosen borderless family uses it, so the footer remains a clean solid-black band.
+
+## Modern official full-art land reference recipes
+
+These recipes use modern official printings as visual targets while remaining explicit about what Card Conjurer actually provides. Where Card Conjurer has no printing-specific pack, build a controlled hybrid from native assets rather than pretending a dedicated pack exists.
+
+### Minas Tirith — LTR #420 borderless/inverted legendary land
+
+Official reference characteristics: full art, borderless, inverted, legendary, and a white-producing land. The modern treatment therefore uses a **white floating legendary crown**, not the neutral land crown.
+
+Card Conjurer recipe:
+- UI base: `Borderless (Alt)`; saved `version = "borderless"`.
+- `artBounds = {x:0, y:0, width:1, height:0.9224}`.
+- Native borderless masks:
+  - Pinline: `/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png`
+  - Title: `/img/frames/m15/regular/m15MaskTitle.png`
+  - Type: `/img/frames/m15/regular/m15MaskType.png`
+  - Rules: `/img/frames/m15/regular/m15MaskRules.png`
+  - No Border: `/img/frames/m15/borderless/masks/maskNoBorder.png` when the complete native borderless body is wanted
+  - Border: `/img/frames/m15/regular/m15MaskBorder.png`
+- White borderless source: `/img/frames/m15/borderless/m15GenericShowcaseFrameW.png` for the white-associated furniture/pinline treatment.
+- Neutral land border source: `/img/frames/m15/borderless/m15GenericShowcaseFrameL.png` when only the neutral footer/border treatment is wanted.
+- Legendary stack, in order: floating crown outline -> **White Legend Crown** (`m15CrownWFloating.png`) -> lower cutout erase. Do not use the black Crown Border Cover over edge-to-edge art.
+- Crown bounds and helpers are the shared floating-crown values above.
+- Native borderless text geometry:
+  - title `x=.0854, y=.0522, width=.8292, height=.0543, font=belerenb, size=.0381, color=white`
+  - type `x=.0854, y=.5664, width=.8292, height=.0543, font=belerenb, size=.0324, color=white`
+  - rules `x=.086, y=.6303, width=.828, height=.2875, size=.0362, color=white`
+- Set-symbol bounds: `{x:.9213, y:.5910, width:.12, height:.0410, vertical:'center', horizontal:'right'}`.
+- No P/T layer.
+- The #420 printing has no printed flavor line; use current Oracle mechanics without adding flavor from a different Minas Tirith printing.
+
+### Temple Garden — ECL #351 borderless reversible shock land
+
+Official reference characteristics: borderless reversible shock land, G/W accents, neutral gray title/type furniture, dark translucent rules panel, and white text. Card Conjurer does not currently expose a dedicated ECL reversible-shock frame pack, so reproduce the face with native borderless pieces.
+
+Card Conjurer recipe:
+- UI base: `Borderless (Alt)`; saved `version = "borderless"`.
+- `artBounds = {x:0, y:0, width:1, height:0.9224}`.
+- Use the borderless family under `/img/frames/m15/borderless/` rather than the older project-specific Generic Showcase colored-box treatment when targeting this exact modern look.
+- G/W color treatment:
+  1. Green borderless source `/img/frames/m15/borderless/m15GenericShowcaseFrameG.png` as the base colored pinline/lower-box layer.
+  2. White borderless source `/img/frames/m15/borderless/m15GenericShowcaseFrameW.png` with `/img/frames/maskRightHalf.png` for the second half where a split treatment is needed.
+  3. Neutral land source `/img/frames/m15/borderless/m15GenericShowcaseFrameL.png` for neutral title/type and footer/border pieces.
+- Use the package's native Pinline/Title/Type/Rules/Border masks listed in the Minas Tirith recipe. Do not add a conventional M15 outer Frame over the artwork.
+- Native borderless text geometry is the same as Minas Tirith: title/type/rules at `.0522/.5664/.6303`, rules height `.2875`, and white text.
+- Set-symbol bounds are the native borderless `{x:.9213, y:.5910, width:.12, height:.0410, vertical:'center', horizontal:'right'}`.
+- No P/T or crown.
+- The printed ECL face does **not** need a manually added parenthetical mana reminder in its rules box; the `Forest Plains` basic land types supply the mana abilities. Preserve the current Oracle text, and append only the selected printing's flavor with `{flavor}` if that printing's flavor is being reproduced.
+- The reversible physical-card back is not required for a normal single proxy face unless the project explicitly wants both ECL art faces represented.
+
+### Plains — ECL #274 modern full-art basic
+
+The closest native Card Conjurer package is `Fullart Basics (2022)`. No dedicated ECL basic-land pack is currently exposed, but this package supplies the matching bottom type-strip + large mana-medallion structure. For the ECL look, omit its optional top Title piece so the art remains uninterrupted above the lower strip.
+
+Card Conjurer recipe:
+- UI pack: `Fullart Basics (2022)`; saved `version = "textlessBasics2022"`.
+- White frame source: `/img/frames/textless/2022/w.png`.
+- White mana medallion: `/img/frames/textless/2022/sw.png`.
+- Frame masks:
+  - Pinline: `/img/frames/textless/2022/maskPinline.png`
+  - Type: `/img/frames/textless/2022/maskType.png`
+  - Border: `/img/frames/textless/2022/maskBorder.png`
+  - omit the package's optional M15 Title mask/layer for the ECL #274 visual treatment.
+- `artBounds = {x:.0394, y:.0281, width:.9214, height:.8929}`.
+- Mana-medallion bounds: `{x:62/1500, y:1752/2100, width:168/1500, height:168/2100}` = approximately `{x:.0413333333, y:.8342857143, width:.112, height:.08}`.
+- Type text: `Basic Land - Plains`; geometry `x=283/1500 (.1886666667), y=.8481, width=.8292, height=.0543, font=belerenb, size=.0324`, black/default text.
+- Set-symbol bounds: `{x:.9213, y:.8739, width:.12, height:.0410, vertical:'center', horizontal:'right'}`.
+- No title text, mana-cost text, rules text, P/T, or rules textbox.
+- Watermark bounds are the package's effectively-off-canvas values `{x:-1, y:-1, width:.0007, height:.0005}`; project watermark remains disabled anyway.
+- Keep the repository's custom footer metadata rather than copying Wizards collector/legal text from the reference card.
+'''
+          root = root[:start] + new_borderless + root[end:]
+          ROOT.write_text(root, encoding='utf-8')
+
+          derevi = DEREVI_RULES.read_text(encoding='utf-8')
+          derevi = derevi.replace("`Gaea's Cradle` — true-borderless Generic Showcase legendary land with the floating neutral Land Legend Crown", "`Gaea's Cradle` — true-borderless Generic Showcase legendary land with the floating green Legend Crown")
+          derevi = derevi.replace("- use the neutral floating land crown, not the green floating crown\n", "- use the green floating legend crown (`/img/frames/m15/crowns/m15CrownGFloating.png`) because the land's frame treatment is green\n")
+          assert 'floating neutral Land Legend Crown' not in derevi
+          assert 'neutral floating land crown, not the green' not in derevi
+          DEREVI_RULES.write_text(derevi, encoding='utf-8')
+
+          who = WHO_RULES.read_text(encoding='utf-8')
+          who = who.replace("`Gaea's Cradle` retains the floating neutral land legendary crown.", "`Gaea's Cradle` uses the floating green legendary crown, matching its green land treatment.")
+          WHO_RULES.write_text(who, encoding='utf-8')
+
+          audit = WHO_AUDIT.read_text(encoding='utf-8')
+          old = "| 25 | Gaea's Cradle | genericShowcase | rare.png | 24_Gaeas_Cradle.png | Legend Crown Outline, Land Legend Crown, Legend Crown Lower Cutout, Green Pinline, Neutral Land Title, Neutral Land Type, Green Rules, Land Frame |"
+          new = "| 25 | Gaea's Cradle | genericShowcase | rare.png | 24_Gaeas_Cradle.png | Legend Crown Outline, Green Legend Crown, Legend Crown Lower Cutout, Green Pinline, Neutral Land Title, Neutral Land Type, Green Rules, Land Frame |"
+          assert old in audit
+          audit = audit.replace(old, new)
+          WHO_AUDIT.write_text(audit, encoding='utf-8')
+
+          # Final content assertions.
+          root2 = ROOT.read_text(encoding='utf-8')
+          assert 'm15CrownWFloating.png' in root2 and 'textlessBasics2022' in root2
+          assert 'WL -> W' in root2 and 'GL -> G' in root2
+          assert 'use the **neutral land-colored** crown' not in root2
+          print(f'Updated crowns: Derevi faces={derevi_count}, Doctor Who faces={who_count}')
+          PY
+
+      - name: Commit updates and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-update-modern-land-recipes.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add STYLE_RULES.md derevi/STYLE_RULES.md doctor_who/STYLE_RULES.md doctor_who/CARD_CONJURER_AUDIT.md derevi/derevi_cards.cardconjurer doctor_who/doctor_who_cards.cardconjurer .github/workflows/temp-update-modern-land-recipes.yml
+          git diff --cached --check
+          git commit -m "Document modern land frames and fix colored crowns"
+          git push
