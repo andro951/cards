@@ -1,0 +1,30 @@
+name: Temporary export card data
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-export-card-data.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Package current card data
+        run: |
+          mkdir -p /tmp/card-export/doctor_who /tmp/card-export/derevi
+          cp doctor_who/doctor_who_cards.cardconjurer /tmp/card-export/doctor_who/
+          cp doctor_who/STYLE_RULES.md /tmp/card-export/doctor_who/
+          cp derevi/derevi_cards.cardconjurer /tmp/card-export/derevi/
+          cp derevi/STYLE_RULES.md /tmp/card-export/derevi/
+          cp STYLE_RULES.md /tmp/card-export/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: card-data-export
+          path: /tmp/card-export
+          retention-days: 1
