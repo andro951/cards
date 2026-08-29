@@ -1,0 +1,69 @@
+name: Temporary Doctor Who flavor audit
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-doctor-who-flavor-audit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit-flavor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit flavor markers
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          cards = json.loads(Path('doctor_who/doctor_who_cards.cardconjurer').read_text(encoding='utf-8'))
+          derevi = json.loads(Path('derevi/derevi_cards.cardconjurer').read_text(encoding='utf-8'))
+
+          print(f'DOCTOR_WHO_FACES={len(cards)}')
+          flavor_cards=[]
+          malformed=[]
+          for entry in cards:
+              data=entry['data']
+              rules=data.get('text',{}).get('rules',{}).get('text','')
+              n=rules.count('{flavor}')
+              if n:
+                  flavor=rules.split('{flavor}',1)[1]
+                  flavor_cards.append((entry['key'], flavor, data.get('version'), data.get('showsFlavorBar')))
+              if n>1:
+                  malformed.append((entry['key'],f'{n} flavor markers'))
+              if '{flavor}' in rules and not rules.split('{flavor}',1)[1].strip():
+                  malformed.append((entry['key'],'empty flavor tail'))
+          print(f'DOCTOR_WHO_FLAVOR_COUNT={len(flavor_cards)}')
+          print(f'DOCTOR_WHO_MALFORMED_COUNT={len(malformed)}')
+          for key,flavor,version,bar in flavor_cards:
+              print(f'FLAVOR|{key}|version={version}|bar={bar}|{flavor!r}')
+          for item in malformed:
+              print('MALFORMED|',item)
+
+          derevi_flavor=[]
+          for entry in derevi:
+              rules=entry['data'].get('text',{}).get('rules',{}).get('text','')
+              if '{flavor}' in rules:
+                  derevi_flavor.append(entry['key'])
+          print(f'DEREVI_FLAVOR_COUNT={len(derevi_flavor)}')
+          print('DEREVI_SAMPLE=' + '|'.join(derevi_flavor[:10]))
+
+          # Specific pair checks.
+          by={e['key']:e['data'] for e in cards}
+          for key in ['Esika, God of the Tree','The Prismatic Bridge']:
+              rules=by[key]['text']['rules']['text']
+              print(f'PAIR|{key}|{rules!r}')
+          PY
+      - name: Remove temporary audit workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-doctor-who-flavor-audit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/temp-doctor-who-flavor-audit.yml
+          git commit -m "Remove temporary Doctor Who flavor audit"
+          git push
