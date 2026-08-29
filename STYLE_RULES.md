@@ -351,21 +351,30 @@ For projects using light text over translucent full-art land panels:
 - Parenthetical mana/tap reminder text should be horizontally centered. If it is the only rules text, center it horizontally and vertically.
 - When a centered reminder precedes normal Oracle text, use Card Conjurer inline alignment (`{center}` for the reminder, then `{left}` for the Oracle text) rather than centering the Oracle text.
 - Projects may increase the Rules Text horizontal inset when the native Generic Showcase geometry visually crowds the border; record the exact project geometry in the project rules.
-- For **white** Generic Showcase/land Rules fills used with white rules text, preserve the white asset hue but use **`opacity: 60` on the white Rules layer only**. Do not reduce opacity on the white pinline. This is the standard white-land readability override unless a project explicitly chooses another value.
+- For **white** Generic Showcase/land Rules fills used with white rules text, preserve the white asset hue but use **`opacity: 85` on the white Rules layer only**. Do not reduce opacity on the white pinline. This is the standard white-land readability override unless a project explicitly chooses another value.
 - Five-color/rainbow utility lands should use Card Conjurer's native multicolored/gold land treatment for pinline and rules-panel color rather than a neutral gray land treatment.
 
-### Shorter land text boxes
+### Compact borderless land boxes for very sparse text
 
-Card Conjurer's M15 Extended Art (Shorter Textbox) package may be intentionally used for sparse lands when a project prefers a smaller type/rules area. This is a deliberate presentation choice, not the same layout as Generic Showcase borderless.
+For a true-borderless project, do **not** switch the whole card to M15 Extended Art (Shorter Textbox) merely to get a smaller lower box. The full `m15ExtendedArtShort` frame adds its own extended-art outer frame and changes the art window, which is visually different from Generic Showcase borderless.
 
-Native recipe:
-- `version = "m15ExtendedArtShort"`
-- `artBounds = {x:0, y:0.081, width:1, height:0.5753}`
+When a land has only a tiny amount of text (for example a basic-land mana hint or an original dual with only the reminder line), use this approved **compact borderless hybrid** instead:
+
+- keep `version = "genericShowcase"`
+- keep Generic Showcase full-art bounds: `artBounds = {x:0, y:0, width:1, height:0.9224}`
+- keep the neutral Generic Showcase title treatment and Generic Showcase neutral bottom/footer `Border` mask
+- use the M15 Extended Art (Shorter Textbox) **lower-box assets only**:
+  - pinline mask `/img/frames/m15/boxTopper/short/pinline.svg`
+  - type mask `/img/frames/m15/boxTopper/short/type.png`
+  - rules mask `/img/frames/m15/boxTopper/short/text.svg`
+  - neutral lower-box source `/img/frames/m15/boxTopper/short/l.png`
+  - colored land sources `wl.png`, `ul.png`, `bl.png`, `rl.png`, `gl.png`, `ml.png` from the same folder
+- **do not add** `/img/frames/m15/boxTopper/short/frame.svg`
+- **do not use** the short package's conventional outer `Border`; retain the Generic Showcase land footer/border instead
 - set-symbol bounds use `y=0.6343`
 - type `y=0.61`
 - rules `y=0.6743`, `height=0.2448`
-- masks: `/img/frames/m15/boxTopper/short/pinline.svg`, `/type.png`, `/text.svg`, `/frame.svg`, plus normal title/border masks
-- land assets: `l.png`, `wl.png`, `ul.png`, `bl.png`, `rl.png`, `gl.png`, `ml.png` under `/img/frames/m15/boxTopper/short/`
+- preserve the project's normal side padding; for the current Doctor Who/Derevi projects this is `x=0.105`, `width=0.79`
+- sparse reminder-only text is centered horizontally and vertically
 
-If a project combines this family with split-color land treatments, use the same Right Half / Middle Third masking principles as its documented land recipe and keep any white Rules layer at the standard white-land opacity override.
-
+Only use this compact hybrid when the text is genuinely sparse. Lands with normal Oracle paragraphs, multiple abilities, cycling, shock-land text, fetch text, or meaningful flavor blocks stay on the normal Generic Showcase lower box. Split-color compact lands still use the usual Right Half mask, and any white Rules layer uses the repository white-land opacity override.
