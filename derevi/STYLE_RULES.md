@@ -100,7 +100,12 @@ If a Derevi-specific rule becomes useful to all projects, move/generalize it int
 
 ## White borderless-land readability override
 
-For Derevi's true-borderless Generic Showcase lands, a white Rules-panel fill keeps the normal white frame asset but uses **`opacity: 60`**. Do not recolor the white asset and do not lower the opacity of the white pinline. This is specifically a Rules-panel readability adjustment for white text over white-associated translucent fills.
+For Derevi's true-borderless Generic Showcase lands, a white Rules-panel fill keeps the normal white frame asset but uses **`opacity: 85`**. Do not recolor the white asset and do not lower the opacity of the white pinline. This is specifically a Rules-panel readability adjustment for white text over white-associated translucent fills.
 
 All Derevi land rules text is vertically centered. Sparse mana reminder text remains horizontally centered; ordinary Oracle rules text remains left aligned.
 
+## Compact sparse dual-land boxes
+
+`Savannah`, `Tropical Island`, and `Tundra` contain only the parenthetical mana reminder, so they use the repository compact-borderless hybrid: Generic Showcase full-art/title/footer with only the M15 Extended Art Shorter Textbox lower-box masks/assets. Do not add the short package's `frame.svg` or conventional outer border. Their reminder line is centered horizontally and vertically.
+
+`Gaea's Cradle` has real Oracle/flavor text and remains on the normal Generic Showcase lower box.
