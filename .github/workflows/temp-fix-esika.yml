@@ -1,0 +1,34 @@
+name: Temporary fix Esika modal faces
+
+on:
+  push:
+    paths:
+      - '.github/scripts/temp_fix_esika.py'
+      - '.github/workflows/temp-fix-esika.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Repair Esika modal faces
+        run: python .github/scripts/temp_fix_esika.py
+      - name: Commit repaired card data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add doctor_who/doctor_who_cards.cardconjurer doctor_who/STYLE_RULES.md
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+          else
+            git commit -m 'Fix Esika modal back face'
+            git push origin main
+          fi
