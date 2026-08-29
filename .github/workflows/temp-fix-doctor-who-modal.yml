@@ -1,0 +1,155 @@
+name: Temporary Doctor Who modal frame fixer
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-fix-doctor-who-modal.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-modal-pair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair Esika and The Prismatic Bridge
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          card_path = Path('doctor_who/doctor_who_cards.cardconjurer')
+          cards = json.loads(card_path.read_text(encoding='utf-8'))
+          assert len(cards) == 51, f'expected 51 faces, found {len(cards)}'
+
+          by_key = {entry['key']: entry['data'] for entry in cards}
+          esika = by_key['Esika, God of the Tree']
+          bridge = by_key['The Prismatic Bridge']
+
+          assert esika['version'] == 'modalRegular'
+          assert bridge['version'] == 'modalRegular'
+          assert esika['artSource'].endswith('/doctor_who/art/12A_Esika_God_of_the_Tree.png')
+          assert bridge['artSource'].endswith('/doctor_who/art/12B_The_Prismatic_Bridge.png')
+
+          masks = [
+              ('Flipside', '/img/frames/modal/regular/reminder.svg'),
+              ('Pinline', '/img/frames/modal/regular/pinline.svg'),
+              ('Title', '/img/frames/modal/regular/title.svg'),
+              ('Type', '/img/frames/m15/regular/m15MaskType.png'),
+              ('Rules', '/img/frames/modal/regular/textbox.svg'),
+              ('MDFC Arrow', '/img/frames/modal/titleMDFCArrow.svg'),
+              ('Frame', '/img/frames/modal/regular/frame.svg'),
+              ('Border', '/img/frames/modal/regular/border.svg'),
+          ]
+          mask_names = {name for name, _ in masks}
+
+          def keep_non_modal_components(data):
+              kept = []
+              for frame in data['frames']:
+                  frame_mask_names = {m.get('name') for m in frame.get('masks', [])}
+                  if not (frame_mask_names & mask_names):
+                      kept.append(frame)
+              return kept
+
+          def layer(frame_name, src, mask_name, mask_src):
+              return {
+                  'name': frame_name,
+                  'src': src,
+                  'masks': [{'src': mask_src, 'name': mask_name}],
+              }
+
+          # Esika is the green FRONT face, but the tiny opposite-face helper
+          # describes the five-color Prismatic Bridge, so only Flipside uses M.
+          e_front = '/img/frames/modal/regular/g.png'
+          e_helper = '/img/frames/modal/regular/m.png'
+          e_layers = []
+          for mask_name, mask_src in masks:
+              if mask_name == 'Flipside':
+                  e_layers.append(layer('Multicolored Frame (Front)', e_helper, mask_name, mask_src))
+              else:
+                  e_layers.append(layer('Green Frame (Front)', e_front, mask_name, mask_src))
+          esika['frames'] = keep_non_modal_components(esika) + e_layers
+
+          # The Bridge is the multicolor BACK face. Every real back-face component
+          # must use the native Modal back treatment; only the helper ribbon is green
+          # because it describes the opposite Esika face.
+          b_back = '/img/frames/modal/regular/back/m.png'
+          b_helper = '/img/frames/modal/regular/back/g.png'
+          b_layers = []
+          for mask_name, mask_src in masks:
+              if mask_name == 'Flipside':
+                  b_layers.append(layer('Green Frame (Back)', b_helper, mask_name, mask_src))
+              else:
+                  b_layers.append(layer('Multicolored Frame (Back)', b_back, mask_name, mask_src))
+          bridge['frames'] = keep_non_modal_components(bridge) + b_layers
+
+          # Keep the compact helper wording and enforce Card Conjurer's native
+          # front/back text colors for this layout.
+          esika['text']['flipsideType']['text'] = 'Enchantment'
+          esika['text']['flipSideReminder']['text'] = '{W}{U}{B}{R}{G}'
+          esika['text']['flipsideType']['color'] = 'white'
+          esika['text']['flipSideReminder']['color'] = 'white'
+
+          bridge['text']['flipsideType']['text'] = 'God'
+          bridge['text']['flipSideReminder']['text'] = '{1}{G}{G}'
+          bridge['text']['title']['color'] = 'white'
+          bridge['text']['type']['color'] = 'white'
+          bridge['text']['rules']['color'] = 'black'
+          bridge['text']['flipsideType']['color'] = 'black'
+          bridge['text']['flipSideReminder']['color'] = 'black'
+
+          # Validate exact modal mask order/sources and make sure the broken Nyx
+          # hybrid is completely gone from The Prismatic Bridge.
+          def modal_frames(data):
+              return [f for f in data['frames'] if any(m.get('name') in mask_names for m in f.get('masks', []))]
+
+          ef = modal_frames(esika)
+          bf = modal_frames(bridge)
+          assert len(ef) == 8 and len(bf) == 8
+          assert [f['masks'][0]['name'] for f in ef] == [name for name, _ in masks]
+          assert [f['masks'][0]['name'] for f in bf] == [name for name, _ in masks]
+          assert ef[0]['src'] == e_helper
+          assert all(f['src'] == e_front for f in ef[1:])
+          assert bf[0]['src'] == b_helper
+          assert all(f['src'] == b_back for f in bf[1:])
+          assert not any('/nyx/' in f.get('src', '').lower() for f in bridge['frames'])
+          assert bridge['text']['rules']['y'] + bridge['text']['rules']['height'] < bridge['text']['flipsideType']['y']
+
+          card_path.write_text(json.dumps(cards, ensure_ascii=True, separators=(',', ':')), encoding='utf-8')
+
+          # Keep the human-readable audit's frame summary accurate.
+          audit_path = Path('doctor_who/CARD_CONJURER_AUDIT.md')
+          audit_lines = audit_path.read_text(encoding='utf-8').splitlines()
+          for i, line in enumerate(audit_lines):
+              if line.startswith('| 12 | Esika, God of the Tree |'):
+                  audit_lines[i] = '| 12 | Esika, God of the Tree | modalRegular | mythic.png | 12A_Esika_God_of_the_Tree.png | Green Legend Crown, Legend Crown Border Cover, Green Power/Toughness, Multicolored Frame (Front), Green Frame (Front), Green Frame (Front), Green Frame (Front), Green Frame (Front), Green Frame (Front), Green Frame (Front), Green Frame (Front) |'
+              elif line.startswith('| 13 | The Prismatic Bridge |'):
+                  audit_lines[i] = '| 13 | The Prismatic Bridge | modalRegular | mythic.png | 12B_The_Prismatic_Bridge.png | Multicolored Legend Crown, Legend Crown Border Cover, Green Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back), Multicolored Frame (Back) |'
+          audit_path.write_text('\n'.join(audit_lines) + '\n', encoding='utf-8')
+
+          # Record the opposite-face helper color rule so it is not regressed later.
+          rules_path = Path('doctor_who/STYLE_RULES.md')
+          rules_text = rules_path.read_text(encoding='utf-8')
+          front_anchor = '- compact opposite-face helper: `Enchantment` and `{W}{U}{B}{R}{G}`\n'
+          front_note = '- the helper ribbon/`Flipside` layer uses the **multicolor front** Modal source because it describes The Prismatic Bridge\n'
+          back_anchor = '- compact opposite-face helper: `God` and `{1}{G}{G}`\n'
+          back_note = '- the helper ribbon/`Flipside` layer uses the **green back** Modal source because it describes Esika\n'
+          if front_note not in rules_text:
+              rules_text = rules_text.replace(front_anchor, front_anchor + front_note)
+          if back_note not in rules_text:
+              rules_text = rules_text.replace(back_anchor, back_anchor + back_note)
+          rules_path.write_text(rules_text, encoding='utf-8')
+          PY
+
+      - name: Commit repaired modal pair and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-fix-doctor-who-modal.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add doctor_who/doctor_who_cards.cardconjurer doctor_who/STYLE_RULES.md doctor_who/CARD_CONJURER_AUDIT.md .github/workflows/temp-fix-doctor-who-modal.yml
+          git diff --cached --check
+          git commit -m "Fix Esika and Prismatic Bridge modal frames"
+          git push
