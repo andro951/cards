@@ -62,6 +62,7 @@ Back (`The Prismatic Bridge`):
 - compact opposite-face helper: `Creature` and `{1}{G}{G}`
 
 Do not put the full opposite face name/type in the tiny MDFC helper ribbon. Use the package's real Flipside/MDFC Arrow masks so the helper does not overlap itself.
+Reserve vertical space above the helper ribbon: the rules/flavor box must end before the ribbon so flavor text never prints through the opposite-face helper. On the Bridge back face, keep the Nyx interior treatment but use the actual Modal back title/frame/border assets so the double-triangle back-face indicator remains intact.
 
 ## Land text geometry and alignment
 
@@ -78,7 +79,7 @@ For standard Generic Showcase lands:
 
 ### White land fill opacity
 
-White land rules-panel layers keep their white asset but use **`opacity: 60`**. Do not darken/recolor the white asset and do not lower the opacity of the white pinline. This lets the art show through enough for white rules text to remain readable.
+White land rules-panel layers keep their white asset but use **`opacity: 85`**. Do not darken/recolor the white asset and do not lower the opacity of the white pinline. This lets the art show through enough for white rules text to remain readable.
 
 ### Fetchlands
 
@@ -119,29 +120,26 @@ Five-color utility lands use Card Conjurer's **multicolored/gold land treatment*
 - Plaza of Heroes
 - Mana Confluence
 
-### Short land boxes
+### Compact land boxes for genuinely sparse cards
 
-By explicit project choice, sparse lands may use Card Conjurer's **M15 Extended Art (Shorter Textbox)** land assets even though this is not the native Generic Showcase family.
+The project remains true-borderless Generic Showcase. For cards with almost no text, use the repository's **compact borderless hybrid** rather than the full M15 Extended Art (Shorter Textbox) frame.
 
-Recipe:
-- `version = "m15ExtendedArtShort"`
-- `artBounds = {x:0, y:0.081, width:1, height:0.5753}`
+Project-specific geometry:
+- `version = "genericShowcase"`
+- keep full-art `artBounds = {x:0, y:0, width:1, height:0.9224}`
+- keep neutral Generic Showcase title and bottom/footer border
+- borrow only the short package's `pinline.svg`, `type.png`, and `text.svg` lower-box masks/assets
+- never add the short package's `frame.svg` or conventional outer border
 - type `y=0.61`
-- rules `y=0.6743`, `height=0.2448`
-- project rules inset remains `x=0.105`, `width=0.79`
-- short masks: `/img/frames/m15/boxTopper/short/pinline.svg`, `type.png`, `text.svg`, `frame.svg`
-- neutral short land: `/img/frames/m15/boxTopper/short/l.png`
-- colored short lands: `wl.png`, `ul.png`, `bl.png`, `rl.png`, `gl.png`
-- multicolor/gold short land: `ml.png`
+- rules `x=0.105`, `y=0.6743`, `width=0.79`, `height=0.2448`
+- set-symbol bounds use `y=0.6343`
+- reminder-only rules text is centered horizontally and vertically
 
-Current sparse short-box cards:
+Current compact cards are **only** the very sparse lands:
 - Forest, Mountain, Swamp, Plains, Island
 - Savannah, Tundra, Tropical Island
-- Gaea's Cradle
-- Reflecting Pool
-- Mana Confluence
 
-`Gaea's Cradle` retains the neutral floating land legendary crown treatment.
+`Gaea's Cradle`, `Reflecting Pool`, and `Mana Confluence` have real Oracle/flavor content and therefore use the normal Generic Showcase lower box. `Reflecting Pool` and `Mana Confluence` retain the multicolored/gold five-color treatment; `Gaea's Cradle` retains the floating neutral land legendary crown.
 
 ## Footer and validation
 
@@ -153,7 +151,7 @@ Before completion validate:
 - official selected flavor text uses `{flavor}`
 - no land rules object uses `noVerticalCenter`
 - land side padding uses the project inset
-- white land Rules layers use opacity 60 but white pinlines do not
+- white land Rules layers use opacity 85 but white pinlines do not
 - all seven fetches have their two searched colors
 - all three-color lands contain Middle Third + Right Half masks
 - all five-color utility lands use multicolor/gold pinline and rules treatment
