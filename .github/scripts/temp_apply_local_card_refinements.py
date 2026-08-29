@@ -1,62 +1,157 @@
 from pathlib import Path
-import base64, gzip, hashlib, json
+import json, copy
 
 ROOT=Path('.')
-PAYLOADS={
-'doctor_who/doctor_who_cards.cardconjurer':('H4sIAIAxkmoC/+2de3PiSLK3v0od/9M9sQzmfuk3Tpyw3d1uz7R7ejEeb+/xhKKQCtBaqHQkYcwQfPc3sySBhLGhscAC58SuB9AtJVVlVT3zy8z/nRzdifHRh6NL7t2NpDTYN/Ew9I5yRwb3+dGHydHINPz+0YdSoVjIHfWF2ev78K1RrOSOBtztmfa/jj4Uos8/1OeuywfCO/rwv5MjGz7B2U9c3+xy3WefcROc3XN1+PnYHPSOg72PB8XqsSt6Q4u7+FnteJJ37N4Rnty7C8638ji8j++mbZm2CA8OTQh/PJr+Nc29kl3tsbNgFP7yqhaZvrVoEv70mja1hpbwkjapn17TJnVs0qbguq9o06l0DeEmjQp+Q6v+yh1x17+SQ1fHDX3fd7wPx8cuH+V7pt8fdoaecHVp+8L287ocHHPbcGWzWjzWuWvABblpHxtS96WrjfryGE52XChqkZvQlJsILw7b0AnkC+VquVQuN8qFRqVarxeLNbUNnUK+WCwXCrVys1ZtNCqNGroP2PRvKQdHH4r5UrGuvrekz320t4BPT/hX40FHWundBZxSM2F/OIMbvc/ZZdQ9NKqlUrnRKFSb9UKx0izFtqv7qNaapWatXK+WarVqqVKNbQ9uBm61UGgm/skdjeCuXHCRd7NbQff6wRzwnjgGM/5fh3uiVsmZf57+0RoVfj/vyRP459vVdf/TdQ8/fsI/p2cnP/Df3c/61W/44eO19emff7YqpcG3ux/nHysfRyenp7DvF/sP/Z8n6pDfWtfVT+7db71e77//+yhmirrdauwHdX/1eq0U+y18QbFfvoouDABHtrRF/GytYGB49PsfDtdNf6zGhXvheqa0YS9owq2gNat2b/PgCWLrh4Zr2l35Q8C2D0cw7JSPotEFNne55YncUUf6vhxcwH5tl9uepRrN5OhBXQYvNo3vE7WqQvzH2Z3NfzqTlsSLjvqmjzchbUty4+iDPbQsGPtMQ5zO9g17WmSQ15cj77PF76V7iob77jBhJlo3MI3g4U2OfPGAD2vShabbEZZwhd3x9Kn67pl/i/J0MnSCAas4vR12u0JMPH4vHkrTCewOZ8Jn9Cv0GNPzp2Dqg+p/tUo9uP18s1pp5KKxG1p1vVCfj96wZ7FexPsTX3FIDK3Fi4NRPen3+WAgDHM4wO4B5swP0Rcf0dBHI2+iCxUK5Zkziu4X3oUvnYVbX2ZzuV5/bZsjQ8FmWwaNKtsGKyvBWnBoqptl3d7Qzln/XGgWZ0MPfmTfXfkwZrfDUqFUYt/BbUibW+zaE+wP2xovu7V6sfnsrVXKP31reMgatzbF6/6Nww3eR3ib0S+5l7yOWv0pmweOxW3ftBP2ouNetJdbZg8drqvO+pT9wasIXfizLWiVW3n6MS81edkjXsfkqZotnMqhHTz1wM56LbKzWCwlmkOlXovbWamUmtPYyL1womapWA5PVG0WY+cplhJ3WymqMc03dW6BwTpMQgQOaH3pmn/DXatfg9uYxobEhatVw0uFI290rXo1fq1SuVCdRo1poobMWGu7hK/sTHr+vL1NKjgsjIP3h7czOzHMX5K3ATO2QrNaiv4+9gGz91UplyvV6vxv5fHb8vrckCOYW/yKb6oY/fAjeHP4VtB2ZWt4djX84ywBZmNq4PbVCmR+d8GKZHZnj1aqwctvVCvR/cIULv4gG41qtQ6vtFkulCuNcuLeq0832GhcjjdYeDpoIK7aYvbh15l50SJgiWHVGkzxYobVasVas1itlErKxBcZVqrgIKDWSXPL1LqJtdGwmX1nruD+0IXfx3LIcO7sSovBdJgJaMtjpofbGd5lnrX7gnlwNmZ6DK1gXenO9/EcYVkLZ7KN+XY1C1eb5chm4Gd9vJL9zmcSvwrW4T683K4pLCN/a0/AGbFJe/qBKSsF46x0XGIdC6571eeO8PpmF3pRzEh5J2w2grUA0/vc7glwFb08e3/ho8HL7uiX+Yuphe+lVi7EO0ij1Eh0vVoJ1gKNarPZqNYb1XIl8dixVzp+7Jl/lyPhHrflsNe3hbdkBKg38fyBOy3EG2qxXEu2gXK9FL8WfltoAp5+9KiVRD0ydEfoK3Gy+G046OCEFe3A761wwhB9vxL+/MtXeJRDWJvMfzlRU01sP/ASz7+3w5+/qUnSkVpGuSa34lcJfmnLwA/OfvhX/MuP+Jcr8KPh2WyYjLs2DPzhDHuKy+yAVH22oPMLg135MPU30iZVNywCRU8t33sC7DL1K5jx67Bqw9/Okz+pVf3Nmqv61af7OaR1ndYNXO/wBnJLT44wCN/iF251F4AQ/szw9+TNfxNDaBUW+4peKBo3XvQUvm4TrCXNDYaRV7F2DTB5wwIKt6NusT4UBAcYMYZGNdERUjH4Om2D02rrqtE8Txq322peAUCWtND7a4H3TwLIiDbi1LNeqRYrJRixg78J2tislRrNQq1UJeb4hpjjQmcg8EjgkcAjgUcCjwQeXwYeAxNn1hXjhjVLCswcMmk8UMz4CDOswIyNxfv9ebS42CRXocavyw1bwIwvNqxUWWLYOqhx0p7m2Hc+ZkVmmV2RY1dcd82uqQvm902PQb80PrArmHDpfYSELuzWAT89VpCRs+8WTKU9Bp8vPEtxRXBtOeYMfWYiQfTlIkPM4Q828/owc4H196SrJkbTmz7cFTNc3pN4PhsM8Czh+Gp302UdeBoes+WIucLz89EzLRaqywlhvZnoMQ3sQfPnVa4+7VuscIzPNDJ89LoPDSHiXjCR7bE2d+20CeJeArg4WGildQMtIohEELMP5JJtPxUbWwQNswMNy1rk7zX098QMiRkSMyRmSMyQmCExQ2KGxAyJGabEDBe5AiHDHSNDOyKF8OUSGrIP8+qNqeHt0QUcOxBM0UPZhck7g4PR+eIUDSWMf/xnCJd45zFfcL0Pb97Ls29ylGMXbACDA4P5lkRlpAfTMZfhDXS5aan9bo8Y+5V94y708xcCxyIBx4wDxzN37MEp2T+H3HXHaRPHy6EFXh6foDDSYneXrwQfib9tjb8lmkkqmOtymyjuLaKqihZ6Ci3wFMSqiFURqyJWRayKWBWxKmJVxKqIVaXEqh4tSQlWbQCrPrATw2CTsylGr1aj6FX12810cj2dnE4nrenkfBqjSl/kiMGisWfqQURszxWwIBO6ZToeXKMj+NAfh3zoSvjSzjHsEHzoMsMdmsYLadFz3oxoUSYiXGEhNRKWlXpsKz6un0xOdbPtFGw7NGqtMMcdmrMWYdqhQetxmR0atF7atR0a9ApIqKpF7oCyrREZomxrBIUIChEUIihEUIiyrWUp2xqu928ONedabEW6AhPVmhW4YqNaqFdqpVqjvuVsa1cSJnhL8VU2kq31pfRQKSRQkTSQrkCoc2uHvvbTg2kJxi3MvxZkjfPySzZGCcyWbhQ2Jj7zB9Adlm7vuTCTGaN7TAibDIlZ2EZwJGqaejJ/e5RqYrRaiRKj7RgbtXi3C7f7DhohPmqKa1zgBKdp3cBpFuIaL03DsES7b7pG8tBgA1NbFlN47WFuOwrspMDOFKjlaTo2nu4ssHOj/p3NFH0v6sJPpfd7i/LAmhaO8Z6mhniSBxIEJnkgkWAiwUSCiQQTCSZ5IMkDUyK+j2FSNvWB7NcoTVwY+Xk14gMn06rBoPlOJ+b0fVwtmGOTa/gjXTY5neZ/mRyb04lle/AHXPW0HUW/MnW0x3zuOAKLZpyNdYwoZZPylL1XFTQ+mh7OxYOIWfz0gX2E+Tvj6gucOuTAWNvjD5j/DF0O7/nMkkN4fI6JqfLkwLShG3kqVNa7G6MnyDHT95gYY1mOjuAwp2eyyxxX9lzheYGW0RNwDLesPIW0HrhIsS0Gjh9UXsH2Ju9F+oGt564Q9k8qu863LVjcoVHrwLddmrMWudyhQeuhvx0atJ5gcYcGvQKkqmvKNWjoGrSZayDxInErEi8SsiJkRciKkBUhKxIvZke8WMYAxQPlWE8sU1fVjK1Aq4hNUd+2ilE9Q0RMEmYXLioYnynaMCvUoCrBPpN1Lc8+cTiFdByw2fbZgI+ZF5w2qMqw8Xk/wwEicW6Y0IfnRjw1O7MCZCM+zkUXftn9tDGLnLowOLAxPKnYZY0ll40yznn5VKWXRapJu3MYBk3hRrqWwdqwtqf8bpTfjfK7UX63x2ysoYGn0JSn0NBTkICLQBgJuIiGEQ0jGkY0jGgYCbhIwJUW+FpcklJ+t59Vaj2tuZrrts4x89sJ7CbtHuMeEiRM+O+70mKe+TAL+8XTeLngX4md+jA7YbfzXHIYK4zvGrVV3B4zZXn+9gguqiLMMalckFcuSC2nssvB/1TquZ+ulzBmtqIjeLVzGYAuLyiW4PfFYJ1yCS9TepWapPTKONz6TRq8r146u7ahbaUfWpwgF18FrHQMdubKkf0kGdBxq/qo9lsEFX/h0ByNHfMXXqzV4hOHZgV9TuB+SvWZXyw2i9OnsMrjxrcSNXxvP2td0GSr9WgcRc1LvM02EuC3UC+XnzTu5xRFl9sWyu3etp+mZLuxai3SuHu71sN0u7drPRHd7u16BV7Y1JTz1cD3aqHv3V8h3WAMUxKdCCJJ6QgeEjwkeEjwkOAhSekOS0qXTPp/oGhxKRBYgRerzWa1UKo06tVaqdhobllQFzAExFxnYe48pVr7MoRbZTfKS2RVbDc3fZb2L8ELe8Jn//jX8T/+lWMjVZj0X8wMwjTnJM96/hz5W/umL2wBvSj4mWOp0thRniMsi3VdGBMUM+zDFD/HhMopqCb5wTa8KAzdeMUEWhyCx7HUmYND4qeGmepcUadkmfAIYEERMM97bg1Fnv2AQ1EOqAxTcaWz3cEvMYePUY2I0ajqKB3acp59D5glg5tFgV5ALZWLfWSgaYNNMIU1cJta1L2WAK96XCUNXjqY8orfc9vm/dSDUMHHD8A7+iuldx350JaOA28aFiawfO9Za4KGxQPDRUjeu19ZPWNj40bbMe6Np+uL3sZqveDiY930dfjrxAjP7HpeFphaA0bvlmwgywqJbGjVKHWrKEFdOryyWNAiL7yIKQ9V21grlqoxMlkjMknaRsKThCcJTxKeJDx5INrGWrlSJnFjhghkbK2f2bR0n6UiUUF2uiWG1orbFTnG3oN6DZWF91B8Ub6686nKVHcTZqpbIgKsV54RAVbQZaxXkzbiVSQDfF2+dgl2jFmL4+WxZafP2VIKbT1/pdDWvSyQQuU1Mh/Xe55OMO9Wc+xltQRIWs37LcK8oqZcvjZ3+RSuTEiPkB4hPUJ6hPQI6RHSo3BlInopEb0ldIECln+6tARGAH/nY1ZkltkVPxsNHCFL+BwW08Apdu65pHcLscBRZYmLQH43gJcKewzdDhhr+0zYiOuw4LAheFfY+Vv7FKaJ3O+Haj3Y6mEyPngkIra3J8F3C6opceiI8ZNn3vGcCkSXXdUktpFOL0i/vzrMWBrcigKNo9V4b2Uo70Ik8aNw42Q0cjyWN24RC9Yd4Pvv1Ytf0zyV3zSUOM1MfFR5YKMg5vPtBTHH6iGw959d6Be/PHPLT72KycojXFhQ2cbsAUWxpZbpeLDme7JGw1ZtWl/quSuL1ECdtOf5Kh9pW/PiOijbfTwwBHTkw0p147btUa/p8uPnsxMXfEDSHPyZqd9f5xmpHxd62bNlULZqTSdApwlztoxOSyeaGss0GMo02VXx24/zPVLwNvHU9YO3sU1T+DbBVIKpBFMJphJMpfDt9MO3i2EyvQOFrE/ylQCrqUnm0nIoKsD1NSK2wdSdANc1AeufZs+EHqmLWArIJxI22n/A83VXhWIH6R/vo9OqGiNrJIOMOOvt0QW7s+UoLCmC6T5zQWy2zm3pjBGeulL6Hhzz0yHOm8Y0F48rrxXTDAeFNKedbGwR5GHJVvfJ1vvgYAdw+NxxRxY3mnGLy7VkFyijk5unsSwv0d+uaIGhtVdgViskU0stTiL+RxkmXmJ1tbHS6qSXOsjKLd9d0xtwGJHYqWsaPfHK6S2Xgd3BfnPnx8n62PtTrt+tA3wGna2C3h2ZtgmuS5j2bfwQmXeJZ2TPGFmsHtvjh3m+Qzh2i2B6xy93PT6962eXQjLSXb/hdUn2jt/vevB4x0a9BkM+VcWCZoOTFgxOhJAJIRNCJoRMCJkQMiFkQsiEkCkD6KsUF1pCTbKEkZehvQwQ5JMgSWVHwLzKDmpqB0rcoXMnhJNjrrgX4HN/Ks1meAyfMWaU8GK/F96IW3fCVaeLUmRG6TSX6XkVgN44i2aEpa987trwNAeMj7jpb1Dfet8KWv8seI7+I8e+UOfYfxgj3vwS3nwDT9wbCcdnX1D3TkkUHiU0TekGbiiJAiVR2K8kCjfp2HiTqSQKlB51jnTL2sz9a8r9U0IForeUUIEALgFcArgEcAngUkIFSqiQEqJ9DBoon8Lr5VMIssBunE/hxGZDJHU9F3sEc7jLDROmT6yjGlRIbV3zHolyJ5ZSwRu6XQ7myi67eOBgLyVROPQkCle+4AP2J9ytlzZd3MsMp3HC0krrBlpEF4kuZj/9abLtp2Jji1K0ZgcoVjTl7TXl7QkmEkwkmEgwkWAiwUSCiQQTCSYSTEyr3lKCKWS25FKYtfQS3rTPVSPPLlpcWlXpOqiq1AqrKk0s24M/4JynJ94cOTJ1qJdT2k+sk+7A/0sKUebZhVJpMkPa7/wcYsZgZ+ZzxxFGfp454AQO9TzzXjBbjNjF338Ln3WGpmUgQ3Rc+R+h+0GFdo700cPZm8GcoetIT/wPDg4d3rHGrIvk4vYI0zX82/wPz7Erc2DqbDCEA2Cyac5z+RJyPNTSUNz1+gwm3ukjx73UA8axxGlaN3BKyJGQY/bFgk8K/k7TMfiU+GN2+GNVU65fU66f+CPxR+KPxB+JPxJ/JP5I/JH4I/HHtKpDJQADCRl3LWQM5Yvw+WrEB87GOsbboxsMLR8IRFKMW5Y6TuUtZX3uMWEbQ1fA0QI6GKaLsnt4BdzUw1yoft+NakJ1XNw49PCzLw0+zjM4N8zqkV0OVYLbNvQ60w3Z5KmANQCRyEMXP6I09p2Hmmfj/4YwOuBehCQPuVD9pWkYlmj3TddIHhpsYGrLYjDwHkbJE5MlJps2k82qbjXdzp7NyH/izptz55qmBnpPi4/zxJ+JPxN/Jv5M/Jn4M/Fn4s/En4k/p6V/XY6VMiuEDQPPQ2wbyGL3Tw17Ps2xyQ38QU3s9WNNbHtBEBtpXG/ts7FuIR6elKfsPfzJsY+mp5KeKtyNnz6wjzCLx5ypmBr1l4hQtyUbQENR/Jp9Mw3Jrrit+0OV8NRDKazsKm4Ok33HEg951g7g96kr75Qo1/ShoXB2z4eWjxTaE7orYjlQiT0fKHs+49DElHr6DNZWLtfTV8Mmqp6kxDAvX4lCE4fcTVmhVOjX5TYj098iwaprM3ehzdwFESwiWESwiGARwSKCRQSLCBYRLCJYKRGs5YtTUlL+LKm6sA3hwfl13+xY8TLwk7NpHr5WkVlFv3UxulrVb8daOap++6Bj2iouGtGQssCLqSOxrpKD3CYo09O1YDbE+mA+1nOHIYp1BDOEbQojz06HPhupbaYX5HpUE+P/CeSO30zP46wl7rktXkieykSesq56lBZrmWoplipuwjvsgqtYsTiPrabVjiebrcLXR0e7tWsd4rJji9YiVru1aT3Us1ub1LFJm5aUkt6tTa/AmhoaOAgNHcT+Fo8e2rD3QNpEnF6vfHSxSsWjCTYRbCLYRLCJYBMVj06/eHTxUAtGx1aoK5hTvdGoVuvwMpvlQrnSKG+5YHQ0+V/NnOq1WrHWLFYrpZIycTf1ouN8CRFTkhV9GqvSHl+4C1PjcZ59enAsqSif53MXqROCIVzbwF4dAVNo3MZZx+L6HetLWEWytjkQ7CvMjJiwYb4mBAbWhkGz6hqWuIdO0mcf1bT8p0s510owK29Um81Gtd5QFcDnj6FWynxl54PL1Sdd6fSlHSjclFuzggedKjpS03I8MQtKsrMzV47sJxfXOm5VH9V+Zwtr679wuIsc8PwVF2u1+GDcrGDfDVpnqT7zL8VmcRpb7s8te9zWVq7gv7efNS1oodV6NBLh0jneRBuJrlGol8txyz5Zhsv/NtfkECLYe9usbYdGrQPadmnOWpRthwath9h2aNB6fG2HBr0CXGtqkUfVwKFqM4e6v6htgIk3dAJtBNoItBFoI9BGoI1AG4G2wwJt9UMFbU8v77PF3QIqgFF1Z67g/tAVyJvYVZ87wuub3aCtZBLJnfW53RMqvvB9OwonRBGWSlrH9Oh+8P7zv9zaJx6L3sqscofelxL8NV/Y+9a+coRleYjr8P3Bbp6w1TZV1UPnns90aB639uRmOrmeTk6nk9Z0cj5limj4Uu2SZ8ouATMj3WeuMIY63AVM2MYBDxxggZSZAE0YgUYNL+DwMRjxB+zlzkzzgkvDo3OltcyynvDZP4rH/yjm04SDygmtxwZrxzXCg+ngwe/SsoZY6OWjsHxOBYSpmgdFbFIBYSrgcZhhqKWCFjl8TTl8ikAlTEkRqMQqiVUSqyRWSaySIlApAjUlMvmILFDw6Y7LeNhRgeQX1/E4YSPuOvAue9AzRnwchKt6QjjIIB8w6RxeZ8AtcS8tYYOBZnR21Zlgu4t9ibXliHt9k7KjHXqM6olrGuxSeKkzxVZaSK71SkxxL+uJEFPMPFNspcPrWttkilmtmPGi5v1UtY23CBiLGjp+DR0/sUVii8QWiS0SWyS2SGyR2CKxRWKLKbHFOFwgrLjr6sCXKCeEiTRyxbDkxOYFgpVyccS9MLfdBVxjiGurAVzNdD0/PAmDziJc9ru0eK/P7Tz7Ikewcx+mPwx8QQ+jSDFzXhjI/O+h25M5dtdXBRyUMZdg4pCw44FjR5gjOLwHDTh17nhqDQX7Nn5YsaK3xw+zlGHXsPu243V3atY6GGq3Bq1F8XZq0priul2atF7c7k5NegU0VdLmzoES4xGsonhd4lTEqYhTEaciTkXxutmK1y1hsOOhCuPiS9RVUboVaAuxyemWo3Q/2Xof2vkA2kJmo3FnUao6t9/5jPs+5rbDkNWhHQTFghluFL8Kl8IgV49Bk1L4SnC9H4vC7YvxLNQVRW1Yy1OdEcN94aQxUvVDDt/dC9blpiUMdi5cFyuJsuTPSJq+ih7Xx4tbEKR5wurm2QWazgzJbCw+6oqQWf0pLZf7/RxG9f7OXZsy7+03igqK8qaNoc7BVQ4cTPG4SkXWkQ9t6TjwkmF+DwvgnrXmUn3xwHAun/fuD7TGZ/REV6u8Fh/Npo/UXwOkzd/085qp1N4z9v/kS6binYoclbWgLy9So4xrml4AimrFUjUGimoEikjVRLSIaBHRIqJFRIsORNVUK1fKJGvKEBmarRizp2k65Z6pBwukX9mTdtaK2xU4xV6CegeVhZdQXFcBFbTm6cScvp9XXDif5n+ZHJvTJSKheuUZkVAFHUUctTzd0SPWQTKh12Uz51zwdx47c7mhOmCqiCZeAYH9Ebj0dSshfIZpOIwcvfCwlcUHCrN2AfOTUqI4QgIWF2H5OV1cxm9SquFrZOFq08qFeqwmQ9y2cqOeNA6GrLhx8Qf4VdXHPRv6MDgmjVRVTVabUS9H7qlYaNbiDqpaLi0O6dDQhYtrNdUxEjQmpajN81cKO6XIy61J3s7TiWo836bg7C1yu4qGft7TAje/Z/SOIhKJ3RG7I3ZH7I7YHbE7YncUkZhldLcIFDIYlTirwLAH8YkzIrdEsxWrThBTZ33B6EHPcaXKOYcyrCB80BPCULUbZJeduOhE80zti7tYWF/Bd4VgI9OyGEySrFCMdQ7mWcLOsTPT5zCxYsIy5iUqNgwfLFP4YMa54G/C[... ELLIPSIZATION ...]95c22f94559a68  /mnt/data/cardbulk5/Morophon, the Boundless.png  *not used for this JSON payload*\n','a30adfc0f6efe875e8543dcfc8233b9f2bad2e1efc78f19ecaa9e367efb46f6e'),
-'STYLE_RULES.md':('H4sIAIAxkmoC/61YzW7cyBG+z1M04MMCgjjcReyFrA2CaGXZMKC1BWkEx6eZHrI5pNXTzXQ3Z8Q9+SFyTC55ND9Jvqru4XAkbSAkvuiH7K7fr6q+4gvxRjm1aUTr7BdVBOE6rfxkcq1kKRbTaX4z+3x5Mb++vby4ma7Lhaga58NUzGqJs9YGPNBKFNYE2RgvQq2EU631TbCuz7ZNqcS5dKU4t+ZL55SLCo5F5eRaZWXjC7tRrhdrFWpbHgsfpCnpwkpZPHP9sTjrghVvmzCcqaAXkqB0o0xorDkWraeg…','de4e0be39a050380237e87a25e0d72d664f15ab1f23d39933fcf93e43204b180'),
-'doctor_who/STYLE_RULES.md':('H4sIAIAxkmoC/61YzW7cyBG+z1M04MMCgjjcReyFrA2CaGXZMKC1BWkEx6eZHrI5pNXTzXQ3Z8Q9+SFyTC55ND9Jvqru4XAkbSAkvuiH7K7fr6q+4gvxRjm1aUTr7BdVBOE6rfxkcq1kKRbTaX4z+3x5Mb++vby4ma7Lhaga58NUzGqJs9YGPNBKFNYE2RgvQq2EU631TbCuz7ZNqcS5dKU4t+ZL55SLCo5F5eRaZWXjC7tRrhdrFWpbHgsfpCnpwkpZPHP9sTjrghVvmzCcqaAXkqB0o0xorDkWraeg…','73fae938ceb5ec4d854c8a40731507edb922dd51e57cdd681d71cd77eea04a8c'),
-'derevi/STYLE_RULES.md':('H4sIAIAxkmoC/61YzW7cyBG+z1M04MMCgjjcReyFrA2CaGXZMKC1BWkEx6eZHrI5pNXTzXQ3Z8Q9+SFyTC55ND9Jvqru4XAkbSAkvuiH7K7fr6q+4gvxRjm1aUTr7BdVBOE6rfxkcq1kKRbTaX4z+3x5Mb++vby4ma7Lhaga58NUzGqJs9YGPNBKFNYE2RgvQq2EU631TbCuz7ZNqcS5dKU4t+ZL55SLCo5F5eRaZWXjC7tRrhdrFWpbHgsfpCnpwkpZPHP9sTjrghVvmzCcqaAXkqB0o0xorDkWraeg…','fc7256696b72c6b66f460fb7156c53aa554b1ac1199ac5346badff94c9b1e11f')
-}
+DOC=ROOT/'doctor_who/doctor_who_cards.cardconjurer'
+DER=ROOT/'derevi/derevi_cards.cardconjurer'
+WHITE_OPACITY=85
+GENERIC_ART_BOUNDS={'x':0,'y':0,'width':1,'height':0.9224}
+GENERIC_ART=(0.0,-0.0745142857142857,1.962890625,'0')
+GENERIC_SET_BOUNDS={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+GENERIC_SET_Y=0.5692963752665245
+COMPACT_SET_BOUNDS={'x':0.9213,'y':0.6343,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+COMPACT_SET_Y=0.6125963752665246
+GENERIC_WATERMARK={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
+color_src={c:f'/img/frames/m15/genericShowcase/m15GenericShowcaseFrame{c}.png' for c in 'WUBRGM'}
+short_land_src={'W':'/img/frames/m15/boxTopper/short/wl.png','U':'/img/frames/m15/boxTopper/short/ul.png','B':'/img/frames/m15/boxTopper/short/bl.png','R':'/img/frames/m15/boxTopper/short/rl.png','G':'/img/frames/m15/boxTopper/short/gl.png','M':'/img/frames/m15/boxTopper/short/ml.png'}
+land_neutral='/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png'
+short_neutral='/img/frames/m15/boxTopper/short/l.png'
+RIGHT={'src':'/img/frames/maskRightHalf.png','name':'Right Half'}
 
-for rel,(enc,expected) in PAYLOADS.items():
-    raw=gzip.decompress(base64.b64decode(enc))
-    got=hashlib.sha256(raw).hexdigest()
-    if got != expected:
-        raise SystemExit(f"payload hash mismatch for {rel}: {got} != {expected}")
-    p=ROOT/rel
-    p.parent.mkdir(parents=True,exist_ok=True)
-    p.write_bytes(raw)
+def mask(src,name): return {'src':src,'name':name}
 
-# Compact structural validation of the exact locally-approved files.
-doc=json.loads((ROOT/'doctor_who/doctor_who_cards.cardconjurer').read_text())
-der=json.loads((ROOT/'derevi/derevi_cards.cardconjurer').read_text())
-assert len(doc)==51 and len({x['key'] for x in doc})==51
-compact={'Forest','Mountain','Swamp','Plains','Island','Savannah','Tundra','Tropical Island'}
-def get(cards,key): return next(x['data'] for x in cards if x['key']==key)
+def set_generic_layout(c):
+    c['version']='genericShowcase'; c['artBounds']=copy.deepcopy(GENERIC_ART_BOUNDS)
+    c['artX'],c['artY'],c['artZoom'],c['artRotate']=GENERIC_ART
+    c['setSymbolBounds']=copy.deepcopy(GENERIC_SET_BOUNDS); c['setSymbolY']=GENERIC_SET_Y
+    c['watermarkBounds']=copy.deepcopy(GENERIC_WATERMARK); c['watermarkY']=0.7762
+    t=c['text']; title=t['title']; typ=t['type']; r=t['rules']
+    title.update(x=0.0854,y=0.0522,width=0.8292,height=0.0543,color='white')
+    typ.update(x=0.0854,y=0.5664,width=0.8292,height=0.0543,color='white'); typ.pop('shadowX',None); typ.pop('shadowY',None)
+    r.update(x=0.105,y=0.6303,width=0.79,height=0.2875,color='white'); r.pop('noVerticalCenter',None)
+
+def make_generic_frames(colors,legendary=False):
+    frames=[]
+    if legendary:
+        frames += [
+            {'name':'Legend Crown Outline','src':'/img/frames/m15/crowns/m15CrownFloatingOutline.png','masks':[],'bounds':{'x':0.028,'y':0.0172,'width':0.944,'height':0.1062}},
+            {'name':'Land Legend Crown','src':'/img/frames/m15/crowns/m15CrownLFloating.png','masks':[],'bounds':{'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024}},
+            {'name':'Legend Crown Lower Cutout','src':'/img/black.png','masks':[],'bounds':{'x':0.0734,'y':0.1096,'width':0.8532,'height':0.0143},'erase':True},
+        ]
+    if len(colors)==1:
+        a=colors[0]; frames.append({'name':f'{a} Pinline','src':color_src[a],'masks':[mask('/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png','Pinline')]})
+    else:
+        a,b=colors; frames += [
+            {'name':f'{a} Pinline','src':color_src[a],'masks':[mask('/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png','Pinline')]},
+            {'name':f'{b} Pinline','src':color_src[b],'masks':[mask('/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png','Pinline'),copy.deepcopy(RIGHT)]},
+        ]
+    frames += [
+        {'name':'Neutral Land Title','src':land_neutral,'masks':[mask('/img/frames/m15/regular/m15MaskTitle.png','Title')]},
+        {'name':'Neutral Land Type','src':land_neutral,'masks':[mask('/img/frames/m15/regular/m15MaskType.png','Type')]},
+    ]
+    if len(colors)==1:
+        a=colors[0]; f={'name':f'{a} Rules','src':color_src[a],'masks':[mask('/img/frames/m15/regular/m15MaskRules.png','Rules')]}
+        if a=='W': f['opacity']=WHITE_OPACITY
+        frames.append(f)
+    else:
+        a,b=colors
+        fa={'name':f'{a} Rules','src':color_src[a],'masks':[mask('/img/frames/m15/regular/m15MaskRules.png','Rules')]}
+        fb={'name':f'{b} Rules','src':color_src[b],'masks':[mask('/img/frames/m15/regular/m15MaskRules.png','Rules'),copy.deepcopy(RIGHT)]}
+        if a=='W': fa['opacity']=WHITE_OPACITY
+        if b=='W': fb['opacity']=WHITE_OPACITY
+        frames += [fa,fb]
+    frames.append({'name':'Land Frame','src':land_neutral,'masks':[mask('/img/frames/m15/regular/m15MaskBorder.png','Border')]})
+    return frames
+
+def make_compact_frames(colors):
+    frames=[]
+    if len(colors)==1:
+        a=colors[0]; frames.append({'name':f'{a} Compact Pinline','src':short_land_src[a],'masks':[mask('/img/frames/m15/boxTopper/short/pinline.svg','Pinline')]})
+    else:
+        a,b=colors; frames += [
+            {'name':f'{a} Compact Pinline','src':short_land_src[a],'masks':[mask('/img/frames/m15/boxTopper/short/pinline.svg','Pinline')]},
+            {'name':f'{b} Compact Pinline','src':short_land_src[b],'masks':[mask('/img/frames/m15/boxTopper/short/pinline.svg','Pinline'),copy.deepcopy(RIGHT)]},
+        ]
+    frames += [
+        {'name':'Neutral Land Title','src':land_neutral,'masks':[mask('/img/frames/m15/regular/m15MaskTitle.png','Title')]},
+        {'name':'Neutral Compact Land Type','src':short_neutral,'masks':[mask('/img/frames/m15/boxTopper/short/type.png','Type')]},
+    ]
+    if len(colors)==1:
+        a=colors[0]; f={'name':f'{a} Compact Rules','src':short_land_src[a],'masks':[mask('/img/frames/m15/boxTopper/short/text.svg','Rules')]}
+        if a=='W': f['opacity']=WHITE_OPACITY
+        frames.append(f)
+    else:
+        a,b=colors
+        fa={'name':f'{a} Compact Rules','src':short_land_src[a],'masks':[mask('/img/frames/m15/boxTopper/short/text.svg','Rules')]}
+        fb={'name':f'{b} Compact Rules','src':short_land_src[b],'masks':[mask('/img/frames/m15/boxTopper/short/text.svg','Rules'),copy.deepcopy(RIGHT)]}
+        if a=='W': fa['opacity']=WHITE_OPACITY
+        if b=='W': fb['opacity']=WHITE_OPACITY
+        frames += [fa,fb]
+    frames.append({'name':'Land Frame','src':land_neutral,'masks':[mask('/img/frames/m15/regular/m15MaskBorder.png','Border')]})
+    return frames
+
+def set_compact(c,colors):
+    c['version']='genericShowcase'; c['frames']=make_compact_frames(colors)
+    c['artBounds']=copy.deepcopy(GENERIC_ART_BOUNDS); c['artX'],c['artY'],c['artZoom'],c['artRotate']=GENERIC_ART
+    c['setSymbolBounds']=copy.deepcopy(COMPACT_SET_BOUNDS); c['setSymbolY']=COMPACT_SET_Y
+    c['watermarkBounds']=copy.deepcopy(GENERIC_WATERMARK); c['watermarkY']=0.7762
+    t=c['text']; t['title'].update(x=0.0854,y=0.0522,width=0.8292,height=0.0543,color='white')
+    t['type'].update(x=0.0854,y=0.61,width=0.8292,height=0.0543,color='white',shadowX=0.0014,shadowY=0.001)
+    r=t['rules']; r.update(x=0.105,y=0.6743,width=0.79,height=0.2448,color='white',align='center'); r.pop('noVerticalCenter',None)
+
+def tune_white(cards):
+    for e in cards:
+        for f in e['data'].get('frames',[]):
+            if not any(m.get('name')=='Rules' for m in f.get('masks',[])): continue
+            src=f.get('src','')
+            if src.endswith('m15GenericShowcaseFrameW.png') or src.endswith('/boxTopper/short/wl.png'): f['opacity']=WHITE_OPACITY
+
+def fix_modal(cards):
+    es=next(e['data'] for e in cards if e['key']=='Esika, God of the Tree'); br=next(e['data'] for e in cards if e['key']=='The Prismatic Bridge')
+    for c in (es,br):
+        c['text']['rules'].update(height=0.24,size=0.0315,x=0.086,width=0.828); c['text']['rules'].pop('noVerticalCenter',None)
+        c['text']['flipsideType'].update(x=0.068,y=0.892,width=0.364)
+        c['text']['flipSideReminder'].update(x=0.068,y=0.892,width=0.364)
+    es['text']['flipsideType']['text']='Enchantment'; es['text']['flipSideReminder']['text']='{W}{U}{B}{R}{G}'
+    br['text']['flipsideType']['text']='Creature'; br['text']['flipSideReminder']['text']='{1}{G}{G}'
+    old=br['frames']; pick=lambda pred:[f for f in old if pred(f)]
+    crown=pick(lambda f:f['name']=='Multicolored Legend Crown'); cover=pick(lambda f:f['name']=='Legend Crown Border Cover')
+    reminder=pick(lambda f:any(m.get('name')=='Flipside' for m in f.get('masks',[]))); arrow=pick(lambda f:any(m.get('name')=='MDFC Arrow' for m in f.get('masks',[])))
+    nyx_pin=pick(lambda f:'Nyx' in f['name'] and any(m.get('name')=='Pinline' for m in f.get('masks',[])))
+    nyx_type=pick(lambda f:'Nyx' in f['name'] and any(m.get('name')=='Type' for m in f.get('masks',[])))
+    nyx_rules=pick(lambda f:'Nyx' in f['name'] and any(m.get('name')=='Rules' for m in f.get('masks',[])))
+    back='/img/frames/modal/regular/mb.png'
+    br['frames']=crown+cover+reminder+arrow+nyx_pin+[{'name':'Multicolored Frame (Back)','src':back,'masks':[mask('/img/frames/modal/regular/title.svg','Title')]}]+nyx_type+nyx_rules+[
+        {'name':'Multicolored Frame (Back)','src':back,'masks':[mask('/img/frames/modal/regular/frame.svg','Frame')]},
+        {'name':'Multicolored Frame (Back)','src':back,'masks':[mask('/img/frames/modal/regular/border.svg','Border')]},]
+
+def get(cards,key): return next(e['data'] for e in cards if e['key']==key)
 def masks(c): return [m.get('src') for f in c.get('frames',[]) for m in f.get('masks',[])]
 def rules_frames(c): return [f for f in c.get('frames',[]) if any(m.get('name')=='Rules' for m in f.get('masks',[]))]
-for e in doc:
-    c=e['data']; k=e['key']; t=c.get('text',{}).get('type',{}).get('text','')
-    if k in compact:
-        assert c['version']=='genericShowcase'
-        assert c['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
-        assert '/img/frames/m15/boxTopper/short/text.svg' in masks(c)
-        assert '/img/frames/m15/boxTopper/short/frame.svg' not in masks(c)
-        assert c['text']['rules']['y']==0.6743 and c['text']['rules']['height']==0.2448
-    elif 'Land' in t:
-        assert '/img/frames/m15/boxTopper/short/text.svg' not in masks(c)
-        assert c['text']['rules']['y']==0.6303 and c['text']['rules']['height']==0.2875
-    for f in rules_frames(c):
-        src=f.get('src','')
-        if src.endswith('m15GenericShowcaseFrameW.png') or src.endswith('/boxTopper/short/wl.png'):
-            assert f.get('opacity')==85
-for k in ['Crystal Quarry','The World Tree','Cascading Cataracts','Reflecting Pool','Plaza of Heroes','Mana Confluence']:
-    c=get(doc,k)
-    assert any(f.get('src','').endswith('m15GenericShowcaseFrameM.png') and any(m.get('name')=='Rules' for m in f.get('masks',[])) for f in c['frames'])
-for k in ['Esika, God of the Tree','The Prismatic Bridge']:
-    c=get(doc,k)
-    assert c['text']['rules']['y']+c['text']['rules']['height'] < c['text']['flipsideType']['y']
-br=get(doc,'The Prismatic Bridge')
-for part in ['Title','Frame','Border']:
-    assert any(f.get('src')=='/img/frames/modal/regular/mb.png' and any(m.get('name')==part for m in f.get('masks',[])) for f in br['frames'])
-for k in ['Savannah','Tropical Island','Tundra']:
-    c=get(der,k)
-    assert '/img/frames/m15/boxTopper/short/text.svg' in masks(c)
-    assert '/img/frames/m15/boxTopper/short/frame.svg' not in masks(c)
-for e in der:
-    for f in rules_frames(e['data']):
-        src=f.get('src','')
-        if src.endswith('m15GenericShowcaseFrameW.png') or src.endswith('/boxTopper/short/wl.png'):
-            assert f.get('opacity')==85
-print('local-refinement payload applied and validated')
+
+def main():
+    doc=json.loads(DOC.read_text()); der=json.loads(DER.read_text())
+    sparse={'Forest':['G'],'Mountain':['R'],'Swamp':['B'],'Plains':['W'],'Island':['U'],'Savannah':['G','W'],'Tropical Island':['G','U'],'Tundra':['W','U']}
+    for e in doc:
+        if e['key'] in sparse: set_compact(e['data'],sparse[e['key']])
+    for k,(colors,legendary) in {"Gaea's Cradle":(['G'],True),'Reflecting Pool':(['M'],False),'Mana Confluence':(['M'],False)}.items():
+        c=get(doc,k); set_generic_layout(c); c['frames']=make_generic_frames(colors,legendary); c['text']['rules']['align']='left'
+    tune_white(doc); fix_modal(doc)
+    for k,colors in {'Savannah':['G','W'],'Tropical Island':['G','U'],'Tundra':['W','U']}.items(): set_compact(get(der,k),colors)
+    tune_white(der)
+    assert len(doc)==51 and len({e['key'] for e in doc})==51
+    for k in sparse:
+        c=get(doc,k); assert c['version']=='genericShowcase'; assert '/img/frames/m15/boxTopper/short/text.svg' in masks(c); assert '/img/frames/m15/boxTopper/short/frame.svg' not in masks(c)
+    for k in ["Gaea's Cradle",'Reflecting Pool','Mana Confluence']:
+        c=get(doc,k); assert '/img/frames/m15/boxTopper/short/text.svg' not in masks(c)
+    for cards in (doc,der):
+        for e in cards:
+            for f in rules_frames(e['data']):
+                src=f.get('src','')
+                if src.endswith('m15GenericShowcaseFrameW.png') or src.endswith('/boxTopper/short/wl.png'): assert f.get('opacity')==85
+    for k in ['Esika, God of the Tree','The Prismatic Bridge']:
+        c=get(doc,k); assert c['text']['rules']['y']+c['text']['rules']['height'] < c['text']['flipsideType']['y']
+    DOC.write_text(json.dumps(doc,separators=(',',':'))); DER.write_text(json.dumps(der,separators=(',',':')))
+    print('refinements applied and validated')
+
+if __name__=='__main__': main()
