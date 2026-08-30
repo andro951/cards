@@ -1,0 +1,43 @@
+name: Package Derevi template examples
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-package-derevi-templates.yml'
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build template files
+        run: |
+          python - <<'PY'
+          import json, pathlib, shutil
+          root = pathlib.Path('.')
+          out = root / 'derevi_template_examples'
+          out.mkdir(exist_ok=True)
+          cards = json.loads((root/'derevi'/'derevi_cards.cardconjurer').read_text(encoding='utf-8'))
+          by_key = {c['key']: c for c in cards}
+          selected = {
+              'card': 'Spellseeker',
+              'card_legendary': 'Derevi, Empyrial Tactician',
+              'card_noncreature': 'Mana Drain',
+              'card_nyx_enchantment': 'Survival of the Fittest',
+          }
+          image_sources = {
+              'card': root/'derevi'/'cards'/'Spellseeker.png',
+              'card_legendary': root/'derevi'/'cards'/'Derevi, Empyrial Tactician.png',
+              'card_noncreature': root/'derevi'/'cards'/'Mana Drain.png',
+              'card_nyx_enchantment': root/'derevi'/'cards'/'Survival of the Fittest.png',
+          }
+          for stem, key in selected.items():
+              (out/f'{stem}.cardconjurer').write_text(json.dumps([by_key[key]], ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+              shutil.copyfile(image_sources[stem], out/f'{stem}.png')
+          PY
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: derevi-template-examples
+          path: derevi_template_examples/
+          compression-level: 6
