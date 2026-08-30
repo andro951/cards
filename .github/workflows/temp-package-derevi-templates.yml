@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            derevi/derevi_cards.cardconjurer
+            derevi/cards/Spellseeker.png
+            derevi/cards/Derevi, Empyrial Tactician.png
+            derevi/cards/Mana Drain.png
+            derevi/cards/Survival of the Fittest.png
       - name: Build template files
         run: |
           python - <<'PY'
