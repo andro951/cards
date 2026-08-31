@@ -1,4 +1,4 @@
-name: Temp fetch proxy list card data
+name: Temp build Doctor Who semantic card data
 
 on:
   push:
@@ -7,14 +7,175 @@ on:
       - '.github/workflows/temp-fetch-proxy-list-carddata.yml'
 
 jobs:
-  fetch:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch deck export
+        with:
+          sparse-checkout: |
+            doctor_who/doctor_who_cards.cardconjurer
+      - name: Build semantic card data from Scryfall deck
         run: |
-          python fetch_scryfall_deck.py --deck-id 6c4be1d5-29f3-454e-bf88-47a19e9daf1e --output-dir temp_proxy_list
+          python - <<'PY'
+          import json, pathlib, re, time, urllib.error, urllib.request
+
+          DECK_ID = '6c4be1d5-29f3-454e-bf88-47a19e9daf1e'
+          UA = 'andro951-card-data-builder/1.0'
+          ACCEPT = 'application/json;q=0.9,*/*;q=0.8'
+          MAIN_TYPES = ['Artifact','Battle','Creature','Enchantment','Instant','Kindred','Land','Planeswalker','Sorcery','Tribal']
+          SUPERTYPES = {'Basic','Legendary','Snow','World'}
+          BASIC_COLORS = {'Plains':'W','Island':'U','Swamp':'B','Mountain':'R','Forest':'G'}
+          SPECIAL_LAYOUTS = {
+              'Esika, God of the Tree': 'modal_dfc_front',
+              'The Prismatic Bridge': 'modal_dfc_back',
+              'Morophon, the Boundless': 'eldrazi_legendary_creature',
+              'The Fourteenth Doctor': 'tardis',
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers={'User-Agent':UA,'Accept':ACCEPT})
+              last = None
+              for attempt in range(8):
+                  try:
+                      with urllib.request.urlopen(req, timeout=45) as r:
+                          body = r.read().decode('utf-8')
+                      time.sleep(0.35)
+                      return json.loads(body)
+                  except urllib.error.HTTPError as exc:
+                      last = exc
+                      if exc.code != 429 and not (500 <= exc.code <= 599):
+                          raise
+                      retry = exc.headers.get('Retry-After') if exc.headers else None
+                      try:
+                          delay = float(retry) if retry else min(2 ** attempt, 20)
+                      except Exception:
+                          delay = min(2 ** attempt, 20)
+                      time.sleep(max(delay, 1.0))
+              raise last or RuntimeError('request failed')
+
+          def basename(src):
+              return str(src or '').split('/')[-1].split('?')[0]
+
+          def split_type_line(tl):
+              tl = str(tl or '').replace('—',' - ').replace('–',' - ')
+              tl = re.sub(r'\s+', ' ', tl).strip()
+              parts = re.split(r'\s+-\s+', tl, maxsplit=1)
+              left = parts[0].split() if parts else []
+              subtypes = parts[1].split() if len(parts) > 1 else []
+              types = [t for t in MAIN_TYPES if t in left]
+              unknown = [x for x in left if x not in SUPERTYPES and x not in MAIN_TYPES]
+              if unknown:
+                  raise RuntimeError(f'Unknown type token(s) {unknown} in {tl!r}')
+              return {
+                  'types': types,
+                  'subtypes': subtypes,
+                  'legendary': 'Legendary' in left,
+                  'basic': 'Basic' in left,
+                  'snow': 'Snow' in left,
+                  'world': 'World' in left,
+              }
+
+          def infer_land_colors(subtypes, oracle):
+              out=[]
+              def add(c):
+                  if c and c not in out: out.append(c)
+              for st in subtypes:
+                  add(BASIC_COLORS.get(st))
+              for st,c in BASIC_COLORS.items():
+                  if re.search(rf'\b{re.escape(st)}\b', oracle or '', re.I): add(c)
+              if re.search(r'\bany (?:one )?color\b|\bany type\b|\bany combination of colors\b', oracle or '', re.I):
+                  return list('WUBRG')
+              for c in 'WUBRG':
+                  if '{'+c+'}' in (oracle or ''): add(c)
+              return out
+
+          # Existing project data is authoritative for proxy-authored flavor and art filenames.
+          existing = json.loads(pathlib.Path('doctor_who/doctor_who_cards.cardconjurer').read_text(encoding='utf-8'))
+          existing_by_name = {}
+          for entry in existing:
+              d = entry.get('data',{})
+              tx = d.get('text',{})
+              name = tx.get('title',{}).get('text') or entry.get('key')
+              if not name: continue
+              rules = str(tx.get('rules',{}).get('text',''))
+              flavor = rules.split('{flavor}',1)[1] if '{flavor}' in rules else ''
+              existing_by_name[name] = {
+                  'art': basename(d.get('artSource')),
+                  'flavor_text': flavor,
+              }
+
+          deck = get_json(f'https://api.scryfall.com/decks/{DECK_ID}/export/json')
+          ids=[]
+          for section, rows in (deck.get('entries') or {}).items():
+              if str(section).lower() == 'maybeboard':
+                  continue
+              for row in rows or []:
+                  if not isinstance(row,dict) or row.get('found') is False:
+                      continue
+                  cid = (row.get('card_digest') or {}).get('id')
+                  if cid and cid not in ids: ids.append(cid)
+
+          cards=[]
+          for cid in ids:
+              obj = get_json(f'https://api.scryfall.com/cards/{cid}')
+              faces = obj.get('card_faces') if isinstance(obj.get('card_faces'),list) and obj.get('card_faces') else [obj]
+              for face in faces:
+                  name = str(face.get('name') or obj.get('name') or '').strip()
+                  if not name: continue
+                  sem = split_type_line(face.get('type_line') or obj.get('type_line'))
+                  oracle = str(face.get('oracle_text') if face.get('oracle_text') is not None else obj.get('oracle_text') or '')
+                  colors = face.get('colors') if isinstance(face.get('colors'),list) else obj.get('colors') or []
+                  known = existing_by_name.get(name,{})
+                  flavor = known.get('flavor_text') or face.get('flavor_text') or obj.get('flavor_text') or ''
+                  art = known.get('art')
+                  if not art:
+                      art = re.sub(r'[^a-z0-9]+','_',name.lower()).strip('_') + '.png'
+
+                  c = {
+                      'name': name,
+                      'mana_cost': str(face.get('mana_cost') if face.get('mana_cost') is not None else obj.get('mana_cost') or ''),
+                      'types': sem['types'],
+                      'subtypes': sem['subtypes'],
+                      'legendary': sem['legendary'],
+                      'basic': sem['basic'],
+                      'snow': sem['snow'],
+                      'world': sem['world'],
+                      'oracle_text': oracle,
+                      'colors': list(colors),
+                      'art': art,
+                      'rarity': str(obj.get('rarity') or ''),
+                  }
+                  if flavor:
+                      c['flavor_text'] = str(flavor)
+                  power = face.get('power') if face.get('power') is not None else obj.get('power')
+                  toughness = face.get('toughness') if face.get('toughness') is not None else obj.get('toughness')
+                  if power is not None and toughness is not None:
+                      c['power'] = str(power)
+                      c['toughness'] = str(toughness)
+                  if 'Land' in sem['types']:
+                      lc = infer_land_colors(sem['subtypes'], oracle)
+                      if lc: c['land_colors'] = lc
+                  if name in SPECIAL_LAYOUTS:
+                      c['layout'] = SPECIAL_LAYOUTS[name]
+                  cards.append(c)
+
+          result = {
+              'schema_version': 2,
+              'defaults': {
+                  'repo': 'andro951/cards',
+                  'branch': 'main',
+                  'artist': 'ChatGPT',
+                  'art_base_url': 'https://raw.githubusercontent.com/andro951/cards/main/doctor_who/art/',
+                  'set_symbol_base_url': 'https://raw.githubusercontent.com/andro951/cards/main/doctor_who/set_icon/'
+              },
+              'cards': cards
+          }
+          out = pathlib.Path('doctor_who_card_data.json')
+          out.write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          print(f'Wrote {len(cards)} card faces to {out}')
+          print('Special layout overrides:', [c['name'] for c in cards if 'layout' in c])
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: proxy-list-export
-          path: temp_proxy_list/
+          name: doctor-who-card-data
+          path: doctor_who_card_data.json
