@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/temp-fetch-proxy-list-carddata.yml'
+      - '.temp-build-doctor-who-carddata'
 
 jobs:
   build:
@@ -89,7 +89,6 @@ jobs:
                   if '{'+c+'}' in (oracle or ''): add(c)
               return out
 
-          # Existing project data is authoritative for proxy-authored flavor and art filenames.
           existing = json.loads(pathlib.Path('doctor_who/doctor_who_cards.cardconjurer').read_text(encoding='utf-8'))
           existing_by_name = {}
           for entry in existing:
@@ -99,19 +98,14 @@ jobs:
               if not name: continue
               rules = str(tx.get('rules',{}).get('text',''))
               flavor = rules.split('{flavor}',1)[1] if '{flavor}' in rules else ''
-              existing_by_name[name] = {
-                  'art': basename(d.get('artSource')),
-                  'flavor_text': flavor,
-              }
+              existing_by_name[name] = {'art': basename(d.get('artSource')), 'flavor_text': flavor}
 
           deck = get_json(f'https://api.scryfall.com/decks/{DECK_ID}/export/json')
           ids=[]
           for section, rows in (deck.get('entries') or {}).items():
-              if str(section).lower() == 'maybeboard':
-                  continue
+              if str(section).lower() == 'maybeboard': continue
               for row in rows or []:
-                  if not isinstance(row,dict) or row.get('found') is False:
-                      continue
+                  if not isinstance(row,dict) or row.get('found') is False: continue
                   cid = (row.get('card_digest') or {}).get('id')
                   if cid and cid not in ids: ids.append(cid)
 
@@ -127,44 +121,29 @@ jobs:
                   colors = face.get('colors') if isinstance(face.get('colors'),list) else obj.get('colors') or []
                   known = existing_by_name.get(name,{})
                   flavor = known.get('flavor_text') or face.get('flavor_text') or obj.get('flavor_text') or ''
-                  art = known.get('art')
-                  if not art:
-                      art = re.sub(r'[^a-z0-9]+','_',name.lower()).strip('_') + '.png'
-
+                  art = known.get('art') or (re.sub(r'[^a-z0-9]+','_',name.lower()).strip('_') + '.png')
                   c = {
                       'name': name,
                       'mana_cost': str(face.get('mana_cost') if face.get('mana_cost') is not None else obj.get('mana_cost') or ''),
-                      'types': sem['types'],
-                      'subtypes': sem['subtypes'],
-                      'legendary': sem['legendary'],
-                      'basic': sem['basic'],
-                      'snow': sem['snow'],
-                      'world': sem['world'],
-                      'oracle_text': oracle,
-                      'colors': list(colors),
-                      'art': art,
-                      'rarity': str(obj.get('rarity') or ''),
+                      'types': sem['types'], 'subtypes': sem['subtypes'],
+                      'legendary': sem['legendary'], 'basic': sem['basic'], 'snow': sem['snow'], 'world': sem['world'],
+                      'oracle_text': oracle, 'colors': list(colors), 'art': art, 'rarity': str(obj.get('rarity') or ''),
                   }
-                  if flavor:
-                      c['flavor_text'] = str(flavor)
+                  if flavor: c['flavor_text'] = str(flavor)
                   power = face.get('power') if face.get('power') is not None else obj.get('power')
                   toughness = face.get('toughness') if face.get('toughness') is not None else obj.get('toughness')
                   if power is not None and toughness is not None:
-                      c['power'] = str(power)
-                      c['toughness'] = str(toughness)
+                      c['power'] = str(power); c['toughness'] = str(toughness)
                   if 'Land' in sem['types']:
                       lc = infer_land_colors(sem['subtypes'], oracle)
                       if lc: c['land_colors'] = lc
-                  if name in SPECIAL_LAYOUTS:
-                      c['layout'] = SPECIAL_LAYOUTS[name]
+                  if name in SPECIAL_LAYOUTS: c['layout'] = SPECIAL_LAYOUTS[name]
                   cards.append(c)
 
           result = {
               'schema_version': 2,
               'defaults': {
-                  'repo': 'andro951/cards',
-                  'branch': 'main',
-                  'artist': 'ChatGPT',
+                  'repo': 'andro951/cards', 'branch': 'main', 'artist': 'ChatGPT',
                   'art_base_url': 'https://raw.githubusercontent.com/andro951/cards/main/doctor_who/art/',
                   'set_symbol_base_url': 'https://raw.githubusercontent.com/andro951/cards/main/doctor_who/set_icon/'
               },
