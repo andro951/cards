@@ -1,0 +1,20 @@
+name: Temp fetch proxy list card data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-fetch-proxy-list-carddata.yml'
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch deck export
+        run: |
+          python fetch_scryfall_deck.py --deck-id 6c4be1d5-29f3-454e-bf88-47a19e9daf1e --output-dir temp_proxy_list
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proxy-list-export
+          path: temp_proxy_list/
