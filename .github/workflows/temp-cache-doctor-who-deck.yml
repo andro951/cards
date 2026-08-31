@@ -1,0 +1,65 @@
+name: Temp cache Doctor Who Scryfall deck
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-cache-doctor-who-deck.yml'
+
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            doctor_who
+      - name: Capture Scryfall responses and project
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib, shutil, time, urllib.error, urllib.parse, urllib.request
+          root=pathlib.Path('doctor_who_script_test')
+          cache=root/'http_cache'; cache.mkdir(parents=True,exist_ok=True)
+          UA='CardDataDeckPipeline/1.0'; ACCEPT='application/json;q=0.9,*/*;q=0.8'
+          DECK='6c4be1d5-29f3-454e-bf88-47a19e9daf1e'
+          def fetch(url):
+              key=hashlib.sha256(url.encode()).hexdigest(); dest=cache/key
+              if dest.exists(): return json.loads(dest.read_text())
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':ACCEPT})
+              for attempt in range(8):
+                  try:
+                      with urllib.request.urlopen(req,timeout=45) as r: body=r.read()
+                      dest.write_bytes(body); time.sleep(0.35); return json.loads(body.decode())
+                  except urllib.error.HTTPError as e:
+                      if e.code!=429 and not 500<=e.code<=599: raise
+                      ra=e.headers.get('Retry-After') if e.headers else None
+                      try: delay=float(ra) if ra else min(2**attempt,20)
+                      except: delay=min(2**attempt,20)
+                      time.sleep(max(delay,1.0))
+              raise RuntimeError(url)
+          deck_url=f'https://api.scryfall.com/decks/{DECK}/export/json'
+          deck=fetch(deck_url)
+          ids=[]
+          for section,rows in (deck.get('entries') or {}).items():
+              if str(section).lower()=='maybeboard': continue
+              for row in rows or []:
+                  if not isinstance(row,dict) or row.get('found') is False: continue
+                  cid=(row.get('card_digest') or {}).get('id')
+                  if cid and cid not in ids: ids.append(cid)
+          cards=[]
+          for cid in ids:
+              cards.append(fetch(f'https://api.scryfall.com/cards/{cid}'))
+          for card in cards:
+              name=str(card.get('name',''))
+              safe=name.replace('\\','\\\\').replace('"','\\"')
+              q=f'!"{safe}" game:paper lang:en'
+              params={'q':q,'unique':'prints','order':'released','dir':'desc'}
+              fetch('https://api.scryfall.com/cards/search?'+urllib.parse.urlencode(params,doseq=True))
+          shutil.copytree('doctor_who',root/'doctor_who')
+          (root/'manifest.json').write_text(json.dumps({'deck_id':DECK,'unique_cards':len(ids)},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doctor-who-script-test
+          path: doctor_who_script_test/
+          compression-level: 6
