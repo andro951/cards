@@ -73,7 +73,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 API_ROOT = "https://api.scryfall.com"
 DEFAULT_REPO = "andro951/cards"
 DEFAULT_BRANCH = "main"
-DEFAULT_DELAY = 0.125  # 8 req/sec; below Scryfall's requested <10 req/sec.
+DEFAULT_DELAY = 0.25  # 4 req/sec; conservative enough for full-deck two-lookup runs.
 
 MAIN_TYPES = {
     "Artifact",
@@ -160,7 +160,12 @@ class ScryfallClient:
         if remaining > 0:
             time.sleep(remaining)
 
-    def get_json(self, url: str, params: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+    def get_json(
+        self,
+        url: str,
+        params: Optional[Mapping[str, Any]] = None,
+        retry_429: bool = True,
+    ) -> Dict[str, Any]:
         if params:
             encoded = urllib.parse.urlencode(params, doseq=True)
             url = url + ("&" if "?" in url else "?") + encoded
@@ -194,6 +199,15 @@ class ScryfallClient:
                 detail = payload.get("details") or payload.get("code") or ""
             except Exception:
                 pass
+            if exc.code == 429 and retry_429:
+                retry_header = exc.headers.get("Retry-After") if exc.headers else None
+                try:
+                    retry_after = max(float(retry_header), 1.0) if retry_header else 60.0
+                except (TypeError, ValueError):
+                    retry_after = 60.0
+                warn(f"Scryfall rate limit reached; retrying this request after {retry_after:g} seconds.")
+                time.sleep(retry_after)
+                return self.get_json(url, retry_429=False)
             suffix = f": {detail}" if detail else ""
             raise DataError(f"Scryfall HTTP {exc.code} for {url}{suffix}") from exc
         except urllib.error.URLError as exc:

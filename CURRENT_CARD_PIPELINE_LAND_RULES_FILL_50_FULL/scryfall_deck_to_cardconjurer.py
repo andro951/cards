@@ -323,6 +323,8 @@ def infer_repo_project_path(project_dir: Path, cwd: Path, explicit: Optional[str
 
     try:
         rel = project_dir.relative_to(cwd.resolve())
+        if rel == Path("."):
+            return project_dir.name
         return rel.as_posix()
     except ValueError:
         return project_dir.name
@@ -424,7 +426,7 @@ def parser() -> argparse.ArgumentParser:
 
     p.add_argument("--allow-missing-art", action="store_true")
     p.add_argument("--allow-missing-symbols", action="store_true")
-    p.add_argument("--request-delay", type=float, default=0.125)
+    p.add_argument("--request-delay", type=float, default=0.25)
 
     p.add_argument(
         "--no-compile",
