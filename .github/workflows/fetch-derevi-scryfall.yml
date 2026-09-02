@@ -3,7 +3,7 @@ name: Time Lords full-deck pipeline test
 on:
   push:
     paths:
-      - '.github/workflows/fetch-derevi-scryfall.yml'
+      - '.run-time-lords'
 
 permissions:
   contents: read
