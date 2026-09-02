@@ -1,0 +1,204 @@
+name: Temporary Time Lords Scryfall prefetch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-chatgpt-timelords-prefetch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch exact Time Lords Scryfall export and HTTP cache
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import re
+          import time
+          import unicodedata
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          DECK_ID = '134b9792-519a-4c61-8d7a-e3e35e8ca468'
+          API = 'https://api.scryfall.com'
+          UA = 'andro951-cardconjurer-prefetch/1.0'
+          EXCLUDED = {'sideboard', 'outside_the_game', 'maybeboard'}
+          OUT = Path('timelords_prefetch')
+          CACHE = OUT / 'cache'
+          CACHE.mkdir(parents=True, exist_ok=True)
+
+          def slug(text):
+              text = unicodedata.normalize('NFKD', str(text))
+              text = ''.join(ch for ch in text if not unicodedata.combining(ch))
+              text = re.sub(r"['’]", '', text)
+              text = re.sub(r'[^A-Za-z0-9]+', '_', text)
+              return text.strip('_').lower()
+
+          def fetch_json(url, retries=8):
+              for attempt in range(retries):
+                  req = urllib.request.Request(url, headers={
+                      'User-Agent': UA,
+                      'Accept': 'application/json;q=0.9,*/*;q=0.8',
+                  })
+                  try:
+                      with urllib.request.urlopen(req, timeout=45) as response:
+                          body = response.read().decode('utf-8')
+                      time.sleep(0.13)
+                      return json.loads(body)
+                  except urllib.error.HTTPError as exc:
+                      if exc.code == 429 or 500 <= exc.code < 600:
+                          retry_after = exc.headers.get('Retry-After')
+                          try:
+                              wait = float(retry_after) if retry_after else min(2 ** attempt, 30)
+                          except ValueError:
+                              wait = min(2 ** attempt, 30)
+                          time.sleep(max(wait, 0.5))
+                          continue
+                      raise
+                  except urllib.error.URLError:
+                      if attempt + 1 >= retries:
+                          raise
+                      time.sleep(min(2 ** attempt, 30))
+              raise RuntimeError(f'failed after retries: {url}')
+
+          def cache_put(url, obj):
+              path = CACHE / hashlib.sha256(url.encode('utf-8')).hexdigest()
+              path.write_text(json.dumps(obj, ensure_ascii=False), encoding='utf-8')
+
+          export_url = f'{API}/decks/{DECK_ID}/export/json'
+          deck = fetch_json(export_url)
+          (OUT / 'deck_export.json').write_text(
+              json.dumps(deck, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
+          )
+
+          entries = deck.get('entries')
+          if not isinstance(entries, dict):
+              raise RuntimeError('Scryfall deck export did not contain entries object')
+
+          included_rows = []
+          excluded_summary = {}
+          all_summary = {}
+          seen_ids = set()
+          card_objects = []
+
+          for section, rows in entries.items():
+              if not isinstance(rows, list):
+                  raise RuntimeError(f'section {section!r} is not a list')
+              normalized = slug(section)
+              usable = []
+              for row in rows:
+                  if not isinstance(row, dict):
+                      continue
+                  digest = row.get('card_digest')
+                  raw_text = str(row.get('raw_text') or '').strip()
+                  if row.get('found') is False:
+                      if not raw_text and not isinstance(digest, dict):
+                          continue
+                      raise RuntimeError(f'unresolved Scryfall row in {section}: {raw_text!r}')
+                  if not isinstance(digest, dict):
+                      if not raw_text:
+                          continue
+                      raise RuntimeError(f'row without card_digest in {section}: {raw_text!r}')
+                  usable.append(row)
+
+              all_summary[str(section)] = {
+                  'normalized': normalized,
+                  'rows': len(usable),
+                  'quantity': sum(int(r.get('count', 1) or 1) for r in usable),
+              }
+
+              if normalized in EXCLUDED:
+                  excluded_summary[str(section)] = all_summary[str(section)]
+                  continue
+
+              for row in usable:
+                  digest = row['card_digest']
+                  card_id = str(digest.get('id') or '').strip()
+                  name = str(digest.get('name') or '').strip()
+                  if not card_id:
+                      raise RuntimeError(f'missing Scryfall id for {name!r}')
+                  included_rows.append({
+                      'section': str(section),
+                      'count': int(row.get('count', 1) or 1),
+                      'name': name,
+                      'scryfall_id': card_id,
+                      'set': digest.get('set'),
+                      'collector_number': digest.get('collector_number'),
+                  })
+                  if card_id in seen_ids:
+                      continue
+                  seen_ids.add(card_id)
+
+                  card_url = f'{API}/cards/{urllib.parse.quote(card_id, safe="")}'
+                  card = fetch_json(card_url)
+                  cache_put(card_url, card)
+                  card_objects.append(card)
+
+          # Prefetch exactly the latest-printing search URL used by
+          # scryfall_to_card_data.py for each selected printing.
+          for card in card_objects:
+              name = str(card.get('name', ''))
+              safe_name = name.replace('\\', '\\\\').replace('"', '\\"')
+              query = f'!"{safe_name}" game:paper lang:en'
+              params = {
+                  'q': query,
+                  'unique': 'prints',
+                  'order': 'released',
+                  'dir': 'desc',
+              }
+              search_url = f'{API}/cards/search?' + urllib.parse.urlencode(params, doseq=True)
+              try:
+                  page = fetch_json(search_url)
+                  cache_put(search_url, page)
+              except Exception as exc:
+                  # The local ingestion script deliberately falls back to the
+                  # resolved printing if this optional flavor lookup fails.
+                  print(f'WARNING latest-printing prefetch failed for {name}: {exc}')
+
+          manifest = {
+              'deck_id': DECK_ID,
+              'deck_name': deck.get('name'),
+              'all_sections': all_summary,
+              'excluded_sections': excluded_summary,
+              'included_manifest_entries': len(included_rows),
+              'included_quantity': sum(r['count'] for r in included_rows),
+              'unique_selected_printings': len(seen_ids),
+              'included_rows': included_rows,
+          }
+          (OUT / 'prefetch_manifest.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
+          )
+          print(json.dumps({
+              'deck_name': manifest['deck_name'],
+              'all_sections': all_summary,
+              'excluded_sections': excluded_summary,
+              'included_manifest_entries': manifest['included_manifest_entries'],
+              'included_quantity': manifest['included_quantity'],
+              'unique_selected_printings': manifest['unique_selected_printings'],
+          }, indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timelords-scryfall-prefetch
+          path: timelords_prefetch/
+          if-no-files-found: error
+
+      - name: Remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-chatgpt-timelords-prefetch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/temp-chatgpt-timelords-prefetch.yml
+          git commit -m "Remove temporary Time Lords Scryfall prefetch workflow"
+          git push
