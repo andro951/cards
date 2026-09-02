@@ -1,4 +1,4 @@
-name: Patch deck section filtering and rerun Time Lords
+name: Fix URL pipeline path and pacing, then rerun Time Lords
 
 on:
   push:
@@ -13,31 +13,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch canonical deck wrapper section filtering
+      - name: Patch canonical URL pipeline
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py')
-          s=p.read_text()
-          old='''    requested = {s.lower() for s in include_sections} if include_sections else None\n\n    sources: List[str] = []\n'''
-          new='''    requested = {s.lower() for s in include_sections} if include_sections else None\n    excluded_default_sections = {\"maybeboard\", \"sideboard\", \"outside\", \"outside the game\"}\n\n    sources: List[str] = []\n'''
+          w=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py')
+          s=w.read_text()
+          old='''    try:\n        rel = project_dir.relative_to(cwd.resolve())\n        return rel.as_posix()\n    except ValueError:\n        return project_dir.name\n'''
+          new='''    try:\n        rel = project_dir.relative_to(cwd.resolve())\n        if rel == Path("."):\n            return project_dir.name\n        return rel.as_posix()\n    except ValueError:\n        return project_dir.name\n'''
           if old not in s:
-              raise SystemExit('expected requested block not found')
+              raise SystemExit('repo-project-path block not found')
           s=s.replace(old,new,1)
-          old2='''        if requested is not None and section_l not in requested:\n            continue\n        if requested is None and section_l == \"maybeboard\" and not include_maybeboard:\n            continue\n'''
-          new2='''        if requested is not None and section_l not in requested:\n            continue\n        if requested is None:\n            if section_l in {\"sideboard\", \"outside\", \"outside the game\"}:\n                continue\n            if section_l == \"maybeboard\" and not include_maybeboard:\n                continue\n'''
-          if old2 not in s:
-              raise SystemExit('expected section filter block not found')
-          s=s.replace(old2,new2,1)
-          p.write_text(s)
+          s=s.replace('p.add_argument("--request-delay", type=float, default=0.125)', 'p.add_argument("--request-delay", type=float, default=0.25)', 1)
+          w.write_text(s)
+
+          src=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py')
+          s=src.read_text()
+          s=s.replace("DEFAULT_DELAY = 0.125  # 8 req/sec; below Scryfall's requested <10 req/sec.", "DEFAULT_DELAY = 0.25  # 4 req/sec; conservative enough for full-deck two-lookup runs.", 1)
+          s=s.replace('''    def get_json(self, url: str, params: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:\n''','''    def get_json(\n        self,\n        url: str,\n        params: Optional[Mapping[str, Any]] = None,\n        retry_429: bool = True,\n    ) -> Dict[str, Any]:\n''',1)
+          old='''        except urllib.error.HTTPError as exc:\n            self._last_request = time.monotonic()\n            detail = ""\n            try:\n                payload = json.loads(exc.read().decode("utf-8"))\n                detail = payload.get("details") or payload.get("code") or ""\n            except Exception:\n                pass\n            suffix = f": {detail}" if detail else ""\n            raise DataError(f"Scryfall HTTP {exc.code} for {url}{suffix}") from exc\n'''
+          new='''        except urllib.error.HTTPError as exc:\n            self._last_request = time.monotonic()\n            detail = ""\n            try:\n                payload = json.loads(exc.read().decode("utf-8"))\n                detail = payload.get("details") or payload.get("code") or ""\n            except Exception:\n                pass\n            if exc.code == 429 and retry_429:\n                retry_header = exc.headers.get("Retry-After") if exc.headers else None\n                try:\n                    retry_after = max(float(retry_header), 1.0) if retry_header else 60.0\n                except (TypeError, ValueError):\n                    retry_after = 60.0\n                warn(f"Scryfall rate limit reached; retrying this request after {retry_after:g} seconds.")\n                time.sleep(retry_after)\n                return self.get_json(url, retry_429=False)\n            suffix = f": {detail}" if detail else ""\n            raise DataError(f"Scryfall HTTP {exc.code} for {url}{suffix}") from exc\n'''
+          if old not in s:
+              raise SystemExit('HTTP 429 block not found')
+          s=s.replace(old,new,1)
+          src.write_text(s)
           PY
-          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py
-      - name: Commit section-filter fix
+          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py
+      - name: Commit URL-pipeline fixes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py
-          git commit -m "Exclude non-deck Scryfall sections by default"
+          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py
+          git commit -m "Fix URL-only project path and Scryfall rate handling"
           git push
       - name: Run full deck from URL only
         working-directory: doctor_who
@@ -47,7 +54,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: time-lords-rerun-after-section-fix
+          name: time-lords-rerun-after-url-fixes
           path: |
             doctor_who/generated_*_card_data.json
             doctor_who/generated_*_cards.cardconjurer
