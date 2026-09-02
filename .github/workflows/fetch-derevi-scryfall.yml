@@ -1,49 +1,25 @@
-name: Time Lords art filename comparison
+name: Fetch Derevi Scryfall checklist
 
 on:
   push:
     paths:
-      - '.github/workflows/fetch-derevi-scryfall.yml'
+      - '.fetch-derevi-scryfall'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  compare:
+  fetch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build semantic data allowing missing art
-        working-directory: doctor_who
+      - name: Fetch Scryfall checklist and card data
+        run: python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi
+      - name: Commit fetched data
         run: |
-          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468" --allow-missing-art --no-compile
-      - name: Compare generated face names to art filenames
-        working-directory: doctor_who
-        run: |
-          python - <<'PY'
-          import json, re, unicodedata
-          from pathlib import Path
-
-          def slug(text):
-              text = unicodedata.normalize('NFKD', text)
-              text = ''.join(ch for ch in text if not unicodedata.combining(ch))
-              text = text.replace('Æ','AE').replace('æ','ae').replace('Œ','OE').replace('œ','oe')
-              text = re.sub(r"['’]", '', text)
-              text = re.sub(r'[^A-Za-z0-9]+', '_', text)
-              return text.strip('_').lower()
-
-          doc = json.loads(Path('generated_doctor_who_card_data.json').read_text())
-          cards = doc['cards']
-          required = {slug(c['name']): c['name'] for c in cards}
-          art_files = [p.name for p in Path('art').iterdir() if p.is_file()]
-          actual = {slug(Path(f).stem): f for f in art_files}
-
-          print(f'GENERATED_FACES={len(cards)}')
-          print(f'ART_FILES={len(art_files)}')
-          print('MISSING_FROM_ART:')
-          for k in sorted(required.keys() - actual.keys()):
-              print(f'  {required[k]} -> expected slug {k}')
-          print('EXTRA_ART_FILES:')
-          for k in sorted(actual.keys() - required.keys()):
-              print(f'  {actual[k]} -> slug {k}')
-          PY
+          rm -f .fetch-derevi-scryfall
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add derevi/scryfall_proxy_decklist.txt derevi/scryfall_proxy_cards.json derevi/scryfall_proxy_export.json .fetch-derevi-scryfall
+          git commit -m "Fetch Derevi Scryfall proxy checklist"
+          git push
