@@ -1,25 +1,54 @@
-name: Fetch Derevi Scryfall checklist
+name: Patch deck section filtering and rerun Time Lords
 
 on:
   push:
     paths:
-      - '.fetch-derevi-scryfall'
+      - '.github/workflows/fetch-derevi-scryfall.yml'
 
 permissions:
   contents: write
 
 jobs:
-  fetch:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch Scryfall checklist and card data
-        run: python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi
-      - name: Commit fetched data
+      - name: Patch canonical deck wrapper section filtering
         run: |
-          rm -f .fetch-derevi-scryfall
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py')
+          s=p.read_text()
+          old='''    requested = {s.lower() for s in include_sections} if include_sections else None\n\n    sources: List[str] = []\n'''
+          new='''    requested = {s.lower() for s in include_sections} if include_sections else None\n    excluded_default_sections = {\"maybeboard\", \"sideboard\", \"outside\", \"outside the game\"}\n\n    sources: List[str] = []\n'''
+          if old not in s:
+              raise SystemExit('expected requested block not found')
+          s=s.replace(old,new,1)
+          old2='''        if requested is not None and section_l not in requested:\n            continue\n        if requested is None and section_l == \"maybeboard\" and not include_maybeboard:\n            continue\n'''
+          new2='''        if requested is not None and section_l not in requested:\n            continue\n        if requested is None:\n            if section_l in {\"sideboard\", \"outside\", \"outside the game\"}:\n                continue\n            if section_l == \"maybeboard\" and not include_maybeboard:\n                continue\n'''
+          if old2 not in s:
+              raise SystemExit('expected section filter block not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py
+      - name: Commit section-filter fix
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add derevi/scryfall_proxy_decklist.txt derevi/scryfall_proxy_cards.json derevi/scryfall_proxy_export.json .fetch-derevi-scryfall
-          git commit -m "Fetch Derevi Scryfall proxy checklist"
+          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py
+          git commit -m "Exclude non-deck Scryfall sections by default"
           git push
+      - name: Run full deck from URL only
+        working-directory: doctor_who
+        run: |
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468"
+      - name: Upload generated files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: time-lords-rerun-after-section-fix
+          path: |
+            doctor_who/generated_*_card_data.json
+            doctor_who/generated_*_cards.cardconjurer
+          if-no-files-found: ignore
