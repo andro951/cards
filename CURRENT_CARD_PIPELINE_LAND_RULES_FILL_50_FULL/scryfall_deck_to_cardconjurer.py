@@ -185,6 +185,7 @@ def extract_card_sources(
         )
 
     requested = {s.lower() for s in include_sections} if include_sections else None
+    excluded_default_sections = {"maybeboard", "sideboard", "outside", "outside the game"}
 
     sources: List[str] = []
     manifest: List[Dict[str, Any]] = []
@@ -195,8 +196,11 @@ def extract_card_sources(
 
         if requested is not None and section_l not in requested:
             continue
-        if requested is None and section_l == "maybeboard" and not include_maybeboard:
-            continue
+        if requested is None:
+            if section_l in {"sideboard", "outside", "outside the game"}:
+                continue
+            if section_l == "maybeboard" and not include_maybeboard:
+                continue
 
         rows = entries.get(section)
         if not isinstance(rows, list):
