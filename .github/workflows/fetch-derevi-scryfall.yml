@@ -1,25 +1,28 @@
-name: Fetch Derevi Scryfall checklist
+name: Time Lords full-deck pipeline test
 
 on:
   push:
     paths:
-      - '.fetch-derevi-scryfall'
+      - '.github/workflows/fetch-derevi-scryfall.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  fetch:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch Scryfall checklist and card data
-        run: python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi
-      - name: Commit fetched data
+      - name: Run full deck from URL only
+        working-directory: doctor_who
         run: |
-          rm -f .fetch-derevi-scryfall
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add derevi/scryfall_proxy_decklist.txt derevi/scryfall_proxy_cards.json derevi/scryfall_proxy_export.json .fetch-derevi-scryfall
-          git commit -m "Fetch Derevi Scryfall proxy checklist"
-          git push
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468"
+      - name: Upload generated files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: time-lords-full-deck-output
+          path: |
+            doctor_who/generated_*_card_data.json
+            doctor_who/generated_*_cards.cardconjurer
+          if-no-files-found: ignore
