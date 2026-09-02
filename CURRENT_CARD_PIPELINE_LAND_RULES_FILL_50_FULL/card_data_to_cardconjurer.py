@@ -5,7 +5,9 @@
 # The input contains card facts/assets only. All visual layout data lives here.
 # `layout` is OPTIONAL and is only a manual override for special treatments.
 # Normal cards are classified from semantic type fields when present, otherwise from type_line.
-# Unknown/special structures fail instead of being forced into a generic frame.
+# Unknown/special structures fail instead of being forced into a generic frame,
+# except Sagas: approved Saga layouts compile automatically and unapproved
+# Saga layout signatures compile but are flagged in a sidecar review file.
 
 from __future__ import annotations
 import argparse, base64, copy, json, math, re, struct, sys, urllib.parse, urllib.request
@@ -28,6 +30,33 @@ LEGENDARY_LAND_RULES_TEXT_HEIGHT_PX=680
 LEGENDARY_LAND_RULES_TEXT_HEIGHT=LEGENDARY_LAND_RULES_TEXT_HEIGHT_PX/CARD_HEIGHT
 NORMAL_FRAME_SET_SYMBOL_X_PX=1737
 NORMAL_FRAME_SET_SYMBOL_X=NORMAL_FRAME_SET_SYMBOL_X_PX/CARD_WIDTH
+
+# APPROVED SAGA GEOMETRY / REFERENCE LAYOUT DATA.
+# New Saga art should be authored at the exact art-well size: 854 x 2041 px.
+SAGA_ART_BOUNDS_PX={"x":1005,"y":316,"width":854,"height":2041}
+SAGA_ART_BOUNDS={k:(v/CARD_WIDTH if k in {"x","width"} else v/CARD_HEIGHT) for k,v in SAGA_ART_BOUNDS_PX.items()}
+SAGA_SET_SYMBOL_X_PX=1737
+SAGA_SET_SYMBOL_Y_PX=2400
+SAGA_SET_SYMBOL_X=SAGA_SET_SYMBOL_X_PX/CARD_WIDTH
+SAGA_SET_SYMBOL_Y=SAGA_SET_SYMBOL_Y_PX/CARD_HEIGHT
+SAGA_SET_SYMBOL_BOUNDS={"x":SAGA_SET_SYMBOL_X,"y":SAGA_SET_SYMBOL_Y,"width":0.12,"height":0.0381,"vertical":"center","horizontal":"right"}
+SAGA_REMINDER_BOUNDS_PX={"x":174,"y":318,"width":812,"height":499}
+SAGA_ABILITY_X_PX=268
+SAGA_ABILITY_WIDTH_PX=704
+SAGA_ABILITY_START_Y_PX=815
+SAGA_ABILITY_END_DEFAULT_Y_PX=2323
+SAGA_ABILITY_END_MAX_Y_PX=2382
+SAGA_TYPE_Y_PX=2387
+SAGA_TEXT_COLOR="black"
+SAGA_REMINDER_FONT_SIZE=0.03
+SAGA_ABILITY_FONT_SIZE=0.0305
+SAGA_SLOTS=4
+SAGA_APPROVED_SIGNATURES={
+    (3,):"An Unearthly Child reference layout",
+    (1,1,1):"The Girl in the Fireplace / The Eleventh Hour reference layout",
+    (3,1):"Trial of a Time Lord / The Day of the Doctor reference layout",
+    (2,1):"Death in Heaven reference layout",
+}
 
 # These names are user-facing recipe/classification results. Most are composed
 # from the approved examples embedded above; they are not required in card data.
@@ -72,12 +101,12 @@ SUPPORTED_STRUCTURES = [
     ("Legendary Land, 4-5 colors", "five-color land + floating legendary crown"),
     ("Snow (modifier)", "uses the underlying supported permanent type"),
     ("World Enchantment (modifier)", "uses enchantment recipe"),
+    ("Enchantment - Saga", "automatic Saga recipe with sidecar review flagging for unapproved Saga layout signatures"),
 ]
 
 UNSUPPORTED_STRUCTURES = [
     "Planeswalker",
     "Battle",
-    "generic Saga (the repo currently has only the special MOM Praetor/Saga example)",
     "Class",
     "Case",
     "Room",
@@ -125,6 +154,7 @@ KNOWN_LAYOUT_OVERRIDES=set(LAYOUTS) | {
     "nyx_creature_legendary","nyx_enchantment_legendary",
     "vehicle","colorless_creature","colorless_creature_legendary","land_colorless","land_full_single","land_full_dual_legendary",
     "land_full_tri_legendary","land_five_color_legendary","original_dual_land_textless",
+    "saga",
 }
 
 COLORLESS_LAND_APPROVED_TEMPLATE=json.loads('{"key":"","data":{"width":2010,"height":2814,"marginX":0,"marginY":0,"frames":[{"name":"Neutral Title Bar","src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201000%20100%22%3E%0A%3Cdefs%3E%0A%20%20%3ClinearGradient%20id%3D%22fill%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23696969%22%20stop-opacity%3D%220.80%22/%3E%0A%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23505050%22%20stop-opacity%3D%220.76%22/%3E%0A%20%20%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22992%22%20height%3D%2292%22%20rx%3D%2228%22%20fill%3D%22none%22%20stroke%3D%22%23040605%22%20stroke-width%3D%228%22/%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%22980%22%20height%3D%2280%22%20rx%3D%2224%22%20fill%3D%22url%28%23fill%29%22%20stroke%3D%22none%22/%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2217%22%20width%3D%22966%22%20height%3D%2266%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%220.35%22%20stroke-width%3D%221.6%22/%3E%0A%3C/svg%3E","masks":[],"bounds":{"x":0.052,"y":0.041,"width":0.896,"height":0.075}},{"name":"Neutral Type Bar","src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201000%20100%22%3E%0A%3Cdefs%3E%0A%20%20%3ClinearGradient%20id%3D%22fill%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23696969%22%20stop-opacity%3D%220.80%22/%3E%0A%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23505050%22%20stop-opacity%3D%220.76%22/%3E%0A%20%20%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22992%22%20height%3D%2292%22%20rx%3D%2228%22%20fill%3D%22none%22%20stroke%3D%22%23040605%22%20stroke-width%3D%228%22/%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%22980%22%20height%3D%2280%22%20rx%3D%2224%22%20fill%3D%22url%28%23fill%29%22%20stroke%3D%22none%22/%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2217%22%20width%3D%22966%22%20height%3D%2266%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%220.35%22%20stroke-width%3D%221.6%22/%3E%0A%3C/svg%3E","masks":[],"bounds":{"x":0.052,"y":0.552,"width":0.896,"height":0.075}},{"name":"Native Land Pinline","src":"/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png","masks":[{"src":"/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png","name":"Pinline"}]},{"name":"Land Frame","src":"/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png","masks":[{"src":"/img/frames/m15/regular/m15MaskBorder.png","name":"Border"}]}],"artSource":"","artX":0,"artY":-0.0745142857142857,"artZoom":1.962890625,"artRotate":"0","setSymbolSource":"","setSymbolX":0.8522388059701492,"setSymbolY":0.5692963752665245,"setSymbolZoom":0.10099999999999999,"watermarkSource":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==","watermarkX":0.5,"watermarkY":0.7762,"watermarkZoom":1,"watermarkLeft":"none","watermarkRight":"none","watermarkOpacity":0,"version":"genericShowcase","manaSymbols":[],"infoYear":"2013","margins":false,"bottomInfoTranslate":{"x":0,"y":0},"bottomInfoRotate":0,"bottomInfoZoom":1,"bottomInfoColor":"white","onload":null,"hideBottomInfoBorder":false,"showsFlavorBar":true,"bottomInfo":{"midLeft":{"text":"{fontbelerenbsc}{fontsize3}{upinline1}￮{savex2}{elemidinfo-artist}","x":0.0647,"y":0.9548,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"midLeft"},"topLeft":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"topLeft"},"note":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"note"},"rarity":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"rarity"},"bottomLeft":{"text":"Custom Proxy • Personal Use Only","x":0.0647,"y":0.9719,"width":0.8707,"height":0.0143,"oneLine":true,"font":"gothammedium","size":0.0143,"color":"white","outlineWidth":0.003},"wizards":{"name":"wizards","text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0167,"oneLine":true,"font":"mplantin","size":0.0162,"color":"white","align":"right","outlineWidth":0.003},"bottomRight":{"text":"","x":0.0647,"y":0.9548,"width":0.8707,"height":0.0143,"oneLine":true,"font":"mplantin","size":0.0143,"color":"white","align":"right","outlineWidth":0.003}},"artBounds":{"x":0,"y":0,"width":1,"height":0.9224},"setSymbolBounds":{"x":0.9213,"y":0.591,"width":0.12,"height":0.041,"vertical":"center","horizontal":"right"},"watermarkBounds":{"x":0.5,"y":0.7762,"width":0.75,"height":0.2305},"text":{"mana":{"name":"Mana Cost","text":"","y":0.0613,"width":0.9292,"height":0.03380952380952381,"oneLine":true,"size":0.043345543345543344,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":true,"manaSpacing":0,"color":"white","outlineWidth":0.0035},"title":{"name":"Title","text":"","x":0.0854,"y":0.0522,"width":0.8292,"height":0.0543,"oneLine":true,"font":"belerenb","size":0.0381,"color":"white","outlineWidth":0.004},"type":{"name":"Type","text":"","x":0.0854,"y":0.5664,"width":0.8292,"height":0.0543,"oneLine":true,"font":"belerenb","size":0.0324,"color":"white","outlineWidth":0.0035},"rules":{"name":"Rules Text","text":"","x":0.105,"y":0.6303,"width":0.79,"height":0.2931769722814499,"size":0.0348,"color":"white","align":"left","outlineWidth":0.0035},"pt":{"name":"Power/Toughness","text":"","x":0.7928,"y":0.902,"width":0.1367,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":true,"align":"center","color":"white","outlineWidth":0.0035}},"infoNumber":"","infoRarity":"","infoSet":"","infoLanguage":"","infoArtist":"ChatGPT","infoNote":"","serialNumber":"","serialTotal":"","serialX":"","serialY":"","serialScale":"","noCorners":false}}')
@@ -137,6 +167,226 @@ def js_round(v): return math.floor(v+0.5)
 def round1(v): return math.floor(v*10+0.5)/10
 def mana_symbol_count(s): return len(re.findall(r"\{[^{}]+\}",s or ""))
 def title_width(mana,cw=CARD_WIDTH): return max(300,1680-95*mana_symbol_count(mana))/cw
+
+def apply_saga_geometry_so_far(data,mana=""):
+    """Apply the approved fixed Saga geometry."""
+    data["artBounds"]=copy.deepcopy(SAGA_ART_BOUNDS)
+    data["setSymbolX"]=SAGA_SET_SYMBOL_X
+    data["setSymbolY"]=SAGA_SET_SYMBOL_Y
+    data["setSymbolBounds"]=copy.deepcopy(SAGA_SET_SYMBOL_BOUNDS)
+    text=data.get("text",{})
+    normal=LAYOUTS.get("card_noncreature",{}).get("data",{})
+    normal_text=normal.get("text",{}) if isinstance(normal,dict) else {}
+    for slot in ("mana","title","type"):
+        dst=text.get(slot) if isinstance(text,dict) else None
+        src=normal_text.get(slot) if isinstance(normal_text,dict) else None
+        if isinstance(dst,dict) and isinstance(src,dict):
+            if "x" in src: dst["x"]=src["x"]
+            if "width" in src: dst["width"]=src["width"]
+    if isinstance(text,dict) and isinstance(text.get("title"),dict):
+        text["title"]["width"]=title_width(mana,int(data.get("width",CARD_WIDTH)))
+    if isinstance(text,dict) and isinstance(text.get("type"),dict):
+        text["type"]["y"]=SAGA_TYPE_Y_PX/CARD_HEIGHT
+    normal_bottom=normal.get("bottomInfo",{}) if isinstance(normal,dict) else {}
+    bottom=data.get("bottomInfo",{})
+    if isinstance(bottom,dict) and isinstance(normal_bottom,dict):
+        for key,dst in bottom.items():
+            src=normal_bottom.get(key)
+            if isinstance(dst,dict) and isinstance(src,dict):
+                if "x" in src: dst["x"]=src["x"]
+                if "width" in src: dst["width"]=src["width"]
+    return data
+
+def saga_frame_code(card,type_info):
+    code=regular_frame_color(card,type_info)
+    return code or "M"
+
+def build_saga_recipe(card,type_info):
+    entry=copy.deepcopy(LAYOUTS["card_noncreature"])
+    data=entry["data"]
+    mana=str(card.get("mana_cost","") or "")
+    frame_code=saga_frame_code(card,type_info)
+    frame_name=f"{COLOR_NAMES.get(frame_code,'Multicolored')} Frame"
+    data["frames"]= [{"name":frame_name,"src":f"/img/frames/saga/regular/sagaFrame{frame_code}.png","masks":[]}]
+    data["version"]="sagaRegular"
+    data["onload"]="/js/frames/versionSaga.js"
+    data["showsFlavorBar"]=False
+    apply_saga_geometry_so_far(data,mana)
+    text=data.get("text",{})
+    text.pop("rules",None)
+    text.pop("pt",None)
+    if isinstance(text.get("title"),dict):
+        text["title"]["color"]=SAGA_TEXT_COLOR
+    if isinstance(text.get("type"),dict):
+        text["type"]["color"]=SAGA_TEXT_COLOR
+    text["reminder"]={
+        "name":"Reminder Text","text":"",
+        "x":SAGA_REMINDER_BOUNDS_PX["x"]/CARD_WIDTH,
+        "y":SAGA_REMINDER_BOUNDS_PX["y"]/CARD_HEIGHT,
+        "width":SAGA_REMINDER_BOUNDS_PX["width"]/CARD_WIDTH,
+        "height":SAGA_REMINDER_BOUNDS_PX["height"]/CARD_HEIGHT,
+        "font":"mplantin","size":SAGA_REMINDER_FONT_SIZE,"color":SAGA_TEXT_COLOR,"shadowColor":"white"
+    }
+    base_ability={
+        "font":"mplantin","size":SAGA_ABILITY_FONT_SIZE,"color":SAGA_TEXT_COLOR,
+        "x":SAGA_ABILITY_X_PX/CARD_WIDTH,"width":SAGA_ABILITY_WIDTH_PX/CARD_WIDTH
+    }
+    default_y=SAGA_ABILITY_END_DEFAULT_Y_PX/CARD_HEIGHT
+    for i in range(SAGA_SLOTS):
+        text[f"ability{i}"]={
+            "name":f"Ability {i+1}","text":"",
+            "x":base_ability["x"],"y":default_y,"width":base_ability["width"],"height":0,
+            "font":base_ability["font"],"size":base_ability["size"],"color":base_ability["color"]
+        }
+    data["saga"]={"abilities":[0,0,0,0],"count":0,"x":0.1,"width":0.3947}
+    return entry
+
+def parse_saga_chapter_prefix(prefix):
+    tokens=[t.strip() for t in prefix.replace(" and ",",").split(",") if t.strip()]
+    return tokens
+
+def parse_saga_oracle(oracle):
+    raw_lines=[str(line).strip() for line in str(oracle or "").splitlines()]
+    lines=[line for line in raw_lines if line]
+    reminder=""
+    abilities=[]
+    current=None
+    for line in lines:
+        if not reminder and line.startswith("(") and line.endswith(")"):
+            reminder=line
+            continue
+        m=re.match(r"^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*(.*)$",line)
+        if m:
+            if current is not None: abilities.append(current)
+            chapters=parse_saga_chapter_prefix(m.group(1))
+            current={"chapters":chapters,"text":m.group(2).strip()}
+        else:
+            if current is None:
+                # Be permissive for unusual formatting: treat stray text as an
+                # unchaptered continuation so the card still compiles.
+                current={"chapters":["I"],"text":line}
+            else:
+                current["text"]=(current["text"]+"\n"+line).strip()
+    if current is not None: abilities.append(current)
+    return {"reminder":reminder,"abilities":abilities}
+
+def clean_saga_text(text):
+    return re.sub(r"\s+"," ",re.sub(r"\{[^{}]+\}","",str(text or ""))).strip()
+
+def estimated_saga_lines(text,width=40):
+    plain=clean_saga_text(text)
+    if not plain: return 1
+    parts=[part.strip() for part in plain.split("\n") if part.strip()] or [plain]
+    total=0
+    for part in parts:
+        total+=max(1,math.ceil(len(part)/max(1,width)))
+    return total
+
+def approved_saga_heights(signature,texts):
+    if signature==(3,):
+        return [1508]
+    if signature==(2,1):
+        return [478,1029]
+    if signature==(3,1):
+        return [1041,467] if len(clean_saga_text(texts[0]))>200 else [535,973]
+    if signature==(1,1,1):
+        return [478,619,470] if len(clean_saga_text(texts[0]))>100 else [422,619,467]
+    return None
+
+def generic_saga_heights(texts):
+    heights=[]
+    for text in texts:
+        lines=estimated_saga_lines(text)
+        heights.append(max(360,240+110*lines))
+    max_total=SAGA_ABILITY_END_DEFAULT_Y_PX-SAGA_ABILITY_START_Y_PX
+    total=sum(heights)
+    if total>max_total and total>0:
+        scale=max_total/total
+        heights=[max(260,int(round(h*scale))) for h in heights]
+        diff=max_total-sum(heights)
+        if heights: heights[-1]+=diff
+    return heights
+
+def normalize_saga_blocks(parsed,flags,name):
+    abilities=list(parsed.get("abilities") or [])
+    if not abilities:
+        raise BuildError(f"{name}: Saga oracle text has no chapter abilities")
+    if len(abilities)<=SAGA_SLOTS:
+        return abilities
+    flags.append({
+        "name":name,
+        "status":"unchecked",
+        "reason":f"Saga has {len(abilities)} ability blocks; merged blocks {SAGA_SLOTS}..{len(abilities)} into slot {SAGA_SLOTS}",
+        "signature":[len(a.get('chapters',[])) for a in abilities],
+    })
+    merged=abilities[:SAGA_SLOTS-1]
+    tail=abilities[SAGA_SLOTS-1:]
+    merged_chapters=[]
+    merged_text_parts=[]
+    for block in tail:
+        ch=block.get("chapters") or []
+        merged_chapters.extend(ch)
+        label=", ".join(ch)
+        txt=str(block.get("text") or "").strip()
+        merged_text_parts.append(f"{label} — {txt}" if label else txt)
+    merged.append({"chapters":merged_chapters,"text":"\n".join(p for p in merged_text_parts if p)})
+    return merged
+
+def saga_layout_metadata(card):
+    name=str(card.get("name","") or "").strip() or "<unnamed>"
+    parsed=parse_saga_oracle(card.get("oracle_text",""))
+    flags=[]
+    abilities=normalize_saga_blocks(parsed,flags,name)
+    signature=tuple(len(a.get("chapters") or []) for a in abilities)
+    texts=[str(a.get("text") or "").strip() for a in abilities]
+    heights=approved_saga_heights(signature,texts)
+    checked=heights is not None and signature in SAGA_APPROVED_SIGNATURES
+    if heights is None:
+        heights=generic_saga_heights(texts)
+    if not checked:
+        flags.append({
+            "name":name,
+            "status":"unchecked",
+            "reason":"Saga chapter grouping does not match any of the six approved reference layouts",
+            "signature":list(signature),
+        })
+    return {
+        "reminder":parsed.get("reminder","") or "",
+        "abilities":abilities,
+        "signature":signature,
+        "heights":heights,
+        "checked":checked,
+        "checked_against":SAGA_APPROVED_SIGNATURES.get(signature),
+        "flags":flags,
+    }
+
+def apply_saga_text_layout(data,meta):
+    text=data.get("text",{})
+    reminder=meta.get("reminder","")
+    if reminder and isinstance(text.get("reminder"),dict):
+        text["reminder"]["text"]="{i}"+reminder
+    abilities=meta.get("abilities") or []
+    heights=list(meta.get("heights") or [])
+    counts=[len(block.get("chapters") or []) for block in abilities]
+    data["saga"]={"abilities":(counts+[0]*SAGA_SLOTS)[:SAGA_SLOTS],"count":len(abilities),"x":0.1,"width":0.3947}
+    y=SAGA_ABILITY_START_Y_PX
+    for i in range(SAGA_SLOTS):
+        slot=text.get(f"ability{i}")
+        if not isinstance(slot,dict):
+            continue
+        if i<len(abilities):
+            h=int(heights[i]) if i<len(heights) else 0
+            slot["text"]=str(abilities[i].get("text") or "")
+            slot["x"]=SAGA_ABILITY_X_PX/CARD_WIDTH
+            slot["y"]=y/CARD_HEIGHT
+            slot["width"]=SAGA_ABILITY_WIDTH_PX/CARD_WIDTH
+            slot["height"]=max(0,h)/CARD_HEIGHT
+            y+=max(0,h)
+        else:
+            slot["text"]=""
+            slot["y"]=y/CARD_HEIGHT
+            slot["height"]=0
+
 
 def colors(v):
     if v is None: return []
@@ -624,6 +874,10 @@ def infer_layout(card,type_info):
         if n in (4,5): return "land_five_color_legendary" if legendary else "land_five_color"
         raise BuildError(f"Land resolved to unsupported color count {n}")
 
+    if "Saga" in sub:
+        if ct!={"Enchantment"}:
+            raise BuildError("Saga is only supported on pure Enchantment - Saga type lines in this pipeline")
+        return "saga"
     if sub & SPECIAL_ENCHANTMENT_SUBTYPES:
         special=sorted(sub & SPECIAL_ENCHANTMENT_SUBTYPES)
         raise BuildError(f"special enchantment subtype(s) {special} are recognized but need their own approved template")
@@ -690,6 +944,8 @@ def recipe_data(recipe,card,type_info):
         return copy.deepcopy(COLORLESS_LAND_APPROVED_TEMPLATE)
     if recipe=="land_five_color":
         return copy.deepcopy(SOLID_GOLD_LAND_APPROVED_TEMPLATE)
+    if recipe=="saga":
+        return build_saga_recipe(card,type_info)
 
     # Direct approved / established examples.
     if recipe in LAYOUTS:
@@ -894,6 +1150,9 @@ def load_bytes(src):
     return Path(src).read_bytes()
 
 def auto_fit(data,src):
+    # This matches Card Conjurer's own cover/center-crop equation. For new Saga
+    # art the preferred source size is the exact art-well size 854x2041, which
+    # produces a no-crop fit. Non-matching legacy art still uses cover/crop.
     if "artBounds" not in data: return
     raw=load_bytes(src); size=png_size(raw) or gif_size(raw) or jpeg_size(raw)
     if not size: raise BuildError("unsupported art format")
@@ -914,17 +1173,26 @@ def validate_required_semantics(card,type_info,recipe):
             raise BuildError(f"{name}: {type_info['normalized']} needs power/toughness")
     if recipe.startswith("land_") and recipe!="land_full_basic":
         infer_land_colors(card,type_info)  # raises later if unusable
+    if recipe=="saga":
+        parsed=parse_saga_oracle(card.get("oracle_text",""))
+        if not parsed.get("abilities"):
+            raise BuildError(f"{name}: Saga needs chaptered oracle text")
 
-def build_one(card,project,do_autofit,explain=False):
+def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
     name=str(card.get("name","")).strip()
     if not name: raise BuildError("missing name")
     type_info=get_type_info(card)
     recipe=infer_layout(card,type_info)
     validate_required_semantics(card,type_info,recipe)
     if explain:
-        return {"name":name,"type_line":type_info["normalized"],"recipe":recipe,
+        extra={"name":name,"type_line":type_info["normalized"],"recipe":recipe,
                 "land_colors":infer_land_colors(card,type_info) if "Land" in type_info["card_types"] else None,
                 "override":bool(card.get("layout"))}
+        if recipe=="saga":
+            meta=saga_layout_metadata(card)
+            extra["saga_signature"]=list(meta["signature"])
+            extra["saga_checked"]=bool(meta["checked"])
+        return extra
 
     entry=recipe_data(recipe,card,type_info); entry["key"]=name; data=entry["data"]
 
@@ -960,6 +1228,19 @@ def build_one(card,project,do_autofit,explain=False):
         data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
 
     mana=str(card.get("mana_cost","")); tl=type_info["normalized"]; oracle=str(card.get("oracle_text",""))
+    saga_meta=None
+
+    if recipe=="saga":
+        saga_meta=saga_layout_metadata(card)
+        if flagged_sagas is not None and saga_meta.get("flags"):
+            for item in saga_meta["flags"]:
+                row=dict(item)
+                row.setdefault("name",name)
+                row.setdefault("type_line",tl)
+                row.setdefault("recipe",recipe)
+                row.setdefault("checked",bool(saga_meta.get("checked")))
+                row.setdefault("checked_against",saga_meta.get("checked_against"))
+                flagged_sagas.append(row)
 
     if name=="Morophon, the Boundless":
         morophon_symbols="{W}{U}{B}{R}{G}"
@@ -970,19 +1251,26 @@ def build_one(card,project,do_autofit,explain=False):
             else:
                 oracle=oracle[:pos]+"\n"+oracle[pos:]
 
-    flavor=str(card.get("flavor_text","")); rules=oracle+("{flavor}"+flavor if flavor else "")
+    flavor=str(card.get("flavor_text",""))
+    rules=oracle+("{flavor}"+flavor if flavor else "")
     pt=str(card.get("pt",""))
     if not pt and (card.get("power") not in (None,"") or card.get("toughness") not in (None,"")):
         if card.get("power") in (None,"") or card.get("toughness") in (None,""):
             raise BuildError(f"{name}: power and toughness must both be present")
         pt=f"{card.get('power')}/{card.get('toughness')}"
-    set_text_if_present(data,"mana",mana); set_text_if_present(data,"title",name); set_text_if_present(data,"type",tl)
-    set_text_if_present(data,"rules",rules); set_text_if_present(data,"pt",pt)
+    set_text_if_present(data,"mana",mana)
+    set_text_if_present(data,"title",name)
+    set_text_if_present(data,"type",tl)
+    if recipe=="saga":
+        apply_saga_text_layout(data,saga_meta or saga_layout_metadata(card))
+    else:
+        set_text_if_present(data,"rules",rules)
+    set_text_if_present(data,"pt",pt)
 
-    if str(data.get("version",""))=="m15Regular" and isinstance(data.get("text",{}).get("title"),dict):
+    if str(data.get("version","")) in {"m15Regular","sagaRegular"} and isinstance(data.get("text",{}).get("title"),dict):
         data["text"]["title"]["width"]=title_width(mana,int(data.get("width",CARD_WIDTH)))
     rs=data.get("text",{}).get("rules")
-    if isinstance(rs,dict):
+    if recipe!="saga" and isinstance(rs,dict):
         is_modal_dfc=recipe in {"modal_dfc_front","modal_dfc_back"}
         if not is_modal_dfc:
             is_land="Land" in type_info["card_types"]
@@ -1027,6 +1315,7 @@ def main():
     ap.add_argument("--supported-types",action="store_true",help="print the automatic support matrix and exit")
     ap.add_argument("--list-layouts",action="store_true",help="print raw/override recipe names and exit")
     ap.add_argument("--explain",action="store_true",help="classify every input card and print the chosen recipe; do not build")
+    ap.add_argument("--flagged-saga-report",type=Path,default=None,help="optional path for the sidecar JSON report of Saga cards flagged as unchecked")
     args=ap.parse_args()
     if args.supported_types: print_supported(); return 0
     if args.list_layouts: print("\n".join(sorted(KNOWN_LAYOUT_OVERRIDES))); return 0
@@ -1042,17 +1331,27 @@ def main():
                     x=build_one(c,project,False,explain=True)
                     extra=f" land_colors={''.join(x['land_colors'])}" if x['land_colors'] is not None else ""
                     ov=" [layout override]" if x['override'] else ""
-                    print(f"{i:03d} {x['name']}: {x['recipe']}{extra}{ov}")
+                    saga_note=""
+                    if x.get("recipe")=="saga":
+                        state="checked" if x.get("saga_checked") else "UNCHECKED"
+                        saga_note=f" saga_signature={x.get('saga_signature')} [{state}]"
+                    print(f"{i:03d} {x['name']}: {x['recipe']}{extra}{ov}{saga_note}")
                 except BuildError as exc:
                     print(f"{i:03d} {c.get('name','<unnamed>')}: FAIL - {exc}")
                     return 2
             return 0
         out=[]
+        flagged_sagas=[]
         for i,c in enumerate(cards_data,1):
-            try: out.append(build_one(c,project,not args.no_auto_fit))
+            try: out.append(build_one(c,project,not args.no_auto_fit,flagged_sagas=flagged_sagas))
             except BuildError as exc: raise BuildError(f"card {i} ({c.get('name','<unnamed>')}): {exc}") from exc
         args.output.write_text(json.dumps(out,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
+        report_path=args.flagged_saga_report
+        if report_path is None:
+            report_path=args.output.with_name(args.output.stem+"_FLAGGED_UNCHECKED_SAGAS.json")
+        report_path.write_text(json.dumps(flagged_sagas,ensure_ascii=False,indent=2),encoding="utf-8")
         print(f"Wrote {len(out)} cards to {args.output}")
+        print(f"Wrote {len(flagged_sagas)} flagged unchecked Saga record(s) to {report_path}")
         return 0
     except (BuildError,OSError,json.JSONDecodeError) as exc:
         print("ERROR:",exc,file=sys.stderr); return 2
