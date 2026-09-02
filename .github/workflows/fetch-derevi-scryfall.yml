@@ -1,4 +1,4 @@
-name: Export canonical compiler
+name: Sync Saga compiler and rerun Time Lords
 
 on:
   push:
@@ -6,14 +6,37 @@ on:
       - '.github/workflows/fetch-derevi-scryfall.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  export:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/upload-artifact@v4
+      - name: Apply exact approved Saga compiler patch
+        run: |
+          base64 -d .saga_compiler_patch.b64 | gzip -d > /tmp/saga.patch
+          patch --dry-run -p1 < /tmp/saga.patch
+          patch -p1 < /tmp/saga.patch
+          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+      - name: Commit Saga compiler
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+          git commit -m "Add approved Saga compiler support"
+          git push
+      - name: Run full deck from URL only
+        working-directory: doctor_who
+        run: |
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468"
+      - name: Upload generated files
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: canonical-compiler-source
-          path: CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+          name: time-lords-full-current-pipeline
+          path: |
+            doctor_who/generated_*_card_data.json
+            doctor_who/generated_*_cards.cardconjurer
+            doctor_who/*_FLAGGED_UNCHECKED_SAGAS.json
+          if-no-files-found: ignore
