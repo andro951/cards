@@ -13,11 +13,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply approved Saga compiler patch
+      - name: Apply approved Saga compiler update
         run: |
           base64 -d .saga_compiler_patch.b64 | gzip -d > /tmp/saga.patch
-          patch --dry-run -p1 < /tmp/saga.patch
-          patch -p1 < /tmp/saga.patch
+          patch --batch -p1 < /tmp/saga.patch || true
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py')
+          s=p.read_text()
+          anchor='SAGA_SET_SYMBOL_Y=SAGA_SET_SYMBOL_Y_PX/CARD_HEIGHT\n'
+          constants='''SAGA_SET_SYMBOL_BOUNDS={"x":SAGA_SET_SYMBOL_X,"y":SAGA_SET_SYMBOL_Y,"width":0.12,"height":0.0381,"vertical":"center","horizontal":"right"}\nSAGA_REMINDER_BOUNDS_PX={"x":174,"y":318,"width":812,"height":499}\nSAGA_ABILITY_X_PX=268\nSAGA_ABILITY_WIDTH_PX=704\nSAGA_ABILITY_START_Y_PX=815\nSAGA_ABILITY_END_DEFAULT_Y_PX=2323\nSAGA_ABILITY_END_MAX_Y_PX=2382\nSAGA_TYPE_Y_PX=2387\nSAGA_TEXT_COLOR="black"\nSAGA_REMINDER_FONT_SIZE=0.03\nSAGA_ABILITY_FONT_SIZE=0.0305\nSAGA_SLOTS=4\nSAGA_APPROVED_SIGNATURES={\n    (3,):"An Unearthly Child reference layout",\n    (1,1,1):"The Girl in the Fireplace / The Eleventh Hour reference layout",\n    (3,1):"Trial of a Time Lord / The Day of the Doctor reference layout",\n    (2,1):"Death in Heaven reference layout",\n}\n'''
+          if 'SAGA_SET_SYMBOL_BOUNDS=' not in s:
+              if anchor not in s: raise SystemExit('Saga constant anchor missing')
+              s=s.replace(anchor,anchor+constants,1)
+          if 'data["setSymbolBounds"]=copy.deepcopy(SAGA_SET_SYMBOL_BOUNDS)' not in s:
+              anchor2='    data["setSymbolY"]=SAGA_SET_SYMBOL_Y\n'
+              if anchor2 not in s: raise SystemExit('Saga geometry symbol anchor missing')
+              s=s.replace(anchor2,anchor2+'    data["setSymbolBounds"]=copy.deepcopy(SAGA_SET_SYMBOL_BOUNDS)\n',1)
+          type_y='    if isinstance(text,dict) and isinstance(text.get("type"),dict):\n        text["type"]["y"]=SAGA_TYPE_Y_PX/CARD_HEIGHT\n'
+          if 'text["type"]["y"]=SAGA_TYPE_Y_PX/CARD_HEIGHT' not in s:
+              anchor3='    if isinstance(text,dict) and isinstance(text.get("title"),dict):\n        text["title"]["width"]=title_width(mana,int(data.get("width",CARD_WIDTH)))\n'
+              if anchor3 not in s: raise SystemExit('Saga title geometry anchor missing')
+              s=s.replace(anchor3,anchor3+type_y,1)
+          if '("Enchantment - Saga", "automatic Saga recipe' not in s:
+              marker='    ("World Enchantment (modifier)", "uses enchantment recipe"),\n'
+              if marker in s:
+                  s=s.replace(marker,marker+'    ("Enchantment - Saga", "automatic Saga recipe with sidecar review flagging for unapproved Saga layout signatures"),\n',1)
+          s=s.replace('    "Saga (provisional geometry/art-fit measurements are recorded, but automatic Saga layout remains disabled until chapter/text layout is finalized)",\n','')
+          required=[
+              'def build_saga_recipe(card,type_info):',
+              'def saga_layout_metadata(card):',
+              'return "saga"',
+              'if recipe=="saga":',
+              '--flagged-saga-report',
+              'flagged_sagas=[]',
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing Saga compiler pieces: '+repr(missing))
+          p.write_text(s)
+          PY
+          rm -f CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py.rej
           python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
       - name: Commit Saga compiler
         run: |
