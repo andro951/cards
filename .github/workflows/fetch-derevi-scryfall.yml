@@ -15,9 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply ability-word italics patch
         run: |
-          base64 -d .ability_word_italics_patch.b64 | gzip -d > /tmp/ability.patch
-          patch --dry-run -p1 < /tmp/ability.patch
-          patch -p1 < /tmp/ability.patch
+          patch --dry-run -p1 < .ability_word_italics.patch
+          patch -p1 < .ability_word_italics.patch
           python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
       - name: Commit renderer update
         run: |
