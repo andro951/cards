@@ -1,66 +1,25 @@
-name: Ability-word italics and Time Lords rerun
+name: Fetch Derevi Scryfall checklist
 
 on:
   push:
     paths:
-      - '.github/workflows/fetch-derevi-scryfall.yml'
+      - '.fetch-derevi-scryfall'
 
 permissions:
   contents: write
 
 jobs:
-  run:
+  fetch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply ability-word italics patch
+      - name: Fetch Scryfall checklist and card data
+        run: python fetch_scryfall_deck.py --deck-id cac4a3fa-84f8-4b8e-b946-0d8a8086fd9d --output-dir derevi
+      - name: Commit fetched data
         run: |
-          patch --dry-run -p1 < .ability_word_italics.patch
-          patch -p1 < .ability_word_italics.patch
-          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
-      - name: Commit renderer update
-        run: |
+          rm -f .fetch-derevi-scryfall
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
-          git commit -m "Italicize short em-dash ability labels"
+          git add derevi/scryfall_proxy_decklist.txt derevi/scryfall_proxy_cards.json derevi/scryfall_proxy_export.json .fetch-derevi-scryfall
+          git commit -m "Fetch Derevi Scryfall proxy checklist"
           git push
-      - name: Run full deck from URL only
-        working-directory: doctor_who
-        run: |
-          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468"
-      - name: Verify ability-word rendering
-        run: |
-          python - <<'PY'
-          import json,re
-          p='doctor_who/generated_doctor_who_cards.cardconjurer'
-          cards=json.load(open(p,encoding='utf-8'))
-          by={c['key']:c for c in cards}
-          def rules(name):
-              return by[name]['data']['text']['rules']['text']
-          arcade=rules('Arcade Gannon')
-          assert '{i}For Auld Lang Syne{/i} — ' in arcade, arcade
-          missy=rules('Missy')
-          assert '{i}At the beginning of your end step' not in missy, missy
-          gip=rules("Great Intelligence's Plan")
-          assert '{i}Draw three cards.' not in gip, gip
-          hits=[]
-          for c in cards:
-              r=c['data'].get('text',{}).get('rules',{}).get('text','')
-              labels=re.findall(r'\{i\}([^{}\n]+)\{/i\} — ',r)
-              if labels:
-                  hits.append((c['key'],labels))
-          print('Ability-label cards:',len(hits))
-          print('Ability labels:',sum(len(x[1]) for x in hits))
-          for row in hits: print(row)
-          PY
-      - name: Upload generated files
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: time-lords-ability-word-italics
-          path: |
-            doctor_who/generated_*_card_data.json
-            doctor_who/generated_*_cards.cardconjurer
-            doctor_who/*_FLAGGED_UNCHECKED_SAGAS.json
-          if-no-files-found: ignore
