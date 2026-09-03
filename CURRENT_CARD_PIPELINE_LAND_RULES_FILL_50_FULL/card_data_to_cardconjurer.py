@@ -1111,6 +1111,41 @@ def set_text_if_present(data,slot,value):
     text=data.get("text",{})
     if isinstance(text,dict) and isinstance(text.get(slot),dict): text[slot]["text"]=value
 
+ABILITY_WORD_ITALIC_EXEMPTIONS={
+    "Boast","Cycling","Visit","Prize",
+    "I","II","III","IV","I, II","II, III","III, IV",
+    "I, II, III","II, III, IV","I, II, III, IV",
+    "• Khans","• Dragons","• Mirran","• Phyrexian",
+    "Prototype","Companion","To solve","Solved",
+}
+ABILITY_WORD_MAX_LABEL_CHARS=50
+
+def italicize_dash_labels(oracle):
+    """Reconstruct Magic ability-word styling from plain Scryfall oracle text.
+
+    Scryfall preserves the em dash but not typography.  Card Conjurer uses
+    {i}...{/i} text codes for italics.  Treat a short line prefix before the
+    first spaced em dash as an italic label, while exempting Saga chapter
+    numerals and other structural labels that Card Conjurer itself leaves
+    upright.  The length guard avoids turning full rules clauses into labels.
+    """
+    out=[]
+    for line in str(oracle or "").split("\n"):
+        if " — " not in line:
+            out.append(line)
+            continue
+        prefix,rest=line.split(" — ",1)
+        label=prefix.strip()
+        if (
+            prefix==label
+            and 0<len(label)<=ABILITY_WORD_MAX_LABEL_CHARS
+            and label not in ABILITY_WORD_ITALIC_EXEMPTIONS
+            and not label.startswith("{")
+        ):
+            line=f"{{i}}{label}{{/i}} — {rest}"
+        out.append(line)
+    return "\n".join(out)
+
 def choose_rules_size(recipe,rules,default):
     score=len(re.sub(r"\{[^{}]+\}","X",rules))+24*rules.count("\n")
     if recipe.startswith("land_"):
@@ -1251,8 +1286,9 @@ def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
             else:
                 oracle=oracle[:pos]+"\n"+oracle[pos:]
 
+    oracle_for_render=italicize_dash_labels(oracle)
     flavor=str(card.get("flavor_text",""))
-    rules=oracle+("{flavor}"+flavor if flavor else "")
+    rules=oracle_for_render+("{flavor}"+flavor if flavor else "")
     pt=str(card.get("pt",""))
     if not pt and (card.get("power") not in (None,"") or card.get("toughness") not in (None,"")):
         if card.get("power") in (None,"") or card.get("toughness") in (None,""):
