@@ -22,8 +22,7 @@ jobs:
 
       - name: Apply exact Card Conjurer Prepare layer fix
         run: |
-          patch --dry-run -p0 < .prepare_text_fix.patch
-          patch -p0 < .prepare_text_fix.patch
+          python .prepare_text_fix.patch
           python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
 
       - name: Commit finalized Prepare support
