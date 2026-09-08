@@ -1,94 +1,117 @@
---- CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
-+++ CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
-@@
--PREPARE_MASKS=[
--    ("/img/frames/prepare/regular/pinline.png","Pinline"),
--    ("/img/frames/m15/regular/m15MaskTitle.png","Title"),
--    ("/img/frames/m15/regular/m15MaskType.png","Type"),
--    ("/img/frames/prepare/regular/rules.png","Rules"),
--    ("/img/frames/prepare/regular/rulesRight.png","Rules (Right Half)"),
--    ("/img/frames/prepare/regular/prepare.png","Prepare Spell"),
--    ("/img/frames/prepare/regular/prepareRight.png","Prepare Spell (Right Half)"),
--    ("/img/frames/prepare/regular/preparePinline.png","Prepare Spell Pinline"),
--    ("/img/frames/prepare/regular/prepareTypeTitle.png","Prepare Spell Type/Title"),
--    ("/img/frames/prepare/regular/frame.png","Frame"),
--    ("/img/frames/m15/regular/m15MaskBorder.png","Border"),
--]
-+PREPARE_MASK_SRCS={
-+    "Pinline":"/img/frames/prepare/regular/pinline.png",
-+    "Type":"/img/frames/m15/regular/m15MaskType.png",
-+    "Title":"/img/frames/m15/regular/m15MaskTitle.png",
-+    "Rules":"/img/frames/prepare/regular/rules.png",
-+    "Rules (Right Half)":"/img/frames/prepare/regular/rulesRight.png",
-+    "Prepare Spell":"/img/frames/prepare/regular/prepare.png",
-+    "Prepare Spell (Right Half)":"/img/frames/prepare/regular/prepareRight.png",
-+    "Prepare Spell Pinline":"/img/frames/prepare/regular/preparePinline.png",
-+    "Prepare Spell Type/Title":"/img/frames/prepare/regular/prepareTypeTitle.png",
-+    "Frame":"/img/frames/prepare/regular/frame.png",
-+    "Border":"/img/frames/m15/regular/m15MaskBorder.png",
-+}
-+
-+def prepare_spell_frame_colors(prepared):
-+    """Mirror Card Conjurer autoFrame's Prepare-side color detection."""
-+    mana=str(prepared.get("mana_cost","") or "").upper()
-+    out=[]
-+    for ch in mana:
-+        if ch in "WUBRG" and ch not in out:
-+            out.append(ch)
-+    if not out:
-+        out=["A"]
-+    return out,("/" in mana)
-@@
- def build_prepare_recipe(card,type_info):
-@@
--    cname=COLOR_NAMES.get(code,"Colorless")
--    src=f"/img/frames/prepare/regular/{code.lower()}.png"
--
-     pt_code=code if code in "WUBRGMA" else "C"
-     pt_src=f"/img/frames/m15/regular/m15PT{pt_code}.png"
-     frames=[{
-         "name":f"{COLOR_NAMES.get(pt_code,'Colorless')} Power/Toughness",
-         "src":pt_src,
-@@
-         "masks":[],
-         "bounds":{"x":0.7573,"y":0.8848,"width":0.188,"height":0.0733},
-     }]
--    for mask_src,mask_name in PREPARE_MASKS:
-+
-+    def add_mask(layer_code,mask_name):
-+        if layer_code not in "WUBRGMACL":
-+            raise BuildError(f"Prepare frame layer has unsupported color {layer_code!r}")
-+        layer_name=COLOR_NAMES.get(layer_code,"Land" if layer_code=="L" else "Colorless")
-         frames.append({
--            "name":f"{cname} Prepare Frame",
--            "src":src,
--            "masks":[{"src":mask_src,"name":mask_name}],
-+            "name":f"{layer_name} Prepare Frame",
-+            "src":f"/img/frames/prepare/regular/{layer_code.lower()}.png",
-+            "masks":[{"src":PREPARE_MASK_SRCS[mask_name],"name":mask_name}],
-         })
-+
-+    # Match Card Conjurer autoFrame's native layer order exactly. Variant
-+    # right-half and Type/Title masks are only added when the Prepared spell's
-+    # own mana colors require them; adding all masks causes overlapping frame
-+    # pieces and visible artifacts around text.
-+    add_mask(code,"Pinline")
-+    add_mask(code,"Type")
-+    add_mask(code,"Title")
-+
-+    prepare_colors,is_hybrid=prepare_spell_frame_colors(prepared)
-+    if len(prepare_colors)==1:
-+        add_mask(prepare_colors[0],"Prepare Spell")
-+        if is_hybrid:
-+            add_mask("L","Prepare Spell Type/Title")
-+    else:
-+        type_title_code="L" if is_hybrid and len(prepare_colors)==2 else "M"
-+        add_mask(type_title_code,"Prepare Spell Type/Title")
-+        add_mask(prepare_colors[1],"Prepare Spell (Right Half)")
-+        add_mask(prepare_colors[0],"Prepare Spell")
-+    add_mask(prepare_colors[0],"Prepare Spell Pinline")
-+
-+    add_mask(code,"Rules")
-+    add_mask(code,"Frame")
-+    add_mask(code,"Border")
-     data["frames"]=frames
+from pathlib import Path
+
+p=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py')
+text=p.read_text(encoding='utf-8')
+
+old_masks='''PREPARE_MASKS=[
+    ("/img/frames/prepare/regular/pinline.png","Pinline"),
+    ("/img/frames/m15/regular/m15MaskTitle.png","Title"),
+    ("/img/frames/m15/regular/m15MaskType.png","Type"),
+    ("/img/frames/prepare/regular/rules.png","Rules"),
+    ("/img/frames/prepare/regular/rulesRight.png","Rules (Right Half)"),
+    ("/img/frames/prepare/regular/prepare.png","Prepare Spell"),
+    ("/img/frames/prepare/regular/prepareRight.png","Prepare Spell (Right Half)"),
+    ("/img/frames/prepare/regular/preparePinline.png","Prepare Spell Pinline"),
+    ("/img/frames/prepare/regular/prepareTypeTitle.png","Prepare Spell Type/Title"),
+    ("/img/frames/prepare/regular/frame.png","Frame"),
+    ("/img/frames/m15/regular/m15MaskBorder.png","Border"),
+]
+'''
+new_masks='''PREPARE_MASK_SRCS={
+    "Pinline":"/img/frames/prepare/regular/pinline.png",
+    "Type":"/img/frames/m15/regular/m15MaskType.png",
+    "Title":"/img/frames/m15/regular/m15MaskTitle.png",
+    "Rules":"/img/frames/prepare/regular/rules.png",
+    "Rules (Right Half)":"/img/frames/prepare/regular/rulesRight.png",
+    "Prepare Spell":"/img/frames/prepare/regular/prepare.png",
+    "Prepare Spell (Right Half)":"/img/frames/prepare/regular/prepareRight.png",
+    "Prepare Spell Pinline":"/img/frames/prepare/regular/preparePinline.png",
+    "Prepare Spell Type/Title":"/img/frames/prepare/regular/prepareTypeTitle.png",
+    "Frame":"/img/frames/prepare/regular/frame.png",
+    "Border":"/img/frames/m15/regular/m15MaskBorder.png",
+}
+
+def prepare_spell_frame_colors(prepared):
+    """Mirror Card Conjurer autoFrame's Prepare-side color detection."""
+    mana=str(prepared.get("mana_cost","") or "").upper()
+    out=[]
+    for ch in mana:
+        if ch in "WUBRG" and ch not in out:
+            out.append(ch)
+    if not out:
+        out=["A"]
+    return out,("/" in mana)
+'''
+
+old_build='''    cname=COLOR_NAMES.get(code,"Colorless")
+    src=f"/img/frames/prepare/regular/{code.lower()}.png"
+
+    pt_code=code if code in "WUBRGMA" else "C"
+    pt_src=f"/img/frames/m15/regular/m15PT{pt_code}.png"
+    frames=[{
+        "name":f"{COLOR_NAMES.get(pt_code,'Colorless')} Power/Toughness",
+        "src":pt_src,
+        "masks":[],
+        "bounds":{"x":0.7573,"y":0.8848,"width":0.188,"height":0.0733},
+    }]
+    for mask_src,mask_name in PREPARE_MASKS:
+        frames.append({
+            "name":f"{cname} Prepare Frame",
+            "src":src,
+            "masks":[{"src":mask_src,"name":mask_name}],
+        })
+    data["frames"]=frames
+'''
+new_build='''    pt_code=code if code in "WUBRGMA" else "C"
+    pt_src=f"/img/frames/m15/regular/m15PT{pt_code}.png"
+    frames=[{
+        "name":f"{COLOR_NAMES.get(pt_code,'Colorless')} Power/Toughness",
+        "src":pt_src,
+        "masks":[],
+        "bounds":{"x":0.7573,"y":0.8848,"width":0.188,"height":0.0733},
+    }]
+
+    def add_mask(layer_code,mask_name):
+        if layer_code not in "WUBRGMACL":
+            raise BuildError(f"Prepare frame layer has unsupported color {layer_code!r}")
+        layer_name=COLOR_NAMES.get(layer_code,"Land" if layer_code=="L" else "Colorless")
+        frames.append({
+            "name":f"{layer_name} Prepare Frame",
+            "src":f"/img/frames/prepare/regular/{layer_code.lower()}.png",
+            "masks":[{"src":PREPARE_MASK_SRCS[mask_name],"name":mask_name}],
+        })
+
+    # Match Card Conjurer autoFrame's native layer order exactly. Variant
+    # right-half and Type/Title masks are only added when the Prepared spell's
+    # own mana colors require them; adding all masks causes overlapping frame
+    # pieces and visible artifacts around text.
+    add_mask(code,"Pinline")
+    add_mask(code,"Type")
+    add_mask(code,"Title")
+
+    prepare_colors,is_hybrid=prepare_spell_frame_colors(prepared)
+    if len(prepare_colors)==1:
+        add_mask(prepare_colors[0],"Prepare Spell")
+        if is_hybrid:
+            add_mask("L","Prepare Spell Type/Title")
+    else:
+        type_title_code="L" if is_hybrid and len(prepare_colors)==2 else "M"
+        add_mask(type_title_code,"Prepare Spell Type/Title")
+        add_mask(prepare_colors[1],"Prepare Spell (Right Half)")
+        add_mask(prepare_colors[0],"Prepare Spell")
+    add_mask(prepare_colors[0],"Prepare Spell Pinline")
+
+    add_mask(code,"Rules")
+    add_mask(code,"Frame")
+    add_mask(code,"Border")
+    data["frames"]=frames
+'''
+
+if text.count(old_masks)!=1:
+    raise SystemExit(f'expected exactly one PREPARE_MASKS block, found {text.count(old_masks)}')
+if text.count(old_build)!=1:
+    raise SystemExit(f'expected exactly one old Prepare frame construction block, found {text.count(old_build)}')
+text=text.replace(old_masks,new_masks,1)
+text=text.replace(old_build,new_build,1)
+p.write_text(text,encoding='utf-8')
+print('Applied native Prepare layer selection fix.')
