@@ -1,0 +1,52 @@
+name: Export Emeritus of Woe only
+
+on:
+  push:
+    paths:
+      - '.run-emeritus-only'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            hulk_pack
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
+          sparse-checkout-cone-mode: true
+
+      - name: Generate one-card Card Conjurer file
+        run: |
+          printf '%s\n' 'https://api.scryfall.com/cards/7eb9e83d-515d-4911-a06b-9982200277b2' > /tmp/emeritus.txt
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py \
+            --project hulk_pack \
+            --repo-project-path hulk_pack \
+            --repo andro951/cards \
+            --branch main \
+            --list /tmp/emeritus.txt \
+            --flavor-policy latest \
+            --request-delay 0.25 \
+            -o /tmp/emeritus_semantic.json
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py \
+            /tmp/emeritus_semantic.json \
+            -o /tmp/emeritus_of_woe.cardconjurer
+          python - <<'PY'
+          import json
+          p='/tmp/emeritus_of_woe.cardconjurer'
+          data=json.load(open(p,encoding='utf-8'))
+          assert len(data)==1
+          assert data[0].get('key')=='Emeritus of Woe'
+          assert data[0].get('data',{}).get('version')=='prepare'
+          assert data[0]['data']['text']['title2']['text']=='Demonic Tutor'
+          print('Verified one-card Prepare export.')
+          PY
+
+      - name: Upload Emeritus file
+        uses: actions/upload-artifact@v4
+        with:
+          name: emeritus-of-woe-cardconjurer
+          path: /tmp/emeritus_of_woe.cardconjurer
