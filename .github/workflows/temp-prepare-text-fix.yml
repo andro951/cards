@@ -1,0 +1,83 @@
+name: Finalize Prepare masks and run Hulk Pack
+
+on:
+  push:
+    paths:
+      - '.prepare_text_fix.patch'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .prepare_text_fix.patch
+            hulk_pack
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
+          sparse-checkout-cone-mode: true
+
+      - name: Apply exact Card Conjurer Prepare layer fix
+        run: |
+          patch --dry-run -p0 < .prepare_text_fix.patch
+          patch -p0 < .prepare_text_fix.patch
+          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+
+      - name: Commit finalized Prepare support
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+          git commit -m "Match native Prepare frame layer selection"
+          git push
+
+      - name: Generate corrected Emeritus of Woe only
+        run: |
+          printf '%s\n' 'https://api.scryfall.com/cards/7eb9e83d-515d-4911-a06b-9982200277b2' > /tmp/emeritus.txt
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py \
+            --project hulk_pack \
+            --repo-project-path hulk_pack \
+            --repo andro951/cards \
+            --branch main \
+            --list /tmp/emeritus.txt \
+            --flavor-policy latest \
+            --request-delay 0.25 \
+            -o /tmp/emeritus_semantic.json
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py \
+            /tmp/emeritus_semantic.json \
+            -o /tmp/emeritus_of_woe.cardconjurer
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/emeritus_of_woe.cardconjurer',encoding='utf-8'))[0]['data']
+          masks=[m['name'] for f in d['frames'] for m in f.get('masks',[])]
+          expected=['Pinline','Type','Title','Prepare Spell','Prepare Spell Pinline','Rules','Frame','Border']
+          assert masks==expected,(masks,expected)
+          assert d['text']['title']['text']=='Emeritus of Woe'
+          assert d['text']['type']['text']=='Creature - Vampire Warlock'
+          assert d['text']['title2']['text']=='Demonic Tutor'
+          print('Corrected native Prepare mask stack verified:',masks)
+          PY
+
+      - name: Upload corrected Emeritus file
+        uses: actions/upload-artifact@v4
+        with:
+          name: emeritus-of-woe-final
+          path: /tmp/emeritus_of_woe.cardconjurer
+
+      - name: Run full Hulk Pack deck URL
+        working-directory: hulk_pack
+        run: |
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py \
+            "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8"
+
+      - name: Upload full Hulk Pack output
+        uses: actions/upload-artifact@v4
+        with:
+          name: hulk-pack-final
+          path: |
+            hulk_pack/generated_hulk_pack_card_data.json
+            hulk_pack/generated_hulk_pack_cards.cardconjurer
+            hulk_pack/generated_hulk_pack_cards_FLAGGED_UNCHECKED_SAGAS.json
