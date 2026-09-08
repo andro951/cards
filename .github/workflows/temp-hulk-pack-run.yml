@@ -1,9 +1,9 @@
-name: Inspect Prepared card metadata
+name: Inspect Prepare compiler insertion points
 
 on:
   push:
     paths:
-      - '.run-inspect-prepared'
+      - '.run-inspect-compiler'
 
 permissions:
   contents: read
@@ -12,23 +12,32 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect Emeritus of Woe Scryfall object
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
+          sparse-checkout-cone-mode: true
+      - name: Inspect Scryfall Prepare object and compiler neighborhoods
         run: |
           python - <<'PY'
-          import json, urllib.request
-          url='https://api.scryfall.com/cards/7eb9e83d-515d-4911-a06b-9982200277b2'
-          req=urllib.request.Request(url,headers={'User-Agent':'andro951-card-pipeline/1.0','Accept':'application/json;q=0.9,*/*;q=0.8'})
+          import json, urllib.parse, urllib.request
+          q=urllib.parse.urlencode({'exact':'Emeritus of Woe'})
+          req=urllib.request.Request('https://api.scryfall.com/cards/named?'+q,headers={'User-Agent':'andro951-card-pipeline/1.0','Accept':'application/json;q=0.9,*/*;q=0.8'})
           with urllib.request.urlopen(req,timeout=30) as r:
               card=json.load(r)
-          print('name=',card.get('name'))
-          print('layout=',card.get('layout'))
-          print('type_line=',card.get('type_line'))
-          print('keywords=',card.get('keywords'))
-          print('card_faces=',len(card.get('card_faces',[])))
+          print('SCRYFALL NAME:',card.get('name'))
+          print('SCRYFALL LAYOUT:',card.get('layout'))
+          print('SCRYFALL TYPE:',card.get('type_line'))
           for i,face in enumerate(card.get('card_faces',[])):
-              print('FACE',i)
-              for k in ('name','mana_cost','type_line','oracle_text','flavor_name','printed_name'):
-                  print(' ',k,'=',face.get(k))
-              print(' keys=',sorted(face.keys()))
-          print('card keys=',sorted(card.keys()))
+              print('FACE',i,json.dumps({k:face.get(k) for k in ('name','mana_cost','type_line','oracle_text','colors')},ensure_ascii=False))
+
+          p='CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py'
+          text=open(p,encoding='utf-8').read()
+          needles=['def infer_recipe','def regular_frame_color','def recolor_m15','def build_one','def build_card','has_creature_type','scryfall_layout','unsupported','LAYOUTS =','LAYOUTS={']
+          for needle in needles:
+              pos=text.find(needle)
+              print('\n===== NEEDLE',repr(needle),'POS',pos,'=====')
+              if pos>=0:
+                  start=max(0,pos-1800); end=min(len(text),pos+7000)
+                  print(text[start:end])
           PY
