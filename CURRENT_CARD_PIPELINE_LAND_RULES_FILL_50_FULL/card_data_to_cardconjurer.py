@@ -1083,7 +1083,17 @@ def build_planeswalker_recipe(card,type_info):
         {'src':'/img/frames/planeswalker/regular/planeswalkerMaskBorder.png','name':'Border'},
         {'src':'/img/frames/planeswalker/maskLoyalty.png','name':'Loyalty'},
     ]
-    data['frames']=[{'name':f'{cname} Frame','src':src,'masks':masks}]
+    # Card Conjurer's serialized frame objects effectively intersect multiple
+    # masks on one frame entry. Regular pipeline outputs therefore use one
+    # masked frame entry per visible frame component. Do the same for
+    # planeswalkers so title/type/frame/border/loyalty pieces all render.
+    data['frames']=[]
+    for mask in masks:
+        data['frames'].append({
+            'name':f"{cname} {mask['name']}",
+            'src':src,
+            'masks':[mask],
+        })
     data['version']='planeswalkerRegular'
     data['onload']='/js/frames/versionPlaneswalker.js'
     data['artBounds']={'x':0.068,'y':0.101,'width':0.864,'height':0.8143}
