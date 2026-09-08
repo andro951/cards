@@ -81,6 +81,7 @@ SUPPORTED_STRUCTURES = [
     ("Colored Artifact", "artifact body + colored pinline"),
     ("Colored Artifact Creature", "artifact body + colored pinline + P/T"),
     ("Modal DFC front/back", "automatic from scryfall_layout=modal_dfc + face_index, using Esika/The Prismatic Bridge as the approved example"),
+    ("Prepare (Secrets of Strixhaven)", "automatic from scryfall_layout=prepare + nested prepared_spell, using Card Conjurer's native Prepare frame pack"),
     ("Artifact - Vehicle", "vehicle frame + vehicle P/T"),
     ("Legendary Artifact - Vehicle", "vehicle frame + crown + vehicle P/T"),
     ("Instant", "standard noncreature"),
@@ -155,7 +156,7 @@ KNOWN_LAYOUT_OVERRIDES=set(LAYOUTS) | {
     "nyx_creature_legendary","nyx_enchantment_legendary",
     "vehicle","colorless_creature","colorless_creature_legendary","land_colorless","land_full_single","land_full_dual_legendary",
     "land_full_tri_legendary","land_five_color_legendary","original_dual_land_textless",
-    "saga",
+    "saga","prepare",
 }
 
 COLORLESS_LAND_APPROVED_TEMPLATE=json.loads('{"key":"","data":{"width":2010,"height":2814,"marginX":0,"marginY":0,"frames":[{"name":"Neutral Title Bar","src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201000%20100%22%3E%0A%3Cdefs%3E%0A%20%20%3ClinearGradient%20id%3D%22fill%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23696969%22%20stop-opacity%3D%220.80%22/%3E%0A%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23505050%22%20stop-opacity%3D%220.76%22/%3E%0A%20%20%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22992%22%20height%3D%2292%22%20rx%3D%2228%22%20fill%3D%22none%22%20stroke%3D%22%23040605%22%20stroke-width%3D%228%22/%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%22980%22%20height%3D%2280%22%20rx%3D%2224%22%20fill%3D%22url%28%23fill%29%22%20stroke%3D%22none%22/%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2217%22%20width%3D%22966%22%20height%3D%2266%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%220.35%22%20stroke-width%3D%221.6%22/%3E%0A%3C/svg%3E","masks":[],"bounds":{"x":0.052,"y":0.041,"width":0.896,"height":0.075}},{"name":"Neutral Type Bar","src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201000%20100%22%3E%0A%3Cdefs%3E%0A%20%20%3ClinearGradient%20id%3D%22fill%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23696969%22%20stop-opacity%3D%220.80%22/%3E%0A%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23505050%22%20stop-opacity%3D%220.76%22/%3E%0A%20%20%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22992%22%20height%3D%2292%22%20rx%3D%2228%22%20fill%3D%22none%22%20stroke%3D%22%23040605%22%20stroke-width%3D%228%22/%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%22980%22%20height%3D%2280%22%20rx%3D%2224%22%20fill%3D%22url%28%23fill%29%22%20stroke%3D%22none%22/%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2217%22%20width%3D%22966%22%20height%3D%2266%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%220.35%22%20stroke-width%3D%221.6%22/%3E%0A%3C/svg%3E","masks":[],"bounds":{"x":0.052,"y":0.552,"width":0.896,"height":0.075}},{"name":"Native Land Pinline","src":"/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png","masks":[{"src":"/img/frames/m15/genericShowcase/m15GenericShowcaseMaskPinline.png","name":"Pinline"}]},{"name":"Land Frame","src":"/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png","masks":[{"src":"/img/frames/m15/regular/m15MaskBorder.png","name":"Border"}]}],"artSource":"","artX":0,"artY":-0.0745142857142857,"artZoom":1.962890625,"artRotate":"0","setSymbolSource":"","setSymbolX":0.8522388059701492,"setSymbolY":0.5692963752665245,"setSymbolZoom":0.10099999999999999,"watermarkSource":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==","watermarkX":0.5,"watermarkY":0.7762,"watermarkZoom":1,"watermarkLeft":"none","watermarkRight":"none","watermarkOpacity":0,"version":"genericShowcase","manaSymbols":[],"infoYear":"2013","margins":false,"bottomInfoTranslate":{"x":0,"y":0},"bottomInfoRotate":0,"bottomInfoZoom":1,"bottomInfoColor":"white","onload":null,"hideBottomInfoBorder":false,"showsFlavorBar":true,"bottomInfo":{"midLeft":{"text":"{fontbelerenbsc}{fontsize3}{upinline1}￮{savex2}{elemidinfo-artist}","x":0.0647,"y":0.9548,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"midLeft"},"topLeft":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"topLeft"},"note":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"note"},"rarity":{"text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0171,"oneLine":true,"font":"gothammedium","size":0.0171,"color":"white","outlineWidth":0.003,"name":"rarity"},"bottomLeft":{"text":"Custom Proxy • Personal Use Only","x":0.0647,"y":0.9719,"width":0.8707,"height":0.0143,"oneLine":true,"font":"gothammedium","size":0.0143,"color":"white","outlineWidth":0.003},"wizards":{"name":"wizards","text":"","x":0.0647,"y":0.9377,"width":0.8707,"height":0.0167,"oneLine":true,"font":"mplantin","size":0.0162,"color":"white","align":"right","outlineWidth":0.003},"bottomRight":{"text":"","x":0.0647,"y":0.9548,"width":0.8707,"height":0.0143,"oneLine":true,"font":"mplantin","size":0.0143,"color":"white","align":"right","outlineWidth":0.003}},"artBounds":{"x":0,"y":0,"width":1,"height":0.9224},"setSymbolBounds":{"x":0.9213,"y":0.591,"width":0.12,"height":0.041,"vertical":"center","horizontal":"right"},"watermarkBounds":{"x":0.5,"y":0.7762,"width":0.75,"height":0.2305},"text":{"mana":{"name":"Mana Cost","text":"","y":0.0613,"width":0.9292,"height":0.03380952380952381,"oneLine":true,"size":0.043345543345543344,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":true,"manaSpacing":0,"color":"white","outlineWidth":0.0035},"title":{"name":"Title","text":"","x":0.0854,"y":0.0522,"width":0.8292,"height":0.0543,"oneLine":true,"font":"belerenb","size":0.0381,"color":"white","outlineWidth":0.004},"type":{"name":"Type","text":"","x":0.0854,"y":0.5664,"width":0.8292,"height":0.0543,"oneLine":true,"font":"belerenb","size":0.0324,"color":"white","outlineWidth":0.0035},"rules":{"name":"Rules Text","text":"","x":0.105,"y":0.6303,"width":0.79,"height":0.2931769722814499,"size":0.0348,"color":"white","align":"left","outlineWidth":0.0035},"pt":{"name":"Power/Toughness","text":"","x":0.7928,"y":0.902,"width":0.1367,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":true,"align":"center","color":"white","outlineWidth":0.0035}},"infoNumber":"","infoRarity":"","infoSet":"","infoLanguage":"","infoArtist":"ChatGPT","infoNote":"","serialNumber":"","serialTotal":"","serialX":"","serialY":"","serialScale":"","noCorners":false}}')
@@ -240,6 +241,84 @@ def build_saga_recipe(card,type_info):
             "font":base_ability["font"],"size":base_ability["size"],"color":base_ability["color"]
         }
     data["saga"]={"abilities":[0,0,0,0],"count":0,"x":0.1,"width":0.3947}
+    return entry
+
+PREPARE_MASKS=[
+    ("/img/frames/prepare/regular/pinline.png","Pinline"),
+    ("/img/frames/m15/regular/m15MaskTitle.png","Title"),
+    ("/img/frames/m15/regular/m15MaskType.png","Type"),
+    ("/img/frames/prepare/regular/rules.png","Rules"),
+    ("/img/frames/prepare/regular/rulesRight.png","Rules (Right Half)"),
+    ("/img/frames/prepare/regular/prepare.png","Prepare Spell"),
+    ("/img/frames/prepare/regular/prepareRight.png","Prepare Spell (Right Half)"),
+    ("/img/frames/prepare/regular/preparePinline.png","Prepare Spell Pinline"),
+    ("/img/frames/prepare/regular/prepareTypeTitle.png","Prepare Spell Type/Title"),
+    ("/img/frames/prepare/regular/frame.png","Frame"),
+    ("/img/frames/m15/regular/m15MaskBorder.png","Border"),
+]
+
+def prepare_frame_code(card,type_info):
+    if "Artifact" in type_info["card_types"]:
+        return "A"
+    return regular_frame_color(card,type_info) or "C"
+
+def build_prepare_recipe(card,type_info):
+    """Build Card Conjurer's native Prepare (Secrets of Strixhaven) frame."""
+    if "Creature" not in type_info["card_types"]:
+        raise BuildError("Prepare layout currently requires a Creature host, matching the Prepare mechanic")
+    prepared=card.get("prepared_spell")
+    if not isinstance(prepared,dict):
+        raise BuildError("Prepare card needs nested prepared_spell semantic data")
+    prep_info=get_type_info(prepared)
+    if not (prep_info["card_types"] & {"Instant","Sorcery"}):
+        raise BuildError("prepared_spell must be an Instant or Sorcery")
+
+    entry=copy.deepcopy(LAYOUTS["creature"])
+    data=entry["data"]
+    code=prepare_frame_code(card,type_info)
+    if code not in "WUBRGMAC":
+        raise BuildError(f"Prepare host has unsupported frame color {code!r}")
+    cname=COLOR_NAMES.get(code,"Colorless")
+    src=f"/img/frames/prepare/regular/{code.lower()}.png"
+
+    pt_code=code if code in "WUBRGMA" else "C"
+    pt_src=f"/img/frames/m15/regular/m15PT{pt_code}.png"
+    frames=[{
+        "name":f"{COLOR_NAMES.get(pt_code,'Colorless')} Power/Toughness",
+        "src":pt_src,
+        "masks":[],
+        "bounds":{"x":0.7573,"y":0.8848,"width":0.188,"height":0.0733},
+    }]
+    for mask_src,mask_name in PREPARE_MASKS:
+        frames.append({
+            "name":f"{cname} Prepare Frame",
+            "src":src,
+            "masks":[{"src":mask_src,"name":mask_name}],
+        })
+    data["frames"]=frames
+
+    if "Legendary" in type_info["supertypes"]:
+        if code=="C":
+            crown=copy.deepcopy(LAYOUTS["eldrazi_legendary_creature"]["data"]["frames"][0])
+            data["frames"].insert(0,crown)
+        else:
+            add_standard_crown(data,code)
+
+    data["version"]="prepare"
+    data["artBounds"]={"x":0.0767,"y":0.1129,"width":0.8476,"height":0.4429}
+    data["setSymbolBounds"]={"x":0.9213,"y":0.5910,"width":0.12,"height":0.0410,"vertical":"center","horizontal":"right"}
+    data["watermarkBounds"]={"x":0.72,"y":0.7681,"width":0.3867,"height":0.2358}
+    data["text"]={
+        "mana":{"name":"Mana Cost","text":"","y":0.0613,"width":0.9292,"height":71/2100,"oneLine":True,"size":71/1638,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":True,"manaSpacing":0},
+        "title":{"name":"Title","text":"","x":0.0854,"y":0.0522,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0381},
+        "type":{"name":"Type","text":"","x":0.0854,"y":0.5664,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0324},
+        "rules":{"name":"Rules Text","text":"","x":0.086,"y":0.6303,"width":808/2010,"height":0.2875,"size":0.0353},
+        "pt":{"name":"Power/Toughness","text":"","x":0.7928,"y":0.902,"width":0.1367,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":True,"align":"center"},
+        "mana2":{"name":"Mana Cost (Prepare Spell)","text":"","x":1319/2010,"y":1798/2814,"width":550/2010,"height":60/2100,"oneLine":True,"size":60/1638,"color":"white","shadowX":-0.001,"shadowY":0.0029,"align":"right","manaCost":True},
+        "title2":{"name":"Title (Prepare Spell)","text":"","x":1042/2010,"y":0.6391,"width":0.4,"height":0.0296,"size":0.0296,"color":"white","oneLine":True,"font":"belerenb"},
+        "type2":{"name":"Type (Prepare Spell)","text":"","x":1042/2010,"y":1932/2814,"width":0.4,"height":0.0296,"size":0.0296,"color":"white","oneLine":True,"font":"belerenb"},
+        "rules2":{"name":"Rules Text (Prepare Spell)","text":"","x":1035/2010,"y":2059/2814,"width":0.3947,"height":438/2814,"size":0.0353},
+    }
     return entry
 
 def parse_saga_chapter_prefix(prefix):
@@ -897,6 +976,10 @@ def infer_layout(card,type_info):
         if face_index==1:
             return "modal_dfc_back"
         raise BuildError("modal_dfc card needs face_index 0 (front) or 1 (back)")
+    if scryfall_layout=="prepare":
+        if not isinstance(card.get("prepared_spell"),dict):
+            raise BuildError("Prepare card needs nested prepared_spell semantic data")
+        return "prepare"
 
     ct=type_info["card_types"]; st=type_info["supertypes"]; sub=type_info["subtypes"]
     legendary="Legendary" in st
@@ -1004,6 +1087,8 @@ def recipe_data(recipe,card,type_info):
         return copy.deepcopy(SOLID_GOLD_LAND_APPROVED_TEMPLATE)
     if recipe=="saga":
         return build_saga_recipe(card,type_info)
+    if recipe=="prepare":
+        return build_prepare_recipe(card,type_info)
 
     # Direct approved / established examples.
     if recipe in LAYOUTS:
@@ -1270,6 +1355,13 @@ def validate_required_semantics(card,type_info,recipe):
         parsed=parse_saga_oracle(card.get("oracle_text",""))
         if not parsed.get("abilities"):
             raise BuildError(f"{name}: Saga needs chaptered oracle text")
+    if recipe=="prepare":
+        prepared=card.get("prepared_spell")
+        if not isinstance(prepared,dict):
+            raise BuildError(f"{name}: Prepare card needs prepared_spell semantic data")
+        prep_info=get_type_info(prepared)
+        if not (prep_info["card_types"] & {"Instant","Sorcery"}):
+            raise BuildError(f"{name}: prepared_spell must be an Instant or Sorcery")
 
 def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
     name=str(card.get("name","")).strip()
@@ -1366,7 +1458,19 @@ def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
         set_text_if_present(data,"rules",rules)
     set_text_if_present(data,"pt",pt)
 
-    if str(data.get("version","")) in {"m15Regular","sagaRegular"} and isinstance(data.get("text",{}).get("title"),dict):
+    if recipe=="prepare":
+        prepared=card["prepared_spell"]
+        prep_info=get_type_info(prepared)
+        prep_rules=italicize_dash_labels(str(prepared.get("oracle_text","") or ""))
+        set_text_if_present(data,"mana2",str(prepared.get("mana_cost","") or ""))
+        set_text_if_present(data,"title2",str(prepared.get("name","") or ""))
+        set_text_if_present(data,"type2",prep_info["normalized"])
+        set_text_if_present(data,"rules2",prep_rules)
+        rs2=data.get("text",{}).get("rules2")
+        if isinstance(rs2,dict):
+            rs2["size"]=choose_rules_size("prepare",prep_rules,float(rs2.get("size",0.0353)))
+
+    if str(data.get("version","")) in {"m15Regular","sagaRegular","prepare"} and isinstance(data.get("text",{}).get("title"),dict):
         data["text"]["title"]["width"]=title_width(mana,int(data.get("width",CARD_WIDTH)))
     rs=data.get("text",{}).get("rules")
     if recipe!="saga" and isinstance(rs,dict):

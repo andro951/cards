@@ -350,6 +350,77 @@ def face_value(face: Mapping[str, Any], card: Mapping[str, Any], key: str, defau
     return value if value is not None else default
 
 
+def prepare_host_and_spell_faces(card: Mapping[str, Any]) -> Tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """Return the physical host face and its auxiliary Prepared spell.
+
+    Scryfall represents Secrets of Strixhaven Prepare cards as layout=prepare
+    with two card_faces, but the spell inset is not a second physical card
+    face. Identify the inset structurally rather than relying on face order.
+    """
+    faces = [f for f in card.get("card_faces", []) if isinstance(f, dict)]
+    if len(faces) != 2:
+        raise DataError(
+            f"Prepare card {card.get('name', '<unnamed>')!r} must have exactly two Scryfall card_faces; got {len(faces)}."
+        )
+
+    spell_faces: List[Mapping[str, Any]] = []
+    host_faces: List[Mapping[str, Any]] = []
+    for face in faces:
+        semantic = split_type_line(str(face.get("type_line") or ""))
+        types = set(semantic["types"])
+        if types & {"Instant", "Sorcery"} and not types & {"Artifact", "Battle", "Creature", "Enchantment", "Land", "Planeswalker"}:
+            spell_faces.append(face)
+        else:
+            host_faces.append(face)
+
+    if len(host_faces) != 1 or len(spell_faces) != 1:
+        raise DataError(
+            f"Prepare card {card.get('name', '<unnamed>')!r} has ambiguous host/spell faces; "
+            f"expected one permanent host and one Instant/Sorcery inset."
+        )
+    return host_faces[0], spell_faces[0]
+
+
+def auxiliary_face_record(face: Mapping[str, Any], card: Mapping[str, Any]) -> Dict[str, Any]:
+    """Build semantic data for an inset/nonphysical face without art or rarity."""
+    name = str(face.get("name") or "").strip()
+    type_line = str(face.get("type_line") or "")
+    semantic = split_type_line(type_line)
+    mana_cost = str(face.get("mana_cost") or "")
+    oracle_text = str(face.get("oracle_text") or "")
+
+    raw_colors = face.get("colors")
+    if isinstance(raw_colors, list):
+        face_colors = [c for c in raw_colors if c in "WUBRG"]
+    else:
+        face_colors = []
+    if not face_colors:
+        # Prepare face-level colors may be null in Scryfall. Mana symbols are
+        # the most specific fallback; only then inherit the whole card colors.
+        for code in "WUBRG":
+            if re.search(rf"\{{(?:[^}}]*/)?{code}(?:/[^}}]*)?\}}", mana_cost):
+                face_colors.append(code)
+        if not face_colors:
+            top = card.get("colors", [])
+            if isinstance(top, list):
+                face_colors = [c for c in top if c in "WUBRG"]
+
+    result: Dict[str, Any] = {
+        "name": name,
+        "mana_cost": mana_cost,
+        "types": semantic["types"],
+        "subtypes": semantic["subtypes"],
+        "legendary": semantic["legendary"],
+        "basic": semantic["basic"],
+        "snow": semantic["snow"],
+        "oracle_text": oracle_text,
+        "colors": face_colors,
+    }
+    if semantic["world"]:
+        result["world"] = True
+    return result
+
+
 def choose_flavor_source(
     client: ScryfallClient,
     resolved: Mapping[str, Any],
@@ -655,6 +726,28 @@ def main() -> int:
             print(f"Scryfall: {source}", file=sys.stderr)
             resolved, was_exact_url = resolve_source(client, source, fuzzy=args.fuzzy)
             flavor_card = choose_flavor_source(client, resolved, was_exact_url, args.flavor_policy)
+
+            if str(resolved.get("layout") or "") == "prepare":
+                host_face, spell_face = prepare_host_and_spell_faces(resolved)
+                flavor_face = select_matching_flavor_face(flavor_card, host_face, 0)
+                host_record = build_face_record(
+                    resolved,
+                    host_face,
+                    flavor_face,
+                    index=0,
+                    face_count=1,  # one physical card; Prepared spell is an inset
+                    project_dir=project_dir,
+                    flavor_overrides=flavor_overrides,
+                    rarity_overrides=rarity_overrides,
+                    art_map=art_map,
+                    allow_missing_art=args.allow_missing_art,
+                    allow_missing_symbols=args.allow_missing_symbols,
+                )
+                host_record["parent_name"] = str(resolved.get("name") or host_record["name"])
+                host_record["scryfall_layout"] = "prepare"
+                host_record["prepared_spell"] = auxiliary_face_record(spell_face, resolved)
+                output_cards.append(host_record)
+                continue
 
             faces = face_list(resolved)
             for i, face in enumerate(faces):
