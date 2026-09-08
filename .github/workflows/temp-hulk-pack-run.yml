@@ -3,7 +3,7 @@ name: Inspect Prepared card metadata
 on:
   push:
     paths:
-      - '.github/workflows/temp-hulk-pack-run.yml'
+      - '.run-inspect-prepared'
 
 permissions:
   contents: read
