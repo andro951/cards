@@ -1,0 +1,128 @@
+--- a/CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
++++ b/CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+@@ -30,6 +30,7 @@
+ LEGENDARY_LAND_RULES_TEXT_HEIGHT=LEGENDARY_LAND_RULES_TEXT_HEIGHT_PX/CARD_HEIGHT
+ NORMAL_FRAME_SET_SYMBOL_X_PX=1737
+ NORMAL_FRAME_SET_SYMBOL_X=NORMAL_FRAME_SET_SYMBOL_X_PX/CARD_WIDTH
++STANDARD_COLOR_ORDER="WUBRG"
+ 
+ # APPROVED SAGA GEOMETRY / REFERENCE LAYOUT DATA.
+ # New Saga art should be authored at the exact art-well size: 854 x 2041 px.
+@@ -468,13 +469,18 @@
+     if not base.endswith("/"): base+="/"
+     return base+urllib.parse.quote(value)
+ 
++def ordered_standard_colors(values):
++    cs=colors(values)
++    order={c:i for i,c in enumerate(STANDARD_COLOR_ORDER)}
++    return sorted(cs,key=lambda c: order.get(c,999))
++
+ def regular_frame_color(card,type_info):
+     explicit=card.get("frame_color")
+     if explicit:
+         code=str(explicit).upper()
+         if code not in "WUBRGM": raise BuildError(f"bad frame_color {code!r}; use W/U/B/R/G/M")
+         return code
+-    cs=colors(card.get("colors"))
++    cs=ordered_standard_colors(card.get("colors"))
+     if len(cs)>1: return "M"
+     if len(cs)==1: return cs[0]
+     return None
+@@ -650,6 +656,10 @@
+     )
+     return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+ 
++def dual_gradient_fill_src(left_code,right_code):
++    """Reusable exact two-color gradient fill used by the approved dual lands."""
++    return original_dual_pinline_src(left_code,right_code)
++
+ def build_original_dual_land_recipe(type_info):
+     colors=ordered_basic_land_colors(type_info)
+     if len(colors)!=2:
+@@ -801,6 +811,54 @@
+     tmp={"frames":crown_layers}; recolor_legend_land(tmp,code)
+     data["frames"]=tmp["frames"]+data.get("frames",[])
+ 
++def apply_dual_legendary_accents(data,left_code,right_code):
++    """
++    Dual-color legendary nonlands keep their normal body treatment, but their
++    legendary accent pieces use the exact same eased left/right blend approved
++    for dual lands. This applies to the crown plus the masked Pinline and Rules
++    layers (the latter is the visible rules-box outline in these templates).
++    """
++    if left_code not in STANDARD_COLOR_ORDER or right_code not in STANDARD_COLOR_ORDER:
++        raise BuildError("dual legendary accent colors must be W/U/B/R/G")
++    gradient_src=dual_gradient_fill_src(left_code,right_code)
++    crown_done=False
++    pinline_done=False
++    rules_done=False
++    pair_name=f"{COLOR_NAMES[left_code]}/{COLOR_NAMES[right_code]}"
++    for frame in data.get("frames",[]):
++        if not isinstance(frame,dict):
++            continue
++        masks=frame.get("masks",[]) if isinstance(frame.get("masks",[]),list) else []
++        mask_names={str(m.get("name","")) for m in masks if isinstance(m,dict)}
++        src=str(frame.get("src",""))
++        name_lower=str(frame.get("name","")).lower()
++
++        if ("crown" in name_lower or "/crowns/" in src) and not crown_done:
++            frame["src"]=gradient_src
++            frame["masks"]=[{"src":src,"name":"Crown"}]
++            frame["name"]=f"{pair_name} Legend Crown"
++            crown_done=True
++            continue
++
++        if "Pinline" in mask_names:
++            frame["src"]=gradient_src
++            frame["name"]=f"{pair_name} Pinline"
++            pinline_done=True
++            continue
++
++        if "Rules" in mask_names:
++            frame["src"]=gradient_src
++            frame["name"]=f"{pair_name} Rules"
++            rules_done=True
++            continue
++
++    if not crown_done:
++        raise BuildError("dual legendary accents expected a crown layer but none was found")
++    if not pinline_done:
++        raise BuildError("dual legendary accents expected a pinline layer but none was found")
++    if not rules_done:
++        raise BuildError("dual legendary accents expected a rules layer but none was found")
++
+ def infer_land_colors(card,type_info):
+     explicit=colors(card.get("land_colors"))
+     if explicit: return explicit
+@@ -1251,16 +1309,21 @@
+         remove_pt_frame(data)
+         data.get("text",{}).pop("pt",None)
+ 
+-    # Normal M15-frame cards use the approved set-symbol X position of 1737 px
+-    # on the standard 2010 px-wide canvas. Special/full-art frame families keep
+-    # the set-symbol position supplied by their own recipe/template.
+-    if str(data.get("version",""))=="m15Regular":
+-        data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
+-    elif recipe in {"modal_dfc_front","modal_dfc_back"}:
+-        # Modal DFC faces use the same set-symbol placement as normal
+-        # creature/card frames. Esika and The Prismatic Bridge are the
+-        # approved modal DFC examples.
+-        data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
++    # Dual-color legendary nonlands use the exact dual-land blend on their
++    # legendary accent pieces. Three-plus-color cards stay gold. Left/right
++    # ordering follows the standard WUBRG color order.
++    nonland_dual_legend=(
++        "Legendary" in type_info["supertypes"]
++        and "Land" not in type_info["card_types"]
++        and len(ordered_standard_colors(card.get("colors")))==2
++    )
++    if nonland_dual_legend:
++        left_code,right_code=ordered_standard_colors(card.get("colors"))
++        apply_dual_legendary_accents(data,left_code,right_code)
++
++    # All cards now use the creature-approved set-symbol X position so lands,
++    # normal spells, sagas, and other supported frames align consistently.
++    data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
+ 
+     mana=str(card.get("mana_cost","")); tl=type_info["normalized"]; oracle=str(card.get("oracle_text",""))
+     saga_meta=None
