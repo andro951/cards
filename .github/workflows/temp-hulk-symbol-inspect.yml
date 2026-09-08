@@ -1,0 +1,41 @@
+name: Inspect Hulk set symbols
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-hulk-symbol-inspect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build labeled contact sheet
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image, ImageOps, ImageDraw
+          from pathlib import Path
+          files=sorted(Path('hulk_pack/set_symbol').glob('*.png'))
+          W,H=700,620
+          cells=[]
+          for p in files:
+              im=Image.open(p).convert('RGBA')
+              bg=Image.new('RGBA',(W,H),'white')
+              thumb=im.copy(); thumb.thumbnail((520,500))
+              bg.alpha_composite(thumb,((W-thumb.width)//2,20))
+              d=ImageDraw.Draw(bg)
+              d.text((20,540),p.name,fill='black')
+              cells.append(bg.convert('RGB'))
+          sheet=Image.new('RGB',(W*2,H*2),'white')
+          for i,cell in enumerate(cells):
+              sheet.paste(cell,((i%2)*W,(i//2)*H))
+          sheet.save('/tmp/hulk_set_symbols_contact_sheet.jpg',quality=90)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hulk-set-symbols-contact-sheet
+          path: /tmp/hulk_set_symbols_contact_sheet.jpg
