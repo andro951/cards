@@ -1,4 +1,4 @@
-name: Hulk Pack art inventory diagnostic
+name: Inspect Hulk Pack duplicate entries
 
 on:
   push:
@@ -9,51 +9,45 @@ permissions:
   contents: read
 
 jobs:
-  run:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            hulk_pack
-            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
-          sparse-checkout-cone-mode: true
-      - name: Fetch full Hulk Pack deck with missing-art tolerance
-        working-directory: hulk_pack
-        run: |
-          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py \
-            "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8" \
-            --allow-missing-art --no-compile
-      - name: Compare every card face against art folder
+      - name: Inspect Demonic Tutor entries in Scryfall export
         run: |
           python - <<'PY'
-          import importlib.util, json
-          from pathlib import Path
-          mod_path=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py')
-          spec=importlib.util.spec_from_file_location('ingest',mod_path)
-          ingest=importlib.util.module_from_spec(spec); spec.loader.exec_module(ingest)
-          src=json.loads(Path('hulk_pack/generated_hulk_pack_card_data.json').read_text(encoding='utf-8'))
-          cards=src['cards']; project=Path('hulk_pack')
-          used=set(); missing=[]
-          for card in cards:
-              name=card['name']
-              try:
-                  fn=ingest.find_art_file(project,name,{},False)
-                  used.add(fn)
-              except Exception as exc:
-                  missing.append({'name':name,'expected':ingest.snake_slug(name)+'.png','error':str(exc)})
-          actual=sorted(p.name for p in (project/'art').iterdir() if p.is_file() and p.suffix.lower() in ingest.IMAGE_EXTENSIONS)
-          extras=[x for x in actual if x not in used]
-          report={'card_faces':len(cards),'art_files':len(actual),'matched_art_files':len(used),'missing_card_faces':missing,'unused_art_files':extras}
-          Path('hulk_pack/art_inventory_report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-          print(json.dumps(report,indent=2))
+          import json, urllib.request
+          url='https://api.scryfall.com/decks/3316831e-83b5-458c-bf88-1529930e24c8/export/json'
+          req=urllib.request.Request(url,headers={'User-Agent':'andro951-card-pipeline/1.0','Accept':'application/json;q=0.9,*/*;q=0.8'})
+          with urllib.request.urlopen(req,timeout=30) as r:
+              data=json.load(r)
+          print('TOP LEVEL KEYS:', sorted(data) if isinstance(data,dict) else type(data).__name__)
+          hits=[]
+          def walk(obj,path='$'):
+              if isinstance(obj,dict):
+                  blob=json.dumps(obj,ensure_ascii=False)
+                  if 'Demonic Tutor' in blob:
+                      # Only report the smallest card-like objects, not every ancestor.
+                      name=obj.get('name') or obj.get('card_name') or obj.get('cardName')
+                      if name=='Demonic Tutor' or any(v=='Demonic Tutor' for v in obj.values() if isinstance(v,str)):
+                          hits.append((path,obj))
+                  for k,v in obj.items(): walk(v,f'{path}.{k}')
+              elif isinstance(obj,list):
+                  for i,v in enumerate(obj): walk(v,f'{path}[{i}]')
+          walk(data)
+          print('DEMONIC TUTOR HITS:',len(hits))
+          for path,obj in hits:
+              print('\nPATH',path)
+              print(json.dumps(obj,indent=2,ensure_ascii=False,sort_keys=True))
+          # Also print section-ish top-level structure compactly.
+          def summarize(obj,path='$',depth=0):
+              if depth>3: return
+              if isinstance(obj,dict):
+                  for k,v in obj.items():
+                      kl=k.lower()
+                      if any(x in kl for x in ('section','board','category','zone','list')):
+                          print('STRUCT',path+'.'+k, type(v).__name__, (len(v) if hasattr(v,'__len__') else ''))
+                      summarize(v,path+'.'+k,depth+1)
+              elif isinstance(obj,list):
+                  for i,v in enumerate(obj[:5]): summarize(v,f'{path}[{i}]',depth+1)
+          summarize(data)
           PY
-      - name: Upload diagnostic files
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hulk-pack-art-inventory-diagnostic
-          path: |
-            hulk_pack/generated_hulk_pack_card_data.json
-            hulk_pack/art_inventory_report.json
-          if-no-files-found: ignore
