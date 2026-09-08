@@ -1,0 +1,36 @@
+name: Hulk Pack full URL run
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-hulk-pack-run.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            hulk_pack
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
+          sparse-checkout-cone-mode: true
+
+      - name: Run Hulk Pack from deck URL only
+        working-directory: hulk_pack
+        run: |
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8"
+
+      - name: Upload generated Hulk Pack files
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hulk-pack-full-current-pipeline
+          path: |
+            hulk_pack/generated_*_card_data.json
+            hulk_pack/generated_*_cards.cardconjurer
+            hulk_pack/*_FLAGGED_UNCHECKED_SAGAS.json
+          if-no-files-found: error
