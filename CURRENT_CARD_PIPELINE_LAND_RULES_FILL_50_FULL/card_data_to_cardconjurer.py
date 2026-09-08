@@ -81,6 +81,7 @@ SUPPORTED_STRUCTURES = [
     ("Colored Artifact", "artifact body + colored pinline"),
     ("Colored Artifact Creature", "artifact body + colored pinline + P/T"),
     ("Modal DFC front/back", "automatic from scryfall_layout=modal_dfc + face_index, using Esika/The Prismatic Bridge as the approved example"),
+    ("Planeswalker / Artifact Planeswalker", "native regular planeswalker frame with 1-4 passive/loyalty ability boxes"),
     ("Prepare (Secrets of Strixhaven)", "automatic from scryfall_layout=prepare + nested prepared_spell, using Card Conjurer's native Prepare frame pack"),
     ("Artifact - Vehicle", "vehicle frame + vehicle P/T"),
     ("Legendary Artifact - Vehicle", "vehicle frame + crown + vehicle P/T"),
@@ -107,7 +108,6 @@ SUPPORTED_STRUCTURES = [
 ]
 
 UNSUPPORTED_STRUCTURES = [
-    "Planeswalker",
     "Battle",
     "Class",
     "Case",
@@ -993,6 +993,165 @@ def infer_land_colors(card,type_info):
         if "{"+code+"}" in text: add(code)
     return out
 
+
+PLANESWALKER_ABILITY_LAYOUT={
+    1:[0.7467],
+    2:[0.6953,0.822],
+    3:[0.6639,0.7467,0.8362],
+    4:[0.6505,0.72,0.7905,0.861],
+}
+PLANESWALKER_ABILITY_START_Y=0.6239
+PLANESWALKER_ABILITY_END_Y=0.8999
+PLANESWALKER_MIN_ABILITY_HEIGHT=0.028
+PLANESWALKER_ABILITY_FONT_SIZE=0.0245
+
+
+def parse_planeswalker_oracle(oracle):
+    rows=[]
+    for raw in str(oracle or '').split('\n'):
+        line=raw.strip()
+        if not line:
+            continue
+        m=re.match(r'^([+\-−]\d+|0)\s*:\s*(.*)$',line,re.S)
+        if m:
+            cost=m.group(1).replace('−','-')
+            body=m.group(2).strip()
+        else:
+            cost=''
+            body=line
+        if not body:
+            raise BuildError('Planeswalker ability row has no rules text')
+        rows.append({'cost':cost,'text':body})
+    if not 1 <= len(rows) <= 4:
+        raise BuildError(f'Planeswalker needs 1-4 oracle ability rows; found {len(rows)}')
+    return rows
+
+
+def planeswalker_ability_heights(rows):
+    total=PLANESWALKER_ABILITY_END_Y-PLANESWALKER_ABILITY_START_Y
+    count=len(rows)
+    base=PLANESWALKER_MIN_ABILITY_HEIGHT
+    remaining=total-base*count
+    if remaining < -1e-9:
+        raise BuildError('Planeswalker ability area is too small for requested rows')
+    extras=[]
+    for row in rows:
+        # Approximate wrapped-line demand at the native regular planeswalker
+        # width. Only extra lines compete for the remaining height so short
+        # abilities retain a clean one-line minimum box.
+        lines=max(1,(len(str(row['text']))+47)//48)
+        extras.append(max(0,lines-1))
+    extra_total=sum(extras)
+    if extra_total:
+        heights=[base+remaining*(x/extra_total) for x in extras]
+    else:
+        heights=[total/count]*count
+    # Pin any floating-point residue to the last box so the stack ends exactly
+    # at the native regular-planeswalker rules boundary.
+    heights[-1]+=total-sum(heights)
+    return heights
+
+
+def build_planeswalker_recipe(card,type_info):
+    ct=type_info['card_types']
+    if 'Planeswalker' not in ct:
+        raise BuildError('planeswalker recipe requires Planeswalker type')
+    if not ct <= {'Planeswalker','Artifact'}:
+        raise BuildError(f'Planeswalker mixed with unsupported card types: {sorted(ct)}')
+
+    if 'Artifact' in ct:
+        code='A'
+    else:
+        code=regular_frame_color(card,type_info)
+        if code not in 'WUBRGM':
+            raise BuildError('colorless nonartifact Planeswalker has no native regular frame color in this pipeline')
+
+    rows=parse_planeswalker_oracle(card.get('oracle_text',''))
+    loyalty=str(card.get('loyalty','') or '').strip()
+    if not loyalty:
+        raise BuildError(f"{card.get('name','<unnamed>')}: Planeswalker needs starting loyalty")
+
+    entry=copy.deepcopy(LAYOUTS['card_noncreature'])
+    data=entry['data']
+    cname=COLOR_NAMES.get(code,'Artifact')
+    src=f'/img/frames/planeswalker/regular/planeswalkerFrame{code}.png'
+    masks=[
+        {'src':'/img/frames/planeswalker/regular/planeswalkerMaskPinline.png','name':'Pinline'},
+        {'src':'/img/frames/planeswalker/regular/planeswalkerMaskTitle.png','name':'Title'},
+        {'src':'/img/frames/planeswalker/regular/planeswalkerMaskType.png','name':'Type'},
+        {'src':'/img/frames/planeswalker/regular/planeswalkerMaskFrame.png','name':'Frame'},
+        {'src':'/img/frames/planeswalker/regular/planeswalkerMaskBorder.png','name':'Border'},
+        {'src':'/img/frames/planeswalker/maskLoyalty.png','name':'Loyalty'},
+    ]
+    data['frames']=[{'name':f'{cname} Frame','src':src,'masks':masks}]
+    data['version']='planeswalkerRegular'
+    data['onload']='/js/frames/versionPlaneswalker.js'
+    data['artBounds']={'x':0.068,'y':0.101,'width':0.864,'height':0.8143}
+    data['setSymbolBounds']={'x':0.9227,'y':0.5891,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
+    # Keep the user's universal creature-approved X position; scale/Y follow
+    # the native regular planeswalker bounds closely.
+    data['setSymbolY']=0.5689
+    data['setSymbolZoom']=0.0938
+    data['text']={
+        'mana':{'name':'Mana Cost','text':'','y':0.0481,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':'','x':0.0867,'y':0.0372,'width':0.8267,'height':0.0548,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':'','x':0.0867,'y':0.5625,'width':0.8267,'height':0.0548,'oneLine':True,'font':'belerenb','size':0.0324},
+        'ability0':{'name':'Ability 1','text':'','x':0.18,'y':0.6239,'width':0.7467,'height':0.0972,'size':PLANESWALKER_ABILITY_FONT_SIZE},
+        'ability1':{'name':'Ability 2','text':'','x':0.18,'y':0,'width':0.7467,'height':0.0972,'size':PLANESWALKER_ABILITY_FONT_SIZE},
+        'ability2':{'name':'Ability 3','text':'','x':0.18,'y':0,'width':0.7467,'height':0.0972,'size':PLANESWALKER_ABILITY_FONT_SIZE},
+        'ability3':{'name':'Ability 4','text':'','x':0.18,'y':0,'width':0.7467,'height':0,'size':PLANESWALKER_ABILITY_FONT_SIZE},
+        'loyalty':{'name':'Loyalty','text':'','x':0.806,'y':0.902,'width':0.14,'height':0.0372,'size':0.0372,'font':'belerenbsc','oneLine':True,'align':'center','color':'white'},
+    }
+
+    heights=planeswalker_ability_heights(rows)
+    y=PLANESWALKER_ABILITY_START_Y
+    for i in range(4):
+        box=data['text'][f'ability{i}']
+        if i < len(rows):
+            box['y']=y
+            box['height']=heights[i]
+            if rows[i]['cost']=='':
+                # versionPlaneswalker.js performs this same expansion when the
+                # loyalty-cost field is blank; include it in the saved object
+                # too so the card looks right before/without rerunning onload.
+                box['x']=0.136
+                box['width']=0.7907
+            y+=heights[i]
+        else:
+            box['y']=y
+            box['height']=0
+            box['text']=''
+
+    defaults=PLANESWALKER_ABILITY_LAYOUT[len(rows)]
+    adjustments=[]
+    y=PLANESWALKER_ABILITY_START_Y
+    for i,row in enumerate(rows):
+        center=y+heights[i]/2
+        adjustments.append(round(center-defaults[i],4) if row['cost'] else 0)
+        y+=heights[i]
+    while len(adjustments)<4:
+        adjustments.append(0)
+    costs=[row['cost'] for row in rows]+['']*(4-len(rows))
+    data['planeswalker']={
+        'abilities':costs,
+        'abilityAdjust':adjustments,
+        'count':len(rows),
+        'x':0.1167,
+        'width':0.8094,
+    }
+    return entry
+
+
+def apply_planeswalker_text_layout(data,card):
+    rows=parse_planeswalker_oracle(card.get('oracle_text',''))
+    for i,row in enumerate(rows):
+        set_text_if_present(data,f'ability{i}',italicize_dash_labels(row['text']))
+    for i in range(len(rows),4):
+        set_text_if_present(data,f'ability{i}','')
+    set_text_if_present(data,'loyalty',str(card.get('loyalty','') or ''))
+
+
 def infer_layout(card,type_info):
     override=card.get("layout")
     if override not in (None,""):
@@ -1022,7 +1181,10 @@ def infer_layout(card,type_info):
     basic="Basic" in st
 
     # Structures with their own frame families must never silently fall back.
-    if "Planeswalker" in ct: raise BuildError("Planeswalker is recognized but unsupported: add an approved planeswalker template first")
+    if "Planeswalker" in ct:
+        if ct <= {"Planeswalker","Artifact"}:
+            return "planeswalker"
+        raise BuildError(f"Planeswalker mixed with unsupported card types: {sorted(ct)}")
     if "Battle" in ct: raise BuildError("Battle is recognized but unsupported: add an approved battle template first")
     if "Land" in ct and "Creature" in ct: raise BuildError("Land Creature is recognized but unsupported; it needs an explicit approved frame recipe")
     if "Land" in ct and "Artifact" in ct: raise BuildError("Artifact Land is recognized but unsupported by default; add/choose an approved treatment")
@@ -1115,6 +1277,8 @@ def recipe_data(recipe,card,type_info):
     regular_color=regular_frame_color(card,type_info)
     artifact="Artifact" in type_info["card_types"]
 
+    if recipe=="planeswalker":
+        return build_planeswalker_recipe(card,type_info)
     if recipe=="original_dual_land_textless":
         return build_original_dual_land_recipe(type_info)
     if recipe=="land_colorless":
@@ -1387,6 +1551,10 @@ def validate_required_semantics(card,type_info,recipe):
             raise BuildError(f"{name}: {type_info['normalized']} needs power/toughness")
     if recipe.startswith("land_") and recipe!="land_full_basic":
         infer_land_colors(card,type_info)  # raises later if unusable
+    if recipe=="planeswalker":
+        if card.get("loyalty") in (None,""):
+            raise BuildError(f"{name}: Planeswalker needs starting loyalty")
+        parse_planeswalker_oracle(card.get("oracle_text",""))
     if recipe=="saga":
         parsed=parse_saga_oracle(card.get("oracle_text",""))
         if not parsed.get("abilities"):
@@ -1443,6 +1611,7 @@ def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
     nonland_dual_legend=(
         "Legendary" in type_info["supertypes"]
         and "Land" not in type_info["card_types"]
+        and recipe!="planeswalker"
         and len(ordered_standard_colors(card.get("colors")))==2
     )
     if nonland_dual_legend:
@@ -1488,7 +1657,9 @@ def build_one(card,project,do_autofit,explain=False,flagged_sagas=None):
     set_text_if_present(data,"mana",mana)
     set_text_if_present(data,"title",name)
     set_text_if_present(data,"type",tl)
-    if recipe=="saga":
+    if recipe=="planeswalker":
+        apply_planeswalker_text_layout(data,card)
+    elif recipe=="saga":
         apply_saga_text_layout(data,saga_meta or saga_layout_metadata(card))
     else:
         set_text_if_present(data,"rules",rules)
