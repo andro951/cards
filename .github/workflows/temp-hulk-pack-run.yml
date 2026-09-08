@@ -1,4 +1,4 @@
-name: Hulk Pack art inventory diagnostic
+name: Hulk Pack full URL run
 
 on:
   push:
@@ -13,57 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Fetch full Hulk Pack deck with missing-art tolerance
+      - name: Run Hulk Pack from deck URL only
         working-directory: hulk_pack
         run: |
-          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py \
-            "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8" \
-            --allow-missing-art || true
-
-      - name: Compare every card face against art folder
-        run: |
-          python - <<'PY'
-          import importlib.util, json
-          from pathlib import Path
-
-          mod_path=Path('CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py')
-          spec=importlib.util.spec_from_file_location('ingest',mod_path)
-          ingest=importlib.util.module_from_spec(spec); spec.loader.exec_module(ingest)
-
-          data_path=Path('hulk_pack/generated_hulk_pack_card_data.json')
-          if not data_path.is_file():
-              raise SystemExit('semantic JSON was not produced')
-          src=json.loads(data_path.read_text(encoding='utf-8'))
-          cards=src['cards']
-          project=Path('hulk_pack')
-          used=set(); missing=[]
-          for card in cards:
-              name=card['name']
-              try:
-                  fn=ingest.find_art_file(project,name,{},False)
-                  used.add(fn)
-              except Exception as exc:
-                  missing.append({'name':name,'error':str(exc),'expected':ingest.snake_slug(name)+'.png'})
-          actual=sorted(p.name for p in (project/'art').iterdir() if p.is_file() and p.suffix.lower() in ingest.IMAGE_EXTENSIONS)
-          extras=[x for x in actual if x not in used]
-          report={
-              'card_faces':len(cards),
-              'art_files':len(actual),
-              'matched_art_files':len(used),
-              'missing_card_faces':missing,
-              'unused_art_files':extras,
-          }
-          Path('hulk_pack/art_inventory_report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-          print(json.dumps(report,indent=2))
-          PY
-
-      - name: Upload diagnostic files
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8"
+      - name: Upload generated Hulk Pack files
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hulk-pack-art-inventory-diagnostic
+          name: hulk-pack-full-current-pipeline
           path: |
-            hulk_pack/generated_hulk_pack_card_data.json
-            hulk_pack/art_inventory_report.json
+            hulk_pack/generated_*_card_data.json
+            hulk_pack/generated_*_cards.cardconjurer
+            hulk_pack/*_FLAGGED_UNCHECKED_SAGAS.json
           if-no-files-found: ignore
