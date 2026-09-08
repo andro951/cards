@@ -1,4 +1,4 @@
-name: Hulk Pack full URL run
+name: Inspect Prepared card metadata
 
 on:
   push:
@@ -9,28 +9,26 @@ permissions:
   contents: read
 
 jobs:
-  run:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            hulk_pack
-            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
-          sparse-checkout-cone-mode: true
-
-      - name: Run Hulk Pack from deck URL only
-        working-directory: hulk_pack
+      - name: Inspect Emeritus of Woe Scryfall object
         run: |
-          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8"
-
-      - name: Upload generated Hulk Pack files
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hulk-pack-full-current-pipeline
-          path: |
-            hulk_pack/generated_*_card_data.json
-            hulk_pack/generated_*_cards.cardconjurer
-            hulk_pack/*_FLAGGED_UNCHECKED_SAGAS.json
-          if-no-files-found: error
+          python - <<'PY'
+          import json, urllib.request
+          url='https://api.scryfall.com/cards/7eb9e83d-515d-4911-a06b-9982200277b2'
+          req=urllib.request.Request(url,headers={'User-Agent':'andro951-card-pipeline/1.0','Accept':'application/json;q=0.9,*/*;q=0.8'})
+          with urllib.request.urlopen(req,timeout=30) as r:
+              card=json.load(r)
+          print('name=',card.get('name'))
+          print('layout=',card.get('layout'))
+          print('type_line=',card.get('type_line'))
+          print('keywords=',card.get('keywords'))
+          print('card_faces=',len(card.get('card_faces',[])))
+          for i,face in enumerate(card.get('card_faces',[])):
+              print('FACE',i)
+              for k in ('name','mana_cost','type_line','oracle_text','flavor_name','printed_name'):
+                  print(' ',k,'=',face.get(k))
+              print(' keys=',sorted(face.keys()))
+          print('card keys=',sorted(card.keys()))
+          PY
