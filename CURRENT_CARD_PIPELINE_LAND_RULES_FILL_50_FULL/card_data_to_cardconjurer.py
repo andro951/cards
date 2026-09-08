@@ -1096,7 +1096,7 @@ def build_planeswalker_recipe(card,type_info):
         })
     data['version']='planeswalkerRegular'
     data['onload']='/js/frames/versionPlaneswalker.js'
-    data['artBounds']={'x':0.068,'y':0.101,'width':0.864,'height':0.8143}
+    data['artBounds']={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429}
     data['setSymbolBounds']={'x':0.9227,'y':0.5891,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
     data['watermarkBounds']={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
     # Keep the user's universal creature-approved X position; scale/Y follow
