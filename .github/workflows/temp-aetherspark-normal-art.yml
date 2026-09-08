@@ -1,0 +1,64 @@
+name: Test Aetherspark normal art window
+
+on:
+  push:
+    paths:
+      - '.run-aetherspark-normal-art'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .planeswalker_normal_art_fix.py
+            hulk_pack
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
+          sparse-checkout-cone-mode: true
+
+      - name: Apply normal art-window fix
+        run: |
+          python .planeswalker_normal_art_fix.py
+          python -m py_compile CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+
+      - name: Generate Aetherspark only
+        run: |
+          printf '%s\n' 'https://api.scryfall.com/cards/05690d52-06c4-40b1-8360-380418a83250' > /tmp/aetherspark.txt
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py \
+            --project hulk_pack \
+            --repo-project-path hulk_pack \
+            --repo andro951/cards \
+            --branch main \
+            --list /tmp/aetherspark.txt \
+            --flavor-policy latest \
+            --request-delay 0.25 \
+            -o /tmp/aetherspark_semantic.json
+          python CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py \
+            /tmp/aetherspark_semantic.json \
+            -o /tmp/the_aetherspark_normal_art.cardconjurer
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/the_aetherspark_normal_art.cardconjurer',encoding='utf-8'))[0]['data']
+          assert d['artBounds']=={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429},d['artBounds']
+          assert len(d['frames'])==6
+          assert [f['masks'][0]['name'] for f in d['frames']]==['Pinline','Title','Type','Frame','Border','Loyalty']
+          print('Verified normal M15 art window with regular planeswalker frame.')
+          PY
+
+      - name: Commit planeswalker art-window fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+          git commit -m "Use normal art window for planeswalkers"
+          git push
+
+      - name: Upload corrected Aetherspark
+        uses: actions/upload-artifact@v4
+        with:
+          name: the-aetherspark-normal-art
+          path: /tmp/the_aetherspark_normal_art.cardconjurer
