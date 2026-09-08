@@ -1,0 +1,2013 @@
+{
+  "schema_version": 2,
+  "defaults": {
+    "repo": "andro951/cards",
+    "branch": "main",
+    "artist": "ChatGPT",
+    "art_base_url": "https://raw.githubusercontent.com/andro951/cards/main/doctor_who/art/",
+    "set_symbol_base_url": "https://raw.githubusercontent.com/andro951/cards/main/doctor_who/set_icon/"
+  },
+  "cards": [
+    {
+      "name": "Esika, God of the Tree",
+      "mana_cost": "{1}{G}{G}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "God"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\"",
+      "colors": [
+        "G"
+      ],
+      "art": "Esika, God of the Tree.png",
+      "rarity": "mythic",
+      "flavor_text": "\"I know this world, from canopy to roots.\"",
+      "power": "1",
+      "toughness": "4",
+      "parent_name": "Esika, God of the Tree // The Prismatic Bridge",
+      "face_index": 0,
+      "scryfall_layout": "modal_dfc"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "mana_cost": "{W}{U}{B}{R}{G}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "At the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+      "colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ],
+      "art": "The Prismatic Bridge.png",
+      "rarity": "mythic",
+      "flavor_text": "Starnheim awaits.",
+      "parent_name": "Esika, God of the Tree // The Prismatic Bridge",
+      "face_index": 1,
+      "scryfall_layout": "modal_dfc"
+    },
+    {
+      "name": "The World Tree",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped.\n{T}: Add {G}.\nAs long as you control six or more lands, lands you control have \"{T}: Add one mana of any color.\"\n{W}{W}{U}{U}{B}{B}{R}{R}{G}{G}, {T}, Sacrifice this land: Search your library for any number of God cards, put them onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "The World Tree.png",
+      "rarity": "rare",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Command Tower",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "colors": [],
+      "art": "command_tower.png",
+      "rarity": "common",
+      "flavor_text": "\"You are a time-space machine. You're a vehicle! I've never asked you to cheer me up with hologrammatic antlers!\"\n—The Twelfth Doctor",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Mana Confluence",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life: Add one mana of any color.",
+      "colors": [],
+      "art": "Mana Confluence.png",
+      "rarity": "rare",
+      "flavor_text": "Five rivers encircle Theros, flowing with waters more ancient than the world itself.",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Exotic Orchard",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "colors": [],
+      "art": "exotic_orchard.png",
+      "rarity": "rare",
+      "flavor_text": "\"When you can't find your way home, find home where you can.\"\n—Rho, veteran hero",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Reflecting Pool",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any type that a land you control could produce.",
+      "colors": [],
+      "art": "Reflecting Pool.png",
+      "rarity": "rare",
+      "flavor_text": "Does it reflect the future that once was or the past that can never be?",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Plaza of Heroes",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell.\n{T}: Add one mana of any color among legendary permanents you control.\n{3}, {T}, Exile this land: Target legendary creature gains hexproof and indestructible until end of turn.",
+      "colors": [],
+      "art": "Plaza of Heroes.png",
+      "rarity": "rare",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Flooded Strand",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Flooded Strand.png",
+      "rarity": "rare",
+      "flavor_text": "Where dragons once slept, their bones now rest.",
+      "land_colors": [
+        "W",
+        "U"
+      ]
+    },
+    {
+      "name": "Windswept Heath",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Windswept Heath.png",
+      "rarity": "rare",
+      "flavor_text": "An underground paradise, bright and thriving beneath the surface of Ixalan.",
+      "land_colors": [
+        "W",
+        "G"
+      ]
+    },
+    {
+      "name": "Gaea's Cradle",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add {G} for each creature you control.",
+      "colors": [],
+      "art": "Gaea's Cradle.png",
+      "rarity": "rare",
+      "flavor_text": "\"Here sprouted the first seedling of Argoth. Here the last tree will fall.\"  - Gamelen, Citanul elder",
+      "land_colors": [
+        "G"
+      ]
+    },
+    {
+      "name": "Crystal Quarry",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add {C}.\n{5}, {T}: Add {W}{U}{B}{R}{G}.",
+      "colors": [],
+      "art": "Crystal Quarry.png",
+      "rarity": "rare",
+      "flavor_text": "\"How tragic that greed eclipses beauty.\"  - Seton, centaur druid",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Cascading Cataracts",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Indestructible\n{T}: Add {C}.\n{5}, {T}: Add five mana in any combination of colors.",
+      "colors": [],
+      "art": "Cascading Cataracts.png",
+      "rarity": "rare",
+      "flavor_text": "\"The power that flows here cannot be denied. But where is the source?\"  - Nissa Revane",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Tundra",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {W} or {U}.)",
+      "colors": [],
+      "art": "Tundra.png",
+      "rarity": "rare",
+      "land_colors": [
+        "W",
+        "U"
+      ]
+    },
+    {
+      "name": "Tropical Island",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G} or {U}.)",
+      "colors": [],
+      "art": "Tropical Island.png",
+      "rarity": "rare",
+      "land_colors": [
+        "G",
+        "U"
+      ]
+    },
+    {
+      "name": "Savannah",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G} or {W}.)",
+      "colors": [],
+      "art": "Savannah.png",
+      "rarity": "rare",
+      "land_colors": [
+        "G",
+        "W"
+      ]
+    },
+    {
+      "name": "Watery Grave",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Island",
+        "Swamp"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {U} or {B}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+      "colors": [],
+      "art": "Watery Grave.png",
+      "rarity": "rare",
+      "flavor_text": "\"I fear that as we scurry after phantoms, the Dimir pull nine puppet strings.\"  - Ral Zarek",
+      "land_colors": [
+        "U",
+        "B"
+      ]
+    },
+    {
+      "name": "Steam Vents",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Island",
+        "Mountain"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+      "colors": [],
+      "art": "Steam Vents.png",
+      "rarity": "rare",
+      "flavor_text": "\"A massive new Izzet building project with an unstated purpose? Probably fine.\"  - Zija, Simic mutationist",
+      "land_colors": [
+        "U",
+        "R"
+      ]
+    },
+    {
+      "name": "Forest",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest"
+      ],
+      "legendary": false,
+      "basic": true,
+      "snow": false,
+      "oracle_text": "({T}: Add {G}.)",
+      "colors": [],
+      "art": "Forest.png",
+      "rarity": "common",
+      "land_colors": [
+        "G"
+      ]
+    },
+    {
+      "name": "Island",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Island"
+      ],
+      "legendary": false,
+      "basic": true,
+      "snow": false,
+      "oracle_text": "({T}: Add {U}.)",
+      "colors": [],
+      "art": "Island.png",
+      "rarity": "common",
+      "land_colors": [
+        "U"
+      ]
+    },
+    {
+      "name": "Mountain",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Mountain"
+      ],
+      "legendary": false,
+      "basic": true,
+      "snow": false,
+      "oracle_text": "({T}: Add {R}.)",
+      "colors": [],
+      "art": "Mountain.png",
+      "rarity": "common",
+      "land_colors": [
+        "R"
+      ]
+    },
+    {
+      "name": "Plains",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": true,
+      "snow": false,
+      "oracle_text": "({T}: Add {W}.)",
+      "colors": [],
+      "art": "Plains.png",
+      "rarity": "common",
+      "land_colors": [
+        "W"
+      ]
+    },
+    {
+      "name": "Swamp",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Swamp"
+      ],
+      "legendary": false,
+      "basic": true,
+      "snow": false,
+      "oracle_text": "({T}: Add {B}.)",
+      "colors": [],
+      "art": "Swamp.png",
+      "rarity": "common",
+      "land_colors": [
+        "B"
+      ]
+    },
+    {
+      "name": "Spara's Headquarters",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Plains",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G}, {W}, or {U}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Spara's Headquarters.png",
+      "rarity": "rare",
+      "flavor_text": "To most, the Nido Sanctuary is an office complex. To the Brokers, it's a vault of secrets.",
+      "land_colors": [
+        "G",
+        "W",
+        "U"
+      ]
+    },
+    {
+      "name": "Raffine's Tower",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains",
+        "Island",
+        "Swamp"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {W}, {U}, or {B}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Raffine's Tower.png",
+      "rarity": "rare",
+      "flavor_text": "The Obscura's Cloud Spire dominates the skyline, its eye a beacon of progress that sees all.",
+      "land_colors": [
+        "W",
+        "U",
+        "B"
+      ]
+    },
+    {
+      "name": "Ketria Triome",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Island",
+        "Mountain"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G}, {U}, or {R}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Ketria Triome.png",
+      "rarity": "rare",
+      "flavor_text": "Nowhere on Ikoria are monsters more integral to the landscape than Ketria, where the river itself will stand up and roar.",
+      "land_colors": [
+        "G",
+        "U",
+        "R"
+      ]
+    },
+    {
+      "name": "Indatha Triome",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains",
+        "Swamp",
+        "Forest"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {W}, {B}, or {G}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Indatha Triome.png",
+      "rarity": "rare",
+      "flavor_text": "\"These lowlands were formed thousands of years ago by the behemoth Indath - its final footsteps before vanishing into the sea.\"  - Tales of the Ozolith",
+      "land_colors": [
+        "W",
+        "B",
+        "G"
+      ]
+    },
+    {
+      "name": "Misty Rainforest",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Misty Rainforest.png",
+      "rarity": "rare",
+      "flavor_text": "In the mist, turbulent enough to deafen.\nBeneath the boughs, serene enough to soothe.",
+      "land_colors": [
+        "U",
+        "G"
+      ]
+    },
+    {
+      "name": "Marsh Flats",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Marsh Flats.png",
+      "rarity": "rare",
+      "flavor_text": "\"We remember all the world has endured, everything it has gone through to bring us to today. We are proud of Tarkir.\"  - Betor",
+      "land_colors": [
+        "W",
+        "B"
+      ]
+    },
+    {
+      "name": "Godless Shrine",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains",
+        "Swamp"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {W} or {B}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+      "colors": [],
+      "art": "Godless Shrine.png",
+      "rarity": "rare",
+      "flavor_text": "Sin is debt, and absolution is paid in tithes of gold and blood.",
+      "land_colors": [
+        "W",
+        "B"
+      ]
+    },
+    {
+      "name": "Sacred Foundry",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Mountain",
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {R} or {W}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+      "colors": [],
+      "art": "Sacred Foundry.png",
+      "rarity": "rare",
+      "flavor_text": "\"You will not be trained here. You will be forged.\"  - Commander Yaszen",
+      "land_colors": [
+        "R",
+        "W"
+      ]
+    },
+    {
+      "name": "Arid Mesa",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Arid Mesa.png",
+      "rarity": "rare",
+      "flavor_text": "\"This was where I fought my first battle under Kolaghan. How I have outgrown her.\"  - Zurgo, khan of the Mardu",
+      "land_colors": [
+        "W",
+        "R"
+      ]
+    },
+    {
+      "name": "Transguild Promenade",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped.\nWhen this land enters, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.",
+      "colors": [],
+      "art": "transguild_promonade.png",
+      "rarity": "common",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Raugrin Triome",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Island",
+        "Mountain",
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {U}, {R}, or {W}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Raugrin Triome.png",
+      "rarity": "rare",
+      "flavor_text": "Raugrin meets the sea with jaws wide, its coast spiked with teeth of crystal and granite.",
+      "land_colors": [
+        "U",
+        "R",
+        "W"
+      ]
+    },
+    {
+      "name": "Zagoth Triome",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Swamp",
+        "Forest",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {B}, {G}, or {U}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Zagoth Triome.png",
+      "rarity": "rare",
+      "flavor_text": "Hunters in the primeval wetlands become fluent in reading the ripples to tell when to pursue and when to flee.",
+      "land_colors": [
+        "B",
+        "G",
+        "U"
+      ]
+    },
+    {
+      "name": "Jetmir's Garden",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Mountain",
+        "Forest",
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {R}, {G}, or {W}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+      "colors": [],
+      "art": "Jetmir's Garden.png",
+      "rarity": "rare",
+      "flavor_text": "The parklike Cabaretti grounds offer rest, food, and the perfect place to shake off a tail.",
+      "land_colors": [
+        "R",
+        "G",
+        "W"
+      ]
+    },
+    {
+      "name": "Glacial Fortress",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped unless you control a Plains or an Island.\n{T}: Add {W} or {U}.",
+      "colors": [],
+      "art": "glacial_fortress.png",
+      "rarity": "rare",
+      "flavor_text": "\"Avengers Mountain is built inside of a Celestial corpse. Weird? Yes. But we go jogging in the femoral artery, so it has its perks.\"\n—She-Hulk, Jennifer Walters",
+      "land_colors": [
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "Hinterland Harbor",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped unless you control a Forest or an Island.\n{T}: Add {G} or {U}.",
+      "colors": [],
+      "art": "hinterland_harbor.png",
+      "rarity": "rare",
+      "flavor_text": "\"You swabs did all right. But I got my own crew ta get back to. Ship's yers now. Sail 'er well.\"\n—Blackbeard the Pirate, Ben Grimm",
+      "land_colors": [
+        "G",
+        "U"
+      ]
+    },
+    {
+      "name": "Sunpetal Grove",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped unless you control a Forest or a Plains.\n{T}: Add {G} or {W}.",
+      "colors": [],
+      "art": "sunpetal_grove.png",
+      "rarity": "rare",
+      "flavor_text": "\"Birnin Zana is not a cold and dead city like those of other nations. Our city lives. It *thrives*.\"\n—Queen Mother Ramonda",
+      "land_colors": [
+        "G",
+        "W"
+      ]
+    },
+    {
+      "name": "Scalding Tarn",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Scalding Tarn.png",
+      "rarity": "rare",
+      "flavor_text": "\"I came here often to meditate on Ojutai's teachings. Now, I must also consider his failings.\"  - Narset",
+      "land_colors": [
+        "U",
+        "R"
+      ]
+    },
+    {
+      "name": "Polluted Delta",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.",
+      "colors": [],
+      "art": "Polluted Delta.png",
+      "rarity": "rare",
+      "flavor_text": "A warped gateway that seeps toxins and malevolence into the waters around Towashi.",
+      "land_colors": [
+        "U",
+        "B"
+      ]
+    },
+    {
+      "name": "Rupture Spire",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This land enters tapped.\nWhen this land enters, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.",
+      "colors": [],
+      "art": "rupture_spire.png",
+      "rarity": "common",
+      "land_colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ]
+    },
+    {
+      "name": "K-9, Mark I",
+      "mana_cost": "{U}",
+      "types": [
+        "Artifact",
+        "Creature"
+      ],
+      "subtypes": [
+        "Robot",
+        "Dog"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Negative — As long as K-9 is untapped, other legendary creatures you control have ward {1}.\nAffirmative — {1}{U}, {T}: Target legendary creature can't be blocked this turn.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+      "colors": [
+        "U"
+      ],
+      "art": "K-9, Mark I.png",
+      "rarity": "rare",
+      "power": "1",
+      "toughness": "1"
+    },
+    {
+      "name": "Rose Tyler",
+      "mana_cost": "{1}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Rose Tyler gets +1/+1 for each time counter on it.\nBad Wolf — Whenever Rose Tyler attacks, put a time counter on it for each suspended card you own and each other permanent you control with a time counter on it.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+      "colors": [
+        "W"
+      ],
+      "art": "rose_tyler.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "Time Beetle",
+      "mana_cost": "{1}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Alien",
+        "Insect"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Skulk (This creature can't be blocked by creatures with greater power.)\nParallel Universe — Whenever this creature deals combat damage to a player, time travel. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter.)",
+      "colors": [
+        "U"
+      ],
+      "art": "time_beetle.png",
+      "rarity": "uncommon",
+      "power": "1",
+      "toughness": "1"
+    },
+    {
+      "name": "River Song",
+      "mana_cost": "{1}{U}{R}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Time",
+        "Lord",
+        "Rogue"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Meet in Reverse — You draw cards from the bottom of your library rather than the top.\nSpoilers — Whenever an opponent scries, surveils, or searches their library, put a +1/+1 counter on River Song. Then River Song deals damage to that player equal to its power.",
+      "colors": [
+        "R",
+        "U"
+      ],
+      "art": "river_song.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "The Eleventh Doctor",
+      "mana_cost": "{1}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "I. AM. TALKING! — Whenever The Eleventh Doctor deals combat damage to a player, you may exile a card from your hand with a number of time counters on it equal to its mana value. If it doesn't have suspend, it gains suspend.\n{2}: Target creature with power 3 or less can't be blocked this turn.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "the_eleventh_doctor.png",
+      "rarity": "rare",
+      "power": "3",
+      "toughness": "2"
+    },
+    {
+      "name": "The First Doctor",
+      "mana_cost": "{1}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When The First Doctor enters, search your library and/or graveyard for a card named TARDIS, reveal it, and put it into your hand. If you search your library this way, shuffle.\nWhenever you cast a spell with cascade, put a +1/+1 counter on target artifact or creature.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "the_first_doctor.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "The Fourteenth Doctor",
+      "mana_cost": "{R/G}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When you cast this spell, reveal the top fourteen cards of your library. Put all Doctor cards revealed this way into your graveyard and the rest on the bottom of your library in a random order.\nYou may have The Fourteenth Doctor enter as a copy of a Doctor card in your graveyard that was put there from your library this turn. If you do, it gains haste until end of turn.",
+      "colors": [
+        "G",
+        "R",
+        "U",
+        "W"
+      ],
+      "art": "The Fourteenth Doctor.png",
+      "rarity": "rare",
+      "power": "3",
+      "toughness": "4"
+    },
+    {
+      "name": "Weeping Angel",
+      "mana_cost": "{1}{U}{B}",
+      "types": [
+        "Artifact",
+        "Creature"
+      ],
+      "subtypes": [
+        "Alien",
+        "Angel"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flash\nFirst strike, vigilance\nWhenever an opponent casts a creature spell, this creature isn't a creature until end of turn.\nIf this creature would deal combat damage to a creature, prevent that damage and that creature's owner shuffles it into their library.",
+      "colors": [
+        "B",
+        "U"
+      ],
+      "art": "weeping_angel.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "The Fifth Doctor",
+      "mana_cost": "{2}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Peaceful Coexistence — At the beginning of your end step, put a +1/+1 counter on each creature you control that didn't attack or enter this turn. Untap those creatures.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "the_fifth_doctor.png",
+      "rarity": "rare",
+      "flavor_text": "\"When did you last have the pleasure of smelling a flower, watching a sunset, eating a well-prepared meal?\"",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "The Fourth Doctor",
+      "mana_cost": "{2}{G}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "You may look at the top card of your library any time.\nWould You Like A...? — Once each turn, you may play a historic land or cast a historic spell from the top of your library. When you do, create a Food token. (Artifacts, legendaries, and Sagas are historic.)",
+      "colors": [
+        "G",
+        "U"
+      ],
+      "art": "the_fourth_doctor.png",
+      "rarity": "mythic",
+      "power": "4",
+      "toughness": "4"
+    },
+    {
+      "name": "The Second Doctor",
+      "mana_cost": "{2}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Players have no maximum hand size.\nHow Civil of You — At the beginning of your end step, each player may draw a card. Each opponent who does can't attack you or permanents you control during their next turn.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "the_second_doctor.png",
+      "rarity": "rare",
+      "flavor_text": "\"Well . . . it is a fact, Jamie, that I do tend to get involved.\"",
+      "power": "2",
+      "toughness": "4"
+    },
+    {
+      "name": "The Third Doctor",
+      "mana_cost": "{2}{G}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Trample\nThe Third Doctor gets +1/+1 for each noncreature token you control.\nWhen The Third Doctor enters, create your choice of a Clue token, a Food token, or a Treasure token.",
+      "colors": [
+        "G",
+        "U"
+      ],
+      "art": "the_third_doctor.png",
+      "rarity": "rare",
+      "flavor_text": "\"It's rather a pity, in a way. Now the universe is down to 699 wonders.\"",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "The War Doctor",
+      "mana_cost": "{2}{R}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Whenever one or more other permanents phase out and whenever one or more other cards are put into exile from anywhere, put a time counter on The War Doctor.\nWhenever The War Doctor attacks, it deals damage equal to the number of time counters on it to any target. If a creature dealt damage this way would die this turn, exile it instead.",
+      "colors": [
+        "R",
+        "W"
+      ],
+      "art": "the_war_doctor.png",
+      "rarity": "rare",
+      "power": "3",
+      "toughness": "5"
+    },
+    {
+      "name": "Wilfred Mott",
+      "mana_cost": "{3}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Soldier"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Look to the Stars — At the beginning of your upkeep, put a time counter on Wilfred Mott. Then look at the top X cards of your library, where X is the number of time counters on Wilfred Mott. You may put a nonland permanent card with mana value 3 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+      "colors": [
+        "W"
+      ],
+      "art": "wilfred_mott.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "4"
+    },
+    {
+      "name": "The Tenth Doctor",
+      "mana_cost": "{3}{U}{R}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Allons-y! — Whenever you attack, exile cards from the top of your library until you exile a nonland card. Put three time counters on it. If it doesn't have suspend, it gains suspend.\nTimey-Wimey — {7}: Time travel three times. Activate only as a sorcery. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter. Then do it two more times.)",
+      "colors": [
+        "R",
+        "U"
+      ],
+      "art": "the_tenth_doctor.png",
+      "rarity": "mythic",
+      "power": "3",
+      "toughness": "5"
+    },
+    {
+      "name": "Missy",
+      "mana_cost": "{3}{U}{B}{R}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Rogue"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Whenever another nonartifact creature dies, return it to the battlefield under your control face down and tapped. It's a 2/2 Cyberman artifact creature.\nAt the beginning of your end step, each opponent faces a villainous choice — Each artifact creature you control deals 1 damage to that opponent, or you draw a card and chaos ensues.",
+      "colors": [
+        "B",
+        "R",
+        "U"
+      ],
+      "art": "missy.png",
+      "rarity": "rare",
+      "power": "4",
+      "toughness": "5"
+    },
+    {
+      "name": "The Sixth Doctor",
+      "mana_cost": "{4}{G}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Time Lord's Prerogative — Whenever you cast a historic spell, copy it, except the copy isn't legendary. This ability triggers only once each turn. (Artifacts, legendaries, and Sagas are historic. A copy of a permanent spell becomes a token.)",
+      "colors": [
+        "G",
+        "U"
+      ],
+      "art": "the_sixth_doctor.png",
+      "rarity": "rare",
+      "flavor_text": "\"This is a situation that requires tact and finesse. Fortunately, I am blessed with both!\"",
+      "power": "3",
+      "toughness": "3"
+    },
+    {
+      "name": "Judoon Enforcers",
+      "mana_cost": "{5}{R}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Alien",
+        "Rhino",
+        "Soldier"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Trample\nNo more than one creature can attack you each combat.\nSuspend 6—{1}{R}{W} (Rather than cast this card from your hand, you may pay {1}{R}{W} and exile it with six time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost. It has haste.)",
+      "colors": [
+        "R",
+        "W"
+      ],
+      "art": "judoon_enforcers.png",
+      "rarity": "uncommon",
+      "power": "8",
+      "toughness": "8"
+    },
+    {
+      "name": "Sol Ring",
+      "mana_cost": "{1}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add {C}{C}.",
+      "colors": [],
+      "art": "Sol Ring.png",
+      "rarity": "uncommon",
+      "flavor_text": "\"The Eye of Harmony. Exploding star in the act of becoming a black hole. Time Lord engineering.\"  - The Eleventh Doctor"
+    },
+    {
+      "name": "Arcane Signet",
+      "mana_cost": "{2}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "colors": [],
+      "art": "arcane_signet.png",
+      "rarity": "common",
+      "flavor_text": "\"Seal of the High Council of Gallifrey. Nicked it off the Master in the Death Zone.\"\n—The Eleventh Doctor"
+    },
+    {
+      "name": "TARDIS",
+      "mana_cost": "{2}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [
+        "Vehicle"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flying\nWhenever this Vehicle attacks, if you control a Time Lord, the next spell you cast this turn has cascade and you may planeswalk.\nCrew 2 (Tap any number of creatures you control with total power 2 or more: This Vehicle becomes an artifact creature until end of turn.)",
+      "colors": [],
+      "art": "tardis.png",
+      "rarity": "uncommon",
+      "power": "2",
+      "toughness": "4"
+    },
+    {
+      "name": "River Song's Diary",
+      "mana_cost": "{3}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [
+        "Book"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Imprint — Whenever a player casts an instant or sorcery spell from their hand, exile it instead of putting it into a graveyard as it resolves.\nAt the beginning of your upkeep, if there are four or more cards exiled with this artifact, choose one of them at random. You may cast it without paying its mana cost.",
+      "colors": [],
+      "art": "river_song_s_diary.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Rotating Fireplace",
+      "mana_cost": "{3}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This artifact enters tapped with a time counter on it.\n{T}: Add an amount of {C} equal to the number of time counters on this artifact.\n{4}, {T}: Time travel. Activate only as a sorcery. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter.)",
+      "colors": [],
+      "art": "rotating_fireplace.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Sonic Screwdriver",
+      "mana_cost": "{3}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any color.\n{1}, {T}: Untap another target artifact.\n{2}, {T}: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{3}, {T}: Target creature can't be blocked this turn.",
+      "colors": [],
+      "art": "Sonic Screwdriver.png",
+      "rarity": "uncommon",
+      "flavor_text": "The Doctor's technologically advanced tool helps them out in most situations."
+    },
+    {
+      "name": "The Pandorica",
+      "mana_cost": "{2}{W}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "You may choose not to untap The Pandorica during your untap step.\n{1}{W}, {T}: Untap another target nonland permanent, then it phases out. It can't phase in for as long as The Pandorica remains tapped. When The Pandorica becomes untapped or leaves the battlefield, that permanent phases in. Activate only as a sorcery.",
+      "colors": [
+        "W"
+      ],
+      "art": "the_pandorica.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "RMS Titanic",
+      "mana_cost": "{3}{R}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [
+        "Vehicle"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flying, trample\nWhen RMS Titanic deals combat damage to a player, sacrifice it and create that many Treasure tokens.\nCrew 3 (Tap any number of creatures you control with total power 3 or more: This Vehicle becomes an artifact creature until end of turn.)",
+      "colors": [
+        "R"
+      ],
+      "art": "RMS Titanic.png",
+      "rarity": "rare",
+      "power": "7",
+      "toughness": "1"
+    },
+    {
+      "name": "Wedding Ring",
+      "mana_cost": "{2}{W}{W}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When this artifact enters, if it was cast, target opponent creates a token that's a copy of it.\nWhenever an opponent who controls an artifact named Wedding Ring draws a card during their turn, you draw a card.\nWhenever an opponent who controls an artifact named Wedding Ring gains life during their turn, you gain that much life.",
+      "colors": [
+        "W"
+      ],
+      "art": "Wedding Ring.png",
+      "rarity": "mythic"
+    },
+    {
+      "name": "Regenerations Restored",
+      "mana_cost": "{W}{U}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Vanishing 12 (This enchantment enters with twelve time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhenever one or more time counters are removed from this enchantment, scry 1 and you gain 1 life. Then if this enchantment has no time counters on it, exile it. When you do, take an extra turn after this one.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "regenerations_restored.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Out of Time",
+      "mana_cost": "{1}{W}{W}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When this enchantment enters, untap all creatures, then those creatures phase out until this enchantment leaves the battlefield. Put a time counter on this enchantment for each creature that phased out this way.\nVanishing (At the beginning of your upkeep, remove a time counter from this enchantment. When the last is removed, sacrifice it.)",
+      "colors": [
+        "W"
+      ],
+      "art": "out_of_time.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Propaganda",
+      "mana_cost": "{2}{U}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.",
+      "colors": [
+        "U"
+      ],
+      "art": "Propaganda.png",
+      "rarity": "uncommon",
+      "flavor_text": "\"You've failed Gerrard. You've failed the Legacy. You've failed yourself. I can do no more.\"  - Volrath, to Karn"
+    },
+    {
+      "name": "Crack in Time",
+      "mana_cost": "{3}{W}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Vanishing 3 (This enchantment enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this enchantment enters and at the beginning of your first main phase, exile target creature an opponent controls until this enchantment leaves the battlefield.",
+      "colors": [
+        "W"
+      ],
+      "art": "crack_in_time.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Bigger on the Inside",
+      "mana_cost": "{3}{R}{G}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [
+        "Aura"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Enchant artifact or land\nEnchanted permanent has \"{T}: Target player adds two mana of any one color. The next spell they cast this turn has cascade.\" (When they cast their next spell, they exile cards from the top of their library until they exile a nonland card that costs less. They may cast it without paying its mana cost. They put the exiled cards on the bottom in a random order.)",
+      "colors": [
+        "G",
+        "R"
+      ],
+      "art": "bigger_on_the_inside.png",
+      "rarity": "uncommon"
+    },
+    {
+      "name": "Gallifrey Stands",
+      "mana_cost": "{4}{W}{U}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When Gallifrey Stands enters, return all Doctor cards from your graveyard to your hand.\nAt the beginning of your upkeep, you may put a Doctor creature card from your hand onto the battlefield. Then if you control thirteen or more Doctors, you win the game.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "gallifrey_stands.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Cyber Conversion",
+      "mana_cost": "{U}{U}",
+      "types": [
+        "Instant"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Turn target creature face down. It's a 2/2 Cyberman artifact creature.",
+      "colors": [
+        "U"
+      ],
+      "art": "cyber_conversion.png",
+      "rarity": "rare",
+      "flavor_text": "\"Do not fear. We will take your fear from you. You will be like us.\""
+    },
+    {
+      "name": "Wibbly-wobbly, Timey-wimey",
+      "mana_cost": "{1}{U}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Time travel. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter.)\nDraw a card.",
+      "colors": [
+        "U"
+      ],
+      "art": "wibbly_wobbly_timey_wimey.png",
+      "rarity": "common",
+      "flavor_text": "\"People assume time is a strict progression of cause to effect, but actually, from a non-linear, non-subjective viewpoint, it's more like a big ball of wibbly-wobbly, timey-wimey stuff.\""
+    },
+    {
+      "name": "The Wedding of River Song",
+      "mana_cost": "{2}{W}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Draw two cards, then you may exile a nonland card from your hand with a number of time counters on it equal to its mana value. Then target opponent does the same. Cards exiled this way that don't have suspend gain suspend.\nTime travel. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter.)",
+      "colors": [
+        "W"
+      ],
+      "art": "the_wedding_of_river_song.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Fractured Identity",
+      "mana_cost": "{3}{W}{U}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "fractured_identity.png",
+      "rarity": "rare",
+      "flavor_text": "Reality Breach Engulfs Town—All Four Mayors Urge Caution"
+    },
+    {
+      "name": "Into the Time Vortex",
+      "mana_cost": "{4}{R}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Cascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+      "colors": [
+        "R"
+      ],
+      "art": "into_the_time_vortex.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Farewell",
+      "mana_cost": "{4}{W}{W}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards.",
+      "colors": [
+        "W"
+      ],
+      "art": "Farewell.png",
+      "rarity": "rare",
+      "flavor_text": "\"I don't want to go.\""
+    },
+    {
+      "name": "Great Intelligence's Plan",
+      "mana_cost": "{4}{U}{B}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Draw three cards. Then target opponent faces a villainous choice — They discard three cards, or you may cast a spell from your hand without paying its mana cost.",
+      "colors": [
+        "B",
+        "U"
+      ],
+      "art": "great_intelligence_s_plan.png",
+      "rarity": "uncommon",
+      "flavor_text": "\"The great swarm is approaching. As humanity celebrates, so shall it end.\"\n—The Great Intelligence"
+    },
+    {
+      "name": "Inspiring Refrain",
+      "mana_cost": "{4}{U}{U}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Draw two cards. Exile Inspiring Refrain with three time counters on it.\nSuspend 3—{2}{U} (Rather than cast this card from your hand, you may pay {2}{U} and exile it with three time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)",
+      "colors": [
+        "U"
+      ],
+      "art": "inspiring_refrain.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Brago, King Eternal",
+      "mana_cost": "{2}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Spirit",
+        "Noble"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flying\nWhenever Brago deals combat damage to a player, exile any number of target nonland permanents you control, then return those cards to the battlefield under their owner's control.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "Brago, King Eternal.png",
+      "rarity": "rare",
+      "flavor_text": "\"My rule persists beyond death itself.\"",
+      "power": "2",
+      "toughness": "4"
+    },
+    {
+      "name": "Jodah, the Unifier",
+      "mana_cost": "{W}{U}{B}{R}{G}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Wizard"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Legendary creatures you control get +X/+X, where X is the number of legendary creatures you control.\nWhenever you cast a legendary spell from your hand, exile cards from the top of your library until you exile a legendary nonland card with lesser mana value. You may cast that card without paying its mana cost. Put the rest on the bottom of your library in a random order.",
+      "colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ],
+      "art": "Jodah, the Unifier.png",
+      "rarity": "mythic",
+      "power": "5",
+      "toughness": "5"
+    },
+    {
+      "name": "Clara Oswald",
+      "mana_cost": "{6}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Advisor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nIf a triggered ability of a Doctor you control triggers, that ability triggers an additional time.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+      "colors": [],
+      "art": "clara_oswald.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "6"
+    },
+    {
+      "name": "Elven Chorus",
+      "mana_cost": "{3}{G}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "You may look at the top card of your library any time.\nYou may cast creature spells from the top of your library.\nCreatures you control have \"{T}: Add one mana of any color.\"",
+      "colors": [
+        "G"
+      ],
+      "art": "Elven Chorus.png",
+      "rarity": "rare",
+      "flavor_text": "Elvish singing was not a thing to miss, in June under the stars."
+    },
+    {
+      "name": "Morophon, the Boundless",
+      "mana_cost": "{7}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Shapeshifter"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Changeling (This card is every creature type.)\nAs Morophon enters, choose a creature type.\nSpells of the chosen type you cast cost {W}{U}{B}{R}{G} less to cast. This effect reduces only the amount of colored mana you pay.\nOther creatures you control of the chosen type get +1/+1.",
+      "colors": [],
+      "art": "Morophon, the Boundless.png",
+      "rarity": "mythic",
+      "power": "6",
+      "toughness": "6"
+    },
+    {
+      "name": "Arcade Gannon",
+      "mana_cost": "{2}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — Once during each of your turns, you may cast an artifact or Human spell from your graveyard with mana value less than or equal to the number of quest counters on Arcade Gannon.",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "arcade_gannon.png",
+      "rarity": "rare",
+      "power": "2",
+      "toughness": "3"
+    },
+    {
+      "name": "The Seventh Doctor",
+      "mana_cost": "{3}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Time",
+        "Lord",
+        "Doctor"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Whenever The Seventh Doctor attacks, choose a card in your hand. Defending player guesses whether that card's mana value is greater than the number of artifacts you control. If they guessed wrong, you may cast it without paying its mana cost. If you don't cast a spell this way, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")",
+      "colors": [
+        "U",
+        "W"
+      ],
+      "art": "the_seventh_doctor.png",
+      "rarity": "rare",
+      "power": "3",
+      "toughness": "6"
+    },
+    {
+      "name": "Akroma's Memorial",
+      "mana_cost": "{7}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Creatures you control have flying, first strike, vigilance, trample, haste, and protection from black and from red.",
+      "colors": [],
+      "art": "Akroma's Memorial.png",
+      "rarity": "mythic",
+      "flavor_text": "\"No rest. No mercy. No matter what.\"  - Memorial inscription"
+    },
+    {
+      "name": "Chromatic Lantern",
+      "mana_cost": "{3}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Lands you control have \"{T}: Add one mana of any color.\"\n{T}: Add one mana of any color.",
+      "colors": [],
+      "art": "chromatic_lantern.png",
+      "rarity": "rare",
+      "flavor_text": "By guild tradition, any puddle of multicolored light on the cobblestones can serve as neutral ground."
+    },
+    {
+      "name": "Everybody Lives!",
+      "mana_cost": "{1}{W}",
+      "types": [
+        "Instant"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "All creatures gain hexproof and indestructible until end of turn. Players gain hexproof until end of turn. Players can't lose life this turn and players can't lose the game or win the game this turn.",
+      "colors": [
+        "W"
+      ],
+      "art": "Everybody Lives!.png",
+      "rarity": "rare",
+      "flavor_text": "\"Everybody lives, Rose. Just this once, everybody lives!\"  - The Ninth Doctor"
+    },
+    {
+      "name": "Maskwood Nexus",
+      "mana_cost": "{4}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Creatures you control are every creature type. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.\n{3}, {T}: Create a 2/2 blue Shapeshifter creature token with changeling. (It is every creature type.)",
+      "colors": [],
+      "art": "Maskwood Nexus.png",
+      "rarity": "rare"
+    },
+    {
+      "name": "Tempt with Discovery",
+      "mana_cost": "{3}{G}",
+      "types": [
+        "Sorcery"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles.",
+      "colors": [
+        "G"
+      ],
+      "art": "Tempt with Discovery.png",
+      "rarity": "rare"
+    }
+  ]
+}

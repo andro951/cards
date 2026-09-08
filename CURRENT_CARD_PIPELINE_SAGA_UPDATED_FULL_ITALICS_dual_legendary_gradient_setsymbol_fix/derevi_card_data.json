@@ -1,0 +1,542 @@
+{
+  "schema_version": 2,
+  "defaults": {
+    "repo": "andro951/cards",
+    "branch": "main",
+    "artist": "ChatGPT",
+    "art_base_url": "https://raw.githubusercontent.com/andro951/cards/main/derevi/art/",
+    "set_symbol_base_url": "https://raw.githubusercontent.com/andro951/cards/main/derevi/set_symbol/"
+  },
+  "cards": [
+    {
+      "name": "Cloud, Midgar Mercenary",
+      "mana_cost": "{W}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Soldier",
+        "Mercenary"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When Cloud enters, search your library for an Equipment card, reveal it, put it into your hand, then shuffle.\nAs long as Cloud is equipped, if a triggered ability of Cloud or an Equipment attached to it triggers, that ability triggers an additional time.",
+      "colors": [
+        "W"
+      ],
+      "art": "cloud_midgar_mercenary.png",
+      "rarity": "mythic",
+      "flavor_text": "Identity is complicated. Swords are not.",
+      "power": "2",
+      "toughness": "1"
+    },
+    {
+      "name": "Oswald Fiddlebender",
+      "mana_cost": "{1}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Gnome",
+        "Artificer"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Magical Tinkering — {W}, {T}, Sacrifice an artifact: Search your library for an artifact card with mana value equal to 1 plus the sacrificed artifact's mana value, put it onto the battlefield, then shuffle. Activate only as a sorcery.",
+      "colors": [
+        "W"
+      ],
+      "art": "oswald_fiddlebender.png",
+      "rarity": "rare",
+      "flavor_text": "Can't see this airship crashing in the near future. Sturdy as a rock.",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "Delney, Streetwise Lookout",
+      "mana_cost": "{2}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Scout"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Creatures you control with power 2 or less can't be blocked by creatures with power 3 or greater.\nIf a triggered ability of a creature you control with power 2 or less triggers, that ability triggers an additional time.",
+      "colors": [
+        "W"
+      ],
+      "art": "delney_streetwise_lookout.png",
+      "rarity": "mythic",
+      "flavor_text": "It's not a matter of what I know. It's a matter of making it worth my while to tell you.",
+      "power": "2",
+      "toughness": "2"
+    },
+    {
+      "name": "Recruiter of the Guard",
+      "mana_cost": "{2}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Soldier"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When this creature enters, you may search your library for a creature card with toughness 2 or less, reveal it, put it into your hand, then shuffle.",
+      "colors": [
+        "W"
+      ],
+      "art": "recruiter_of_the_guard.png",
+      "rarity": "mythic",
+      "flavor_text": "Before a cause can have supporters, it has to have a voice.",
+      "power": "1",
+      "toughness": "1"
+    },
+    {
+      "name": "Spellseeker",
+      "mana_cost": "{2}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Wizard"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When this creature enters, you may search your library for an instant or sorcery card with mana value 2 or less, reveal it, put it into your hand, then shuffle.",
+      "colors": [
+        "U"
+      ],
+      "art": "spellseeker.png",
+      "rarity": "mythic",
+      "flavor_text": "Not content with mere answers, she hunts for the truth.",
+      "power": "1",
+      "toughness": "1"
+    },
+    {
+      "name": "Enduring Curiosity",
+      "mana_cost": "{2}{U}{U}",
+      "types": [
+        "Enchantment",
+        "Creature"
+      ],
+      "subtypes": [
+        "Cat",
+        "Glimmer"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flash\nWhenever a creature you control deals combat damage to a player, draw a card.\nWhen Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)",
+      "colors": [
+        "U"
+      ],
+      "art": "enduring_curiosity.png",
+      "rarity": "rare",
+      "flavor_text": "How many lives until it learns its lesson?",
+      "power": "4",
+      "toughness": "3"
+    },
+    {
+      "name": "Preston, the Vanisher",
+      "mana_cost": "{3}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Rabbit",
+        "Wizard"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Whenever another nontoken creature you control enters, if it wasn't cast, create a token that's a copy of that creature, except it's a 0/1 white Illusion.\n{1}{W}, Sacrifice five Illusions: Exile target nonland permanent.",
+      "colors": [
+        "W"
+      ],
+      "art": "preston_the_vanisher.png",
+      "rarity": "rare",
+      "flavor_text": "Making a second one is easy. Convincing reality to keep both is harder.",
+      "power": "2",
+      "toughness": "5"
+    },
+    {
+      "name": "Prime Speaker Vannifar",
+      "mana_cost": "{2}{G}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Elf",
+        "Ooze",
+        "Wizard"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}, Sacrifice another creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle. Activate only as a sorcery.",
+      "colors": [
+        "G",
+        "U"
+      ],
+      "art": "prime_speaker_vannifar.png",
+      "rarity": "mythic",
+      "flavor_text": "All lives end. Some simply deserve less time.",
+      "power": "2",
+      "toughness": "4"
+    },
+    {
+      "name": "Urza, Lord High Artificer",
+      "mana_cost": "{2}{U}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Artificer"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When Urza enters, create a 0/0 colorless Construct artifact creature token with \"This token gets +1/+1 for each artifact you control.\"\nTap an untapped artifact you control: Add {U}.\n{5}: Shuffle your library, then exile the top card. Until end of turn, you may play that card without paying its mana cost.",
+      "colors": [
+        "U"
+      ],
+      "art": "urza_lord_high_artificer.png",
+      "rarity": "mythic",
+      "flavor_text": "When you've eliminated the possible, what remains?",
+      "power": "1",
+      "toughness": "4"
+    },
+    {
+      "name": "Mox Amber",
+      "mana_cost": "{0}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add one mana of any color among legendary creatures and planeswalkers you control.",
+      "colors": [],
+      "art": "mox_amber.png",
+      "rarity": "mythic",
+      "flavor_text": "A moment in time made tangible, it has the power to realize epic visions."
+    },
+    {
+      "name": "Mox Opal",
+      "mana_cost": "{0}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Metalcraft — {T}: Add one mana of any color. Activate only if you control three or more artifacts.",
+      "colors": [],
+      "art": "mox_opal.png",
+      "rarity": "mythic",
+      "flavor_text": "The suns of Mirrodin have shone upon perfection only once."
+    },
+    {
+      "name": "Skullclamp",
+      "mana_cost": "{1}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [
+        "Equipment"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}",
+      "colors": [],
+      "art": "skull_clamp.png",
+      "rarity": "uncommon",
+      "flavor_text": "The mind is a beautiful bounty encased in an annoying bone container."
+    },
+    {
+      "name": "Helm of the Host",
+      "mana_cost": "{4}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [
+        "Equipment"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "At the beginning of combat on your turn, create a token that's a copy of equipped creature, except the token isn't legendary. That token gains haste.\nEquip {5}",
+      "colors": [],
+      "art": "helm_of_the_host.png",
+      "rarity": "rare",
+      "flavor_text": "When both claim to be the original, survival settles the matter."
+    },
+    {
+      "name": "Nyx Lotus",
+      "mana_cost": "{4}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Nyx Lotus enters tapped.\n{T}: Choose a color. Add an amount of mana of that color equal to your devotion to that color. (Your devotion to a color is the number of mana symbols of that color in the mana costs of permanents you control.)",
+      "colors": [],
+      "art": "nyx_lotus.png",
+      "rarity": "rare",
+      "flavor_text": "Are you prepared for your faith to be tested?"
+    },
+    {
+      "name": "Fierce Guardianship",
+      "mana_cost": "{2}{U}",
+      "types": [
+        "Instant"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nCounter target noncreature spell.",
+      "colors": [
+        "U"
+      ],
+      "art": "fierce_guardianship.png",
+      "rarity": "rare",
+      "flavor_text": "No good commander stands alone."
+    },
+    {
+      "name": "Gaea's Cradle",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{T}: Add {G} for each creature you control.",
+      "colors": [],
+      "art": "gaeas_cradle.png",
+      "rarity": "rare",
+      "flavor_text": "Mother provides.",
+      "land_colors": [
+        "G"
+      ]
+    },
+    {
+      "name": "Savannah",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Plains"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G} or {W}.)",
+      "colors": [],
+      "art": "savana.png",
+      "rarity": "rare",
+      "land_colors": [
+        "G",
+        "W"
+      ]
+    },
+    {
+      "name": "Tropical Island",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Forest",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {G} or {U}.)",
+      "colors": [],
+      "art": "tropical_island.png",
+      "rarity": "rare",
+      "land_colors": [
+        "G",
+        "U"
+      ]
+    },
+    {
+      "name": "Tundra",
+      "mana_cost": "",
+      "types": [
+        "Land"
+      ],
+      "subtypes": [
+        "Plains",
+        "Island"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "({T}: Add {W} or {U}.)",
+      "colors": [],
+      "art": "tundra.png",
+      "rarity": "rare",
+      "land_colors": [
+        "W",
+        "U"
+      ]
+    },
+    {
+      "name": "Grim Monolith",
+      "mana_cost": "{2}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{4}: Untap this artifact.",
+      "colors": [],
+      "art": "grim_monolith.png",
+      "rarity": "rare",
+      "flavor_text": "Part prison, part home."
+    },
+    {
+      "name": "Mana Vault",
+      "mana_cost": "{1}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}.",
+      "colors": [],
+      "art": "mana_vault.png",
+      "rarity": "rare",
+      "flavor_text": "Some doors are better left unopened."
+    },
+    {
+      "name": "Mana Drain",
+      "mana_cost": "{U}{U}",
+      "types": [
+        "Instant"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.",
+      "colors": [
+        "U"
+      ],
+      "art": "mana_drain.png",
+      "rarity": "uncommon",
+      "flavor_text": "I suppose you've never heard of conservation of energy."
+    },
+    {
+      "name": "Derevi, Empyrial Tactician",
+      "mana_cost": "{G}{W}{U}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Bird",
+        "Wizard"
+      ],
+      "legendary": true,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Flying\nWhen Derevi enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put Derevi onto the battlefield from the command zone.",
+      "colors": [
+        "G",
+        "U",
+        "W"
+      ],
+      "art": "derevi_empyrial_tactician.png",
+      "rarity": "mythic",
+      "flavor_text": "When she falls, another finds their place.",
+      "power": "2",
+      "toughness": "3"
+    },
+    {
+      "name": "Academy Rector",
+      "mana_cost": "{3}{W}",
+      "types": [
+        "Creature"
+      ],
+      "subtypes": [
+        "Human",
+        "Cleric"
+      ],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "When this creature dies, you may exile it. If you do, search your library for an enchantment card, put that card onto the battlefield, then shuffle.",
+      "colors": [
+        "W"
+      ],
+      "art": "academy_rector.png",
+      "rarity": "rare",
+      "flavor_text": "The final lesson is learned only after the teacher is gone.",
+      "power": "1",
+      "toughness": "2"
+    },
+    {
+      "name": "Phyrexian Altar",
+      "mana_cost": "{3}",
+      "types": [
+        "Artifact"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "Sacrifice a creature: Add one mana of any color.",
+      "colors": [],
+      "art": "pyrexian_altar.png",
+      "rarity": "rare",
+      "flavor_text": "The price of a miracle is less than you think."
+    },
+    {
+      "name": "Survival of the Fittest",
+      "mana_cost": "{1}{G}",
+      "types": [
+        "Enchantment"
+      ],
+      "subtypes": [],
+      "legendary": false,
+      "basic": false,
+      "snow": false,
+      "oracle_text": "{G}, Discard a creature card: Search your library for a creature card, reveal that card, put it into your hand, then shuffle.",
+      "colors": [
+        "G"
+      ],
+      "art": "survival_of_the_fittest.png",
+      "rarity": "rare",
+      "flavor_text": "There's always a bigger fish."
+    }
+  ]
+}

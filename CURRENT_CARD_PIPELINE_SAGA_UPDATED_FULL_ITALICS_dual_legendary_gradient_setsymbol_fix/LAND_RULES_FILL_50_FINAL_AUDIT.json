@@ -1,0 +1,63 @@
+{
+  "rules_fill": {
+    "color": "#000000",
+    "opacity": 0.5,
+    "applies_to": "all lands except Basic lands and the original 10 duals"
+  },
+  "doctor_who": {
+    "full_card_count": 51,
+    "affected_land_count": 25,
+    "affected_land_names": [
+      "Arid Mesa",
+      "Cascading Cataracts",
+      "Crystal Quarry",
+      "Flooded Strand",
+      "Gaea's Cradle",
+      "Godless Shrine",
+      "Indatha Triome",
+      "Jetmir's Garden",
+      "Ketria Triome",
+      "Mana Confluence",
+      "Marsh Flats",
+      "Misty Rainforest",
+      "Plaza of Heroes",
+      "Polluted Delta",
+      "Raffine's Tower",
+      "Raugrin Triome",
+      "Reflecting Pool",
+      "Sacred Foundry",
+      "Scalding Tarn",
+      "Spara's Headquarters",
+      "Steam Vents",
+      "The World Tree",
+      "Watery Grave",
+      "Windswept Heath",
+      "Zagoth Triome"
+    ],
+    "excluded_land_names": [
+      "Savannah",
+      "Tropical Island",
+      "Tundra",
+      "Plains",
+      "Swamp",
+      "Mountain",
+      "Island",
+      "Forest"
+    ]
+  },
+  "derevi": {
+    "full_card_count": 26,
+    "affected_land_count": 1,
+    "affected_land_names": [
+      "Gaea's Cradle"
+    ],
+    "excluded_land_names": [
+      "Savannah",
+      "Tropical Island",
+      "Tundra"
+    ]
+  },
+  "dual_easing_preserved": true,
+  "triome_easing_preserved": true,
+  "original_duals_excluded": true
+}

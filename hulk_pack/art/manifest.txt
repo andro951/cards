@@ -1,0 +1,10 @@
+100-card deck fronts expected: 100
+Fronts present: 100
+DFC back faces expected: 9
+DFC backs present: 8
+PNG files packaged: 108
+
+Missing fronts: none
+
+Missing DFC backs:
+- tovolar_the_midnight_scourge.png

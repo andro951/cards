@@ -1,0 +1,3 @@
+Wrote 101 card face(s) to timelords_card_data.json
+Wrote 101 cards to timelords_FULL.cardconjurer
+Wrote 0 flagged unchecked Saga record(s) to timelords_FULL_FLAGGED_UNCHECKED_SAGAS.json

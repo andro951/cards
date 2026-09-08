@@ -1,0 +1,47 @@
+{
+  "deck": {
+    "name": "Time Lords",
+    "url": "https://scryfall.com/@andro951/decks/134b9792-519a-4c61-8d7a-e3e35e8ca468",
+    "selected_playable_cards": 100,
+    "included_sections": {
+      "commanders": 1,
+      "lands": 40,
+      "nonlands": 59
+    },
+    "excluded_sections": {
+      "maybeboard": 6,
+      "outside": 85,
+      "sideboard": 0
+    },
+    "outside_section_note": "Scryfall currently exports the UI label \"Outside the Game\" under the JSON key \"outside\". The wrapper excludes both \"outside\" and \"outside_the_game\"."
+  },
+  "pipeline": {
+    "semantic_generation": "PASS",
+    "semantic_card_faces": 101,
+    "full_compile": "PASS",
+    "full_compile_output": "timelords_FULL.cardconjurer",
+    "flagged_unchecked_saga_report": "timelords_FULL_FLAGGED_UNCHECKED_SAGAS.json",
+    "flagged_unchecked_saga_count": 0,
+    "supported_only_diagnostic_compile": "PASS",
+    "supported_only_faces": 95
+  },
+  "art_matching_warnings": [
+    {
+      "card": "Transguild Promenade",
+      "matched_file": "transguild_promonade.png"
+    },
+    {
+      "card": "River Song's Diary",
+      "matched_file": "river_song_s_diary.png"
+    },
+    {
+      "card": "Great Intelligence's Plan",
+      "matched_file": "great_intelligence_s_plan.png"
+    }
+  ],
+  "github_cleanup": {
+    "temporary_workflow_removed": true,
+    "derevi_fetch_workflow_restored": true,
+    "restored_blob_sha": "d8c74fab83caba737a0653a6b64fc4ab04768476"
+  }
+}

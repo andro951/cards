@@ -1,0 +1,131 @@
+{
+  "status": "PASS",
+  "saga_status": "automatic Saga compilation enabled; unmatched Saga layouts compile and are flagged in sidecar review output",
+  "approved_so_far": {
+    "set_symbol_x_px": 1737,
+    "set_symbol_y_px": 2400,
+    "art_bounds_px": {
+      "x": 1005,
+      "y": 316,
+      "width": 854,
+      "height": 2041
+    },
+    "art_fit_method": "Card Conjurer cover/center-crop equation using actual image dimensions",
+    "manual_land_art_example": {
+      "x_px": 752,
+      "y_px": 316,
+      "scale_percent": 132.9
+    }
+  },
+  "working_saga_checks": [
+    {
+      "name": "An Unearthly Child",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    },
+    {
+      "name": "The Girl in the Fireplace",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    },
+    {
+      "name": "Trial of a Time Lord",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    },
+    {
+      "name": "Death in Heaven",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    },
+    {
+      "name": "The Eleventh Hour",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    },
+    {
+      "name": "The Day of the Doctor",
+      "set_symbol_x_px": 1737.0,
+      "set_symbol_y_px": 2400.0,
+      "art_bounds_px": {
+        "x": 1005.0,
+        "y": 316.0,
+        "width": 854.0,
+        "height": 2041.0
+      },
+      "type_x_matches_normal": true,
+      "type_width_matches_normal": true
+    }
+  ],
+  "land_art_test_actual": {
+    "x_px": 752.0,
+    "y_px": 316.0,
+    "scale_percent": 132.9
+  },
+  "python_syntax_checked": [
+    "card_data_to_cardconjurer.py",
+    "scryfall_to_card_data.py",
+    "scryfall_deck_to_cardconjurer.py"
+  ],
+  "checked_layout_signatures": [
+    [
+      3
+    ],
+    [
+      1,
+      1,
+      1
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      2,
+      1
+    ]
+  ],
+  "flagged_sidecar_pattern": "*_FLAGGED_UNCHECKED_SAGAS.json",
+  "full_timelords_compile": "PASS",
+  "full_timelords_flagged_unchecked_saga_count": 0
+}

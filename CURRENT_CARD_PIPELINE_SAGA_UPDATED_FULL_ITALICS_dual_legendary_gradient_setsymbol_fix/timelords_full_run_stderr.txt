@@ -1,0 +1,2 @@
+Scryfall ingestion previously completed successfully.
+Current full compile status: PASS (run with --no-auto-fit for the packaged compile artifact).
