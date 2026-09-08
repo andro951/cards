@@ -1,43 +1,81 @@
-name: Inspect Prepare compiler insertion points
+name: Apply and test Prepare card support
 
 on:
   push:
     paths:
-      - '.run-inspect-compiler'
+      - '.prepare_support.patch'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            .prepare_support.patch
+            hulk_pack
             CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL
           sparse-checkout-cone-mode: true
-      - name: Inspect Scryfall Prepare object and compiler neighborhoods
+
+      - name: Apply tested Prepare support patch
+        run: |
+          patch --dry-run -p0 < .prepare_support.patch
+          patch -p0 < .prepare_support.patch
+          python -m py_compile \
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py \
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py \
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py
+
+      - name: Commit canonical Prepare support
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py \
+            CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+          git commit -m "Add native Prepare card support"
+          git push
+
+      - name: Run Hulk Pack from deck URL only
+        working-directory: hulk_pack
+        run: |
+          python ../CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_deck_to_cardconjurer.py \
+            "https://scryfall.com/@andro951/decks/3316831e-83b5-458c-bf88-1529930e24c8"
+
+      - name: Verify Prepared card output
         run: |
           python - <<'PY'
-          import json, urllib.parse, urllib.request
-          q=urllib.parse.urlencode({'exact':'Emeritus of Woe'})
-          req=urllib.request.Request('https://api.scryfall.com/cards/named?'+q,headers={'User-Agent':'andro951-card-pipeline/1.0','Accept':'application/json;q=0.9,*/*;q=0.8'})
-          with urllib.request.urlopen(req,timeout=30) as r:
-              card=json.load(r)
-          print('SCRYFALL NAME:',card.get('name'))
-          print('SCRYFALL LAYOUT:',card.get('layout'))
-          print('SCRYFALL TYPE:',card.get('type_line'))
-          for i,face in enumerate(card.get('card_faces',[])):
-              print('FACE',i,json.dumps({k:face.get(k) for k in ('name','mana_cost','type_line','oracle_text','colors')},ensure_ascii=False))
+          import json
+          semantic=json.load(open('hulk_pack/generated_hulk_pack_card_data.json',encoding='utf-8'))['cards']
+          names=[c['name'] for c in semantic]
+          assert names.count('Demonic Tutor') == 1, names.count('Demonic Tutor')
+          emeritus=[c for c in semantic if c['name']=='Emeritus of Woe']
+          assert len(emeritus)==1
+          assert emeritus[0].get('scryfall_layout')=='prepare'
+          assert emeritus[0].get('prepared_spell',{}).get('name')=='Demonic Tutor'
 
-          p='CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py'
-          text=open(p,encoding='utf-8').read()
-          needles=['def infer_recipe','def regular_frame_color','def recolor_m15','def build_one','def build_card','has_creature_type','scryfall_layout','unsupported','LAYOUTS =','LAYOUTS={']
-          for needle in needles:
-              pos=text.find(needle)
-              print('\n===== NEEDLE',repr(needle),'POS',pos,'=====')
-              if pos>=0:
-                  start=max(0,pos-1800); end=min(len(text),pos+7000)
-                  print(text[start:end])
+          cc=json.load(open('hulk_pack/generated_hulk_pack_cards.cardconjurer',encoding='utf-8'))
+          rendered=[e for e in cc if e.get('key')=='Emeritus of Woe']
+          assert len(rendered)==1
+          data=rendered[0]['data']
+          assert data.get('version')=='prepare'
+          assert data['text']['title2']['text']=='Demonic Tutor'
+          assert data['text']['mana2']['text']=='{1}{B}'
+          assert data['text']['type2']['text']=='Sorcery'
+          assert 'Search your library for a card' in data['text']['rules2']['text']
+          print('Prepared semantic and Card Conjurer output verified.')
+          print('semantic card records:',len(semantic))
+          print('Card Conjurer entries:',len(cc))
           PY
+
+      - name: Upload generated Hulk Pack files
+        uses: actions/upload-artifact@v4
+        with:
+          name: hulk-pack-with-prepare-support
+          path: |
+            hulk_pack/generated_hulk_pack_card_data.json
+            hulk_pack/generated_hulk_pack_cards.cardconjurer
+            hulk_pack/generated_hulk_pack_cards_FLAGGED_UNCHECKED_SAGAS.json
