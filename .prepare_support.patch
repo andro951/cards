@@ -1,0 +1,214 @@
+--- CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py
++++ CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/scryfall_to_card_data.py
+@@ -352,0 +353,71 @@
++def prepare_host_and_spell_faces(card: Mapping[str, Any]) -> Tuple[Mapping[str, Any], Mapping[str, Any]]:
++    """Return the physical host face and its auxiliary Prepared spell.
++
++    Scryfall represents Secrets of Strixhaven Prepare cards as layout=prepare
++    with two card_faces, but the spell inset is not a second physical card
++    face. Identify the inset structurally rather than relying on face order.
++    """
++    faces = [f for f in card.get("card_faces", []) if isinstance(f, dict)]
++    if len(faces) != 2:
++        raise DataError(
++            f"Prepare card {card.get('name', '<unnamed>')!r} must have exactly two Scryfall card_faces; got {len(faces)}."
++        )
++
++    spell_faces: List[Mapping[str, Any]] = []
++    host_faces: List[Mapping[str, Any]] = []
++    for face in faces:
++        semantic = split_type_line(str(face.get("type_line") or ""))
++        types = set(semantic["types"])
++        if types & {"Instant", "Sorcery"} and not types & {"Artifact", "Battle", "Creature", "Enchantment", "Land", "Planeswalker"}:
++            spell_faces.append(face)
++        else:
++            host_faces.append(face)
++
++    if len(host_faces) != 1 or len(spell_faces) != 1:
++        raise DataError(
++            f"Prepare card {card.get('name', '<unnamed>')!r} has ambiguous host/spell faces; "
++            f"expected one permanent host and one Instant/Sorcery inset."
++        )
++    return host_faces[0], spell_faces[0]
++
++
++def auxiliary_face_record(face: Mapping[str, Any], card: Mapping[str, Any]) -> Dict[str, Any]:
++    """Build semantic data for an inset/nonphysical face without art or rarity."""
++    name = str(face.get("name") or "").strip()
++    type_line = str(face.get("type_line") or "")
++    semantic = split_type_line(type_line)
++    mana_cost = str(face.get("mana_cost") or "")
++    oracle_text = str(face.get("oracle_text") or "")
++
++    raw_colors = face.get("colors")
++    if isinstance(raw_colors, list):
++        face_colors = [c for c in raw_colors if c in "WUBRG"]
++    else:
++        face_colors = []
++    if not face_colors:
++        # Prepare face-level colors may be null in Scryfall. Mana symbols are
++        # the most specific fallback; only then inherit the whole card colors.
++        for code in "WUBRG":
++            if re.search(rf"\{{(?:[^}}]*/)?{code}(?:/[^}}]*)?\}}", mana_cost):
++                face_colors.append(code)
++        if not face_colors:
++            top = card.get("colors", [])
++            if isinstance(top, list):
++                face_colors = [c for c in top if c in "WUBRG"]
++
++    result: Dict[str, Any] = {
++        "name": name,
++        "mana_cost": mana_cost,
++        "types": semantic["types"],
++        "subtypes": semantic["subtypes"],
++        "legendary": semantic["legendary"],
++        "basic": semantic["basic"],
++        "snow": semantic["snow"],
++        "oracle_text": oracle_text,
++        "colors": face_colors,
++    }
++    if semantic["world"]:
++        result["world"] = True
++    return result
++
++
+@@ -657,0 +729,22 @@
++
++            if str(resolved.get("layout") or "") == "prepare":
++                host_face, spell_face = prepare_host_and_spell_faces(resolved)
++                flavor_face = select_matching_flavor_face(flavor_card, host_face, 0)
++                host_record = build_face_record(
++                    resolved,
++                    host_face,
++                    flavor_face,
++                    index=0,
++                    face_count=1,  # one physical card; Prepared spell is an inset
++                    project_dir=project_dir,
++                    flavor_overrides=flavor_overrides,
++                    rarity_overrides=rarity_overrides,
++                    art_map=art_map,
++                    allow_missing_art=args.allow_missing_art,
++                    allow_missing_symbols=args.allow_missing_symbols,
++                )
++                host_record["parent_name"] = str(resolved.get("name") or host_record["name"])
++                host_record["scryfall_layout"] = "prepare"
++                host_record["prepared_spell"] = auxiliary_face_record(spell_face, resolved)
++                output_cards.append(host_record)
++                continue
+--- CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
++++ CURRENT_CARD_PIPELINE_LAND_RULES_FILL_50_FULL/card_data_to_cardconjurer.py
+@@ -83,0 +84 @@
++    ("Prepare (Secrets of Strixhaven)", "automatic from scryfall_layout=prepare + nested prepared_spell, using Card Conjurer's native Prepare frame pack"),
+@@ -158 +159 @@
+-    "saga",
++    "saga","prepare",
+@@ -244,0 +246,78 @@
++PREPARE_MASKS=[
++    ("/img/frames/prepare/regular/pinline.png","Pinline"),
++    ("/img/frames/m15/regular/m15MaskTitle.png","Title"),
++    ("/img/frames/m15/regular/m15MaskType.png","Type"),
++    ("/img/frames/prepare/regular/rules.png","Rules"),
++    ("/img/frames/prepare/regular/rulesRight.png","Rules (Right Half)"),
++    ("/img/frames/prepare/regular/prepare.png","Prepare Spell"),
++    ("/img/frames/prepare/regular/prepareRight.png","Prepare Spell (Right Half)"),
++    ("/img/frames/prepare/regular/preparePinline.png","Prepare Spell Pinline"),
++    ("/img/frames/prepare/regular/prepareTypeTitle.png","Prepare Spell Type/Title"),
++    ("/img/frames/prepare/regular/frame.png","Frame"),
++    ("/img/frames/m15/regular/m15MaskBorder.png","Border"),
++]
++
++def prepare_frame_code(card,type_info):
++    if "Artifact" in type_info["card_types"]:
++        return "A"
++    return regular_frame_color(card,type_info) or "C"
++
++def build_prepare_recipe(card,type_info):
++    """Build Card Conjurer's native Prepare (Secrets of Strixhaven) frame."""
++    if "Creature" not in type_info["card_types"]:
++        raise BuildError("Prepare layout currently requires a Creature host, matching the Prepare mechanic")
++    prepared=card.get("prepared_spell")
++    if not isinstance(prepared,dict):
++        raise BuildError("Prepare card needs nested prepared_spell semantic data")
++    prep_info=get_type_info(prepared)
++    if not (prep_info["card_types"] & {"Instant","Sorcery"}):
++        raise BuildError("prepared_spell must be an Instant or Sorcery")
++
++    entry=copy.deepcopy(LAYOUTS["creature"])
++    data=entry["data"]
++    code=prepare_frame_code(card,type_info)
++    if code not in "WUBRGMAC":
++        raise BuildError(f"Prepare host has unsupported frame color {code!r}")
++    cname=COLOR_NAMES.get(code,"Colorless")
++    src=f"/img/frames/prepare/regular/{code.lower()}.png"
++
++    pt_code=code if code in "WUBRGMA" else "C"
++    pt_src=f"/img/frames/m15/regular/m15PT{pt_code}.png"
++    frames=[{
++        "name":f"{COLOR_NAMES.get(pt_code,'Colorless')} Power/Toughness",
++        "src":pt_src,
++        "masks":[],
++        "bounds":{"x":0.7573,"y":0.8848,"width":0.188,"height":0.0733},
++    }]
++    for mask_src,mask_name in PREPARE_MASKS:
++        frames.append({
++            "name":f"{cname} Prepare Frame",
++            "src":src,
++            "masks":[{"src":mask_src,"name":mask_name}],
++        })
++    data["frames"]=frames
++
++    if "Legendary" in type_info["supertypes"]:
++        if code=="C":
++            crown=copy.deepcopy(LAYOUTS["eldrazi_legendary_creature"]["data"]["frames"][0])
++            data["frames"].insert(0,crown)
++        else:
++            add_standard_crown(data,code)
++
++    data["version"]="prepare"
++    data["artBounds"]={"x":0.0767,"y":0.1129,"width":0.8476,"height":0.4429}
++    data["setSymbolBounds"]={"x":0.9213,"y":0.5910,"width":0.12,"height":0.0410,"vertical":"center","horizontal":"right"}
++    data["watermarkBounds"]={"x":0.72,"y":0.7681,"width":0.3867,"height":0.2358}
++    data["text"]={
++        "mana":{"name":"Mana Cost","text":"","y":0.0613,"width":0.9292,"height":71/2100,"oneLine":True,"size":71/1638,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":True,"manaSpacing":0},
++        "title":{"name":"Title","text":"","x":0.0854,"y":0.0522,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0381},
++        "type":{"name":"Type","text":"","x":0.0854,"y":0.5664,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0324},
++        "rules":{"name":"Rules Text","text":"","x":0.086,"y":0.6303,"width":808/2010,"height":0.2875,"size":0.0353},
++        "pt":{"name":"Power/Toughness","text":"","x":0.7928,"y":0.902,"width":0.1367,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":True,"align":"center"},
++        "mana2":{"name":"Mana Cost (Prepare Spell)","text":"","x":1319/2010,"y":1798/2814,"width":550/2010,"height":60/2100,"oneLine":True,"size":60/1638,"color":"white","shadowX":-0.001,"shadowY":0.0029,"align":"right","manaCost":True},
++        "title2":{"name":"Title (Prepare Spell)","text":"","x":1042/2010,"y":0.6391,"width":0.4,"height":0.0296,"size":0.0296,"color":"white","oneLine":True,"font":"belerenb"},
++        "type2":{"name":"Type (Prepare Spell)","text":"","x":1042/2010,"y":1932/2814,"width":0.4,"height":0.0296,"size":0.0296,"color":"white","oneLine":True,"font":"belerenb"},
++        "rules2":{"name":"Rules Text (Prepare Spell)","text":"","x":1035/2010,"y":2059/2814,"width":0.3947,"height":438/2814,"size":0.0353},
++    }
++    return entry
++
+@@ -899,0 +979,4 @@
++    if scryfall_layout=="prepare":
++        if not isinstance(card.get("prepared_spell"),dict):
++            raise BuildError("Prepare card needs nested prepared_spell semantic data")
++        return "prepare"
+@@ -1006,0 +1090,2 @@
++    if recipe=="prepare":
++        return build_prepare_recipe(card,type_info)
+@@ -1272,0 +1358,7 @@
++    if recipe=="prepare":
++        prepared=card.get("prepared_spell")
++        if not isinstance(prepared,dict):
++            raise BuildError(f"{name}: Prepare card needs prepared_spell semantic data")
++        prep_info=get_type_info(prepared)
++        if not (prep_info["card_types"] & {"Instant","Sorcery"}):
++            raise BuildError(f"{name}: prepared_spell must be an Instant or Sorcery")
+@@ -1369 +1461,13 @@
+-    if str(data.get("version","")) in {"m15Regular","sagaRegular"} and isinstance(data.get("text",{}).get("title"),dict):
++    if recipe=="prepare":
++        prepared=card["prepared_spell"]
++        prep_info=get_type_info(prepared)
++        prep_rules=italicize_dash_labels(str(prepared.get("oracle_text","") or ""))
++        set_text_if_present(data,"mana2",str(prepared.get("mana_cost","") or ""))
++        set_text_if_present(data,"title2",str(prepared.get("name","") or ""))
++        set_text_if_present(data,"type2",prep_info["normalized"])
++        set_text_if_present(data,"rules2",prep_rules)
++        rs2=data.get("text",{}).get("rules2")
++        if isinstance(rs2,dict):
++            rs2["size"]=choose_rules_size("prepare",prep_rules,float(rs2.get("size",0.0353)))
++
++    if str(data.get("version","")) in {"m15Regular","sagaRegular","prepare"} and isinstance(data.get("text",{}).get("title"),dict):
