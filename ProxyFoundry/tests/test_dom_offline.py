@@ -11,7 +11,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['ui','setup','render','orders','templates','settings','deck','app']:
+    for name in ['ui','credits','setup','render','orders','templates','settings','deck','app']:
         text=(ROOT/'site'/(name+'.js')).read_text()
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2]+';',text)
