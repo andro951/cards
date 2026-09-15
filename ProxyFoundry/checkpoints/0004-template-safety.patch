@@ -1,0 +1,121 @@
+diff --git a/foundry/compiler.py b/foundry/compiler.py
+--- a/foundry/compiler.py
++++ b/foundry/compiler.py
+@@ -80,6 +80,10 @@
+         if choice in {x['id'] for x in BUILTINS}:
+             if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
++            if group in {'modal-front','modal-back'}:
++                pair=[x.get('name') for x in sf.get('card_faces',[])]
++                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
++                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+             d0=choose_builtin(sem,choice)
+             try:
+                 data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+ diff --git a/foundry/workspace.py b/foundry/workspace.py
+--- a/foundry/workspace.py
++++ b/foundry/workspace.py
+@@ -207,11 +207,33 @@
+         if not groups or any(g not in GROUP_LABELS for g in groups):raise ValidationError('Choose the structural groups this template supports.')
+         mapping=value.get('mapping') or {}
+         if not isinstance(mapping,dict) or any(k not in d['text'] or not isinstance(v,str) for k,v in mapping.items()):raise ValidationError('Bind existing text slots to card fields.')
+-        return self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
++        if value.get('id') and value.get('revision') is None:
++            raise ValidationError('Reload the template before saving; its revision is required.')
++        result=self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
++        self.invalidate_template(result['id'])
++        return result
++    def invalidate_template(self,ident):
++        # Invalidate only decks referencing this template, never saved order snapshots.
++        with self.store.connect() as db:
++            db.execute('BEGIN IMMEDIATE')
++            rows=db.execute("SELECT id,body FROM documents WHERE kind='decks'").fetchall()
++            for row in rows:
++                d=json.loads(row['body'])
++                uses=ident in d.get('settings',{}).get('templateRules',{}).values() or any(f.get('templateOverride')==ident for c in d.get('cards',[]) for f in c.get('faces',[]))
++                if uses:
++                    d['status']='draft'
++                    db.execute("UPDATE documents SET body=?,rev=rev+1,updated=? WHERE kind='decks' AND id=?",(json.dumps(d,ensure_ascii=False),time.time(),row['id']))
++    def delete_template(self,ident,revision):
++        if revision is None:raise ValidationError('Reload the template before deleting it.')
++        result=self.store.trash('templates',ident,revision)
++        self.invalidate_template(ident)
++        return result
+     def template_seed(self,kind='normal'):
+-        key={'normal':'creature','land':'land_full_basic','legend-land':'land_full_legendary'}.get(kind,'creature')
+-        if key not in native.LAYOUTS:key='creature'
+-        return copy.deepcopy(native.LAYOUTS[key]['data'])
++        if kind in {'land','legend-land'}:
++            sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':kind=='legend-land','basic':False,'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}
++            key='land_full_single' if kind=='land' else 'land_full_legendary'
++            return copy.deepcopy(native.recipe_data(key,sem,native.get_type_info(sem))['data'])
++        return copy.deepcopy(native.LAYOUTS['creature']['data'])
+     def render_targets(self,deck_ids):
+         targets={};cached=0;errors=[]
+         for ident in deck_ids:
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -364,7 +364,7 @@
+             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
+         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
+         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
+-        if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.store.trash('templates', m[1], d.get('revision')))
++        if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
+         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals)', p):
+             ident, action = m[1], m[2]
+             if action == 'save': return self.respond(self.app.ws.save(ident, d))
+diff --git a/site/templates.js b/site/templates.js
+--- a/site/templates.js
++++ b/site/templates.js
+@@ -19,7 +19,7 @@
+ }
+ async function createFromSeed(kind='normal'){
+   const data=await api('/api/templates/seed?kind='+encodeURIComponent(kind));
+-  editTemplate({name:'My '+({normal:'classic card',land:'full-art land','legend-land':'crowned full art'}[kind]||'card')+' style',data,groups:kind==='land'?['standard','land','basic-land']:ordinary,legendary:kind!=='land',mapping:{}});
++  editTemplate({name:'My '+({normal:'classic card',land:'full-art land','legend-land':'crowned full art'}[kind]||'card')+' style',data,groups:kind==='legend-land'?ordinary:['standard','land','basic-land'],legendary:kind==='legend-land',mapping:{}});
+ }
+ async function uploadTemplate(){
+   const f=await pickFile('.cardconjurer,.json');if(!f)return;if(f.size>20*1024**2)throw new Error('Template file limit is 20 MB.');
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -22,7 +22,7 @@
+         'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/test.jpg','png':'https://cards.scryfall.io/png/front/a/b/test.png'}}
+ 
+ @pytest.fixture
+-def browser_app(tmp_path):
++def browser_app(tmp_path,request):
+     from playwright.sync_api import sync_playwright
+     store=Store(tmp_path/'workspace')
+     def transport(url):
+@@ -41,14 +41,19 @@
+         page.goto(server.origin);page.locator('#import-deck').wait_for()
+         yield app,server,page,errors
+         (ROOT/'test-results').mkdir(exist_ok=True)
+-        page.screenshot(path=str(ROOT/'test-results'/'browser-last.png'),full_page=True)
++        name=request.node.name
++        page.screenshot(path=str(ROOT/'test-results'/(name+'.png')),full_page=True)
++        (ROOT/'test-results'/(name+'.json')).write_text(json.dumps({'url':page.url,'body':page.locator('body').inner_text(),'errors':errors,'jobs':app.jobs.jobs},default=str,indent=2))
++        (ROOT/'test-results'/(name+'.log')).write_text((app.store.home/'logs/app.log').read_text())
+         browser.close()
+     server.shutdown();server.server_close();app.close()
+ 
+ def test_browser_import_setup_edit_template_and_mobile(browser_app):
+     app,server,page,errors=browser_app
+     page.click('#import-deck');page.fill('#import-name','Browser deck');page.fill('#import-source','2 A Test Creature');page.click('#do-import')
+-    page.locator('#deck-name').wait_for();assert page.input_value('#deck-name')=='Browser deck'
++    page.locator('#deck-name,.form-error,#retry-page').first.wait_for()
++    assert page.locator('#deck-name').count(),page.locator('body').inner_text()
++    assert page.input_value('#deck-name')=='Browser deck'
+     with page.expect_file_chooser() as chooser:page.click('#generate-symbols')
+     chooser.value.set_files({'name':'symbol.png','mimeType':'image/png','buffer':png((160,160))})
+     expect(page.locator('.symbol-upload img')).to_have_count(4)
+@@ -111,6 +116,7 @@
+             before=len(app.runtime.requested)
+             page.click('#generate-deck');page.wait_for_timeout(2500)
+             assert len(app.runtime.requested)==before,'Unchanged front was not reused from render cache'
++            (ROOT/'test-results').mkdir(exist_ok=True)
+             im.thumbnail((502,703));im.save(ROOT/'test-results/native-card-preview.png')
+             (ROOT/'test-results/native-runtime.json').write_text(json.dumps(app.runtime.diagnostic(),indent=2))
+             assert not errors,errors
