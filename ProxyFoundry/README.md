@@ -1,6 +1,6 @@
 # Proxy Foundry
 
-A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v48 compiler and CardConjurer's actual native renderer.
+A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v54 compiler and CardConjurer's actual native renderer.
 
 ## Start here
 
@@ -41,17 +41,27 @@ Name matching normalizes to lowercase underscores, removes apostrophes and strip
 
 The optional full-art land library is **unset by default**. Add its GitHub folder in Settings and enable it for a deck. It expects `card_name.png`. Individual art overrides and the main custom-art folder take priority.
 
-Set an artist for the whole deck or leave it blank for the selected printing's artist. Per-face overrides and intentionally blank credit are available. Credit the actual creator of custom artwork.
+Artist credits are source-aware. Actual Scryfall artwork, including fallback images, always uses the selected printing's real artist (face-specific when provided). A custom-art deck default or per-card override cannot overwrite or hide that original credit. Missing Scryfall metadata stays blank rather than being attributed to the custom-art artist.
+
+For custom artwork, use a deck-wide artist or edit each card's credit. **Use the original printing artist for this custom image** keeps the original attribution when you upload modified/extended artwork. Add optional **Modification credit** such as `Modified by ChatGPT` in the deck setup or card inspector. It displays in the normal artist spot as `Artist Name · Modified by ChatGPT`. A per-face value replaces the deck suffix; **No modification credit on this face** suppresses it. Both screens preview the complete artist line before generation. The stored Scryfall artist is never modified, and regenerating does not duplicate the suffix.
 
 Four rarity symbols are required before generation. Upload all four or explicitly generate common/uncommon/rare/mythic color treatments from one image. Review those previews: they preserve transparency but do not redraw the original symbol. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
 
+## Updating from the previous test build
+
+This release uses the supplied **Card Tools v54** and separate original/modification credit fields. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply the corrected artists and updated v54 recipes; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
+
+The print helper is **unchanged from version 1.0.0**. An already connected 1.0.0 helper does not need replacement for this update. Earlier 0.9.x test helpers still need the integrated helper setup described above.
+
+The v48-to-v54 comparison and integration decisions are documented in `docs/CARD_TOOLS_V54_REVIEW.md`; `docs/CARD_TOOLS_V54_MANIFEST.json` records exact hashes for all ten supplied source/document files.
+
 ## Templates and accuracy
 
-**Automatic** delegates to the original v48 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
+**Automatic** delegates to the original v54 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
 
 For ordinary layouts, **Classic card** and **Crowned full art** support legendary/nonlegendary cards; **Full-art land** supports nonlegendary cards only because its frame has no compatible crown. Creature overrides retain a power/toughness box.
 
-Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates.
+Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v54 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
 
 Create a separate custom style from a protected built-in copy, or upload a `.cardconjurer` face. Map its named text boxes to card fields and select the groups it supports. The advanced editor exposes native template JSON. Editing or deleting a custom template invalidates only dependent decks; existing order snapshots do not change.
 
