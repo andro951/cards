@@ -30,6 +30,13 @@ Current controls include:
   * normal cache lifetime: 1 year
   * when checked, cache entries are refreshed only when at least 7 days old
 - missing-art / missing-symbol / auto-fit controls
+- universal set-symbol horizontal placement
+  * every rendered set symbol ends at 92.13% of card width
+  * the symbol left edge is calculated from its actual rendered width
+  * overlapping type-line width is derived from the symbol width with a 1% card-width gap
+- multicolored Vehicles
+  * 2+ color Vehicles use gold/multicolored Title and Type bars
+  * the rest of the Vehicle frame treatment remains unchanged
 
 The per-card Scryfall cache is persistent outside this extracted folder so replacing the UI does not erase it.
 

@@ -406,21 +406,16 @@ Exception: for Saga cards only, unmatched/new chapter-group layouts should compi
 
 ## 7. Multi-face cards
 
-Scryfall may return `card_faces` for transform cards, Modal DFCs, meld cards, and other multi-face structures.
+Scryfall may return `card_faces` for transform cards, Modal DFCs, Kamigawa Flip cards, meld cards, and other multi-face structures.
 
-For source-data purposes:
+For source-data purposes, preserve the physical-card relationship rather than assuming every Scryfall face becomes a separate Card Conjurer card:
 
-- Create one semantic entry per physical face.
-- Use the face's own `name`, `mana_cost`, type data, Oracle text, colors, P/T, loyalty, defense, and flavor text.
-- It is acceptable to add semantic relationship metadata such as:
+- Modal DFCs currently remain one semantic entry per physical face, with `parent_name`, `face_index`, and `scryfall_layout="modal_dfc"` selecting the approved front/back templates.
+- Prepare cards are one physical card and nest the prepared spell under `prepared_spell`.
+- Kamigawa Flip cards are one physical card and nest the rotated lower face under `flip_face`, with `scryfall_layout="flip"`.
+- Unsupported multi-face layouts must still fail rather than being approximated.
 
-```json
-"parent_name": "Esika, God of the Tree // The Prismatic Bridge",
-"face_index": 0,
-"scryfall_layout": "modal_dfc"
-```
-
-Those fields describe the source card relationship; they do not describe Card Conjurer geometry.
+Each face keeps its own `name`, `mana_cost`, type data, Oracle text, colors, P/T, loyalty, defense, and flavor text. Relationship fields describe the source card; they do not manually specify Card Conjurer geometry.
 
 Do **not** invent a `layout` override. If the Card Conjurer compiler does not know how to render that multi-face structure, report it as unsupported so a proper template/recipe can be added.
 

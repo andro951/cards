@@ -931,6 +931,21 @@ def scryfall_art_crop_url(card: Mapping[str, Any], face: Mapping[str, Any]) -> s
     return ""
 
 
+def scryfall_artist(card: Mapping[str, Any], face: Mapping[str, Any]) -> str:
+    """Return the artist credited by Scryfall for the art actually being used.
+
+    Multi-face Scryfall records may carry face-specific artist credits, so prefer
+    the face value and fall back to the physical card's top-level artist.
+    """
+    for source in (face, card):
+        if not isinstance(source, Mapping):
+            continue
+        value = source.get("artist")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
 def build_face_record(
     card: Mapping[str, Any],
     face: Mapping[str, Any],
@@ -1013,6 +1028,7 @@ def build_face_record(
             local_art_path = scryfall_art_cache.get_or_download(name, art_url)
             art_value = art_url
         print(f"Art source: {name}: Scryfall fallback", file=sys.stderr)
+        artist = scryfall_artist(card, face)
     else:
         art_filename = find_art_file(project_dir, name, art_map, allow_missing_art)
         art_value = art_filename
@@ -1031,6 +1047,14 @@ def build_face_record(
         "art": art_value,
         "rarity": rarity,
     }
+    # A card-specific artist is emitted only when the artwork itself came from
+    # Scryfall.  Custom GitHub art deliberately falls back to the project's
+    # configured artist (normally "ChatGPT") in the compiler.
+    if use_scryfall_art and not github_art_filename:
+        # Keep the field even if Scryfall has no credit. A blank credit is
+        # preferable to falsely attributing Scryfall artwork to the project's
+        # custom-art artist.
+        record["artist"] = artist
     if local_art_path is not None:
         record["art_local_path"] = str(local_art_path.resolve())
 
@@ -1070,6 +1094,62 @@ def build_face_record(
     # Intentionally NO `layout` key here. Layout is an optional manual override
     # for the Card Conjurer compiler and should not be invented by ingestion.
     return record
+
+
+def build_nested_face_semantic(
+    card: Mapping[str, Any],
+    face: Mapping[str, Any],
+    flavor_face: Mapping[str, Any],
+    flavor_overrides: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Build semantic data for a face nested inside one physical output card.
+
+    Used for layouts such as Kamigawa Flip where Scryfall exposes two faces but
+    Card Conjurer must receive one physical card record with both text halves.
+    Art and set-symbol ownership stay on the host record.
+    """
+    parent_name=str(card.get("name", ""))
+    name=str(face_value(face, card, "name", parent_name))
+    type_line=str(face_value(face, card, "type_line", ""))
+    semantic=split_type_line(type_line)
+    oracle_text=str(face_value(face, card, "oracle_text", ""))
+    raw_colors=face_value(face, card, "colors", [])
+    face_colors=[c for c in raw_colors if c in "WUBRG"] if isinstance(raw_colors,list) else []
+    flavor_default=face_value(flavor_face, card, "flavor_text", "")
+    flavor_override=override_lookup(flavor_overrides,name,parent_name)
+    flavor_text=str(flavor_override if flavor_override is not None else (flavor_default or ""))
+    nested: Dict[str, Any]={
+        "name":name,
+        "mana_cost":str(face_value(face, card, "mana_cost", "")),
+        "types":semantic["types"],
+        "subtypes":semantic["subtypes"],
+        "legendary":semantic["legendary"],
+        "basic":semantic["basic"],
+        "snow":semantic["snow"],
+        "oracle_text":oracle_text,
+        "colors":face_colors,
+    }
+    if semantic["world"]:
+        nested["world"]=True
+    if flavor_text:
+        nested["flavor_text"]=flavor_text
+    power=face_value(face,card,"power",None)
+    toughness=face_value(face,card,"toughness",None)
+    if power is not None or toughness is not None:
+        if power is None or toughness is None:
+            raise DataError(f"{name}: Scryfall supplied only one of power/toughness.")
+        nested["power"]=str(power)
+        nested["toughness"]=str(toughness)
+    loyalty=face_value(face,card,"loyalty",None)
+    if loyalty is not None:
+        nested["loyalty"]=str(loyalty)
+    defense=face_value(face,card,"defense",None)
+    if defense is not None:
+        nested["defense"]=str(defense)
+    land_colors=build_land_colors(semantic,face,card,oracle_text)
+    if land_colors:
+        nested["land_colors"]=land_colors
+    return nested
 
 
 def select_matching_flavor_face(
@@ -1289,11 +1369,14 @@ def main() -> int:
             flavor_card = choose_flavor_source(client, resolved, was_exact_url, args.flavor_policy)
 
             faces = face_list(resolved)
-            # Prepared cards contain a spell nested inside one physical host card.
-            # Keep that relationship semantic so the compiler can render one
-            # physical card instead of incorrectly emitting the prepared spell as
-            # a second card in the batch.
-            if str(resolved.get("layout", "")) == "prepare":
+            # PHYSICAL-CARD DECISION: do not treat every Scryfall card_faces
+            # array the same way. Prepare and old Kamigawa Flip layouts are one
+            # physical printed card, so their secondary face is nested into the
+            # host semantic record. Modal DFCs are genuinely two printed sides
+            # and remain separate face records so the compiler can give each side
+            # its own front/back frame treatment.
+            physical_layout=str(resolved.get("layout", ""))
+            if physical_layout == "prepare":
                 if len(faces) != 2:
                     raise DataError(
                         f"{resolved.get('name','<unnamed>')}: prepare layout needs exactly two Scryfall faces"
@@ -1325,6 +1408,30 @@ def main() -> int:
                 }
                 if spell_semantic["world"]:
                     host["prepared_spell"]["world"] = True
+                output_cards.append(host)
+            elif physical_layout == "flip":
+                if len(faces) != 2:
+                    raise DataError(
+                        f"{resolved.get('name','<unnamed>')}: flip layout needs exactly two Scryfall faces"
+                    )
+                host_face, flipped_face = faces
+                host_flavor=select_matching_flavor_face(flavor_card,host_face,0)
+                flipped_flavor=select_matching_flavor_face(flavor_card,flipped_face,1)
+                host=build_face_record(
+                    resolved,host_face,host_flavor,index=0,face_count=1,
+                    project_dir=project_dir,flavor_overrides=flavor_overrides,
+                    rarity_overrides=rarity_overrides,art_map=art_map,
+                    allow_missing_art=args.allow_missing_art,
+                    allow_missing_symbols=args.allow_missing_symbols,
+                    use_scryfall_art=args.use_scryfall_art,
+                    scryfall_art_cache=scryfall_art_cache,
+                    remote_art_names=remote_art_names,
+                )
+                host["scryfall_layout"]="flip"
+                host["parent_name"]=str(resolved.get("name","") or "")
+                host["flip_face"]=build_nested_face_semantic(
+                    resolved,flipped_face,flipped_flavor,flavor_overrides
+                )
                 output_cards.append(host)
             else:
                 for i, face in enumerate(faces):
