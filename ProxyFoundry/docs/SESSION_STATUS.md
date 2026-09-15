@@ -1,3 +1,5 @@
-# Implementation checkpoint
+# Checkpoint · 15 September 2026
 
-The new printer transport is implemented and its offline TCG DOM fixtures pass for an empty editor, Add to existing, and Replace with automatic per-card confirmations. The exact ZIP bytes reach the file input in all three tests. No sequential back assignment exists. This is a simulated TCG DOM, not a live website test. Runtime-source tests found and corrected a concrete URL-resolution bug: native blank.src URLs from the renderer's own localhost origin must not be treated as remote images. Standalone original-printing downloads and .cardconjurer copy-token generation now preserve the legacy utilities without requiring a managed deck.
+Recovered every previously committed source file through the scoped CI source artifact, without downloading the repository's artwork tree. Added the missing runnable HTTP API and separate-origin renderer server. Added portable image/deck/template backups (font and runtime caches excluded), CSRF/Host checks, render-session authorization and bounded ZIP range downloads for the print helper. 74 local Python tests currently pass, including seven real-loopback API tests. The three initially failing tests were a stale Room classification expectation, a missing empty-deck constructor, and a template regression assertion that did not normalize the two intentional asset transport URLs. No v48 source files were edited.
+
+UI modules, full print-helper content script and live browser rendering are the next integration work. This checkpoint is not a release.
