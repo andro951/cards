@@ -1,3 +1,3 @@
-# Integration checkpoint — resumed implementation
+# Integration checkpoint 3
 
-Recovered the saved foundation and byte-identical Card Tools v48 source. Ran the foundation suite locally: 29 tests passed. Added native compiler/ingestion/token module loading and image validation, safe SVG checks and opt-in four-rarity symbol treatment. Printing-preserving deck import and explicit GitHub folder indexing are being integrated next. No live rendering or production-readiness claim is made at this checkpoint. Network calls are tested with dependency-injected transports; this container cannot resolve raw.githubusercontent.com.
+39 tests passed locally. Automatic adapter output equals the unchanged v48 compiler for the regression case. Added exact-printing Scryfall imports, explicit GitHub source parsing, three validated ordinary template choices, compatible custom template slots, per-card artist precedence, front-only render hashing and >20% cover-crop diagnostics. Workspace CRUD, preparation and export are being integrated next. External live end-to-end tests remain unverified.
