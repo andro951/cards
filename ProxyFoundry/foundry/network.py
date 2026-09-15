@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Callable
 
-from .domain import ValidationError, cache_is_fresh
+from .domain import ValidationError, cache_is_fresh, STATION_SCRIPT_URL
 from .storage import Store
 
 MAX_REMOTE_BYTES = 64 * 1024 * 1024
@@ -24,7 +24,7 @@ def validate_remote_url(url: str) -> str:
     if p.scheme != 'https' or p.username or p.password or p.port not in (None, 443):
         raise ValidationError('Only HTTPS public artwork/data URLs are accepted.')
     host = (p.hostname or '').lower()
-    if host not in ALLOWED_HOSTS:
+    if host not in ALLOWED_HOSTS and str(url) != STATION_SCRIPT_URL:
         raise ValidationError(f'Unsupported asset host {host!r}. Use a GitHub folder or upload a computer folder.')
     if '\\' in p.path or any(x == '..' for x in urllib.parse.unquote(p.path).split('/')):
         raise ValidationError('Unsafe remote path.')

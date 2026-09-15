@@ -1,9 +1,9 @@
 """On-demand pinned CardConjurer files. Never download or unpack a repository archive."""
 from __future__ import annotations
-import base64,html,io,json,mimetypes,re,threading
+import base64,html,io,json,mimetypes,re,threading,hashlib
 from urllib.parse import quote,unquote,urlsplit
 from PIL import Image
-from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT
+from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -20,8 +20,30 @@ class Runtime:
         if u.scheme not in {'http','https'} or u.username or u.password:return None
         if u.hostname not in {'cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'}:return None
         return cls.path(u.path)
+    def station_script(self):
+        """Use the real native Station module, pinned by content rather than a moving site version.
+
+        The verified module is absent from the older GitHub runtime snapshots.
+        Only its UI property assignment is made CSP-safe; drawing/layout stays native.
+        """
+        raw,mime,meta=self.net.fetch(STATION_SCRIPT_URL,immutable=True)
+        if hashlib.sha256(raw).hexdigest()!=STATION_SCRIPT_SHA256:
+            raise ValidationError('The native Station script differs from the verified version. No unverified script was executed. Update Proxy Foundry before rendering Stations.')
+        text=raw.decode('utf-8')
+        original='eval(`${target} = value`);'
+        if text.count(original)!=1:
+            raise ValidationError('Unexpected native Station property-assignment format.')
+        replacement=r"""const parts = target.replace(/\[(\d+)\]/g, '.$1').split('.');
+            if (parts.shift() !== 'card' || parts.some(p => !/^[a-zA-Z0-9_]+$/.test(p) || ['__proto__','prototype','constructor'].includes(p))) throw new Error('Invalid Station property');
+            const key = parts.pop(); let object = card;
+            for (const part of parts) object = object[part];
+            object[key] = value;"""
+        text=text.replace(original,replacement)
+        with self.lock:self.requested['/js/frames/versionStation.js']={'url':STATION_SCRIPT_URL,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':STATION_SCRIPT_SHA256,'adapter':'CSP-safe UI property assignment'}
+        return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        if path=='/js/frames/versionStation.js':return self.station_script()
         # The hidden native frame picker does not need its thumbnail catalogue.
         if re.search(r'Thumb\.png$',path,re.I):
             b=io.BytesIO();Image.new('RGBA',(1,1),(0,0,0,0)).save(b,'PNG');return b.getvalue(),'image/png'

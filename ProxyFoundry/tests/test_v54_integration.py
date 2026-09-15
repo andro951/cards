@@ -39,7 +39,7 @@ def env(tmp_path):
 
 def test_vendor_exact_manifest():
     root=Path(__file__).resolve().parents[1]
-    manifest=json.loads((root/'docs/CARD_TOOLS_V54_MANIFEST.json').read_text())
+    manifest=json.loads((root/'docs/CARD_TOOLS_V58_MANIFEST.json').read_text())
     for name,expected in manifest['files'].items():
         assert hashlib.sha256((root/'vendor/card_tools'/name).read_bytes()).hexdigest()==expected['sha256'],name
 

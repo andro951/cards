@@ -1,4 +1,4 @@
-"""Adapter over unchanged v54 templates. Overrides are opt-in, never automatic guesses."""
+"""Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
 import copy,math
 from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION
@@ -6,7 +6,7 @@ from .legacy import compiler as native,ingest
 from .images import data_uri
 from .credits import resolve_credit
 BUILTINS=[
- {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v54 type-specific recipe.','legendary':True,'groups':'all'},
+ {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]

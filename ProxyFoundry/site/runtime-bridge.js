@@ -3,6 +3,44 @@
   'use strict';
   const S=window.__PF_RUNTIME,post=S.post,sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const pendingScripts=new Set();
+  const baseTextEdited=window.textEdited;
+  // The old pinned core predates Stations. Compose the genuine native Station
+  // canvases after the frame, exactly where the current native core does.
+  if(!String(window.drawCard).includes('stationPreFrameCanvas')){
+    const nativeDrawImage=window.cardContext.drawImage;
+    window.cardContext.drawImage=function(image,...args){
+      const result=nativeDrawImage.call(this,image,...args);
+      if(image===window.frameCanvas&&window.card?.station&&String(window.card.version).toLowerCase().includes('station')){
+        for(const canvas of [window.stationPreFrameCanvas,window.stationPostFrameCanvas])
+          if(canvas)nativeDrawImage.call(this,canvas,0,0,window.cardCanvas.width,window.cardCanvas.height);
+      }
+      return result;
+    };
+  }
+  function clearStationState(){
+    if(window.card?.station){
+      for(const key of ['mana','pt']){
+        const field=window.card.text?.[key];
+        clearTimeout(field?._stationManaUpdateTimeout);clearTimeout(field?._stationPTUpdateTimeout);
+      }
+      window.clearStationListeners?.();
+    }
+    if(window.originalTextEdited){window.textEdited=baseTextEdited;delete window.originalTextEdited;}
+  }
+  async function stationReady(data){
+    if(!String(data.version).toLowerCase().includes('station'))return;
+    if(!window.card?.station||typeof window.stationEdited!=='function')throw new Error('Native Station module did not initialize.');
+    // Guard only stale callbacks from a previous card; retain native layout/drawing.
+    const nativeEdited=window.stationEdited;
+    window.stationEdited=function(...args){if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))return nativeEdited.apply(this,args);};
+    window.updateBadgeImageFromMana();window.updatePTImageFromMana();
+    window.fixStationInputs();window.stationEdited();
+    await readyImages([['Station badge',window.stationBadgeImage],['Station P/T',window.stationPTImage]]);
+    await sleep(80);window.stationEdited();
+    for(const key of ['width','height','x','y'])
+      if(window.card.station.badgeSettings[key]!==data.station.badgeSettings[key])throw new Error('Native Station changed the saved badge '+key+'.');
+    if(JSON.stringify(window.card.station.badgeValues)!==JSON.stringify(data.station.badgeValues))throw new Error('Native Station changed the saved threshold values.');
+  }
   const timeout=(promise,ms,label)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error(label+' timed out after '+Math.round(ms/1000)+' seconds.')),ms);Promise.resolve(promise).then(x=>{clearTimeout(timer);resolve(x)},e=>{clearTimeout(timer);reject(e)});});
   async function waitFor(fn,ms,label){const start=Date.now();while(Date.now()-start<ms){if(fn())return;await sleep(50)}throw new Error(label+' did not initialize.');}
   // Replace only script orchestration, not the native frame, text or canvas logic.
@@ -68,7 +106,7 @@
   }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
-    S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    clearStationState();S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
       await preload(data);await fontsReady(data);
@@ -79,6 +117,7 @@
       S.phase='load';localStorage.setItem(storageKey,JSON.stringify(data));
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
       await window.loadCard(storageKey);await scriptsSettled();
+      await stationReady(data);
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
       await readyImages(imagesFor(window.card,symbols));await fontsReady(window.card);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
@@ -86,6 +125,7 @@
       await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
       await sleep(550);
       if(window.writingText)clearTimeout(window.writingText);
+      if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
       await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
       const errors=S.errors.filter(x=>x.phase!=='bootstrap');
       if(errors.length)throw new Error(errors[0].message);
