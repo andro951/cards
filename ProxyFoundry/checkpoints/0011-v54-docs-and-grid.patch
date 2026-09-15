@@ -1,0 +1,42 @@
+diff --git a/README.md b/README.md
+index e2dc4fc..b87044c 100644
+--- a/README.md
++++ b/README.md
+@@ -3 +3 @@
+-A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v48 compiler and CardConjurer's actual native renderer.
++A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v54 compiler and CardConjurer's actual native renderer.
+@@ -44 +44,3 @@
+-Set an artist for the whole deck or leave it blank for the selected printing's artist. Per-face overrides and intentionally blank credit are available. Credit the actual creator of custom artwork.
++Artist credits are source-aware. Actual Scryfall artwork, including fallback images, always uses the selected printing's real artist (face-specific when provided). A custom-art deck default or per-card override cannot overwrite or hide that original credit. Missing Scryfall metadata stays blank rather than being attributed to the custom-art artist.
++
++For custom artwork, use a deck-wide artist or edit each card's credit. **Use the original printing artist for this custom image** keeps the original attribution when you upload modified/extended artwork. Add optional **Modification credit** such as `Modified by ChatGPT` in the deck setup or card inspector. It displays in the normal artist spot as `Artist Name · Modified by ChatGPT`. A per-face value replaces the deck suffix; **No modification credit on this face** suppresses it. Both screens preview the complete artist line before generation. The stored Scryfall artist is never modified, and regenerating does not duplicate the suffix.
+@@ -47,0 +50,8 @@
++## Updating from the previous test build
++
++This release uses the supplied **Card Tools v54** and separate original/modification credit fields. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply the corrected artists and updated v54 recipes; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
++
++The print helper is **unchanged from version 1.0.0**. An already connected 1.0.0 helper does not need replacement for this update. Earlier 0.9.x test helpers still need the integrated helper setup described above.
++
++The v48-to-v54 comparison and integration decisions are documented in `docs/CARD_TOOLS_V54_REVIEW.md`; `docs/CARD_TOOLS_V54_MANIFEST.json` records exact hashes for all ten supplied source/document files.
++
+@@ -50 +60 @@
+-**Automatic** delegates to the original v48 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
++**Automatic** delegates to the original v54 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
+@@ -54 +64 @@
+-Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates.
++Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v54 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
+diff --git a/docs/THIRD_PARTY.md b/docs/THIRD_PARTY.md
+index 019ee9f..db7ccde 100644
+--- a/docs/THIRD_PARTY.md
++++ b/docs/THIRD_PARTY.md
+@@ -3 +3 @@
+-Proxy Foundry integrates the user's approved Card Tools v48 source, preserved in `vendor/card_tools`. Its native template assets and original project notices remain in those files.
++Proxy Foundry integrates the user's approved Card Tools v54 source, preserved in `vendor/card_tools`. Its native template assets and original project notices remain in those files.
+diff --git a/site/deck.js b/site/deck.js
+index 4ae6467..222be79 100644
+--- a/site/deck.js
++++ b/site/deck.js
+@@ -66 +66,2 @@
+-      return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span>${warning?'<span class="warn-pill">!</span>':''}${url?`<img src="${esc(url)}" class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}${flipped?' back':''}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${flipped?'No back selected':f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button><h3 title="${esc(c.name)}">${esc(c.name)}</h3>${f.compiled?.credit?`<div class="card-credit" title="${esc(f.compiled.credit.display)}">${esc(f.compiled.credit.display)}</div>`:''}<div class="card-item-footer"><small>${esc((c.scryfall.set||'').toUpperCase())} ${esc(c.scryfall.collector_number||'')} · ${esc(flipped?'Back':f.compiled?.render?'Rendered':'Not rendered')}</small><button class="flip-button" data-flip="${c.id}" aria-label="Show ${flipped?'front':'back'} of ${esc(c.name)}">${flipped?'Front':'Back'} ↻</button></div></article>`;
++      const displayedCredit=flipped?(!c.backOverride&&c.faces.length===2?c.faces[1].compiled?.credit:null):f.compiled?.credit;
++      return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span>${warning?'<span class="warn-pill">!</span>':''}${url?`<img src="${esc(url)}" class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}${flipped?' back':''}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${flipped?'No back selected':f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button><h3 title="${esc(c.name)}">${esc(c.name)}</h3>${displayedCredit?`<div class="card-credit" title="${esc(displayedCredit.display)}">${esc(displayedCredit.display)}</div>`:''}<div class="card-item-footer"><small>${esc((c.scryfall.set||'').toUpperCase())} ${esc(c.scryfall.collector_number||'')} · ${esc(flipped?'Back':f.compiled?.render?'Rendered':'Not rendered')}</small><button class="flip-button" data-flip="${c.id}" aria-label="Show ${flipped?'front':'back'} of ${esc(c.name)}">${flipped?'Front':'Back'} ↻</button></div></article>`;
