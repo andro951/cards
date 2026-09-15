@@ -29,18 +29,25 @@ jobs:
           sha = os.environ['CHECKPOINT_SHA']
           names = subprocess.check_output(['git','diff-tree','--no-commit-id','--name-only','-r',sha], text=True).splitlines()
           patches = [p for p in names if re.fullmatch(r'ProxyFoundry/checkpoints/[A-Za-z0-9_-]+\.patch', p)]
+          vendor_paths = {
+              'vendor/card_tools/pipeline/card_data_to_cardconjurer.py',
+              'vendor/card_tools/pipeline/scryfall_to_card_data.py',
+              'vendor/card_tools/pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md',
+              'vendor/card_tools/README_LOCAL_UI.txt',
+          }
           for p in patches:
               raw = pathlib.Path(p).read_text(encoding='utf-8')
               entries = re.findall(r'^diff --git a/(\S+) b/(\S+)$', raw, re.M)
               if not entries:
                   raise SystemExit('Empty or malformed checkpoint: '+p)
               for old,new in entries:
-                  if old != new or not re.fullmatch(r'(foundry|site|extension|tests|scripts|docs)/[A-Za-z0-9_./-]+\.(py|js|css|html|json|txt|md|ini|bat)|run\.py|README\.md|RUN_TESTS\.bat|requirements(?:-dev)?\.txt',new):
+                  allowed = re.fullmatch(r'(foundry|site|extension|tests|scripts|docs)/[A-Za-z0-9_./-]+\.(py|js|css|html|json|txt|md|ini|bat)|run\.py|README\.md|RUN_TESTS\.bat|START_LEGACY_CARD_TOOLS\.bat|requirements(?:-dev)?\.txt',new)
+                  if old != new or not (allowed or new in vendor_paths):
                       raise SystemExit('Checkpoint path not allowed: '+new)
                   if '..' in pathlib.PurePosixPath(new).parts:
                       raise SystemExit('Unsafe checkpoint path')
-              subprocess.run(['git','apply','--check','--directory=ProxyFoundry',p], check=True)
-              subprocess.run(['git','apply','--directory=ProxyFoundry',p], check=True)
+              subprocess.run(['git','apply','--check','--unidiff-zero','--directory=ProxyFoundry',p], check=True)
+              subprocess.run(['git','apply','--unidiff-zero','--directory=ProxyFoundry',p], check=True)
           PY
           python ProxyFoundry/scripts/verify_vendor.py
       - name: Save expanded, readable source files to main
