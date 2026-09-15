@@ -109,7 +109,7 @@ def test_real_cardconjurer_roundtrip(tmp_path):
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=240000)
             current=app.ws.deck(d['id'])
-            assert current['status']=='ready',{'status':current['status'],'activity':page.locator('#activity-log').inner_text(),'errors':errors}
+            assert current['status']=='ready',{'status':current['status'],'activity':page.locator('#activity-log').text_content(),'errors':errors}
             comp=current['cards'][0]['faces'][0]['compiled'];r=store.render_get(comp['renderKey']);im=Image.open(store.asset_path(r['asset_id']))
             assert im.size==(2010,2814)
             assert len(im.resize((100,140)).getcolors(14000) or [])>80,'Native output is unexpectedly blank or flat'

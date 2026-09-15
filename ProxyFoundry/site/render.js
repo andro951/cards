@@ -42,6 +42,6 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true}={}){
     }
     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true);throw new Error(plan.errors.join('\n'));}
     endActivity('All card images saved');toast('Rendering complete. Your decks are ready for order review.');
-  }catch(e){endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
+  }catch(e){api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
 }
 function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}

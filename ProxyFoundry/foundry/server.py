@@ -393,6 +393,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(self.app.store.asset_path(m[1]), a['mime'])
         if p == '/runtime/remote':
             url = q.get('url', [''])[0]
+            alias = self.app.runtime.upstream_alias(url)
+            if alias:
+                raw, mime = self.app.runtime.fetch(alias)
+                return self.send_bytes(raw, mime)
             raw, mime, _ = self.app.ws.net.fetch(url)
             if mime == 'image/svg+xml': raw = sanitize_svg(raw)
             elif not mime.startswith('image/'):

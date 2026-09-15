@@ -47,7 +47,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
-            assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').inner_text(),'errors':browser_errors}
+            assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
             assert ready['summary']['rendered']==8
             for c in ready['cards']:
                 for f in c['faces']:
@@ -64,6 +64,6 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert not browser_errors,browser_errors
         finally:
             page.screenshot(path=str(evidence/'native-structural-browser.png'),full_page=True)
-            (evidence/'native-structural-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'browserErrors':browser_errors,'activity':page.locator('#activity-log').inner_text()},indent=2))
+            (evidence/'native-structural-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'browserErrors':browser_errors,'activity':page.locator('#activity-log').text_content()},indent=2))
             (evidence/'native-structural.log').write_text((s.home/'logs/app.log').read_text())
             browser.close();server.shutdown();server.server_close();app.close()

@@ -21,6 +21,7 @@
     if(/^https?:/i.test(s)){
       const url=new URL(s);
       if(url.origin===location.origin)return url.pathname+url.search;
+      if(['cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'].includes(url.hostname)&&/^\/(img|js|fonts|css)\//.test(url.pathname))return url.pathname;
       return '/runtime/remote?url='+encodeURIComponent(s);
     }
     return s;

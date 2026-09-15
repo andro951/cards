@@ -1,7 +1,7 @@
 """On-demand pinned CardConjurer files. Never download or unpack a repository archive."""
 from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading
-from urllib.parse import quote,unquote
+from urllib.parse import quote,unquote,urlsplit
 from PIL import Image
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT
 
@@ -14,6 +14,12 @@ class Runtime:
         if not p.startswith(('/js/','/img/','/fonts/','/css/','/creator/')) or any(x in {'.','..'} for x in p.split('/')) or '\\' in p or '\x00' in p:
             raise ValidationError('Invalid CardConjurer dependency path.')
         return p
+    @classmethod
+    def upstream_alias(cls,url):
+        u=urlsplit(str(url))
+        if u.scheme not in {'http','https'} or u.username or u.password:return None
+        if u.hostname not in {'cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'}:return None
+        return cls.path(u.path)
     def fetch(self,path):
         path=self.path(path)
         # The hidden native frame picker does not need its thumbnail catalogue.
