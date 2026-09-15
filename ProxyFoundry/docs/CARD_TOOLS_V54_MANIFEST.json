@@ -1,0 +1,47 @@
+{
+  "version": 54,
+  "source": "MTG_Card_Pipeline_Local_UI_v54(1).zip",
+  "zipSha256": "67136267239e3a4d025a0b8156a428a7a472e7473965bb55ebd67e99ebc12def",
+  "files": {
+    "local_pipeline_ui.py": {
+      "sha256": "1e54c4752d42596356dc7f5b2a58775af7babbd084881b420885b86f08cd05f9",
+      "gitBlob": "5cb3e35e9dd141b646d2332997829b20dcf61e19"
+    },
+    "START_LOCAL_UI.bat": {
+      "sha256": "fe2a299e6b30b99853933be41e7baecbd846adc7b0dbeea7788d2a40f6c14d5f",
+      "gitBlob": "95ed99f174e42cdcd10b2ca2c0fed411314a9864"
+    },
+    "README_LOCAL_UI.txt": {
+      "sha256": "009955146f845b33fd0e14e06d8c5b140449d36890fff68a87ac5a6a30479162",
+      "gitBlob": "af534459d30552b80b7e3985cd2e68b7d62e8090"
+    },
+    "pipeline/card_data_to_cardconjurer.py": {
+      "sha256": "ac28d30673777098e5d2efecd24651ce2256895b7d3b07ea75e7d66a51783eb2",
+      "gitBlob": "47a5c448d88c20a5119dec0593494791d5533bea"
+    },
+    "pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md": {
+      "sha256": "55984ab89994ad113afe6c1bfcc17d2e646eba72afe13820d08e3ea733fd4243",
+      "gitBlob": "fad32075afcc1952d30271407e05b7067b3a124d"
+    },
+    "pipeline/scryfall_to_card_data.py": {
+      "sha256": "debfc1fe8a806374d41b13a55fea69cd4164ed614608ee40763cd5c36dfe3a52",
+      "gitBlob": "773e95f16ac28d53b0a0791efb04bb3cc34293ec"
+    },
+    "pipeline/scryfall_deck_to_cardconjurer.py": {
+      "sha256": "d2af1a9d2d748ac716f2c0603e6afdae83fcb5590ec094f50df67e4f24d0ee31",
+      "gitBlob": "65f4ccfd069546ebc1e704c2e89c880554d9a5fc"
+    },
+    "tools/token_spec_example.json": {
+      "sha256": "7c7a5b8cc8db40878589ef718a8676e9b2cd716b40aacf7ff7d4b23239a4e350",
+      "gitBlob": "3773253e8ac2dcd88ecbd838b64b930eaf4be141"
+    },
+    "tools/download_scryfall_deck_images_zip.py": {
+      "sha256": "4fa8bc7f022ed71f1005953fc1a8f6e65f4c7e074be1746b032c70b7a41fb063",
+      "gitBlob": "9f48fda13ab4f3ae4fd9f5f0d407ffec87c3d197"
+    },
+    "tools/make_copy_tokens.py": {
+      "sha256": "e7350710862586329ff446c724c94a30fa957275418f7f200d7b693a2625aa69",
+      "gitBlob": "21ca6e6cd0761a648659a707e6264c75e9c382c7"
+    }
+  }
+}
