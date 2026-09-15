@@ -1,0 +1,1455 @@
+{
+  "source_deck_url": "https://scryfall.com/@andro951/decks/ce5b8abe-ec82-4813-b259-9b4faaa6bd66",
+  "section_summary": {
+    "commanders": {
+      "normalized_section": "commanders",
+      "rows": 1,
+      "quantity": 1,
+      "excluded": false
+    },
+    "maybeboard": {
+      "normalized_section": "maybeboard",
+      "rows": 0,
+      "quantity": 0,
+      "excluded": true
+    },
+    "outside": {
+      "normalized_section": "outside",
+      "rows": 77,
+      "quantity": 78,
+      "excluded": false
+    },
+    "lands": {
+      "normalized_section": "lands",
+      "rows": 31,
+      "quantity": 31,
+      "excluded": false
+    },
+    "nonlands": {
+      "normalized_section": "nonlands",
+      "rows": 68,
+      "quantity": 68,
+      "excluded": false
+    }
+  },
+  "selected_entry_count": 177,
+  "selected_quantity": 178,
+  "entries": [
+    {
+      "section": "commanders",
+      "count": 1,
+      "name": "The Wandering Minstrel",
+      "scryfall_id": "77bc419d-ff69-4e7c-afe6-faca383a5ed7",
+      "set": "fin",
+      "collector_number": "249"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Eldritch Evolution",
+      "scryfall_id": "606caf13-c0d3-4a61-9a1a-32f13b6448ab",
+      "set": "inr",
+      "collector_number": "195"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Neoform",
+      "scryfall_id": "92d8f67e-4f2f-4a1f-b190-7c3f39e477e4",
+      "set": "war",
+      "collector_number": "206"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Squandered Resources",
+      "scryfall_id": "fcddbea7-3025-47b1-a597-2d2b2711fb81",
+      "set": "vis",
+      "collector_number": "137"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "H.E.R.B.I.E. Scout Unit",
+      "scryfall_id": "3496d0d4-3fab-4ea4-8986-afe5a7155ec6",
+      "set": "msh",
+      "collector_number": "247"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Shorikai, Genesis Engine",
+      "scryfall_id": "969ac7dd-f3aa-4888-9ff0-d16a31b5e7a9",
+      "set": "nec",
+      "collector_number": "4"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Salvaging Station",
+      "scryfall_id": "f0336e07-8eaf-4b90-af54-4764e5ba50f2",
+      "set": "5dn",
+      "collector_number": "148"
+    },
+    {
+      "section": "outside",
+      "count": 2,
+      "name": "Chromatic Orrery",
+      "scryfall_id": "3af78d76-ad5c-44ba-880d-b834bcde5398",
+      "set": "m21",
+      "collector_number": "228"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Summon: Bahamut",
+      "scryfall_id": "95318d85-4a08-47ac-a43d-ea83c0bea81c",
+      "set": "fin",
+      "collector_number": "1"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Molderhulk",
+      "scryfall_id": "ba88e031-b194-4621-9e97-2f33ee46f6d0",
+      "set": "grn",
+      "collector_number": "190"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Bringer of the White Dawn",
+      "scryfall_id": "9e5a7117-b1e2-46bd-873e-baf9d9fac009",
+      "set": "5dn",
+      "collector_number": "7"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Combustible Gearhulk",
+      "scryfall_id": "c80e620e-bece-4c48-9dd6-7bcdacabf521",
+      "set": "dsc",
+      "collector_number": "163"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Salvage Titan",
+      "scryfall_id": "7175febd-ae8e-4945-91ab-b6c67c40f04b",
+      "set": "2xm",
+      "collector_number": "104"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Urza, Lord Protector",
+      "scryfall_id": "8aefe8bd-216a-4ec1-9362-3f9dbf7fd083",
+      "set": "bro",
+      "collector_number": "225"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scourglass",
+      "scryfall_id": "b8993b57-3060-45ca-80ed-3366784ec61d",
+      "set": "ala",
+      "collector_number": "25"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "The Mightstone and Weakstone",
+      "scryfall_id": "02aea379-b444-46a3-82f4-3038f698d4f4",
+      "set": "bro",
+      "collector_number": "238"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "The Great Henge",
+      "scryfall_id": "6340e0f3-7f9c-4d71-8daf-e1be5505eb5b",
+      "set": "cmm",
+      "collector_number": "294"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Shimmer Dragon",
+      "scryfall_id": "3983a11e-8a8a-4d9d-868b-13e0c3719abb",
+      "set": "mkc",
+      "collector_number": "117"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Ancient Greenwarden",
+      "scryfall_id": "12a0bf5c-a165-48f1-9a57-3a7cc9f3b0f9",
+      "set": "otc",
+      "collector_number": "186"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Memory Jar",
+      "scryfall_id": "60b70b7f-6f24-4c00-947a-b109f302205b",
+      "set": "vma",
+      "collector_number": "276"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Aftermath Analyst",
+      "scryfall_id": "66f135b4-8cb3-4a4e-86ae-81a3cf4b7259",
+      "set": "eoc",
+      "collector_number": "91"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Llanowar Scout",
+      "scryfall_id": "c8026d80-2e91-46f9-ae97-1f137848236c",
+      "set": "dom",
+      "collector_number": "170"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scaled Herbalist",
+      "scryfall_id": "6cb05274-5a94-44e3-889a-667cba1da033",
+      "set": "afr",
+      "collector_number": "204"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Urza, Prince of Kroog",
+      "scryfall_id": "5a7329cd-95af-4d71-984f-f5f28982520c",
+      "set": "bro",
+      "collector_number": "226"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Jhoira, Weatherlight Captain",
+      "scryfall_id": "776f490a-2f75-4c18-8164-56bd65bb09c6",
+      "set": "eoc",
+      "collector_number": "118"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Quicksmith Genius",
+      "scryfall_id": "7fed8df9-600c-4502-83a3-883724f2f7c6",
+      "set": "c21",
+      "collector_number": "178"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Roil Cartographer",
+      "scryfall_id": "84317f9d-5a24-4f74-9c3e-0a8b5c15bb5f",
+      "set": "mh3",
+      "collector_number": "67"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Chulane, Teller of Tales",
+      "scryfall_id": "d1499a4b-1af1-4913-8e26-57d0707264db",
+      "set": "mkc",
+      "collector_number": "202"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Thought Monitor",
+      "scryfall_id": "18a6ea89-417c-4ee0-a410-8a0067b92967",
+      "set": "eoc",
+      "collector_number": "79"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Tideforce Elemental",
+      "scryfall_id": "f23e758d-c9a4-4f8e-b366-634f8c451b61",
+      "set": "wwk",
+      "collector_number": "41"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scrabbling Claws",
+      "scryfall_id": "67b06cb5-5e74-456f-81b1-fced1346cc47",
+      "set": "rna",
+      "collector_number": "238"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Ultron, Artificial Malevolence",
+      "scryfall_id": "32ddd5ac-57ed-4e78-8932-a65980191f6e",
+      "set": "msh",
+      "collector_number": "252"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Arcum Dagsson",
+      "scryfall_id": "f5ecf811-2efc-4fa6-9af8-ef09f559ec1a",
+      "set": "2xm",
+      "collector_number": "41"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Myr Turbine",
+      "scryfall_id": "71a76840-47f7-4e1e-b68b-00cb7da98cdf",
+      "set": "mbs",
+      "collector_number": "117"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Traveling Chocobo",
+      "scryfall_id": "2462df62-fc35-47ed-9571-40452074dc6d",
+      "set": "fin",
+      "collector_number": "210"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Rook Turret",
+      "scryfall_id": "4572884d-0c0e-41e7-b219-f76b95fdbd01",
+      "set": "fin",
+      "collector_number": "69"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Expedition Map",
+      "scryfall_id": "c55bee97-593f-441f-b96c-a998d5212a55",
+      "set": "zen",
+      "collector_number": "201"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Lotus Cobra",
+      "scryfall_id": "a4b759f0-901f-4be3-93fa-224609b08d48",
+      "set": "znr",
+      "collector_number": "193"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Grim Monolith",
+      "scryfall_id": "9ddc9fe1-17c8-4e1d-aeb8-c4214e881280",
+      "set": "ulg",
+      "collector_number": "126"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Skyshroud Ranger",
+      "scryfall_id": "9a2fd9e5-1986-4998-b08c-80897b9b27e7",
+      "set": "10e",
+      "collector_number": "297"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Budoka Gardener // Dokai, Weaver of Life",
+      "scryfall_id": "58164521-aeec-43fc-9db9-d595432dea6f",
+      "set": "c18",
+      "collector_number": "134"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Zimone and Dina",
+      "scryfall_id": "bf2af874-1052-4cad-90ed-d80e49d4c68c",
+      "set": "mom",
+      "collector_number": "257"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Sarinth Greatwurm",
+      "scryfall_id": "eaee6fcb-23de-4347-84b6-1e9849a537fc",
+      "set": "bro",
+      "collector_number": "220"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "The Mycosynth Gardens",
+      "scryfall_id": "0a6f0408-6758-495f-9d6c-7686a1542fbd",
+      "set": "eoc",
+      "collector_number": "168"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Redress Fate",
+      "scryfall_id": "19f56096-f692-4719-af38-6a4955f2b65c",
+      "set": "dsc",
+      "collector_number": "9"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Moonsilver Key",
+      "scryfall_id": "87778e37-af92-402e-b037-5fbd6112b682",
+      "set": "mid",
+      "collector_number": "255"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scrap Trawler",
+      "scryfall_id": "614be454-3829-4c3b-9485-930755dfa16d",
+      "set": "moc",
+      "collector_number": "373"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Rydia, Summoner of Mist",
+      "scryfall_id": "99450143-6ab5-463d-9e04-e8e6703a8b92",
+      "set": "fin",
+      "collector_number": "239"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Mana Vault",
+      "scryfall_id": "c1a31d52-a407-4ded-bfca-cc812f11afa0",
+      "set": "2x2",
+      "collector_number": "308"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Manabond",
+      "scryfall_id": "6f94ab94-5a8f-4422-8927-0b7da85c3119",
+      "set": "tpr",
+      "collector_number": "179"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Umbral Collar Zealot",
+      "scryfall_id": "98648b8a-2cf0-4c10-ab13-c88b2e03fc15",
+      "set": "soc",
+      "collector_number": "227"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Tatyova, Benthic Druid",
+      "scryfall_id": "eabc978a-0666-472d-bdc6-d4b29d29eca4",
+      "set": "fdn",
+      "collector_number": "247"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Bolas's Citadel",
+      "scryfall_id": "d2124603-d20e-40eb-97f0-a66323397ac2",
+      "set": "war",
+      "collector_number": "79"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Pitiless Carnage",
+      "scryfall_id": "fa76fc45-a106-4dc9-9d44-a005eaa2784d",
+      "set": "otj",
+      "collector_number": "98"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Priest of Yawgmoth",
+      "scryfall_id": "c9fd4054-42fc-4f95-a6f7-369a5da43dd5",
+      "set": "atq",
+      "collector_number": "19"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Seedborn Muse",
+      "scryfall_id": "76f58441-5674-4f1e-af9b-94e14ab7e619",
+      "set": "tdc",
+      "collector_number": "268"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Unwinding Clock",
+      "scryfall_id": "c3fd1a59-4ade-459f-90d2-1fc67d6d1384",
+      "set": "c18",
+      "collector_number": "228"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "The One Ring",
+      "scryfall_id": "d5806e68-1054-458e-866d-1f2470f682b2",
+      "set": "ltr",
+      "collector_number": "246"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Aetherworks Marvel",
+      "scryfall_id": "884f6948-3e03-48c6-8be2-6f2539386c9d",
+      "set": "kld",
+      "collector_number": "193"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scaretiller",
+      "scryfall_id": "23eb0fce-2e69-4280-8ee3-85736765fbbd",
+      "set": "otc",
+      "collector_number": "266"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Karn, Legacy Reforged",
+      "scryfall_id": "4219b5ea-a252-4d76-a60a-9674340e8ed3",
+      "set": "mat",
+      "collector_number": "49"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Doors of Durin",
+      "scryfall_id": "8ebd8813-4aaf-48bf-9243-3ec4099b8372",
+      "set": "ltr",
+      "collector_number": "199"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Cosmic Cube",
+      "scryfall_id": "d1cf1ead-fe91-4328-89ab-6d0bc9ff6cbe",
+      "set": "msh",
+      "collector_number": "245"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Chocobo Racetrack",
+      "scryfall_id": "1565813b-6912-42f4-bae0-22136a2d6a92",
+      "set": "fin",
+      "collector_number": "179"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Cauldron of Souls",
+      "scryfall_id": "cbd4604e-c21a-42a1-b099-aad7f9263a82",
+      "set": "cm2",
+      "collector_number": "180"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Mycosynth Golem",
+      "scryfall_id": "c3200fa2-182f-4515-b326-ab4fdb95c8c1",
+      "set": "5dn",
+      "collector_number": "137"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Planar Bridge",
+      "scryfall_id": "30879758-841c-46a9-a0b6-179ac163f0ac",
+      "set": "2x2",
+      "collector_number": "313"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Buried Ruin",
+      "scryfall_id": "7ab1a074-9d92-4125-9200-84cd035f8f53",
+      "set": "eoc",
+      "collector_number": "150"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Nahiri's Lithoforming",
+      "scryfall_id": "06bb4bc1-6ef9-4015-9f5f-36f51dbac87e",
+      "set": "znr",
+      "collector_number": "151"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Myr Battlesphere",
+      "scryfall_id": "71e7ef4a-2032-4571-afc6-5207d4b40c3d",
+      "set": "tdc",
+      "collector_number": "322"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Metalworker",
+      "scryfall_id": "2050d414-71c7-4c42-a1ff-4c04068ba7f2",
+      "set": "uds",
+      "collector_number": "135"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Empowered Autogenerator",
+      "scryfall_id": "1b6abe5b-9bd3-43a0-b1bb-e6ebb64b443c",
+      "set": "eoc",
+      "collector_number": "135"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Power Depot",
+      "scryfall_id": "032eba04-0a63-4823-85e1-64861330a8d7",
+      "set": "mh2",
+      "collector_number": "251"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Darksteel Citadel",
+      "scryfall_id": "2ba7597d-6d76-45b8-b172-342999e401bd",
+      "set": "c21",
+      "collector_number": "285"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Academy Ruins",
+      "scryfall_id": "a95b7645-154f-4904-bf71-db7eb24d4df2",
+      "set": "2xm",
+      "collector_number": "309"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Scapeshift",
+      "scryfall_id": "175e21a3-00f7-4c51-8a8e-fbfd7089efda",
+      "set": "m19",
+      "collector_number": "201"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Amareth, the Lustrous",
+      "scryfall_id": "2fbea010-de77-468e-be39-1717070c9303",
+      "set": "cmr",
+      "collector_number": "266"
+    },
+    {
+      "section": "outside",
+      "count": 1,
+      "name": "Azusa, Lost but Seeking",
+      "scryfall_id": "2fe97fbe-a6d6-4e96-8c26-f81bcdf579a1",
+      "set": "cmm",
+      "collector_number": "274"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Azorius Chancery",
+      "scryfall_id": "50ef0ac3-e911-4d67-a751-8d86160ae843",
+      "set": "dsc",
+      "collector_number": "261"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Dimir Aqueduct",
+      "scryfall_id": "84bf9d60-64b8-4209-acfe-e07eefc6bf1f",
+      "set": "dsc",
+      "collector_number": "270"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Golgari Rot Farm",
+      "scryfall_id": "42486edd-24b7-4299-84fa-50559917b2a8",
+      "set": "ecc",
+      "collector_number": "151"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Gruul Turf",
+      "scryfall_id": "f19d2b68-1415-4a0c-bb68-cfacb611c4d2",
+      "set": "ecc",
+      "collector_number": "152"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Izzet Boilerworks",
+      "scryfall_id": "bfac9395-7ca5-48dd-ab83-7c26ada12f61",
+      "set": "otc",
+      "collector_number": "302"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Selesnya Sanctuary",
+      "scryfall_id": "fdc53c6a-8e28-4314-9bcf-b31b6c6f56d7",
+      "set": "clu",
+      "collector_number": "246"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Simic Growth Chamber",
+      "scryfall_id": "212d97c5-c144-483b-b42e-00623477e928",
+      "set": "dsc",
+      "collector_number": "298"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Ancient Den",
+      "scryfall_id": "d9a7b0f6-97f9-4937-865c-e25c142c3ed7",
+      "set": "eoc",
+      "collector_number": "148"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Darkmoss Bridge",
+      "scryfall_id": "3ca3ef68-ea62-4098-bd43-4597ff0647d4",
+      "set": "dsc",
+      "collector_number": "269"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Drossforge Bridge",
+      "scryfall_id": "5b46b8d8-723a-4752-b97d-29ef83bd294c",
+      "set": "mh2",
+      "collector_number": "246"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Field of the Dead",
+      "scryfall_id": "470ca3f4-29aa-4c4c-8ff2-8cdd70c69943",
+      "set": "m20",
+      "collector_number": "247"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Fomori Vault",
+      "scryfall_id": "a5433b98-4657-4bbe-9e72-d3c94c6aa8ef",
+      "set": "big",
+      "collector_number": "29"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Goldmire Bridge",
+      "scryfall_id": "3235954d-a1b1-4822-b177-1691347d1e58",
+      "set": "moc",
+      "collector_number": "407"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Great Furnace",
+      "scryfall_id": "74c5bb44-d72c-4c1a-a38f-86b4a8f49ae1",
+      "set": "eoc",
+      "collector_number": "161"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Inventors' Fair",
+      "scryfall_id": "275471e3-ded1-40ac-91ef-369dce5764d9",
+      "set": "kld",
+      "collector_number": "247"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Mishra's Workshop",
+      "scryfall_id": "aac0c8df-f01d-4178-8d66-ee603f814d24",
+      "set": "vma",
+      "collector_number": "305"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Mistvault Bridge",
+      "scryfall_id": "9f36a6e2-3e51-4a30-a225-10cfe6650b9d",
+      "set": "mh2",
+      "collector_number": "249"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Oboro, Palace in the Clouds",
+      "scryfall_id": "ffc2d68e-6543-43ec-b67a-afff1325a32f",
+      "set": "sok",
+      "collector_number": "164"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Razortide Bridge",
+      "scryfall_id": "0bbd24cd-48f7-40d7-9741-f30108f04b84",
+      "set": "eoc",
+      "collector_number": "171"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Rustvale Bridge",
+      "scryfall_id": "da54e458-1d4f-45f0-a225-99eb9c4049fb",
+      "set": "eoc",
+      "collector_number": "175"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Scene of the Crime",
+      "scryfall_id": "de039992-631b-4feb-a522-acdb0a6d1f26",
+      "set": "mkm",
+      "collector_number": "267"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Seat of the Synod",
+      "scryfall_id": "57a194b3-2899-4dee-977a-c77df0b94dfe",
+      "set": "eoc",
+      "collector_number": "176"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Silverbluff Bridge",
+      "scryfall_id": "8f14540a-479f-4a3c-8e5b-f482caf48451",
+      "set": "eoc",
+      "collector_number": "180"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Slagwoods Bridge",
+      "scryfall_id": "e51b48e9-a75a-4acd-9462-5e1ac2b0d803",
+      "set": "mh2",
+      "collector_number": "256"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Tanglepool Bridge",
+      "scryfall_id": "57d2b895-8921-4615-a674-fb85eed5ea3f",
+      "set": "mh2",
+      "collector_number": "257"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Thornglint Bridge",
+      "scryfall_id": "9d483643-6a11-47f7-a0aa-190e0179525f",
+      "set": "mh2",
+      "collector_number": "258"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Treasure Vault",
+      "scryfall_id": "a0931eb3-b403-4b1a-ad46-a7b0a51bb9a4",
+      "set": "afr",
+      "collector_number": "261"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Tree of Tales",
+      "scryfall_id": "3b3134b3-1bad-4b41-9e56-700125ff31fa",
+      "set": "dsc",
+      "collector_number": "319"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Urza's Saga",
+      "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
+      "set": "mh2",
+      "collector_number": "259"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "Vault of Whispers",
+      "scryfall_id": "e85e4098-f872-4aa4-a71a-208b6090be28",
+      "set": "dsc",
+      "collector_number": "322"
+    },
+    {
+      "section": "lands",
+      "count": 1,
+      "name": "The World Tree",
+      "scryfall_id": "a70cb6d9-3955-4064-917b-11dec26440c5",
+      "set": "khm",
+      "collector_number": "275"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Retreat to Coralhelm",
+      "scryfall_id": "cf8246c1-1db2-409f-9440-222d6dc78297",
+      "set": "dsc",
+      "collector_number": "126"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "PuPu UFO",
+      "scryfall_id": "989b52f7-d8a5-4488-9a5d-f14a1d48686d",
+      "set": "fin",
+      "collector_number": "266"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Walking Atlas",
+      "scryfall_id": "53515042-e729-4a7c-ac3b-36ef70dbbe8d",
+      "set": "wwk",
+      "collector_number": "131"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Goblin Welder",
+      "scryfall_id": "17cd920a-de09-454a-a9da-c84512e3aff1",
+      "set": "cm2",
+      "collector_number": "101"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Nissa, Resurgent Animist",
+      "scryfall_id": "248c76d3-b5cb-4582-be17-7cd1d0cb0f58",
+      "set": "mat",
+      "collector_number": "22"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Tireless Provisioner",
+      "scryfall_id": "a1e048e0-19d2-4076-892d-f8b3104dee37",
+      "set": "moc",
+      "collector_number": "313"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Urza, Lord High Artificer",
+      "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050",
+      "set": "cmm",
+      "collector_number": "130"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Clock of Omens",
+      "scryfall_id": "5b087992-9c30-4434-acb3-a12ee6f207b3",
+      "set": "m13",
+      "collector_number": "202"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Tezzeret, Cruel Captain",
+      "scryfall_id": "02e8e540-8aa3-4e6a-9a11-c3949cab5f0f",
+      "set": "eoe",
+      "collector_number": "2"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Tezzeret the Seeker",
+      "scryfall_id": "cf339735-eb1a-46f0-8c3e-eae06f278eca",
+      "set": "mm2",
+      "collector_number": "62"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Codex Shredder",
+      "scryfall_id": "4f5a3293-f3e7-4f68-af6a-b478959226c1",
+      "set": "cmr",
+      "collector_number": "304"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Gerrard's Hourglass Pendant",
+      "scryfall_id": "580ca958-4df7-4f42-b497-d412d286bd4e",
+      "set": "dmc",
+      "collector_number": "17"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Sensei's Divining Top",
+      "scryfall_id": "e5142b7a-e580-4737-a4aa-2590f6610ceb",
+      "set": "2x2",
+      "collector_number": "314"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Mox Opal",
+      "scryfall_id": "56001a36-126b-4c08-af98-a6cc4d84210e",
+      "set": "2xm",
+      "collector_number": "275"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Mox Amber",
+      "scryfall_id": "66024e69-ad60-4c9a-a0ca-da138d33ad80",
+      "set": "dom",
+      "collector_number": "224"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Radiant Lotus",
+      "scryfall_id": "be6dac83-39c2-40dc-a322-76a3ea4e7aee",
+      "set": "dft",
+      "collector_number": "240"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Krark-Clan Ironworks",
+      "scryfall_id": "c60174d6-1f9d-4870-b3db-34d6fcb3f6ab",
+      "set": "5dn",
+      "collector_number": "134"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Faith's Reward",
+      "scryfall_id": "fa19fe94-0302-4d08-9821-fa0db722048a",
+      "set": "cn2",
+      "collector_number": "84"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Open the Vaults",
+      "scryfall_id": "e5c5a822-0f5e-4b5f-b969-b27324e4543f",
+      "set": "2xm",
+      "collector_number": "24"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Displacer Kitten",
+      "scryfall_id": "c7a401b8-29fb-46ef-a663-427f66724d5c",
+      "set": "clb",
+      "collector_number": "63"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Master Transmuter",
+      "scryfall_id": "480eb74f-9e62-41f7-b48a-b4249aab5752",
+      "set": "2xm",
+      "collector_number": "58"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Golbez, Crystal Collector",
+      "scryfall_id": "849f5716-7211-4e93-a220-f88d49f937f4",
+      "set": "fin",
+      "collector_number": "225"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Oswald Fiddlebender",
+      "scryfall_id": "bba1650f-eddf-49a9-820e-489cb8d5b6fa",
+      "set": "afr",
+      "collector_number": "28"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Sarinth Steelseeker",
+      "scryfall_id": "d96761b2-eb9c-4963-a496-ba53a01f4b17",
+      "set": "bro",
+      "collector_number": "189"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "The Reality Chip",
+      "scryfall_id": "d859de3a-0be1-4e66-b438-1c3d4ee756cd",
+      "set": "neo",
+      "collector_number": "74"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Emry, Lurker of the Loch",
+      "scryfall_id": "c977d89a-bfd1-4e98-9d95-3e41c53dd188",
+      "set": "eoc",
+      "collector_number": "71"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Six",
+      "scryfall_id": "f9246b68-580f-4f53-883d-7900880e4b0d",
+      "set": "mh3",
+      "collector_number": "169"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Transplant Theorist",
+      "scryfall_id": "f912c4ec-08e9-4524-a2ba-98f6dfabdc18",
+      "set": "one",
+      "collector_number": "73"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Crucible of Worlds",
+      "scryfall_id": "7f4893ef-f983-418b-b7a4-5f073c844545",
+      "set": "2x2",
+      "collector_number": "303"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Grinding Station",
+      "scryfall_id": "df1df511-b52c-45cd-9503-ffce4271a802",
+      "set": "5dn",
+      "collector_number": "127"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Esoteric Duplicator",
+      "scryfall_id": "3dbb2755-97d9-492e-8697-5548160678c8",
+      "set": "big",
+      "collector_number": "5"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Repurposing Bay",
+      "scryfall_id": "0cf1ace1-b7f5-4bd9-a494-ee7cb6c1f854",
+      "set": "dft",
+      "collector_number": "56"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Uthros Research Craft",
+      "scryfall_id": "6ade097b-349f-4876-bdc8-7bcd051e9952",
+      "set": "eoc",
+      "collector_number": "7"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Crystal Skull, Isu Spyglass",
+      "scryfall_id": "b10fa72b-6742-4b65-8654-ac70b6240e38",
+      "set": "acr",
+      "collector_number": "15"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Spine of Ish Sah",
+      "scryfall_id": "fe28640d-a030-4da4-882d-87b6e1678bbd",
+      "set": "moc",
+      "collector_number": "383"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Portal to Phyrexia",
+      "scryfall_id": "5f608efc-0dbc-4cc3-aadd-ed473bfc29ab",
+      "set": "bro",
+      "collector_number": "240"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Trade Routes",
+      "scryfall_id": "57e5d7c9-36f7-4312-ada0-b6c2757487c8",
+      "set": "9ed",
+      "collector_number": "108"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Gandalf, Shadow's Foe",
+      "scryfall_id": "c659c9e5-5ec6-4c7f-80b2-e1782e6c3334",
+      "set": "hoc",
+      "collector_number": "99"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Cultivator Colossus",
+      "scryfall_id": "426ed66e-41b3-4e44-90a2-697aafaa8c5c",
+      "set": "inr",
+      "collector_number": "190"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Moraug, Fury of Akoum",
+      "scryfall_id": "4481eab8-9e7d-4db8-b1f2-fdf5ee1919a2",
+      "set": "eoc",
+      "collector_number": "89"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Kodama of the East Tree",
+      "scryfall_id": "af5105ee-09e2-4344-ab39-00f0e9034c47",
+      "set": "cmr",
+      "collector_number": "239"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Aesi, Tyrant of Gyre Strait",
+      "scryfall_id": "673c21f8-02b6-4ac4-b2fc-df065b4ac662",
+      "set": "dsc",
+      "collector_number": "210"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "The Gitrog Monster",
+      "scryfall_id": "40489e28-878d-44a2-847f-07beef1aa0f8",
+      "set": "eoc",
+      "collector_number": "117"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Phantom Train",
+      "scryfall_id": "7a50d2ac-101d-41e1-b400-18fa7d2d7125",
+      "set": "fin",
+      "collector_number": "110"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "The Seriema",
+      "scryfall_id": "dec91ec3-42d3-4922-96f0-dbb50a576084",
+      "set": "eoe",
+      "collector_number": "35"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Lightning Greaves",
+      "scryfall_id": "b61634ae-05be-4b56-8ebb-9d4ade902e42",
+      "set": "msc",
+      "collector_number": "202"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Krang, Master Mind",
+      "scryfall_id": "d27fa497-e842-4812-80fe-28517544e1c5",
+      "set": "tmt",
+      "collector_number": "43"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Panther Robot",
+      "scryfall_id": "8bb7185d-fc07-4f2f-9762-aa7e7c287cba",
+      "set": "msc",
+      "collector_number": "113"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Metalwork Colossus",
+      "scryfall_id": "d7e2d686-1fbc-449a-9af4-f00a71ff7911",
+      "set": "msc",
+      "collector_number": "204"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "The Cauldron of Eternity",
+      "scryfall_id": "eb69473f-de99-43a7-b094-429465ae735c",
+      "set": "eld",
+      "collector_number": "82"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Krang, Utrom Warlord",
+      "scryfall_id": "88d36c32-d6f9-46e4-9cc8-08e6c0ff05d2",
+      "set": "tmt",
+      "collector_number": "175"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Lumra, Bellow of the Woods",
+      "scryfall_id": "ae4f3aaf-3960-48cd-b34b-32e4ae5ae088",
+      "set": "blb",
+      "collector_number": "183"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Scroll Rack",
+      "scryfall_id": "dfaaa58d-89bb-4cb3-96a6-b480e6f6954e",
+      "set": "cmr",
+      "collector_number": "337"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Icetill Explorer",
+      "scryfall_id": "d9482aab-6ddf-48e1-84fa-b13d5ff81e69",
+      "set": "eoe",
+      "collector_number": "192"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Smelting Vat",
+      "scryfall_id": "e5b82177-3795-470a-abff-a4a936b27430",
+      "set": "brc",
+      "collector_number": "18"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Birthing Pod",
+      "scryfall_id": "b768efa2-e56b-4a7e-ace8-d673f10e0714",
+      "set": "nph",
+      "collector_number": "104"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Chromatic Lantern",
+      "scryfall_id": "bf810ace-f866-457c-8671-a84c73b6f733",
+      "set": "ecc",
+      "collector_number": "138"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Wake the Past",
+      "scryfall_id": "1a58dad4-0189-4e28-a9e1-0b15aa5d84eb",
+      "set": "eoc",
+      "collector_number": "128"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Valakut Exploration",
+      "scryfall_id": "18cb7bf6-9c7c-4e62-a678-7b75862e2f64",
+      "set": "znr",
+      "collector_number": "175"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Fateful Discovery",
+      "scryfall_id": "a1142fa1-b861-4876-aa48-402af35aaa63",
+      "set": "hob",
+      "collector_number": "40"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Elven Raft-Steerer",
+      "scryfall_id": "c141695c-c108-41d5-85cb-1f7485d9d533",
+      "set": "hob",
+      "collector_number": "37"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Elvish Reclaimer",
+      "scryfall_id": "39c431d7-d94b-46c4-bb89-f3db56214ab4",
+      "set": "m20",
+      "collector_number": "169"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Sakura-Tribe Scout",
+      "scryfall_id": "9cbdda50-8a27-4094-849d-b6f66def82ce",
+      "set": "sok",
+      "collector_number": "144"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Kuldotha Forgemaster",
+      "scryfall_id": "c768267f-5ad2-4f4d-bbc7-6639325401c7",
+      "set": "2xm",
+      "collector_number": "266"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Second Sunrise",
+      "scryfall_id": "4e50ee7c-f2a2-4d49-a1cc-8233fd8dd0c5",
+      "set": "mrd",
+      "collector_number": "20"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Iron Man, Titan of Innovation",
+      "scryfall_id": "20d54b22-62e8-48ac-ba65-0bdbf42d6cad",
+      "set": "mar",
+      "collector_number": "91"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Arcane Signet",
+      "scryfall_id": "0539b83c-4459-41b5-a001-d15a1c9ddf23",
+      "set": "cmm",
+      "collector_number": "367"
+    },
+    {
+      "section": "nonlands",
+      "count": 1,
+      "name": "Goblin Engineer",
+      "scryfall_id": "a55c4d47-5252-40af-961d-c08bc688028a",
+      "set": "mh1",
+      "collector_number": "128"
+    }
+  ]
+}
