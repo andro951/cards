@@ -143,7 +143,11 @@ class Workspace:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',True):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
         if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
-        raw,_,_=self.net.fetch(url,refresh=settings.get('refreshData',False));asset=ingest_image(self.store,raw)
+        refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
+        # Scryfall alone uses the year/week policy; mutable custom art is rechecked
+        # after ten minutes, or immediately when the user asks to refresh custom art.
+        ttl=None if origin=='Scryfall selected printing' else (0 if settings['source'].get('refreshArt') else 600)
+        raw,_,_=self.net.fetch(url,refresh=refresh,ttl=ttl);asset=ingest_image(self.store,raw)
         if origin=='Scryfall selected printing' and ingest.saga_creature_trailing_rules_text(face.get('type_line',sf.get('type_line','')),face.get('oracle_text',sf.get('oracle_text',''))):
             im=decode_image(self.store.asset_path(asset['id']).read_bytes())
             if im.height<=182:raise ValidationError('Saga-creature artwork is too short for the approved 99/83-pixel crop.')
@@ -155,11 +159,11 @@ class Workspace:
         index={};land_index={}
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
-            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None)
+            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=bool(s['source'].get('refreshArt')))
         if s.get('useLandLibrary'):
             url=s.get('landLibrary') or self.global_settings().get('landLibrary')
             if not url:raise ValidationError('Add a land artwork library link in Settings, or turn the option off.')
-            progress(0,1,'Reading optional land artwork library');land_index=self.sources.github_index(url)
+            progress(0,1,'Reading optional land artwork library');land_index=self.sources.github_index(url,refresh=bool(s['source'].get('refreshArt')))
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             if cancel():raise ValidationError('Preparation cancelled.')
