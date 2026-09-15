@@ -1,0 +1,38 @@
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -3,6 +3,7 @@
+ import io,json,os,threading,time,zipfile
+ from pathlib import Path
+ import pytest
++from playwright.sync_api import expect
+ from PIL import Image
+ from foundry.server import App,LocalServer
+ from foundry.storage import Store
+@@ -50,13 +51,13 @@
+     page.locator('#deck-name').wait_for();assert page.input_value('#deck-name')=='Browser deck'
+     with page.expect_file_chooser() as chooser:page.click('#generate-symbols')
+     chooser.value.set_files({'name':'symbol.png','mimeType':'image/png','buffer':png((160,160))})
+-    page.wait_for_function("document.querySelectorAll('.symbol-upload img').length===4")
++    expect(page.locator('.symbol-upload img')).to_have_count(4)
+     with page.expect_file_chooser() as chooser:page.click('#pick-back')
+     chooser.value.set_files({'name':'back.png','mimeType':'image/png','buffer':png((300,420))})
+-    page.wait_for_function("!!document.querySelector('#back-upload img')")
+-    page.fill('#deck-artist','Deck Artist');page.click('#save-setup');page.wait_for_function("document.querySelector('#setup-state')?.textContent.startsWith('Saved settings')")
++    expect(page.locator('#back-upload img')).to_have_count(1)
++    page.fill('#deck-artist','Deck Artist');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+     page.click('[data-tab=cards]');page.locator('[data-card]').first.click();page.fill('#card-qty','3');page.click('#save-card')
+-    page.wait_for_function("document.querySelector('.quantity-pill')?.textContent==='3×'")
++    expect(page.locator('.quantity-pill')).to_have_text('3×')
+     page.locator('a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
+     page.get_by_text('Browser frame',exact=True).wait_for()
+     page.locator('a[data-nav=settings]').click();page.locator('#global-refresh').check();page.click('#save-settings');page.wait_for_timeout(300)
+@@ -101,7 +102,7 @@
+         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+         try:
+             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+-            page.wait_for_function("document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=240000)
++            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=240000)
+             current=app.ws.deck(d['id'])
+             assert current['status']=='ready',{'status':current['status'],'activity':page.locator('#activity-log').inner_text(),'errors':errors}
+             comp=current['cards'][0]['faces'][0]['compiled'];r=store.render_get(comp['renderKey']);im=Image.open(store.asset_path(r['asset_id']))
