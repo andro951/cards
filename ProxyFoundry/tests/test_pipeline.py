@@ -14,7 +14,7 @@ def workspace(tmp_path):
     return s,a['id'],{'symbols':symbols,'artist':'Test Artist'}
 def sf(types='Legendary Creature — Human',colors=['G']):
     return {'id':'00000000-0000-4000-8000-000000000001','name':'Test Card','type_line':types,'mana_cost':'{2}{G}','oracle_text':'Vigilance','colors':colors,'rarity':'rare','power':'2','toughness':'3','set':'tst','collector_number':'1','artist':'Source Artist'}
-def test_auto_same_as_v48(workspace):
+def test_auto_same_as_v54(workspace):
     from foundry.images import data_uri
     s,a,settings=workspace;c=sf();result=Compiler(s).compile_face(c,c,0,{},settings,a)
     sem=semantic(c,c);sem.update(art=data_uri(s,a),art_local_path=str(s.asset_path(a)),set_symbol_source=data_uri(s,settings['symbols']['rare']))

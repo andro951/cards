@@ -1,16 +1,17 @@
-"""Adapter over unchanged v48 templates. Overrides are opt-in, never automatic guesses."""
+"""Adapter over unchanged v54 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
 import copy,math
-from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES
+from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION
 from .legacy import compiler as native,ingest
 from .images import data_uri
+from .credits import resolve_credit
 BUILTINS=[
- {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v48 type-specific recipe.','legendary':True,'groups':'all'},
+ {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v54 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
-NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','flip','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
 
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
@@ -26,6 +27,11 @@ def semantic(sf,face,index=0):
         faces=sf.get('card_faces',[])
         if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
         d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
     return d
 
 def choose_builtin(d,choice):
@@ -36,7 +42,7 @@ def choose_builtin(d,choice):
     if choice=='normal':
         pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
         d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
-        if 'Land' not in d['types'] and d.get('name') != getattr(native,'IRON_MAN_NAME','Iron Man, Titan of Innovation'):
+        if 'Land' not in d['types']:
             d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
         if not d.get('colors') and 'Artifact' not in d['types']:
             d['frame_color']='M';d['_neutral_classic']=True
@@ -63,10 +69,13 @@ def custom_data(template,sem,other_faces=None):
 
 class Compiler:
     def __init__(self,store):self.store=store
-    def compile_face(self,sf,face,index,options,settings,art_id):
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
         for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem and nested in options.get('nestedFlavorTexts',{}):
+                sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
         symbols=settings.get('symbols',{})
         if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
         symbol_id=symbols.get(sem.get('rarity','common'))
@@ -74,8 +83,9 @@ class Compiler:
         art=self.store.asset(art_id)
         if not art:raise ValidationError('Artwork is missing.')
         sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
-        artist=options.get('artistOverride')
-        if artist is None:artist=settings.get('artist') or face.get('artist') or sf.get('artist') or ''
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
         if choice in {x['id'] for x in BUILTINS}:
             if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
@@ -109,4 +119,4 @@ class Compiler:
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id);warning=crop_metrics(art['width'],art['height'],data)
-        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist)}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':GENERATION_VERSION}

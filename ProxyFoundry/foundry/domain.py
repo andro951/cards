@@ -13,6 +13,7 @@ CC_REPO='Investigamer/cardconjurer'
 COMPAT_COMMIT='47087b3fc21e2cef61c58b9ebf180968ee991658'
 COMPAT_REPO='d1rtyskittl3z/Card-Cipherist'
 SCHEMA_VERSION=1
+GENERATION_VERSION='card-tools-v54/credits-v1'
 class ValidationError(ValueError): pass
 class ConflictError(ValidationError): pass
 
@@ -124,7 +125,7 @@ def crop_metrics(iw,ih,data,threshold=.20):
         lost_x=max(lost_x,1-vx/(iw*z));lost_y=max(lost_y,1-vy/(ih*z))
     return {'width':iw,'height':ih,'windowWidth':round(bw),'windowHeight':round(bh),'cropX':round(lost_x,6),'cropY':round(lost_y,6),'warning':max(lost_x,lost_y)>threshold+1e-9,'threshold':threshold}
 def render_key(data,art_digest=''):
-    return stable_hash({'renderer':CC_COMMIT,'compiler':'card-tools-v48','adapter':2,'art':art_digest,'data':data})
+    return stable_hash({'renderer':CC_COMMIT,'compiler':GENERATION_VERSION,'adapter':3,'art':art_digest,'data':data})
 
 def validate_template(entry):
     if isinstance(entry,list):

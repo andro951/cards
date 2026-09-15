@@ -10,9 +10,10 @@ from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
 from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
 from .legacy import ingest,compiler as native,tokens
+from .credits import credit_text,printing_artist
 
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store)
@@ -35,7 +36,8 @@ class Workspace:
             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
-        if len(str(s.get('artist','')))>300:raise ValidationError('Artist credit is too long.')
+        s['artist']=credit_text(s.get('artist'))
+        s['modificationCredit']=credit_text(s.get('modificationCredit'), 'Modification credit', maximum=160)
         for group,choice in s.get('templateRules',{}).items():
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
             if choice not in {t['id'] for t in BUILTINS} and not self.store.get('templates',choice):raise ValidationError('A selected custom template is missing.')
@@ -57,10 +59,14 @@ class Workspace:
                 sf=c.get('scryfall',{});sf_faces=ingest.face_list(sf)
                 sf_face=sf_faces[min(f.get('index',0),len(sf_faces)-1)] if sf_faces else sf
                 f['group']=type_group(sf_face,sf,f.get('index',0))
+                f['originalArtist']=printing_artist(sf,sf_face)
                 total+=1
                 if f.get('error'):errors+=1
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
-                if comp:comp['render']=r
+                if comp:
+                    comp['render']=r
+                    if comp.get('generationVersion')!=GENERATION_VERSION:
+                        d['status']='draft';d['upgradeRequired']=True
                 if r:ready+=1
                 if (comp.get('crop') or {}).get('warning') or comp.get('flags'):warns+=1
         d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns}
@@ -103,10 +109,13 @@ class Workspace:
             if patch.get('faceId'):
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
-                for k in ('artistOverride','artOverride','templateOverride','fit','semanticOverrides'):
+                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride','fit','semanticOverrides'):
                     if k in patch:
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
-                        f[k]=patch[k];d['status']='draft'
+                        if k in {'artistOverride','modificationCreditOverride'} and patch[k] is not None:
+                            credit_text(patch[k], 'Modification credit' if k=='modificationCreditOverride' else 'Artist credit', maximum=160 if k=='modificationCreditOverride' else 300)
+                        if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
+                        if f.get(k)!=patch[k]:f[k]=patch[k];d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,rev)
     def add_cards(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=payload.get('revision')
@@ -129,7 +138,7 @@ class Workspace:
         new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride')
         for i,f in enumerate(new['faces']):
             if i<len(old['faces']):
-                for k in ('artistOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
+                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
         d['cards']=[new if c['id']==card_id else c for c in d['cards']];d['status']='draft';d.pop('summary',None)
         return self.store.put('decks',d,revision)
     def _art(self,sf,face,opts,settings,index,land_index):
@@ -183,7 +192,11 @@ class Workspace:
                     options=copy.deepcopy(f)
                     flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
                     options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
-                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id)
+                    if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
+                        nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
+                        secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
+                        options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
+                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                     if c.get('tokenSpec'):
                         entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
                         comp['renderKey']=render_key(comp['data'],art_id);comp['render']=self.store.render_get(comp['renderKey'])
@@ -191,7 +204,7 @@ class Workspace:
                 except (ValidationError,native.BuildError,ValueError,OSError) as e:
                     f['error']=str(e);f.pop('compiled',None)
                 done+=1;progress(done,total,'Prepared '+f['name'])
-        d['settings']=s;d['status']='prepared';d.pop('summary',None)
+        d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     def copy_token(self,deck_id,card_id,spec,revision):
         d=self.deck(deck_id);c=next((x for x in d['cards'] if x['id']==card_id),None)
