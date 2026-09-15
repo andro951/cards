@@ -137,7 +137,7 @@ def test_browser_artist_credit_and_modified_upload(browser_app):
     expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Modified by ChatGPT')
     page.fill('#face-modification','Extended by Isaac')
     expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
-    page.click('#save-card');page.locator('[data-card]').first.wait_for()
+    page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
     d=app.ws.prepare(d['id'])
     assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
     page.reload();page.locator('[data-card]').first.click()
@@ -149,13 +149,13 @@ def test_browser_artist_credit_and_modified_upload(browser_app):
     expect(page.locator('#face-credit-preview')).to_have_text('Custom Per-Card Artist · Extended by Isaac')
     page.check('#use-printing-artist')
     expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
-    page.click('#save-card');page.locator('[data-card]').first.wait_for()
+    page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
     d=app.ws.prepare(d['id']);f=d['cards'][0]['faces'][0]
     assert f['artistCreditMode']=='printing'
     assert f['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
     page.reload();page.locator('[data-card]').first.click();page.check('#no-modification')
     expect(page.locator('#face-credit-preview')).to_have_text('Original Artist')
-    page.click('#save-card');page.locator('[data-card]').first.wait_for()
+    page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
     d=app.ws.prepare(d['id'])
     assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist'
     assert not errors,errors
