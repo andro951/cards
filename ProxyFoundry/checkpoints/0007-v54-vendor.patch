@@ -1,0 +1,694 @@
+diff --git a/scripts/verify_vendor.py b/scripts/verify_vendor.py
+index 06de896..128f09d 100644
+--- a/scripts/verify_vendor.py
++++ b/scripts/verify_vendor.py
+@@ -1 +1 @@
+-"""Fail rather than silently change the approved Card Tools v48 templates."""
++"""Fail rather than silently change the approved Card Tools v54 templates."""
+@@ -6,2 +6,2 @@ EXPECTED = {
+-    'pipeline/card_data_to_cardconjurer.py': 'baf13c91baf8df81eaa79d50ce51b508da1d5035',
+-    'pipeline/scryfall_to_card_data.py': '2b22954811e114b46d2fa92e14c9ae89081e3cb8',
++    'pipeline/card_data_to_cardconjurer.py': '47a5c448d88c20a5119dec0593494791d5533bea',
++    'pipeline/scryfall_to_card_data.py': '773e95f16ac28d53b0a0791efb04bb3cc34293ec',
+diff --git a/vendor/card_tools/README_LOCAL_UI.txt b/vendor/card_tools/README_LOCAL_UI.txt
+index ba5b80d..af53445 100644
+--- a/vendor/card_tools/README_LOCAL_UI.txt
++++ b/vendor/card_tools/README_LOCAL_UI.txt
+@@ -32,0 +33,7 @@ Current controls include:
++- universal set-symbol horizontal placement
++  * every rendered set symbol ends at 92.13% of card width
++  * the symbol left edge is calculated from its actual rendered width
++  * overlapping type-line width is derived from the symbol width with a 1% card-width gap
++- multicolored Vehicles
++  * 2+ color Vehicles use gold/multicolored Title and Type bars
++  * the rest of the Vehicle frame treatment remains unchanged
+diff --git a/vendor/card_tools/pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md b/vendor/card_tools/pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md
+index 3e68754..fad3207 100644
+--- a/vendor/card_tools/pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md
++++ b/vendor/card_tools/pipeline/CARD_DATA_INPUT_INSTRUCTIONS.md
+@@ -409 +409 @@
+-Scryfall may return `card_faces` for transform cards, Modal DFCs, meld cards, and other multi-face structures.
++Scryfall may return `card_faces` for transform cards, Modal DFCs, Kamigawa Flip cards, meld cards, and other multi-face structures.
+@@ -411 +411 @@
+-For source-data purposes:
++For source-data purposes, preserve the physical-card relationship rather than assuming every Scryfall face becomes a separate Card Conjurer card:
+@@ -413,3 +413,4 @@
+-- Create one semantic entry per physical face.
+-- Use the face's own `name`, `mana_cost`, type data, Oracle text, colors, P/T, loyalty, defense, and flavor text.
+-- It is acceptable to add semantic relationship metadata such as:
++- Modal DFCs currently remain one semantic entry per physical face, with `parent_name`, `face_index`, and `scryfall_layout="modal_dfc"` selecting the approved front/back templates.
++- Prepare cards are one physical card and nest the prepared spell under `prepared_spell`.
++- Kamigawa Flip cards are one physical card and nest the rotated lower face under `flip_face`, with `scryfall_layout="flip"`.
++- Unsupported multi-face layouts must still fail rather than being approximated.
+@@ -417,7 +418 @@
+-```json
+-"parent_name": "Esika, God of the Tree // The Prismatic Bridge",
+-"face_index": 0,
+-"scryfall_layout": "modal_dfc"
+-```
+-
+-Those fields describe the source card relationship; they do not describe Card Conjurer geometry.
++Each face keeps its own `name`, `mana_cost`, type data, Oracle text, colors, P/T, loyalty, defense, and flavor text. Relationship fields describe the source card; they do not manually specify Card Conjurer geometry.
+diff --git a/vendor/card_tools/pipeline/card_data_to_cardconjurer.py b/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
+index baf13c9..47a5c44 100644
+--- a/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
++++ b/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
+@@ -10,0 +11,19 @@
++#
++# DESIGN INVARIANTS / INTENTIONAL TREATMENTS:
++# - Prefer semantic/type-driven recipes. Named-card exceptions are allowed only
++#   when they were explicitly approved as true exceptions; Iron Man is
++#   deliberately *not* special and must use the normal semantic recipe.
++# - P/T artwork is owned by try_apply_pt_box(). Recipe templates may contain
++#   candidate P/T geometry, but the final pass strips candidates and restores
++#   exactly the physical P/T treatment the card needs.
++# - Lands have four visual families: basics, the original ten textless duals,
++#   ordinary nonlegendary lands (Temple geometry), and ordinary legendary lands
++#   (Academy Ruins geometry). "Artifact Land" is not a fifth frame family.
++# - Artifact bodies stay artifact. Card color changes accent pieces; Vehicles
++#   likewise keep the Vehicle body, while 2+ color Vehicles use gold/multicolor
++#   title and type bars.
++# - Ordinary set symbols share a right-edge anchor and are vertically centered
++#   on the type text box. Kamigawa Flip is a deliberate exception because its
++#   top P/T medallion occupies the normal symbol slot.
++# - Spacecraft/Station cards keep the ordinary artifact frame underneath and
++#   add the real Station frame above it; crown/P/T overlays remain above both.
+@@ -19,0 +39,5 @@
++# Universal set-symbol geometry. The right edge is the stable visual anchor
++# across every template; the left edge is derived from the symbol's actual
++# rendered width after zoom/embedding compensation.
++SET_SYMBOL_RIGHT_EDGE=0.9213
++SET_SYMBOL_TYPE_GAP=0.0100
+@@ -59 +82,0 @@
+-IRON_MAN_NAME="Iron Man, Titan of Innovation"
+@@ -123,0 +147 @@
++    ("Kamigawa Flip card", "one physical card with shared center art and the second face rotated 180 degrees"),
+@@ -167 +191 @@
+-    "Split / Aftermath / Flip / Meld / Adventure / Prototype / Mutate layouts",
++    "Split / Aftermath / Meld / Adventure / Prototype / Mutate layouts",
+@@ -215 +239 @@
+-    "saga","saga_creature","planeswalker_regular_3","planeswalker_tall_4",
++    "saga","saga_creature","planeswalker_regular_3","planeswalker_tall_4","flip",
+@@ -1598,0 +1623,26 @@
++def set_title_type_frame_color(data,code):
++    """Recolor only the Title/Type bars while preserving the rest of a frame.
++
++    Vehicles use their dedicated wood/metal Vehicle frame for the body, border,
++    rules box, P/T, etc. Multicolored Vehicles are the exception for the two
++    horizontal label bars: those use the normal gold/multicolored M15 texture.
++    """
++    if code not in "WUBRGMAC":
++        raise BuildError(f"unsupported Title/Type frame code {code!r}")
++    cname=COLOR_NAMES.get(code,"Colorless")
++    frame_code="A" if code=="A" else code
++    frame_path=f"/img/frames/m15/regular/m15Frame{frame_code}.png"
++    for f in data.get("frames",[]):
++        if not isinstance(f,dict):
++            continue
++        masks=f.get("masks",[])
++        names={m.get("name") for m in masks if isinstance(m,dict)}
++        target=names & {"Title","Type"}
++        if not target:
++            continue
++        f["src"]=frame_path
++        if "name" in f:
++            piece=next(iter(target))
++            f["name"]=f"{cname} {piece} Bar"
++
++
+@@ -1673,0 +1724,22 @@
++def _flip_face_needs_pt(type_info):
++    card_types=type_info.get("card_types",set())
++    subtypes=type_info.get("subtypes",set())
++    return "Creature" in card_types or "Vehicle" in subtypes or "Spacecraft" in subtypes
++
++
++def _new_flip_pt_frame(code,half):
++    if code not in "WUBRGMALCV":
++        raise BuildError(f"unsupported Flip P/T frame code {code!r}")
++    if half not in {"top","bottom"}:
++        raise BuildError(f"unsupported Flip P/T half {half!r}")
++    cname="Vehicle" if code=="V" else COLOR_NAMES.get(code,"Colorless")
++    mask_name="Top PT" if half=="top" else "Bottom PT"
++    mask_src="/img/frames/topHalfSharp.svg" if half=="top" else "/img/frames/bottomHalfSharp.svg"
++    return {
++        "name":f"{cname} Flip Power/Toughness ({half.title()})",
++        "src":f"/img/frames/m15/flip/{code.lower()}pt.png",
++        "bounds":{"x":0.0374,"y":0.2277,"width":0.9067,"height":0.4762},
++        "masks":[{"src":mask_src,"name":mask_name}],
++    }
++
++
+@@ -1675 +1747 @@
+-    """Single authoritative P/T-box pass for every card.
++    """Single authoritative P/T-box pass for every physical card.
+@@ -1677,5 +1749,5 @@
+-    No recipe is allowed to add a P/T box independently. This pass removes all
+-    P/T frame layers first, decides once whether the finished card should have
+-    one, and then restores/adds exactly one layer. Duplicate P/T boxes are
+-    therefore structurally impossible even if a source template already
+-    contains one.
++    Normal cards may receive exactly one P/T layer. Kamigawa Flip cards are a
++    single physical card with two printed faces, so this same pass may add one
++    top and/or one bottom Flip P/T piece as required. Recipes never own P/T
++    layers themselves; all candidates are stripped before the correct final
++    set is restored.
+@@ -1688,0 +1761 @@
++    existing_pt2_text=copy.deepcopy(text.get("pt2")) if isinstance(text.get("pt2"),dict) else None
+@@ -1689,0 +1763,26 @@
++    text.pop("pt2",None)
++
++    if recipe=="flip":
++        flip_face=card.get("flip_face")
++        if not isinstance(flip_face,dict):
++            raise BuildError("flip card needs nested flip_face semantic data")
++        second_type_info=get_type_info(flip_face)
++        top_needed=_flip_face_needs_pt(type_info)
++        bottom_needed=_flip_face_needs_pt(second_type_info)
++        code=flip_frame_code(card,type_info)
++        flip_pts=[]
++        if top_needed:
++            flip_pts.append(_new_flip_pt_frame(code,"top"))
++        if bottom_needed:
++            flip_pts.append(_new_flip_pt_frame(code,"bottom"))
++        # frames are top-to-bottom; keep both P/T pieces above the complete Flip frame.
++        data["frames"]=flip_pts+data["frames"]
++        if top_needed:
++            text["pt"]=existing_pt_text or copy.deepcopy(build_flip_recipe(card,type_info)["data"]["text"]["pt"])
++        if bottom_needed:
++            text["pt2"]=existing_pt2_text or copy.deepcopy(build_flip_recipe(card,type_info)["data"]["text"]["pt2"])
++        pt_count=sum(1 for f in data.get("frames",[]) if _is_pt_frame(f))
++        expected=int(top_needed)+int(bottom_needed)
++        if pt_count!=expected:
++            raise BuildError(f"internal Flip P/T invariant failed: expected {expected} P/T frame(s), found {pt_count}")
++        return
+@@ -1947,0 +2047,65 @@
++def flip_frame_code(card,type_info):
++    """Select Card Conjurer's native Kamigawa Flip frame family color."""
++    card_types=type_info.get("card_types",set())
++    subtypes=type_info.get("subtypes",set())
++    if "Vehicle" in subtypes:
++        return "V"
++    if "Artifact" in card_types:
++        return "A"
++    if "Land" in card_types:
++        return "L"
++    code=regular_frame_color(card,type_info)
++    return code or "C"
++
++
++def build_flip_recipe(card,type_info):
++    """Build one physical Kamigawa-style Flip card.
++
++    Card Conjurer's Flip picker mixes the full-color frames and the separate
++    P/T assets together in one UI list.  The generated file does not mirror
++    that awkward picker ordering.  It uses one complete Flip frame as the
++    structural layer; the single authoritative P/T pass adds only the top and
++    bottom P/T pieces that the two physical faces actually need.
++    """
++    code=flip_frame_code(card,type_info)
++    cname="Vehicle" if code=="V" else COLOR_NAMES.get(code,"Colorless")
++    base=copy.deepcopy(LAYOUTS["creature"]["data"])
++    data={
++        "width":CARD_WIDTH,"height":CARD_HEIGHT,"marginX":0,"marginY":0,
++        "frames":[{
++            "name":f"{cname} Kamigawa Flip Frame",
++            "src":f"/img/frames/m15/flip/{code.lower()}.png",
++            "masks":[],
++        }],
++        "artSource":"","artX":0.0754,"artY":0.2962,"artZoom":1,"artRotate":"0",
++        "setSymbolSource":"","setSymbolX":1855/CARD_WIDTH,"setSymbolY":2707/CARD_HEIGHT,
++        "setSymbolZoom":0.101,
++        "watermarkSource":copy.deepcopy(base.get("watermarkSource","https://cardconjurer.app/img/blank.png")),
++        "watermarkX":0.5,"watermarkY":0.7762,"watermarkZoom":1,
++        "watermarkLeft":"none","watermarkRight":"none","watermarkOpacity":0,
++        "version":"flip","manaSymbols":[],"infoYear":copy.deepcopy(base.get("infoYear","2013")),
++        "margins":False,"bottomInfoTranslate":{"x":0,"y":0},"bottomInfoRotate":0,
++        "bottomInfoZoom":1,"bottomInfoColor":"white","onload":None,
++        "hideBottomInfoBorder":False,"showsFlavorBar":True,
++        "bottomInfo":copy.deepcopy(base.get("bottomInfo",{})),
++        "artBounds":{"x":0.0754,"y":0.2962,"width":0.8494,"height":0.3315},
++        "setSymbolBounds":{"x":0.9213,"y":0.5910,"width":0.12,"height":0.0410,"vertical":"center","horizontal":"right"},
++        "watermarkBounds":{"x":0.5,"y":0.7762,"width":0.75,"height":0.2305},
++        "text":{
++            "mana":{"name":"Mana Cost 1","text":"","y":0.0477,"width":0.9292,"height":71/2100,"oneLine":True,"size":71/1638,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":True,"manaSpacing":0},
++            "title":{"name":"Title 1","text":"","x":0.0854,"y":0.0386,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0381},
++            "type":{"name":"Type 1","text":"","x":0.0854,"y":0.2353,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0324},
++            "rules":{"name":"Rules Text 1","text":"","x":0.086,"y":0.102,"width":0.828,"height":0.12,"size":0.0362},
++            "pt":{"name":"Power/Toughness 1","text":"","x":0.8267,"y":0.2448,"width":0.0967,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":True,"align":"center"},
++            "mana2":{"name":"Mana Cost 2","text":"","x":1,"y":0.8778,"width":0.9292,"height":71/2100,"oneLine":True,"size":71/1638,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":True,"manaSpacing":0,"rotation":180},
++            "title2":{"name":"Title 2","text":"","x":0.9147,"y":0.8848,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0381,"rotation":180},
++            "type2":{"name":"Type 2","text":"","x":0.9147,"y":0.6886,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0324,"rotation":180},
++            "rules2":{"name":"Rules Text 2","text":"","x":0.914,"y":0.821,"width":0.828,"height":0.12,"size":0.0362,"rotation":180},
++            "pt2":{"name":"Power/Toughness 2","text":"","x":0.1734,"y":0.6791,"width":0.0967,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":True,"align":"center","rotation":180},
++        },
++        "infoNumber":"","infoRarity":"","infoSet":"","infoLanguage":"","infoArtist":"ChatGPT","infoNote":"",
++        "serialNumber":"","serialTotal":"","serialX":"","serialY":"","serialScale":"","noCorners":False,
++    }
++    return {"key":"","data":data}
++
++
+@@ -1991,0 +2156,4 @@
++    if scryfall_layout=="flip":
++        if not isinstance(card.get("flip_face"),dict):
++            raise BuildError("flip card needs nested flip_face semantic data")
++        return "flip"
+@@ -1997,4 +2164,0 @@
+-    # Exact named special cases.
+-    if str(card.get("name","")).strip()==IRON_MAN_NAME:
+-        return "iron_man_fullart_dual_creature"
+-
+@@ -2023,0 +2188,5 @@
++        # LAND FAMILY DECISION: select geometry first, then color treatment.
++        # Basics and the original ten duals have their own approved families;
++        # every other nonlegendary land uses Temple geometry and every other
++        # legendary land uses Academy Ruins geometry. Artifact Land follows
++        # exactly this same routing and is not visually classified as an artifact.
+@@ -2061,0 +2231,3 @@
++        # Vehicle is the body/frame family regardless of color. Colors are
++        # applied later as accents; 2+ color Vehicles also get gold title/type
++        # bars while the rest of the Vehicle frame stays Vehicle.
+@@ -2078,0 +2251,3 @@
++        # Do not add card-name routing here. In particular, Iron Man, Titan of
++        # Innovation intentionally uses the same normal legendary artifact-
++        # creature treatment as any other card with the same semantic types.
+@@ -2139,12 +2314,2 @@
+-    if recipe=="iron_man_fullart_dual_creature":
+-        entry=copy.deepcopy(LAYOUTS["land_full_dual"])
+-        data=entry["data"]
+-        # Special approved exception: Iron Man uses the full-art dual-land
+-        # treatment rather than a normal creature frame. Preserve the same
+-        # dual-land color logic, then add only a visible P/T box.
+-        dual=canonical_dual_color_order(colors(card.get("colors")))
+-        if len(dual)!=2:
+-            raise BuildError(f"{IRON_MAN_NAME}: special full-art dual treatment needs exactly two card colors")
+-        recolor_dual(data,dual)
+-        add_land_rules_fill(data,"land_full_dual")
+-        return entry
++    if recipe=="flip":
++        return build_flip_recipe(card,type_info)
+@@ -2156,0 +2322,3 @@
++            # Colored artifacts keep the metallic artifact body. Their actual
++            # colors affect only accent pieces (pinline/crown here; dual-color
++            # gradients below), matching the approved colored-artifact policy.
+@@ -2172,0 +2341,2 @@
++            # Keep the Vehicle body/P-T treatment. Mono colors affect accents;
++            # 2+ colors additionally use gold/multicolor title and type bars.
+@@ -2175,0 +2346,2 @@
++            if len(card_color_codes)>=2:
++                set_title_type_frame_color(data,"M")
+@@ -2231,0 +2404,2 @@
++        # Same policy as legendary Vehicles: Vehicle structure is preserved,
++        # while 2+ color cards get gold title/type bars rather than artifact bars.
+@@ -2235,0 +2410,2 @@
++        if len(card_color_codes)>=2:
++            set_title_type_frame_color(data,"M")
+@@ -2539,0 +2716,203 @@
++def svg_size(raw):
++    """Best-effort intrinsic SVG dimensions for set-symbol placement."""
++    try:
++        text=raw.decode("utf-8",errors="ignore")[:16384]
++    except Exception:
++        return None
++    m=re.search(r'<svg\b[^>]*\bwidth=["\']\s*([0-9.]+)(?:px)?["\'][^>]*\bheight=["\']\s*([0-9.]+)(?:px)?["\']',text,re.I)
++    if m:
++        try:
++            return float(m.group(1)),float(m.group(2))
++        except ValueError:
++            pass
++    m=re.search(r'\bviewBox=["\']\s*[-+0-9.eE]+[ ,]+[-+0-9.eE]+[ ,]+([-+0-9.eE]+)[ ,]+([-+0-9.eE]+)\s*["\']',text,re.I)
++    if m:
++        try:
++            return float(m.group(1)),float(m.group(2))
++        except ValueError:
++            pass
++    return None
++
++
++def image_size_from_source(src):
++    raw=load_bytes(src)
++    return png_size(raw) or gif_size(raw) or jpeg_size(raw) or svg_size(raw)
++
++
++def apply_universal_set_symbol_geometry(data,symbol_source):
++    """Apply set-symbol alignment and type-line collision rules.
++
++    Ordinary templates use the universal right edge ``SET_SYMBOL_RIGHT_EDGE``.
++    When they have a primary unrotated ``type`` text box, the symbol is also
++    vertically centered on that box using its *actual rendered height*.
++
++    Kamigawa Flip cards are a deliberate exception because the upright face's
++    P/T medallion occupies the normal set-symbol position.  For Flip cards:
++
++      * the set symbol is vertically centered on the upright ``type`` box;
++      * if the upright face has P/T, the symbol's right edge is placed one
++        ``SET_SYMBOL_TYPE_GAP`` to the left of the upright P/T text/medallion
++        anchor;
++      * the upright type text ends one gap before the symbol;
++      * the rotated lower type text reserves space for its own P/T medallion.
++
++    This keeps the generated geometry relational even though Card Conjurer
++    ultimately stores all positions in global card coordinates.
++    """
++    size=image_size_from_source(symbol_source)
++    if not size:
++        raise BuildError("could not determine set-symbol image dimensions for placement")
++    iw,ih=size
++    cw=float(data.get("width",CARD_WIDTH) or CARD_WIDTH)
++    ch=float(data.get("height",CARD_HEIGHT) or CARD_HEIGHT)
++    zoom=float(data.get("setSymbolZoom",1.0) or 1.0)
++    symbol_w=(float(iw)*zoom)/cw
++    symbol_h=(float(ih)*zoom)/ch
++
++    text=data.get("text",{})
++    version=str(data.get("version","") or "").lower()
++    bounds=data.get("setSymbolBounds")
++
++    # Kamigawa Flip layout: the top P/T medallion occupies the normal symbol
++    # slot, so anchor the symbol immediately to its left and reserve the type
++    # text around both elements.  The lower rotated type line independently
++    # reserves room for its lower P/T medallion.
++    if version == "flip" and isinstance(text,dict):
++        primary_type=text.get("type")
++        top_pt=text.get("pt")
++        bottom_type=text.get("type2")
++        bottom_pt=text.get("pt2")
++
++        if not isinstance(primary_type,dict):
++            raise BuildError("Flip layout is missing primary type geometry")
++        try:
++            ty=float(primary_type.get("y"))
++            th=float(primary_type.get("height"))
++            tx=float(primary_type.get("x"))
++        except (TypeError,ValueError):
++            raise BuildError("Flip layout has invalid primary type geometry")
++
++        # With an upright P/T box, use its left text/medallion anchor as the
++        # protected edge.  Without one, fall back to the universal right edge.
++        if isinstance(top_pt,dict):
++            try:
++                pt_left=float(top_pt.get("x"))
++            except (TypeError,ValueError):
++                raise BuildError("Flip layout has invalid upright P/T geometry")
++            symbol_right=pt_left-SET_SYMBOL_TYPE_GAP
++        else:
++            symbol_right=SET_SYMBOL_RIGHT_EDGE
++
++        left=symbol_right-symbol_w
++        if left<=tx:
++            raise BuildError("Flip set symbol leaves no room for upright type text")
++
++        type_width=left-SET_SYMBOL_TYPE_GAP-tx
++        if type_width<=0:
++            raise BuildError("Flip set symbol leaves no room for upright type text")
++        primary_type["width"]=type_width
++
++        type_center=ty+(th/2.0)
++        symbol_y=type_center-(symbol_h/2.0)
++        data["setSymbolX"]=left
++        data["setSymbolY"]=symbol_y
++
++        if isinstance(bounds,dict):
++            bounds["x"]=symbol_right
++            bounds["y"]=type_center
++            bounds["horizontal"]="right"
++            bounds["vertical"]="center"
++
++        # Rotated 180-degree text extends physically left from its stored x.
++        # Shrinking width while keeping x fixed therefore moves the visible
++        # left edge rightward, away from the lower P/T medallion.
++        if isinstance(bottom_type,dict) and isinstance(bottom_pt,dict):
++            try:
++                btx=float(bottom_type.get("x"))
++                bpt_right=float(bottom_pt.get("x"))
++            except (TypeError,ValueError):
++                raise BuildError("Flip layout has invalid lower type/P/T geometry")
++            lower_left=bpt_right+SET_SYMBOL_TYPE_GAP
++            lower_width=btx-lower_left
++            if lower_width<=0:
++                raise BuildError("Flip lower P/T box leaves no room for type text")
++            bottom_type["width"]=lower_width
++
++        return {
++            "right":symbol_right,
++            "left":left,
++            "top":symbol_y,
++            "rendered_width":symbol_w,
++            "rendered_height":symbol_h,
++            "centered_on_type":True,
++            "flip_special":True,
++        }
++
++    # Ordinary templates: universal right edge and, when possible, center the
++    # symbol vertically on the primary unrotated type text box.
++    left=SET_SYMBOL_RIGHT_EDGE-symbol_w
++    if left<0:
++        raise BuildError("set symbol is too wide for the universal right-edge anchor")
++    data["setSymbolX"]=left
++
++    if isinstance(bounds,dict):
++        bounds["x"]=SET_SYMBOL_RIGHT_EDGE
++        bounds["horizontal"]="right"
++
++    primary_type=text.get("type") if isinstance(text,dict) else None
++    center_on_primary_type=(
++        isinstance(primary_type,dict)
++        and float(primary_type.get("rotation",0) or 0)%360 == 0
++    )
++
++    if center_on_primary_type:
++        try:
++            ty=float(primary_type.get("y"))
++            th=float(primary_type.get("height"))
++        except (TypeError,ValueError):
++            center_on_primary_type=False
++        else:
++            type_center=ty+(th/2.0)
++            symbol_y=type_center-(symbol_h/2.0)
++            data["setSymbolY"]=symbol_y
++            if isinstance(bounds,dict):
++                bounds["y"]=type_center
++                bounds["vertical"]="center"
++
++    if not center_on_primary_type:
++        symbol_y=float(data.get("setSymbolY",0.0) or 0.0)
++
++    symbol_bottom=symbol_y+symbol_h
++
++    if isinstance(text,dict):
++        for key,item in text.items():
++            if not str(key).lower().startswith("type") or not isinstance(item,dict):
++                continue
++            # Rotated/nested secondary faces (for example Prepare) do not
++            # share the ordinary set-symbol line.
++            if float(item.get("rotation",0) or 0)%360:
++                continue
++            try:
++                ty=float(item.get("y"))
++                th=float(item.get("height"))
++                tx=float(item.get("x"))
++                float(item.get("width"))  # validate existing geometry
++            except (TypeError,ValueError):
++                continue
++            if max(ty,symbol_y) >= min(ty+th,symbol_bottom):
++                continue
++            available=left-SET_SYMBOL_TYPE_GAP-tx
++            if available<=0:
++                raise BuildError(f"set symbol leaves no room for {key} text")
++            item["width"]=available
++
++    return {
++        "right":SET_SYMBOL_RIGHT_EDGE,
++        "left":left,
++        "top":symbol_y,
++        "rendered_width":symbol_w,
++        "rendered_height":symbol_h,
++        "centered_on_type":center_on_primary_type,
++        "flip_special":False,
++    }
++
+@@ -2573,0 +2953,2 @@
++    if recipe=="flip" and not isinstance(card.get("flip_face"),dict):
++        raise BuildError(f"{name}: Flip layout needs nested flip_face")
+@@ -2619,11 +2999,0 @@
+-    # Normal M15-frame cards use the approved set-symbol X position of 1737 px
+-    # on the standard 2010 px-wide canvas. Special/full-art frame families keep
+-    # the set-symbol position supplied by their own recipe/template.
+-    if str(data.get("version",""))=="m15Regular":
+-        data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
+-    elif recipe in {"modal_dfc_front","modal_dfc_back"}:
+-        # Modal DFC faces use the same set-symbol placement as normal
+-        # creature/card frames. Esika and The Prismatic Bridge are the
+-        # approved modal DFC examples.
+-        data["setSymbolX"]=NORMAL_FRAME_SET_SYMBOL_X
+-
+@@ -2693,0 +3064,22 @@
++    elif recipe=="flip":
++        set_text_if_present(data,"rules",rules)
++        flip=card["flip_face"]
++        flip_ti=get_type_info(flip)
++        mana2=str(flip.get("mana_cost","") or "")
++        oracle2=italicize_dash_labels(str(flip.get("oracle_text","") or ""))
++        flavor2=str(flip.get("flavor_text","") or "")
++        rules2=oracle2+("{flavor}"+flavor2 if flavor2 else "")
++        set_text_if_present(data,"mana2",mana2)
++        set_text_if_present(data,"title2",str(flip.get("name","") or ""))
++        set_text_if_present(data,"type2",flip_ti["normalized"])
++        set_text_if_present(data,"rules2",rules2)
++        pt2=str(flip.get("pt","") or "")
++        if not pt2 and (flip.get("power") not in (None,"") or flip.get("toughness") not in (None,"")):
++            if flip.get("power") in (None,"") or flip.get("toughness") in (None,""):
++                raise BuildError(f"{name}: flipped face power and toughness must both be present")
++            pt2=f"{flip.get('power')}/{flip.get('toughness')}"
++        set_text_if_present(data,"pt2",pt2)
++        if isinstance(data.get("text",{}).get("rules"),dict):
++            data["text"]["rules"]["size"]=choose_rules_size("flip",rules,float(data["text"]["rules"].get("size",0.0362)))
++        if isinstance(data.get("text",{}).get("rules2"),dict):
++            data["text"]["rules2"]["size"]=choose_rules_size("flip",rules2,float(data["text"]["rules2"].get("size",0.0362)))
+@@ -2712 +3104 @@
+-    if recipe not in {"saga","saga_creature","prepare","planeswalker_regular_3","planeswalker_tall_4"} and isinstance(rs,dict):
++    if recipe not in {"saga","saga_creature","prepare","flip","planeswalker_regular_3","planeswalker_tall_4"} and isinstance(rs,dict):
+@@ -2739 +3131,8 @@
+-    data["artSource"]=art; data["setSymbolSource"]=symbol; data["infoArtist"]=str(project.get("artist","ChatGPT"))
++    data["artSource"]=art; data["setSymbolSource"]=symbol
++    # Scryfall-backed semantic records can carry the real credited artist for
++    # that specific card/face.  Custom project art normally has no per-card
++    # artist field and therefore continues to use the project default.
++    if "artist" in card:
++        data["infoArtist"]=str(card.get("artist") or "")
++    else:
++        data["infoArtist"]=str(project.get("artist","ChatGPT"))
+@@ -2746,0 +3146,6 @@
++
++    # Universal set-symbol placement: every template shares one right edge.
++    # The left edge is derived from the actual rendered symbol width, and any
++    # overlapping type line is shortened only as much as necessary.
++    apply_universal_set_symbol_geometry(data,symbol)
++
+diff --git a/vendor/card_tools/pipeline/scryfall_to_card_data.py b/vendor/card_tools/pipeline/scryfall_to_card_data.py
+index 2b22954..773e95f 100644
+--- a/vendor/card_tools/pipeline/scryfall_to_card_data.py
++++ b/vendor/card_tools/pipeline/scryfall_to_card_data.py
+@@ -933,0 +934,15 @@
++def scryfall_artist(card: Mapping[str, Any], face: Mapping[str, Any]) -> str:
++    """Return the artist credited by Scryfall for the art actually being used.
++
++    Multi-face Scryfall records may carry face-specific artist credits, so prefer
++    the face value and fall back to the physical card's top-level artist.
++    """
++    for source in (face, card):
++        if not isinstance(source, Mapping):
++            continue
++        value = source.get("artist")
++        if isinstance(value, str) and value.strip():
++            return value.strip()
++    return ""
++
++
+@@ -1015,0 +1031 @@
++        artist = scryfall_artist(card, face)
+@@ -1033,0 +1050,8 @@
++    # A card-specific artist is emitted only when the artwork itself came from
++    # Scryfall.  Custom GitHub art deliberately falls back to the project's
++    # configured artist (normally "ChatGPT") in the compiler.
++    if use_scryfall_art and not github_art_filename:
++        # Keep the field even if Scryfall has no credit. A blank credit is
++        # preferable to falsely attributing Scryfall artwork to the project's
++        # custom-art artist.
++        record["artist"] = artist
+@@ -1074,0 +1099,56 @@
++def build_nested_face_semantic(
++    card: Mapping[str, Any],
++    face: Mapping[str, Any],
++    flavor_face: Mapping[str, Any],
++    flavor_overrides: Mapping[str, Any],
++) -> Dict[str, Any]:
++    """Build semantic data for a face nested inside one physical output card.
++
++    Used for layouts such as Kamigawa Flip where Scryfall exposes two faces but
++    Card Conjurer must receive one physical card record with both text halves.
++    Art and set-symbol ownership stay on the host record.
++    """
++    parent_name=str(card.get("name", ""))
++    name=str(face_value(face, card, "name", parent_name))
++    type_line=str(face_value(face, card, "type_line", ""))
++    semantic=split_type_line(type_line)
++    oracle_text=str(face_value(face, card, "oracle_text", ""))
++    raw_colors=face_value(face, card, "colors", [])
++    face_colors=[c for c in raw_colors if c in "WUBRG"] if isinstance(raw_colors,list) else []
++    flavor_default=face_value(flavor_face, card, "flavor_text", "")
++    flavor_override=override_lookup(flavor_overrides,name,parent_name)
++    flavor_text=str(flavor_override if flavor_override is not None else (flavor_default or ""))
++    nested: Dict[str, Any]={
++        "name":name,
++        "mana_cost":str(face_value(face, card, "mana_cost", "")),
++        "types":semantic["types"],
++        "subtypes":semantic["subtypes"],
++        "legendary":semantic["legendary"],
++        "basic":semantic["basic"],
++        "snow":semantic["snow"],
++        "oracle_text":oracle_text,
++        "colors":face_colors,
++    }
++    if semantic["world"]:
++        nested["world"]=True
++    if flavor_text:
++        nested["flavor_text"]=flavor_text
++    power=face_value(face,card,"power",None)
++    toughness=face_value(face,card,"toughness",None)
++    if power is not None or toughness is not None:
++        if power is None or toughness is None:
++            raise DataError(f"{name}: Scryfall supplied only one of power/toughness.")
++        nested["power"]=str(power)
++        nested["toughness"]=str(toughness)
++    loyalty=face_value(face,card,"loyalty",None)
++    if loyalty is not None:
++        nested["loyalty"]=str(loyalty)
++    defense=face_value(face,card,"defense",None)
++    if defense is not None:
++        nested["defense"]=str(defense)
++    land_colors=build_land_colors(semantic,face,card,oracle_text)
++    if land_colors:
++        nested["land_colors"]=land_colors
++    return nested
++
++
+@@ -1292,5 +1372,8 @@
+-            # Prepared cards contain a spell nested inside one physical host card.
+-            # Keep that relationship semantic so the compiler can render one
+-            # physical card instead of incorrectly emitting the prepared spell as
+-            # a second card in the batch.
+-            if str(resolved.get("layout", "")) == "prepare":
++            # PHYSICAL-CARD DECISION: do not treat every Scryfall card_faces
++            # array the same way. Prepare and old Kamigawa Flip layouts are one
++            # physical printed card, so their secondary face is nested into the
++            # host semantic record. Modal DFCs are genuinely two printed sides
++            # and remain separate face records so the compiler can give each side
++            # its own front/back frame treatment.
++            physical_layout=str(resolved.get("layout", ""))
++            if physical_layout == "prepare":
+@@ -1328,0 +1412,24 @@
++            elif physical_layout == "flip":
++                if len(faces) != 2:
++                    raise DataError(
++                        f"{resolved.get('name','<unnamed>')}: flip layout needs exactly two Scryfall faces"
++                    )
++                host_face, flipped_face = faces
++                host_flavor=select_matching_flavor_face(flavor_card,host_face,0)
++                flipped_flavor=select_matching_flavor_face(flavor_card,flipped_face,1)
++                host=build_face_record(
++                    resolved,host_face,host_flavor,index=0,face_count=1,
++                    project_dir=project_dir,flavor_overrides=flavor_overrides,
++                    rarity_overrides=rarity_overrides,art_map=art_map,
++                    allow_missing_art=args.allow_missing_art,
++                    allow_missing_symbols=args.allow_missing_symbols,
++                    use_scryfall_art=args.use_scryfall_art,
++                    scryfall_art_cache=scryfall_art_cache,
++                    remote_art_names=remote_art_names,
++                )
++                host["scryfall_layout"]="flip"
++                host["parent_name"]=str(resolved.get("name","") or "")
++                host["flip_face"]=build_nested_face_semantic(
++                    resolved,flipped_face,flipped_flavor,flavor_overrides
++                )
++                output_cards.append(host)
