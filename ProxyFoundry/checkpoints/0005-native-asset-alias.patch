@@ -1,0 +1,93 @@
+diff --git a/foundry/runtime.py b/foundry/runtime.py
+--- a/foundry/runtime.py
++++ b/foundry/runtime.py
+@@ -1,7 +1,7 @@
+ """On-demand pinned CardConjurer files. Never download or unpack a repository archive."""
+ from __future__ import annotations
+ import base64,html,io,json,mimetypes,re,threading
+-from urllib.parse import quote,unquote
++from urllib.parse import quote,unquote,urlsplit
+ from PIL import Image
+ from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT
+ 
+@@ -14,6 +14,12 @@
+         if not p.startswith(('/js/','/img/','/fonts/','/css/','/creator/')) or any(x in {'.','..'} for x in p.split('/')) or '\\' in p or '\x00' in p:
+             raise ValidationError('Invalid CardConjurer dependency path.')
+         return p
++    @classmethod
++    def upstream_alias(cls,url):
++        u=urlsplit(str(url))
++        if u.scheme not in {'http','https'} or u.username or u.password:return None
++        if u.hostname not in {'cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'}:return None
++        return cls.path(u.path)
+     def fetch(self,path):
+         path=self.path(path)
+         # The hidden native frame picker does not need its thumbnail catalogue.
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -393,6 +393,10 @@
+             return self.file(self.app.store.asset_path(m[1]), a['mime'])
+         if p == '/runtime/remote':
+             url = q.get('url', [''])[0]
++            alias = self.app.runtime.upstream_alias(url)
++            if alias:
++                raw, mime = self.app.runtime.fetch(alias)
++                return self.send_bytes(raw, mime)
+             raw, mime, _ = self.app.ws.net.fetch(url)
+             if mime == 'image/svg+xml': raw = sanitize_svg(raw)
+             elif not mime.startswith('image/'):
+diff --git a/site/runtime-hooks.js b/site/runtime-hooks.js
+--- a/site/runtime-hooks.js
++++ b/site/runtime-hooks.js
+@@ -21,6 +21,7 @@
+     if(/^https?:/i.test(s)){
+       const url=new URL(s);
+       if(url.origin===location.origin)return url.pathname+url.search;
++      if(['cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'].includes(url.hostname)&&/^\/(img|js|fonts|css)\//.test(url.pathname))return url.pathname;
+       return '/runtime/remote?url='+encodeURIComponent(s);
+     }
+     return s;
+diff --git a/site/render.js b/site/render.js
+--- a/site/render.js
++++ b/site/render.js
+@@ -42,6 +42,6 @@
+     }
+     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true);throw new Error(plan.errors.join('\n'));}
+     endActivity('All card images saved');toast('Rendering complete. Your decks are ready for order review.');
+-  }catch(e){endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
++  }catch(e){api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
+ }
+ function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -109,7 +109,7 @@
+             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=240000)
+             current=app.ws.deck(d['id'])
+-            assert current['status']=='ready',{'status':current['status'],'activity':page.locator('#activity-log').inner_text(),'errors':errors}
++            assert current['status']=='ready',{'status':current['status'],'activity':page.locator('#activity-log').text_content(),'errors':errors}
+             comp=current['cards'][0]['faces'][0]['compiled'];r=store.render_get(comp['renderKey']);im=Image.open(store.asset_path(r['asset_id']))
+             assert im.size==(2010,2814)
+             assert len(im.resize((100,140)).getcolors(14000) or [])>80,'Native output is unexpectedly blank or flat'
+diff --git a/tests/test_native_deck.py b/tests/test_native_deck.py
+--- a/tests/test_native_deck.py
++++ b/tests/test_native_deck.py
+@@ -48,7 +48,7 @@
+             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
+             ready=app.ws.deck(d['id'])
+-            assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').inner_text(),'errors':browser_errors}
++            assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
+             assert ready['summary']['rendered']==8
+             for c in ready['cards']:
+                 for f in c['faces']:
+@@ -65,6 +65,6 @@
+             assert not browser_errors,browser_errors
+         finally:
+             page.screenshot(path=str(evidence/'native-structural-browser.png'),full_page=True)
+-            (evidence/'native-structural-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'browserErrors':browser_errors,'activity':page.locator('#activity-log').inner_text()},indent=2))
++            (evidence/'native-structural-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'browserErrors':browser_errors,'activity':page.locator('#activity-log').text_content()},indent=2))
+             (evidence/'native-structural.log').write_text((s.home/'logs/app.log').read_text())
+             browser.close();server.shutdown();server.server_close();app.close()
