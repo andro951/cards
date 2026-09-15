@@ -53,7 +53,7 @@ index 66ccc13..30cec61 100644
 +    assert current['settings']['artist']=='My Custom Artist'
 +    assert current['settings']['modificationCredit']=='Modified by ChatGPT'
 +    assert not errors,errors
- diff --git a/tests/test_native_deck.py b/tests/test_native_deck.py
+diff --git a/tests/test_native_deck.py b/tests/test_native_deck.py
 index ba0108f..9934360 100644
 --- a/tests/test_native_deck.py
 +++ b/tests/test_native_deck.py
