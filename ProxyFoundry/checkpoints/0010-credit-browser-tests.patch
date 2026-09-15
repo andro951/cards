@@ -1,0 +1,85 @@
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+index 66ccc13..30cec61 100644
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -125,0 +126,50 @@
++
++
++def test_browser_artist_credit_and_modified_upload(browser_app):
++    app,server,page,errors=browser_app
++    art=ingest_image(app.store,png());symbols=rarity_variants(app.store,art['id'])
++    d=app.ws.create({'name':'Artist credits','source':[{'id':sf()['id']}],
++        'settings':{'symbols':symbols,'artist':'Deck Custom Artist','modificationCredit':'Modified by ChatGPT'}})
++    d=app.ws.prepare(d['id'])
++    page.goto(server.origin+'/#deck/'+d['id']);page.locator('[data-card]').first.click()
++    expect(page.locator('#printing-artist')).to_have_text('Original Artist')
++    expect(page.locator('#face-artist')).to_be_disabled()
++    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Modified by ChatGPT')
++    page.fill('#face-modification','Extended by Isaac')
++    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
++    page.click('#save-card');page.locator('[data-card]').first.wait_for()
++    d=app.ws.prepare(d['id'])
++    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
++    page.reload();page.locator('[data-card]').first.click()
++    with page.expect_file_chooser() as chooser:page.click('#face-art')
++    chooser.value.set_files({'name':'modified_art.png','mimeType':'image/png','buffer':png((900,650),'#113355')})
++    expect(page.locator('#face-art-state')).to_contain_text('Custom art:')
++    expect(page.locator('#face-artist')).to_be_enabled()
++    page.fill('#face-artist','Custom Per-Card Artist')
++    expect(page.locator('#face-credit-preview')).to_have_text('Custom Per-Card Artist · Extended by Isaac')
++    page.check('#use-printing-artist')
++    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
++    page.click('#save-card');page.locator('[data-card]').first.wait_for()
++    d=app.ws.prepare(d['id']);f=d['cards'][0]['faces'][0]
++    assert f['artistCreditMode']=='printing'
++    assert f['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
++    page.reload();page.locator('[data-card]').first.click();page.check('#no-modification')
++    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist')
++    page.click('#save-card');page.locator('[data-card]').first.wait_for()
++    d=app.ws.prepare(d['id'])
++    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist'
++    assert not errors,errors
++
++
++def test_browser_deck_artist_modification_previews(browser_app):
++    app,server,page,errors=browser_app
++    d=app.ws.create({'name':'Deck credit defaults','source':[{'id':sf()['id']}]})
++    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#deck-name').wait_for()
++    page.fill('#deck-artist','My Custom Artist');page.fill('#deck-modification','Modified by ChatGPT')
++    expect(page.locator('#scryfall-credit-preview')).to_have_text('Original Artist · Modified by ChatGPT')
++    expect(page.locator('#custom-credit-preview')).to_have_text('My Custom Artist · Modified by ChatGPT')
++    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
++    current=app.ws.deck(d['id'])
++    assert current['settings']['artist']=='My Custom Artist'
++    assert current['settings']['modificationCredit']=='Modified by ChatGPT'
++    assert not errors,errors
+ diff --git a/tests/test_native_deck.py b/tests/test_native_deck.py
+index ba0108f..9934360 100644
+--- a/tests/test_native_deck.py
++++ b/tests/test_native_deck.py
+@@ -28 +28,6 @@
+-      {'name':'Walker Test','type_line':'Legendary Planeswalker — Tester','colors':['U'],'mana_cost':'{2}{U}{U}','loyalty':'4','oracle_text':'+1: Draw a card.\n−2: Return target creature to its owner\'s hand.\n−7: Draw seven cards.'}
++      {'name':'Walker Test','type_line':'Legendary Planeswalker — Tester','colors':['U'],'mana_cost':'{2}{U}{U}','loyalty':'4','oracle_text':'+1: Draw a card.\n−2: Return target creature to its owner\'s hand.\n−7: Draw seven cards.'},
++      {'name':'Budoka Gardener // Dokai, Weaver of Life','layout':'flip','type_line':'Creature — Human Monk','card_faces':[
++        {'name':'Budoka Gardener','type_line':'Creature — Human Monk','colors':['G'],'mana_cost':'{1}{G}','power':'2','toughness':'1','oracle_text':'Upright rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']},
++        {'name':'Dokai, Weaver of Life','type_line':'Legendary Creature — Human Monk','colors':['G'],'mana_cost':'','power':'3','toughness':'3','oracle_text':'Rotated lower rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']}]},
++      {'name':'Vehicle Test','type_line':'Artifact — Vehicle','colors':['U','R'],'mana_cost':'{1}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying\nCrew 2'},
++      {'name':'Iron Man, Titan of Innovation','type_line':'Legendary Artifact Creature — Human','colors':['U','R'],'mana_cost':'{3}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying, haste'}
+@@ -40 +45 @@
+-    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id']}})
++    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id'],'artist':'Wrong Custom Default','modificationCredit':'Modified by ChatGPT'}})
+@@ -51 +56 @@
+-            assert ready['summary']['rendered']==8
++            assert ready['summary']['rendered']==11
+@@ -54 +59,2 @@
+-                    comp=f['compiled'];render=s.render_get(comp['renderKey']);im=Image.open(s.asset_path(render['asset_id']))
++                    comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' · Modified by ChatGPT'
++                    render=s.render_get(comp['renderKey']);im=Image.open(s.asset_path(render['asset_id']))
+@@ -55,0 +62 @@
++                    im.crop((0, int(im.height*.93), im.width, im.height)).save(evidence/('credit_'+slug(f['name'])+'.png'))
+@@ -63 +70,4 @@
+-                assert len(z.namelist())==14
++                assert len(z.namelist())==20
++                assert z.read('BACK/000008.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
++            flip=ready['cards'][7]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
++            assert flip['text']['pt']['text']=='2/1' and flip['text']['pt2']['text']=='3/3'
