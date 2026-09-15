@@ -1,0 +1,270 @@
+diff --git a/foundry/jobs.py b/foundry/jobs.py
+index 16aef88..9c42bc9 100644
+--- a/foundry/jobs.py
++++ b/foundry/jobs.py
+@@ -30,3 +30,9 @@ class Jobs:
+         with self.lock:
+             if ident in self.jobs:self.jobs[ident]['cancelled']=True
+         return {'ok':True}
++
++    def close(self):
++        with self.lock:
++            for job in self.jobs.values():
++                if job['state'] in {'running','queued'}: job['cancelled']=True
++        self.pool.shutdown(wait=False, cancel_futures=True)
+diff --git a/foundry/runtime.py b/foundry/runtime.py
+index f0421e6..e9d2618 100644
+--- a/foundry/runtime.py
++++ b/foundry/runtime.py
+@@ -46,6 +46,6 @@ class Runtime:
+         creator=re.sub(r'<link\b[^>]*>','',creator,flags=re.I)
+         return ('''<!doctype html><html><head><meta charset="utf-8"><title>Proxy Foundry native CardConjurer renderer</title>
+ <link rel="stylesheet" href="/runtime/fonts.css"><style>html,body{margin:0;background:#101216;color:#eee} .notification-container{display:none}.native-host{position:absolute;left:-12000px;top:0;width:1600px;opacity:0;pointer-events:none}</style>
+-<script src="/site/runtime-hooks.js"></script></head><body><div class="notification-container"></div><div class="native-host">'''+creator+'''</div><script src="/js/main-1.js"></script><script src="/js/creator-23.js"></script><script src="/site/runtime-bridge.js"></script></body></html>''').encode()
++<meta name="pf-parent-origin" content="''' + html.escape(getattr(self, 'parent_origin', ''), quote=True) + '''"><script src="/site/runtime-hooks.js"></script></head><body><div class="notification-container"></div><div class="native-host">'''+creator+'''</div><script src="/js/main-1.js"></script><script src="/js/creator-23.js"></script><script src="/site/runtime-bridge.js"></script></body></html>''').encode()
+     def diagnostic(self):
+         with self.lock:return {'repository':CC_REPO,'commit':CC_COMMIT,'files':dict(self.requested),'count':len(self.requested),'bytes':sum(x['bytes'] for x in self.requested.values())}
+diff --git a/foundry/sources.py b/foundry/sources.py
+index 9f7920d..162fe37 100644
+--- a/foundry/sources.py
++++ b/foundry/sources.py
+@@ -17,6 +17,12 @@ class Sources:
+         d=self.net.json('https://api.scryfall.com/cards/'+path,refresh=refresh)
+         if not isinstance(d,dict) or not d.get('name') or not d.get('id'):raise ValidationError('Scryfall did not return a card for '+source)
+         if d.get('digital'):raise ValidationError(d['name']+' is digital-only. Choose a paper printing.')
++        canonical='https://api.scryfall.com/cards/'+d['id']
++        original='https://api.scryfall.com/cards/'+path
++        cached=self.net.store.cache_get(original)
++        if cached and canonical!=original:
++            asset=self.net.store.asset(cached['asset_id'])
++            if asset:self.net.store.cache_put(canonical,asset,cached['fetched'])
+         return d
+     def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+         original=source if isinstance(source,str) else '[Scryfall export]'
+@@ -55,6 +61,7 @@ class Sources:
+             identity=(sf['id'],row['section'])
+             if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity']);continue
+             entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
++            entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
+             seen[identity]=entry;cards.append(entry)
+         progress(len(manifest),len(manifest),'Selected printings imported')
+         return {'name':str(title),'cards':cards,'importedSource':original}
+@@ -83,3 +90,14 @@ class Sources:
+         if not url.startswith('https://api.scryfall.com/cards/search?'):raise ValidationError('Invalid printings page.')
+         d=self.net.json(url,refresh=refresh)
+         return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
++
++    def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
++        if policy=='resolved' or policy=='auto' and source_exact:return sf
++        name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')
++        url='https://api.scryfall.com/cards/search?unique=prints&order=released&dir=desc&q='+quote('!"'+name+'" game:paper lang:en')
++        try:
++            page=self.net.json(url,refresh=refresh)
++            rows=page.get('data',[])
++            return rows[0] if rows and isinstance(rows[0],dict) else sf
++        except ValidationError:
++            return sf
+diff --git a/foundry/workspace.py b/foundry/workspace.py
+index 1ad4566..e110549 100644
+--- a/foundry/workspace.py
++++ b/foundry/workspace.py
+@@ -11,15 +11,21 @@ from .sources import Sources
+ from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
+ from .legacy import ingest,compiler as native,tokens
+ 
+-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+-FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit'}
++DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
++FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
+ class Workspace:
+     def __init__(self,store=None,network=None):
+         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store)
++    def new_deck(self, name='Untitled deck'):
++        return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
++            'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
++            'status':'draft', 'notes':'', 'importedSource':''})
+     def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'landLibrary':'','defaults':{}}
+     def set_global_settings(self,values):
+         old=self.global_settings();safe={k:v for k,v in values.items() if k in {'refreshData','landLibrary','defaults'}}
+         if safe.get('landLibrary'):github_location(safe['landLibrary'])
++        if 'defaults' in safe and safe['defaults']:
++            safe['defaults']=self.validate_settings(safe['defaults'])
+         return self.store.put('settings',{**old,**safe},values.get('revision'))
+     def validate_settings(self,settings):
+         s={**copy.deepcopy(DEFAULT_SETTINGS),**settings};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
+@@ -28,6 +34,7 @@ class Workspace:
+         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
+             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
+         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
++        if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
+         if len(str(s.get('artist','')))>300:raise ValidationError('Artist credit is too long.')
+         for group,choice in s.get('templateRules',{}).items():
+             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
+@@ -47,6 +54,9 @@ class Workspace:
+         ready=0;errors=0;warns=0;total=0
+         for c in d['cards']:
+             for f in c['faces']:
++                sf=c.get('scryfall',{});sf_faces=ingest.face_list(sf)
++                sf_face=sf_faces[min(f.get('index',0),len(sf_faces)-1)] if sf_faces else sf
++                f['group']=type_group(sf_face,sf,f.get('index',0))
+                 total+=1
+                 if f.get('error'):errors+=1
+                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
+@@ -57,7 +67,15 @@ class Workspace:
+         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
+         return d
+     def list_decks(self):
+-        return [{k:v for k,v in self.deck(d['id']).items() if k!='cards'} for d in self.store.list('decks')]
++        out=[]
++        for old in self.store.list('decks'):
++            d=self.deck(old['id']);cover=''
++            if d['cards']:
++                c=d['cards'][0];f=c['faces'][0] if c['faces'] else {};comp=f.get('compiled') or {}
++                cover=(('/api/assets/'+comp['artId']) if comp.get('artId') else '') or (c['scryfall'].get('image_uris') or {}).get('art_crop','')
++                if not cover and c['scryfall'].get('card_faces'):cover=(c['scryfall']['card_faces'][0].get('image_uris') or {}).get('art_crop','')
++            out.append({**{k:v for k,v in d.items() if k!='cards'},'cover':cover})
++        return out
+     def save(self,ident,patch):
+         d=self.deck(ident);expected=patch.get('revision')
+         if expected is None:raise ValidationError('A revision is required to save a deck safely.')
+@@ -145,14 +163,23 @@ class Workspace:
+         total=sum(len(c['faces']) for c in d['cards']);done=0
+         for c in d['cards']:
+             if cancel():raise ValidationError('Preparation cancelled.')
+-            sf=c['scryfall'];sf_faces=ingest.face_list(sf)
++            sf=c['scryfall']
++            refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
++            if sf.get('id'):
++                progress(done,total,'Checking cached metadata for '+c['name'])
++                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
++            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
++            sf_faces=ingest.face_list(sf)
+             for f in c['faces']:
+                 if cancel():raise ValidationError('Preparation cancelled.')
+                 progress(done,total,'Preparing '+f['name']);f.pop('error',None)
+                 try:
+                     face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
+                     art_id,origin,url=self._art(sf,face,f,s,index,land_index)
+-                    comp=self.compiler.compile_face(sf,face,f.get('index',0),f,s,art_id)
++                    options=copy.deepcopy(f)
++                    flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
++                    options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
++                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id)
+                     if c.get('tokenSpec'):
+                         entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
+                         comp['renderKey']=render_key(comp['data'],art_id);comp['render']=self.store.render_get(comp['renderKey'])
+@@ -182,27 +209,28 @@ class Workspace:
+         if not isinstance(mapping,dict) or any(k not in d['text'] or not isinstance(v,str) for k,v in mapping.items()):raise ValidationError('Bind existing text slots to card fields.')
+         return self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
+     def template_seed(self,kind='normal'):
+-        key={'normal':'creature','land':'land_full_single','legend-land':'land_full_legendary'}.get(kind,'creature')
++        key={'normal':'creature','land':'land_full_basic','legend-land':'land_full_legendary'}.get(kind,'creature')
+         if key not in native.LAYOUTS:key='creature'
+         return copy.deepcopy(native.LAYOUTS[key]['data'])
+     def render_targets(self,deck_ids):
+-        targets={};cached=0
++        targets={};cached=0;errors=[]
+         for ident in deck_ids:
+             d=self.deck(ident)
+             if d['status']=='draft':raise ValidationError(d['name']+': prepare changes before rendering.')
+             for c in d['cards']:
+                 for f in c['faces']:
+                     comp=f.get('compiled')
+-                    if f.get('error') or not comp:continue
++                    if f.get('error') or not comp:
++                        errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
+                     if self.store.render_get(comp['renderKey']):cached+=1;continue
+                     targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
+-        return {'targets':list(targets.values()),'cached':cached}
++        return {'targets':list(targets.values()),'cached':cached,'errors':errors}
+     def save_render(self,key,raw,expected_size):
+         asset=ingest_image(self.store,raw)
+         if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
+         return self.store.render_put(key,asset)
+     def export_cc(self,deck_ids):
+-        entries=[]
++        entries=[];used_keys=set()
+         for ident in deck_ids:
+             d=self.deck(ident)
+             if d['status']=='draft':raise ValidationError('Prepare '+d['name']+' before exporting CardConjurer data.')
+@@ -212,7 +240,9 @@ class Workspace:
+                     if not comp or f.get('error'):raise ValidationError(f['name']+': fix preparation errors before exporting.')
+                     data=copy.deepcopy(comp['data'])
+                     data['artSource']=comp.get('exportArtUrl') or data_uri(self.store,comp['artId']);data['setSymbolSource']=data_uri(self.store,comp['symbolId'])
+-                    entries.append({'key':f['name'],'data':data})
++                    key=f['name']
++                    if key in used_keys:key=key+' ['+d['name']+' / '+str(len(entries)+1)+']'
++                    used_keys.add(key);entries.append({'key':key,'data':data})
+         return json.dumps(entries,ensure_ascii=False,separators=(',',':')).encode()
+     def original_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
+         d=self.deck(ident);out=self.store.home/'orders'/('originals-'+uid()+'.zip');names=set();count=0
+diff --git a/run.py b/run.py
+index 40ffbff..0ce4731 100644
+--- a/run.py
++++ b/run.py
+@@ -9,5 +9,5 @@ def main():
+     if not a.no_browser:threading.Timer(.7,lambda:webbrowser.open(server.origin,new=2)).start()
+     try:server.serve_forever(poll_interval=.2)
+     except KeyboardInterrupt:print('\nStopping. Saved decks and completed images are safe.')
+-    finally:app.jobs.close();server.server_close()
++    finally:app.close();server.server_close()
+ if __name__=='__main__':main()
+diff --git a/site/runtime-bridge.js b/site/runtime-bridge.js
+index 3da635c..4039ffd 100644
+--- a/site/runtime-bridge.js
++++ b/site/runtime-bridge.js
+@@ -105,7 +105,7 @@
+     S.clearErrors();initialized=true;post('ready');
+   };
+   window.addEventListener('message',e=>{
+-    if(e.source!==parent||e.origin!==location.origin||e.data?.source!=='pf-app')return;
++    if(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)||e.data?.source!=='pf-app')return;
+     const msg=e.data;
+     if(msg.type==='ping'){if(initialized)post('ready');return;}
+     if(msg.type==='render'){
+diff --git a/site/runtime-hooks.js b/site/runtime-hooks.js
+index 24cd3d0..cf0bf85 100644
+--- a/site/runtime-hooks.js
++++ b/site/runtime-hooks.js
+@@ -1,6 +1,15 @@
+ /* Dependency instrumentation only. All card drawing is done by upstream CardConjurer. */
+ (() => {
+   'use strict';
++  window.__PF_PARENT_ORIGIN=document.querySelector('meta[name="pf-parent-origin"]')?.content||location.origin;
++  // Large custom templates need not fit the browser's localStorage quota.
++  // Native loadCard still calls its original Storage interface; only our ephemeral
++  // per-face keys are held in memory and released after export.
++  const temporaryCards=new Map(), storage=window.localStorage;
++  const get=Storage.prototype.getItem, set=Storage.prototype.setItem, remove=Storage.prototype.removeItem;
++  Storage.prototype.getItem=function(k){return this===storage&&String(k).startsWith('__pf_')?(temporaryCards.get(String(k))??null):get.call(this,k);};
++  Storage.prototype.setItem=function(k,v){if(this===storage&&String(k).startsWith('__pf_'))temporaryCards.set(String(k),String(v));else set.call(this,k,v);};
++  Storage.prototype.removeItem=function(k){if(this===storage&&String(k).startsWith('__pf_'))temporaryCards.delete(String(k));else remove.call(this,k);};
+   const NativeImage=window.Image;
+   const srcDescriptor=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+   const deferred=new Map(), errors=[];
+diff --git a/tests/test_domain.py b/tests/test_domain.py
+index a77ca17..e9b00f0 100644
+--- a/tests/test_domain.py
++++ b/tests/test_domain.py
+@@ -41,7 +41,7 @@ def test_deck_text():
+     ('Basic Snow Land — Forest','normal',0,'basic-land'), ('Enchantment Creature — Saga','normal',0,'saga-creature'),
+     ('Enchantment — Saga','saga',0,'saga'), ('Legendary Planeswalker — Jace','normal',0,'planeswalker'),
+     ('Land','modal_dfc',1,'modal-back'), ('Creature','transform',0,'transform-front'),
+-    ('Enchantment — Room','split',0,'split'), ('Battle — Siege','normal',0,'battle')])
++    ('Enchantment — Room','split',0,'room'), ('Battle — Siege','normal',0,'battle')])
+ def test_groups(types,layout,index,expected):
+     assert type_group({'type_line':types}, {'layout':layout},index) == expected
+ 
+diff --git a/tests/test_pipeline.py b/tests/test_pipeline.py
+index 9ff6db2..1c02bb5 100644
+--- a/tests/test_pipeline.py
++++ b/tests/test_pipeline.py
+@@ -19,6 +19,8 @@ def test_auto_same_as_v48(workspace):
+     s,a,settings=workspace;c=sf();result=Compiler(s).compile_face(c,c,0,{},settings,a)
+     sem=semantic(c,c);sem.update(art=data_uri(s,a),art_local_path=str(s.asset_path(a)),set_symbol_source=data_uri(s,settings['symbols']['rare']))
+     expected=native.build_one(sem,{'artist':'Test Artist'},True)['data']
++    expected['artSource']='/api/assets/'+a
++    expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
+     assert result['data']==expected
+ @pytest.mark.parametrize('choice',['auto','normal','land','legend-land'])
+ def test_nonlegendary_choices(workspace,choice):
