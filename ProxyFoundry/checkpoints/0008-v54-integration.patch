@@ -1,0 +1,168 @@
+diff --git a/foundry/__init__.py b/foundry/__init__.py
+index 1f356cc..1a72d32 100644
+--- a/foundry/__init__.py
++++ b/foundry/__init__.py
+@@ -1 +1 @@
+-__version__ = '1.0.0'
++__version__ = '1.1.0'
+diff --git a/foundry/compiler.py b/foundry/compiler.py
+index 5effc22..f40e880 100644
+--- a/foundry/compiler.py
++++ b/foundry/compiler.py
+@@ -1 +1 @@
+-"""Adapter over unchanged v48 templates. Overrides are opt-in, never automatic guesses."""
++"""Adapter over unchanged v54 templates. Overrides are opt-in, never automatic guesses."""
+@@ -4 +4 @@
+-from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES
++from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION
+@@ -6,0 +7 @@
++from .credits import resolve_credit
+@@ -8 +9 @@
+- {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v48 type-specific recipe.','legendary':True,'groups':'all'},
++ {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v54 type-specific recipe.','legendary':True,'groups':'all'},
+@@ -13 +14 @@
+-NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','flip','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
++NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
+@@ -28,0 +30,5 @@
++    if sf.get('layout')=='flip':
++        faces=sf.get('card_faces',[])
++        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
++        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
++        d['scryfall_layout']='flip'
+@@ -39 +45 @@
+-        if 'Land' not in d['types'] and d.get('name') != getattr(native,'IRON_MAN_NAME','Iron Man, Titan of Innovation'):
++        if 'Land' not in d['types']:
+@@ -66 +72 @@
+-    def compile_face(self,sf,face,index,options,settings,art_id):
++    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+@@ -69,0 +76,3 @@
++        for nested in ('flip_face','prepared_spell'):
++            if nested in sem and nested in options.get('nestedFlavorTexts',{}):
++                sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+@@ -77,2 +86,3 @@
+-        artist=options.get('artistOverride')
+-        if artist is None:artist=settings.get('artist') or face.get('artist') or sf.get('artist') or ''
++        credit=resolve_credit(sf,face,options,settings,art_origin)
++        artist=credit['display']
++        sem['artist']=artist
+@@ -112 +122 @@
+-        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist)}
++        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':GENERATION_VERSION}
+diff --git a/foundry/domain.py b/foundry/domain.py
+index 6216803..f2b15b8 100644
+--- a/foundry/domain.py
++++ b/foundry/domain.py
+@@ -15,0 +16 @@
++GENERATION_VERSION='card-tools-v54/credits-v1'
+@@ -127 +128 @@
+-    return stable_hash({'renderer':CC_COMMIT,'compiler':'card-tools-v48','adapter':2,'art':art_digest,'data':data})
++    return stable_hash({'renderer':CC_COMMIT,'compiler':GENERATION_VERSION,'adapter':3,'art':art_digest,'data':data})
+diff --git a/foundry/legacy.py b/foundry/legacy.py
+index 3a75f1b..3d09d1b 100644
+--- a/foundry/legacy.py
++++ b/foundry/legacy.py
+@@ -8,5 +8,5 @@
+-compiler=load('pf_v48_compiler','pipeline/card_data_to_cardconjurer.py')
+-ingest=load('pf_v48_ingest','pipeline/scryfall_to_card_data.py')
+-deck_parser=load('pf_v48_deck','pipeline/scryfall_deck_to_cardconjurer.py')
+-tokens=load('pf_v48_tokens','tools/make_copy_tokens.py')
+-image_tools=load('pf_v48_images','tools/download_scryfall_deck_images_zip.py')
++compiler=load('pf_v54_compiler','pipeline/card_data_to_cardconjurer.py')
++ingest=load('pf_v54_ingest','pipeline/scryfall_to_card_data.py')
++deck_parser=load('pf_v54_deck','pipeline/scryfall_deck_to_cardconjurer.py')
++tokens=load('pf_v54_tokens','tools/make_copy_tokens.py')
++image_tools=load('pf_v54_images','tools/download_scryfall_deck_images_zip.py')
+diff --git a/foundry/server.py b/foundry/server.py
+index e37f544..44d6c23 100644
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -111 +111 @@
+-            z.writestr('diagnostics.json', json.dumps({'version': '1.0.0', 'runtime': self.runtime.diagnostic(),
++            z.writestr('diagnostics.json', json.dumps({'version': '1.1.0', 'runtime': self.runtime.diagnostic(),
+@@ -150 +150 @@
+-    server_version = 'ProxyFoundry/1.0'
++    server_version = 'ProxyFoundry/1.1'
+@@ -278 +278 @@
+-            return self.respond({'version': '1.0.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
++            return self.respond({'version': '1.1.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+diff --git a/foundry/workspace.py b/foundry/workspace.py
+index 336200f..485c204 100644
+--- a/foundry/workspace.py
++++ b/foundry/workspace.py
+@@ -12,0 +13 @@
++from .credits import credit_text,printing_artist
+@@ -14,2 +15,2 @@
+-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
+-FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
++DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
++FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
+@@ -38 +39,2 @@
+-        if len(str(s.get('artist','')))>300:raise ValidationError('Artist credit is too long.')
++        s['artist']=credit_text(s.get('artist'))
++        s['modificationCredit']=credit_text(s.get('modificationCredit'), 'Modification credit', maximum=160)
+@@ -59,0 +62 @@
++                f['originalArtist']=printing_artist(sf,sf_face)
+@@ -63 +66,4 @@
+-                if comp:comp['render']=r
++                if comp:
++                    comp['render']=r
++                    if comp.get('generationVersion')!=GENERATION_VERSION:
++                        d['status']='draft';d['upgradeRequired']=True
+@@ -106 +112 @@
+-                for k in ('artistOverride','artOverride','templateOverride','fit','semanticOverrides'):
++                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride','fit','semanticOverrides'):
+@@ -109 +115,4 @@
+-                        f[k]=patch[k];d['status']='draft'
++                        if k in {'artistOverride','modificationCreditOverride'} and patch[k] is not None:
++                            credit_text(patch[k], 'Modification credit' if k=='modificationCreditOverride' else 'Artist credit', maximum=160 if k=='modificationCreditOverride' else 300)
++                        if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
++                        if f.get(k)!=patch[k]:f[k]=patch[k];d['status']='draft'
+@@ -132 +141 @@
+-                for k in ('artistOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
++                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
+@@ -186 +195,5 @@
+-                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id)
++                    if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
++                        nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
++                        secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
++                        options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
++                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
+@@ -194 +207 @@
+-        d['settings']=s;d['status']='prepared';d.pop('summary',None)
++        d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
+diff --git a/scripts/package_release.py b/scripts/package_release.py
+index 9c9676a..50c27ff 100644
+--- a/scripts/package_release.py
++++ b/scripts/package_release.py
+@@ -19 +19 @@
+-    manifest={'application':'Proxy Foundry','version':'1.0.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
++    manifest={'application':'Proxy Foundry','version':'1.1.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+@@ -27 +27 @@
+-    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_0.zip')
++    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_1.zip')
+diff --git a/site/index.html b/site/index.html
+index 705cdf4..a37fcd4 100644
+--- a/site/index.html
++++ b/site/index.html
+@@ -12 +12 @@
+-  <div class="version">PROXY FOUNDRY 1.0 <span>LOCAL</span></div>
++  <div class="version">PROXY FOUNDRY 1.1 <span>LOCAL</span></div>
+diff --git a/tests/test_orders.py b/tests/test_orders.py
+index a405d2c..73b86c6 100644
+--- a/tests/test_orders.py
++++ b/tests/test_orders.py
+@@ -4 +4 @@
+-from foundry.domain import uid,ValidationError
++from foundry.domain import uid,ValidationError,GENERATION_VERSION
+@@ -16,2 +16,2 @@
+-        f=[{'id':uid(),'name':'Same name','compiled':{'renderKey':'front'}}]
+-        if second:f.append({'id':uid(),'name':'DFC','compiled':{'renderKey':'dfc'}})
++        f=[{'id':uid(),'name':'Same name','compiled':{'renderKey':'front','generationVersion':GENERATION_VERSION}}]
++        if second:f.append({'id':uid(),'name':'DFC','compiled':{'renderKey':'dfc','generationVersion':GENERATION_VERSION}})
+diff --git a/tests/test_pipeline.py b/tests/test_pipeline.py
+index 1c02bb5..2e71f49 100644
+--- a/tests/test_pipeline.py
++++ b/tests/test_pipeline.py
+@@ -17 +17 @@
+-def test_auto_same_as_v48(workspace):
++def test_auto_same_as_v54(workspace):
