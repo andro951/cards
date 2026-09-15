@@ -37,7 +37,10 @@ export function modal(title,body,{size='',footer='',onClose=null}={}){
     if(e.key==='Escape'){e.preventDefault();closeModal();}
     if(e.key==='Tab'){const nodes=$$('button,a,input,select,textarea,summary,[tabindex="0"]',el).filter(x=>!x.disabled&&x.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
   });
-  setTimeout(()=>($('input:not([type=file]),textarea',el)||$('#modal-close')).focus(),20);return el;
+  // Focus before returning the mounted dialog. A delayed focus callback can steal
+  // typing from a field the user has already chosen (including the artist credit).
+  const first=$('input:not([type=file]):not([disabled]),textarea:not([disabled])',el)||$('#modal-close',el);
+  first?.focus({preventScroll:true});return el;
 }
 export function confirmAction(title,text,label='Continue',danger=false){return new Promise(resolve=>{
   modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button quiet" id="confirm-no">Cancel</button><button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
