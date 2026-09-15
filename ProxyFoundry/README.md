@@ -1,6 +1,6 @@
 # Proxy Foundry
 
-A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v54 compiler and CardConjurer's actual native renderer.
+A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v58 compiler and CardConjurer's actual native renderer.
 
 ## Start here
 
@@ -49,23 +49,29 @@ Four rarity symbols are required before generation. Upload all four or explicitl
 
 ## Updating from the previous test build
 
-This release uses the supplied **Card Tools v54** and separate original/modification credit fields. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply the corrected artists and updated v54 recipes; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
+This release uses the supplied **Card Tools v58**, with the existing source-aware artist/modification controls retained. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply native Station rendering and the updated Flip spacing; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
 
 The print helper is **unchanged from version 1.0.0**. An already connected 1.0.0 helper does not need replacement for this update. Earlier 0.9.x test helpers still need the integrated helper setup described above.
 
-The v48-to-v54 comparison and integration decisions are documented in `docs/CARD_TOOLS_V54_REVIEW.md`; `docs/CARD_TOOLS_V54_MANIFEST.json` records exact hashes for all ten supplied source/document files.
+The previous v48-to-v54 comparison remains in `docs/CARD_TOOLS_V54_REVIEW.md`. This update follows the supplied v54-to-v58 handoff; see `docs/CARD_TOOLS_V58_UPDATE.md`. `docs/CARD_TOOLS_V58_MANIFEST.json` records exact hashes for all ten supplied source/document files.
 
 ## Templates and accuracy
 
-**Automatic** delegates to the original v54 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
+**Automatic** delegates to the original v58 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
 
 For ordinary layouts, **Classic card** and **Crowned full art** support legendary/nonlegendary cards; **Full-art land** supports nonlegendary cards only because its frame has no compatible crown. Creature overrides retain a power/toughness box.
 
-Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v54 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
+Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. The approved built-in modal-DFC pair is **Esika / The Prismatic Bridge**; its hardcoded reminder-strip treatment is not reused for unrelated modal DFCs. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v58 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
 
 Create a separate custom style from a protected built-in copy, or upload a `.cardconjurer` face. Map its named text boxes to card fields and select the groups it supports. The advanced editor exposes native template JSON. Editing or deleting a custom template invalidates only dependent decks; existing order snapshots do not change.
 
 Review an example of a new style before ordering. Generic text-slot mapping cannot invent missing second-face rules boxes or infer every custom layout. No AI image generation is used.
+
+## Native Station support in 1.2
+
+Spacecraft use the supplied v58 `station` recipe with the ordinary artifact body underneath, color-correct Station pinline above the Station overlay, and native three-section rules, threshold badges and Station P/T. One/two-threshold parsing retains continuation lines in the correct tier. Unsupported structures fail instead of being flattened into ordinary artifact rules. Flip cards retain an additional 2% of card width around their visible P/T medallions.
+
+The existing pinned GitHub core predates Station. For Stations only, the app additionally fetches the genuine `https://cardconjurer.app/js/frames/versionStation.js` module, pinned by SHA-256 `481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21`. It is fetched individually and cached, not bundled or re-created. A different upstream version is rejected rather than executed silently. Station images come from the existing pinned GitHub asset source. The adapter replaces one UI `eval` assignment with an equivalent checked property assignment and composites the native Station canvases in the same order as the newer core. Native drawing and layout are unchanged.
 
 ## Rendering and ordering
 
