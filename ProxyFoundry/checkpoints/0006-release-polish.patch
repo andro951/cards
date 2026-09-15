@@ -1,0 +1,80 @@
+diff --git a/foundry/workspace.py b/foundry/workspace.py
+--- a/foundry/workspace.py
++++ b/foundry/workspace.py
+@@ -143,7 +143,11 @@
+             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',True):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
+             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
+         if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
+-        raw,_,_=self.net.fetch(url,refresh=settings.get('refreshData',False));asset=ingest_image(self.store,raw)
++        refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
++        # Scryfall alone uses the year/week policy; mutable custom art is rechecked
++        # after ten minutes, or immediately when the user asks to refresh custom art.
++        ttl=None if origin=='Scryfall selected printing' else (0 if settings['source'].get('refreshArt') else 600)
++        raw,_,_=self.net.fetch(url,refresh=refresh,ttl=ttl);asset=ingest_image(self.store,raw)
+         if origin=='Scryfall selected printing' and ingest.saga_creature_trailing_rules_text(face.get('type_line',sf.get('type_line','')),face.get('oracle_text',sf.get('oracle_text',''))):
+             im=decode_image(self.store.asset_path(asset['id']).read_bytes())
+             if im.height<=182:raise ValidationError('Saga-creature artwork is too short for the approved 99/83-pixel crop.')
+@@ -155,11 +159,11 @@
+         index={};land_index={}
+         if s['source']['mode']=='github':
+             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
+-            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None)
++            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=bool(s['source'].get('refreshArt')))
+         if s.get('useLandLibrary'):
+             url=s.get('landLibrary') or self.global_settings().get('landLibrary')
+             if not url:raise ValidationError('Add a land artwork library link in Settings, or turn the option off.')
+-            progress(0,1,'Reading optional land artwork library');land_index=self.sources.github_index(url)
++            progress(0,1,'Reading optional land artwork library');land_index=self.sources.github_index(url,refresh=bool(s['source'].get('refreshArt')))
+         total=sum(len(c['faces']) for c in d['cards']);done=0
+         for c in d['cards']:
+             if cancel():raise ValidationError('Preparation cancelled.')
+diff --git a/site/setup.js b/site/setup.js
+--- a/site/setup.js
++++ b/site/setup.js
+@@ -14,6 +14,7 @@
+       <div data-source="scryfall" class="${s.source.mode==='scryfall'?'':'hidden'}"><div class="notice info">Use any real paper printing. The selected set and collector number are preserved, and each card’s art can still be replaced individually.</div></div>
+       <div data-source="github" class="${s.source.mode==='github'?'':'hidden'}"><label class="field"><span>GitHub artwork folder</span><input id="github-folder" value="${esc(s.source.githubFolder)}" placeholder="https://github.com/you/cards/tree/main/my_deck"><small>Names should match cards, for example <code>the_world_tree.png</code>. Apostrophes are removed; spaces become underscores.</small></label><label class="field"><span>Branch or commit override <small>optional</small></span><input id="github-ref" value="${esc(s.source.ref||'')}" placeholder="Use the ref from the URL"></label></div>
+       <div data-source="local" class="${s.source.mode==='local'?'':'hidden'}"><label class="field"><span>Choose the artwork folder</span><input type="file" id="local-art" webkitdirectory directory multiple><small id="local-count">${Object.keys(s.source.localFiles||{}).length} images saved for this deck. Files stay in your local workspace; they are not uploaded to GitHub.</small></label></div>
++      <label class="check-line"><input type="checkbox" id="refresh-custom-art" ${s.source.refreshArt?'checked':''}><span>Refresh custom GitHub art when generating<small>Checks changed filenames and image contents. Scryfall still follows its separate year/week cache setting.</small></span></label>
+       <label class="check-line" id="fallback-line"><input type="checkbox" id="art-fallback" ${s.source.fallback?'checked':''}><span>Use Scryfall artwork when a custom image is missing<small>Turn off to require matching custom art for every card.</small></span></label>
+       <details><summary>Optional custom full-art land library</summary><label class="check-line"><input type="checkbox" id="use-land-library" ${s.useLandLibrary?'checked':''}><span>Use the land-art library for matching lands<small>Individual art overrides and your main custom-art folder take priority.</small></span></label><label class="field"><span>GitHub land-art folder <small>optional deck override</small></span><input id="land-library" value="${esc(s.landLibrary||'')}" placeholder="Use the library configured in Settings"><small>Expected format: <code>card_name.png</code>. Add the library link in Settings to make it available to every deck.</small></label></details>
+     </section>
+@@ -36,13 +37,13 @@
+   redrawSymbols();redrawBack();
+   $$('input:not([type=file]),textarea,select',root).forEach(el=>el.addEventListener('input',mark));
+   $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;$$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x===b));$$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));mark();});
+-  $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root);b.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;}});
++  $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
+   $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;const button=$('#generate-symbols',root);button.disabled=true;try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();}finally{button.disabled=false;}});
+   $('#clear-back',root).onclick=()=>{s.backAsset=null;redrawBack();mark();};
+   $('#open-templates',root).onclick=()=>nav('templates');
+   $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','artist','templateRules'])s[key]=structuredClone(other.settings[key]|| (key==='symbols'||key==='templateRules'?{}:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
+   async function save(generate){
+-    s.source.githubFolder=$('#github-folder',root).value.trim();s.source.ref=$('#github-ref',root).value.trim();s.source.fallback=$('#art-fallback',root).checked;
++    s.source.githubFolder=$('#github-folder',root).value.trim();s.source.ref=$('#github-ref',root).value.trim();s.source.fallback=$('#art-fallback',root).checked;s.source.refreshArt=$('#refresh-custom-art',root).checked;
+     s.useLandLibrary=$('#use-land-library',root).checked;s.landLibrary=$('#land-library',root).value.trim();s.artist=$('#deck-artist',root).value;
+     s.disableAutofit=$('#disable-autofit',root).checked;s.refreshData=$('#refresh-data',root).checked;s.flavorPolicy=$('#flavor-policy',root).value;
+     $$('[data-rule]',root).forEach(el=>s.templateRules[el.dataset.rule]=el.value);
+diff --git a/site/deck.js b/site/deck.js
+--- a/site/deck.js
++++ b/site/deck.js
+@@ -5,7 +5,7 @@
+ const views=new Map();
+ export async function importDeck(existing=null){
+   if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
+-  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt,.csv"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
++  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
+   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
+   $('#do-import').onclick=async()=>{
+     const source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
+@@ -78,8 +78,9 @@
+   await renderDecks([d.id],{onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
+ }
+ function deckMenu(d){
+-  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">Move deck to Trash</button></div><p class="muted" style="margin-top:16px;font-size:12px">Exports use prepared card data. Trashed decks can be restored from Settings.</p>`,{size:'small'});
++  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">Move deck to Trash</button></div><p class="muted" style="margin-top:16px;font-size:12px">Exports use prepared card data. Trashed decks can be restored from Settings.</p>`,{size:'small'});
+   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
++  $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
+   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
+   $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});location.href=out.download;});
+   $('#use-as-defaults').onclick=()=>attempt(async()=>{const defaults={symbols:d.settings.symbols,backAsset:d.settings.backAsset,artist:d.settings.artist,templateRules:d.settings.templateRules};await api('/api/settings',{defaults});closeModal();toast('Symbols, back, artist and templates saved as defaults for new decks.');});
