@@ -1,0 +1,3 @@
+# Integration checkpoint 1
+
+Original Card Tools v48 source is preserved byte-for-byte in vendor/card_tools. No existing templates were modified. New pure-domain, SQLite persistence and bounded network/cache modules are being integrated locally. The first regression run passes 29 tests covering cache TTL, GitHub/local source separation, quantity parsing, structural groups, crop thresholds, render hashing and revision conflicts. Browser end-to-end tests are not yet completed. This checkpoint stores the original working engine so its behavior remains recoverable independently of subsequent app changes.

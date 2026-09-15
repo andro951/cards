@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+playwright-report/
+test-results/
+.cache/
+_work/
+workspace/
+outputs/
+node_modules/
+*.pem
+*.crx
