@@ -11,15 +11,21 @@ from .sources import Sources
 from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
 from .legacy import ingest,compiler as native,tokens
 
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit'}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store)
+    def new_deck(self, name='Untitled deck'):
+        return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
+            'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
+            'status':'draft', 'notes':'', 'importedSource':''})
     def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'landLibrary':'','defaults':{}}
     def set_global_settings(self,values):
         old=self.global_settings();safe={k:v for k,v in values.items() if k in {'refreshData','landLibrary','defaults'}}
         if safe.get('landLibrary'):github_location(safe['landLibrary'])
+        if 'defaults' in safe and safe['defaults']:
+            safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
         s={**copy.deepcopy(DEFAULT_SETTINGS),**settings};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
@@ -28,6 +34,7 @@ class Workspace:
         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
+        if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
         if len(str(s.get('artist','')))>300:raise ValidationError('Artist credit is too long.')
         for group,choice in s.get('templateRules',{}).items():
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
@@ -47,6 +54,9 @@ class Workspace:
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             for f in c['faces']:
+                sf=c.get('scryfall',{});sf_faces=ingest.face_list(sf)
+                sf_face=sf_faces[min(f.get('index',0),len(sf_faces)-1)] if sf_faces else sf
+                f['group']=type_group(sf_face,sf,f.get('index',0))
                 total+=1
                 if f.get('error'):errors+=1
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
@@ -57,7 +67,15 @@ class Workspace:
         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
         return d
     def list_decks(self):
-        return [{k:v for k,v in self.deck(d['id']).items() if k!='cards'} for d in self.store.list('decks')]
+        out=[]
+        for old in self.store.list('decks'):
+            d=self.deck(old['id']);cover=''
+            if d['cards']:
+                c=d['cards'][0];f=c['faces'][0] if c['faces'] else {};comp=f.get('compiled') or {}
+                cover=(('/api/assets/'+comp['artId']) if comp.get('artId') else '') or (c['scryfall'].get('image_uris') or {}).get('art_crop','')
+                if not cover and c['scryfall'].get('card_faces'):cover=(c['scryfall']['card_faces'][0].get('image_uris') or {}).get('art_crop','')
+            out.append({**{k:v for k,v in d.items() if k!='cards'},'cover':cover})
+        return out
     def save(self,ident,patch):
         d=self.deck(ident);expected=patch.get('revision')
         if expected is None:raise ValidationError('A revision is required to save a deck safely.')
@@ -145,14 +163,23 @@ class Workspace:
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             if cancel():raise ValidationError('Preparation cancelled.')
-            sf=c['scryfall'];sf_faces=ingest.face_list(sf)
+            sf=c['scryfall']
+            refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
+            if sf.get('id'):
+                progress(done,total,'Checking cached metadata for '+c['name'])
+                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
+            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
+            sf_faces=ingest.face_list(sf)
             for f in c['faces']:
                 if cancel():raise ValidationError('Preparation cancelled.')
                 progress(done,total,'Preparing '+f['name']);f.pop('error',None)
                 try:
                     face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
                     art_id,origin,url=self._art(sf,face,f,s,index,land_index)
-                    comp=self.compiler.compile_face(sf,face,f.get('index',0),f,s,art_id)
+                    options=copy.deepcopy(f)
+                    flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
+                    options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
+                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id)
                     if c.get('tokenSpec'):
                         entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
                         comp['renderKey']=render_key(comp['data'],art_id);comp['render']=self.store.render_get(comp['renderKey'])
@@ -182,27 +209,28 @@ class Workspace:
         if not isinstance(mapping,dict) or any(k not in d['text'] or not isinstance(v,str) for k,v in mapping.items()):raise ValidationError('Bind existing text slots to card fields.')
         return self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
     def template_seed(self,kind='normal'):
-        key={'normal':'creature','land':'land_full_single','legend-land':'land_full_legendary'}.get(kind,'creature')
+        key={'normal':'creature','land':'land_full_basic','legend-land':'land_full_legendary'}.get(kind,'creature')
         if key not in native.LAYOUTS:key='creature'
         return copy.deepcopy(native.LAYOUTS[key]['data'])
     def render_targets(self,deck_ids):
-        targets={};cached=0
+        targets={};cached=0;errors=[]
         for ident in deck_ids:
             d=self.deck(ident)
             if d['status']=='draft':raise ValidationError(d['name']+': prepare changes before rendering.')
             for c in d['cards']:
                 for f in c['faces']:
                     comp=f.get('compiled')
-                    if f.get('error') or not comp:continue
+                    if f.get('error') or not comp:
+                        errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
                     if self.store.render_get(comp['renderKey']):cached+=1;continue
                     targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
-        return {'targets':list(targets.values()),'cached':cached}
+        return {'targets':list(targets.values()),'cached':cached,'errors':errors}
     def save_render(self,key,raw,expected_size):
         asset=ingest_image(self.store,raw)
         if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
         return self.store.render_put(key,asset)
     def export_cc(self,deck_ids):
-        entries=[]
+        entries=[];used_keys=set()
         for ident in deck_ids:
             d=self.deck(ident)
             if d['status']=='draft':raise ValidationError('Prepare '+d['name']+' before exporting CardConjurer data.')
@@ -212,7 +240,9 @@ class Workspace:
                     if not comp or f.get('error'):raise ValidationError(f['name']+': fix preparation errors before exporting.')
                     data=copy.deepcopy(comp['data'])
                     data['artSource']=comp.get('exportArtUrl') or data_uri(self.store,comp['artId']);data['setSymbolSource']=data_uri(self.store,comp['symbolId'])
-                    entries.append({'key':f['name'],'data':data})
+                    key=f['name']
+                    if key in used_keys:key=key+' ['+d['name']+' / '+str(len(entries)+1)+']'
+                    used_keys.add(key);entries.append({'key':key,'data':data})
         return json.dumps(entries,ensure_ascii=False,separators=(',',':')).encode()
     def original_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);out=self.store.home/'orders'/('originals-'+uid()+'.zip');names=set();count=0

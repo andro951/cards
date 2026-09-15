@@ -105,7 +105,7 @@
     S.clearErrors();initialized=true;post('ready');
   };
   window.addEventListener('message',e=>{
-    if(e.source!==parent||e.origin!==location.origin||e.data?.source!=='pf-app')return;
+    if(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)||e.data?.source!=='pf-app')return;
     const msg=e.data;
     if(msg.type==='ping'){if(initialized)post('ready');return;}
     if(msg.type==='render'){

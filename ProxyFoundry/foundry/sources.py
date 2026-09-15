@@ -17,6 +17,12 @@ class Sources:
         d=self.net.json('https://api.scryfall.com/cards/'+path,refresh=refresh)
         if not isinstance(d,dict) or not d.get('name') or not d.get('id'):raise ValidationError('Scryfall did not return a card for '+source)
         if d.get('digital'):raise ValidationError(d['name']+' is digital-only. Choose a paper printing.')
+        canonical='https://api.scryfall.com/cards/'+d['id']
+        original='https://api.scryfall.com/cards/'+path
+        cached=self.net.store.cache_get(original)
+        if cached and canonical!=original:
+            asset=self.net.store.asset(cached['asset_id'])
+            if asset:self.net.store.cache_put(canonical,asset,cached['fetched'])
         return d
     def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
         original=source if isinstance(source,str) else '[Scryfall export]'
@@ -55,6 +61,7 @@ class Sources:
             identity=(sf['id'],row['section'])
             if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity']);continue
             entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
+            entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
             seen[identity]=entry;cards.append(entry)
         progress(len(manifest),len(manifest),'Selected printings imported')
         return {'name':str(title),'cards':cards,'importedSource':original}
@@ -83,3 +90,14 @@ class Sources:
         if not url.startswith('https://api.scryfall.com/cards/search?'):raise ValidationError('Invalid printings page.')
         d=self.net.json(url,refresh=refresh)
         return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
+
+    def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
+        if policy=='resolved' or policy=='auto' and source_exact:return sf
+        name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')
+        url='https://api.scryfall.com/cards/search?unique=prints&order=released&dir=desc&q='+quote('!"'+name+'" game:paper lang:en')
+        try:
+            page=self.net.json(url,refresh=refresh)
+            rows=page.get('data',[])
+            return rows[0] if rows and isinstance(rows[0],dict) else sf
+        except ValidationError:
+            return sf

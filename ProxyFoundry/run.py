@@ -9,5 +9,5 @@ def main():
     if not a.no_browser:threading.Timer(.7,lambda:webbrowser.open(server.origin,new=2)).start()
     try:server.serve_forever(poll_interval=.2)
     except KeyboardInterrupt:print('\nStopping. Saved decks and completed images are safe.')
-    finally:app.jobs.close();server.server_close()
+    finally:app.close();server.server_close()
 if __name__=='__main__':main()

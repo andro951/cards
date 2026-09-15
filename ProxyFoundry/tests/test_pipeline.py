@@ -19,6 +19,8 @@ def test_auto_same_as_v48(workspace):
     s,a,settings=workspace;c=sf();result=Compiler(s).compile_face(c,c,0,{},settings,a)
     sem=semantic(c,c);sem.update(art=data_uri(s,a),art_local_path=str(s.asset_path(a)),set_symbol_source=data_uri(s,settings['symbols']['rare']))
     expected=native.build_one(sem,{'artist':'Test Artist'},True)['data']
+    expected['artSource']='/api/assets/'+a
+    expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
     assert result['data']==expected
 @pytest.mark.parametrize('choice',['auto','normal','land','legend-land'])
 def test_nonlegendary_choices(workspace,choice):

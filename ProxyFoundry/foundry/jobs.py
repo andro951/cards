@@ -30,3 +30,9 @@ class Jobs:
         with self.lock:
             if ident in self.jobs:self.jobs[ident]['cancelled']=True
         return {'ok':True}
+
+    def close(self):
+        with self.lock:
+            for job in self.jobs.values():
+                if job['state'] in {'running','queued'}: job['cancelled']=True
+        self.pool.shutdown(wait=False, cancel_futures=True)

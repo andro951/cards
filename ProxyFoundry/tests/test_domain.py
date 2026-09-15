@@ -41,7 +41,7 @@ def test_deck_text():
     ('Basic Snow Land — Forest','normal',0,'basic-land'), ('Enchantment Creature — Saga','normal',0,'saga-creature'),
     ('Enchantment — Saga','saga',0,'saga'), ('Legendary Planeswalker — Jace','normal',0,'planeswalker'),
     ('Land','modal_dfc',1,'modal-back'), ('Creature','transform',0,'transform-front'),
-    ('Enchantment — Room','split',0,'split'), ('Battle — Siege','normal',0,'battle')])
+    ('Enchantment — Room','split',0,'room'), ('Battle — Siege','normal',0,'battle')])
 def test_groups(types,layout,index,expected):
     assert type_group({'type_line':types}, {'layout':layout},index) == expected
 
