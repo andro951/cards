@@ -5,13 +5,18 @@
   const srcDescriptor=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
   const deferred=new Map(), errors=[];
   const state=window.__PF_RUNTIME={deferred,errors,active:false,required:new Set(),phase:'bootstrap'};
-  const post=(type,data={})=>parent.postMessage({...data,source:'pf-native-runtime',type},location.origin);
+  const post=(type,data={})=>parent.postMessage({...data,source:'pf-native-runtime',type},window.__PF_PARENT_ORIGIN||location.origin);
   state.post=post;
   const localSource=value=>{
     const s=String(value||'');
-    if(/^https?:/i.test(s))return '/runtime/remote?url='+encodeURIComponent(s);
+    if(/^https?:/i.test(s)){
+      const url=new URL(s);
+      if(url.origin===location.origin)return url.pathname+url.search;
+      return '/runtime/remote?url='+encodeURIComponent(s);
+    }
     return s;
   };
+  state.resolveSource=localSource;
   window.Image=function(...args){
     const image=new NativeImage(...args);
     Object.defineProperty(image,'src',{configurable:true,get(){return srcDescriptor.get.call(this)},set(value){
