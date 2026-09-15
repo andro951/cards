@@ -1,3 +1,3 @@
-# Recovery and implementation checkpoint
+# Implementation checkpoint
 
-Recovered the approved v48 vendor engine and the working v0.9.2 handoff from the provided packages. Four approved source files verified byte-for-byte. Added 27 passing local rules/storage regression cases covering exact TTL boundaries, GitHub/local source separation, structural groups (including Rooms and Stations), actual-placement crop warnings, render keys and revision conflicts. The dashboard, HTTP API and browser integration are being implemented next; they are not yet release-tested.
+61 local rules, storage, cache, template-adapter and paired-order tests pass. The byte-for-byte v48 compiler guard also passes. The new native renderer host is implemented: pinned per-file downloads, no repository archive, unused mana images deferred, native frame-picker initialization awaited, structural scripts executed after their saved card is assigned, explicit native redraw and PNG size verification. Its browser integration is still being tested; this checkpoint does not certify live GitHub rendering or live checkout.
