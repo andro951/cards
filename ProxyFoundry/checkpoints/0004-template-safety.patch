@@ -12,7 +12,7 @@ diff --git a/foundry/compiler.py b/foundry/compiler.py
              d0=choose_builtin(sem,choice)
              try:
                  data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
- diff --git a/foundry/workspace.py b/foundry/workspace.py
+diff --git a/foundry/workspace.py b/foundry/workspace.py
 --- a/foundry/workspace.py
 +++ b/foundry/workspace.py
 @@ -207,11 +207,33 @@
