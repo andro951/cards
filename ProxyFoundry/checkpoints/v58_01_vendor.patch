@@ -1,0 +1,535 @@
+diff --git a/scripts/verify_vendor.py b/scripts/verify_vendor.py
+--- a/scripts/verify_vendor.py
++++ b/scripts/verify_vendor.py
+@@ -1 +1 @@
+-"""Fail rather than silently change the approved Card Tools v54 templates."""
++"""Fail rather than silently change the approved Card Tools v58 templates."""
+@@ -6 +6 @@
+-    'pipeline/card_data_to_cardconjurer.py': '47a5c448d88c20a5119dec0593494791d5533bea',
++    'pipeline/card_data_to_cardconjurer.py': '0bc9c2a0c5cb15b71316dfeb092723362160bd2b',
+diff --git a/vendor/card_tools/pipeline/card_data_to_cardconjurer.py b/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
+index 47a5c44..0bc9c2a 100644
+--- a/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
++++ b/vendor/card_tools/pipeline/card_data_to_cardconjurer.py
+@@ -29 +29,3 @@
+-#   add the real Station frame above it; crown/P/T overlays remain above both.
++#   add the real Station frame above it. Their tier badges and P/T medallion
++#   belong to Card Conjurer's native Station post-frame renderer, so the normal
++#   M15 P/T frame must NOT be added on top.
+@@ -43,0 +46,11 @@
++# Kamigawa Flip P/T medallions extend visibly beyond the P/T text anchors.
++# Reserve this extra horizontal silhouette width before applying the normal
++# symbol/type gap; otherwise symbols and type text visually crowd the beveled
++# medallion even though their text boxes do not mathematically overlap.
++FLIP_PT_VISUAL_OVERHANG=0.0200
++# Landscape Scryfall Station art is an art-window crop, not the full bleed that
++# the Station frame expects. Preserve this calibrated placement rather than
++# letting generic auto-fit zoom/recenter it.
++STATION_LANDSCAPE_ART_X=156/CARD_WIDTH
++STATION_LANDSCAPE_ART_Y=320/CARD_HEIGHT
++STATION_LANDSCAPE_ART_ZOOM=2.73
+@@ -149,0 +163 @@
++    ("Artifact - Spacecraft / Station", "artifact body under native Station frame + native Station tier badges/P-T"),
+@@ -239 +253 @@
+-    "saga","saga_creature","planeswalker_regular_3","planeswalker_tall_4","flip",
++    "saga","saga_creature","planeswalker_regular_3","planeswalker_tall_4","flip","station",
+@@ -1789,0 +1804,16 @@
++    if recipe=="station":
++        # Station owns the visible P/T medallion in versionStation.js. Keep the
++        # semantic P/T textbox so that renderer has the value, but deliberately
++        # leave zero ordinary M15 P/T frame layers.
++        if existing_pt_text is not None:
++            text["pt"]=existing_pt_text
++        else:
++            text["pt"]={
++                "name":"Power/Toughness","text":"","x":0.7928,"y":2,
++                "width":0.1367,"height":0.0372,"size":0.0372,
++                "font":"belerenbsc","oneLine":True,"align":"center",
++            }
++        if any(_is_pt_frame(f) for f in data.get("frames",[])):
++            raise BuildError("internal Station P/T invariant failed: normal P/T frame survived")
++        return
++
+@@ -1795 +1824,0 @@
+-        or "Spacecraft" in subtypes
+@@ -1817 +1846 @@
+-            if artifact or "Spacecraft" in subtypes:
++            if artifact:
+@@ -2228,0 +2258,8 @@
++    if "Spacecraft" in sub:
++        # Station/Spacecraft is a dedicated physical frame family. It keeps an
++        # artifact body underneath, but its segmented rules area, tier badges,
++        # and P/T treatment are owned by the native Station renderer.
++        if "Artifact" not in ct:
++            raise BuildError("Spacecraft subtype without Artifact type is not a supported Station structure")
++        return "station"
++
+@@ -2315,0 +2353,8 @@
++    if recipe=="station":
++        # Start from the ordinary artifact recipe so all of our existing body,
++        # crown, pinline, and color-accent decisions remain authoritative.
++        # Then convert only the Station-owned portions of the card.
++        base_recipe="card_legendary" if "Legendary" in type_info["supertypes"] else "card_noncreature"
++        entry=recipe_data(base_recipe,card,type_info)
++        configure_station_recipe(entry["data"],card,type_info)
++        return entry
+@@ -2521 +2566,6 @@
+-    """Parse Edge of Eternities Station tier lines without card-name special cases."""
++    """Parse Station into Card Conjurer's native three-section model.
++
++    Continuation lines after a ``7+ |``/``12+ |`` line belong to that tier
++    until the next threshold begins. This is why a Station card cannot be
++    faithfully represented as one normal M15 rules textbox plus marker SVGs.
++    """
+@@ -2523 +2573 @@
+-    if not any(re.match(r"^Station(?:\s|$)",line,re.I) for line in lines):
++    if not lines:
+@@ -2525,2 +2575,4 @@
+-    rendered=[]
+-    thresholds=[]
++
++    before_threshold=[]
++    station_abilities=[]
++    current=None
+@@ -2528,8 +2580,4 @@
+-        m_station=re.match(r"^(Station)\s*(\(.*\))$",line,re.I)
+-        if m_station:
+-            rendered.append(f"Station {{i}}{m_station.group(2)}{{/i}}")
+-            continue
+-        m_tier=re.match(r"^(\d+\+)\s*\|\s*(.*)$",line)
+-        if m_tier:
+-            thresholds.append({"label":m_tier.group(1),"line_index":len(rendered)})
+-            rendered.append(m_tier.group(2))
++        m=re.match(r"^(\d+\+)\s*\|\s*(.*)$",line)
++        if m:
++            current={"number":m.group(1),"lines":[m.group(2).strip()] if m.group(2).strip() else []}
++            station_abilities.append(current)
+@@ -2537,2 +2585,6 @@
+-        rendered.append(line)
+-    if not thresholds:
++        if current is not None:
++            current["lines"].append(line)
++        else:
++            before_threshold.append(line)
++
++    if not station_abilities:
+@@ -2540 +2591,0 @@
+-    return {"lines":rendered,"thresholds":thresholds,"text":"\n".join(rendered)}
+@@ -2541,0 +2593,9 @@
++    pre_station="\n".join(before_threshold).strip()
++    reminder_text=""
++    pre_text=pre_station
++    m_reminder=re.search(r"\bStation\s*(\([^)]*\))",pre_station,re.I|re.S)
++    if m_reminder:
++        reminder_text=f"Station {{i}}{m_reminder.group(1)}{{/i}}"
++        before=pre_station[:m_reminder.start()].strip()
++        after=pre_station[m_reminder.end():].strip()
++        pre_text="\n".join(x for x in (before,after) if x).strip()
+@@ -2543,17 +2603,2 @@
+-def approx_rules_wrapped_lines(text,size,width):
+-    clean=re.sub(r"\{[^{}]+\}","",str(text or ""))
+-    # Calibrated to the normal M15 rules box: around 54 average characters per
+-    # line at size .0315 and width .79.
+-    capacity=max(20,int(round(54*(float(width)/0.79)*(0.0315/max(float(size),0.001)))))
+-    words=clean.split()
+-    if not words:
+-        return 1
+-    lines=1; used=0
+-    for word in words:
+-        w=len(word)
+-        need=w if used==0 else w+1
+-        if used and used+need>capacity:
+-            lines+=1; used=w
+-        else:
+-            used+=need
+-    return lines
++    for ability in station_abilities:
++        ability["text"]="\n".join(ability.pop("lines")).strip()
+@@ -2560,0 +2606,18 @@
++    n=len(station_abilities)
++    if n==1:
++        # With ordinary pre-Station text (The Seriema pattern), all three
++        # printed regions are meaningful: pre-text, reminder, threshold.
++        ability_texts=[pre_text,reminder_text,station_abilities[0]["text"]]
++        badge_values=["","",station_abilities[0]["number"]]
++        disable_first_ability=not bool(pre_text)
++    elif n==2:
++        # The two shaded regions are reserved for the two threshold payoffs.
++        # Any ordinary text and the Station reminder share the top region.
++        top=pre_text
++        if reminder_text:
++            top=(top+"\n"+reminder_text).strip() if top else reminder_text
++        ability_texts=[top,station_abilities[0]["text"],station_abilities[1]["text"]]
++        badge_values=["",station_abilities[0]["number"],station_abilities[1]["number"]]
++        disable_first_ability=False
++    else:
++        raise BuildError(f"Station card has {n} threshold abilities; native Station layout supports at most two")
+@@ -2562,28 +2625,8 @@
+-def station_accent_markup(codes):
+-    codes=[c for c in colors(codes) if c in "WUBRG"]
+-    if len(codes)==2:
+-        codes=canonical_dual_color_order(codes)
+-    if len(codes)==1:
+-        return None,"#"+DUAL_EASE_SOLID_HEX[codes[0]]
+-    if len(codes)==2:
+-        return eased_dual_gradient_markup("stationRim",codes[0],codes[1]),"url(#stationRim)"
+-    # Station is a nonland treatment, so 3+ colors use the normal gold accent
+-    # rule rather than the land-only three-color/Triome treatment.
+-    if len(codes)>=3:
+-        return None,"#"+LAND_GOLD_ACCENT_HEX
+-    return None,"#9b9b91"
+-
+-
+-def station_badge_src(label,codes):
+-    gradient,stroke=station_accent_markup(codes)
+-    defs=f"<defs>{gradient}</defs>" if gradient else ""
+-    safe=re.sub(r"[^0-9+]","",str(label))
+-    svg=(
+-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">'
+-        +defs+
+-        f'<circle cx="60" cy="60" r="52" fill="#30343a" stroke="{stroke}" stroke-width="7"/>'
+-        '<circle cx="60" cy="60" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="2"/>'
+-        f'<text x="60" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#ffffff">{safe}</text>'
+-        '</svg>'
+-    )
+-    return "data:image/svg+xml;utf8,"+urllib.parse.quote(svg)
++    return {
++        "pre_text":pre_text,
++        "reminder_text":reminder_text,
++        "station_abilities":station_abilities,
++        "ability_texts":ability_texts,
++        "badge_values":badge_values,
++        "disable_first_ability":disable_first_ability,
++    }
+@@ -2592,30 +2635,39 @@
+-def apply_station_badges(data,station_meta,color_codes):
+-    if not station_meta:
+-        return
+-    rules=data.get("text",{}).get("rules")
+-    if not isinstance(rules,dict):
+-        return
+-    rules["noVerticalCenter"]=True
+-    # Leave the same left inset the printed Station cards use for tier text,
+-    # with the circular tier marker protruding into the left margin.
+-    rules["x"]=0.105
+-    rules["width"]=0.79
+-    size=float(rules.get("size",0.0315))
+-    line_height_px=max(58.0,size*CARD_WIDTH*1.18)
+-    badge_w_px=124.0; badge_h_px=124.0; badge_x_px=76.0
+-    frames=data.setdefault("frames",[])
+-    for tier in reversed(station_meta.get("thresholds",[])):
+-        idx=int(tier["line_index"])
+-        before=0
+-        for line in station_meta.get("lines",[])[:idx]:
+-            before+=approx_rules_wrapped_lines(line,size,float(rules["width"]))
+-        center_y_px=float(rules.get("y",0.6303))*CARD_HEIGHT+(before+0.52)*line_height_px
+-        frames.insert(0,{
+-            "name":f"Station {tier['label']} Marker",
+-            "src":station_badge_src(tier["label"],color_codes),
+-            "masks":[],
+-            "bounds":{
+-                "x":badge_x_px/CARD_WIDTH,
+-                "y":(center_y_px-badge_h_px/2)/CARD_HEIGHT,
+-                "width":badge_w_px/CARD_WIDTH,
+-                "height":badge_h_px/CARD_HEIGHT,
++def _station_square_colors(card):
++    """Initial tint matching Card Conjurer's Station auto-color table."""
++    codes=colors(card.get("colors"))
++    key=codes[0].lower() if len(codes)==1 else ("m" if len(codes)>=2 else "default")
++    settings={
++        "default":("#e6ecf2","#e6ecf2",0.20),
++        "w":("#4a4a4a","#4a4a4a",0.20),
++        "u":("#0075be","#0075be",0.20),
++        "b":("#272624","#272624",0.15),
++        "r":("#ef3827","#ef3827",0.20),
++        "g":("#007b43","#007b43",0.45),
++        "m":("#bc932e","#bc932e",0.25),
++    }
++    return settings[key]
++
++
++def station_state(card,station_meta=None):
++    """State consumed by Card Conjurer's native Station renderer.
++
++    Badge geometry is calibrated from the corrected Seriema: the lower marker
++    is ~151 px square at x≈60/y≈2390 on a 2010x2814 canvas. Because the native
++    renderer positions badges from their corresponding section, the same math
++    automatically supports one or two thresholds without card-name cases.
++    """
++    c1,c2,offset=_station_square_colors(card)
++    state={
++        "abilityCount":3,
++        "x":0.1167,
++        "width":0.8094,
++        "badgeX":0.066,
++        "badgeValues":["","",""],
++        "disableFirstAbility":False,
++        "disabledTextX":0.087,
++        "disabledTextWidth":0.825,
++        "importSettings":{
++            "singleAbility":{"yOffset":-250,"height1":550},
++            "versionOverrides":{
++                "stationRegular":{"yOffset":-275,"height1":525,"minDistanceFromBottom":163},
++                "stationBorderless":{"yOffset":-275,"height1":525,"minDistanceFromBottom":163},
+@@ -2623 +2675,81 @@
+-        })
++        },
++        # These replace the native 162/-94 defaults with the calibrated
++        # marker position, but the badge itself is intentionally 10% smaller
++        # than the prior v56 size. We keep X unchanged so shrinking the badge
++        # naturally pulls its right edge left. No opacity is applied here;
++        # versionStation.js draws the real badge PNG at globalAlpha=1.
++        "badgeSettings":{"fontSize":0.0245,"width":151.2,"height":151.2,"x":-88,"y":3},
++        "squares":{
++            1:{"width":1714,"height":300,"x":0,"y":76,"enabled":True,"color":c1,"opacity":0.20},
++            2:{"width":1714,"height":250,"x":0,"y":10,"enabled":True,"color":c2,"opacity":min(1.0,0.20+offset)},
++        },
++        "minDistanceFromBottom":150,
++        "baseTextPositions":{
++            "ability1":{"x":0.18,"y":0.7},
++            "ability2":{"x":0.18,"y":0.83},
++        },
++        "textOffsets":{
++            1:{"x":85,"y":15},
++            2:{"x":85,"y":12},
++        },
++        "ptSettings":{"fontSize":0.0320,"width":306,"height":148,"x":0,"y":0},
++        "colorModes":{1:"auto",2:"auto"},
++        "ptColorMode":"auto",
++        "badgeColorMode":"auto",
++        "colorSettings":{
++            "default":{"square1":"#e6ecf2","square2":"#e6ecf2","square2OpacityOffset":0.20},
++            "w":{"square1":"#4a4a4a","square2":"#4a4a4a","square2OpacityOffset":0.20},
++            "u":{"square1":"#0075be","square2":"#0075be","square2OpacityOffset":0.20},
++            "b":{"square1":"#272624","square2":"#272624","square2OpacityOffset":0.15},
++            "r":{"square1":"#ef3827","square2":"#ef3827","square2OpacityOffset":0.20},
++            "g":{"square1":"#007b43","square2":"#007b43","square2OpacityOffset":0.45},
++            "m":{"square1":"#bc932e","square2":"#bc932e","square2OpacityOffset":0.25},
++            "a":{"square1":"#416c77","square2":"#416c77","square2OpacityOffset":0.20},
++            "l":{"square1":"#7c5439","square2":"#7c5439","square2OpacityOffset":0.20},
++        },
++        "packDefaults":{
++            "ability":{"x":175/CARD_WIDTH,"y":1775/CARD_HEIGHT,"width":1660/CARD_WIDTH,"height":280/CARD_HEIGHT},
++        },
++        "borderlessXOffset":0,
++    }
++    if station_meta:
++        state["badgeValues"]=list(station_meta["badge_values"])
++        state["disableFirstAbility"]=bool(station_meta["disable_first_ability"])
++        # Only the genuinely two-region form gets native single-threshold
++        # compaction. The Seriema-style three-region form deliberately does not.
++        if state["disableFirstAbility"]:
++            settings=state["importSettings"]["versionOverrides"]["stationRegular"]
++            state["squares"][1]["y"]=settings["yOffset"]+76
++            state["squares"][1]["height"]=settings["height1"]
++    return state
++
++
++def configure_station_recipe(data,card,type_info):
++    """Convert the ordinary artifact recipe into native Station structure."""
++    apply_station_frame_layer(data,card,type_info)
++    data["version"]="stationRegular"
++    data["onload"]="/js/frames/versionStation.js"
++    data["artBounds"]={"x":0.068,"y":0.027,"width":0.864,"height":0.9000}
++    data["setSymbolBounds"]={"x":0.9213,"y":0.5910,"width":0.12,"height":0.0410,"vertical":"center","horizontal":"right"}
++    data["watermarkBounds"]={"x":0.5,"y":0.7762,"width":0.75,"height":0.2305}
++
++    old_text=data.get("text",{})
++    mana=copy.deepcopy(old_text.get("mana",{}))
++    title=copy.deepcopy(old_text.get("title",{}))
++    type_box=copy.deepcopy(old_text.get("type",{}))
++    pt=copy.deepcopy(old_text.get("pt",{}))
++    mana.update({"name":"Mana Cost","y":0.0613,"width":0.9292,"height":71/2100,"oneLine":True,"size":71/1638,"align":"right","shadowX":-0.001,"shadowY":0.0029,"manaCost":True,"manaSpacing":0})
++    title.update({"name":"Title","x":0.0854,"y":0.0522,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0381})
++    type_box.update({"name":"Type","x":0.0854,"y":0.5664,"width":0.8292,"height":0.0543,"oneLine":True,"font":"belerenb","size":0.0324})
++    pt.update({"name":"Power/Toughness","x":0.7928,"y":2,"width":0.1367,"height":0.0372,"size":0.0372,"font":"belerenbsc","oneLine":True,"align":"center"})
++    data["text"]={
++        "mana":mana,
++        "title":title,
++        "type":type_box,
++        "ability0":{"name":"Ability 1","text":"","x":175/CARD_WIDTH,"y":1775/CARD_HEIGHT,"width":1660/CARD_WIDTH,"height":280/CARD_HEIGHT,"size":0.0295},
++        "ability1":{"name":"Ability 2","text":"","x":175/CARD_WIDTH,"y":0.7,"width":0.7467,"height":0.0972,"size":0.0295},
++        "ability2":{"name":"Ability 3","text":"","x":0.18,"y":0.83,"width":0.7467,"height":0.0972,"size":0.0295},
++        "pt":pt,
++    }
++    data["station"]=station_state(card)
++    return data
+@@ -2626,0 +2759 @@
++STATION_PINLINE_MASK_SRC="/img/frames/m15/regular/m15MaskPinline.png"
+@@ -2629 +2762 @@
+-def _is_station_frame_layer(frame):
++def _is_station_base_overlay(frame):
+@@ -2633 +2766,18 @@
+-    return src.startswith("/img/frames/station/") and "/badges/" not in src and "/pt/" not in src
++    masks=frame.get("masks",[])
++    return (
++        src==STATION_ARTIFACT_FRAME_SRC
++        and not masks
++    )
++
++
++def _is_station_pinline_layer(frame):
++    if not isinstance(frame,dict):
++        return False
++    return any(
++        isinstance(mask,dict) and mask.get("name")=="Pinline"
++        for mask in frame.get("masks",[])
++    ) and "station" in str(frame.get("name","")).lower()
++
++
++def station_pinline_layer(card):
++    """Return the visible Station pinline using our normal card-color policy.
+@@ -2634,0 +2785,10 @@
++    The full Station artifact overlay contains its own neutral pinline, so the
++    colored pinline from the lower artifact frame is hidden. Keep the artifact
++    body underneath, but redraw only the pinline *above* the Station overlay.
++    This mirrors the accent policy used elsewhere: artifact when colorless,
++    the card color when mono, our eased two-color gradient when dual, and the
++    multicolor/gold Station treatment for three or more colors.
++    """
++    codes=colors(card.get("colors"))
++    if len(codes)==2:
++        codes=canonical_dual_color_order(codes)
+@@ -2636,2 +2796,19 @@
+-def apply_station_frame_layer(data,type_info):
+-    """Layer the real Station frame over the existing artifact frame.
++    if not codes:
++        src="/img/frames/station/a.png"
++        name="Artifact Station Pinline"
++    elif len(codes)==1:
++        code=codes[0]
++        src=f"/img/frames/station/{code.lower()}.png"
++        name=f"{COLOR_NAMES[code]} Station Pinline"
++    elif len(codes)==2:
++        src=dual_gradient_fill_src(codes[0],codes[1])
++        name=f"{COLOR_NAMES[codes[0]]}/{COLOR_NAMES[codes[1]]} Gradient Station Pinline"
++    else:
++        src="/img/frames/station/m.png"
++        name="Multicolored Station Pinline"
++
++    return {
++        "name":name,
++        "src":src,
++        "masks":[{"src":STATION_PINLINE_MASK_SRC,"name":"Pinline"}],
++    }
+@@ -2639,4 +2816,10 @@
+-    Spacecraft keep the ordinary artifact recipe as the lower frame. The real
+-    Card Conjurer Station artifact PNG is then added above those artifact frame
+-    pieces. Legendary crown/border-cover layers and the authoritative P/T layer
+-    stay above the Station frame.
++
++def apply_station_frame_layer(data,card,type_info):
++    """Layer the real Station frame over the artifact body, then restore color accents.
++
++    Spacecraft keep the ordinary artifact recipe as the lower frame. The full
++    artifact Station PNG sits above that body, but because that PNG contains a
++    neutral pinline it would hide the colored artifact pinline underneath.
++    Therefore a Station-compatible pinline layer is intentionally drawn above
++    the Station overlay. Legendary crown/border-cover layers stay above both.
++    Station P/T is not a normal frame layer; versionStation.js draws it later.
+@@ -2648,2 +2830,0 @@
+-    if any(_is_station_frame_layer(frame) for frame in frames):
+-        return False
+@@ -2657,2 +2838 @@
+-            _is_pt_frame(frame)
+-            or "legend crown" in name
++            "legend crown" in name
+@@ -2662,4 +2842,3 @@
+-    # Frame order is top-to-bottom. Skip the crown stack and any recipe P/T
+-    # candidate so the Station layer sits above the artifact body but below
+-    # those overlays. try_apply_pt_box() will subsequently remove/re-add the
+-    # single P/T layer at the same visual level.
++    # Frame order is top-to-bottom. Skip the crown stack so the visible Station
++    # pinline and Station overlay remain below the crown but above the artifact
++    # body. The pinline must come first because earlier list entries draw later.
+@@ -2670,6 +2849,19 @@
+-    frames.insert(insert_at,{
+-        "name":"Station Frame (Artifact Overlay)",
+-        "src":STATION_ARTIFACT_FRAME_SRC,
+-        "masks":[],
+-    })
+-    return True
++    changed=False
++    base_index=next((i for i,f in enumerate(frames) if _is_station_base_overlay(f)),None)
++    if base_index is None:
++        frames.insert(insert_at,{
++            "name":"Station Frame (Artifact Overlay)",
++            "src":STATION_ARTIFACT_FRAME_SRC,
++            "masks":[],
++        })
++        base_index=insert_at
++        changed=True
++
++    if not any(_is_station_pinline_layer(frame) for frame in frames):
++        # Insert immediately before the full Station overlay in top-to-bottom
++        # order, making this pinline the visible one without changing its body.
++        base_index=next(i for i,f in enumerate(frames) if _is_station_base_overlay(f))
++        frames.insert(base_index,station_pinline_layer(card))
++        changed=True
++
++    return changed
+@@ -2753,3 +2945,3 @@
+-      * if the upright face has P/T, the symbol's right edge is placed one
+-        ``SET_SYMBOL_TYPE_GAP`` to the left of the upright P/T text/medallion
+-        anchor;
++      * if the upright face has P/T, reserve the medallion's visual overhang
++        beyond its P/T text anchor, then place the symbol one
++        ``SET_SYMBOL_TYPE_GAP`` farther left;
+@@ -2802 +2994,2 @@
+-            symbol_right=pt_left-SET_SYMBOL_TYPE_GAP
++            pt_visual_left=pt_left-FLIP_PT_VISUAL_OVERHANG
++            symbol_right=pt_visual_left-SET_SYMBOL_TYPE_GAP
+@@ -2835 +3028,2 @@
+-            lower_left=bpt_right+SET_SYMBOL_TYPE_GAP
++            pt_visual_right=bpt_right+FLIP_PT_VISUAL_OVERHANG
++            lower_left=pt_visual_right+SET_SYMBOL_TYPE_GAP
+@@ -2954,0 +3149,6 @@
++    if recipe=="station":
++        parsed=parse_station_oracle(card.get("oracle_text",""))
++        if not parsed:
++            raise BuildError(f"{name}: Spacecraft needs Station reminder/threshold oracle text")
++        if len(parsed.get("station_abilities",[])) not in {1,2}:
++            raise BuildError(f"{name}: native Station layout supports one or two thresholds")
+@@ -2993,4 +3193,4 @@
+-    # Spacecraft keep the normal artifact frame as the lower layer, with the
+-    # actual Station artifact frame layered over it. This is type-driven, not
+-    # a named-card special case.
+-    apply_station_frame_layer(data,type_info)
++    # Station recipes already compose the native Station frame over the normal
++    # artifact body. Keep this idempotent call here as an invariant guard.
++    if recipe=="station":
++        apply_station_frame_layer(data,card,type_info)
+@@ -3032,2 +3232,2 @@
+-    station_meta=parse_station_oracle(oracle) if "Spacecraft" in type_info.get("subtypes",set()) else None
+-    oracle_for_render=italicize_dash_labels(station_meta["text"] if station_meta else oracle)
++    station_meta=parse_station_oracle(oracle) if recipe=="station" else None
++    oracle_for_render=italicize_dash_labels(oracle)
+@@ -3045 +3245,7 @@
+-    if recipe=="saga":
++    if recipe=="station":
++        if not station_meta:
++            raise BuildError(f"{name}: Station/Spacecraft needs parseable Station threshold text")
++        for i,ability_text in enumerate(station_meta["ability_texts"]):
++            set_text_if_present(data,f"ability{i}",italicize_dash_labels(ability_text))
++        data["station"]=station_state(card,station_meta)
++    elif recipe=="saga":
+@@ -3104 +3310 @@
+-    if recipe not in {"saga","saga_creature","prepare","flip","planeswalker_regular_3","planeswalker_tall_4"} and isinstance(rs,dict):
++    if recipe not in {"saga","saga_creature","prepare","flip","station","planeswalker_regular_3","planeswalker_tall_4"} and isinstance(rs,dict):
+@@ -3125,2 +3330,0 @@
+-        if station_meta:
+-            apply_station_badges(data,station_meta,canonical_dual_color_order(colors(card.get("colors"))))
+@@ -3160,0 +3365,13 @@
++            # Landscape Station images are Scryfall-style art-window crops. Generic
++            # auto-fit zooms/recenters them into the much taller Station art well
++            # and changes the printed composition, so preserve the calibrated
++            # 156/320/273 placement instead.
++            if recipe=="station":
++                raw=load_bytes(fit_art)
++                size=png_size(raw) or gif_size(raw) or jpeg_size(raw)
++                if size and size[0]>size[1]:
++                    data["artX"]=STATION_LANDSCAPE_ART_X
++                    data["artY"]=STATION_LANDSCAPE_ART_Y
++                    data["artZoom"]=STATION_LANDSCAPE_ART_ZOOM
++                    data["artRotate"]="0"
++                    fixed_fit=True
