@@ -25,7 +25,12 @@ def records():
         {'name':'Esika, God of the Tree','type_line':'Legendary Creature — God','colors':['G'],'mana_cost':'{1}{G}{G}','oracle_text':'Vigilance\n{T}: Add one mana of any color.','power':'1','toughness':'4','image_uris':base['image_uris']},
         {'name':'The Prismatic Bridge','type_line':'Legendary Enchantment','colors':['W','U','B','R','G'],'mana_cost':'{W}{U}{B}{R}{G}','oracle_text':'At the beginning of your upkeep, draw a card.','image_uris':base['image_uris']}]},
       {'name':'Chronicle Test','layout':'saga','type_line':'Enchantment — Saga','colors':['W'],'mana_cost':'{2}{W}','oracle_text':'I — Create a 1/1 white Soldier creature token.\nII — Draw a card.\nIII — Creatures you control get +1/+1 until end of turn.'},
-      {'name':'Walker Test','type_line':'Legendary Planeswalker — Tester','colors':['U'],'mana_cost':'{2}{U}{U}','loyalty':'4','oracle_text':'+1: Draw a card.\n−2: Return target creature to its owner\'s hand.\n−7: Draw seven cards.'}
+      {'name':'Walker Test','type_line':'Legendary Planeswalker — Tester','colors':['U'],'mana_cost':'{2}{U}{U}','loyalty':'4','oracle_text':'+1: Draw a card.\n−2: Return target creature to its owner\'s hand.\n−7: Draw seven cards.'},
+      {'name':'Budoka Gardener // Dokai, Weaver of Life','layout':'flip','type_line':'Creature — Human Monk','card_faces':[
+        {'name':'Budoka Gardener','type_line':'Creature — Human Monk','colors':['G'],'mana_cost':'{1}{G}','power':'2','toughness':'1','oracle_text':'Upright rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']},
+        {'name':'Dokai, Weaver of Life','type_line':'Legendary Creature — Human Monk','colors':['G'],'mana_cost':'','power':'3','toughness':'3','oracle_text':'Rotated lower rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']}]},
+      {'name':'Vehicle Test','type_line':'Artifact — Vehicle','colors':['U','R'],'mana_cost':'{1}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying\nCrew 2'},
+      {'name':'Iron Man, Titan of Innovation','type_line':'Legendary Artifact Creature — Human','colors':['U','R'],'mana_cost':'{3}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying, haste'}
     ]
     return [{**base,**d,'id':f'11111111-1111-4111-8111-{i:012d}','oracle_id':f'22222222-2222-4222-8222-{i:012d}','collector_number':str(i)} for i,d in enumerate(defs,1)]
 def test_real_native_deck_and_dfc_pairing(tmp_path):
@@ -37,7 +42,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
         return transport(url)
     net.transport=remote;app=App(s,net);server=LocalServer(app);threading.Thread(target=server.serve_forever,daemon=True).start()
     a=ingest_image(s,art);symbols=rarity_variants(s,a['id']);back=ingest_image(s,art)
-    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id']}})
+    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id'],'artist':'Wrong Custom Default','modificationCredit':'Modified by ChatGPT'}})
     d=app.ws.prepare(d['id']);errors=[f['name']+': '+f['error'] for c in d['cards'] for f in c['faces'] if f.get('error')]
     assert not errors,errors
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
@@ -48,11 +53,13 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
-            assert ready['summary']['rendered']==8
+            assert ready['summary']['rendered']==11
             for c in ready['cards']:
                 for f in c['faces']:
-                    comp=f['compiled'];render=s.render_get(comp['renderKey']);im=Image.open(s.asset_path(render['asset_id']))
+                    comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' · Modified by ChatGPT'
+                    render=s.render_get(comp['renderKey']);im=Image.open(s.asset_path(render['asset_id']))
                     assert im.size==(comp['data']['width'],comp['data']['height'])
+                    im.crop((0, int(im.height*.93), im.width, im.height)).save(evidence/('credit_'+slug(f['name'])+'.png'))
                     im.thumbnail((300,420));im.save(evidence/('native_'+slug(f['name'])+'.png'))
             order=app.orders.build([d['id']],acknowledge=True)
             esika=next(c for c in ready['cards'] if len(c['faces'])==2)
@@ -60,7 +67,10 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             with zipfile.ZipFile(s.home/'orders'/(order['id']+'.zip')) as z:
                 assert z.read('BACK/000005.png')==s.asset_path(expected).read_bytes()
                 assert z.read('BACK/000001.png')==s.asset_path(back['id']).read_bytes()
-                assert len(z.namelist())==14
+                assert len(z.namelist())==20
+                assert z.read('BACK/000008.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
+            flip=ready['cards'][7]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
+            assert flip['text']['pt']['text']=='2/1' and flip['text']['pt2']['text']=='3/3'
             assert not browser_errors,browser_errors
         finally:
             page.screenshot(path=str(evidence/'native-structural-browser.png'),full_page=True)
