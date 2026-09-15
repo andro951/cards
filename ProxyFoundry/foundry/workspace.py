@@ -207,11 +207,33 @@ class Workspace:
         if not groups or any(g not in GROUP_LABELS for g in groups):raise ValidationError('Choose the structural groups this template supports.')
         mapping=value.get('mapping') or {}
         if not isinstance(mapping,dict) or any(k not in d['text'] or not isinstance(v,str) for k,v in mapping.items()):raise ValidationError('Bind existing text slots to card fields.')
-        return self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
+        if value.get('id') and value.get('revision') is None:
+            raise ValidationError('Reload the template before saving; its revision is required.')
+        result=self.store.put('templates',{'id':value.get('id'),'name':str(value.get('name') or 'Custom template')[:200],'data':d,'groups':groups,'legendary':bool(value.get('legendary')),'mapping':mapping},value.get('revision'))
+        self.invalidate_template(result['id'])
+        return result
+    def invalidate_template(self,ident):
+        # Invalidate only decks referencing this template, never saved order snapshots.
+        with self.store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            rows=db.execute("SELECT id,body FROM documents WHERE kind='decks'").fetchall()
+            for row in rows:
+                d=json.loads(row['body'])
+                uses=ident in d.get('settings',{}).get('templateRules',{}).values() or any(f.get('templateOverride')==ident for c in d.get('cards',[]) for f in c.get('faces',[]))
+                if uses:
+                    d['status']='draft'
+                    db.execute("UPDATE documents SET body=?,rev=rev+1,updated=? WHERE kind='decks' AND id=?",(json.dumps(d,ensure_ascii=False),time.time(),row['id']))
+    def delete_template(self,ident,revision):
+        if revision is None:raise ValidationError('Reload the template before deleting it.')
+        result=self.store.trash('templates',ident,revision)
+        self.invalidate_template(ident)
+        return result
     def template_seed(self,kind='normal'):
-        key={'normal':'creature','land':'land_full_basic','legend-land':'land_full_legendary'}.get(kind,'creature')
-        if key not in native.LAYOUTS:key='creature'
-        return copy.deepcopy(native.LAYOUTS[key]['data'])
+        if kind in {'land','legend-land'}:
+            sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':kind=='legend-land','basic':False,'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}
+            key='land_full_single' if kind=='land' else 'land_full_legendary'
+            return copy.deepcopy(native.recipe_data(key,sem,native.get_type_info(sem))['data'])
+        return copy.deepcopy(native.LAYOUTS['creature']['data'])
     def render_targets(self,deck_ids):
         targets={};cached=0;errors=[]
         for ident in deck_ids:

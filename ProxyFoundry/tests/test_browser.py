@@ -22,7 +22,7 @@ def sf(name='A Test Creature',id='11111111-1111-4111-8111-111111111111'):
         'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/test.jpg','png':'https://cards.scryfall.io/png/front/a/b/test.png'}}
 
 @pytest.fixture
-def browser_app(tmp_path):
+def browser_app(tmp_path,request):
     from playwright.sync_api import sync_playwright
     store=Store(tmp_path/'workspace')
     def transport(url):
@@ -41,14 +41,19 @@ def browser_app(tmp_path):
         page.goto(server.origin);page.locator('#import-deck').wait_for()
         yield app,server,page,errors
         (ROOT/'test-results').mkdir(exist_ok=True)
-        page.screenshot(path=str(ROOT/'test-results'/'browser-last.png'),full_page=True)
+        name=request.node.name
+        page.screenshot(path=str(ROOT/'test-results'/(name+'.png')),full_page=True)
+        (ROOT/'test-results'/(name+'.json')).write_text(json.dumps({'url':page.url,'body':page.locator('body').inner_text(),'errors':errors,'jobs':app.jobs.jobs},default=str,indent=2))
+        (ROOT/'test-results'/(name+'.log')).write_text((app.store.home/'logs/app.log').read_text())
         browser.close()
     server.shutdown();server.server_close();app.close()
 
 def test_browser_import_setup_edit_template_and_mobile(browser_app):
     app,server,page,errors=browser_app
     page.click('#import-deck');page.fill('#import-name','Browser deck');page.fill('#import-source','2 A Test Creature');page.click('#do-import')
-    page.locator('#deck-name').wait_for();assert page.input_value('#deck-name')=='Browser deck'
+    page.locator('#deck-name,.form-error,#retry-page').first.wait_for()
+    assert page.locator('#deck-name').count(),page.locator('body').inner_text()
+    assert page.input_value('#deck-name')=='Browser deck'
     with page.expect_file_chooser() as chooser:page.click('#generate-symbols')
     chooser.value.set_files({'name':'symbol.png','mimeType':'image/png','buffer':png((160,160))})
     expect(page.locator('.symbol-upload img')).to_have_count(4)
@@ -111,6 +116,7 @@ def test_real_cardconjurer_roundtrip(tmp_path):
             before=len(app.runtime.requested)
             page.click('#generate-deck');page.wait_for_timeout(2500)
             assert len(app.runtime.requested)==before,'Unchanged front was not reused from render cache'
+            (ROOT/'test-results').mkdir(exist_ok=True)
             im.thumbnail((502,703));im.save(ROOT/'test-results/native-card-preview.png')
             (ROOT/'test-results/native-runtime.json').write_text(json.dumps(app.runtime.diagnostic(),indent=2))
             assert not errors,errors

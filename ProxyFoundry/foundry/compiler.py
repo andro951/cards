@@ -80,6 +80,10 @@ class Compiler:
         if choice in {x['id'] for x in BUILTINS}:
             if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
             d0=choose_builtin(sem,choice)
             try:
                 data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']

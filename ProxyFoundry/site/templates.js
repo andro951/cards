@@ -19,7 +19,7 @@ export async function showTemplates(){
 }
 async function createFromSeed(kind='normal'){
   const data=await api('/api/templates/seed?kind='+encodeURIComponent(kind));
-  editTemplate({name:'My '+({normal:'classic card',land:'full-art land','legend-land':'crowned full art'}[kind]||'card')+' style',data,groups:kind==='land'?['standard','land','basic-land']:ordinary,legendary:kind!=='land',mapping:{}});
+  editTemplate({name:'My '+({normal:'classic card',land:'full-art land','legend-land':'crowned full art'}[kind]||'card')+' style',data,groups:kind==='legend-land'?ordinary:['standard','land','basic-land'],legendary:kind==='legend-land',mapping:{}});
 }
 async function uploadTemplate(){
   const f=await pickFile('.cardconjurer,.json');if(!f)return;if(f.size>20*1024**2)throw new Error('Template file limit is 20 MB.');
