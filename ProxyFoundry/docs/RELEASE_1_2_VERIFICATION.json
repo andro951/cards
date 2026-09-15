@@ -1,0 +1,52 @@
+{
+  "application": "Proxy Foundry",
+  "version": "1.2.0",
+  "cardToolsVersion": 58,
+  "testedSourceCommit": "ea2f2e6e7cc9a5b9972a16425e2ca042b5af1d20",
+  "repository": "andro951/cards",
+  "workflowRun": 35035650027,
+  "workflowJob": 104604053921,
+  "artifactId": 10423585758,
+  "artifactSha256": "ab05c2ce35b98f87bdeb60929675d77f47bcb6982b10d3c8d8676ff462f12727",
+  "testResult": {
+    "cases": 153,
+    "passed": 151,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2,
+    "seconds": 250.202,
+    "enabled": ["PF_BROWSER=1", "PF_LIVE_CC=1"],
+    "skippedReason": "Optional offline-only DOM tests; both also passed in a separate local run."
+  },
+  "additionalLocalChecks": {
+    "coreTestsPassed": 136,
+    "offlineDomTestsPassed": 2,
+    "printHelperDomTestsPassed": 5,
+    "javascriptSyntax": "passed"
+  },
+  "integrity": {
+    "vendorSourceFilesByteIdenticalToSuppliedV58": 10,
+    "changedVendorFilesSinceV54": ["pipeline/card_data_to_cardconjurer.py"],
+    "allFourHelperFilesByteIdenticalToRelease1_1": true,
+    "artistResolverAndCreditUiByteIdenticalToRelease1_1": true
+  },
+  "stationVerification": {
+    "nativeStationVariants": 4,
+    "ordinaryCreatureBetweenStations": 1,
+    "badgeDimensions": [151.2, 151.2],
+    "badgeAlpha": 1,
+    "ptDimensions": [306, 148],
+    "ptAlpha": 1,
+    "nativeScriptSha256": "481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21",
+    "nativeRendering": true,
+    "syntheticArtworkAndCardText": true
+  },
+  "scope": {
+    "realHttpBrowserAndNativeRenderer": true,
+    "installedMv3Extension": true,
+    "merchantEditor": "Controlled fixture, not live checkout",
+    "windowsBatExecuted": false,
+    "purchaseOrPaymentPerformed": false
+  },
+  "note": "This verification document was added after the tested commit; executable source is unchanged."
+}
