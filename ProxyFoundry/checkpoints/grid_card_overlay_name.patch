@@ -1,0 +1,20 @@
+diff --git a/site/deck.js b/site/deck.js
+--- a/site/deck.js
++++ b/site/deck.js
+@@ -66,2 +66,1 @@
+-    const displayedCredit=f.compiled?.credit;
+-    return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button><h3 title="${esc(c.name)}">${esc(c.name)}</h3>${displayedCredit?`<div class="card-credit" title="${esc(displayedCredit.display)}">${esc(displayedCredit.display)}</div>`:''}<div class="card-item-footer"><small>${esc((c.scryfall.set||'').toUpperCase())} ${esc(c.scryfall.collector_number||'')} · ${esc(f.compiled?.render?'Rendered':'Not rendered')}</small></div></article>`;
++    return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span><span class="card-name-pill" title="${esc(c.name)}">${esc(c.name)}</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button></article>`;
+diff --git a/site/forge-theme.css b/site/forge-theme.css
+--- a/site/forge-theme.css
++++ b/site/forge-theme.css
+@@ -86,1 +86,2 @@
+ .quantity-pill{border-color:#8b5b35!important;background:#160e08e8!important}.warn-pill{background:#743d11!important;color:#ffd28f!important}
++.card-name-pill{position:absolute;z-index:4;top:8px;left:50px;right:34px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 8px;border:1px solid #8b5b35;border-radius:6px;background:#160e08e8;color:#f3dfbd;font-size:10px;font-weight:650;line-height:1.25;text-align:left;pointer-events:none;box-shadow:0 2px 8px #0007}
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -108,1 +108,3 @@
+     assert page.locator('.flip-button').count()==0
++    expect(card.locator('.card-name-pill')).to_have_text('A Test Creature')
++    assert card.locator('h3,.card-credit,.card-item-footer').count()==0
