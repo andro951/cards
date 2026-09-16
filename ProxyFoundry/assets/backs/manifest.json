@@ -4,11 +4,17 @@
   "files": {
     "forge_default.png": {
       "sha256": "43aa4e050a84cfbc6c33fee88b3254b4ad69888b12da527c14c1a407912ba739",
-      "size": [1061, 1482]
+      "size": [
+        1061,
+        1482
+      ]
     },
     "forge_blank.png": {
       "sha256": "8bc1139dfb0f392390ed213987508a6a914f5535034b9f868d573b9afd657a3b",
-      "size": [1055, 1491]
+      "size": [
+        1055,
+        1491
+      ]
     }
   }
 }
