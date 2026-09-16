@@ -11,10 +11,10 @@ def test_complete_release_contains_no_runtime_cache_or_fonts(tmp_path):
     with zipfile.ZipFile(out) as z:
         assert z.testzip() is None
         names=z.namelist()
-        assert {p for p in names if p.endswith('.png')}=={'ProxyFoundry/assets/backs/forge_default.png','ProxyFoundry/assets/backs/forge_blank.png'}
-        assert all('ProxyFoundry/'+p in names for p in required)
+        assert {p for p in names if p.endswith('.png')}=={'BulkProxyForge/assets/backs/forge_default.png','BulkProxyForge/assets/backs/forge_blank.png'}
+        assert all('BulkProxyForge/'+p in names for p in required)
         assert not any(p.lower().endswith(('.ttf','.otf','.woff','.woff2','.pem','.crx','.pyc')) for p in names)
         assert not any('/test-results/' in p or '/.git/' in p or '/checkpoints/' in p for p in names)
-        saved=json.loads(z.read('ProxyFoundry/RELEASE_MANIFEST.json'))
+        saved=json.loads(z.read('BulkProxyForge/RELEASE_MANIFEST.json'))
         assert saved==manifest
-        for name,digest in saved['files'].items():assert hashlib.sha256(z.read('ProxyFoundry/'+name)).hexdigest()==digest
+        for name,digest in saved['files'].items():assert hashlib.sha256(z.read('BulkProxyForge/'+name)).hexdigest()==digest
