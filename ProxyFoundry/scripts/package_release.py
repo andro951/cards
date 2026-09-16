@@ -22,13 +22,13 @@ def build(destination):
     for name in BACK_FILES:
         assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==back_manifest['files'][Path(name).name]['sha256']
     assert all(p.suffix.lower() not in {'.ttf','.otf','.woff','.woff2','.pem','.crx'} for p in files)
-    manifest={'application':'Proxy Foundry','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+    manifest={'application':'Bulk Proxy Forge','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
     with zipfile.ZipFile(destination,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
-        for p in files:z.write(p,Path('ProxyFoundry')/p.relative_to(ROOT))
-        z.writestr('ProxyFoundry/RELEASE_MANIFEST.json',json.dumps(manifest,indent=2))
+        for p in files:z.write(p,Path('BulkProxyForge')/p.relative_to(ROOT))
+        z.writestr('BulkProxyForge/RELEASE_MANIFEST.json',json.dumps(manifest,indent=2))
     with zipfile.ZipFile(destination) as z:assert z.testzip() is None
     return manifest
 if __name__=='__main__':
     import sys
-    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_3.zip')
+    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'BulkProxyForge_1_3.zip')
     m=build(destination);print(f'{destination}: {len(m["files"])} files; {destination.stat().st_size:,} bytes')
