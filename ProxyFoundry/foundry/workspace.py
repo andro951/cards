@@ -66,8 +66,7 @@ class Workspace:
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
                 if comp:
                     comp['render']=r
-                    pipeline=comp.get('pipelineVersion',comp.get('generationVersion'))
-                    if pipeline!=PIPELINE_VERSION:
+                    if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
