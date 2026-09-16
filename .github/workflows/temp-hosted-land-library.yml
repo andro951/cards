@@ -16,9 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          sparse-checkout: |
-            ProxyFoundry
-            .github/workflows/proxy-foundry-ci.yml
+          sparse-checkout: ProxyFoundry
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -73,11 +71,6 @@ jobs:
               "The optional full-art land library is **unset by default**. Add its GitHub folder in Settings and enable it for a deck. It expects `card_name.png`. Individual art overrides and the main custom-art folder take priority.\n",
               "The optional full-art land library is hosted by Bulk Proxy Forge. Enable it with the single checkbox in a deck's Artwork setup; matching filenames in `full_art_lands/` are used automatically. Individual art overrides and the main custom-art folder take priority.\n")
 
-          ci='.github/workflows/proxy-foundry-ci.yml'
-          replace(ci,
-              "                  if not p.is_file() or any(x in {'.venv', '__pycache__', '.pytest_cache', 'workspace', '_work', '.cache', 'node_modules', 'checkpoints'} for x in p.parts):\n",
-              "                  if not p.is_file() or any(x in {'.venv', '__pycache__', '.pytest_cache', 'workspace', '_work', '.cache', 'node_modules', 'checkpoints', 'full_art_lands'} for x in p.parts):\n")
-
           test=Path('ProxyFoundry/tests/test_hosted_land_library.py')
           test.write_text('''from pathlib import Path\n\nfrom foundry.workspace import DEFAULT_SETTINGS, FRONT_SETTINGS, HOSTED_LAND_LIBRARY\n\n\ndef test_land_library_is_app_hosted_and_not_user_configurable():\n    assert HOSTED_LAND_LIBRARY == "https://github.com/andro951/cards/tree/main/ProxyFoundry/full_art_lands"\n    assert "landLibrary" not in DEFAULT_SETTINGS\n    assert "landLibrary" not in FRONT_SETTINGS\n    assert Path("full_art_lands").is_dir()\n    assert any(p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"} for p in Path("full_art_lands").iterdir())\n\n\ndef test_land_library_ui_is_one_checkbox_only():\n    setup=Path("site/setup.js").read_text(encoding="utf-8")\n    settings=Path("site/settings.js").read_text(encoding="utf-8")\n    workspace=Path("foundry/workspace.py").read_text(encoding="utf-8")\n    assert setup.count('id="use-land-library"') == 1\n    assert 'id="land-library"' not in setup\n    assert "GitHub land-art folder" not in setup\n    assert "Optional custom full-art land library" not in setup\n    assert "global-land-library" not in settings\n    assert "s.get('landLibrary')" not in workspace\n    assert "self.global_settings().get('landLibrary')" not in workspace\n''',encoding='utf-8')
           PY
@@ -91,6 +84,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ProxyFoundry/foundry/workspace.py ProxyFoundry/foundry/backup.py ProxyFoundry/site/setup.js ProxyFoundry/site/settings.js ProxyFoundry/README.md ProxyFoundry/tests/test_hosted_land_library.py .github/workflows/proxy-foundry-ci.yml
+          git add ProxyFoundry/foundry/workspace.py ProxyFoundry/foundry/backup.py ProxyFoundry/site/setup.js ProxyFoundry/site/settings.js ProxyFoundry/README.md ProxyFoundry/tests/test_hosted_land_library.py
           git commit -m 'Use hosted full-art land library'
           git push origin HEAD:main
