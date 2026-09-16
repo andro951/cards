@@ -1,0 +1,94 @@
+name: Apply template cache versions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-template-cache-versions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: ProxyFoundry
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Patch pipeline and template cache versions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing expected text in {path}: {old[:180]!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          domain='ProxyFoundry/foundry/domain.py'
+          replace(domain,
+              "GENERATION_VERSION='card-tools-v58/credits-v1'\n",
+              "# Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.\nPIPELINE_VERSION='card-tools-v58/credits-v1'\n# Backward-compatible name used by saved compiled faces and older callers.\nGENERATION_VERSION=PIPELINE_VERSION\n")
+          replace(domain,
+              "def render_key(data,art_digest=''):\n    return stable_hash({'renderer':CC_COMMIT,'compiler':GENERATION_VERSION,'adapter':4,'art':art_digest,'data':data})\n",
+              "def render_key(data,art_digest='',template_version=1):\n    payload={'renderer':CC_COMMIT,'compiler':PIPELINE_VERSION,'adapter':4,'art':art_digest,'data':data}\n    # Version 1 is the pre-versioning baseline, so existing valid render-cache keys\n    # remain usable. Bumping only one template to 2+ salts only that template's cards.\n    if template_version!=1:payload['template']=template_version\n    return stable_hash(payload)\n")
+
+          compiler='ProxyFoundry/foundry/compiler.py'
+          replace(compiler,
+              "from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION\n",
+              "from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash\n")
+          replace(compiler,
+              "NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}\n\n\n",
+              "NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}\n\n# Built-in cache versions are intentionally scoped. For Automatic, bump only the\n# affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).\n# Version 1 preserves the historical render key, so adding this system does not\n# itself invalidate existing finished cards.\nAUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}\nBUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}\n\n\n")
+          replace(compiler,
+              "class Compiler:\n    def __init__(self,store):self.store=store\n    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):\n",
+              "class Compiler:\n    def __init__(self,store):self.store=store\n    def template_identity(self,group,choice):\n        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)\n        if choice in BUILTIN_TEMPLATE_VERSIONS:\n            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version\n        t=self.store.get('templates',choice)\n        if not t:raise ValidationError('The selected template was deleted.')\n        # Custom template data is already embedded in compiled CardConjurer data,\n        # so its fingerprint is for stale-template detection; render-key salting\n        # stays at baseline v1 to avoid redundant cache invalidation.\n        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})\n        return 'custom:'+choice,fingerprint,1\n    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):\n")
+          replace(compiler,
+              "        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]\n",
+              "        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]\n        template_key,template_version,template_cache_version=self.template_identity(group,choice)\n")
+          replace(compiler,
+              "        key=render_key(data,art_id);warning=crop_metrics(art['width'],art['height'],data)\n",
+              "        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)\n")
+          replace(compiler,
+              "        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':GENERATION_VERSION}\n",
+              "        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'pipelineVersion':PIPELINE_VERSION,'generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}\n")
+
+          workspace='ProxyFoundry/foundry/workspace.py'
+          replace(workspace,
+              "                if comp:\n                    comp['render']=r\n                    if comp.get('generationVersion')!=GENERATION_VERSION:\n                        d['status']='draft';d['upgradeRequired']=True\n",
+              "                if comp:\n                    comp['render']=r\n                    pipeline=comp.get('pipelineVersion',comp.get('generationVersion'))\n                    if pipeline!=PIPELINE_VERSION:\n                        d['status']='draft';d['upgradeRequired']=True\n                    else:\n                        choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')\n                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice)\n                        except ValidationError:\n                            d['status']='draft'\n                        else:\n                            old_key=comp.get('templateKey');old_version=comp.get('templateVersion')\n                            # Legacy compiled faces predate template version fields. They are\n                            # compatible with built-in v1 and with custom templates whose edits\n                            # already use invalidate_template(). Future v2+ bumps become stale.\n                            if old_key is None:\n                                if template_key.startswith(('auto:','builtin:')) and template_version!=1:d['status']='draft'\n                            elif old_key!=template_key or old_version!=template_version:d['status']='draft'\n")
+          replace(workspace,
+              "                        comp['renderKey']=render_key(comp['data'],art_id);comp['render']=self.store.render_get(comp['renderKey'])\n",
+              "                        comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])\n")
+
+          readme='ProxyFoundry/README.md'
+          replace(readme,
+              "The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.\n",
+              "The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Finished fronts are keyed by exact compiled data, artwork, the common pipeline version, and a scoped built-in template version. Automatic template versions are per structural group (for example Station vs Planeswalker), so a template-only change can invalidate only cards using that template; pipeline-version changes invalidate all affected compiled fronts. Custom template edits already invalidate only decks that reference that template, and their template data is part of the render key. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.\n")
+
+          test_domain='ProxyFoundry/tests/test_domain.py'
+          replace(test_domain,
+              "def test_render_hash_quantity_independent():\n    cc = {'artSource':'image-a','frames':[]}\n    a = render_key(cc,'a')\n    assert a == render_key(copy.deepcopy(cc),'a')\n    assert a != render_key(cc,'b')\n",
+              "def test_render_hash_quantity_independent():\n    cc = {'artSource':'image-a','frames':[]}\n    a = render_key(cc,'a')\n    assert a == render_key(copy.deepcopy(cc),'a')\n    assert a == render_key(copy.deepcopy(cc),'a',1)  # v1 preserves historical cache keys\n    assert a != render_key(cc,'b')\n    assert a != render_key(cc,'a',2)\n")
+
+          Path('ProxyFoundry/tests/test_template_versions.py').write_text('''from foundry.compiler import Compiler,AUTO_TEMPLATE_VERSIONS,BUILTIN_TEMPLATE_VERSIONS\nfrom foundry.domain import PIPELINE_VERSION,GENERATION_VERSION,render_key\nfrom foundry.storage import Store\n\n\ndef test_pipeline_version_keeps_generation_compatibility_name():\n    assert PIPELINE_VERSION == GENERATION_VERSION\n\n\ndef test_auto_template_version_is_scoped_to_structural_group(tmp_path,monkeypatch):\n    compiler=Compiler(Store(tmp_path))\n    station=compiler.template_identity('station','auto')\n    planeswalker=compiler.template_identity('planeswalker','auto')\n    assert station[1]==1 and planeswalker[1]==1\n    monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',2)\n    station2=compiler.template_identity('station','auto')\n    planeswalker2=compiler.template_identity('planeswalker','auto')\n    assert station2[1]==2 and station2[2]==2\n    assert planeswalker2==planeswalker\n    data={'artSource':'/api/assets/art','frames':[]}\n    assert render_key(data,'art',station[2]) != render_key(data,'art',station2[2])\n    assert render_key(data,'art',planeswalker[2]) == render_key(data,'art',planeswalker2[2])\n\n\ndef test_named_builtin_template_versions_are_independent(tmp_path,monkeypatch):\n    compiler=Compiler(Store(tmp_path))\n    normal=compiler.template_identity('standard','normal')\n    land=compiler.template_identity('land','land')\n    monkeypatch.setitem(BUILTIN_TEMPLATE_VERSIONS,'normal',2)\n    assert compiler.template_identity('standard','normal')[1]==2\n    assert compiler.template_identity('land','land')==land\n    assert normal[0]=='builtin:normal'\n\n\ndef test_custom_template_fingerprint_changes_only_for_edited_template(tmp_path):\n    store=Store(tmp_path);compiler=Compiler(store)\n    base={'width':1000,'height':1400,'frames':[],'text':{'title':{'text':''},'type':{'text':''}}}\n    one=store.put('templates',{'name':'One','data':base,'groups':['standard'],'legendary':True,'mapping':{}})\n    two=store.put('templates',{'name':'Two','data':base,'groups':['standard'],'legendary':True,'mapping':{}})\n    one_before=compiler.template_identity('standard',one['id']);two_before=compiler.template_identity('standard',two['id'])\n    changed=dict(one);changed['mapping']={'title':'title'};store.put('templates',changed,one['revision'])\n    one_after=compiler.template_identity('standard',one['id']);two_after=compiler.template_identity('standard',two['id'])\n    assert one_after[1]!=one_before[1]\n    assert two_after==two_before\n    assert one_after[2]==1  # custom data itself is already part of the render key\n''',encoding='utf-8')
+          PY
+      - name: Test versioned cache behavior
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q tests/test_template_versions.py tests/test_domain.py tests/test_app_rules.py tests/test_native_deck.py
+      - name: Commit app change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/foundry/domain.py ProxyFoundry/foundry/compiler.py ProxyFoundry/foundry/workspace.py ProxyFoundry/README.md ProxyFoundry/tests/test_domain.py ProxyFoundry/tests/test_template_versions.py
+          git commit -m 'Add scoped template cache versions'
+          git push origin HEAD:main
