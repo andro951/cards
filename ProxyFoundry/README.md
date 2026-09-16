@@ -77,7 +77,7 @@ The existing pinned GitHub core predates Station. For Stations only, the app add
 
 The app fetches individual code/assets from pinned CardConjurer commits and runs native `loadCard()` / `cardCanvas` rendering in a separate-origin local frame. The full upstream repository archive and thumbnail catalogue are never downloaded. Only completed, correctly sized PNGs enter the render cache.
 
-The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.
+The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Finished fronts are keyed by exact compiled data, artwork, the common pipeline version, and a scoped built-in template version. Automatic template versions are per structural group (for example Station vs Planeswalker), so a template-only change can invalidate only cards using that template; pipeline-version changes invalidate all affected compiled fronts. Custom template edits already invalidate only decks that reference that template, and their template data is part of the render key. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.
 
 Every physical card has explicit matching filenames, for example `FRONT/000001.png` and `BACK/000001.png`. Real reverse faces, deck-default backs, individual overrides and quantities are included. Multiple selected decks become one order ZIP. Saved order packages are immutable snapshots and do not change when a deck is later edited.
 

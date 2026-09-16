@@ -1,7 +1,7 @@
 """Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
 import copy,math
-from .domain import ValidationError,ORDINARY_GROUPS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION
+from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
 from .legacy import compiler as native,ingest
 from .images import data_uri
 from .credits import resolve_credit
@@ -12,6 +12,13 @@ BUILTINS=[
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
 NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
+
+# Built-in cache versions are intentionally scoped. For Automatic, bump only the
+# affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
+# Version 1 preserves the historical render key, so adding this system does not
+# itself invalidate existing finished cards.
+AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
+BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 
 def intentional_art_window_crop(group,choice,art,options,settings):
@@ -94,6 +101,17 @@ def custom_data(template,sem,other_faces=None):
 
 class Compiler:
     def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
         for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
@@ -112,6 +130,7 @@ class Compiler:
         artist=credit['display']
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
         if choice in {x['id'] for x in BUILTINS}:
             if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
@@ -143,7 +162,7 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
-        key=render_key(data,art_id);warning=crop_metrics(art['width'],art['height'],data)
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if intentional_art_window_crop(group,choice,art,options,settings):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
-        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':GENERATION_VERSION}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'pipelineVersion':PIPELINE_VERSION,'generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}

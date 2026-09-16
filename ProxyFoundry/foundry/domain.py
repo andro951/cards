@@ -15,7 +15,10 @@ COMPAT_REPO='d1rtyskittl3z/Card-Cipherist'
 SCHEMA_VERSION=1
 STATION_SCRIPT_URL='https://cardconjurer.app/js/frames/versionStation.js'
 STATION_SCRIPT_SHA256='481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21'
-GENERATION_VERSION='card-tools-v58/credits-v1'
+# Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.
+PIPELINE_VERSION='card-tools-v58/credits-v1'
+# Backward-compatible name used by saved compiled faces and older callers.
+GENERATION_VERSION=PIPELINE_VERSION
 class ValidationError(ValueError): pass
 class ConflictError(ValidationError): pass
 
@@ -127,8 +130,12 @@ def crop_metrics(iw,ih,data,threshold=.20):
         vx=max(0.,min(ax+iw*z,wx+bw)-max(ax,wx));vy=max(0.,min(ay+ih*z,wy+bh)-max(ay,wy))
         lost_x=max(lost_x,1-vx/(iw*z));lost_y=max(lost_y,1-vy/(ih*z))
     return {'width':iw,'height':ih,'windowWidth':round(bw),'windowHeight':round(bh),'cropX':round(lost_x,6),'cropY':round(lost_y,6),'warning':max(lost_x,lost_y)>threshold+1e-9,'threshold':threshold}
-def render_key(data,art_digest=''):
-    return stable_hash({'renderer':CC_COMMIT,'compiler':GENERATION_VERSION,'adapter':4,'art':art_digest,'data':data})
+def render_key(data,art_digest='',template_version=1):
+    payload={'renderer':CC_COMMIT,'compiler':PIPELINE_VERSION,'adapter':4,'art':art_digest,'data':data}
+    # Version 1 is the pre-versioning baseline, so existing valid render-cache keys
+    # remain usable. Bumping only one template to 2+ salts only that template's cards.
+    if template_version!=1:payload['template']=template_version
+    return stable_hash(payload)
 
 def validate_template(entry):
     if isinstance(entry,list):

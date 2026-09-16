@@ -66,8 +66,22 @@ class Workspace:
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
                 if comp:
                     comp['render']=r
-                    if comp.get('generationVersion')!=GENERATION_VERSION:
+                    pipeline=comp.get('pipelineVersion',comp.get('generationVersion'))
+                    if pipeline!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
+                    else:
+                        choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
+                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice)
+                        except ValidationError:
+                            d['status']='draft'
+                        else:
+                            old_key=comp.get('templateKey');old_version=comp.get('templateVersion')
+                            # Legacy compiled faces predate template version fields. They are
+                            # compatible with built-in v1 and with custom templates whose edits
+                            # already use invalidate_template(). Future v2+ bumps become stale.
+                            if old_key is None:
+                                if template_key.startswith(('auto:','builtin:')) and template_version!=1:d['status']='draft'
+                            elif old_key!=template_key or old_version!=template_version:d['status']='draft'
                 if r:ready+=1
                 if (comp.get('crop') or {}).get('warning') or comp.get('flags'):warns+=1
         d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns}
@@ -223,7 +237,7 @@ class Workspace:
                     comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                     if c.get('tokenSpec'):
                         entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
-                        comp['renderKey']=render_key(comp['data'],art_id);comp['render']=self.store.render_get(comp['renderKey'])
+                        comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])
                     comp['artOrigin']=origin;comp['exportArtUrl']=url;f['compiled']=comp
                 except (ValidationError,native.BuildError,ValueError,OSError) as e:
                     f['error']=str(e);f.pop('compiled',None)

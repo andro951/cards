@@ -59,7 +59,9 @@ def test_render_hash_quantity_independent():
     cc = {'artSource':'image-a','frames':[]}
     a = render_key(cc,'a')
     assert a == render_key(copy.deepcopy(cc),'a')
+    assert a == render_key(copy.deepcopy(cc),'a',1)  # v1 preserves historical cache keys
     assert a != render_key(cc,'b')
+    assert a != render_key(cc,'a',2)
 
 
 def test_store_revisions_and_trash(tmp_path):
