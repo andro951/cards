@@ -104,7 +104,7 @@ async function inspect(deck,card,index=0){
   $('#cancel-card').onclick=closeModal;
   $('#face-art').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;artOverride=(await uploadImage(file)).id;changedArt=true;fit={};$('#face-art-state').textContent='Custom art: '+file.name;if($('#inspector-image'))$('#inspector-image').src=asset(artOverride);creditControls.refresh();});
   $('#clear-face-art').onclick=()=>{artOverride=null;changedArt=true;fit={};$('#face-art-state').textContent='Using deck source after regeneration';creditControls.refresh();};
-  $('#face-back').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;backOverride=(await uploadImage(file)).id;backDesignOverride={mode:'custom'};$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent='Custom back: '+file.name;});
+  $('#face-back').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;backOverride=(await uploadImage(file,{back:true})).id;backDesignOverride={mode:'custom'};$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent='Custom back: '+file.name;});
   $('#clear-face-back').onclick=()=>{backOverride=null;backDesignOverride=null;$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent=c.faces.length===2?'Actual reverse will be used':'Deck default back will be used';};
   $('#face-back-designer').onclick=()=>{
     const target=$('#face-back-picker');target.classList.remove('hidden');

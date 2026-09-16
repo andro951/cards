@@ -23,6 +23,11 @@ def png(color=(100, 140, 200, 180), size=(160, 160)):
     return out.getvalue()
 
 
+def padded_png(size, visible_box, color=(100,140,200,180)):
+    out=io.BytesIO();im=Image.new('RGBA',size,(0,0,0,0))
+    im.paste(color,visible_box);im.save(out,'PNG');return out.getvalue()
+
+
 class BundleRemote:
     """A bounded public GitHub-like transport; unexpected requests fail the test."""
     def __init__(self, *, art=True, folder='set_symbols', single=False, back=None,
@@ -126,6 +131,16 @@ def test_single_symbol_uses_existing_color_generator(tmp_path):
     assert 'not recommended' in result['warnings'][0]
     for asset in result['settings']['symbols'].values():
         assert decode_image(ws.store.asset_path(asset).read_bytes()).getchannel('A').getextrema() == (180, 180)
+
+
+def test_github_symbols_and_custom_back_trim_fully_transparent_padding(tmp_path):
+    remote=BundleRemote(art=False,back='custom')
+    remote.images[remote.child('set_symbols/common.png')]=padded_png((160,160),(20,30,120,110))
+    remote.images[remote.child('back.png')]=padded_png((400,600),(25,40,325,460),(15,40,80,255))
+    ws=workspace(tmp_path,remote);result=import_github_setup(ws,{'url':remote.url})
+    common=decode_image(ws.store.asset_path(result['settings']['symbols']['common']).read_bytes())
+    back=decode_image(ws.store.asset_path(result['settings']['backAsset']).read_bytes())
+    assert common.size==(100,80) and back.size==(300,420)
 
 
 def test_precedence_four_images_over_single_and_complete_back_over_icon(tmp_path):

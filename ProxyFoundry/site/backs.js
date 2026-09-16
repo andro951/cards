@@ -13,7 +13,7 @@ export function mountBackPicker(root,initial,onChange,{onBusy=()=>{},allowNone=f
     if(!file||busy)return;
     busy=true;warnings=[];onBusy(true);draw();
     try {
-      const image=await uploadImage(file);
+      const image=await uploadImage(file,{back:kind==='custom'});
       if(kind==='icon'){
         const output=await api('/api/backs/compose',{iconAsset:image.id});
         warnings=output.placement.warnings||[];
@@ -28,12 +28,12 @@ export function mountBackPicker(root,initial,onChange,{onBusy=()=>{},allowNone=f
     root.innerHTML=`<div class="back-mode-choices" role="group" aria-label="Card-back design">
       <button type="button" class="back-mode ${selected==='default'?'selected':''}" data-back-action="default" aria-pressed="${selected==='default'}" ${busy?'disabled':''}><b>Default back</b><small>Dragon & anvil · ready to use</small></button>
       <button type="button" class="back-mode ${isIcon?'selected':''}" data-back-action="icon" aria-pressed="${isIcon}" ${busy?'disabled':''}><b>${isIcon?'Change icon':'Upload icon'}</b><small>Your logo in a protected square</small></button>
-      <button type="button" class="back-mode ${selected==='custom'?'selected':''}" data-back-action="custom" aria-pressed="${selected==='custom'}" ${busy?'disabled':''}><b>Upload full back</b><small>Use your entire image as-is</small></button>
+      <button type="button" class="back-mode ${selected==='custom'?'selected':''}" data-back-action="custom" aria-pressed="${selected==='custom'}" ${busy?'disabled':''}><b>Upload full back</b><small>Only fully transparent edge padding is trimmed</small></button>
     </div>
     <div class="back-design-preview"><div class="back-preview-canvas" style="aspect-ratio:${isIcon?bw+'/ '+bh:'auto'}">
       ${url?`<img src="${esc(url)}" alt="${esc(info)}" data-back-preview>`:'<div class="back-none-preview">Choose a back</div>'}
       ${isIcon?`<span class="back-icon-guide hidden" style="left:${100*box.x/bw}%;top:${100*box.y/bh}%;width:${100*box.size/bw}%;height:${100*box.size/bh}%" aria-hidden="true"></span>`:''}
-      </div><div class="back-preview-detail"><b>${esc(info)}</b><p>${isIcon?'Fits inside the square without cropping or stretching. Only fully transparent padding is trimmed.':'The uploaded design is preserved. Deck backs do not replace a real double-faced reverse.'}</p>
+      </div><div class="back-preview-detail"><b>${esc(info)}</b><p>${isIcon?'Fits inside the square without cropping or stretching. Only fully transparent padding is trimmed.':'Only fully transparent edge padding is trimmed. Otherwise the uploaded design is preserved. Deck backs do not replace a real double-faced reverse.'}</p>
       ${isIcon?`<label class="check-line"><input type="checkbox" data-back-guide><span>Show safe icon area<small>${box.size} × ${box.size} pixels · preview only</small></span></label>`:''}
       ${url?`<a class="button quiet small" href="${esc(url)}" download="Bulk_Proxy_Forge_Back.png">Save this back PNG</a>`:''}
       ${allowNone?'<button type="button" class="button quiet small" data-back-action="none">Clear selection</button>':''}

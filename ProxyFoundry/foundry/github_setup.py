@@ -127,7 +127,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     total = (4 if symbol_rows else 1) + bool(back or icon)
     done = 0
 
-    def download(row):
+    def download(row, *, trim_transparent_padding=False):
         nonlocal done
         check_cancel()
         progress(done, total, 'Importing ' + row['name'])
@@ -135,16 +135,16 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
         check_cancel()
         try:
-            image = ingest_image(store, raw)
+            image = ingest_image(store, raw, trim_transparent_padding=trim_transparent_padding)
         except ValidationError as exc:
             raise ValidationError(row['name'] + ': ' + str(exc)) from exc
         done += 1
         progress(done, total, 'Imported ' + row['name'])
         return image
 
-    symbols = {r: download(row)['id'] for r, row in symbol_rows.items()} if symbol_rows else rarity_variants(store, download(single)['id'])
+    symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()} if symbol_rows else rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
     if back:
-        back_settings = {'backAsset': download(back)['id'], 'backDesign': {'mode': 'custom'}}
+        back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
     elif icon:
         output = workspace.backs.icon(download(icon)['id'])
         warnings.extend(output['placement'].get('warnings', []))

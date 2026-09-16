@@ -334,7 +334,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def post(self, p, q):
         if p == '/api/uploads':
-            raw = self.body(); a = ingest_image(self.app.store, raw)
+            raw = self.body()
+            kinds = q.get('kind', [])
+            trim = any(k in {'symbol', 'back'} for k in kinds)
+            a = ingest_image(self.app.store, raw, trim_transparent_padding=trim)
             name = urllib.parse.unquote(self.headers.get('X-Filename', 'image.png'))
             a.update(filename=Path(name).name, stem=slug(Path(name).stem))
             return self.respond(a)

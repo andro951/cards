@@ -64,7 +64,7 @@ export async function job(path,data,{label='Working',onProgress=null}={}){
     if(j.state==='failed'||j.state==='cancelled'){endActivity(j.message,true);throw new Error(j.error||j.message);}
   }
 }
-export async function uploadImage(file,{symbol=false}={}){
+export async function uploadImage(file,{symbol=false,back=false}={}){
   if(!file)throw new Error('Choose an image.');if(file.size>64*1024**2)throw new Error('Choose an image under 64 MB.');
   let blob=file;
   if(file.name.toLowerCase().endsWith('.svg')){
@@ -72,7 +72,8 @@ export async function uploadImage(file,{symbol=false}={}){
     const safe=await api('/api/svg/validate',{base64:btoa(text)});const url=URL.createObjectURL(new Blob([safe.svg],{type:'image/svg+xml'}));
     try{const im=await image(url);const c=document.createElement('canvas');const scale=512/Math.max(im.naturalWidth||512,im.naturalHeight||512);c.width=Math.max(1,Math.round((im.naturalWidth||512)*scale));c.height=Math.max(1,Math.round((im.naturalHeight||512)*scale));c.getContext('2d').drawImage(im,0,0,c.width,c.height);blob=await new Promise(r=>c.toBlob(r,'image/png'));}finally{URL.revokeObjectURL(url);}
   }
-  return blobRequest('/api/uploads'+(symbol?'?kind=symbol':''),blob,'image/png',{'X-Filename':encodeURIComponent(file.name.replace(/\.svg$/i,'.png'))});
+  const kind=symbol?'symbol':back?'back':'';
+  return blobRequest('/api/uploads'+(kind?('?kind='+encodeURIComponent(kind)):''),blob,'image/png',{'X-Filename':encodeURIComponent(file.name.replace(/\.svg$/i,'.png'))});
 }
 export function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not decode image.'));i.src=src;});}
 export async function uploadFolder(files,onProgress=()=>{}){

@@ -12,6 +12,10 @@ from foundry.images import ingest_image,rarity_variants
 def png(size=(900,600),color='#aa7733'):
     out=io.BytesIO();Image.new('RGB',size,color).save(out,'PNG');return out.getvalue()
 
+def padded_png(size, visible_box, color=(100,140,200,180)):
+    out=io.BytesIO();im=Image.new('RGBA',size,(0,0,0,0))
+    im.paste(color,visible_box);im.save(out,'PNG');return out.getvalue()
+
 def card(name='Sample Card'):
     return {'object':'card','id':'11111111-1111-4111-8111-111111111111','oracle_id':'22222222-2222-4222-8222-222222222222','name':name,
         'type_line':'Creature — Human','layout':'normal','colors':['G'],'mana_cost':'{2}{G}',
@@ -141,6 +145,15 @@ def test_uploaded_file_name_never_becomes_a_local_path(running):
     assert not (app.store.home/'evil.png').exists()
     assert app.store.asset(a['id'])
 
+
+def test_symbol_and_back_uploads_trim_only_fully_transparent_edges(running):
+    app,s=running
+    status,symbol,_=request(s,'/api/uploads?kind=symbol',padded_png((100,80),(10,15,70,55)),headers={'X-Filename':'rare.png'})
+    assert status==200 and (symbol['width'],symbol['height'])==(60,40)
+    status,back,_=request(s,'/api/uploads?kind=back',padded_png((400,600),(25,40,325,460),(15,40,80,255)),headers={'X-Filename':'back.png'})
+    assert status==200 and (back['width'],back['height'])==(300,420)
+    status,plain,_=request(s,'/api/uploads',padded_png((100,80),(10,15,70,55)),headers={'X-Filename':'art.png'})
+    assert status==200 and (plain['width'],plain['height'])==(100,80)
 
 def test_back_catalog_and_composition_endpoint(running):
     app,s=running

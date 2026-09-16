@@ -14,8 +14,15 @@ def decode_image(raw):
         im.load();return ImageOps.exif_transpose(im).convert('RGBA')
     except (UnidentifiedImageError,OSError,ValueError) as exc:raise ValidationError('Could not decode image. Use PNG, JPEG, WebP or GIF.') from exc
 
-def ingest_image(store,raw):
-    im=decode_image(raw);out=io.BytesIO();im.save(out,'PNG')
+def trim_transparent_edges(im):
+    alpha=im.getchannel('A');bbox=alpha.getbbox()
+    if bbox is None or bbox==(0,0,im.width,im.height):return im
+    return im.crop(bbox)
+
+def ingest_image(store,raw,*,trim_transparent_padding=False):
+    im=decode_image(raw)
+    if trim_transparent_padding:im=trim_transparent_edges(im)
+    out=io.BytesIO();im.save(out,'PNG')
     return store.add_asset(out.getvalue(),'image/png',im.width,im.height)
 
 def data_uri(store,asset_id):
