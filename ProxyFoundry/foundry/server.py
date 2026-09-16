@@ -26,6 +26,7 @@ from .images import ingest_image, rarity_variants, sanitize_svg
 from .jobs import Jobs
 from .github_setup import import_github_setup
 from .orders import Orders
+from .transfer_batches import TransferBatches, MAX_CHUNK_BYTES
 from .runtime import Runtime
 from .storage import Store
 from .tools import CardTools
@@ -84,12 +85,13 @@ class App:
         d = self.store.get('orders', order_id)
         p = self.store.home / 'orders' / (order_id + '.zip')
         if not d or not p.is_file(): raise ValidationError('This saved order package is missing. Build it again.')
+        batches = TransferBatches(p, d['count'])
         ident, secret = uid(), secrets.token_urlsafe(32)
         with self.lock:
             now = time.time()
             self.transfers = {k: v for k, v in self.transfers.items() if v['expires'] > now}
             self.transfers[ident] = {'secret': secret, 'expires': now + 3600, 'order': order_id,
-                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size}
+                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size, 'batches': batches}
         return {'id': ident, 'secret': secret, 'origin': self.origin}
 
     def authorized_transfer(self, ident, secret):
@@ -97,6 +99,7 @@ class App:
             t = self.transfers.get(ident)
             if not t or t['expires'] < time.time() or not secrets.compare_digest(str(secret or ''), t['secret']):
                 raise PermissionError('Print transfer expired or is not authorized. Open the order again from Bulk Proxy Forge.')
+            t['expires'] = time.time() + 3600  # Idle expiry, not a total-order time limit.
             return dict(t)
 
     def order(self, ident):
@@ -309,8 +312,24 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(self.app.store.home / ('orders' if m[1] == 'files' else 'backups') / m[2], 'application/zip', m[2])
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
-            return self.file(t['path'], 'application/zip', allow_range=True)
+            if m[2] == 'metadata':
+                return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'],
+                                     'filename': 'BulkProxyForge_Order.zip', 'protocolVersion': 2,
+                                     'batches': t['batches'].metadata()})
+            if 'batch' not in q:  # Keep the original endpoint for 1.0 helpers/small orders.
+                return self.file(t['path'], 'application/zip', allow_range=True)
+            indices = q['batch']
+            if len(indices) != 1 or not re.fullmatch(r'[0-9]{1,5}', indices[0]):
+                raise ValidationError('Invalid ZIP batch index.')
+            batch = int(indices[0])
+            match = re.fullmatch(r'bytes=(\d+)-(\d+)', self.headers.get('Range', ''))
+            if not match: raise ValidationError('A bounded ZIP batch range is required.')
+            start, end = map(int, match.groups())
+            data = t['batches'].read(batch, start, end - start + 1)
+            size = t['batches'].views[batch].size
+            return self.send_bytes(data, 'application/zip', 206,
+                                   headers={'Accept-Ranges': 'bytes',
+                                            'Content-Range': f'bytes {start}-{start + len(data) - 1}/{size}'})
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):

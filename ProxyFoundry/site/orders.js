@@ -42,20 +42,25 @@ function reviewPlan(plan,ids,saved=false){
   if($('#ack-order-warnings'))$('#ack-order-warnings').onchange=enableBuild;enableBuild();
   $('#build-order').onclick=async()=>{
     try{
-      $('#build-order').disabled=true;const out=await job('/api/orders/build',{deckIds:ids,acknowledge:!!$('#ack-order-warnings')?.checked},{label:'Build paired order'});
-      closeModal();orderReady(out);
-    }catch(e){errorBox($('.modal-body',host),e.message);enableBuild();}
+      if(state.busy)throw new Error('Wait for the current task before building an order.');
+      const acknowledge=!!$('#ack-order-warnings')?.checked;
+      if(plan.warnings?.length&&!acknowledge)throw new Error('Review and acknowledge the warnings first.');
+      const payload={deckIds:[...ids],acknowledge};
+      $('#build-order').disabled=true;closeModal();
+      const out=await job('/api/orders/build',payload,{label:'Build paired order'});
+      orderReady(out);
+    }catch(e){toast(e.message,true);}
   };
 }
 function orderReady(order){
-  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">This package exceeds the helper’s 1 GB transfer limit. Download it for manual upload or split it into smaller orders.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
-  $('#send-order').disabled=order.zipBytes>1024**3;$('#send-order').onclick=()=>attempt(()=>openOrder(order.id));
+  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">The helper will send this order as multiple ZIP batches, each at most 1 GB, into the same TCGPlaytest design. Original image quality is unchanged.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
+  $('#send-order').onclick=()=>attempt(()=>openOrder(order.id));
   $('#view-orders').onclick=()=>{closeModal();nav('orders');};
 }
 async function openOrder(id){
   if(!state.helper){setupHelper();return;}
   const order=await api('/api/orders/'+id);
-  if(order.zipBytes>1024**3)throw new Error('The browser helper supports orders up to 1 GB. Download the ZIP or split the order.');
+  if(order.zipBytes>1024**3&&!state.helperCapabilities?.includes('paired-zip-batches'))throw new Error('Large orders need Print Helper 1.1.0. Reload the updated extension in edge://extensions or chrome://extensions, then reload this page. No uninstall is needed.');
   const transfer=await api('/api/orders/'+id+'/transfer',{});
   await new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{window.removeEventListener('message',listener);reject(new Error('The helper did not respond. Reconnect the helper and reopen the saved order.'));},40000);

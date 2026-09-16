@@ -25,7 +25,7 @@ Remove the old test helper. Open `edge://extensions` or `chrome://extensions`, e
 
 The helper asks **Add** or **Replace** when the printer already contains cards. Replace confirms recognized deletion dialogs and checks the count decreases. An unfamiliar flow stops before upload. The overlay can be minimized or closed and closes automatically after success. The helper does not enter payment details or click Checkout.
 
-ZIP transfers through the browser helper are limited to **1 GB**. Larger packages can be downloaded for manual upload or split into smaller orders. The implemented printer integration is **TCGPlaytest**, not every service named MTGProxy.
+Print Helper **1.1.0** automatically transfers large orders as sequential paired ZIP batches, each at most **1 GiB (1,073,741,824 bytes)** including archive headers. The 1 GB whole-order helper limit is gone. Card image bytes and full-resolution renders are unchanged; the full downloadable order ZIP is still available. Batches append to one TCGPlaytest design, with Add/Replace asked once and each cumulative card count verified before the next upload. The helper holds only one batch at a time; TCGPlaytest still controls its own memory and order limits. The implemented printer integration is **TCGPlaytest**, not every service named MTGProxy.
 
 ## Deck and artwork management
 
@@ -51,7 +51,7 @@ Four rarity symbols are required before generation. Upload all four or explicitl
 
 This release uses the supplied **Card Tools v58**, with the existing source-aware artist/modification controls retained. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply native Station rendering and the updated Flip spacing; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
 
-The print helper is **unchanged from version 1.0.0**. An already connected 1.0.0 helper does not need replacement for this update. Earlier 0.9.x test helpers still need the integrated helper setup described above.
+Large-order batching requires **Print Helper 1.1.0**. For an unpacked helper loaded from this repository, pull the update and click **Reload** for the existing extension in `edge://extensions` or `chrome://extensions`, then reload Bulk Proxy Forge and reopen the saved order. No uninstall is needed. For a separately extracted helper, update the files in that same extension folder first. A 1.0.0 helper remains compatible with small orders but cannot batch large ones.
 
 The previous v48-to-v54 comparison remains in `docs/CARD_TOOLS_V54_REVIEW.md`. This update follows the supplied v54-to-v58 handoff; see `docs/CARD_TOOLS_V58_UPDATE.md`. `docs/CARD_TOOLS_V58_MANIFEST.json` records exact hashes for all ten supplied source/document files.
 

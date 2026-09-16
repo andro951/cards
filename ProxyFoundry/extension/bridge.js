@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const params = new URLSearchParams(location.search);
   const requestedSessionId = params.get('proxyFoundryOrder');
   if (!requestedSessionId) return;
@@ -8,6 +8,7 @@
 
   let metadata = null;
   let NEW_CARD_COUNT = 0;
+  let batches = [], completedCards = 0;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   try {
@@ -202,9 +203,10 @@
   }
   function fail(err) {
     if (cancelled) return;
+    debugEvent('Batch transfer stopped',{completedCards,totalCards:NEW_CARD_COUNT});
     lastError = err?.stack || err?.message || String(err);debugEvent('FAILURE', {error:lastError});
     line.textContent = 'FAILED — ' + (err?.message || String(err));line.style.color = '#ff8383';
-    sub.textContent = 'Diagnostics are shown below. Review them before sharing: card names and visible page text may be included.';
+    sub.textContent = `${completedCards}/${NEW_CARD_COUNT} cards verified. No further batches will be sent. Check the printer’s existing cards before retrying; an interrupted batch may be partially imported. Diagnostics may include card names.`;
     overlay.style.borderColor = '#a83d3d';choiceBox.style.display = 'none';showDebug();
   }
   async function waitFor(fn, timeout, label, interval=250) {
@@ -220,24 +222,35 @@
     metadata = await chrome.runtime.sendMessage({type:'PF_ORDER_METADATA'});
     if (!metadata?.ok) throw new Error(metadata?.error || 'This order transfer is no longer available. Reopen it from Proxy Foundry.');
     if (!Number.isSafeInteger(metadata.count) || metadata.count < 1 || metadata.count > 10000 || !Number.isSafeInteger(metadata.zipBytes) || metadata.zipBytes < 22) throw new Error('The saved order metadata is invalid.');
+    batches=metadata.protocolVersion===2?metadata.batches:[{index:0,count:metadata.count,zipBytes:metadata.zipBytes,filename:metadata.filename}];
+    if(!Array.isArray(batches)||!batches.length||batches.length>metadata.count)throw new Error('Invalid ZIP batches.');
+    let total=0;
+    for(const [i,b] of batches.entries()){
+      if(b.index!==i||!Number.isSafeInteger(b.count)||b.count<1||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>1024**3)throw new Error('Invalid or oversized ZIP batch.');
+      total+=b.count;
+    }
+    if(total!==metadata.count)throw new Error('ZIP batches do not match the saved card count.');
     NEW_CARD_COUNT = metadata.count;debugEvent('Saved paired order connected', {cards:NEW_CARD_COUNT,bytes:metadata.zipBytes});
   }
-  async function createDeckZipFile() {
+  async function createDeckZipFile(batch) {
     const parts=[];let offset=0;
-    while (offset < metadata.zipBytes) {
+    while (offset < batch.zipBytes) {
       if (cancelled) throw new Error('Handoff cancelled.');
-      const part=await chrome.runtime.sendMessage({type:'PF_ORDER_CHUNK',offset});
+      const part=await chrome.runtime.sendMessage({type:'PF_ORDER_CHUNK',offset,...(metadata.protocolVersion===2?{batch:batch.index}:{})});
       if (!part?.ok) throw new Error(part?.error || 'The order transfer failed.');
-      if (part.offset!==offset || part.total!==metadata.zipBytes || !Number.isSafeInteger(part.length) || part.length<1 || part.length>1024*1024) throw new Error('The order chunk did not match its saved package.');
+      if (part.offset!==offset || part.total!==batch.zipBytes || !Number.isSafeInteger(part.length) || part.length<1 || part.length>1024*1024) throw new Error('The order chunk did not match its saved package.');
+      if(cancelled)throw new Error('Handoff cancelled.');
+      if(metadata.protocolVersion===2&&part.batch!==batch.index)throw new Error('Wrong ZIP batch returned.');
       const text=atob(part.base64),bytes=Uint8Array.from(text,c=>c.charCodeAt(0));
       if (bytes.length!==part.length) throw new Error('An order chunk was truncated.');
       parts.push(bytes);offset+=bytes.length;
-      log(`Transferring paired ZIP: ${Math.round(offset/metadata.zipBytes*100)}%`,`${NEW_CARD_COUNT} cards. Fronts and backs remain paired by filename.`);
+      log(`Transferring ZIP ${batch.index+1}/${batches.length}: ${Math.round(offset/batch.zipBytes*100)}%`,`${NEW_CARD_COUNT} cards. Fronts and backs remain paired by filename.`);
     }
     if (cancelled) throw new Error('Handoff cancelled.');
-    const file=new File(parts,metadata.filename||'ProxyFoundry_Order.zip',{type:'application/zip'});
-    if (file.size!==metadata.zipBytes) throw new Error('The paired ZIP transfer was incomplete.');
-    debugEvent('Paired ZIP transferred',{bytes:file.size,cards:NEW_CARD_COUNT});return file;
+    const file=new File(parts,batch.filename||'ProxyFoundry_Order.zip',{type:'application/zip'});
+    parts.length=0;
+    if (file.size!==batch.zipBytes) throw new Error('The paired ZIP transfer was incomplete.');
+    debugEvent('Paired ZIP transferred',{bytes:file.size,cards:batch.count,batch:batch.index});return file;
   }
   function setFiles(input, files) {
     if (cancelled) throw new Error('Handoff cancelled.');
@@ -432,20 +445,36 @@
     throw new Error('TCGPlaytest did not finish processing the ZIP. Stop and review its editor before retrying.');
   }
   async function appendDeckViaZip(existing) {
-    log(Number.isFinite(existing)&&existing>0?`Keeping ${existing} existing ${existing===1?'card':'cards'} and adding ${NEW_CARD_COUNT} more…`:`Uploading ${NEW_CARD_COUNT} cards with their paired backs…`,
-      'Using TCGPlaytest’s Deck ZIP importer so each FRONT/###.png is locked to the matching BACK/###.png.');
-    await ensureFrontStep();
-    const zipInput=await waitFor(findDeckZipInput,15000,'the Upload Deck ZIP control');
-    const zipFile=await createDeckZipFile();
-    if(setFiles(zipInput,[zipFile])!==1)throw new Error('TCGPlaytest did not accept the deck ZIP.');
-    await waitForUploadProcessing(2200,120000);await dismissCommonDialogs();
-    const expected=Number.isFinite(existing)?existing+NEW_CARD_COUNT:NEW_CARD_COUNT;let after=null;
-    await waitFor(()=>{
-      after=detectExistingCards();const explicit=after.signals.textCounts.filter(x=>x>0);
-      return explicit.includes(expected)||(after.count===expected)||(!Number.isFinite(existing)&&after.count>=NEW_CARD_COUNT);
-    },120000,'the completed paired-card count');
+    // The Add/Replace decision happens once in run(). Every subsequent ZIP appends.
+    let baseline=Number.isFinite(existing)?existing:detectExistingCards().count;
+    if(!Number.isSafeInteger(baseline)||baseline<0)throw new Error('Cannot determine the existing card count safely.');
+    for(const batch of batches){
+      if(cancelled)throw new Error('Handoff cancelled.');
+      log(`Preparing ZIP ${batch.index+1}/${batches.length} — ${batch.count} cards…`,
+        `${completedCards}/${NEW_CARD_COUNT} cards verified. Image bytes and front/back pairing are unchanged.`);
+      await ensureFrontStep();
+      const zipInput=await waitFor(findDeckZipInput,15000,'the Upload Deck ZIP control');
+      let zipFile=await createDeckZipFile(batch);
+      try{
+        if(setFiles(zipInput,[zipFile])!==1)throw new Error('TCGPlaytest did not accept the deck ZIP.');
+        await waitForUploadProcessing(2200,600000);await dismissCommonDialogs();
+        const expected=baseline+batch.count;
+        let after=null;
+        await waitFor(()=>{
+          after=detectExistingCards();
+          if(after.count>expected)throw new Error('The printer card count is higher than expected. Stopped to avoid duplicate batches.');
+          return after.count===expected&&!processingVisible();
+        },120000,'the completed paired-card count');
+        if(cancelled)throw new Error('Handoff cancelled.');
+        baseline=expected;completedCards+=batch.count;
+        debugEvent('Paired upload count verified',{batch:batch.index+1,expected,completedCards,detected:after});
+      }finally{
+        // Do not retain previous batch Files in the helper while receiving the next.
+        zipFile=null;
+        if(zipInput.isConnected)zipInput.value='';
+      }
+    }
     if(cancelled)return;
-    debugEvent('Paired upload count verified',{expected,detected:after});
     if(clickControl(/Next.*Customize Back/i)){
       await sleep(1100);if(cancelled)return;
       clickControl(/Next.*Preview/i)||clickControl(/^Preview$/i);
