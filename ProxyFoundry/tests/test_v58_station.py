@@ -78,13 +78,16 @@ def test_native_station_structure_and_layering(env,colors,legendary):
 
 def test_fixed_landscape_and_unchanged_portrait_autofit(env):
     s,comp,landscape,portrait,settings=env;c=card()
-    d=comp.compile_face(c,c,0,{},settings,landscape['id'])['data']
+    result=comp.compile_face(c,c,0,{},settings,landscape['id']);d=result['data']
     assert (d['artX'],d['artY'],d['artZoom'])==(156/2010,320/2814,2.73)
+    assert result['crop']['cropX']>.20 and not result['crop']['warning']
+    assert result['crop']['intentionalArtWindow'] is True
     d=comp.compile_face(c,c,0,{},settings,portrait['id'])['data']
     expected=copy.deepcopy(d);native.auto_fit(expected,str(s.asset_path(portrait['id'])))
     assert all(d[k]==expected[k] for k in ['artX','artY','artZoom'])
-    custom=comp.compile_face(c,c,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])['data']
-    assert custom['artZoom']==1.2
+    custom=comp.compile_face(c,c,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])
+    assert custom['data']['artZoom']==1.2
+    assert custom['crop']['warning'] and not custom['crop'].get('intentionalArtWindow')
 
 def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)
