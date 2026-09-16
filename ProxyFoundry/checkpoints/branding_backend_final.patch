@@ -1,0 +1,64 @@
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -95,7 +95,7 @@
+         with self.lock:
+             t = self.transfers.get(ident)
+             if not t or t['expires'] < time.time() or not secrets.compare_digest(str(secret or ''), t['secret']):
+-                raise PermissionError('Print transfer expired or is not authorized. Open the order again from Proxy Foundry.')
++                raise PermissionError('Print transfer expired or is not authorized. Open the order again from Bulk Proxy Forge.')
+             return dict(t)
+@@ -147,7 +147,7 @@
+ class Handler(BaseHTTPRequestHandler):
+-    server_version = 'ProxyFoundry/1.3'
++    server_version = 'BulkProxyForge/1.3'
+@@ -286,13 +286,13 @@
+-        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='ProxyFoundry_Diagnostics.zip')
++        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
+         if p == '/api/helper/download':
+             b = io.BytesIO()
+             with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
+                 for file in (ROOT / 'extension').iterdir():
+                     if file.is_file() and file.suffix in {'.json', '.js', '.txt', '.md'}: z.write(file, 'extension/' + file.name)
+-            return self.send_bytes(b.getvalue(), 'application/zip', filename='ProxyFoundry_Print_Helper.zip')
++            return self.send_bytes(b.getvalue(), 'application/zip', filename='BulkProxyForge_Print_Helper.zip')
+@@ -303,12 +303,12 @@
+         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
+         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
+-            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'ProxyFoundry_Order_' + m[1][:8] + '.zip')
++            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+@@ -309,7 +309,7 @@
+         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
+             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
+-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'ProxyFoundry_Order.zip'})
++            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
+@@ -361,7 +361,7 @@
+-        if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='ProxyFoundry_Cards.cardconjurer')
++        if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='BulkProxyForge_Cards.cardconjurer')
+diff --git a/foundry/backup.py b/foundry/backup.py
+--- a/foundry/backup.py
++++ b/foundry/backup.py
+@@ -56,7 +56,7 @@
+-        name = 'ProxyFoundry_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
++        name = 'BulkProxyForge_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
+@@ -78,7 +78,7 @@
+-            raise ValidationError('Choose a Proxy Foundry backup ZIP.') from e
++            raise ValidationError('Choose a Bulk Proxy Forge backup ZIP.') from e
+@@ -93,7 +93,7 @@
+-                raise ValidationError('This is not a supported Proxy Foundry backup.')
++                raise ValidationError('This is not a supported Bulk Proxy Forge backup.')
+diff --git a/foundry/network.py b/foundry/network.py
+--- a/foundry/network.py
++++ b/foundry/network.py
+@@ -49,7 +49,7 @@
+-        headers = {'User-Agent': 'ProxyFoundry/1.0 (local deck artwork workspace)',
++        headers = {'User-Agent': 'BulkProxyForge/1.3 (local deck artwork workspace)',
+diff --git a/foundry/runtime.py b/foundry/runtime.py
+--- a/foundry/runtime.py
++++ b/foundry/runtime.py
+@@ -28,7 +28,7 @@
+-            raise ValidationError('The native Station script differs from the verified version. No unverified script was executed. Update Proxy Foundry before rendering Stations.')
++            raise ValidationError('The native Station script differs from the verified version. No unverified script was executed. Update Bulk Proxy Forge before rendering Stations.')
+@@ -72,7 +72,7 @@
+-        return ('''<!doctype html><html><head><meta charset="utf-8"><title>Proxy Foundry native CardConjurer renderer</title>
++        return ('''<!doctype html><html><head><meta charset="utf-8"><title>Bulk Proxy Forge native CardConjurer renderer</title>
