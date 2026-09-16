@@ -1,0 +1,114 @@
+name: Temp Bulk Proxy Forge symbol folder update
+on:
+  push:
+    paths: ['.github/workflows/temp-bpf-symbol-folder.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply fail-closed source edits
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          setup=Path('ProxyFoundry/site/setup.js')
+          text=setup.read_text()
+          def replace_once(old,new,label):
+              global text
+              count=text.count(old)
+              if count!=1:raise SystemExit(f'{label}: expected exactly one source match, found {count}')
+              text=text.replace(old,new)
+          replace_once("export const rarities=['common','uncommon','rare','mythic'];\n", """export const rarities=['common','uncommon','rare','mythic'];
+          const symbolImage=/\\.(png|jpe?g|webp|gif|svg)$/i;
+          export function symbolFolderFiles(files){
+            const found={},unexpected=[];
+            for(const file of [...files]){
+              if(!symbolImage.test(file.name))continue;
+              const stem=file.name.replace(/\\.[^.]+$/,'').toLowerCase();
+              if(!rarities.includes(stem)){unexpected.push(file.name);continue;}
+              if(found[stem])throw new Error(`The symbol folder contains more than one ${stem} image. Keep exactly one file named ${stem}.*.`);
+              found[stem]=file;
+            }
+            const missing=rarities.filter(r=>!found[r]);
+            if(unexpected.length)throw new Error('The symbol folder must contain only common.*, uncommon.*, rare.*, and mythic.* image files. Rename or remove: '+unexpected.join(', '));
+            if(missing.length)throw new Error('The symbol folder is missing: '+missing.map(r=>r+'.*').join(', ')+'.');
+            return found;
+          }
+          """,'symbol folder validator')
+          old='''    <section class="panel"><div class="panel-head"><div><span class="eyebrow">03 / SET SYMBOLS</span><h2>Four rarities. One identity.</h2><p>Provide four symbols, or create four color treatments from one.</p></div></div><div class="symbol-grid" id="symbol-grid"></div><div class="actions"><button class="button small" id="generate-symbols">Generate four from one image</button><span class="muted" style="font-size:10px">PNG, JPEG, WebP, or SVG</span></div><small style="display:block;margin-top:12px">Generated treatments preserve transparency. Review the four previews before printing; they are color treatments, not a redraw of your symbol.</small></section>'''
+          new='''    <section class="panel"><div class="panel-head"><div><span class="eyebrow">03 / SET SYMBOLS</span><h2>Four rarities. One identity.</h2><p>Upload the four symbols individually, choose a folder containing all four, or create four color treatments from one.</p></div></div><div class="symbol-grid" id="symbol-grid"></div><div class="actions"><button class="button small" id="symbol-folder-button">Upload folder with four images</button><input type="file" id="symbol-folder" webkitdirectory directory multiple accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" hidden><button class="button small" id="generate-symbols">Generate four from one image</button><span class="muted" style="font-size:10px">PNG, JPEG, WebP, GIF, or SVG</span></div><small id="symbol-folder-status" style="display:block;margin-top:12px">Folder filenames must be <code>common.*</code>, <code>uncommon.*</code>, <code>rare.*</code>, and <code>mythic.*</code>. Non-image files are ignored; unexpected image filenames are rejected.</small><small style="display:block;margin-top:7px">Generated treatments preserve transparency. Review the four previews before printing; they are color treatments, not a redraw of your symbol.</small></section>'''
+          replace_once(old,new,'set-symbol section')
+          anchor="  $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});\n"
+          block=anchor+'''  $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
+          $('#symbol-folder',root).onchange=()=>attempt(async()=>{
+            const input=$('#symbol-folder',root),files=input.files;if(!files.length)return;
+            const button=$('#symbol-folder-button',root),generate=$('#generate-symbols',root),save=$('#save-setup',root),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
+            button.disabled=true;generate.disabled=true;save.disabled=true;render.disabled=true;
+            try{
+              const selected=symbolFolderFiles(files),next={};let done=0;
+              for(const rarity of rarities){
+                status.textContent=`Uploading set symbols ${done+1} / 4 · ${selected[rarity].name}`;
+                next[rarity]=(await uploadImage(selected[rarity],{symbol:true})).id;done++;
+              }
+              s.symbols=next;redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
+            }finally{
+              input.value='';button.disabled=false;generate.disabled=false;save.disabled=false;render.disabled=false;
+            }
+          });
+          '''
+          replace_once(anchor,block,'symbol folder binding')
+          replace_once("if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols, or use Generate four from one image.');", "if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');",'generation validation')
+          setup.write_text(text)
+
+          test=Path('ProxyFoundry/tests/test_browser.py')
+          t=test.read_text()
+          marker='\ndef test_browser_paired_order_snapshot(browser_app):\n'
+          if t.count(marker)!=1:raise SystemExit('browser test insertion point changed')
+          addition=r'''
+          def test_browser_symbol_folder_upload(browser_app,tmp_path):
+              app,server,page,errors=browser_app
+              d=app.ws.new_deck('Folder symbols')
+              page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#symbol-folder-button').wait_for()
+              folder=tmp_path/'symbols';folder.mkdir()
+              colors={'common':'#34383e','uncommon':'#8aa4ba','rare':'#d8ad39','mythic':'#e65318'}
+              for rarity,color in colors.items():(folder/(rarity+'.png')).write_bytes(png((140,140),color))
+              (folder/'notes.txt').write_text('Non-image files are intentionally ignored.')
+              with page.expect_file_chooser() as chooser:page.click('#symbol-folder-button')
+              chooser.value.set_files(str(folder))
+              expect(page.locator('.symbol-upload img')).to_have_count(4,timeout=15000)
+              expect(page.locator('#symbol-folder-status')).to_contain_text('Loaded common, uncommon, rare, and mythic')
+              page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+              saved=app.ws.deck(d['id']);assert set(saved['settings']['symbols'])=={'common','uncommon','rare','mythic'}
+              assert len(set(saved['settings']['symbols'].values()))==4
+              bad=tmp_path/'bad-symbols';bad.mkdir()
+              for rarity,color in colors.items():
+                  name='legendary.png' if rarity=='mythic' else rarity+'.png'
+                  (bad/name).write_bytes(png((120,120),color))
+              before=dict(saved['settings']['symbols'])
+              with page.expect_file_chooser() as chooser:page.click('#symbol-folder-button')
+              chooser.value.set_files(str(bad))
+              expect(page.locator('.toast.error')).to_contain_text('common.*, uncommon.*, rare.*, and mythic.*',timeout=10000)
+              assert app.ws.deck(d['id'])['settings']['symbols']==before
+              assert not errors,errors
+          '''
+          # De-indent the raw block written inside this workflow's Python source.
+          import textwrap
+          t=t.replace(marker,'\n'+textwrap.dedent(addition).strip('\n')+marker)
+          test.write_text(t)
+          PY
+          git diff --check
+          python ProxyFoundry/scripts/verify_vendor.py
+      - name: Commit source update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/site/setup.js ProxyFoundry/tests/test_browser.py
+          git commit -m 'Add four-rarity set-symbol folder upload'
+          git push origin HEAD:main
