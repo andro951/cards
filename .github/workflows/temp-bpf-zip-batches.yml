@@ -16,21 +16,6 @@ jobs:
           sparse-checkout: |
             ProxyFoundry
             .github/workflows
-      - name: Apply exact locally tested change
-        env:
-          PATCH_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-537c-81f5-a42b-eec35b5619f3/raw?se=2026-09-16T19%3A04%3A18Z&sp=r&sv=2026-02-06&sr=b&scid=8e8d2e54-899a-5201-bc6d-f095284080ea&skoid=d1cabc79-3240-4866-94fe-6005330cb49e&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-16T11%3A10%3A07Z&ske=2026-09-17T11%3A10%3A07Z&sks=b&skv=2026-02-06&sig=aJc3fY2TrmtNwKp799pOsMqPmYmiD8SPNRPggNGdUeY%3D'
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 2 "$PATCH_URL" --output /tmp/bpf-batches.patch
-          echo '8eb208427fe797b8e64310fa62948786e293b6918bfab76987b99e0934ad244d  /tmp/bpf-batches.patch' | sha256sum -c -
-          git apply --check /tmp/bpf-batches.patch
-          git apply /tmp/bpf-batches.patch
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ProxyFoundry/README.md ProxyFoundry/extension/background.js ProxyFoundry/extension/bridge.js ProxyFoundry/extension/manifest.json ProxyFoundry/extension/site-bridge.js ProxyFoundry/extension/transfer-protocol.js ProxyFoundry/foundry/server.py ProxyFoundry/foundry/transfer_batches.py ProxyFoundry/site/app.js ProxyFoundry/site/orders.js ProxyFoundry/tests/test_print_bridge.py ProxyFoundry/tests/test_transfer_batches.py ProxyFoundry/tests/test_transfer_batches_browser.py ProxyFoundry/tests/test_transfer_protocol.py
-          git commit -m 'Stream large paired orders in sequential 1 GiB ZIP batches'
-          git push origin HEAD:bpf/sequential-zip-batches
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -51,9 +36,12 @@ jobs:
           PF_LIVE_CC: '1'
         run: |
           set -o pipefail
+          mkdir -p test-results
           python -m pytest -q --tb=short --junitxml=test-results/batches.xml | tee test-results/batches.log
       - name: Remove this one-shot transfer workflow after passing tests
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/temp-bpf-zip-batches.yml
           git commit -m 'Remove completed ZIP batch staging workflow'
           git push origin HEAD:bpf/sequential-zip-batches
