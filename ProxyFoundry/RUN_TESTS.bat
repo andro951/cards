@@ -1,9 +1,9 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Proxy Foundry Tests
+title Bulk Proxy Forge Tests
 if not exist ".venv\Scripts\python.exe" (
-  echo Start Proxy Foundry once to create its isolated Python environment.
+  echo Start Bulk Proxy Forge once to create its isolated Python environment.
   pause
   exit /b 1
 )
