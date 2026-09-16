@@ -47,10 +47,10 @@ def test_meld_import_uses_result_as_back_without_rendering_result(workspace):
     s,a,settings=workspace
     front_id='10000000-0000-4000-8000-000000000001';result_id='20000000-0000-4000-8000-000000000002'
     parts=[{'id':front_id,'component':'meld_part','name':'Urza, Lord Protector'},{'id':result_id,'component':'meld_result','name':'Urza, Planeswalker'}]
-    front={'id':front_id,'name':'Urza, Lord Protector','layout':'meld','type_line':'Legendary Creature — Human Artificer','mana_cost':'{1}{W}{U}','oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast.','colors':['W','U'],'rarity':'mythic','power':'2','toughness':'4','set':'bro','collector_number':'225','artist':'Front Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/front.jpg'}}
+    front={'id':front_id,'name':'Urza, Lord Protector','layout':'meld','type_line':'Legendary Creature — Human Artificer','mana_cost':'{1}{W}{U}','oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast. {7}: If you both own and control Urza, Lord Protector and an artifact named The Mightstone and Weakstone, exile them, then meld them into Urza, Planeswalker.','colors':['W','U'],'rarity':'mythic','power':'2','toughness':'4','set':'bro','collector_number':'225','artist':'Front Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/front.jpg'}}
     result={'id':result_id,'name':'Urza, Planeswalker','layout':'meld','type_line':'Legendary Planeswalker — Urza','rarity':'mythic','set':'bro','collector_number':'238b','artist':'Back Artist','all_parts':parts,'image_uris':{'png':'https://cards.scryfall.io/result.png'}}
     front_png=io.BytesIO();Image.new('RGB',(900,650),'#556677').save(front_png,'PNG')
-    result_png=io.BytesIO();Image.new('RGB',(1800,900),'#775533').save(result_png,'PNG')
+    result_image=Image.new('RGB',(900,1260),'#aa2211');result_image.paste('#1133aa',(0,630,900,1260));result_png=io.BytesIO();result_image.save(result_png,'PNG')
     calls=[]
     def transport(url):
         calls.append(url)
@@ -65,6 +65,11 @@ def test_meld_import_uses_result_as_back_without_rendering_result(workspace):
     d=ws.prepare(d['id']);card=d['cards'][0];face=card['faces'][0]
     assert face['compiled']['group']=='legendary' and face['compiled']['name']=='Urza, Lord Protector'
     assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])
+    meld_asset=s.asset(card['meldBackAsset']);assert (meld_asset['width'],meld_asset['height'])==(630,900)
+    with Image.open(s.asset_path(card['meldBackAsset'])) as meld_image:assert meld_image.getpixel((100,100))[:3]==(170,34,17)
+    bottom_sf={**front,'oracle_text':'(Melds with Urza, Lord Protector.)','_meld_result':card['scryfall']['_meld_result']}
+    bottom_id=ws._meld_back(bottom_sf);bottom_asset=s.asset(bottom_id);assert (bottom_asset['width'],bottom_asset['height'])==(630,900)
+    with Image.open(s.asset_path(bottom_id)) as bottom_image:assert bottom_image.getpixel((100,100))[:3]==(17,51,170)
     comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))
     plan=Orders(ws).plan([d['id']]);assert plan['cards'][0]['backAsset']==card['meldBackAsset']
     assert 'https://cards.scryfall.io/result.png' in calls

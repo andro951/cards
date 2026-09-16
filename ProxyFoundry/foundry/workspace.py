@@ -173,7 +173,16 @@ class Workspace:
         result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}
         url=images.get('png') or images.get('large') or images.get('normal') or images.get('small')
         if not url:raise ValidationError('Scryfall did not provide an image for the meld result.')
-        raw,_,_=self.net.fetch(url,refresh=refresh);return ingest_image(self.store,raw)['id']
+        raw,_,_=self.net.fetch(url,refresh=refresh)
+        try:
+            with Image.open(io.BytesIO(raw)) as source:
+                source.load();width,height=source.size
+                if width<2 or height<2:raise ValueError('invalid meld result dimensions')
+                split=height//2;top=bool(re.search(r'\bmeld them into\b',str(sf.get('oracle_text','')),re.I))
+                box=(0,0,width,split) if top else (0,split,width,height)
+                half=source.crop(box).transpose(Image.Transpose.ROTATE_90);out=io.BytesIO();half.save(out,'PNG')
+        except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc
+        return ingest_image(self.store,out.getvalue())['id']
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
