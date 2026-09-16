@@ -1,0 +1,62 @@
+name: Refine meld proxy backs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-meld-half-backs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: ProxyFoundry
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Split combined meld results into physical card backs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          workspace=Path('ProxyFoundry/foundry/workspace.py')
+          text=workspace.read_text(encoding='utf-8')
+          old="    def _meld_back(self,sf,refresh=False):\n        result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}\n        url=images.get('png') or images.get('large') or images.get('normal') or images.get('small')\n        if not url:raise ValidationError('Scryfall did not provide an image for the meld result.')\n        raw,_,_=self.net.fetch(url,refresh=refresh);return ingest_image(self.store,raw)['id']\n"
+          new="    def _meld_back(self,sf,refresh=False):\n        result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}\n        url=images.get('png') or images.get('large') or images.get('normal') or images.get('small')\n        if not url:raise ValidationError('Scryfall did not provide an image for the meld result.')\n        raw,_,_=self.net.fetch(url,refresh=refresh)\n        try:\n            with Image.open(io.BytesIO(raw)) as source:\n                source.load();width,height=source.size\n                if width<2 or height<2:raise ValueError('invalid meld result dimensions')\n                split=height//2;top=bool(re.search(r'\\bmeld them into\\b',str(sf.get('oracle_text','')),re.I))\n                box=(0,0,width,split) if top else (0,split,width,height)\n                half=source.crop(box).transpose(Image.Transpose.ROTATE_90);out=io.BytesIO();half.save(out,'PNG')\n        except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc\n        return ingest_image(self.store,out.getvalue())['id']\n"
+          assert old in text
+          workspace.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          tests=Path('ProxyFoundry/tests/test_pipeline.py')
+          text=tests.read_text(encoding='utf-8')
+          old="    result_png=io.BytesIO();Image.new('RGB',(1800,900),'#775533').save(result_png,'PNG')\n"
+          new="    result_image=Image.new('RGB',(900,1260),'#aa2211');result_image.paste('#1133aa',(0,630,900,1260));result_png=io.BytesIO();result_image.save(result_png,'PNG')\n"
+          assert old in text
+          text=text.replace(old,new,1)
+          old="    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])\n    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))\n"
+          new="    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])\n    meld_asset=s.asset(card['meldBackAsset']);assert (meld_asset['width'],meld_asset['height'])==(630,900)\n    with Image.open(s.asset_path(card['meldBackAsset'])) as meld_image:assert meld_image.getpixel((100,100))==(170,34,17)\n    bottom_sf={**front,'oracle_text':'(Melds with Urza, Lord Protector.)','_meld_result':card['scryfall']['_meld_result']}\n    bottom_id=ws._meld_back(bottom_sf);bottom_asset=s.asset(bottom_id);assert (bottom_asset['width'],bottom_asset['height'])==(630,900)\n    with Image.open(s.asset_path(bottom_id)) as bottom_image:assert bottom_image.getpixel((100,100))==(17,51,170)\n    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))\n"
+          assert old in text
+          tests.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+
+      - name: Install and test
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q tests/test_pipeline.py
+
+      - name: Commit physical meld backs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/foundry/workspace.py ProxyFoundry/tests/test_pipeline.py
+          git commit -m 'Split meld results into physical card backs'
+          git push origin HEAD:main
