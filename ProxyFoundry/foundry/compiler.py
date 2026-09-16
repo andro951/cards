@@ -13,6 +13,28 @@ BUILTINS=[
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
 NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
 
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
@@ -34,6 +56,7 @@ def semantic(sf,face,index=0):
         d['scryfall_layout']='flip'
     return d
 
+
 def choose_builtin(d,choice):
     if choice=='auto':return d
     if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
@@ -52,6 +75,7 @@ def choose_builtin(d,choice):
     else:raise ValidationError('Unknown built-in template.')
     return d
 
+
 def custom_data(template,sem,other_faces=None):
     d=copy.deepcopy(template['data'])
     values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
@@ -66,6 +90,7 @@ def custom_data(template,sem,other_faces=None):
             key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
     if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
     return d
+
 
 class Compiler:
     def __init__(self,store):self.store=store
@@ -119,4 +144,6 @@ class Compiler:
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
         return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':GENERATION_VERSION}
