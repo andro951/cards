@@ -1,0 +1,15 @@
+diff --git a/foundry/backup.py b/foundry/backup.py
+--- a/foundry/backup.py
++++ b/foundry/backup.py
+@@ -44 +44 @@
+-        name = 'ProxyFoundry_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
++        name = 'BulkProxyForge_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
+@@ -61 +61 @@
+-            raise ValidationError('Choose a Proxy Foundry backup ZIP.') from e
++            raise ValidationError('Choose a Bulk Proxy Forge backup ZIP.') from e
+diff --git a/foundry/network.py b/foundry/network.py
+--- a/foundry/network.py
++++ b/foundry/network.py
+@@ -38 +38 @@
+-        headers = {'User-Agent': 'ProxyFoundry/1.0 (local deck artwork workspace)',
++        headers = {'User-Agent': 'BulkProxyForge/1.3 (local deck artwork workspace)',
