@@ -39,7 +39,7 @@ Artwork source choices are deliberately separate:
 
 Name matching normalizes to lowercase underscores, removes apostrophes and strips accents. Duplicate normalized filenames are reported rather than selected arbitrarily. Missing custom art can fall back to the original printing when that option is enabled.
 
-The optional full-art land library is **unset by default**. Add its GitHub folder in Settings and enable it for a deck. It expects `card_name.png`. Individual art overrides and the main custom-art folder take priority.
+The optional full-art land library is hosted by Bulk Proxy Forge. Enable it with the single checkbox in a deck's Artwork setup; matching filenames in `full_art_lands/` are used automatically. Individual art overrides and the main custom-art folder take priority.
 
 Artist credits are source-aware. Actual Scryfall artwork, including fallback images, always uses the selected printing's real artist (face-specific when provided). A custom-art deck default or per-card override cannot overwrite or hide that original credit. Missing Scryfall metadata stays blank rather than being attributed to the custom-art artist.
 

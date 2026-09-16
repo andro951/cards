@@ -13,8 +13,9 @@ from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
 
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
+HOSTED_LAND_LIBRARY='https://github.com/andro951/cards/tree/main/ProxyFoundry/full_art_lands'
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store)
@@ -22,15 +23,14 @@ class Workspace:
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
             'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
             'status':'draft', 'notes':'', 'importedSource':''})
-    def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'landLibrary':'','defaults':{}}
+    def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'defaults':{}}
     def set_global_settings(self,values):
-        old=self.global_settings();safe={k:v for k,v in values.items() if k in {'refreshData','landLibrary','defaults'}}
-        if safe.get('landLibrary'):github_location(safe['landLibrary'])
+        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','defaults'}}
         if 'defaults' in safe and safe['defaults']:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
-        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
+        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None)
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
@@ -191,9 +191,7 @@ class Workspace:
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=bool(s['source'].get('refreshArt')))
         if s.get('useLandLibrary'):
-            url=s.get('landLibrary') or self.global_settings().get('landLibrary')
-            if not url:raise ValidationError('Add a land artwork library link in Settings, or turn the option off.')
-            progress(0,1,'Reading optional land artwork library');land_index=self.sources.github_index(url,refresh=bool(s['source'].get('refreshArt')))
+            progress(0,1,'Reading hosted full-art land library');land_index=self.sources.github_index(HOSTED_LAND_LIBRARY)
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             if cancel():raise ValidationError('Preparation cancelled.')

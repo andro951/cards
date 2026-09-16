@@ -158,5 +158,5 @@ class Backups:
                                    (r['render_key'], r['asset_id'], a['width'], a['height'], _time.time()))
             if apply_defaults and docs['settings']:
                 defaults = docs['settings'][0]
-                self.ws.set_global_settings({k: defaults[k] for k in ('refreshData', 'landLibrary', 'defaults') if k in defaults})
+                self.ws.set_global_settings({k: defaults[k] for k in ('refreshData', 'defaults') if k in defaults})
             return {'decks': len(imported), 'templates': len(templates), 'ids': imported}
