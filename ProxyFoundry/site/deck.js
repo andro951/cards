@@ -12,13 +12,14 @@ export async function importDeck(existing=null){
   $('#do-import').onclick=async()=>{
     const source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
     $('#do-import').disabled=true;
+    const payload={source,includeOutside:$('#import-outside').checked,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
+    closeModal();
     try{
-      const payload={source,includeOutside:$('#import-outside').checked,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
       const d=await job(existing?'/api/decks/'+existing.id+'/add':'/api/decks/import',payload,{label:existing?'Add cards':'Import deck'});
-      closeModal();state.dirty=false;
+      state.dirty=false;
       if(existing){await showDeck(d.id,'cards');toast('Cards added. Generate images to prepare the new entries.');}
       else nav('deck/'+d.id+'/setup');
-    }catch(e){errorBox($('.modal-body',host),e.message);const b=$('#do-import');if(b)b.disabled=false;}
+    }catch(e){toast(e.message,true);}
   };
 }
 function preview(c,f){

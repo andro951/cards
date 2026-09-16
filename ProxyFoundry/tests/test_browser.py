@@ -51,6 +51,7 @@ def browser_app(tmp_path,request):
 def test_browser_import_setup_edit_template_and_mobile(browser_app):
     app,server,page,errors=browser_app
     page.click('#import-deck');page.fill('#import-name','Browser deck');page.fill('#import-source','2 A Test Creature');page.click('#do-import')
+    assert page.locator('#modal-host .modal').count()==0
     page.locator('#deck-name,.form-error,#retry-page').first.wait_for()
     assert page.locator('#deck-name').count(),page.locator('body').inner_text()
     assert page.input_value('#deck-name')=='Browser deck'
