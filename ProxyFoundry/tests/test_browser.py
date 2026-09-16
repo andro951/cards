@@ -106,6 +106,8 @@ def test_browser_card_hover_shows_assigned_back_without_flip_button(browser_app)
     card=page.locator('[data-card]').first;img=card.locator('img').first;img.wait_for()
     front=img.get_attribute('src');assert front and front!='/api/assets/'+back['id']
     assert page.locator('.flip-button').count()==0
+    expect(card.locator('.card-name-pill')).to_have_text('A Test Creature')
+    assert card.locator('h3,.card-credit,.card-item-footer').count()==0
     card.hover();expect(img).to_have_attribute('src','/api/assets/'+back['id'])
     card.dispatch_event('mouseleave');expect(img).to_have_attribute('src',front)
     assert not errors,errors
