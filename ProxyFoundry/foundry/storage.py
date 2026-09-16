@@ -16,12 +16,18 @@ from .domain import ConflictError, ValidationError, uid
 
 
 def default_home() -> Path:
-    override = os.environ.get('PROXY_FOUNDRY_HOME')
+    # New installs use the product name. Existing ProxyFoundry workspaces are
+    # retained in place so a branding update never strands a user's saved decks.
+    override = os.environ.get('BULK_PROXY_FORGE_HOME') or os.environ.get('PROXY_FOUNDRY_HOME')
     if override:
         return Path(override).expanduser().resolve()
     if os.name == 'nt':
-        return Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local')) / 'ProxyFoundry'
-    return Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'ProxyFoundry'
+        root = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local'))
+    else:
+        root = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share'))
+    current = root / 'BulkProxyForge'
+    legacy = root / 'ProxyFoundry'
+    return legacy if legacy.exists() and not current.exists() else current
 
 
 class Store:
@@ -52,7 +58,7 @@ class Store:
             ''')
             version = db.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()[0]
             if version != '1':
-                raise ValidationError('This workspace was created by a newer Proxy Foundry. Upgrade before opening it.')
+                raise ValidationError('This workspace was created by a newer Bulk Proxy Forge. Upgrade before opening it.')
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
