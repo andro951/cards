@@ -1,4 +1,5 @@
 name: Temp BPF symbol folder browser test
+# Trigger after this workflow exists on the default branch.
 on:
   push:
     paths: ['.github/workflows/temp-bpf-symbol-folder-test.yml']
