@@ -5,6 +5,7 @@ from foundry.storage import Store
 
 def test_pipeline_version_keeps_generation_compatibility_name():
     assert PIPELINE_VERSION == GENERATION_VERSION
+    assert isinstance(PIPELINE_VERSION,str) and PIPELINE_VERSION
 
 
 def test_auto_template_version_is_scoped_to_structural_group(tmp_path,monkeypatch):
