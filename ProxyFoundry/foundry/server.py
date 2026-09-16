@@ -24,6 +24,7 @@ from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS
 from .images import ingest_image, rarity_variants, sanitize_svg
 from .jobs import Jobs
+from .github_setup import import_github_setup
 from .orders import Orders
 from .runtime import Runtime
 from .storage import Store
@@ -345,6 +346,8 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
         if p == '/api/templates': return self.respond(self.app.ws.save_template(d))
         if p == '/api/symbols/generate': return self.respond(rarity_variants(self.app.store, d['assetId']))
+        if p == '/api/setup/github-import':
+            return self.respond(self.app.jobs.start('Import GitHub setup', lambda u, c: import_github_setup(self.app.ws, d, u, c)))
         if p == '/api/svg/validate':
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})

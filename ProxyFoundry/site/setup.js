@@ -1,4 +1,5 @@
 import {mountBackPicker} from './backs.js';
+import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav} from './ui.js';
 import {originalArtist,composeCredit} from './credits.js';
 export const rarities=['common','uncommon','rare','mythic'];
@@ -25,7 +26,7 @@ export function templateOptions(group,legendary=false,value='auto'){
 export function renderSetup(root,deck,onSaved){
   const s=structuredClone(deck.settings),groups={};s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
-  root.innerHTML=`<div class="setup-columns"><div>
+  root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
       <div class="source-choices"><button class="choice ${s.source.mode==='scryfall'?'selected':''}" data-mode="scryfall"><span class="choice-symbol">▧</span><b>Scryfall printing</b><span>Use the art already selected in your deck.</span></button><button class="choice ${s.source.mode==='github'?'selected':''}" data-mode="github"><span class="choice-symbol">⌘</span><b>GitHub folder</b><span>Paste a folder link. No local repository needed.</span></button><button class="choice ${s.source.mode==='local'?'selected':''}" data-mode="local"><span class="choice-symbol">▱</span><b>Computer folder</b><span>Choose your artwork directly from this device.</span></button></div>
       <div data-source="scryfall" class="${s.source.mode==='scryfall'?'':'hidden'}"><div class="notice info">Use any real paper printing. The selected set and collector number are preserved, and each card’s art can still be replaced individually.</div></div>
@@ -46,7 +47,7 @@ export function renderSetup(root,deck,onSaved){
       <label class="field"><span>Reuse style from another deck</span><select id="reuse-style"><option value="">Choose a deck…</option>${state.decks.filter(d=>d.id!==deck.id).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select><small>Copies its symbols, back, artist/modification credits and template choices—not its card list or artwork folder.</small></label>
       <label class="field"><span>Flavor text source</span><select id="flavor-policy"><option value="auto" ${(!s.flavorPolicy||s.flavorPolicy==='auto')?'selected':''}>Automatic · preserve exact printings</option><option value="resolved" ${s.flavorPolicy==='resolved'?'selected':''}>Selected printing</option><option value="latest" ${s.flavorPolicy==='latest'?'selected':''}>Latest English paper printing</option></select><small>Only flavor text changes. The selected card printing and artwork remain unchanged.</small></label><label class="check-line"><input type="checkbox" id="refresh-data" ${s.refreshData?'checked':''}><span>Fetch new data when the cached copy is at least one week old<small>Normal mode reuses Scryfall data for one year. This does not refetch every time.</small></span></label>
     </section>
-  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div>`;
+  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div></fieldset>`;
   const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
@@ -64,8 +65,23 @@ export function renderSetup(root,deck,onSaved){
   }
   $('#deck-artist',root).addEventListener('input',creditPreview);$('#deck-modification',root).addEventListener('input',creditPreview);creditPreview();
   redrawSymbols();redrawBack();
-  $$('input:not([type=file]),textarea,select',root).forEach(el=>el.addEventListener('input',mark));
-  $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;$$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x===b));$$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));$('#fallback-line',root).classList.toggle('hidden',s.source.mode==='scryfall');mark();});
+  $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
+  function redrawSource(){
+    $$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x.dataset.mode===s.source.mode));
+    $$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));
+    $('#fallback-line',root).classList.toggle('hidden',s.source.mode==='scryfall');
+  }
+  $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;redrawSource();mark();});
+  const githubImport=mountGithubSetupImport($('#github-setup',root),{
+    isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#generate-symbols:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
+    onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
+    onImport:patch=>{
+      s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
+      $('#github-folder',root).value=s.source.githubFolder;$('#github-ref',root).value=s.source.ref;
+      $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
+      redrawSource();redrawSymbols();redrawBack();mark();
+    }
+  });
   $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
   $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
 $('#symbol-folder',root).onchange=()=>attempt(async()=>{
@@ -87,6 +103,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
   $('#open-templates',root).onclick=()=>nav('templates');
   $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','modificationCredit','templateRules'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#deck-modification',root).value=s.modificationCredit||'';creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
   async function save(generate){
+    if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
     if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
     s.source.githubFolder=$('#github-folder',root).value.trim();s.source.ref=$('#github-ref',root).value.trim();s.source.fallback=$('#art-fallback',root).checked;
     s.useLandLibrary=$('#use-land-library',root).checked;s.artist=$('#deck-artist',root).value;s.modificationCredit=$('#deck-modification',root).value.trim();
