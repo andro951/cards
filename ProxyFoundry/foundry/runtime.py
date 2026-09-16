@@ -7,6 +7,9 @@ from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
+    COLORLESS_SAGA_CREATURE_PATH='/img/frames/saga/creature/c.png'
+    COLORLESS_SAGA_CREATURE_REPO='joshbirnholz/cardconjurer'
+    COLORLESS_SAGA_CREATURE_COMMIT='d3c6706692898d596ec6a5be0be44f63062c9e12'
     def __init__(self,network):self.net=network;self.requested={};self.lock=threading.Lock()
     @staticmethod
     def path(raw):
@@ -52,7 +55,14 @@ class Runtime:
         except ValidationError as original:
             if not path.startswith('/img/') or 'HTTP 404' not in str(original):raise
             url='https://raw.githubusercontent.com/'+COMPAT_REPO+'/'+COMPAT_COMMIT+'/public'+quote(path,safe='/')
-            raw,mime,meta=self.net.fetch(url,immutable=True)
+            try:raw,mime,meta=self.net.fetch(url,immutable=True)
+            except ValidationError as compat_error:
+                if path!=self.COLORLESS_SAGA_CREATURE_PATH or 'HTTP 404' not in str(compat_error):raise
+                # CardConjurer's valid colorless Saga-creature layer is absent from
+                # both older pinned snapshots. Fill only this known asset gap from
+                # a newer CardConjurer fork pinned to an immutable commit.
+                url='https://raw.githubusercontent.com/'+self.COLORLESS_SAGA_CREATURE_REPO+'/'+self.COLORLESS_SAGA_CREATURE_COMMIT+quote(path,safe='/')
+                raw,mime,meta=self.net.fetch(url,immutable=True)
         mime={'.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.ttf':'font/ttf','.otf':'font/otf','.woff':'font/woff','.woff2':'font/woff2'}.get('.'+path.rsplit('.',1)[-1].lower(),mimetypes.guess_type(path)[0] or mime)
         with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False)}
         return raw,mime
