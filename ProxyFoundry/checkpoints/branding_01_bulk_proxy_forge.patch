@@ -1,0 +1,102 @@
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -150 +150 @@
+-    server_version = 'ProxyFoundry/1.3'
++    server_version = 'BulkProxyForge/1.3'
+@@ -294 +294 @@
+-        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='ProxyFoundry_Diagnostics.zip')
++        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
+@@ -299 +299 @@
+-            return self.send_bytes(b.getvalue(), 'application/zip', filename='ProxyFoundry_Print_Helper.zip')
++            return self.send_bytes(b.getvalue(), 'application/zip', filename='BulkProxyForge_Print_Helper.zip')
+@@ -311 +311 @@
+-            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'ProxyFoundry_Order_' + m[1][:8] + '.zip')
++            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+@@ -316 +316 @@
+-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'ProxyFoundry_Order.zip'})
++            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
+diff --git a/foundry/backup.py b/foundry/backup.py
+--- a/foundry/backup.py
++++ b/foundry/backup.py
+@@ -44 +44 @@
+-        name = 'ProxyFoundry_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
++        name = 'BulkProxyForge_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
+@@ -61 +61 @@
+-            raise ValidationError('Choose a Proxy Foundry backup ZIP.') from e
++            raise ValidationError('Choose a Bulk Proxy Forge backup ZIP.') from e
+diff --git a/foundry/network.py b/foundry/network.py
+--- a/foundry/network.py
++++ b/foundry/network.py
+@@ -38 +38 @@
+-        headers = {'User-Agent': 'ProxyFoundry/1.0 (local deck artwork workspace)',
++        headers = {'User-Agent': 'BulkProxyForge/1.3 (local deck artwork workspace)',
+diff --git a/scripts/package_release.py b/scripts/package_release.py
+--- a/scripts/package_release.py
++++ b/scripts/package_release.py
+@@ -25 +25 @@
+-    manifest={'application':'Proxy Foundry','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
++    manifest={'application':'Bulk Proxy Forge','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+@@ -27,2 +27,2 @@
+-        for p in files:z.write(p,Path('ProxyFoundry')/p.relative_to(ROOT))
+-        z.writestr('ProxyFoundry/RELEASE_MANIFEST.json',json.dumps(manifest,indent=2))
++        for p in files:z.write(p,Path('BulkProxyForge')/p.relative_to(ROOT))
++        z.writestr('BulkProxyForge/RELEASE_MANIFEST.json',json.dumps(manifest,indent=2))
+@@ -33 +33 @@
+-    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_3.zip')
++    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'BulkProxyForge_1_3.zip')
+diff --git a/site/app.js b/site/app.js
+--- a/site/app.js
++++ b/site/app.js
+@@ -39 +39 @@
+-  $('#breadcrumb').innerHTML=`Workspace <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
++  $('#breadcrumb').innerHTML=`Forge <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
+diff --git a/extension/bridge.js b/extension/bridge.js
+--- a/extension/bridge.js
++++ b/extension/bridge.js
+@@ -21 +21 @@
+-    console.log('[Proxy Print Helper]', message, data ?? '');
++    console.log('[Bulk Proxy Forge Print Helper]', message, data ?? '');
+@@ -31 +31 @@
+-        <b style="font-size:14px;color:#fff;line-height:1.2">Proxy Print Helper <span style="font-size:10px;color:#8d98a6;font-weight:700">v${VERSION}</span></b>
++        <b style="font-size:14px;color:#fff;line-height:1.2">Bulk Proxy Forge <span style="font-size:10px;color:#ff9c55;font-weight:700">Print Helper · v${VERSION}</span></b>
+@@ -203 +203 @@
+-    log('Connecting to your saved print order…', 'Keep the Proxy Foundry launcher running until the ZIP upload is finished.');
++    log('Connecting to your saved print order…', 'Keep the Bulk Proxy Forge launcher running until the ZIP upload is finished.');
+@@ -222 +222 @@
+-    const file=new File(parts,metadata.filename||'ProxyFoundry_Order.zip',{type:'application/zip'});
++    const file=new File(parts,metadata.filename||'BulkProxyForge_Order.zip',{type:'application/zip'});
+diff --git a/START_LEGACY_CARD_TOOLS.bat b/START_LEGACY_CARD_TOOLS.bat
+--- a/START_LEGACY_CARD_TOOLS.bat
++++ b/START_LEGACY_CARD_TOOLS.bat
+@@ -5 +5 @@
+-  echo Start Proxy Foundry once to set up its private Python environment.
++  echo Start Bulk Proxy Forge once to set up its private Python environment.
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1 +1 @@
+-# Proxy Foundry
++# Bulk Proxy Forge
+@@ -3 +3 @@
+-A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v58 compiler and CardConjurer's actual native renderer.
++A local-first forge-themed workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v58 compiler and CardConjurer's actual native renderer.
+@@ -20 +20 @@
+-**Do not double-click `site/index.html`.** This integrated version uses the local server started by the launcher. Normal use requires no Git, Node, Playwright or full CardConjurer repository download.
++**Do not double-click `site/index.html`.** Bulk Proxy Forge uses the local server started by the launcher. Normal use requires no Git, Node, Playwright or full CardConjurer repository download.
+@@ -90 +90,2 @@
+-Windows workspace: `%LOCALAPPDATA%\ProxyFoundry`. macOS/Linux: `~/.local/share/ProxyFoundry` or `$XDG_DATA_HOME/ProxyFoundry`. Set `PROXY_FOUNDRY_HOME` before launching to choose another location.
++New Windows workspaces use `%LOCALAPPDATA%\BulkProxyForge`; macOS/Linux use `~/.local/share/BulkProxyForge` or `$XDG_DATA_HOME/BulkProxyForge`. Existing `ProxyFoundry` workspaces continue in place automatically so the rename never strands saved decks. Set `BULK_PROXY_FORGE_HOME` to choose another location; the old `PROXY_FOUNDRY_HOME` override remains accepted for compatibility.
++
+diff --git a/docs/THIRD_PARTY.md b/docs/THIRD_PARTY.md
+--- a/docs/THIRD_PARTY.md
++++ b/docs/THIRD_PARTY.md
+@@ -3 +3 @@
+-Proxy Foundry integrates the user's approved Card Tools v58 source, preserved in `vendor/card_tools`. Its native template assets and original project notices remain in those files.
++Bulk Proxy Forge integrates the user's approved Card Tools v58 source, preserved in `vendor/card_tools`. Its native template assets and original project notices remain in those files.
+diff --git a/docs/ARTIST_CREDITS.md b/docs/ARTIST_CREDITS.md
+--- a/docs/ARTIST_CREDITS.md
++++ b/docs/ARTIST_CREDITS.md
+@@ -1 +1 @@
+-# Artist credits in Proxy Foundry 1.1
++# Artist credits in Bulk Proxy Forge
