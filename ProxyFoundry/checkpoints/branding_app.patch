@@ -1,0 +1,6 @@
+diff --git a/site/app.js b/site/app.js
+--- a/site/app.js
++++ b/site/app.js
+@@ -39 +39 @@
+-  $('#breadcrumb').innerHTML=`Workspace <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
++  $('#breadcrumb').innerHTML=`Forge <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
