@@ -71,6 +71,31 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     assert not errors,errors
 
+def test_browser_symbol_folder_upload(browser_app,tmp_path):
+    app,server,page,errors=browser_app
+    d=app.ws.new_deck('Folder symbols')
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#symbol-folder-button').wait_for()
+    folder=tmp_path/'symbols';folder.mkdir()
+    colors={'common':'#34383e','uncommon':'#8aa4ba','rare':'#d8ad39','mythic':'#e65318'}
+    for rarity,color in colors.items():(folder/(rarity+'.png')).write_bytes(png((140,140),color))
+    (folder/'notes.txt').write_text('Non-image files are intentionally ignored.')
+    with page.expect_file_chooser() as chooser:page.click('#symbol-folder-button')
+    chooser.value.set_files(str(folder))
+    expect(page.locator('.symbol-upload img')).to_have_count(4,timeout=15000)
+    expect(page.locator('#symbol-folder-status')).to_contain_text('Loaded common, uncommon, rare, and mythic')
+    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    saved=app.ws.deck(d['id']);assert set(saved['settings']['symbols'])=={'common','uncommon','rare','mythic'}
+    assert len(set(saved['settings']['symbols'].values()))==4
+    bad=tmp_path/'bad-symbols';bad.mkdir()
+    for rarity,color in colors.items():
+        name='legendary.png' if rarity=='mythic' else rarity+'.png'
+        (bad/name).write_bytes(png((120,120),color))
+    before=dict(saved['settings']['symbols'])
+    with page.expect_file_chooser() as chooser:page.click('#symbol-folder-button')
+    chooser.value.set_files(str(bad))
+    expect(page.locator('.toast.error')).to_contain_text('common.*, uncommon.*, rare.*, and mythic.*',timeout=10000)
+    assert app.ws.deck(d['id'])['settings']['symbols']==before
+    assert not errors,errors
 def test_browser_paired_order_snapshot(browser_app):
     app,server,page,errors=browser_app
     art=ingest_image(app.store,png());back=ingest_image(app.store,png((300,420),'#665577'));symbols=rarity_variants(app.store,art['id'])

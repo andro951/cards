@@ -2,6 +2,21 @@ import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav} from './ui.js';
 import {originalArtist,composeCredit} from './credits.js';
 export const rarities=['common','uncommon','rare','mythic'];
+const symbolImage=/\.(png|jpe?g|webp|gif|svg)$/i;
+export function symbolFolderFiles(files){
+  const found={},unexpected=[];
+  for(const file of [...files]){
+    if(!symbolImage.test(file.name))continue;
+    const stem=file.name.replace(/\.[^.]+$/,'').toLowerCase();
+    if(!rarities.includes(stem)){unexpected.push(file.name);continue;}
+    if(found[stem])throw new Error(`The symbol folder contains more than one ${stem} image. Keep exactly one file named ${stem}.*.`);
+    found[stem]=file;
+  }
+  const missing=rarities.filter(r=>!found[r]);
+  if(unexpected.length)throw new Error('The symbol folder must contain only common.*, uncommon.*, rare.*, and mythic.* image files. Rename or remove: '+unexpected.join(', '));
+  if(missing.length)throw new Error('The symbol folder is missing: '+missing.map(r=>r+'.*').join(', ')+'.');
+  return found;
+}
 export function pickFile(accept='image/*',multiple=false){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept=accept;input.multiple=multiple;input.onchange=()=>resolve(multiple?[...input.files]:input.files[0]||null);input.oncancel=()=>resolve(null);input.click();});}
 export function templateOptions(group,legendary=false,value='auto'){
   const ordinary=['standard','legendary','land','legendary-land','basic-land'].includes(group);
@@ -26,7 +41,7 @@ export function renderSetup(root,deck,onSaved){
       <details><summary>Template safety & advanced options</summary><p class="muted">Special layouts are recognized separately. When the approved recipes do not cover one, choose a compatible custom template; the app will never substitute an incorrect ordinary frame.</p><label class="check-line"><input type="checkbox" id="disable-autofit" ${s.disableAutofit?'checked':''}><span>Keep template art positioning instead of automatic fitting<small>Leave off for the normal cover/center crop behavior.</small></span></label></details>
     </section>
   </div><div>
-    <section class="panel"><div class="panel-head"><div><span class="eyebrow">03 / SET SYMBOLS</span><h2>Four rarities. One identity.</h2><p>Provide four symbols, or create four color treatments from one.</p></div></div><div class="symbol-grid" id="symbol-grid"></div><div class="actions"><button class="button small" id="generate-symbols">Generate four from one image</button><span class="muted" style="font-size:10px">PNG, JPEG, WebP, or SVG</span></div><small style="display:block;margin-top:12px">Generated treatments preserve transparency. Review the four previews before printing; they are color treatments, not a redraw of your symbol.</small></section>
+    <section class="panel"><div class="panel-head"><div><span class="eyebrow">03 / SET SYMBOLS</span><h2>Four rarities. One identity.</h2><p>Upload the four symbols individually, choose a folder containing all four, or create four color treatments from one.</p></div></div><div class="symbol-grid" id="symbol-grid"></div><div class="actions"><button class="button small" id="symbol-folder-button">Upload folder with four images</button><input type="file" id="symbol-folder" webkitdirectory directory multiple accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" hidden><button class="button small" id="generate-symbols">Generate four from one image</button><span class="muted" style="font-size:10px">PNG, JPEG, WebP, GIF, or SVG</span></div><small id="symbol-folder-status" style="display:block;margin-top:12px">Folder filenames must be <code>common.*</code>, <code>uncommon.*</code>, <code>rare.*</code>, and <code>mythic.*</code>. Non-image files are ignored; unexpected image filenames are rejected.</small><small style="display:block;margin-top:7px">Generated treatments preserve transparency. Review the four previews before printing; they are color treatments, not a redraw of your symbol.</small></section>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">04 / CARD BACK</span><h2>The back of this deck</h2><p>One default for single-sided cards. Real double-faced cards keep their actual reverse.</p></div></div><div id="back-designer"></div></section>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">05 / DETAILS</span><h2>Credit the artist</h2></div></div><label class="field"><span>Artist for custom artwork in this deck</span><input id="deck-artist" value="${esc(s.artist||'')}" placeholder="Use each selected printing’s original artist"><small>Used only for custom artwork. Scryfall originals and fallback images always keep the real printing artist. Leave blank to inherit the printing artist for custom art too.</small></label><label class="field"><span>Modification credit for this deck <small>optional</small></span><input id="deck-modification" maxlength="160" value="${esc(s.modificationCredit||'')}" placeholder="e.g. Modified by ChatGPT"><small>Appended after each card’s artist. You can change or suppress it per face.</small></label><div class="credit-preview" aria-live="polite"><span class="eyebrow">EXAMPLE ARTIST LINES</span><small>Scryfall artwork</small><strong id="scryfall-credit-preview"></strong><small>Custom artwork</small><strong id="custom-credit-preview"></strong></div><label class="field"><span>Deck name</span><input id="deck-name" maxlength="200" value="${esc(deck.name)}"></label><label class="field"><span>Notes <small>only visible here</small></span><textarea id="deck-notes" rows="3">${esc(deck.notes||'')}</textarea></label>
       <label class="field"><span>Reuse style from another deck</span><select id="reuse-style"><option value="">Choose a deck…</option>${state.decks.filter(d=>d.id!==deck.id).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select><small>Copies its symbols, back, artist/modification credits and template choices—not its card list or artwork folder.</small></label>
@@ -53,6 +68,22 @@ export function renderSetup(root,deck,onSaved){
   $$('input:not([type=file]),textarea,select',root).forEach(el=>el.addEventListener('input',mark));
   $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;$$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x===b));$$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));mark();});
   $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
+  $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
+$('#symbol-folder',root).onchange=()=>attempt(async()=>{
+  const input=$('#symbol-folder',root),files=input.files;if(!files.length)return;
+  const button=$('#symbol-folder-button',root),generate=$('#generate-symbols',root),save=$('#save-setup',root),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
+  button.disabled=true;generate.disabled=true;save.disabled=true;render.disabled=true;
+  try{
+    const selected=symbolFolderFiles(files),next={};let done=0;
+    for(const rarity of rarities){
+      status.textContent=`Uploading set symbols ${done+1} / 4 · ${selected[rarity].name}`;
+      next[rarity]=(await uploadImage(selected[rarity],{symbol:true})).id;done++;
+    }
+    s.symbols=next;redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
+  }finally{
+    input.value='';button.disabled=false;generate.disabled=false;save.disabled=false;render.disabled=false;
+  }
+});
   $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;const button=$('#generate-symbols',root);button.disabled=true;try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();}finally{button.disabled=false;}});
   $('#open-templates',root).onclick=()=>nav('templates');
   $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','modificationCredit','templateRules'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#deck-modification',root).value=s.modificationCredit||'';creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
@@ -62,7 +93,7 @@ export function renderSetup(root,deck,onSaved){
     s.useLandLibrary=$('#use-land-library',root).checked;s.landLibrary=$('#land-library',root).value.trim();s.artist=$('#deck-artist',root).value;s.modificationCredit=$('#deck-modification',root).value.trim();
     s.disableAutofit=$('#disable-autofit',root).checked;s.refreshData=$('#refresh-data',root).checked;s.flavorPolicy=$('#flavor-policy',root).value;
     $$('[data-rule]',root).forEach(el=>s.templateRules[el.dataset.rule]=el.value);
-    if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols, or use Generate four from one image.');
+    if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
     try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,name:$('#deck-name',root).value,notes:$('#deck-notes',root).value,settings:s});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
   }
