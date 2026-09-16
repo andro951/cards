@@ -11,6 +11,7 @@ def test_auto_template_version_is_scoped_to_structural_group(tmp_path,monkeypatc
     compiler=Compiler(Store(tmp_path))
     station=compiler.template_identity('station','auto')
     planeswalker=compiler.template_identity('planeswalker','auto')
+    assert station[0]=='auto:station' and planeswalker[0]=='auto:planeswalker'
     assert station[1]==1 and planeswalker[1]==1
     monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',2)
     station2=compiler.template_identity('station','auto')
