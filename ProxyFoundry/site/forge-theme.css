@@ -88,7 +88,7 @@ input:focus,select:focus,textarea:focus{border-color:#ef8030;box-shadow:0 0 0 2p
 .card-image{background:#0d0a08;border-color:#462e1d}.card-image:hover{border-color:#ed7c2c;box-shadow:0 0 18px #ef6d191e}
 .quantity-pill{border-color:#8b5b35!important;background:#160e08e8!important}.warn-pill{background:#743d11!important;color:#ffd28f!important}
 .card-name-pill{position:absolute;z-index:4;top:8px;left:50px;right:34px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 8px;border:1px solid #8b5b35;border-radius:6px;background:#160e08e8;color:#f3dfbd;font-size:10px;font-weight:650;line-height:1.25;text-align:left;pointer-events:none;box-shadow:0 2px 8px #0007}
-.modal-backdrop{background:#000c}.modal-header,.modal-footer{border-color:#422a19}.modal-header{background:linear-gradient(180deg,#21150d,#17100b)}
+.modal{overflow:hidden}.modal-backdrop{background:#000c}.modal-header,.modal-footer{border-color:#422a19}.modal-header{background:linear-gradient(180deg,#21150d,#17100b)}
 .toast{background:#202c20;border-color:#4c6b48}.toast.error{background:#3b1c17;border-color:#854436}
 .credit-preview{background:#1e150e!important;border-color:#604025!important}.credit-original{background:#0e0b08!important;border-color:#49301e!important}
 code{color:#ffb76d}
