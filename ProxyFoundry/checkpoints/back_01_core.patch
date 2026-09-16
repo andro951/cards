@@ -1,0 +1,151 @@
+diff --git a/foundry/__init__.py b/foundry/__init__.py
+--- a/foundry/__init__.py
++++ b/foundry/__init__.py
+@@ -1 +1 @@
+-__version__ = '1.2.0'
++__version__ = '1.3.0'
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -111 +111 @@
+-            z.writestr('diagnostics.json', json.dumps({'version': '1.2.0', 'runtime': self.runtime.diagnostic(),
++            z.writestr('diagnostics.json', json.dumps({'version': '1.3.0', 'runtime': self.runtime.diagnostic(),
+@@ -150 +150 @@
+-    server_version = 'ProxyFoundry/1.2'
++    server_version = 'ProxyFoundry/1.3'
+@@ -278,2 +278,3 @@
+-            return self.respond({'version': '1.2.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+-                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats()})
++            return self.respond({'version': '1.3.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
++                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
++        if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
+@@ -340,0 +342 @@
++        if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
+diff --git a/foundry/workspace.py b/foundry/workspace.py
+--- a/foundry/workspace.py
++++ b/foundry/workspace.py
+@@ -13,0 +14 @@
++from .backs import Backs
+@@ -19 +20 @@
+-        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store)
++        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store)
+@@ -32 +33 @@
+-        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
++        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
+@@ -92 +93,4 @@
+-            new=self.validate_settings({**d['settings'],**patch['settings']})
++            incoming={**d['settings'],**patch['settings']}
++            # Old callers sending a complete back by ID remain supported.
++            if 'backAsset' in patch['settings'] and 'backDesign' not in patch['settings']:incoming.pop('backDesign',None)
++            new=self.validate_settings(incoming)
+@@ -105 +109,4 @@
+-            if 'backOverride' in patch:
++            if 'backDesignOverride' in patch and patch['backDesignOverride'] is not None:
++                resolved=self.backs.settings({'backDesign':patch['backDesignOverride'],'backAsset':patch.get('backOverride')})
++                c['backOverride']=resolved['backAsset'];c['backDesignOverride']=resolved['backDesign']
++            elif 'backOverride' in patch:
+@@ -108 +115 @@
+-                c['backOverride']=value
++                c['backOverride']=value;c.pop('backDesignOverride',None)
+@@ -138 +145 @@
+-        new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride')
++        new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride');new['backDesignOverride']=old.get('backDesignOverride')
+diff --git a/scripts/package_release.py b/scripts/package_release.py
+--- a/scripts/package_release.py
++++ b/scripts/package_release.py
+@@ -9,0 +10,2 @@
++BACK_FILES={'assets/backs/forge_default.png','assets/backs/forge_blank.png'}
++
+@@ -14 +16 @@
+-        if p.suffix.lower() not in EXTENSIONS and p.name!='.gitignore':continue
++        if p.suffix.lower() not in EXTENSIONS and p.name!='.gitignore' and p.relative_to(ROOT).as_posix() not in BACK_FILES:continue
+@@ -17,0 +20,4 @@
++    assert BACK_FILES <= {p.relative_to(ROOT).as_posix() for p in files}, 'Release is missing its two approved back assets'
++    back_manifest=json.loads((ROOT/'assets/backs/manifest.json').read_text())
++    for name in BACK_FILES:
++        assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==back_manifest['files'][Path(name).name]['sha256']
+@@ -19 +25 @@
+-    manifest={'application':'Proxy Foundry','version':'1.2.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
++    manifest={'application':'Proxy Foundry','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+@@ -27 +33 @@
+-    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_2.zip')
++    destination=Path(sys.argv[1] if len(sys.argv)>1 else ROOT.parent/'ProxyFoundry_1_3.zip')
+diff --git a/tests/test_browser.py b/tests/test_browser.py
+--- a/tests/test_browser.py
++++ b/tests/test_browser.py
+@@ -60 +60 @@
+-    with page.expect_file_chooser() as chooser:page.click('#pick-back')
++    with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
+@@ -62 +62 @@
+-    expect(page.locator('#back-upload img')).to_have_count(1)
++    expect(page.locator('#back-designer [data-back-preview]')).to_have_count(1)
+@@ -175,0 +176,28 @@
++
++
++def test_browser_default_icon_full_back_and_reload(browser_app):
++    app,server,page,errors=browser_app
++    d=app.ws.new_deck('Back designer')
++    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#back-designer').wait_for()
++    expect(page.locator('[data-back-action=default]')).to_have_attribute('aria-pressed','true')
++    with page.expect_file_chooser() as chooser:page.click('[data-back-action=icon]')
++    # Wide synthetic icon must be contained, never forced to a square.
++    chooser.value.set_files({'name':'test_logo.png','mimeType':'image/png','buffer':png((1000,200))})
++    expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true',timeout=15000)
++    before=page.locator('[data-back-preview]').get_attribute('src')
++    page.check('[data-back-guide]');expect(page.locator('.back-icon-guide')).to_be_visible()
++    assert page.locator('[data-back-preview]').get_attribute('src')==before
++    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
++    saved=app.ws.deck(d['id']);assert saved['settings']['backDesign']['mode']=='icon'
++    icon_id=saved['settings']['backAsset']
++    page.reload();expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true')
++    with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
++    chooser.value.set_files({'name':'whole_back.png','mimeType':'image/png','buffer':png((300,420))})
++    expect(page.locator('[data-back-action=custom]')).to_have_attribute('aria-pressed','true')
++    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
++    assert app.ws.deck(d['id'])['settings']['backAsset']!=icon_id
++    page.click('[data-back-action=default]');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
++    assert app.ws.deck(d['id'])['settings']['backAsset']==app.ws.backs.builtin('default')['id']
++    page.set_viewport_size({'width':390,'height':844})
++    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
++    assert not errors,errors
+diff --git a/tests/test_dom_offline.py b/tests/test_dom_offline.py
+--- a/tests/test_dom_offline.py
++++ b/tests/test_dom_offline.py
+@@ -14 +14 @@
+-    for name in ['ui','credits','setup','render','orders','templates','settings','deck','app']:
++    for name in ['ui','credits','backs','setup','render','orders','templates','settings','deck','app']:
+@@ -44 +44 @@
+-          if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{}};
++          if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{},backs:{default:{id:'a'.repeat(64)},blank:{id:'b'.repeat(64)},iconBounds:{x:207,y:450,size:640},blankSize:[1055,1491]}};
+diff --git a/tests/test_release.py b/tests/test_release.py
+--- a/tests/test_release.py
++++ b/tests/test_release.py
+@@ -0,0 +1,2 @@
++import os,pytest
++from pathlib import Path
+@@ -4,0 +7 @@
++@pytest.mark.skipif((os.environ.get('PF_TEST_BACK_ASSETS')=='1' or (os.environ.get('CI')=='true' and not (Path(__file__).resolve().parents[1]/'assets/backs/forge_default.png').is_file())),reason='Code-only CI uses synthetic backdrops; exact two-background release is verified locally from the complete asset pack.')
+@@ -7 +10 @@
+-    required=['START_PROXY_FOUNDRY.bat','START_LEGACY_CARD_TOOLS.bat','RUN_TESTS.bat','run.py','site/index.html','site/app.js','site/deck.js','site/setup.js','site/render.js','site/styles.css','foundry/server.py','extension/manifest.json','extension/bridge.js','extension/background.js','vendor/card_tools/pipeline/card_data_to_cardconjurer.py']
++    required=['START_PROXY_FOUNDRY.bat','START_LEGACY_CARD_TOOLS.bat','RUN_TESTS.bat','run.py','site/index.html','site/app.js','site/deck.js','site/setup.js','site/render.js','site/styles.css','foundry/server.py','extension/manifest.json','extension/bridge.js','extension/background.js','vendor/card_tools/pipeline/card_data_to_cardconjurer.py','foundry/backs.py','site/backs.js','assets/backs/forge_default.png','assets/backs/forge_blank.png','assets/backs/manifest.json']
+@@ -10,0 +14 @@
++        assert {p for p in names if p.endswith('.png')}=={'ProxyFoundry/assets/backs/forge_default.png','ProxyFoundry/assets/backs/forge_blank.png'}
+diff --git a/tests/test_server.py b/tests/test_server.py
+--- a/tests/test_server.py
++++ b/tests/test_server.py
+@@ -121 +121 @@
+-        assert z.namelist()==['workspace.json']
++        assert set(z.namelist())=={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}
+@@ -142,0 +143,12 @@
++
++
++def test_back_catalog_and_composition_endpoint(running):
++    app,s=running
++    status,cat,_=request(s,'/api/backs/catalog');assert status==200
++    assert cat['iconBounds']=={'x':207,'y':450,'size':640}
++    _,image,_=request(s,'/api/uploads',png((1200,400)),headers={'X-Filename':'test_icon.png'})
++    status,result,_=request(s,'/api/backs/compose',{'iconAsset':image['id']});assert status==200
++    assert result['placement']['placedBounds']==[207,663,640,213]
++    assert (result['width'],result['height'])==(1055,1491)
++    assert request(s,'/api/backs/compose',{'iconAsset':image['id']},headers={'X-Proxy-CSRF':'wrong'})[0]==403
++    assert request(s.runtime_server,'/api/backs/catalog')[0]==404
