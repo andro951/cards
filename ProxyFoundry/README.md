@@ -1,19 +1,19 @@
-# Proxy Foundry
+# Bulk Proxy Forge
 
 A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v58 compiler and CardConjurer's actual native renderer.
 
 ## Start here
 
 1. Extract the complete ZIP into a permanent folder.
-2. Double-click **START_PROXY_FOUNDRY.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
+2. Double-click **START_BULK_PROXY_FORGE.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
 3. The workspace opens automatically in your browser. Keep the launcher window open.
 4. Click **Import deck** and paste a public Scryfall deck URL, JSON export, or card list.
 5. In **Art & setup**, choose original printing art, a GitHub folder, or a computer folder. Select templates, supply four rarity symbols (or generate four treatments from one), and choose a deck back.
 6. Click **Save & generate images**. Completed cards appear in the grid and are cached locally.
 7. Select one or more decks, choose **Review print order**, check both sides and any crop/layout warnings, and build the paired ZIP.
-8. Save the images ZIP or use **Open in TCGPlaytest**. The printer opens in a **new tab**; Proxy Foundry stays open. Review the printer proof and complete checkout yourself.
+8. Save the images ZIP or use **Open in TCGPlaytest**. The printer opens in a **new tab**; Bulk Proxy Forge stays open. Review the printer proof and complete checkout yourself.
 
-**Do not double-click `site/index.html`.** This integrated version uses the local server started by the BAT. Normal use requires no Git, Node, Playwright or full CardConjurer repository download.
+**Do not double-click `site/index.html`.** Bulk Proxy Forge uses the local server started by the BAT. Normal use requires no Git, Node, Playwright or full CardConjurer repository download.
 
 On macOS/Linux: install `requirements.txt` in a Python environment and run `python run.py`. `python run.py --no-browser --port 8765` starts without opening a tab.
 
@@ -77,13 +77,13 @@ The existing pinned GitHub core predates Station. For Stations only, the app add
 
 The app fetches individual code/assets from pinned CardConjurer commits and runs native `loadCard()` / `cardCanvas` rendering in a separate-origin local frame. The full upstream repository archive and thumbnail catalogue are never downloaded. Only completed, correctly sized PNGs enter the render cache.
 
-The grid stays on the Proxy Foundry page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.
+The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.
 
 Every physical card has explicit matching filenames, for example `FRONT/000001.png` and `BACK/000001.png`. Real reverse faces, deck-default backs, individual overrides and quantities are included. Multiple selected decks become one order ZIP. Saved order packages are immutable snapshots and do not change when a deck is later edited.
 
 ## Storage, cache and backups
 
-Windows workspace: `%LOCALAPPDATA%\ProxyFoundry`. macOS/Linux: `~/.local/share/ProxyFoundry` or `$XDG_DATA_HOME/ProxyFoundry`. Set `PROXY_FOUNDRY_HOME` before launching to choose another location.
+New Windows workspaces use `%LOCALAPPDATA%\BulkProxyForge`; macOS/Linux use `~/.local/share/BulkProxyForge` or `$XDG_DATA_HOME/BulkProxyForge`. Existing `ProxyFoundry` workspaces continue in place automatically so the rename never strands saved decks. Set `BULK_PROXY_FORGE_HOME` to choose another location; the old `PROXY_FOUNDRY_HOME` override remains accepted for compatibility.
 
 Replacing the extracted app folder does not remove the workspace. Do not delete that workspace directory unless you intend to erase its saved data.
 
