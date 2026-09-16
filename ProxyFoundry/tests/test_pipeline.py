@@ -41,6 +41,22 @@ def test_artist_and_back_hash(workspace):
 @pytest.mark.parametrize('raw',[b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',b'<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>'])
 def test_active_svg_rejected(raw):
     with pytest.raises(ValidationError):sanitize_svg(raw)
+
+def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
+    s,_,settings=workspace
+    b=io.BytesIO();Image.new('RGB',(1000,600),'#556677').save(b,'PNG');landscape=ingest_image(s,b.getvalue())
+    walker={'id':'00000000-0000-4000-8000-000000000099','name':'Walker Test','type_line':'Legendary Planeswalker — Tester','mana_cost':'{2}{U}{U}','oracle_text':'+1: Draw a card.\n-2: Return target creature to its owner\'s hand.\n-7: Draw seven cards.','colors':['U'],'rarity':'mythic','loyalty':'4','artist':'Source Artist'}
+    comp=Compiler(s)
+    result=comp.compile_face(walker,walker,0,{},settings,landscape['id'],art_origin='Scryfall selected printing')
+    assert result['group']=='planeswalker' and result['recipe']=='planeswalker_regular_3'
+    assert result['crop']['cropX']>.20 and not result['crop']['warning']
+    assert result['crop']['intentionalArtWindow'] is True
+    manual=comp.compile_face(walker,walker,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])
+    assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
+    ordinary=sf('Creature — Human',['U'])
+    ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,landscape['id'])
+    assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
+
 def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace):
     from foundry.workspace import Workspace
     from foundry.orders import Orders
