@@ -1,0 +1,46 @@
+name: Install Bulk Proxy Forge bundled backs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-install-bpf-backs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  install-backs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download exact approved back assets
+        env:
+          ASSET_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-e080-81f5-98cc-2f0987bb55b0/raw?se=2026-09-16T02%3A16%3A33Z&sp=r&sv=2026-02-06&sr=b&scid=4c883a39-482b-5db5-ac29-32399f4b0726&skoid=d1cabc79-3240-4866-94fe-6005330cb49e&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-15T18%3A16%3A23Z&ske=2026-09-16T18%3A16%3A23Z&sks=b&skv=2026-02-06&sig=tIcy3TaNdiEbmFpl37yAUoajiV0CKSW3MmXa4SGGHe0%3D'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-delay 1 "$ASSET_URL" --output /tmp/bpf-backs.zip
+          unzip -o /tmp/bpf-backs.zip -d ProxyFoundry
+
+      - name: Verify exact assets
+        run: |
+          set -euo pipefail
+          echo '43aa4e050a84cfbc6c33fee88b3254b4ad69888b12da527c14c1a407912ba739  ProxyFoundry/assets/backs/forge_default.png' | sha256sum -c -
+          echo '8bc1139dfb0f392390ed213987508a6a914f5535034b9f868d573b9afd657a3b  ProxyFoundry/assets/backs/forge_blank.png' | sha256sum -c -
+
+      - name: Commit bundled back assets
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/assets/backs/forge_default.png ProxyFoundry/assets/backs/forge_blank.png ProxyFoundry/assets/backs/manifest.json
+          if git diff --cached --quiet; then
+            echo 'Assets already present; nothing to commit.'
+            exit 0
+          fi
+          git commit -m 'Add bundled Bulk Proxy Forge card backs'
+          git push origin HEAD:main
