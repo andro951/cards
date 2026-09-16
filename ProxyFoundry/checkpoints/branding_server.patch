@@ -1,0 +1,18 @@
+diff --git a/foundry/server.py b/foundry/server.py
+--- a/foundry/server.py
++++ b/foundry/server.py
+@@ -150 +150 @@
+-    server_version = 'ProxyFoundry/1.3'
++    server_version = 'BulkProxyForge/1.3'
+@@ -294 +294 @@
+-        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='ProxyFoundry_Diagnostics.zip')
++        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
+@@ -299 +299 @@
+-            return self.send_bytes(b.getvalue(), 'application/zip', filename='ProxyFoundry_Print_Helper.zip')
++            return self.send_bytes(b.getvalue(), 'application/zip', filename='BulkProxyForge_Print_Helper.zip')
+@@ -311 +311 @@
+-            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'ProxyFoundry_Order_' + m[1][:8] + '.zip')
++            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+@@ -316 +316 @@
+-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'ProxyFoundry_Order.zip'})
++            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
