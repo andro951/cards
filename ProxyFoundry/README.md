@@ -25,7 +25,7 @@ Remove the old test helper. Open `edge://extensions` or `chrome://extensions`, e
 
 The helper asks **Add** or **Replace** when the printer already contains cards. Replace confirms recognized deletion dialogs and checks the count decreases. An unfamiliar flow stops before upload. The overlay can be minimized or closed and closes automatically after success. The helper does not enter payment details or click Checkout.
 
-ZIP transfers through the browser helper are limited to **1 GB**. Larger packages can be downloaded for manual upload or split into smaller orders. The implemented printer integration is **TCGPlaytest**, not every service named MTGProxy.
+The browser helper transfers large orders as **sequential ZIP batches capped at 1 GB each (1,073,741,824 bytes, including ZIP headers)**. It splits before adding a front/back pair that would cross the cap, never splits a pair, and preserves the original image bytes and resolution. All batches append to one TCGPlaytest design; Add/Replace is asked only once. The saved full-order ZIP and manual download are unchanged. See `docs/HELPER_ZIP_BATCHES.md`. The implemented printer integration is **TCGPlaytest**, not every service named MTGProxy.
 
 ## Deck and artwork management
 
@@ -51,7 +51,7 @@ Four rarity symbols are required before generation. Upload all four or explicitl
 
 This release uses the supplied **Card Tools v58**, with the existing source-aware artist/modification controls retained. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply native Station rendering and the updated Flip spacing; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
 
-The print helper is **unchanged from version 1.0.0**. An already connected 1.0.0 helper does not need replacement for this update. Earlier 0.9.x test helpers still need the integrated helper setup described above.
+The print helper is now **1.1.0**. Multi-ZIP orders require updating the installed extension files and clicking **Reload** in Edge/Chrome, then reloading the workspace page. A helper loaded directly from `ProxyFoundry/extension` gets the new files with `git pull`; otherwise extract the updated helper into the same installed folder. Existing 1.0.0 helpers still support small single-ZIP orders. No uninstall/reinstall is required.
 
 The previous v48-to-v54 comparison remains in `docs/CARD_TOOLS_V54_REVIEW.md`. This update follows the supplied v54-to-v58 handoff; see `docs/CARD_TOOLS_V58_UPDATE.md`. `docs/CARD_TOOLS_V58_MANIFEST.json` records exact hashes for all ten supplied source/document files.
 

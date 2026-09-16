@@ -2,7 +2,7 @@
   if(window.__proxyFoundryWorkspaceBridge)return;
   if(!document.querySelector('meta[name="proxy-foundry"][content="workspace-v1"]'))return;
   window.__proxyFoundryWorkspaceBridge=true;
-  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.0.0'},location.origin);
+  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.1.0',transferProtocol:2},location.origin);
   let opening=false;
   window.addEventListener('message',async e=>{
     if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-workspace')return;

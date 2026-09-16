@@ -74,6 +74,7 @@ def start(page,existing=0,bad_chunk=False):
     script=(ROOT/'extension/bridge.js').read_text()
     assert script.count('new URLSearchParams(location.search)')==1
     script=script.replace('new URLSearchParams(location.search)',"new URLSearchParams('?proxyFoundryOrder=fixture')")
+    page.add_script_tag(content=(ROOT/'extension/transfer-protocol.js').read_text())
     page.add_script_tag(content=script)
     return data
 @pytest.mark.parametrize('existing,action,expected,deleted',[(0,None,2,0),(2,'add',4,0),(2,'replace',2,2)])

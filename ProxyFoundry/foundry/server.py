@@ -26,6 +26,7 @@ from .images import ingest_image, rarity_variants, sanitize_svg
 from .jobs import Jobs
 from .github_setup import import_github_setup
 from .orders import Orders
+from .transfer_zip import PairedZipTransfer, MAX_RANGE_BYTES
 from .runtime import Runtime
 from .storage import Store
 from .tools import CardTools
@@ -84,12 +85,13 @@ class App:
         d = self.store.get('orders', order_id)
         p = self.store.home / 'orders' / (order_id + '.zip')
         if not d or not p.is_file(): raise ValidationError('This saved order package is missing. Build it again.')
+        batches = PairedZipTransfer(p, d['count'])
         ident, secret = uid(), secrets.token_urlsafe(32)
         with self.lock:
             now = time.time()
             self.transfers = {k: v for k, v in self.transfers.items() if v['expires'] > now}
             self.transfers[ident] = {'secret': secret, 'expires': now + 3600, 'order': order_id,
-                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size}
+                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size, 'batches': batches}
         return {'id': ident, 'secret': secret, 'origin': self.origin}
 
     def authorized_transfer(self, ident, secret):
@@ -97,6 +99,8 @@ class App:
             t = self.transfers.get(ident)
             if not t or t['expires'] < time.time() or not secrets.compare_digest(str(secret or ''), t['secret']):
                 raise PermissionError('Print transfer expired or is not authorized. Open the order again from Bulk Proxy Forge.')
+            # One hour of inactivity, not a one-hour ceiling on large active orders.
+            t['expires'] = time.time() + 3600
             return dict(t)
 
     def order(self, ident):
@@ -309,8 +313,19 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(self.app.store.home / ('orders' if m[1] == 'files' else 'backups') / m[2], 'application/zip', m[2])
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
+            if m[2] == 'metadata': return self.respond(t['batches'].metadata())
             return self.file(t['path'], 'application/zip', allow_range=True)
+        if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/batches/(\d+)/zip', p):
+            t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
+            view = t['batches']; batch = view.batch(int(m[2]))
+            match = re.fullmatch(r'bytes=(\d+)-(\d+)', self.headers.get('Range', ''))
+            if not match: raise ValidationError('Request a bounded ZIP batch download range.')
+            start, requested_end = int(match[1]), int(match[2])
+            if requested_end - start + 1 > MAX_RANGE_BYTES:
+                raise ValidationError('Download range is too large.')
+            raw = view.read_range(batch.index, start, requested_end)
+            return self.send_bytes(raw, 'application/zip', 206, headers={
+                'Accept-Ranges': 'bytes', 'Content-Range': f'bytes {start}-{start + len(raw) - 1}/{batch.size}'})
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):
