@@ -1,0 +1,96 @@
+:root{
+  --bg:#090806;
+  --panel:#16110c;
+  --panel2:#21170f;
+  --line:#4d3320;
+  --text:#f1dfbf;
+  --muted:#b39a7b;
+  --accent:#f47a20;
+  --accent2:#ffae58;
+  --good:#9ccf9c;
+  --danger:#f29a8f;
+  --radius:12px;
+}
+body{
+  background:
+    radial-gradient(circle at 77% 8%,#f26d1116 0 3%,transparent 18%),
+    radial-gradient(circle at 18% 82%,#8a3e1014 0 4%,transparent 20%),
+    repeating-linear-gradient(135deg,#ffffff018 0 1px,transparent 1px 7px),
+    #090806;
+  color:var(--text);
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:linear-gradient(90deg,#0008,transparent 18% 82%,#0007),radial-gradient(ellipse at center,transparent 42%,#0007 100%);
+}
+h1,h2,h3,.brand-copy{font-family:Georgia,"Times New Roman",serif}
+h1{color:#f7e6c4;text-shadow:0 1px #000,0 0 18px #e86d1722}
+h2,h3{color:#efd6ad}
+.sidebar{
+  background:
+    linear-gradient(180deg,#120d09f5,#080706f8),
+    repeating-linear-gradient(90deg,#ffffff08 0 1px,transparent 1px 6px);
+  border-right:1px solid #694220;
+  box-shadow:8px 0 30px #0007,inset -1px 0 #130a04;
+}
+.brand{gap:13px;color:#f3d9ae;text-shadow:0 1px 1px #000;margin-bottom:44px}
+.brand-copy{font-size:17px;line-height:1.1;letter-spacing:.2px}
+.brand-copy small{font-family:Inter,Segoe UI,system-ui,sans-serif;color:#d18447!important;letter-spacing:2px!important}
+.brand-mark{
+  position:relative;width:42px;height:42px;border-radius:50%!important;
+  background:radial-gradient(circle at 35% 30%,#ffb25f,#dc6319 45%,#6c2c0b 72%,#1c0f08 74%);
+  border:2px solid #cc6a25;
+  box-shadow:0 0 0 2px #2a160a,0 0 0 3px #75411f,0 4px 12px #000,inset 0 0 12px #250d02!important;
+  color:#180b04!important;font:800 10px/1 Georgia,serif!important;
+}
+.brand-mark:before,.brand-mark:after{content:"";position:absolute;left:50%;transform:translateX(-50%);background:#1b0d06;border-radius:2px}
+.brand-mark:before{width:20px;height:5px;top:13px;box-shadow:-5px 5px 0 -1px #1b0d06,5px 5px 0 -1px #1b0d06}
+.brand-mark:after{width:9px;height:12px;top:17px;clip-path:polygon(0 0,100% 0,76% 100%,24% 100%)}
+.brand-mark span{position:absolute;inset:auto 0 2px;text-align:center;color:#ffcc8e;text-shadow:0 1px #000;z-index:2;font-size:7px;letter-spacing:.7px}
+.nav-label,.eyebrow{color:#d8752e}
+.sidebar nav a{color:#bfa98d;border:1px solid transparent}
+.sidebar nav a:hover{background:#23170f;color:#f7dfbd;border-color:#4e311e}
+.sidebar nav a.active{background:linear-gradient(90deg,#3a1e0d,#21140c);color:#ffac61;border-color:#714020;box-shadow:inset 3px 0 #ef7925}
+.nav-icon{color:#c36b30}
+.topbar{background:#0f0b08e8;border-bottom:1px solid #4b2e1b;box-shadow:0 8px 25px #0005;backdrop-filter:blur(10px)}
+.breadcrumb{color:#a98d6d}.breadcrumb span{color:#8b4c26}.helper-state b{color:#f28a3c}.helper-state.connected b{color:#a5d39e}
+.button{background:linear-gradient(180deg,#2a1c12,#17100b);border-color:#573820;color:#ead2ae;box-shadow:inset 0 1px #ffffff08,0 2px 5px #0005}
+.button:hover:not(:disabled){background:linear-gradient(180deg,#3a2618,#21140d);border-color:#8a5028;color:#ffe7c5}
+.button.primary{background:linear-gradient(180deg,#ff9b48,#e96a18);border-color:#ffb260;color:#211006;box-shadow:inset 0 1px #ffd0a0,0 3px 0 #7a310b,0 7px 18px #0006;text-shadow:0 1px #ffc58a}
+.button.primary:hover:not(:disabled){background:linear-gradient(180deg,#ffb363,#f27a24)}
+.button.quiet{background:#140d08a8;border-color:#3f2919}
+.hero-strip{background:radial-gradient(circle at 78% 45%,#ff7c221a,transparent 26%),linear-gradient(115deg,#321a0c,#17100b 58%,#0d0b09);border-color:#70401f;box-shadow:inset 0 0 40px #0008,0 7px 25px #0005}
+.hero-strip:before{content:"";position:absolute;right:-35px;top:-70px;width:250px;height:250px;border:1px solid #f58a3b22;border-radius:50%;box-shadow:0 0 0 25px #f58a3b08,0 0 0 55px #f58a3b05}
+.step-mini b{border-color:#824721;background:#160e08;color:#ff9c50;box-shadow:inset 0 0 14px #5b250c55}
+.filter-pills{background:#110c08;border-color:#422918}.filter-pills button{color:#a98f72}.filter-pills button.active{background:linear-gradient(#48250f,#2b180d);color:#ffc489;box-shadow:inset 0 0 0 1px #7a431f}
+.deck-tile,.panel,.template-card,.order-row,.modal{background:linear-gradient(180deg,#19110c,#110d09);border-color:#442b1a;box-shadow:inset 0 1px #ffffff08,0 7px 24px #0004}
+.deck-tile:hover{border-color:#a15b2b;box-shadow:0 10px 30px #0007,0 0 0 1px #6c3518}
+.deck-tile.selected{border-color:#ef7a2a;box-shadow:0 0 0 1px #ef7a2a,0 0 22px #ff71152d}
+.deck-cover{background:radial-gradient(ellipse at 65% 35%,#7d3d17,#2a160c 50%,#0e0b09 78%)}
+.deck-cover:after{background:linear-gradient(0deg,#140e0a,transparent)}
+.deck-cover .deck-monogram{color:#f48c3430;text-shadow:0 0 20px #f47a2040}
+.deck-content{background:linear-gradient(180deg,#16100b,#100c09)}
+.deck-footer{border-color:#3b2517}
+.badge{background:#271b12;color:#c1a483;border:1px solid #45301f}.badge.ready{background:#1e2c1f;color:#a6d6a4;border-color:#39563b}.badge.attention,.badge.warning{background:#3a260f;color:#f0b96b;border-color:#68451d}.badge.draft{background:#2d2118;color:#c4aa8a}.badge.prepared{background:#312019;color:#e3a56e}
+.add-tile{border-color:#604027;color:#a98d72;background:#0f0b08a8}.add-tile:hover{background:#24160d;border-color:#e97b2b;color:#f2d7b2}
+.selection-tray,.activity{background:#18110cf3;border-color:#814a24;box-shadow:0 14px 55px #000b,inset 0 1px #ffffff0b}
+.progress-track{background:#342216}.progress-track>div{background:linear-gradient(90deg,#c84f0d,#ff9a45);box-shadow:0 0 12px #ff7b24}
+input:not([type]),input[type=text],input[type=url],input[type=number],input[type=search],select,textarea,.input{background:#0e0b08;border-color:#49301e;color:#f0ddbd;box-shadow:inset 0 2px 7px #0006}
+input:hover,select:hover,textarea:hover{border-color:#88502a}
+input:focus,select:focus,textarea:focus{border-color:#ef8030;box-shadow:0 0 0 2px #f47a201f,inset 0 2px 7px #0005}
+.choice,.well,.stat-card{background:linear-gradient(180deg,#17100b,#100c09);border-color:#432b1a}.choice.selected{border-color:#e67a30;background:linear-gradient(180deg,#3a210f,#21130b);box-shadow:inset 0 0 18px #ff7b1814}.choice .choice-symbol{color:#f58a3c}
+.notice{background:#2c1f13;border-color:#6c4827;color:#e6c596}.notice.info{background:#201a14;border-color:#5a412b;color:#d8c0a0}.notice.success{background:#1d2b1e;border-color:#3c5d3e;color:#a8d5a7}.notice.error{background:#371b17;border-color:#7b3c30;color:#f3aaa0}
+.symbol-upload{background:#0e0b08;border-color:#49301e}.symbol-upload.has-image{border-color:#7a4f2d}
+.back-mode{background:linear-gradient(#19110c,#100c09);border-color:#48301e}.back-mode.selected{border-color:#ee7d2d;background:linear-gradient(#3b210f,#21130b);box-shadow:inset 0 0 18px #ff7a1818}
+.back-design-preview{padding:14px;border:1px solid #3f2919;border-radius:10px;background:#0d0a08}
+.back-icon-guide{outline-color:#ffb35f;background:#f47a2018}
+.tabs{border-color:#422a19}.tabs button{color:#a88c70}.tabs button.active{border-color:#f47a20;color:#ffd6a4}
+.card-image{background:#0d0a08;border-color:#462e1d}.card-image:hover{border-color:#ed7c2c;box-shadow:0 0 18px #ef6d191e}
+.quantity-pill{border-color:#8b5b35!important;background:#160e08e8!important}.warn-pill{background:#743d11!important;color:#ffd28f!important}
+.modal-backdrop{background:#000c}.modal-header,.modal-footer{border-color:#422a19}.modal-header{background:linear-gradient(180deg,#21150d,#17100b)}
+.toast{background:#202c20;border-color:#4c6b48}.toast.error{background:#3b1c17;border-color:#854436}
+.credit-preview{background:#1e150e!important;border-color:#604025!important}.credit-original{background:#0e0b08!important;border-color:#49301e!important}
+code{color:#ffb76d}
+::selection{background:#c85d20;color:#fff4e2}
+::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:#0b0806}::-webkit-scrollbar-thumb{background:#4e311f;border:2px solid #0b0806;border-radius:8px}::-webkit-scrollbar-thumb:hover{background:#75421f}
+@media(max-width:760px){.brand-copy{display:none!important}.brand-mark{width:31px!important;height:31px!important}.sidebar nav a.active{box-shadow:inset 0 -2px #ef7925}}
