@@ -57,9 +57,12 @@ def test_sequential_paired_zip_batches(tmp_path, monkeypatch, action, stop):
     server = LocalServer(app);threading.Thread(target=server.serve_forever,daemon=True).start()
     image=io.BytesIO();Image.frombytes('RGB',(600,840),random.Random(9).randbytes(600*840*3)).save(image,'PNG')
     asset=ingest_image(store,image.getvalue());store.render_put('fixture',asset)
-    entry={'id':uid(),'name':'Batch fixture','quantity':3,'faces':[{'id':uid(),'name':'Batch fixture',
+    entry={'id':uid(),'name':'Batch fixture','quantity':3,
+           'scryfall':{'name':'Batch fixture','layout':'normal','type_line':'Artifact','image_uris':{}},
+           'faces':[{'id':uid(),'name':'Batch fixture',
            'compiled':{'renderKey':'fixture','generationVersion':GENERATION_VERSION}}]}
     deck=store.put('decks',{'name':'Batch test','status':'prepared','settings':{'backAsset':asset['id']},'cards':[entry]})
+    assert app.ws.list_decks()[0]['id']==deck['id']  # Fixture must support real app bootstrap.
     order=app.orders.build([deck['id']],True)
     path=store.home/'orders'/(order['id']+'.zip')
     # >1 MB messages and one full pair per batch, without a multi-GB CI upload.
