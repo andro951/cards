@@ -1,3 +1,4 @@
+# One-shot migration; removed after the patch lands.
 name: Restore card hover backs
 
 on:
