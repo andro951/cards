@@ -29,90 +29,64 @@ jobs:
 
           sources=Path('ProxyFoundry/foundry/sources.py')
           text=sources.read_text(encoding='utf-8')
-          old="""        return d
-    def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
-"""
-          new="""        return self._expand_meld(d,refresh)
-    def _expand_meld(self,d,refresh=False):
-        if d.get('layout')!='meld':return d
-        result=next((p for p in d.get('all_parts') or [] if p.get('component')=='meld_result'),None)
-        if not result or result.get('id')==d.get('id'):return d
-        other=self.resolve_card(result.get('id') or result.get('name',''),refresh)
-        def face(card):return {k:v for k,v in card.items() if k not in {'card_faces','all_parts','_meld_proxy'}}
-        return {**d,'_meld_proxy':True,'card_faces':[face(d),face(other)]}
-    def physical_faces(self,sf):
-        faces=sf.get('card_faces') or []
-        if sf.get('_meld_proxy') and len(faces)==2:return faces
-        return ingest.face_list(sf)
-    def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
-"""
+          old="        return d\n    def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):\n"
+          new="        return self._expand_meld(d,refresh)\n    def _expand_meld(self,d,refresh=False):\n        if d.get('layout')!='meld':return d\n        result=next((p for p in d.get('all_parts') or [] if p.get('component')=='meld_result'),None)\n        if not result or result.get('id')==d.get('id'):return d\n        other=self.resolve_card(result.get('id') or result.get('name',''),refresh)\n        def face(card):return {k:v for k,v in card.items() if k not in {'card_faces','all_parts','_meld_proxy'}}\n        return {**d,'_meld_proxy':True,'card_faces':[face(d),face(other)]}\n    def physical_faces(self,sf):\n        faces=sf.get('card_faces') or []\n        if sf.get('_meld_proxy') and len(faces)==2:return faces\n        return ingest.face_list(sf)\n    def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):\n"
           assert old in text
           text=text.replace(old,new,1)
-          old="""        faces=ingest.face_list(sf)
-        if sf.get('layout') in {'split','adventure','flip','prepare'}:faces=faces[:1]
-"""
-          new="""        faces=self.physical_faces(sf)
-        if sf.get('layout') in {'split','adventure','flip','prepare'}:faces=faces[:1]
-"""
+          old="        faces=ingest.face_list(sf)\n        if sf.get('layout') in {'split','adventure','flip','prepare'}:faces=faces[:1]\n"
+          new="        faces=self.physical_faces(sf)\n        if sf.get('layout') in {'split','adventure','flip','prepare'}:faces=faces[:1]\n"
           assert old in text
-          text=text.replace(old,new,1)
-          sources.write_text(text,encoding='utf-8')
+          sources.write_text(text.replace(old,new,1),encoding='utf-8')
 
           domain=Path('ProxyFoundry/foundry/domain.py')
           text=domain.read_text(encoding='utf-8')
-          old="""    layout=str(parent.get('layout') or face.get('scryfall_layout') or 'normal')
-    tl=str(face.get('type_line') or '').lower()
-"""
-          new="""    layout=str(parent.get('layout') or face.get('scryfall_layout') or 'normal')
-    if layout=='meld' and parent.get('_meld_proxy'):layout='normal'
-    tl=str(face.get('type_line') or '').lower()
-"""
+          old="    layout=str(parent.get('layout') or face.get('scryfall_layout') or 'normal')\n    tl=str(face.get('type_line') or '').lower()\n"
+          new="    layout=str(parent.get('layout') or face.get('scryfall_layout') or 'normal')\n    if layout=='meld' and parent.get('_meld_proxy'):layout='normal'\n    tl=str(face.get('type_line') or '').lower()\n"
           assert old in text
           domain.write_text(text.replace(old,new,1),encoding='utf-8')
 
           compiler=Path('ProxyFoundry/foundry/compiler.py')
           text=compiler.read_text(encoding='utf-8')
-          old="""    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'rarity':sf.get('rarity','common'),'flavor_text':get('flavor_text')}
-"""
-          new="""    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'rarity':face.get('rarity',sf.get('rarity','common')),'flavor_text':get('flavor_text')}
-"""
+          old="    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'rarity':sf.get('rarity','common'),'flavor_text':get('flavor_text')}\n"
+          new="    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'rarity':face.get('rarity',sf.get('rarity','common')),'flavor_text':get('flavor_text')}\n"
           assert old in text
           compiler.write_text(text.replace(old,new,1),encoding='utf-8')
 
           workspace=Path('ProxyFoundry/foundry/workspace.py')
           text=workspace.read_text(encoding='utf-8')
           assert text.count('ingest.face_list(sf)')==2
-          text=text.replace('ingest.face_list(sf)','self.sources.physical_faces(sf)')
-          workspace.write_text(text,encoding='utf-8')
+          workspace.write_text(text.replace('ingest.face_list(sf)','self.sources.physical_faces(sf)'),encoding='utf-8')
 
           tests=Path('ProxyFoundry/tests/test_pipeline.py')
           text=tests.read_text(encoding='utf-8')
           marker='def test_exact_printing(workspace):\n'
           assert marker in text
-          test="""def test_meld_import_pairs_result_as_back_and_uses_normal_renderers(workspace):
-    s,a,settings=workspace
-    front_id='10000000-0000-4000-8000-000000000001';result_id='20000000-0000-4000-8000-000000000002'
-    parts=[{'id':front_id,'component':'meld_part','name':'Urza, Lord Protector'},{'id':result_id,'component':'meld_result','name':'Urza, Planeswalker'}]
-    front={'id':front_id,'name':'Urza, Lord Protector','layout':'meld','type_line':'Legendary Creature — Human Artificer','mana_cost':'{1}{W}{U}','oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast.','colors':['W','U'],'rarity':'mythic','power':'2','toughness':'4','set':'bro','collector_number':'225','artist':'Front Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/front.jpg'}}
-    result={'id':result_id,'name':'Urza, Planeswalker','layout':'meld','type_line':'Legendary Planeswalker — Urza','mana_cost':'','oracle_text':'You may activate the loyalty abilities of Urza twice each turn rather than only once.\\n+2: You gain 2 life.\\n+1: Draw two cards, then discard a card.\\n0: Create two 1/1 colorless Soldier artifact creature tokens.\\n-3: Exile target nonland permanent.\\n-10: Destroy all nonland permanents.','colors':['W','U'],'rarity':'mythic','loyalty':'7','set':'bro','collector_number':'238b','artist':'Back Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/back.jpg'}}
-    calls=[]
-    def transport(url):
-        calls.append(url);card=result if url.endswith(result_id) else front
-        return json.dumps(card).encode(),'application/json',{}
-    src=Sources(Network(s,transport=transport,sleeper=lambda n:None))
-    imported=src.import_deck([{'id':front_id,'quantity':1}]);card=imported['cards'][0];sf0=card['scryfall']
-    assert sf0['_meld_proxy'] is True
-    assert [f['name'] for f in card['faces']]==['Urza, Lord Protector','Urza, Planeswalker']
-    assert [f['name'] for f in src.physical_faces(sf0)]==['Urza, Lord Protector','Urza, Planeswalker']
-    comp=Compiler(s)
-    front_comp=comp.compile_face(sf0,sf0['card_faces'][0],0,{},settings,a)
-    back_comp=comp.compile_face(sf0,sf0['card_faces'][1],1,{},settings,a)
-    assert front_comp['group']=='legendary'
-    assert back_comp['group']=='planeswalker'
-    assert front_comp['name']=='Urza, Lord Protector' and back_comp['name']=='Urza, Planeswalker'
-    assert calls==['https://api.scryfall.com/cards/'+front_id,'https://api.scryfall.com/cards/'+result_id]
-
-"""
+          lines=[
+            'def test_meld_import_pairs_result_as_back_and_uses_normal_renderers(workspace):',
+            '    s,a,settings=workspace',
+            "    front_id='10000000-0000-4000-8000-000000000001';result_id='20000000-0000-4000-8000-000000000002'",
+            "    parts=[{'id':front_id,'component':'meld_part','name':'Urza, Lord Protector'},{'id':result_id,'component':'meld_result','name':'Urza, Planeswalker'}]",
+            "    front={'id':front_id,'name':'Urza, Lord Protector','layout':'meld','type_line':'Legendary Creature — Human Artificer','mana_cost':'{1}{W}{U}','oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast.','colors':['W','U'],'rarity':'mythic','power':'2','toughness':'4','set':'bro','collector_number':'225','artist':'Front Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/front.jpg'}}",
+            "    result={'id':result_id,'name':'Urza, Planeswalker','layout':'meld','type_line':'Legendary Planeswalker — Urza','mana_cost':'','oracle_text':'You may activate the loyalty abilities of Urza twice each turn rather than only once.\\n+2: You gain 2 life.\\n+1: Draw two cards, then discard a card.\\n0: Create two 1/1 colorless Soldier artifact creature tokens.\\n-3: Exile target nonland permanent.\\n-10: Destroy all nonland permanents.','colors':['W','U'],'rarity':'mythic','loyalty':'7','set':'bro','collector_number':'238b','artist':'Back Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/back.jpg'}}",
+            '    calls=[]',
+            '    def transport(url):',
+            "        calls.append(url);card=result if url.endswith(result_id) else front",
+            "        return json.dumps(card).encode(),'application/json',{}",
+            '    src=Sources(Network(s,transport=transport,sleeper=lambda n:None))',
+            "    imported=src.import_deck([{'id':front_id,'quantity':1}]);card=imported['cards'][0];sf0=card['scryfall']",
+            "    assert sf0['_meld_proxy'] is True",
+            "    assert [f['name'] for f in card['faces']]==['Urza, Lord Protector','Urza, Planeswalker']",
+            "    assert [f['name'] for f in src.physical_faces(sf0)]==['Urza, Lord Protector','Urza, Planeswalker']",
+            '    comp=Compiler(s)',
+            "    front_comp=comp.compile_face(sf0,sf0['card_faces'][0],0,{},settings,a)",
+            "    back_comp=comp.compile_face(sf0,sf0['card_faces'][1],1,{},settings,a)",
+            "    assert front_comp['group']=='legendary'",
+            "    assert back_comp['group']=='planeswalker'",
+            "    assert front_comp['name']=='Urza, Lord Protector' and back_comp['name']=='Urza, Planeswalker'",
+            "    assert calls==['https://api.scryfall.com/cards/'+front_id,'https://api.scryfall.com/cards/'+result_id]",
+            '',
+          ]
+          test='\n'.join(lines)+'\n'
           tests.write_text(text.replace(marker,test+marker,1),encoding='utf-8')
           PY
 
