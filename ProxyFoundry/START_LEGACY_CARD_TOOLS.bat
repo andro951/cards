@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 if not exist ".venv\Scripts\python.exe" (
-  echo Start Proxy Foundry once to set up its private Python environment.
+  echo Start Bulk Proxy Forge once to set up its private Python environment.
   pause
   exit /b 1
 )
