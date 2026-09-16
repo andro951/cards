@@ -26,6 +26,7 @@ from .images import ingest_image, rarity_variants, sanitize_svg
 from .jobs import Jobs
 from .github_setup import import_github_setup
 from .orders import Orders
+from .transfer_batches import plan_batches, HELPER_ZIP_LIMIT, MAX_RANGE
 from .runtime import Runtime
 from .storage import Store
 from .tools import CardTools
@@ -84,12 +85,13 @@ class App:
         d = self.store.get('orders', order_id)
         p = self.store.home / 'orders' / (order_id + '.zip')
         if not d or not p.is_file(): raise ValidationError('This saved order package is missing. Build it again.')
+        batches = plan_batches(p, d['count'])
         ident, secret = uid(), secrets.token_urlsafe(32)
         with self.lock:
             now = time.time()
             self.transfers = {k: v for k, v in self.transfers.items() if v['expires'] > now}
             self.transfers[ident] = {'secret': secret, 'expires': now + 3600, 'order': order_id,
-                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size}
+                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size, 'batches': batches}
         return {'id': ident, 'secret': secret, 'origin': self.origin}
 
     def authorized_transfer(self, ident, secret):
@@ -97,6 +99,8 @@ class App:
             t = self.transfers.get(ident)
             if not t or t['expires'] < time.time() or not secrets.compare_digest(str(secret or ''), t['secret']):
                 raise PermissionError('Print transfer expired or is not authorized. Open the order again from Bulk Proxy Forge.')
+            # Idle timeout, not an absolute deadline for a multi-batch order.
+            t['expires'] = time.time() + 3600
             return dict(t)
 
     def order(self, ident):
@@ -307,10 +311,26 @@ class Handler(BaseHTTPRequestHandler):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
         if m := re.fullmatch(r'/api/(files|backups)/([A-Za-z0-9_.-]+\.zip)', p):
             return self.file(self.app.store.home / ('orders' if m[1] == 'files' else 'backups') / m[2], 'application/zip', m[2])
-        if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
+        if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip|batches/(\d+)/zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
-            return self.file(t['path'], 'application/zip', allow_range=True)
+            if m[2] == 'metadata':
+                return self.respond({'protocol': 2, 'count': t['count'], 'zipBytes': t['zipBytes'],
+                                     'filename': 'BulkProxyForge_Order.zip', 'batchLimit': HELPER_ZIP_LIMIT,
+                                     'batches': [batch.metadata for batch in t['batches']]})
+            if m[2] == 'zip':  # Compatibility with already-installed single-ZIP helpers.
+                return self.file(t['path'], 'application/zip', allow_range=True)
+            index = int(m[3])
+            if index >= len(t['batches']): raise ValidationError('Unknown upload batch.')
+            batch = t['batches'][index]
+            match = re.fullmatch(r'bytes=(\d+)-(\d+)', self.headers.get('Range', ''))
+            if not match: raise ValidationError('Upload batches require a bounded download range.')
+            start, end = int(match[1]), int(match[2])
+            if end < start or end - start >= MAX_RANGE:
+                raise ValidationError('Invalid or oversized upload-batch range.')
+            end = min(end, batch.size - 1)
+            raw = batch.read_range(start, end - start + 1)
+            return self.send_bytes(raw, 'application/zip', 206,
+                                   headers={'Accept-Ranges': 'bytes', 'Content-Range': f'bytes {start}-{end}/{batch.size}'})
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):

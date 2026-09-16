@@ -62,7 +62,7 @@ async function boot(){
     window.addEventListener('message',e=>{
       if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;
       if(e.data.type==='PF_WORKSPACE_PONG'){
-        state.helper=true;$('#helper-state').classList.add('connected');$('#helper-state b').textContent='connected';
+        state.helper=true;state.helperBatches=Array.isArray(e.data.capabilities)&&e.data.capabilities.includes('paired-zip-batches');$('#helper-state').classList.add('connected');$('#helper-state b').textContent='connected';
       }
       if(e.data.type==='PF_WORKSPACE_ERROR')toast(e.data.error||'The print helper could not open the order.',true);
     });
