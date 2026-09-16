@@ -1,0 +1,95 @@
+name: Restore card hover backs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-hover-card-backs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: ProxyFoundry
+
+      - name: Restore hover-to-back and remove flip button
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          deck = Path('ProxyFoundry/site/deck.js')
+          text = deck.read_text(encoding='utf-8')
+
+          old_state = "  let v=views.get(id);if(!v){v={query:'',filter:'all',flipped:new Set()};views.set(id,v);}\n"
+          new_state = "  let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}\n"
+          assert old_state in text
+          text = text.replace(old_state, new_state, 1)
+
+          start = text.index("      const f=c.faces[0],flipped=")
+          end = text.index("\n    }).join('')}</div>`", start)
+          replacement = '''      const f=c.faces[0],front=preview(c,f),back=backPreview(c,d),done=!!f.compiled?.render;
+              const warning=c.faces.some(x=>x.error||x.compiled?.crop?.warning||x.compiled?.flags?.length);
+              const displayedCredit=f.compiled?.credit;
+              return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button><h3 title="${esc(c.name)}">${esc(c.name)}</h3>${displayedCredit?`<div class="card-credit" title="${esc(displayedCredit.display)}">${esc(displayedCredit.display)}</div>`:''}<div class="card-item-footer"><small>${esc((c.scryfall.set||'').toUpperCase())} ${esc(c.scryfall.collector_number||'')} · ${esc(f.compiled?.render?'Rendered':'Not rendered')}</small></div></article>`;'''
+          text = text[:start] + replacement + text[end:]
+
+          card_handler = "    $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));\n"
+          hover_handler = card_handler + "    $$('[data-hover-back]').forEach(img=>{const card=img.closest('[data-card]'),front=img.dataset.hoverFront,back=img.dataset.hoverBack;if(!card||!front||!back)return;card.onmouseenter=()=>{img.src=back;};card.onmouseleave=()=>{img.src=front;};});\n"
+          assert card_handler in text
+          text = text.replace(card_handler, hover_handler, 1)
+
+          flip_handler = "    $$('[data-flip]').forEach(b=>b.onclick=()=>{v.flipped.has(b.dataset.flip)?v.flipped.delete(b.dataset.flip):v.flipped.add(b.dataset.flip);const scroll=$('.card-grid')?.scrollTop;cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=scroll||0;});\n"
+          assert flip_handler in text
+          text = text.replace(flip_handler, '', 1)
+
+          old_help = '<div class="subtitle-line">Click a card to edit its artist, art, printing, quantity or template. Real double-faced cards keep their reverse as a paired face.</div>`;'
+          new_help = '<div class="subtitle-line">Hover a card to see its back. Click it to edit its artist, art, printing, quantity or template. Real double-faced cards hover to their actual reverse face.</div>`;'
+          assert old_help in text
+          text = text.replace(old_help, new_help, 1)
+
+          assert 'data-flip=' not in text
+          assert 'flip-button' not in text
+          assert 'v.flipped' not in text
+          deck.write_text(text, encoding='utf-8')
+
+          tests = Path('ProxyFoundry/tests/test_browser.py')
+          test_text = tests.read_text(encoding='utf-8')
+          marker = '\ndef test_browser_paired_order_snapshot(browser_app):\n'
+          assert marker in test_text
+          regression = r'''
+def test_browser_card_hover_shows_assigned_back_without_flip_button(browser_app):
+    app,server,page,errors=browser_app
+    art=ingest_image(app.store,png());back=ingest_image(app.store,png((300,420),'#775544'));symbols=rarity_variants(app.store,art['id'])
+    d=app.ws.create({'name':'Hover back deck','source':'1 A Test Creature','settings':{'symbols':symbols,'backAsset':back['id']}});d=app.ws.prepare(d['id'])
+    comp=d['cards'][0]['faces'][0]['compiled'];app.ws.save_render(comp['renderKey'],png((comp['data']['width'],comp['data']['height'])),(comp['data']['width'],comp['data']['height']))
+    page.goto(server.origin+'/#deck/'+d['id']+'/cards')
+    card=page.locator('[data-card]').first;img=card.locator('img').first;img.wait_for()
+    front=img.get_attribute('src');assert front and front!='/api/assets/'+back['id']
+    assert page.locator('.flip-button').count()==0
+    card.hover();expect(img).to_have_attribute('src','/api/assets/'+back['id'])
+    card.dispatch_event('mouseleave');expect(img).to_have_attribute('src',front)
+    assert not errors,errors
+'''
+          test_text = test_text.replace(marker, regression + marker, 1)
+          tests.write_text(test_text, encoding='utf-8')
+          PY
+
+      - name: Sanity check changed JavaScript and test
+        run: |
+          grep -q 'data-hover-back' ProxyFoundry/site/deck.js
+          ! grep -q 'flip-button' ProxyFoundry/site/deck.js
+          grep -q 'test_browser_card_hover_shows_assigned_back_without_flip_button' ProxyFoundry/tests/test_browser.py
+
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/site/deck.js ProxyFoundry/tests/test_browser.py
+          git commit -m 'Restore card hover backs and remove flip button'
+          git push origin HEAD:main
