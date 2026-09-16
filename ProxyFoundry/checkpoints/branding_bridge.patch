@@ -1,0 +1,20 @@
+diff --git a/extension/bridge.js b/extension/bridge.js
+--- a/extension/bridge.js
++++ b/extension/bridge.js
+@@ -21 +21 @@
+-    console.log('[Proxy Print Helper]', message, data ?? '');
++    console.log('[Bulk Proxy Forge Print Helper]', message, data ?? '');
+@@ -31 +31 @@
+-        <b style="font-size:14px;color:#fff;line-height:1.2">Proxy Print Helper <span style="font-size:10px;color:#8d98a6;font-weight:700">v${VERSION}</span></b>
++        <b style="font-size:14px;color:#f4dfbf;line-height:1.2">Bulk Proxy Forge <span style="font-size:10px;color:#ff9c55;font-weight:700">Print Helper · v${VERSION}</span></b>
+@@ -52,2 +52,2 @@
+-    background:'rgba(8,10,14,.97)', border:'1px solid #3b414d', borderRadius:'14px',
+-    boxShadow:'0 18px 50px rgba(0,0,0,.45)', padding:'14px 16px',
++    background:'rgba(20,13,8,.98)', border:'1px solid #75401f', borderRadius:'12px',
++    boxShadow:'0 18px 50px rgba(0,0,0,.55), inset 0 1px rgba(255,180,110,.06)', padding:'14px 16px',
+@@ -203 +203 @@
+-    log('Connecting to your saved print order…', 'Keep the Proxy Foundry launcher running until the ZIP upload is finished.');
++    log('Connecting to your saved print order…', 'Keep the Bulk Proxy Forge launcher running until the ZIP upload is finished.');
+@@ -222 +222 @@
+-    const file=new File(parts,metadata.filename||'ProxyFoundry_Order.zip',{type:'application/zip'});
++    const file=new File(parts,metadata.filename||'BulkProxyForge_Order.zip',{type:'application/zip'});
