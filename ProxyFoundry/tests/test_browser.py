@@ -97,6 +97,19 @@ def test_browser_symbol_folder_upload(browser_app,tmp_path):
     expect(page.locator('.toast.error')).to_contain_text('common.*, uncommon.*, rare.*, and mythic.*',timeout=10000)
     assert app.ws.deck(d['id'])['settings']['symbols']==before
     assert not errors,errors
+def test_browser_card_hover_shows_assigned_back_without_flip_button(browser_app):
+    app,server,page,errors=browser_app
+    art=ingest_image(app.store,png());back=ingest_image(app.store,png((300,420),'#775544'));symbols=rarity_variants(app.store,art['id'])
+    d=app.ws.create({'name':'Hover back deck','source':'1 A Test Creature','settings':{'symbols':symbols,'backAsset':back['id']}});d=app.ws.prepare(d['id'])
+    comp=d['cards'][0]['faces'][0]['compiled'];app.ws.save_render(comp['renderKey'],png((comp['data']['width'],comp['data']['height'])),(comp['data']['width'],comp['data']['height']))
+    page.goto(server.origin+'/#deck/'+d['id']+'/cards')
+    card=page.locator('[data-card]').first;img=card.locator('img').first;img.wait_for()
+    front=img.get_attribute('src');assert front and front!='/api/assets/'+back['id']
+    assert page.locator('.flip-button').count()==0
+    card.hover();expect(img).to_have_attribute('src','/api/assets/'+back['id'])
+    card.dispatch_event('mouseleave');expect(img).to_have_attribute('src',front)
+    assert not errors,errors
+
 def test_browser_paired_order_snapshot(browser_app):
     app,server,page,errors=browser_app
     art=ingest_image(app.store,png());back=ingest_image(app.store,png((300,420),'#665577'));symbols=rarity_variants(app.store,art['id'])
