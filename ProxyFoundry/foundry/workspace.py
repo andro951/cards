@@ -30,7 +30,7 @@ class Workspace:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
-        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None)
+        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None);s['source'].pop('refreshArt',None)
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
@@ -160,10 +160,13 @@ class Workspace:
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
         if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
         refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
-        # Scryfall alone uses the year/week policy; mutable custom art is rechecked
-        # after ten minutes, or immediately when the user asks to refresh custom art.
-        ttl=None if origin=='Scryfall selected printing' else (0 if settings['source'].get('refreshArt') else 600)
-        raw,_,_=self.net.fetch(url,refresh=refresh,ttl=ttl);asset=ingest_image(self.store,raw)
+        # GitHub artwork is a live source: every generation rechecks the remote
+        # bytes. Scryfall keeps its separate year/week cache policy.
+        if origin in {'GitHub folder','land art library'}:
+            raw,_,_=self.net.fetch(url,refresh=True,ttl=0)
+        else:
+            raw,_,_=self.net.fetch(url,refresh=refresh,ttl=None)
+        asset=ingest_image(self.store,raw)
         if origin=='Scryfall selected printing' and ingest.saga_creature_trailing_rules_text(face.get('type_line',sf.get('type_line','')),face.get('oracle_text',sf.get('oracle_text',''))):
             im=decode_image(self.store.asset_path(asset['id']).read_bytes())
             if im.height<=182:raise ValidationError('Saga-creature artwork is too short for the approved 99/83-pixel crop.')
@@ -189,9 +192,9 @@ class Workspace:
         index={};land_index={}
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
-            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=bool(s['source'].get('refreshArt')))
+            progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
         if s.get('useLandLibrary'):
-            progress(0,1,'Reading hosted full-art land library');land_index=self.sources.github_index(HOSTED_LAND_LIBRARY)
+            progress(0,1,'Reading hosted full-art land library');land_index=self.sources.github_index(HOSTED_LAND_LIBRARY,refresh=True)
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             if cancel():raise ValidationError('Preparation cancelled.')

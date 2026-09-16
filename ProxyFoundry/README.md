@@ -87,7 +87,7 @@ New Windows workspaces use `%LOCALAPPDATA%\BulkProxyForge`; macOS/Linux use `~/.
 
 Replacing the extracted app folder does not remove the workspace. Do not delete that workspace directory unless you intend to erase its saved data.
 
-Scryfall data/art cache is **365 days**, or **7 days** with Fetch new data enabled. Fresh entries are reused, not fetched on every request. Mutable custom GitHub art is rechecked after ten minutes or immediately with **Refresh custom GitHub art**; that is separate from the Scryfall policy. Pinned CardConjurer dependencies are cached individually.
+Scryfall data/art cache is **365 days**, or **7 days** with Fetch new data enabled. Fresh Scryfall entries are reused, not fetched on every request. GitHub folder artwork and the hosted full-art land library are treated as live sources: their folder listings and selected image bytes are re-fetched whenever images are generated. Pinned CardConjurer dependencies are cached individually.
 
 SQLite transactions and revision checks prevent two tabs from silently overwriting deck edits. Portable backups include decks, custom templates, referenced images and completed renders, excluding runtime/font/HTTP caches, browser credentials and printer transfer secrets. Restore adds copies rather than overwriting existing decks. Export a backup before moving computers or deleting the workspace.
 

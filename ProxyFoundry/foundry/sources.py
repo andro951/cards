@@ -85,7 +85,7 @@ class Sources:
     def art_url(self,sf,face):return ingest.scryfall_art_crop_url(sf,face)
     def github_index(self,url,branch=None,refresh=False):
         loc=github_location(url,branch)
-        if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],refresh=refresh).get('default_branch','main')
+        if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0 if refresh else 600).get('default_branch','main')
         api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+quote(loc['ref'],safe='')
         rows=self.net.json(api,ttl=0 if refresh else 600)
         if not isinstance(rows,list):raise ValidationError('That GitHub link is a file, not an artwork folder.')
