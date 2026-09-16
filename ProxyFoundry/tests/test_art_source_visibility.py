@@ -12,3 +12,4 @@ def test_github_refresh_toggle_is_removed():
     source=Path("site/setup.js").read_text(encoding="utf-8")
     assert 'refresh-custom-art' not in source
     assert 'refreshArt' not in source
+    assert 'Refresh custom GitHub art when generating' not in source
