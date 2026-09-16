@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Proxy Foundry
+title Bulk Proxy Forge
 where py >nul 2>nul
 if not errorlevel 1 (
   set "PYTHON=py -3"
@@ -16,7 +16,7 @@ if errorlevel 1 (
   exit /b 1
 )
 if not exist ".venv\Scripts\python.exe" (
-  echo Preparing the isolated application environment...
+  echo Preparing the isolated Bulk Proxy Forge environment...
   %PYTHON% -m venv .venv
   if errorlevel 1 goto failed
 )
@@ -26,12 +26,12 @@ if errorlevel 1 (
   ".venv\Scripts\python.exe" -m pip install -r requirements.txt
   if errorlevel 1 goto failed
 )
-echo Opening Proxy Foundry. Your decks are stored outside this extracted app folder.
+echo Opening Bulk Proxy Forge. Your decks are stored outside this extracted app folder.
 ".venv\Scripts\python.exe" run.py
 if errorlevel 1 goto failed
 exit /b 0
 :failed
 echo.
-echo Proxy Foundry could not start. The error is shown above; your saved decks are unchanged.
+echo Bulk Proxy Forge could not start. The error is shown above; your saved decks are unchanged.
 pause
 exit /b 1
