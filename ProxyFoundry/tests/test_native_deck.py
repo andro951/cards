@@ -30,7 +30,8 @@ def records():
         {'name':'Budoka Gardener','type_line':'Creature — Human Monk','colors':['G'],'mana_cost':'{1}{G}','power':'2','toughness':'1','oracle_text':'Upright rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']},
         {'name':'Dokai, Weaver of Life','type_line':'Legendary Creature — Human Monk','colors':['G'],'mana_cost':'','power':'3','toughness':'3','oracle_text':'Rotated lower rules for native Flip test.','artist':'Flip Artist','image_uris':base['image_uris']}]},
       {'name':'Vehicle Test','type_line':'Artifact — Vehicle','colors':['U','R'],'mana_cost':'{1}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying\nCrew 2'},
-      {'name':'Iron Man, Titan of Innovation','type_line':'Legendary Artifact Creature — Human','colors':['U','R'],'mana_cost':'{3}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying, haste'}
+      {'name':'Iron Man, Titan of Innovation','type_line':'Legendary Artifact Creature — Human','colors':['U','R'],'mana_cost':'{3}{U}{R}','power':'4','toughness':'4','oracle_text':'Flying, haste'},
+      {'name':'Summon: Bahamut','layout':'saga','rarity':'mythic','type_line':'Enchantment Creature — Saga Dragon','colors':[],'mana_cost':'{9}','power':'9','toughness':'9','oracle_text':'(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II — Destroy up to one target nonland permanent.\nIII — Draw two cards.\nIV — Mega Flare — This creature deals damage equal to the total mana value of other permanents you control to each opponent.\nFlying'}
     ]
     return [{**base,**d,'id':f'11111111-1111-4111-8111-{i:012d}','oracle_id':f'22222222-2222-4222-8222-{i:012d}','collector_number':str(i)} for i,d in enumerate(defs,1)]
 def test_real_native_deck_and_dfc_pairing(tmp_path):
@@ -53,7 +54,8 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
-            assert ready['summary']['rendered']==11
+            assert ready['summary']['rendered']==12
+            assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
             for c in ready['cards']:
                 for f in c['faces']:
                     comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' · Modified by ChatGPT'
@@ -67,7 +69,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             with zipfile.ZipFile(s.home/'orders'/(order['id']+'.zip')) as z:
                 assert z.read('BACK/000005.png')==s.asset_path(expected).read_bytes()
                 assert z.read('BACK/000001.png')==s.asset_path(back['id']).read_bytes()
-                assert len(z.namelist())==20
+                assert len(z.namelist())==22
                 assert z.read('BACK/000008.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
             flip=ready['cards'][7]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
             assert flip['text']['pt']['text']=='2/1' and flip['text']['pt2']['text']=='3/3'
