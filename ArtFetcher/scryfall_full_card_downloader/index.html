@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scryfall Card Downloader</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:20px;font-family:Arial,sans-serif;background:#fff;color:#111}
+  input{width:100%;padding:8px;font:14px Arial,sans-serif}
+  button{margin:8px 6px 8px 0;padding:7px 10px;cursor:pointer}
+  #log{width:100%;height:300px;overflow:auto;white-space:pre-wrap;border:1px solid #888;padding:8px;background:#f5f5f5;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<input id="deckUrl" type="url" spellcheck="false" placeholder="https://scryfall.com/@user/decks/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+<br>
+<button id="runBtn">Download Full Card Images</button>
+<div id="log"></div>
+<button id="copyLogBtn">Copy Logs</button>
+<button id="downloadLogBtn">Download Logs</button>
+<button id="openFolderBtn">Open Output Folder</button>
+
+<script>
+(() => {
+  const deckUrl = document.getElementById('deckUrl');
+  const runBtn = document.getElementById('runBtn');
+  const logEl = document.getElementById('log');
+  let pollTimer = null;
+
+  async function refreshLog() {
+    const r = await fetch('/api/status', {cache:'no-store'});
+    const s = await r.json();
+    logEl.textContent = s.log || '';
+    logEl.scrollTop = logEl.scrollHeight;
+    runBtn.disabled = !!s.running;
+    if (!s.running && pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  runBtn.onclick = async () => {
+    const url = deckUrl.value.trim();
+    if (!url) return;
+    logEl.textContent = '';
+    runBtn.disabled = true;
+    try {
+      const r = await fetch('/api/start', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({deck_url:url})
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+      await refreshLog();
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => refreshLog().catch(() => {}), 500);
+    } catch (e) {
+      logEl.textContent += `ERROR: ${e.message}\n`;
+      runBtn.disabled = false;
+    }
+  };
+
+  document.getElementById('copyLogBtn').onclick = async () => {
+    try { await navigator.clipboard.writeText(logEl.textContent || ''); }
+    catch (e) { logEl.textContent += `ERROR: Could not copy logs: ${e.message}\n`; }
+  };
+
+  document.getElementById('downloadLogBtn').onclick = () => {
+    location.href = '/api/log.txt';
+  };
+
+  document.getElementById('openFolderBtn').onclick = async () => {
+    const r = await fetch('/api/open-output', {method:'POST'});
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      logEl.textContent += `ERROR: ${data.error || `HTTP ${r.status}`}\n`;
+    }
+  };
+
+  refreshLog().catch(() => {});
+})();
+</script>
+</body>
+</html>
