@@ -118,7 +118,7 @@ def test_backup_restore_copies_and_omits_runtime_fonts(running):
     backup=app.backups.export()
     path=app.store.home/'backups'/backup['filename']
     with zipfile.ZipFile(path) as z:
-        assert z.namelist()==['workspace.json']
+        assert set(z.namelist())=={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}
     result=app.backups.restore(path)
     assert result['decks']==1
     assert len(app.ws.list_decks())==2
@@ -140,3 +140,15 @@ def test_uploaded_file_name_never_becomes_a_local_path(running):
     assert status==200 and a['stem']=='evil'
     assert not (app.store.home/'evil.png').exists()
     assert app.store.asset(a['id'])
+
+
+def test_back_catalog_and_composition_endpoint(running):
+    app,s=running
+    status,cat,_=request(s,'/api/backs/catalog');assert status==200
+    assert cat['iconBounds']=={'x':207,'y':450,'size':640}
+    _,image,_=request(s,'/api/uploads',png((1200,400)),headers={'X-Filename':'test_icon.png'})
+    status,result,_=request(s,'/api/backs/compose',{'iconAsset':image['id']});assert status==200
+    assert result['placement']['placedBounds']==[207,663,640,213]
+    assert (result['width'],result['height'])==(1055,1491)
+    assert request(s,'/api/backs/compose',{'iconAsset':image['id']},headers={'X-Proxy-CSRF':'wrong'})[0]==403
+    assert request(s.runtime_server,'/api/backs/catalog')[0]==404

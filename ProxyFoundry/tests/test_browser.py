@@ -57,9 +57,9 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     with page.expect_file_chooser() as chooser:page.click('#generate-symbols')
     chooser.value.set_files({'name':'symbol.png','mimeType':'image/png','buffer':png((160,160))})
     expect(page.locator('.symbol-upload img')).to_have_count(4)
-    with page.expect_file_chooser() as chooser:page.click('#pick-back')
+    with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'back.png','mimeType':'image/png','buffer':png((300,420))})
-    expect(page.locator('#back-upload img')).to_have_count(1)
+    expect(page.locator('#back-designer [data-back-preview]')).to_have_count(1)
     page.fill('#deck-artist','Deck Artist');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     page.click('[data-tab=cards]');page.locator('[data-card]').first.click();page.fill('#card-qty','3');page.click('#save-card')
     expect(page.locator('.quantity-pill')).to_have_text('3×')
@@ -172,4 +172,32 @@ def test_browser_deck_artist_modification_previews(browser_app):
     current=app.ws.deck(d['id'])
     assert current['settings']['artist']=='My Custom Artist'
     assert current['settings']['modificationCredit']=='Modified by ChatGPT'
+    assert not errors,errors
+
+
+def test_browser_default_icon_full_back_and_reload(browser_app):
+    app,server,page,errors=browser_app
+    d=app.ws.new_deck('Back designer')
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#back-designer').wait_for()
+    expect(page.locator('[data-back-action=default]')).to_have_attribute('aria-pressed','true')
+    with page.expect_file_chooser() as chooser:page.click('[data-back-action=icon]')
+    # Wide synthetic icon must be contained, never forced to a square.
+    chooser.value.set_files({'name':'test_logo.png','mimeType':'image/png','buffer':png((1000,200))})
+    expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true',timeout=15000)
+    before=page.locator('[data-back-preview]').get_attribute('src')
+    page.check('[data-back-guide]');expect(page.locator('.back-icon-guide')).to_be_visible()
+    assert page.locator('[data-back-preview]').get_attribute('src')==before
+    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    saved=app.ws.deck(d['id']);assert saved['settings']['backDesign']['mode']=='icon'
+    icon_id=saved['settings']['backAsset']
+    page.reload();expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true')
+    with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
+    chooser.value.set_files({'name':'whole_back.png','mimeType':'image/png','buffer':png((300,420))})
+    expect(page.locator('[data-back-action=custom]')).to_have_attribute('aria-pressed','true')
+    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    assert app.ws.deck(d['id'])['settings']['backAsset']!=icon_id
+    page.click('[data-back-action=default]');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    assert app.ws.deck(d['id'])['settings']['backAsset']==app.ws.backs.builtin('default')['id']
+    page.set_viewport_size({'width':390,'height':844})
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     assert not errors,errors

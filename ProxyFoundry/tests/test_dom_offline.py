@@ -11,7 +11,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['ui','credits','setup','render','orders','templates','settings','deck','app']:
+    for name in ['ui','credits','backs','setup','render','orders','templates','settings','deck','app']:
         text=(ROOT/'site'/(name+'.js')).read_text()
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2]+';',text)
@@ -41,7 +41,7 @@ def dom_page(tmp_path):
         window.postMessage=()=>{};
         window.fetch=async(path,opts={})=>{
           const d=opts.body?JSON.parse(opts.body):null,F=window.__fixture;let value={};
-          if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{}};
+          if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{},backs:{default:{id:'a'.repeat(64)},blank:{id:'b'.repeat(64)},iconBounds:{x:207,y:450,size:640},blankSize:[1055,1491]}};
           else if(path==='/api/decks')value=[F.deck];
           else if(path==='/api/templates'&&!d)value=F.templates;
           else if(path==='/api/templates'&&d){value={...d,id:'33333333-3333-4333-8333-333333333333'};F.templates.push(value);}

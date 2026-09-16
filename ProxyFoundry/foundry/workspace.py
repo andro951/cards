@@ -11,12 +11,13 @@ from .sources import Sources
 from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
+from .backs import Backs
 
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'landLibrary':'','disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','landLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
-        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store)
+        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store)
     def new_deck(self, name='Untitled deck'):
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
             'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
@@ -29,7 +30,7 @@ class Workspace:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
-        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
+        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})}
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
@@ -89,7 +90,10 @@ class Workspace:
         if 'name' in patch:d['name']=str(patch['name']).strip()[:200] or 'Untitled deck'
         if 'notes' in patch:d['notes']=str(patch['notes'])[:20000]
         if 'settings' in patch:
-            new=self.validate_settings({**d['settings'],**patch['settings']})
+            incoming={**d['settings'],**patch['settings']}
+            # Old callers sending a complete back by ID remain supported.
+            if 'backAsset' in patch['settings'] and 'backDesign' not in patch['settings']:incoming.pop('backDesign',None)
+            new=self.validate_settings(incoming)
             dirty=any(new.get(k)!=d['settings'].get(k) for k in FRONT_SETTINGS);d['settings']=new
         if dirty:d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,expected)
@@ -102,10 +106,13 @@ class Workspace:
             d['cards']=[x for x in d['cards'] if x['id']!=card_id]
         else:
             if 'quantity' in patch:c['quantity']=quantity(patch['quantity'])
-            if 'backOverride' in patch:
+            if 'backDesignOverride' in patch and patch['backDesignOverride'] is not None:
+                resolved=self.backs.settings({'backDesign':patch['backDesignOverride'],'backAsset':patch.get('backOverride')})
+                c['backOverride']=resolved['backAsset'];c['backDesignOverride']=resolved['backDesign']
+            elif 'backOverride' in patch:
                 value=patch['backOverride']
                 if value and not self.store.asset(value):raise ValidationError('Back image is missing.')
-                c['backOverride']=value
+                c['backOverride']=value;c.pop('backDesignOverride',None)
             if patch.get('faceId'):
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
@@ -135,7 +142,7 @@ class Workspace:
         if not old:raise ValidationError('Card no longer exists.')
         sf=self.sources.resolve_card(source,d['settings'].get('refreshData',False))
         if sf.get('oracle_id') and old['scryfall'].get('oracle_id') and sf['oracle_id']!=old['scryfall']['oracle_id']:raise ValidationError('Select another printing of the same card, or use Add cards.')
-        new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride')
+        new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride');new['backDesignOverride']=old.get('backDesignOverride')
         for i,f in enumerate(new['faces']):
             if i<len(old['faces']):
                 for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)

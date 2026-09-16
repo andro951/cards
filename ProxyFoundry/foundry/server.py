@@ -108,7 +108,7 @@ class App:
     def diagnostic_zip(self):
         b = io.BytesIO()
         with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
-            z.writestr('diagnostics.json', json.dumps({'version': '1.2.0', 'runtime': self.runtime.diagnostic(),
+            z.writestr('diagnostics.json', json.dumps({'version': '1.3.0', 'runtime': self.runtime.diagnostic(),
                 'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}, indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
@@ -147,7 +147,7 @@ class LocalServer(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'ProxyFoundry/1.2'
+    server_version = 'ProxyFoundry/1.3'
     protocol_version = 'HTTP/1.1'
 
     @property
@@ -275,8 +275,9 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:css|js|svg|json)', name): raise FileNotFoundError('UI file not found.')
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
-            return self.respond({'version': '1.2.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
-                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats()})
+            return self.respond({'version': '1.3.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
+        if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
         if p == '/api/templates/seed': return self.respond(self.app.ws.template_seed(q.get('kind', ['normal'])[0]))
@@ -338,6 +339,7 @@ class Handler(BaseHTTPRequestHandler):
                 finally: path.unlink(missing_ok=True)
             return self.respond(self.app.jobs.start('Restore workspace backup', restore))
         d = self.data()
+        if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
         if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
