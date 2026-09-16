@@ -36,12 +36,16 @@ jobs:
 
           tests=Path('ProxyFoundry/tests/test_pipeline.py')
           text=tests.read_text(encoding='utf-8')
+          old="'oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast.'"
+          new="'oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast. {7}: If you both own and control Urza, Lord Protector and an artifact named The Mightstone and Weakstone, exile them, then meld them into Urza, Planeswalker.'"
+          assert old in text
+          text=text.replace(old,new,1)
           old="    result_png=io.BytesIO();Image.new('RGB',(1800,900),'#775533').save(result_png,'PNG')\n"
           new="    result_image=Image.new('RGB',(900,1260),'#aa2211');result_image.paste('#1133aa',(0,630,900,1260));result_png=io.BytesIO();result_image.save(result_png,'PNG')\n"
           assert old in text
           text=text.replace(old,new,1)
           old="    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])\n    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))\n"
-          new="    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])\n    meld_asset=s.asset(card['meldBackAsset']);assert (meld_asset['width'],meld_asset['height'])==(630,900)\n    with Image.open(s.asset_path(card['meldBackAsset'])) as meld_image:assert meld_image.getpixel((100,100))==(170,34,17)\n    bottom_sf={**front,'oracle_text':'(Melds with Urza, Lord Protector.)','_meld_result':card['scryfall']['_meld_result']}\n    bottom_id=ws._meld_back(bottom_sf);bottom_asset=s.asset(bottom_id);assert (bottom_asset['width'],bottom_asset['height'])==(630,900)\n    with Image.open(s.asset_path(bottom_id)) as bottom_image:assert bottom_image.getpixel((100,100))==(17,51,170)\n    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))\n"
+          new="    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])\n    meld_asset=s.asset(card['meldBackAsset']);assert (meld_asset['width'],meld_asset['height'])==(630,900)\n    with Image.open(s.asset_path(card['meldBackAsset'])) as meld_image:assert meld_image.getpixel((100,100))[:3]==(170,34,17)\n    bottom_sf={**front,'oracle_text':'(Melds with Urza, Lord Protector.)','_meld_result':card['scryfall']['_meld_result']}\n    bottom_id=ws._meld_back(bottom_sf);bottom_asset=s.asset(bottom_id);assert (bottom_asset['width'],bottom_asset['height'])==(630,900)\n    with Image.open(s.asset_path(bottom_id)) as bottom_image:assert bottom_image.getpixel((100,100))[:3]==(17,51,170)\n    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))\n"
           assert old in text
           tests.write_text(text.replace(old,new,1),encoding='utf-8')
           PY
