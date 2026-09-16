@@ -53,8 +53,9 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     assert result['crop']['intentionalArtWindow'] is True
     manual=comp.compile_face(walker,walker,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
+    wide=io.BytesIO();Image.new('RGB',(1600,400),'#775533').save(wide,'PNG');wide_art=ingest_image(s,wide.getvalue())
     ordinary=sf('Creature — Human',['U'])
-    ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,landscape['id'])
+    ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
 def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace):
