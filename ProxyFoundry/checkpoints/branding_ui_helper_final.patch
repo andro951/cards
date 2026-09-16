@@ -1,0 +1,69 @@
+diff --git a/site/app.js b/site/app.js
+--- a/site/app.js
++++ b/site/app.js
+@@ -23,7 +23,7 @@
+ function showLibrary(){
+   const decks=state.decks.filter(d=>d.name.toLowerCase().includes(query.toLowerCase())&&(filter==='all'||(filter==='ready'?d.status==='ready':d.status!=='ready')));
+   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">YOUR NEXT GAME STARTS HERE</span><h1>Deck library</h1><p>A home for your decks, your artwork, and the cards you’re ready to print.</p></div><div class="actions"><button class="button" id="new-empty">New blank deck</button><button class="button primary" id="import-deck">＋ Import deck</button></div></div>
+-  <section class="hero-strip"><div><span class="eyebrow">FROM DECKLIST TO TABLETOP</span><h2>Make the deck yours.<br>We’ll handle the print prep.</h2><p>Keep the art from your selected Scryfall printings, bring your own, or mix both. Start with approved templates or create a style of your own.</p></div><div class="steps-compact"><div class="step-mini"><b>1</b>Import a deck</div><span class="step-arrow">→</span><div class="step-mini"><b>2</b>Art & style</div><span class="step-arrow">→</span><div class="step-mini"><b>3</b>Render & print</div></div></section>
++  <section class="hero-strip"><div><span class="eyebrow">FROM DECKLIST TO THE FORGE</span><h2>Forge the deck you want.<br>We’ll handle the print prep.</h2><p>Keep the art from your selected Scryfall printings, bring your own, or mix both. Start with approved templates or create a style of your own.</p></div><div class="steps-compact"><div class="step-mini"><b>1</b>Import a deck</div><span class="step-arrow">→</span><div class="step-mini"><b>2</b>Art & style</div><span class="step-arrow">→</span><div class="step-mini"><b>3</b>Forge & print</div></div></section>
+@@ -41,7 +41,7 @@
+   if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
+   state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
+   $('#selection-tray').classList.add('hidden');$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===(name==='deck'?'decks':name)));
+-  $('#breadcrumb').innerHTML=`Workspace <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
++  $('#breadcrumb').innerHTML=`Forge <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
+diff --git a/site/orders.js b/site/orders.js
+--- a/site/orders.js
++++ b/site/orders.js
+@@ -1,7 +1,7 @@
+ import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,date,badge,empty,loading,nav} from './ui.js';
+ import {renderDecks} from './render.js';
+ export function setupHelper(){
+-  const host=modal('Connect the print helper',`<span class="eyebrow">ONE-TIME BROWSER SETUP</span><p class="muted">The app handles importing, templates, rendering and ZIP downloads by itself. The small helper is only needed to fill TCGPlaytest’s editor automatically.</p><div class="well"><h3>1 · Download and extract the helper</h3><p>Keep the extracted <code>extension</code> folder somewhere permanent.</p><a class="button primary" href="/api/helper/download" download>Download print helper</a></div><div class="well section-gap"><h3>2 · Load the extension in Edge or Chrome</h3><p>Open <code>edge://extensions</code> or <code>chrome://extensions</code>, enable <b>Developer mode</b>, click <b>Load unpacked</b>, and select the extracted <code>extension</code> folder.</p><p>Remove the old test helper first. This version does not need “Allow access to file URLs.”</p></div><div class="well section-gap"><h3>3 · Reload this page</h3><p>The top-right status will say <b>connected</b>. Build an order and choose <b>Open in TCGPlaytest</b>. Proxy Foundry stays open.</p></div><div class="notice info">The helper never places an order, enters payment details or checks out. You review the printer’s preview and complete checkout yourself. Downloading the paired ZIP is always available without the helper.</div>`,{footer:'<button class="button" id="recheck-helper">Check connection</button><button class="button primary" id="close-helper">Done</button>'});
++  const host=modal('Connect the print helper',`<span class="eyebrow">ONE-TIME BROWSER SETUP</span><p class="muted">The app handles importing, templates, rendering and ZIP downloads by itself. The small helper is only needed to fill TCGPlaytest’s editor automatically.</p><div class="well"><h3>1 · Download and extract the helper</h3><p>Keep the extracted <code>extension</code> folder somewhere permanent.</p><a class="button primary" href="/api/helper/download" download>Download print helper</a></div><div class="well section-gap"><h3>2 · Load the extension in Edge or Chrome</h3><p>Open <code>edge://extensions</code> or <code>chrome://extensions</code>, enable <b>Developer mode</b>, click <b>Load unpacked</b>, and select the extracted <code>extension</code> folder.</p><p>Remove the old test helper first. This version does not need “Allow access to file URLs.”</p></div><div class="well section-gap"><h3>3 · Reload this page</h3><p>The top-right status will say <b>connected</b>. Build an order and choose <b>Open in TCGPlaytest</b>. Bulk Proxy Forge stays open.</p></div><div class="notice info">The helper never places an order, enters payment details or checks out. You review the printer’s preview and complete checkout yourself. Downloading the paired ZIP is always available without the helper.</div>`,{footer:'<button class="button" id="recheck-helper">Check connection</button><button class="button primary" id="close-helper">Done</button>'});
+@@ -48,7 +48,7 @@
+ }
+ function orderReady(order){
+-  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">This package exceeds the helper’s 1 GB transfer limit. Download it for manual upload or split it into smaller orders.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
++  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Bulk Proxy Forge stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">This package exceeds the helper’s 1 GB transfer limit. Download it for manual upload or split it into smaller orders.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
+diff --git a/extension/bridge.js b/extension/bridge.js
+--- a/extension/bridge.js
++++ b/extension/bridge.js
+@@ -21,7 +21,7 @@
+-    console.log('[Proxy Print Helper]', message, data ?? '');
++    console.log('[Bulk Proxy Forge Print Helper]', message, data ?? '');
+@@ -31,7 +31,7 @@
+-        <b style="font-size:14px;color:#fff;line-height:1.2">Proxy Print Helper <span style="font-size:10px;color:#8d98a6;font-weight:700">v${VERSION}</span></b>
++        <b style="font-size:14px;color:#fff;line-height:1.2">Bulk Proxy Forge <span style="font-size:10px;color:#ff9c55;font-weight:700">Print Helper · v${VERSION}</span></b>
+@@ -54,7 +54,7 @@
+-    background:'rgba(8,10,14,.97)', border:'1px solid #3b414d', borderRadius:'14px',
++    background:'rgba(20,13,8,.98)', border:'1px solid #75401f', borderRadius:'12px',
+@@ -216,9 +216,9 @@
+-    log('Connecting to your saved print order…', 'Keep the Proxy Foundry launcher running until the ZIP upload is finished.');
++    log('Connecting to your saved print order…', 'Keep the Bulk Proxy Forge launcher running until the ZIP upload is finished.');
+     metadata = await chrome.runtime.sendMessage({type:'PF_ORDER_METADATA'});
+-    if (!metadata?.ok) throw new Error(metadata?.error || 'This order transfer is no longer available. Reopen it from Proxy Foundry.');
++    if (!metadata?.ok) throw new Error(metadata?.error || 'This order transfer is no longer available. Reopen it from Bulk Proxy Forge.');
+@@ -235,7 +235,7 @@
+-    const file=new File(parts,metadata.filename||'ProxyFoundry_Order.zip',{type:'application/zip'});
++    const file=new File(parts,metadata.filename||'BulkProxyForge_Order.zip',{type:'application/zip'});
+diff --git a/extension/background.js b/extension/background.js
+--- a/extension/background.js
++++ b/extension/background.js
+@@ -2,10 +2,10 @@
+ const VERSION='1.0.0';
+ const TARGET='https://www.tcgplaytest.com';
+ const CHUNK=1024*1024;
+-function localOrigin(url){try{const u=new URL(url);if(u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port&&!u.username&&!u.password)return u.origin;}catch{}throw new Error('The order must come from a local Proxy Foundry workspace.');}
++function localOrigin(url){try{const u=new URL(url);if(u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port&&!u.username&&!u.password)return u.origin;}catch{}throw new Error('The order must come from a local Bulk Proxy Forge workspace.');}
+ function validateTransfer(value,sender){
+   const origin=localOrigin(sender.url||sender.tab?.url||'');
+-  if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Open the order from the main Proxy Foundry tab.');
++  if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Open the order from the main Bulk Proxy Forge tab.');
+@@ -13,7 +13,7 @@
+-  if(!t||t.expires<Date.now()){await chrome.storage.session.remove(key);throw new Error('Transfer expired. Open this order again from Proxy Foundry.');}
++  if(!t||t.expires<Date.now()){await chrome.storage.session.remove(key);throw new Error('Transfer expired. Open this order again from Bulk Proxy Forge.');}
+@@ -30,7 +30,7 @@
+-  }catch(e){if(e.name==='AbortError')throw new Error('Local order transfer timed out. Keep the Proxy Foundry launcher running.');throw e;}finally{clearTimeout(timer);}
++  }catch(e){if(e.name==='AbortError')throw new Error('Local order transfer timed out. Keep the Bulk Proxy Forge launcher running.');throw e;}finally{clearTimeout(timer);}
