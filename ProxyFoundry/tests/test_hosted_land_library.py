@@ -16,6 +16,8 @@ def test_land_library_ui_is_one_checkbox_only():
     settings=Path("site/settings.js").read_text(encoding="utf-8")
     workspace=Path("foundry/workspace.py").read_text(encoding="utf-8")
     assert setup.count('id="use-land-library"') == 1
+    assert "Use the full-art land library" in setup
+    assert "Bulk Proxy Forge's hosted library" in setup
     assert 'id="land-library"' not in setup
     assert "GitHub land-art folder" not in setup
     assert "Optional custom full-art land library" not in setup
