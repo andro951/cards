@@ -47,18 +47,8 @@ jobs:
           assert marker in text
           helper="    def _meld_back(self,sf,refresh=False):\n        result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}\n        url=images.get('png') or images.get('large') or images.get('normal') or images.get('small')\n        if not url:raise ValidationError('Scryfall did not provide an image for the meld result.')\n        raw,_,_=self.net.fetch(url,refresh=refresh);return ingest_image(self.store,raw)['id']\n"
           text=text.replace(marker,helper+marker,1)
-          old="""            if sf.get('id'):
-                progress(done,total,'Checking cached metadata for '+c['name'])
-                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
-            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
-"""
-          new="""            if sf.get('id'):
-                progress(done,total,'Checking cached metadata for '+c['name'])
-                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
-            if sf.get('_meld_result'):c['meldBackAsset']=self._meld_back(sf,refresh)
-            else:c.pop('meldBackAsset',None)
-            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
-"""
+          old="            if sf.get('id'):\n                progress(done,total,'Checking cached metadata for '+c['name'])\n                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf\n            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)\n"
+          new="            if sf.get('id'):\n                progress(done,total,'Checking cached metadata for '+c['name'])\n                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf\n            if sf.get('_meld_result'):c['meldBackAsset']=self._meld_back(sf,refresh)\n            else:c.pop('meldBackAsset',None)\n            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)\n"
           assert old in text
           workspace.write_text(text.replace(old,new,1),encoding='utf-8')
 
@@ -105,7 +95,8 @@ jobs:
             "    d=ws.prepare(d['id']);card=d['cards'][0];face=card['faces'][0]",
             "    assert face['compiled']['group']=='legendary' and face['compiled']['name']=='Urza, Lord Protector'",
             "    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])",
-            "    comp=face['compiled'];ws.save_render(comp['renderKey'],front_png.getvalue(),(comp['data']['width'],comp['data']['height'])) if (comp['data']['width'],comp['data']['height'])==(900,650) else None",
+            "    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))",
+            "    plan=Orders(ws).plan([d['id']]);assert plan['cards'][0]['backAsset']==card['meldBackAsset']",
             "    assert 'https://cards.scryfall.io/result.png' in calls",
             '',
           ]
