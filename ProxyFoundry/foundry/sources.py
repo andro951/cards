@@ -16,7 +16,9 @@ class Sources:
         else:path='named?exact='+quote(source)
         d=self.net.json('https://api.scryfall.com/cards/'+path,refresh=refresh)
         if not isinstance(d,dict) or not d.get('name') or not d.get('id'):raise ValidationError('Scryfall did not return a card for '+source)
-        if d.get('digital'):raise ValidationError(d['name']+' is digital-only. Choose a paper printing.')
+        # A digital Scryfall printing is still a valid source printing for a proxy.
+        # Preserve the exact printing selected by the user instead of substituting
+        # a paper version or rejecting the card solely because digital=true.
         canonical='https://api.scryfall.com/cards/'+d['id']
         original='https://api.scryfall.com/cards/'+path
         cached=self.net.store.cache_get(original)
