@@ -14,6 +14,7 @@ class Orders:
             for c in d['cards']:
                 faces=c['faces'];front=self._render(faces[0],d['name'])
                 if c.get('backOverride'):back=c['backOverride']
+                elif c.get('meldBackAsset'):back=c['meldBackAsset']
                 elif len(faces)==2:back=self._render(faces[1],d['name'])
                 elif len(faces)==1:back=d['settings'].get('backAsset')
                 else:raise ValidationError(c['name']+': expected one front or one front/back pair.')

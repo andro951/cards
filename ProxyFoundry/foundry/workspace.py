@@ -169,6 +169,11 @@ class Workspace:
             if im.height<=182:raise ValidationError('Saga-creature artwork is too short for the approved 99/83-pixel crop.')
             im=im.crop((0,99,im.width,im.height-83));out=io.BytesIO();im.save(out,'PNG');asset=ingest_image(self.store,out.getvalue());url=None
         return asset['id'],origin,url
+    def _meld_back(self,sf,refresh=False):
+        result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}
+        url=images.get('png') or images.get('large') or images.get('normal') or images.get('small')
+        if not url:raise ValidationError('Scryfall did not provide an image for the meld result.')
+        raw,_,_=self.net.fetch(url,refresh=refresh);return ingest_image(self.store,raw)['id']
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
@@ -188,6 +193,8 @@ class Workspace:
             if sf.get('id'):
                 progress(done,total,'Checking cached metadata for '+c['name'])
                 sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
+            if sf.get('_meld_result'):c['meldBackAsset']=self._meld_back(sf,refresh)
+            else:c.pop('meldBackAsset',None)
             flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
             sf_faces=ingest.face_list(sf)
             for f in c['faces']:

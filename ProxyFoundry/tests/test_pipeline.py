@@ -41,6 +41,34 @@ def test_artist_and_back_hash(workspace):
 @pytest.mark.parametrize('raw',[b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',b'<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>'])
 def test_active_svg_rejected(raw):
     with pytest.raises(ValidationError):sanitize_svg(raw)
+def test_meld_import_uses_result_as_back_without_rendering_result(workspace):
+    from foundry.workspace import Workspace
+    from foundry.orders import Orders
+    s,a,settings=workspace
+    front_id='10000000-0000-4000-8000-000000000001';result_id='20000000-0000-4000-8000-000000000002'
+    parts=[{'id':front_id,'component':'meld_part','name':'Urza, Lord Protector'},{'id':result_id,'component':'meld_result','name':'Urza, Planeswalker'}]
+    front={'id':front_id,'name':'Urza, Lord Protector','layout':'meld','type_line':'Legendary Creature — Human Artificer','mana_cost':'{1}{W}{U}','oracle_text':'Artifact, instant, and sorcery spells you cast cost {1} less to cast.','colors':['W','U'],'rarity':'mythic','power':'2','toughness':'4','set':'bro','collector_number':'225','artist':'Front Artist','all_parts':parts,'image_uris':{'art_crop':'https://cards.scryfall.io/front.jpg'}}
+    result={'id':result_id,'name':'Urza, Planeswalker','layout':'meld','type_line':'Legendary Planeswalker — Urza','rarity':'mythic','set':'bro','collector_number':'238b','artist':'Back Artist','all_parts':parts,'image_uris':{'png':'https://cards.scryfall.io/result.png'}}
+    front_png=io.BytesIO();Image.new('RGB',(900,650),'#556677').save(front_png,'PNG')
+    result_png=io.BytesIO();Image.new('RGB',(1800,900),'#775533').save(result_png,'PNG')
+    calls=[]
+    def transport(url):
+        calls.append(url)
+        if url.endswith(front_id):return json.dumps(front).encode(),'application/json',{}
+        if url.endswith(result_id):return json.dumps(result).encode(),'application/json',{}
+        if url.endswith('result.png'):return result_png.getvalue(),'image/png',{}
+        return front_png.getvalue(),'image/png',{}
+    net=Network(s,transport=transport,sleeper=lambda n:None);ws=Workspace(s,net)
+    d=ws.create({'name':'Meld test','source':[{'id':front_id,'quantity':1}],'settings':settings});card=d['cards'][0]
+    assert card['scryfall']['_meld_result']['name']=='Urza, Planeswalker'
+    assert len(card['faces'])==1 and card['faces'][0]['name']=='Urza, Lord Protector'
+    d=ws.prepare(d['id']);card=d['cards'][0];face=card['faces'][0]
+    assert face['compiled']['group']=='legendary' and face['compiled']['name']=='Urza, Lord Protector'
+    assert card.get('meldBackAsset') and s.asset(card['meldBackAsset'])
+    comp=face['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))
+    plan=Orders(ws).plan([d['id']]);assert plan['cards'][0]['backAsset']==card['meldBackAsset']
+    assert 'https://cards.scryfall.io/result.png' in calls
+
 def test_exact_printing(workspace):
     s,a,settings=workspace;calls=[];card=sf()
     def transport(url):calls.append(url);return json.dumps(card).encode(),'application/json',{}

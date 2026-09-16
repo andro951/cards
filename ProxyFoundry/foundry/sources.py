@@ -25,7 +25,16 @@ class Sources:
         if cached and canonical!=original:
             asset=self.net.store.asset(cached['asset_id'])
             if asset:self.net.store.cache_put(canonical,asset,cached['fetched'])
-        return d
+        return self._expand_meld(d,refresh)
+    def _expand_meld(self,d,refresh=False):
+        if d.get('layout')!='meld':return d
+        result=next((p for p in d.get('all_parts') or [] if p.get('component')=='meld_result'),None)
+        if not result or result.get('id')==d.get('id'):return d
+        card=self.resolve_card(result.get('id') or result.get('name',''),refresh)
+        images=card.get('image_uris') or {}
+        meld_result={k:card.get(k) for k in ('id','name','artist','set','collector_number','rarity') if card.get(k) is not None}
+        meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
+        return {**d,'_meld_proxy':True,'_meld_result':meld_result}
     def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):

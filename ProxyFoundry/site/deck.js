@@ -27,6 +27,7 @@ function preview(c,f){
 }
 function backPreview(c,d){
   if(c.backOverride)return asset(c.backOverride);
+  if(c.meldBackAsset)return asset(c.meldBackAsset);
   if(c.faces.length===2)return preview(c,c.faces[1]);
   return asset(d.settings.backAsset);
 }
