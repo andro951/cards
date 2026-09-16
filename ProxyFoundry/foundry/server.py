@@ -95,7 +95,7 @@ class App:
         with self.lock:
             t = self.transfers.get(ident)
             if not t or t['expires'] < time.time() or not secrets.compare_digest(str(secret or ''), t['secret']):
-                raise PermissionError('Print transfer expired or is not authorized. Open the order again from Proxy Foundry.')
+                raise PermissionError('Print transfer expired or is not authorized. Open the order again from Bulk Proxy Forge.')
             return dict(t)
 
     def order(self, ident):
@@ -147,7 +147,7 @@ class LocalServer(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'ProxyFoundry/1.3'
+    server_version = 'BulkProxyForge/1.3'
     protocol_version = 'HTTP/1.1'
 
     @property
@@ -286,13 +286,13 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/trash': return self.respond(self.app.store.list('decks', deleted=True))
         if p == '/api/orders':
             return self.respond([{k: v for k, v in self.app.order(x['id']).items() if k != 'cards'} for x in self.app.store.list('orders')])
-        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='ProxyFoundry_Diagnostics.zip')
+        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
         if p == '/api/helper/download':
             b = io.BytesIO()
             with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
                 for file in (ROOT / 'extension').iterdir():
                     if file.is_file() and file.suffix in {'.json', '.js', '.txt', '.md'}: z.write(file, 'extension/' + file.name)
-            return self.send_bytes(b.getvalue(), 'application/zip', filename='ProxyFoundry_Print_Helper.zip')
+            return self.send_bytes(b.getvalue(), 'application/zip', filename='BulkProxyForge_Print_Helper.zip')
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})', p): return self.respond(self.app.ws.deck(m[1]))
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})', p): return self.respond(self.app.jobs.get(m[1]))
         if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})', p):
@@ -303,12 +303,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(self.app.target(m[1], m[2]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
-            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'ProxyFoundry_Order_' + m[1][:8] + '.zip')
+            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
         if m := re.fullmatch(r'/api/(files|backups)/([A-Za-z0-9_.-]+\.zip)', p):
             return self.file(self.app.store.home / ('orders' if m[1] == 'files' else 'backups') / m[2], 'application/zip', m[2])
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
-            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'ProxyFoundry_Order.zip'})
+            if m[2] == 'metadata': return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'], 'filename': 'BulkProxyForge_Order.zip'})
             return self.file(t['path'], 'application/zip', allow_range=True)
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
@@ -361,7 +361,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/printings': return self.respond(self.app.ws.sources.printings(d['name'], bool(d.get('refresh')), d.get('nextPage')))
         if p == '/api/tools/copy-tokens': return self.send_bytes(self.app.tools.copy_tokens(d), 'application/json', filename='Copy_Tokens.cardconjurer')
         if p == '/api/tools/originals': return self.respond(self.app.jobs.start('Download original card images', lambda u, c: self.app.tools.originals(d, u, c)))
-        if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='ProxyFoundry_Cards.cardconjurer')
+        if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='BulkProxyForge_Cards.cardconjurer')
         if p == '/api/client-error':
             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
