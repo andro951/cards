@@ -3,7 +3,7 @@ import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,e
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks} from './render.js';
 import {chooseOrder} from './orders.js';
-import {creditFields,bindCreditFields} from './credits.js';
+import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
 export async function importDeck(existing=null){
   if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
@@ -79,6 +79,7 @@ export async function showDeck(id,tab='cards'){
 async function generate(d){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
+  d=await ensureCustomArtCredits(d);if(!d)return;
   await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
 }
 function deckMenu(d){

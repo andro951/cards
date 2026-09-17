@@ -49,7 +49,10 @@ def resolve_credit(card, face, options, settings, art_origin):
     elif credit_text(settings.get('artist')):
         artist, source = credit_text(settings['artist']), 'deck'
     else:
-        artist, source = original, 'printing'
+        # Custom artwork has unknown provenance unless the user explicitly
+        # supplies a custom-art artist or chooses the printing artist. Never
+        # silently attribute unrelated custom art to the Scryfall illustrator.
+        artist, source = '', 'missing-custom'
     modification = options.get('modificationCreditOverride')
     if modification is None:
         modification = settings.get('modificationCredit', '')
@@ -60,4 +63,5 @@ def resolve_credit(card, face, options, settings, art_origin):
     return {'originalArtist': original, 'artist': artist,
             'modificationCredit': modification, 'display': display,
             'source': source, 'locked': source_is_scryfall,
-            'missingOriginalArtist': source in {'scryfall', 'printing'} and not original}
+            'missingOriginalArtist': source in {'scryfall', 'printing'} and not original,
+            'missingCustomArtist': source == 'missing-custom'}

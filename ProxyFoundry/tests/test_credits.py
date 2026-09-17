@@ -42,3 +42,14 @@ def test_suffix_does_not_replace_or_mutate_cached_original():
 @pytest.mark.parametrize('text',['Wrong\nName','{elemidinfo-artist}','\x00','x'*301,42])
 def test_plain_credit_validation(text):
     with pytest.raises(ValidationError):credit_text(text)
+
+
+def test_custom_art_without_credit_never_assumes_printing_artist():
+    c=resolve_credit(SF,FACE,{}, {},'uploaded override')
+    assert c['artist']=='' and c['display']==''
+    assert c['source']=='missing-custom' and c['missingCustomArtist']
+
+def test_explicit_blank_custom_artist_is_intentional_not_missing():
+    c=resolve_credit(SF,FACE,{'artistOverride':''}, {},'uploaded override')
+    assert c['artist']=='' and c['source']=='card'
+    assert not c['missingCustomArtist']
