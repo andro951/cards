@@ -5,6 +5,7 @@ from PIL import Image,ImageOps,UnidentifiedImageError
 from .domain import ValidationError,RARITIES
 MAX_PIXELS=48_000_000
 MAX_BYTES=64*1024*1024
+TRANSPARENT_EDGE_ALPHA_THRESHOLD=2
 
 def decode_image(raw):
     if not raw or len(raw)>MAX_BYTES: raise ValidationError('Choose an image smaller than 64 MB.')
@@ -15,7 +16,12 @@ def decode_image(raw):
     except (UnidentifiedImageError,OSError,ValueError) as exc:raise ValidationError('Could not decode image. Use PNG, JPEG, WebP or GIF.') from exc
 
 def trim_transparent_edges(im):
-    alpha=im.getchannel('A');bbox=alpha.getbbox()
+    alpha=im.getchannel('A')
+    # Alpha 0-2 is visually negligible but can occur as stray anti-aliasing/noise
+    # far outside the intended artwork. Ignore it only while finding the outer
+    # crop bounds; retained pixels are copied unchanged from the original image.
+    visible=alpha.point(lambda value:255 if value>TRANSPARENT_EDGE_ALPHA_THRESHOLD else 0)
+    bbox=visible.getbbox()
     if bbox is None or bbox==(0,0,im.width,im.height):return im
     return im.crop(bbox)
 
