@@ -72,6 +72,26 @@ def test_csrf_and_runtime_isolation(running):
     assert request(s,'/api/bootstrap',headers={'Host':'evil.example'})[0]==403
 
 
+def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
+    app,s=running
+    _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})
+    _,back,_=request(s,'/api/uploads',png((300,420),'#223355'))
+    _,symbols,_=request(s,'/api/symbols/generate',{'assetId':art['id']})
+    d=job_done(s,'/api/decks/import',{'name':'Diagnostic Deck','source':'1 Sample Card','settings':{'symbols':symbols,'backAsset':back['id']}})
+    request(s,'/api/decks/'+d['id'])
+    d=job_done(s,'/api/decks/'+d['id']+'/prepare',{})
+    _,plan,_=request(s,'/api/render-sessions',{'deckIds':[d['id']],'force':True})
+    assert plan['pipelineVersion']==PIPELINE_VERSION and plan['force'] is True and len(plan['targets'])==1
+    key=plan['targets'][0]['key'];_,target,_=request(s,'/api/render-sessions/'+plan['id']+'/'+key)
+    dims=(target['data']['width'],target['data']['height'])
+    request(s,'/api/render-sessions/'+plan['id']+'/'+key,png(dims))
+    for h in list(app.log.handlers): h.flush()
+    log=(app.store.home/'logs/app.log').read_text(encoding='utf-8')
+    for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_FACE_DECISION','RENDER_SAVE',PIPELINE_VERSION]:
+        assert token in log,token
+    assert 'zoom=' in log and 'newKey=' in log and 'cachePresent=' in log
+
+
 def test_import_prepare_render_order_roundtrip(running):
     app,s=running
     _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})

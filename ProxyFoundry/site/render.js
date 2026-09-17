@@ -8,6 +8,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
   try{
     if(prepare)for(const id of ids){await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
     const plan=await api('/api/render-sessions',{deckIds:ids,force});
+    activity('Render deck','Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
     if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity('All images are already up to date');toast('Cached images reused. No rendering needed.');return;}
     if(force)activity('Render deck','Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
     await job('/api/runtime/prepare',{}, {label:'Load CardConjurer'});
@@ -33,6 +34,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
       if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
       const t=plan.targets[i];activity('Render deck',t.name,'Loading saved face…',i,plan.targets.length);
       const detail=await api('/api/render-sessions/'+plan.id+'/'+t.key);
+      activity('Render deck',t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);
       const promise=new Promise((resolve,reject)=>{pending={...t,index:i,resolve,reject};rejectPending=reject;});
       activeFrame.contentWindow.postMessage({source:'pf-app',type:'render',key:t.key,data:detail.data},origin);
       const output=await withTimeout(promise,150000,t.name+': native render timed out. Retry will keep completed images.');

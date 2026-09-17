@@ -57,8 +57,44 @@ class App:
         from logging.handlers import RotatingFileHandler
         handler = RotatingFileHandler(self.store.home / 'logs' / 'app.log', maxBytes=2 * 1024 ** 2, backupCount=2, encoding='utf-8')
         self.log.addHandler(handler)
+        self.log.info('APP_START app=1.3.0 pipeline=%s root=%s workspace=%s', PIPELINE_VERSION, ROOT, self.store.home)
+
+    @staticmethod
+    def _short(value):
+        return str(value or '')[:12] or '-'
+
+    def _log_face_state(self, label, deck, card, face, old_comp=None):
+        comp=face.get('compiled') or {};data=comp.get('data') or {};key=comp.get('renderKey') or ''
+        render=self.store.render_get(key) if key else None
+        symbol=self.store.asset(comp.get('symbolId','')) if comp.get('symbolId') else None
+        old_comp=old_comp or {};old_data=old_comp.get('data') or {}
+        self.log.info(
+            '%s deck=%s card=%s face=%s pipeline=%s oldGeneration=%s newGeneration=%s oldKey=%s newKey=%s cacheAsset=%s symbol=%s symbolPx=%sx%s ccVersion=%s zoom=%s x=%s y=%s oldZoom=%s oldX=%s oldY=%s',
+            label, self._short(deck.get('id')), card.get('name'), face.get('name'), PIPELINE_VERSION,
+            old_comp.get('generationVersion') or '-', comp.get('generationVersion') or '-',
+            self._short(old_comp.get('renderKey')), self._short(key),
+            self._short(render.get('asset_id') if render else ''), self._short(comp.get('symbolId')),
+            (symbol or {}).get('width','-'), (symbol or {}).get('height','-'), data.get('version','-'),
+            data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'),
+            old_data.get('setSymbolZoom','-'), old_data.get('setSymbolX','-'), old_data.get('setSymbolY','-'))
+
+    def prepare_deck(self, ident, progress=lambda *a:None, cancel=lambda:False):
+        before=self.ws.deck(ident)
+        old={f.get('id'):copy.deepcopy(f.get('compiled') or {}) for c in before.get('cards',[]) for f in c.get('faces',[])}
+        self.log.info('PREPARE_BEGIN deck=%s name=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
+                      self._short(ident), before.get('name'), PIPELINE_VERSION, before.get('status'),
+                      bool(before.get('upgradeRequired')), (before.get('summary') or {}).get('rendered',0))
+        result=self.ws.prepare(ident, progress, cancel)
+        self.log.info('PREPARE_DONE deck=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
+                      self._short(ident), PIPELINE_VERSION, result.get('status'), bool(result.get('upgradeRequired')),
+                      (result.get('summary') or {}).get('rendered',0))
+        for card in result.get('cards',[]):
+            for face in card.get('faces',[]):
+                self._log_face_state('PREPARE_FACE',result,card,face,old.get(face.get('id')))
+        return result
 
     def start_render_session(self, ids, force=False):
+        self.log.info('RENDER_PLAN_BEGIN pipeline=%s force=%s decks=%s', PIPELINE_VERSION, bool(force), ','.join(self._short(x) for x in ids))
         plan = self.ws.render_targets(ids, force=force)
         ident = uid()
         now = time.time()
@@ -69,6 +105,19 @@ class App:
             for t in targets.values():
                 from .backup import referenced_assets
                 self.runtime_assets.update(referenced_assets(t['data']))
+        queued=set(targets)
+        self.log.info('RENDER_PLAN_DONE session=%s pipeline=%s force=%s queued=%s cached=%s errors=%s',
+                      self._short(ident), PIPELINE_VERSION, bool(force), len(queued), plan['cached'], len(plan.get('errors', [])))
+        for deck_id in ids:
+            deck=self.ws.deck(deck_id)
+            for card in deck.get('cards',[]):
+                for face in card.get('faces',[]):
+                    comp=face.get('compiled') or {};key=comp.get('renderKey') or '';render=self.store.render_get(key) if key else None
+                    data=comp.get('data') or {}
+                    self.log.info('RENDER_FACE_DECISION deck=%s face=%s generation=%s key=%s cachePresent=%s cacheAsset=%s queued=%s force=%s ccVersion=%s zoom=%s x=%s y=%s',
+                                  self._short(deck_id), face.get('name'), comp.get('generationVersion') or '-', self._short(key),
+                                  bool(render), self._short(render.get('asset_id') if render else ''), key in queued, bool(force),
+                                  data.get('version','-'), data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'))
         return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION}
 
@@ -297,7 +346,13 @@ class Handler(BaseHTTPRequestHandler):
                 for file in (ROOT / 'extension').iterdir():
                     if file.is_file() and file.suffix in {'.json', '.js', '.txt', '.md'}: z.write(file, 'extension/' + file.name)
             return self.send_bytes(b.getvalue(), 'application/zip', filename='BulkProxyForge_Print_Helper.zip')
-        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})', p): return self.respond(self.app.ws.deck(m[1]))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})', p):
+            deck=self.app.ws.deck(m[1])
+            generations=sorted({(f.get('compiled') or {}).get('generationVersion','-') for c in deck.get('cards',[]) for f in c.get('faces',[])})
+            self.app.log.info('DECK_OPEN deck=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s/%s generations=%s',
+                              self.app._short(m[1]), PIPELINE_VERSION, deck.get('status'), bool(deck.get('upgradeRequired')),
+                              (deck.get('summary') or {}).get('rendered',0), (deck.get('summary') or {}).get('faces',0), ','.join(generations))
+            return self.respond(deck)
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})', p): return self.respond(self.app.jobs.get(m[1]))
         if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})', p):
             a = self.app.store.asset(m[1])
@@ -344,7 +399,12 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/render-sessions/([-a-f0-9]{36})/([a-f0-9]{64})', p):
             t = self.app.target(m[1], m[2]); d = t['data']
             size = [round(d['width'] * (1 + 2 * d.get('marginX', 0))), round(d['height'] * (1 + 2 * d.get('marginY', 0)))]
-            return self.respond(self.app.ws.save_render(m[2], self.body(), size))
+            saved=self.app.ws.save_render(m[2], self.body(), size)
+            self.app.log.info('RENDER_SAVE session=%s key=%s asset=%s size=%sx%s pipeline=%s ccVersion=%s zoom=%s x=%s y=%s',
+                              self.app._short(m[1]), self.app._short(m[2]), self.app._short(saved.get('asset_id')),
+                              saved.get('width'), saved.get('height'), PIPELINE_VERSION, d.get('version','-'),
+                              d.get('setSymbolZoom','-'), d.get('setSymbolX','-'), d.get('setSymbolY','-'))
+            return self.respond(saved)
         if p == '/api/backups/import':
             size = int(self.headers.get('Content-Length', '0'))
             if size < 1 or size > 2 * 1024 ** 3: raise ValidationError('Backup upload limit is 2 GB.')
@@ -395,7 +455,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))
-            if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.ws.prepare(ident, u, c)))
+            if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c)))
             if action == 'add': return self.respond(self.app.jobs.start('Add cards', lambda u, c: self.app.ws.add_cards(ident, d, u, c)))
             if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))
             if action in {'delete', 'restore'}: return self.respond(self.app.store.trash('decks', ident, d.get('revision'), restore=action == 'restore'))
