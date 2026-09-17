@@ -20,6 +20,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
       const m=event.data;
       if(m.type==='ready'){ready=true;readyResolve();return;}
       if(m.type==='failed'&&!ready){readyReject(new Error(m.error));return;}
+      if(m.type==='diagnostic'){api('/api/render-diagnostic',{key:m.key,stage:m.stage,diagnostic:m.diagnostic}).catch(()=>{});return;}
       if(!pending||m.key!==pending.key)return;
       if(m.type==='progress'){activity('Render deck',pending.name,m.message,pending.index,plan.targets.length);return;}
       if(m.type==='failed')pending.reject(new Error(m.error));

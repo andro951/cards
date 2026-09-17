@@ -4,19 +4,24 @@
   const S=window.__PF_RUNTIME,post=S.post,sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const pendingScripts=new Set();
   const baseTextEdited=window.textEdited;
-  // The old pinned core predates Stations. Compose the genuine native Station
-  // canvases after the frame, exactly where the current native core does.
-  if(!String(window.drawCard).includes('stationPreFrameCanvas')){
-    const nativeDrawImage=window.cardContext.drawImage;
-    window.cardContext.drawImage=function(image,...args){
-      const result=nativeDrawImage.call(this,image,...args);
-      if(image===window.frameCanvas&&window.card?.station&&String(window.card.version).toLowerCase().includes('station')){
-        for(const canvas of [window.stationPreFrameCanvas,window.stationPostFrameCanvas])
-          if(canvas)nativeDrawImage.call(this,canvas,0,0,window.cardCanvas.width,window.cardCanvas.height);
-      }
-      return result;
-    };
-  }
+  // Instrument the genuine canvas draw call so diagnostics record the exact
+  // destination rectangle CardConjurer actually used for the set symbol.
+  // The old pinned core also predates Stations; preserve the existing native
+  // Station composition adapter without changing any card geometry.
+  let lastSetSymbolDraw=null;
+  const nativeDrawImage=window.cardContext.drawImage;
+  const needsStationCompose=!String(window.drawCard).includes('stationPreFrameCanvas');
+  window.cardContext.drawImage=function(image,...args){
+    if(S.active&&image===window.setSymbol){
+      lastSetSymbolDraw={phase:S.phase,args:args.map(v=>typeof v==='number'?v:Number(v)),imageWidth:image?.width||0,imageHeight:image?.height||0,naturalWidth:image?.naturalWidth||0,naturalHeight:image?.naturalHeight||0};
+    }
+    const result=nativeDrawImage.call(this,image,...args);
+    if(needsStationCompose&&image===window.frameCanvas&&window.card?.station&&String(window.card.version).toLowerCase().includes('station')){
+      for(const canvas of [window.stationPreFrameCanvas,window.stationPostFrameCanvas])
+        if(canvas)nativeDrawImage.call(this,canvas,0,0,window.cardCanvas.width,window.cardCanvas.height);
+    }
+    return result;
+  };
   function clearStationState(){
     if(window.card?.station){
       for(const key of ['mana','pt']){
@@ -114,6 +119,12 @@
     const imgs=[...paths].filter(Boolean).map(path=>{const img=new Image();img.crossOrigin='anonymous';img.src=path;return [String(path).slice(0,130),img];});
     await readyImages(imgs);
   }
+  function symbolRuntimeSnapshot(stage,key,data){
+    const image=window.setSymbol,card=window.card||{},cw=Number(card.width||data.width||0),ch=Number(card.height||data.height||0);
+    const zoom=Number(card.setSymbolZoom??data.setSymbolZoom??0),x=Number(card.setSymbolX??data.setSymbolX??0),y=Number(card.setSymbolY??data.setSymbolY??0);
+    const iw=Number(image?.width||0),ih=Number(image?.height||0);
+    post('diagnostic',{key,stage,diagnostic:{version:card.version||data.version||'',input:{x:data.setSymbolX??null,y:data.setSymbolY??null,zoom:data.setSymbolZoom??null},card:{x:card.setSymbolX??null,y:card.setSymbolY??null,zoom:card.setSymbolZoom??null,width:cw,height:ch},image:{src:String(image?.src||'').slice(0,220),width:iw,height:ih,naturalWidth:Number(image?.naturalWidth||0),naturalHeight:Number(image?.naturalHeight||0),complete:!!image?.complete},expectedDraw:{x:x*cw,y:y*ch,width:iw*zoom,height:ih*zoom},lastDraw:lastSetSymbolDraw}});
+  }
   async function fontsReady(data){
     const families=new Set(['belerenb','belerenbsc','mplantin','mplantini','gothammedium']);
     for(const obj of [...Object.values(data.text||{}),...Object.values(data.bottomInfo||{})]){
@@ -125,7 +136,7 @@
   }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
-    clearStationState();S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
       await preload(data);await fontsReady(data);
@@ -139,13 +150,16 @@
       await sagaReady(data);await stationReady(data);
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
       await readyImages(imagesFor(window.card,symbols));await fontsReady(window.card);
+      symbolRuntimeSnapshot('after-load',request.key,data);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
       S.phase='render';if(window.writingText)clearTimeout(window.writingText);
       await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
+      symbolRuntimeSnapshot('after-first-draw',request.key,data);
       await sleep(550);
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
       await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
+      symbolRuntimeSnapshot('after-final-draw',request.key,data);
       const errors=S.errors.filter(x=>x.phase!=='bootstrap');
       if(errors.length)throw new Error(errors[0].message);
       const canvas=window.cardCanvas;

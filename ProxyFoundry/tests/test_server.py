@@ -90,6 +90,25 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
     for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_FACE_DECISION','RENDER_SAVE',PIPELINE_VERSION]:
         assert token in log,token
     assert 'zoom=' in log and 'newKey=' in log and 'cachePresent=' in log
+    assert 'SET_SYMBOL_GEOMETRY' in log and 'alphaGt2=' in log and 'drawExpectedPx=' in log
+
+
+def test_runtime_symbol_diagnostic_endpoint(running):
+    app,s=running
+    payload={'key':'a'*64,'stage':'after-final-draw','diagnostic':{'version':'m15Regular','image':{'width':869,'height':1057},'card':{'x':.87,'y':.57,'zoom':.109},'lastDraw':{'args':[1757,1606,94.7,115.2]}}}
+    status,out,_=request(s,'/api/render-diagnostic',payload);assert status==200 and out['ok'] is True
+    for h in list(app.log.handlers):h.flush()
+    log=(app.store.home/'logs/app.log').read_text(encoding='utf-8')
+    assert 'RUNTIME_SYMBOL' in log and 'after-final-draw' in log and '869' in log and '1757' in log
+
+
+def test_runtime_symbol_source_instrumentation():
+    root=Path(__file__).resolve().parents[1]
+    bridge=(root/'site/runtime-bridge.js').read_text(encoding='utf-8')
+    render=(root/'site/render.js').read_text(encoding='utf-8')
+    for token in ['lastSetSymbolDraw','image===window.setSymbol','after-load','after-first-draw','after-final-draw','expectedDraw']:
+        assert token in bridge
+    assert "m.type==='diagnostic'" in render and '/api/render-diagnostic' in render
 
 
 def test_import_prepare_render_order_roundtrip(running):

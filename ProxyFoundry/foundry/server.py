@@ -22,7 +22,7 @@ from pathlib import Path
 from .backup import Backups
 from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION
-from .images import ingest_image, rarity_variants, sanitize_svg
+from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
 from .jobs import Jobs
 from .github_setup import import_github_setup
 from .orders import Orders
@@ -77,6 +77,26 @@ class App:
             (symbol or {}).get('width','-'), (symbol or {}).get('height','-'), data.get('version','-'),
             data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'),
             old_data.get('setSymbolZoom','-'), old_data.get('setSymbolX','-'), old_data.get('setSymbolY','-'))
+        if symbol and comp.get('symbolId'):
+            try:
+                image=decode_image(self.store.asset_path(comp['symbolId']).read_bytes());alpha=image.getchannel('A')
+                alpha0=alpha.point(lambda value:255 if value>0 else 0).getbbox()
+                alpha2=alpha.point(lambda value:255 if value>2 else 0).getbbox()
+                def bbox_text(box):
+                    return '-' if not box else f'{box[0]},{box[1]},{box[2]},{box[3]}:{box[2]-box[0]}x{box[3]-box[1]}'
+                cw=float(data.get('width') or 0);ch=float(data.get('height') or 0);zoom=float(data.get('setSymbolZoom') or 0)
+                sx=float(data.get('setSymbolX') or 0)*cw;sy=float(data.get('setSymbolY') or 0)*ch
+                sw=float(symbol.get('width') or 0);sh=float(symbol.get('height') or 0)
+                bounds=data.get('setSymbolBounds') or {};type_box=(data.get('text') or {}).get('type') or {}
+                bx=float(bounds.get('x') or 0)*cw;by=float(bounds.get('y') or 0)*ch
+                bw=float(bounds.get('width') or 0)*cw;bh=float(bounds.get('height') or 0)*ch
+                ty=float(type_box.get('y') or 0)*ch;th=float(type_box.get('height') or 0)*ch
+                self.log.info(
+                    'SET_SYMBOL_GEOMETRY deck=%s face=%s key=%s storedPx=%sx%s alphaGt0=%s alphaGt2=%s boundsAnchorPx=%.3f,%.3f boundsSizePx=%.3fx%.3f drawExpectedPx=%.3f,%.3f,%.3fx%.3f typeBoxPxY=%.3f typeBoxPxH=%.3f typeBoxCenterPx=%.3f',
+                    self._short(deck.get('id')), face.get('name'), self._short(key), int(sw), int(sh), bbox_text(alpha0), bbox_text(alpha2),
+                    bx,by,bw,bh,sx,sy,sw*zoom,sh*zoom,ty,th,ty+th/2)
+            except Exception as exc:
+                self.log.warning('SET_SYMBOL_GEOMETRY_FAILED face=%s key=%s error=%s',face.get('name'),self._short(key),str(exc)[:500])
 
     def prepare_deck(self, ident, progress=lambda *a:None, cancel=lambda:False):
         before=self.ws.deck(ident)
@@ -454,6 +474,11 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='BulkProxyForge_Cards.cardconjurer')
         if p == '/api/client-error':
             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
+        if p == '/api/render-diagnostic':
+            diag=d.get('diagnostic') if isinstance(d.get('diagnostic'),dict) else {}
+            payload={'key':str(d.get('key') or '')[:64],'stage':str(d.get('stage') or '')[:80],'diagnostic':diag}
+            self.app.log.info('RUNTIME_SYMBOL %s',json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
+            return self.respond({'ok':True})
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
