@@ -1,0 +1,177 @@
+name: Trash controls and missing-generation fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-trash-generation-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply generation and trash fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, count=1):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing expected text in {path}: {old[:160]!r}')
+              p.write_text(text.replace(old,new,count),encoding='utf-8')
+
+          replace('ProxyFoundry/foundry/domain.py',
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v6'",
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v7'")
+
+          replace('ProxyFoundry/foundry/workspace.py',
+              "    def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'defaults':{}}\n    def set_global_settings(self,values):\n        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','defaults'}}\n",
+              "    def global_settings(self):\n        s=self.store.get('settings','global') or {'id':'global','refreshData':False,'deletePermanently':False,'defaults':{}}\n        s.setdefault('deletePermanently',False)\n        return s\n    def set_global_settings(self,values):\n        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','deletePermanently','defaults'}}\n        if 'deletePermanently' in safe:safe['deletePermanently']=bool(safe['deletePermanently'])\n")
+
+          replace('ProxyFoundry/foundry/workspace.py',
+              "                comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))\n                if comp:\n",
+              "                comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))\n                if not comp:\n                    d['status']='draft';d['upgradeRequired']=True\n                if comp:\n")
+
+          replace('ProxyFoundry/foundry/storage.py',
+              "    def trash(self, kind: str, ident: str, expected: int | None = None, restore: bool = False) -> dict[str, Any]:\n        old = self.get(kind, ident, include_deleted=True)\n        if not old:\n            raise ValidationError('That item no longer exists.')\n        old['deleted'] = not restore\n        return self.put(kind, old, expected)\n\n",
+              "    def trash(self, kind: str, ident: str, expected: int | None = None, restore: bool = False) -> dict[str, Any]:\n        old = self.get(kind, ident, include_deleted=True)\n        if not old:\n            raise ValidationError('That item no longer exists.')\n        old['deleted'] = not restore\n        return self.put(kind, old, expected)\n\n    def purge(self, kind: str, ident: str, expected: int | None = None) -> dict[str, Any]:\n        with self.connect() as db:\n            db.execute('BEGIN IMMEDIATE')\n            row=db.execute('SELECT rev FROM documents WHERE kind=? AND id=?',(kind,ident)).fetchone()\n            if not row:raise ValidationError('That item no longer exists.')\n            if expected is not None and expected!=row['rev']:\n                raise ConflictError('This deck changed in another tab. Reload it before deleting it.')\n            db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))\n        return {'id':ident,'permanent':True}\n\n    def purge_trash(self, kind: str) -> dict[str, Any]:\n        with self.connect() as db:\n            db.execute('BEGIN IMMEDIATE')\n            count=db.execute('SELECT count(*) FROM documents WHERE kind=? AND deleted=1',(kind,)).fetchone()[0]\n            db.execute('DELETE FROM documents WHERE kind=? AND deleted=1',(kind,))\n        return {'deleted':count}\n\n")
+
+          replace('ProxyFoundry/foundry/server.py',
+              "        if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))\n        if p == '/api/templates': return self.respond(self.app.ws.save_template(d))\n",
+              "        if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))\n        if p == '/api/trash/empty': return self.respond(self.app.store.purge_trash('decks'))\n        if m := re.fullmatch(r'/api/trash/([-a-f0-9]{36})/delete', p):\n            old=self.app.store.get('decks',m[1],include_deleted=True)\n            if not old or not old.get('deleted'):raise ValidationError('That deck is not in Trash.')\n            return self.respond(self.app.store.purge('decks',m[1],d.get('revision')))\n        if p == '/api/templates': return self.respond(self.app.ws.save_template(d))\n")
+
+          replace('ProxyFoundry/foundry/server.py',
+              "            if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))\n            if action in {'delete', 'restore'}: return self.respond(self.app.store.trash('decks', ident, d.get('revision'), restore=action == 'restore'))\n            if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))\n",
+              "            if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))\n            if action == 'delete':\n                if self.app.ws.global_settings().get('deletePermanently'):\n                    return self.respond(self.app.store.purge('decks',ident,d.get('revision')))\n                return self.respond(self.app.store.trash('decks',ident,d.get('revision')))\n            if action == 'restore': return self.respond(self.app.store.trash('decks',ident,d.get('revision'),restore=True))\n            if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))\n")
+
+          replace('ProxyFoundry/site/render.js',
+              "    if(prepare)for(const id of ids){await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}\n",
+              "    if(prepare)for(const id of ids){const before=await api('/api/decks/'+id);force=force||!!before.upgradeRequired;await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}\n")
+
+          replace('ProxyFoundry/site/settings.js',
+              "<label class=\"check-line\"><input type=\"checkbox\" id=\"global-refresh\" ${settings.refreshData?'checked':''}><span>Fetch new Scryfall data<small>Off: reuse data for one year. On: refresh only when the cache is at least one week old. This does not refetch every request.</small></span></label><div class=\"notice info\">",
+              "<label class=\"check-line\"><input type=\"checkbox\" id=\"global-refresh\" ${settings.refreshData?'checked':''}><span>Fetch new Scryfall data<small>Off: reuse data for one year. On: refresh only when the cache is at least one week old. This does not refetch every request.</small></span></label><label class=\"check-line\"><input type=\"checkbox\" id=\"permanent-delete\" ${settings.deletePermanently?'checked':''}><span>Permanently delete decks instead of moving them to Trash<small>When enabled, deleting a deck skips Trash and cannot be undone. Shared artwork and render caches are retained.</small></span></label><div class=\"notice info\">")
+
+          replace('ProxyFoundry/site/settings.js',
+              "  <section class=\"panel section-gap\"><div class=\"panel-head\"><div><h2>Trash</h2><p>Deleted decks remain recoverable here. Shared artwork and render caches are not deleted.</p></div></div>${trash.length?trash.map(d=>`<div class=\"trash-row\"><div><b>${esc(d.name)}</b><small class=\"muted\">${d.cards?.length||0} card entries</small></div><button class=\"button small\" data-restore=\"${d.id}\">Restore deck</button></div>`).join(''):'<p class=\"muted\">No deleted decks.</p>'}</section>\n",
+              "  <section class=\"panel section-gap\"><div class=\"panel-head\"><div><h2>Trash</h2><p>Deleted decks remain recoverable here. Shared artwork and render caches are not deleted.</p></div>${trash.length?'<button class=\"button danger small\" id=\"empty-trash\">Delete all permanently</button>':''}</div>${trash.length?trash.map(d=>`<div class=\"trash-row\"><div><b>${esc(d.name)}</b><small class=\"muted\">${d.cards?.length||0} card entries</small></div><div class=\"actions\"><button class=\"button quiet small\" data-trash-inspect=\"${d.id}\">Inspect</button><button class=\"button small\" data-restore=\"${d.id}\">Restore deck</button><button class=\"button danger small\" data-trash-delete=\"${d.id}\">Delete permanently</button></div></div>`).join(''):'<p class=\"muted\">No deleted decks.</p>'}</section>\n")
+
+          replace('ProxyFoundry/site/settings.js',
+              "  $('#save-settings').onclick=()=>attempt(async()=>{const out=await api('/api/settings',{revision:settings.revision,refreshData:$('#global-refresh').checked});state.bootstrap.settings=out;toast('Settings saved.');await showSettings();});\n",
+              "  $('#save-settings').onclick=()=>attempt(async()=>{const out=await api('/api/settings',{revision:settings.revision,refreshData:$('#global-refresh').checked,deletePermanently:$('#permanent-delete').checked});state.bootstrap.settings=out;toast('Settings saved.');await showSettings();});\n")
+
+          replace('ProxyFoundry/site/settings.js',
+              "  $$('[data-restore]').forEach(b=>b.onclick=()=>attempt(async()=>{const d=trash.find(x=>x.id===b.dataset.restore);await api('/api/decks/'+d.id+'/restore',{revision:d.revision});await showSettings();toast('Deck restored to your library.');}));\n}\nasync function waitExistingJob(id){\n",
+              "  $$('[data-trash-inspect]').forEach(b=>b.onclick=()=>{const d=trash.find(x=>x.id===b.dataset.trashInspect);if(d)inspectTrashDeck(d);});\n  $$('[data-restore]').forEach(b=>b.onclick=()=>attempt(async()=>{const d=trash.find(x=>x.id===b.dataset.restore);await api('/api/decks/'+d.id+'/restore',{revision:d.revision});await showSettings();toast('Deck restored to your library.');}));\n  $$('[data-trash-delete]').forEach(b=>b.onclick=()=>attempt(async()=>{const d=trash.find(x=>x.id===b.dataset.trashDelete);if(!d)return;if(!await confirmAction('Delete this deck permanently?',d.name+' will be removed from Trash and cannot be restored. Shared artwork and render caches are kept.','Delete permanently',true))return;await api('/api/trash/'+d.id+'/delete',{revision:d.revision});await showSettings();toast('Deck permanently deleted.');}));\n  if($('#empty-trash'))$('#empty-trash').onclick=()=>attempt(async()=>{if(!await confirmAction('Delete everything in Trash permanently?',`${trash.length} deleted deck${trash.length===1?'':'s'} will be removed and cannot be restored. Shared artwork and render caches are kept.`,'Delete all permanently',true))return;const out=await api('/api/trash/empty',{});await showSettings();toast(`${out.deleted} deck${out.deleted===1?'':'s'} permanently deleted.`);});\n}\nfunction inspectTrashDeck(d){\n  const cards=d.cards||[],physical=cards.reduce((n,c)=>n+(Number(c.quantity)||1),0);\n  modal('Deleted deck · '+d.name,`<div class=\"well\"><b>${physical} physical cards · ${cards.length} card entries</b>${d.notes?`<p class=\"muted\" style=\"margin-top:8px\">${esc(d.notes)}</p>`:''}</div><div class=\"stack section-gap\">${cards.length?cards.map(c=>`<div class=\"trash-row\"><div><b>${Number(c.quantity)||1}× ${esc(c.name)}</b><small class=\"muted\">${esc((c.scryfall?.set||'').toUpperCase())}${c.scryfall?.collector_number?' · '+esc(c.scryfall.collector_number):''}</small></div></div>`).join(''):'<p class=\"muted\">This deck has no cards.</p>'}</div>`,{size:'large'});\n}\nasync function waitExistingJob(id){\n")
+
+          replace('ProxyFoundry/site/deck.js',
+              "function deckMenu(d){\n  modal('Deck actions',`<div class=\"stack\"><button class=\"button\" id=\"duplicate-deck\">Duplicate deck</button><button class=\"button\" id=\"deck-image-zip\">Download paired images ZIP</button><button class=\"button\" id=\"download-cc\">Export CardConjurer save</button><button class=\"button\" id=\"download-originals\">Download original printing images</button><button class=\"button\" id=\"use-as-defaults\">Use this deck’s style as my default</button><button class=\"button danger\" id=\"trash-deck\">Move deck to Trash</button></div><p class=\"muted\" style=\"margin-top:16px;font-size:12px\">Exports use prepared card data. Trashed decks can be restored from Settings.</p>`,{size:'small'});\n",
+              "function deckMenu(d){\n  const permanent=!!state.bootstrap.settings?.deletePermanently;\n  modal('Deck actions',`<div class=\"stack\"><button class=\"button\" id=\"duplicate-deck\">Duplicate deck</button><button class=\"button\" id=\"deck-image-zip\">Download paired images ZIP</button><button class=\"button\" id=\"download-cc\">Export CardConjurer save</button><button class=\"button\" id=\"download-originals\">Download original printing images</button><button class=\"button\" id=\"use-as-defaults\">Use this deck’s style as my default</button><button class=\"button danger\" id=\"trash-deck\">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class=\"muted\" style=\"margin-top:16px;font-size:12px\">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Trashed decks can be restored from Settings.'}</p>`,{size:'small'});\n")
+
+          replace('ProxyFoundry/site/deck.js',
+              "  $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();if(!await confirmAction('Move this deck to Trash?',d.name+' and its saved setup can be restored later.','Move to Trash',true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');});\n",
+              "  $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});\n")
+
+          # Storage-level regression coverage.
+          replace('ProxyFoundry/tests/test_app_rules.py',
+              "    s.trash('decks',d['id']);assert s.get('decks',d['id']) is None\n    s.trash('decks',d['id'],restore=True);assert s.get('decks',d['id'])['name']=='two'\n",
+              "    s.trash('decks',d['id']);assert s.get('decks',d['id']) is None\n    s.trash('decks',d['id'],restore=True);assert s.get('decks',d['id'])['name']=='two'\n    s.trash('decks',d['id']);trashed=s.get('decks',d['id'],include_deleted=True);s.purge('decks',d['id'],trashed['revision']);assert s.get('decks',d['id'],include_deleted=True) is None\n    a=s.put('decks',{'name':'a'});b=s.put('decks',{'name':'b'});s.trash('decks',a['id']);s.trash('decks',b['id']);assert s.purge_trash('decks')['deleted']==2;assert s.list('decks',deleted=True)==[]\n")
+
+          # HTTP + UI contract coverage for trash controls and permanent-delete setting.
+          marker="\n\ndef test_template_validation_and_seed(running):\n"
+          addition="""
+
+          def test_trash_controls_and_permanent_delete_setting(running):
+              app,s=running
+              _,d,_=request(s,'/api/decks/new',{'name':'Trash me'})
+              assert request(s,'/api/decks/'+d['id']+'/delete',{'revision':d['revision']})[0]==200
+              _,trash,_=request(s,'/api/trash');item=next(x for x in trash if x['id']==d['id'])
+              assert item['deleted'] is True
+              assert request(s,'/api/trash/'+d['id']+'/delete',{'revision':item['revision']})[0]==200
+              assert app.store.get('decks',d['id'],include_deleted=True) is None
+
+              ids=[]
+              for name in ['one','two']:
+                  _,deck,_=request(s,'/api/decks/new',{'name':name});ids.append(deck['id'])
+                  assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
+              _,out,_=request(s,'/api/trash/empty',{});assert out['deleted']==2
+              assert request(s,'/api/trash')[1]==[]
+
+              _,settings,_=request(s,'/api/settings')
+              _,settings,_=request(s,'/api/settings',{'revision':settings['revision'],'deletePermanently':True})
+              assert settings['deletePermanently'] is True
+              _,deck,_=request(s,'/api/decks/new',{'name':'Skip trash'})
+              assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
+              assert app.store.get('decks',deck['id'],include_deleted=True) is None
+              assert request(s,'/api/trash')[1]==[]
+
+          def test_trash_ui_and_missing_generation_contracts():
+              root=Path(__file__).resolve().parents[1]
+              settings=(root/'site/settings.js').read_text(encoding='utf-8')
+              deck=(root/'site/deck.js').read_text(encoding='utf-8')
+              render=(root/'site/render.js').read_text(encoding='utf-8')
+              for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty']:
+                  assert token in settings
+              assert 'deletePermanently' in deck
+              assert 'before.upgradeRequired' in render
+          """
+          p=Path('ProxyFoundry/tests/test_server.py');text=p.read_text(encoding='utf-8')
+          if marker not in text:raise SystemExit('missing test marker')
+          p.write_text(text.replace(marker,addition+marker,1),encoding='utf-8')
+
+          # Exact missing-generation regression: force once, then save current metadata and reuse cache.
+          p=Path('ProxyFoundry/tests/test_v54_integration.py');text=p.read_text(encoding='utf-8')
+          text += """
+
+          def test_missing_generation_metadata_forces_once_then_reuses(env):
+              w,c,a,s=env
+              d=w.create({'source':[{'id':c['id']}],'settings':s})
+              before=w.deck(d['id'])
+              assert before['upgradeRequired']
+              force=bool(before['upgradeRequired'])
+              prepared=w.prepare(d['id'])
+              comp=prepared['cards'][0]['faces'][0]['compiled']
+              assert comp['generationVersion']==GENERATION_VERSION
+              w.store.render_put(comp['renderKey'],a)
+              first=w.render_targets([d['id']],force=force)
+              assert first['cached']==0 and len(first['targets'])==1
+              dims=(comp['data']['width'],comp['data']['height'])
+              w.save_render(comp['renderKey'],png(dims),dims)
+              reloaded=w.deck(d['id'])
+              assert not reloaded.get('upgradeRequired')
+              assert reloaded['cards'][0]['faces'][0]['compiled']['generationVersion']==GENERATION_VERSION
+              second=w.render_targets([d['id'])]
+          """
+          # Fix the intentionally easy-to-spot bracket in the appended line while keeping construction readable above.
+          text=text.replace("second=w.render_targets([d['id'])]","second=w.render_targets([d['id']])\n    assert second['cached']==1 and second['targets']==[]")
+          p.write_text(text,encoding='utf-8')
+          PY
+      - name: Verify JavaScript syntax
+        run: |
+          node --check ProxyFoundry/site/settings.js
+          node --check ProxyFoundry/site/deck.js
+          node --check ProxyFoundry/site/render.js
+      - name: Test full Bulk Proxy Forge suite
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/foundry/domain.py ProxyFoundry/foundry/workspace.py ProxyFoundry/foundry/storage.py ProxyFoundry/foundry/server.py ProxyFoundry/site/render.js ProxyFoundry/site/settings.js ProxyFoundry/site/deck.js ProxyFoundry/tests/test_app_rules.py ProxyFoundry/tests/test_server.py ProxyFoundry/tests/test_v54_integration.py
+          git commit -m 'Fix generation invalidation and add trash controls'
+          git push origin HEAD:main
