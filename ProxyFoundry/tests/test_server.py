@@ -170,6 +170,10 @@ def test_trash_controls_and_permanent_delete_setting(running):
     _,settings,_=request(s,'/api/settings')
     _,settings,_=request(s,'/api/settings',{'deletePermanently':True})
     assert settings['deletePermanently'] is True
+    # This is a real workspace setting, not browser-only state: a fresh read
+    # from the server/workspace must retain it.
+    assert request(s,'/api/settings')[1]['deletePermanently'] is True
+    assert app.ws.global_settings()['deletePermanently'] is True
     _,deck,_=request(s,'/api/decks/new',{'name':'Skip trash'})
     assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
     assert app.store.get('decks',deck['id'],include_deleted=True) is None
@@ -180,7 +184,7 @@ def test_trash_ui_and_missing_generation_contracts():
     settings=(root/'site/settings.js').read_text(encoding='utf-8')
     deck=(root/'site/deck.js').read_text(encoding='utf-8')
     render=(root/'site/render.js').read_text(encoding='utf-8')
-    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty']:
+    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty',"$('#permanent-delete').onchange",'Object.assign(settings,out)','Saved immediately.']:
         assert token in settings
     assert 'deletePermanently' in deck
     assert 'before.upgradeRequired' in render
