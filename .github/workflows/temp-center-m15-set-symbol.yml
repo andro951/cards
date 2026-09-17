@@ -1,0 +1,65 @@
+name: Center M15 set symbols
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-center-m15-set-symbol.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: ProxyFoundry
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Center M15 set symbols on visible type bar
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:raise SystemExit(f'missing expected text in {path}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          replace('ProxyFoundry/foundry/compiler.py',
+              "BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}\n\n\ndef intentional_art_window_crop",
+              "BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}\n\n# The visible M15 type bar centers about six pixels above CardConjurer's\n# type-text box center. Keep the symbol centered on the artwork, not the text box.\nM15_SET_SYMBOL_VERTICAL_CENTER=0.59142\n\ndef align_m15_set_symbol_vertical(data,symbol):\n    if str(data.get('version') or '')!='m15Regular' or not symbol:return\n    try:\n        height=float(symbol.get('height') or 0)*float(data.get('setSymbolZoom') or 0)/float(data.get('height') or 0)\n    except (TypeError,ValueError,ZeroDivisionError):return\n    if height<=0 or not math.isfinite(height):return\n    data['setSymbolY']=M15_SET_SYMBOL_VERTICAL_CENTER-height/2\n    bounds=data.get('setSymbolBounds')\n    if isinstance(bounds,dict):\n        bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER\n        bounds['vertical']='center'\n\n\ndef intentional_art_window_crop")
+
+          replace('ProxyFoundry/foundry/compiler.py',
+              "                if d0.get('_neutral_classic'):native.recolor_m15(data,'L')\n            except native.BuildError as e:raise ValidationError(str(e)) from e",
+              "                if d0.get('_neutral_classic'):native.recolor_m15(data,'L')\n                align_m15_set_symbol_vertical(data,self.store.asset(symbol_id))\n            except native.BuildError as e:raise ValidationError(str(e)) from e")
+
+          replace('ProxyFoundry/tests/test_v54_integration.py',
+              "from foundry.compiler import Compiler, semantic",
+              "from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER")
+
+          replace('ProxyFoundry/tests/test_v54_integration.py',
+              "    box=d['text']['type']\n    assert d['setSymbolY']+height/2==pytest.approx(box['y']+box['height']/2)\n    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)",
+              "    box=d['text']['type'];center=d['setSymbolY']+height/2\n    assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n    assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n    assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)\n    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)")
+
+          replace('ProxyFoundry/foundry/domain.py',
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v2'",
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v3'")
+          PY
+      - name: Test full Bulk Proxy Forge suite
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q
+      - name: Commit set symbol correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/foundry/compiler.py ProxyFoundry/tests/test_v54_integration.py ProxyFoundry/foundry/domain.py
+          git commit -m 'Center M15 set symbols on visible type bar'
+          git push origin HEAD:main
