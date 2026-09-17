@@ -1,0 +1,64 @@
+name: Persist permanent delete setting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-persist-permanent-delete.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply persistent setting fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, count=1):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing expected text in {path}: {old[:180]!r}')
+              p.write_text(text.replace(old,new,count),encoding='utf-8')
+
+          replace('ProxyFoundry/site/settings.js',
+              "<span>Permanently delete decks instead of moving them to Trash<small>When enabled, deleting a deck skips Trash and cannot be undone. Shared artwork and render caches are retained.</small></span>",
+              "<span>Permanently delete decks instead of moving them to Trash<small>Saved immediately. When enabled, deleting a deck skips Trash and cannot be undone. Shared artwork and render caches are retained.</small></span>")
+
+          replace('ProxyFoundry/site/settings.js',
+              "  $('#save-settings').onclick=()=>attempt(async()=>{const out=await api('/api/settings',{revision:settings.revision,refreshData:$('#global-refresh').checked,deletePermanently:$('#permanent-delete').checked});state.bootstrap.settings=out;toast('Settings saved.');await showSettings();});\n",
+              "  $('#save-settings').onclick=()=>attempt(async()=>{const out=await api('/api/settings',{revision:settings.revision,refreshData:$('#global-refresh').checked,deletePermanently:$('#permanent-delete').checked});state.bootstrap.settings=out;toast('Settings saved.');await showSettings();});\n  $('#permanent-delete').onchange=()=>attempt(async()=>{const input=$('#permanent-delete'),value=input.checked,save=$('#save-settings');input.disabled=true;if(save)save.disabled=true;try{const out=await api('/api/settings',{revision:settings.revision,deletePermanently:value});Object.assign(settings,out);state.bootstrap.settings=out;toast(value?'Permanent deck deletion enabled.':'Decks will move to Trash.');}catch(e){input.checked=!value;throw e;}finally{if(document.body.contains(input))input.disabled=false;if(save&&document.body.contains(save))save.disabled=false;}});\n")
+
+          replace('ProxyFoundry/tests/test_server.py',
+              "    _,settings,_=request(s,'/api/settings',{'deletePermanently':True})\n    assert settings['deletePermanently'] is True\n",
+              "    _,settings,_=request(s,'/api/settings',{'deletePermanently':True})\n    assert settings['deletePermanently'] is True\n    # This is a real workspace setting, not browser-only state: a fresh read\n    # from the server/workspace must retain it.\n    assert request(s,'/api/settings')[1]['deletePermanently'] is True\n    assert app.ws.global_settings()['deletePermanently'] is True\n")
+
+          replace('ProxyFoundry/tests/test_server.py',
+              "    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty']:\n        assert token in settings\n",
+              "    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty',\"$('#permanent-delete').onchange\",'Object.assign(settings,out)','Saved immediately.']:\n        assert token in settings\n")
+          PY
+      - name: Verify JavaScript syntax
+        run: node --check ProxyFoundry/site/settings.js
+      - name: Test full Bulk Proxy Forge suite
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/site/settings.js ProxyFoundry/tests/test_server.py
+          git commit -m 'Persist permanent deck deletion setting immediately'
+          git push origin HEAD:main
