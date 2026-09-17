@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/temp-update-modern-land-recipes.yml'
+      - '.github/scripts/temp_custom_artist_patch.py'
 
 permissions:
   contents: write
@@ -37,6 +38,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ProxyFoundry/foundry/domain.py ProxyFoundry/foundry/credits.py ProxyFoundry/foundry/compiler.py ProxyFoundry/site/credits.js ProxyFoundry/site/deck.js ProxyFoundry/site/setup.js ProxyFoundry/tests/test_credits.py ProxyFoundry/tests/test_custom_artist_prompt_contract.py
+          git add ProxyFoundry/foundry/domain.py ProxyFoundry/foundry/credits.py ProxyFoundry/site/credits.js ProxyFoundry/site/deck.js ProxyFoundry/site/setup.js ProxyFoundry/tests/test_credits.py ProxyFoundry/tests/test_custom_artist_prompt_contract.py
           git commit -m 'Require explicit artist credits for custom artwork'
           git push origin HEAD:main
