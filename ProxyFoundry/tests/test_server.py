@@ -168,12 +168,13 @@ def test_trash_controls_and_permanent_delete_setting(running):
     assert request(s,'/api/trash')[1]==[]
 
     _,settings,_=request(s,'/api/settings')
-    _,settings,_=request(s,'/api/settings',{'deletePermanently':True})
-    assert settings['deletePermanently'] is True
-    # This is a real workspace setting, not browser-only state: a fresh read
-    # from the server/workspace must retain it.
-    assert request(s,'/api/settings')[1]['deletePermanently'] is True
-    assert app.ws.global_settings()['deletePermanently'] is True
+    _,settings,_=request(s,'/api/settings',{'deletePermanently':True,'refreshData':True})
+    assert settings['deletePermanently'] is True and settings['refreshData'] is True
+    # These are real workspace settings, not browser-only state: a fresh read
+    # from the server/workspace must retain both of them.
+    reread=request(s,'/api/settings')[1]
+    assert reread['deletePermanently'] is True and reread['refreshData'] is True
+    assert app.ws.global_settings()['deletePermanently'] is True and app.ws.global_settings()['refreshData'] is True
     _,deck,_=request(s,'/api/decks/new',{'name':'Skip trash'})
     assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
     assert app.store.get('decks',deck['id'],include_deleted=True) is None
@@ -184,8 +185,9 @@ def test_trash_ui_and_missing_generation_contracts():
     settings=(root/'site/settings.js').read_text(encoding='utf-8')
     deck=(root/'site/deck.js').read_text(encoding='utf-8')
     render=(root/'site/render.js').read_text(encoding='utf-8')
-    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty',"$('#permanent-delete').onchange",'Object.assign(settings,out)','Saved immediately.']:
+    for token in ['permanent-delete','global-refresh','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty',"$('#permanent-delete').onchange","$('#global-refresh').onchange",'persistToggle','Object.assign(settings,out)','Saved immediately.']:
         assert token in settings
+    assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
     assert 'deletePermanently' in deck
     assert 'before.upgradeRequired' in render
 
