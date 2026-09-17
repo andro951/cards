@@ -3,7 +3,7 @@ import copy, hashlib, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER, fit_set_symbol_to_bounds, _standard_visible_type_bar
+from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER, fit_set_symbol_to_bounds, _standard_visible_type_bar, SET_SYMBOL_RECIPE_Y_OFFSET_PX
 from foundry.credits import SCRYFALL_ART
 from foundry.domain import GENERATION_VERSION, ValidationError
 from foundry.images import ingest_image, data_uri
@@ -153,7 +153,7 @@ def test_multicolor_vehicle_bars_are_gold_body_stays_vehicle(env,legendary):
     ('Land','Land','normal'),('Legendary Land','Legendary Land','normal')])
 def test_symbol_fit_uses_each_frame_bounds(env,name,type_line,layout):
     w,_,a,s=env;c=sf(name,type_line=type_line,layout=layout)
-    d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data'];sym=w.store.asset(s['symbols']['rare'])
+    comp=w.compiler.compile_face(c,c,0,{},s,a['id']);d=comp['data'];sym=w.store.asset(s['symbols']['rare'])
     cw=d['width'];ch=d['height'];bounds=d['setSymbolBounds'];box=d['text']['type']
     rendered_w=sym['width']*d['setSymbolZoom'];rendered_h=sym['height']*d['setSymbolZoom']
     bounds_w=round(bounds['width']*cw);bounds_h=round(bounds['height']*ch)
@@ -163,6 +163,7 @@ def test_symbol_fit_uses_each_frame_bounds(env,name,type_line,layout):
     horizontal=bounds.get('horizontal','center');vertical=bounds.get('vertical','center')
     expected_x=anchor_x-rendered_w if horizontal=='right' else anchor_x-rendered_w/2 if horizontal=='center' else anchor_x
     expected_y=anchor_y-rendered_h if vertical=='bottom' else anchor_y-rendered_h/2 if vertical=='center' else anchor_y
+    expected_y+=SET_SYMBOL_RECIPE_Y_OFFSET_PX.get(comp['recipe'],0)
     assert d['setSymbolX']*cw==pytest.approx(round(expected_x),abs=.6)
     assert d['setSymbolY']*ch==pytest.approx(round(expected_y),abs=.6)
     if _standard_visible_type_bar(d,bounds):assert bounds['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)

@@ -28,6 +28,23 @@ BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
 M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
 
+# Pixel corrections measured from native CardConjurer renders using a 115 px
+# square set symbol. Negative values move the symbol upward. These are scoped
+# by native recipe so ordinary M15/basic frames keep their already-correct
+# placement while the affected land families are centered in their visible bars.
+SET_SYMBOL_RECIPE_Y_OFFSET_PX={
+    'land_colorless':-5,
+    'land_full_single':-5,
+    'land_full_dual':-5,
+    'land_full_tri':-5,
+    'land_five_color':-5,
+    'land_full_legendary':-7,
+    'land_full_dual_legendary':-7,
+    'land_full_tri_legendary':-7,
+    'land_five_color_legendary':-7,
+    'original_dual_land_textless':-3,
+}
+
 def _js_round_positive(value):
     return math.floor(value+0.5)
 
@@ -47,7 +64,7 @@ def _standard_visible_type_bar(data,bounds):
     except (TypeError,ValueError):return False
 
 
-def fit_set_symbol_to_bounds(data,symbol):
+def fit_set_symbol_to_bounds(data,symbol,recipe=None):
     """Fit every generated frame's set symbol like CardConjurer resetSetSymbol().
 
     This deliberately has no CardConjurer version-name gate. Any generated frame
@@ -98,6 +115,7 @@ def fit_set_symbol_to_bounds(data,symbol):
     y=anchor_y
     if vertical=='center':y-=rendered_h/2
     elif vertical=='bottom':y-=rendered_h
+    y+=SET_SYMBOL_RECIPE_Y_OFFSET_PX.get(str(recipe or ''),0)
     x=_js_round_positive(x);y=_js_round_positive(y)
     data['setSymbolX']=x/card_w;data['setSymbolY']=y/card_h
 
@@ -235,7 +253,7 @@ class Compiler:
                 data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                 if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                 if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
-                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),native.infer_layout(d0,native.get_type_info(d0)))
             except native.BuildError as e:raise ValidationError(str(e)) from e
             recipe=native.infer_layout(d0,native.get_type_info(d0))
         else:

@@ -66,7 +66,7 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     expect(page.locator('.quantity-pill')).to_have_text('3×')
     page.locator('a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
     page.get_by_text('Browser frame',exact=True).wait_for()
-    page.locator('a[data-nav=settings]').click();page.locator('#global-refresh').check();page.click('#save-settings');page.wait_for_timeout(300)
+    page.locator('a[data-nav=settings]').click();page.locator('#global-refresh').check();page.wait_for_timeout(300)
     assert app.ws.global_settings()['refreshData'] is True
     page.set_viewport_size({'width':390,'height':844});page.locator('a[data-nav=decks]').click();page.locator('#import-deck').wait_for()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
