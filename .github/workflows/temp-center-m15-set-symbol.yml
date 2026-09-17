@@ -44,7 +44,15 @@ jobs:
 
           replace('ProxyFoundry/tests/test_v54_integration.py',
               "    box=d['text']['type']\n    assert d['setSymbolY']+height/2==pytest.approx(box['y']+box['height']/2)\n    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)",
-              "    box=d['text']['type'];center=d['setSymbolY']+height/2\n    assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n    assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n    assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)\n    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)")
+              "    box=d['text']['type'];center=d['setSymbolY']+height/2\n    if d.get('version')=='m15Regular':\n        assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n        assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)\n        assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)\n    else:\n        assert center==pytest.approx(box['y']+box['height']/2)\n    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)")
+
+          replace('ProxyFoundry/tests/test_pipeline.py',
+              "from foundry.compiler import Compiler,semantic,choose_builtin",
+              "from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical")
+
+          replace('ProxyFoundry/tests/test_pipeline.py',
+              "    expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']\n    assert result['data']==expected",
+              "    expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']\n    align_m15_set_symbol_vertical(expected,s.asset(settings['symbols']['rare']))\n    assert result['data']==expected")
 
           replace('ProxyFoundry/foundry/domain.py',
               "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v2'",
@@ -60,6 +68,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ProxyFoundry/foundry/compiler.py ProxyFoundry/tests/test_v54_integration.py ProxyFoundry/foundry/domain.py
+          git add ProxyFoundry/foundry/compiler.py ProxyFoundry/tests/test_v54_integration.py ProxyFoundry/tests/test_pipeline.py ProxyFoundry/foundry/domain.py
           git commit -m 'Center M15 set symbols on visible type bar'
           git push origin HEAD:main
