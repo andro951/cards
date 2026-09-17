@@ -21,7 +21,7 @@ from pathlib import Path
 
 from .backup import Backups
 from .compiler import BUILTINS
-from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS
+from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION
 from .images import ingest_image, rarity_variants, sanitize_svg
 from .jobs import Jobs
 from .github_setup import import_github_setup
@@ -58,8 +58,8 @@ class App:
         handler = RotatingFileHandler(self.store.home / 'logs' / 'app.log', maxBytes=2 * 1024 ** 2, backupCount=2, encoding='utf-8')
         self.log.addHandler(handler)
 
-    def start_render_session(self, ids):
-        plan = self.ws.render_targets(ids)
+    def start_render_session(self, ids, force=False):
+        plan = self.ws.render_targets(ids, force=force)
         ident = uid()
         now = time.time()
         targets = {x['key']: x for x in plan['targets']}
@@ -70,7 +70,7 @@ class App:
                 from .backup import referenced_assets
                 self.runtime_assets.update(referenced_assets(t['data']))
         return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
-                'cached': plan['cached'], 'errors': plan.get('errors', [])}
+                'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION}
 
     def target(self, session, key):
         with self.lock:
@@ -112,7 +112,7 @@ class App:
     def diagnostic_zip(self):
         b = io.BytesIO()
         with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
-            z.writestr('diagnostics.json', json.dumps({'version': '1.3.0', 'runtime': self.runtime.diagnostic(),
+            z.writestr('diagnostics.json', json.dumps({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
                 'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}, indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
@@ -279,7 +279,7 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:css|js|svg|json)', name): raise FileNotFoundError('UI file not found.')
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
-            return self.respond({'version': '1.3.0', 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+            return self.respond({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
                                  'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
@@ -373,7 +373,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/svg/validate':
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})
-        if p == '/api/render-sessions': return self.respond(self.app.start_render_session(d.get('deckIds', [])))
+        if p == '/api/render-sessions': return self.respond(self.app.start_render_session(d.get('deckIds', []), force=d.get('force') is True))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))

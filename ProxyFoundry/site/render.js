@@ -1,14 +1,15 @@
 import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast} from './ui.js';
 let activeFrame=null;
-export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true}={}){
+export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false}={}){
   if(state.busy)throw new Error('Another task is running. Wait for it or cancel first.');
   state.busy=true;let cancelled=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
   const origin=state.bootstrap.runtimeOrigin;
   const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.remove();activeFrame=null;};
   try{
     if(prepare)for(const id of ids){await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
-    const plan=await api('/api/render-sessions',{deckIds:ids});
+    const plan=await api('/api/render-sessions',{deckIds:ids,force});
     if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity('All images are already up to date');toast('Cached images reused. No rendering needed.');return;}
+    if(force)activity('Render deck','Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
     await job('/api/runtime/prepare',{}, {label:'Load CardConjurer'});
     $('#activity-cancel').textContent='Cancel';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>{cancelled=true;rejectPending?.(new Error('Rendering cancelled. Completed images are saved.'));readyReject?.(new Error('Rendering cancelled.'));cleanup();};
     activity('Render deck','Starting native renderer','Loading the pinned CardConjurer runtime…',0,plan.targets.length);

@@ -288,7 +288,7 @@ class Workspace:
             key='land_full_single' if kind=='land' else 'land_full_legendary'
             return copy.deepcopy(native.recipe_data(key,sem,native.get_type_info(sem))['data'])
         return copy.deepcopy(native.LAYOUTS['creature']['data'])
-    def render_targets(self,deck_ids):
+    def render_targets(self,deck_ids,force=False):
         targets={};cached=0;errors=[]
         for ident in deck_ids:
             d=self.deck(ident)
@@ -298,7 +298,7 @@ class Workspace:
                     comp=f.get('compiled')
                     if f.get('error') or not comp:
                         errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
-                    if self.store.render_get(comp['renderKey']):cached+=1;continue
+                    if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
                     targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors}
     def save_render(self,key,raw,expected_size):

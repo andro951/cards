@@ -7,6 +7,7 @@ from foundry.server import App,LocalServer
 from foundry.storage import Store
 from foundry.network import Network
 from foundry.images import ingest_image,rarity_variants
+from foundry.domain import PIPELINE_VERSION
 
 
 def png(size=(900,600),color='#aa7733'):
@@ -60,7 +61,9 @@ def job_done(server,path,data):
 
 def test_csrf_and_runtime_isolation(running):
     app,s=running
-    assert request(s,'/api/bootstrap')[1]['runtimeOrigin']!=s.origin
+    bootstrap=request(s,'/api/bootstrap')[1]
+    assert bootstrap['runtimeOrigin']!=s.origin
+    assert bootstrap['pipelineVersion']==PIPELINE_VERSION
     assert request(s,'/api/decks/new',{'name':'x'},headers={'X-Proxy-CSRF':'bad'})[0]==403
     assert request(s,'/api/decks/new',{'name':'x'},origin='https://evil.example')[0]==403
     r=s.runtime_server
@@ -102,6 +105,11 @@ def test_import_prepare_render_order_roundtrip(running):
     assert app.ws.deck(d['id'])['status']=='ready'
     assert app.ws.render_targets([d['id']])['cached']==1
     assert app.ws.render_targets([d['id']])['targets']==[]
+    forced=app.ws.render_targets([d['id']],force=True)
+    assert forced['cached']==0 and len(forced['targets'])==1
+    _,forced_session,_=request(s,'/api/render-sessions',{'deckIds':[d['id']],'force':True})
+    assert forced_session['force'] is True and forced_session['pipelineVersion']==PIPELINE_VERSION
+    assert len(forced_session['targets'])==1
 
 
 def test_template_validation_and_seed(running):
