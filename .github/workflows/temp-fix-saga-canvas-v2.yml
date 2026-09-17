@@ -1,0 +1,166 @@
+name: Temporary Saga renderer regression v2
+on:
+  push:
+    branches:
+      - bpf/fix-saga-canvas
+    paths:
+      - '.github/workflows/temp-fix-saga-canvas-v2.yml'
+permissions:
+  contents: write
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bpf/fix-saga-canvas
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply Saga canvas refresh fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if text.count(old)!=1:
+                  raise SystemExit(f'{path}: expected one replacement, found {text.count(old)}')
+              p.write_text(text.replace(old,new),encoding='utf-8')
+
+          replace('ProxyFoundry/site/runtime-bridge.js',
+          """  async function stationReady(data){
+              if(!String(data.version).toLowerCase().includes('station'))return;
+          """,
+          """  async function sagaReady(data){
+              if(!String(data.version).toLowerCase().includes('saga'))return;
+              if(!window.card?.saga||typeof window.sagaEdited!=='function'||typeof window.fixSagaInputs!=='function')throw new Error('Native Saga module did not initialize.');
+              // versionSaga.js initializes its controls/canvas only once per CardConjurer
+              // page. Later loadCard calls replace `card` but otherwise leave the old
+              // chapter shields/dividers on sagaCanvas. Synchronize the native inputs
+              // from the newly loaded card, then let the genuine Saga renderer redraw.
+              window.fixSagaInputs();
+              await readyImages([['Saga chapter',window.sagaChapter],['Saga divider',window.sagaDivider]]);
+              window.fixSagaInputs();window.sagaEdited();await sleep(40);window.sagaEdited();
+              const expected=(data.saga?.abilities||[]).map(Number);
+              const actual=(window.card.saga?.abilities||[]).map(Number);
+              if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error('Native Saga changed the saved chapter grouping.');
+              if(Number(window.card.saga.count)!==Number(data.saga?.count))throw new Error('Native Saga changed the saved ability count.');
+              for(let i=0;i<4;i++){
+                const input=document.querySelector('#saga-chapters-'+i);
+                if(!input||Number(input.value)!==Number(expected[i]||0))throw new Error('Native Saga controls did not synchronize chapter '+(i+1)+'.');
+              }
+            }
+            async function stationReady(data){
+              if(!String(data.version).toLowerCase().includes('station'))return;
+          """)
+          replace('ProxyFoundry/site/runtime-bridge.js',
+          """      await window.loadCard(storageKey);await scriptsSettled();
+                await stationReady(data);
+          """,
+          """      await window.loadCard(storageKey);await scriptsSettled();
+                await sagaReady(data);await stationReady(data);
+          """)
+
+          replace('ProxyFoundry/foundry/compiler.py',
+          """AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
+          BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
+          """,
+          """AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
+          # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
+          # that canvas for each loaded Saga instead of reusing the previous Saga's
+          # chapter shields/dividers. Scope invalidation to Saga cards only.
+          AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2})
+          BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
+          """)
+
+          p=Path('ProxyFoundry/tests/test_pipeline.py'); text=p.read_text(encoding='utf-8')
+          if 'def test_doctor_who_saga_chapter_groupings_and_ability_boxes' not in text:
+              text += r'''
+
+          def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
+              from foundry.legacy import compiler as native
+              cases=[
+                ('An Unearthly Child','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III — Reveal cards from the top of your library until you reveal a Doctor card.',(3,),[3,0,0,0],1),
+                ('The Girl in the Fireplace','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create a 1/1 white Human Noble creature token.\nII — Create a 2/2 white Horse creature token.\nIII — Whenever a creature you control deals combat damage to a player this turn, time travel.',(1,1,1),[1,1,1,0],3),
+                ('Trial of a Time Lord','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II, III — Exile target nontoken creature an opponent controls until this Saga leaves the battlefield.\nIV — Starting with you, each player votes for innocent or guilty.',(3,1),[3,1,0,0],2),
+                ('Death in Heaven','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with Death in Heaven onto the battlefield face down under your control.',(2,1),[2,1,0,0],2),
+              ]
+              for name,oracle,signature,chapter_groups,ability_count in cases:
+                  card={'name':name,'type_line':'Enchantment — Saga','layout':'saga','colors':['W'],'mana_cost':'{2}{W}','oracle_text':oracle}
+                  meta=native.saga_layout_metadata(card)
+                  assert meta['signature']==signature
+                  data=native.recipe_data('saga',card,native.get_type_info(card))['data']
+                  native.apply_saga_text_layout(data,meta)
+                  assert data['saga']['abilities']==chapter_groups
+                  assert data['saga']['count']==ability_count
+                  assert sum(1 for i in range(4) if data['text'][f'ability{i}']['height']>0)==ability_count
+          '''
+          p.write_text(text,encoding='utf-8')
+
+          p=Path('ProxyFoundry/tests/test_template_versions.py'); text=p.read_text(encoding='utf-8')
+          if 'def test_saga_runtime_fix_invalidates_only_saga_auto_templates' not in text:
+              text += """
+
+          def test_saga_runtime_fix_invalidates_only_saga_auto_templates(tmp_path):
+              compiler=Compiler(Store(tmp_path))
+              assert compiler.template_identity('saga','auto')[1:]==(2,2)
+              assert compiler.template_identity('saga-creature','auto')[1:]==(2,2)
+              assert compiler.template_identity('standard','auto')[1:]==(1,1)
+              assert compiler.template_identity('planeswalker','auto')[1:]==(1,1)
+          """
+          p.write_text(text,encoding='utf-8')
+
+          replace('ProxyFoundry/tests/test_native_deck.py',
+          """            page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+          """,
+          """            page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
+                      page.evaluate(\"\"\"() => {
+                        const originalRemove=HTMLIFrameElement.prototype.remove;
+                        HTMLIFrameElement.prototype.remove=function(){
+                          if(this.classList?.contains('render-frame')){this.dataset.testKept='1';return;}
+                          return originalRemove.call(this);
+                        };
+                      }\"\"\")
+                      page.click('#generate-deck')
+          """)
+          replace('ProxyFoundry/tests/test_native_deck.py',
+          """            assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
+                      for c in ready['cards']:
+          """,
+          """            assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
+                      runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
+                      saga_state=runtime_frame.evaluate(\"\"\"() => ({
+                        title: window.card?.text?.title?.text,
+                        groups: [0,1,2,3].map(i=>Number(document.querySelector('#saga-chapters-'+i)?.value||0)),
+                        count: Number(window.card?.saga?.count||0),
+                        heights: [0,1,2,3].map(i=>Number(document.querySelector('#saga-height-'+i)?.value||0))
+                      })\"\"\")
+                      assert saga_state['title']=='Summon: Bahamut',saga_state
+                      assert saga_state['groups']==[2,1,1,0],saga_state
+                      assert saga_state['count']==3 and all(x>0 for x in saga_state['heights'][:3]) and saga_state['heights'][3]==0,saga_state
+                      for c in ready['cards']:
+          """)
+          PY
+          git diff --check
+      - name: Install test dependencies and Chromium
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Verify Card Tools and run full suite
+        env:
+          PF_BROWSER: '1'
+          PF_LIVE_CC: '1'
+        run: |
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q --tb=short
+      - name: Commit application changes
+        run: |
+          git config user.name 'Isaac Richards'
+          git config user.email '44043352+andro951@users.noreply.github.com'
+          git add ProxyFoundry/site/runtime-bridge.js ProxyFoundry/foundry/compiler.py ProxyFoundry/tests/test_pipeline.py ProxyFoundry/tests/test_template_versions.py ProxyFoundry/tests/test_native_deck.py
+          git commit -m 'Refresh native Saga overlay for every card'
+          git push origin HEAD:bpf/fix-saga-canvas
