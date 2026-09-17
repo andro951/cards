@@ -40,6 +40,8 @@ def test_revisions(tmp_path):
     assert s.get('decks',d['id'])['name']=='two'
     s.trash('decks',d['id']);assert s.get('decks',d['id']) is None
     s.trash('decks',d['id'],restore=True);assert s.get('decks',d['id'])['name']=='two'
+    s.trash('decks',d['id']);trashed=s.get('decks',d['id'],include_deleted=True);s.purge('decks',d['id'],trashed['revision']);assert s.get('decks',d['id'],include_deleted=True) is None
+    a=s.put('decks',{'name':'a'});b=s.put('decks',{'name':'b'});s.trash('decks',a['id']);s.trash('decks',b['id']);assert s.purge_trash('decks')['deleted']==2;assert s.list('decks',deleted=True)==[]
 def test_assets(tmp_path):
     s=Store(tmp_path);a=s.add_asset(b'abc','text/plain');assert a['id']==s.add_asset(b'abc','text/plain')['id']
     with pytest.raises(ValidationError):s.asset_path('../x')

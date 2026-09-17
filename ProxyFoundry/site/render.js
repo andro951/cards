@@ -6,7 +6,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
   const origin=state.bootstrap.runtimeOrigin;
   const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.remove();activeFrame=null;};
   try{
-    if(prepare)for(const id of ids){await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
+    if(prepare)for(const id of ids){const before=await api('/api/decks/'+id);force=force||!!before.upgradeRequired;await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
     const plan=await api('/api/render-sessions',{deckIds:ids,force});
     activity('Render deck','Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
     if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity('All images are already up to date');toast('Cached images reused. No rendering needed.');return;}

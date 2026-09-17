@@ -132,6 +132,41 @@ def test_import_prepare_render_order_roundtrip(running):
     assert len(forced_session['targets'])==1
 
 
+def test_trash_controls_and_permanent_delete_setting(running):
+    app,s=running
+    _,d,_=request(s,'/api/decks/new',{'name':'Trash me'})
+    assert request(s,'/api/decks/'+d['id']+'/delete',{'revision':d['revision']})[0]==200
+    _,trash,_=request(s,'/api/trash');item=next(x for x in trash if x['id']==d['id'])
+    assert item['deleted'] is True
+    assert request(s,'/api/trash/'+d['id']+'/delete',{'revision':item['revision']})[0]==200
+    assert app.store.get('decks',d['id'],include_deleted=True) is None
+
+    ids=[]
+    for name in ['one','two']:
+        _,deck,_=request(s,'/api/decks/new',{'name':name});ids.append(deck['id'])
+        assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
+    _,out,_=request(s,'/api/trash/empty',{});assert out['deleted']==2
+    assert request(s,'/api/trash')[1]==[]
+
+    _,settings,_=request(s,'/api/settings')
+    _,settings,_=request(s,'/api/settings',{'deletePermanently':True})
+    assert settings['deletePermanently'] is True
+    _,deck,_=request(s,'/api/decks/new',{'name':'Skip trash'})
+    assert request(s,'/api/decks/'+deck['id']+'/delete',{'revision':deck['revision']})[0]==200
+    assert app.store.get('decks',deck['id'],include_deleted=True) is None
+    assert request(s,'/api/trash')[1]==[]
+
+def test_trash_ui_and_missing_generation_contracts():
+    root=Path(__file__).resolve().parents[1]
+    settings=(root/'site/settings.js').read_text(encoding='utf-8')
+    deck=(root/'site/deck.js').read_text(encoding='utf-8')
+    render=(root/'site/render.js').read_text(encoding='utf-8')
+    for token in ['permanent-delete','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty']:
+        assert token in settings
+    assert 'deletePermanently' in deck
+    assert 'before.upgradeRequired' in render
+
+
 def test_template_validation_and_seed(running):
     app,s=running
     for kind in ['normal','land','legend-land']:

@@ -211,3 +211,24 @@ def test_credit_fields_survive_style_defaults_duplicate_and_backup(env):
     restored=w.deck(result['ids'][0])
     assert restored['cards'][0]['faces'][0]['artistCreditMode']=='printing'
     assert restored['cards'][0]['faces'][0]['modificationCreditOverride']=='Extended by Isaac'
+
+
+def test_missing_generation_metadata_forces_once_then_reuses(env):
+    w,c,a,s=env
+    d=w.create({'source':[{'id':c['id']}],'settings':s})
+    before=w.deck(d['id'])
+    assert before['upgradeRequired']
+    force=bool(before['upgradeRequired'])
+    prepared=w.prepare(d['id'])
+    comp=prepared['cards'][0]['faces'][0]['compiled']
+    assert comp['generationVersion']==GENERATION_VERSION
+    w.store.render_put(comp['renderKey'],a)
+    first=w.render_targets([d['id']],force=force)
+    assert first['cached']==0 and len(first['targets'])==1
+    dims=(comp['data']['width'],comp['data']['height'])
+    w.save_render(comp['renderKey'],png(dims),dims)
+    reloaded=w.deck(d['id'])
+    assert not reloaded.get('upgradeRequired')
+    assert reloaded['cards'][0]['faces'][0]['compiled']['generationVersion']==GENERATION_VERSION
+    second=w.render_targets([d['id']])
+    assert second['cached']==1 and second['targets']==[]

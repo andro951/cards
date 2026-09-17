@@ -426,6 +426,11 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
+        if p == '/api/trash/empty': return self.respond(self.app.store.purge_trash('decks'))
+        if m := re.fullmatch(r'/api/trash/([-a-f0-9]{36})/delete', p):
+            old=self.app.store.get('decks',m[1],include_deleted=True)
+            if not old or not old.get('deleted'):raise ValidationError('That deck is not in Trash.')
+            return self.respond(self.app.store.purge('decks',m[1],d.get('revision')))
         if p == '/api/templates': return self.respond(self.app.ws.save_template(d))
         if p == '/api/symbols/generate': return self.respond(rarity_variants(self.app.store, d['assetId']))
         if p == '/api/setup/github-import':
@@ -458,7 +463,11 @@ class Handler(BaseHTTPRequestHandler):
             if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c)))
             if action == 'add': return self.respond(self.app.jobs.start('Add cards', lambda u, c: self.app.ws.add_cards(ident, d, u, c)))
             if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))
-            if action in {'delete', 'restore'}: return self.respond(self.app.store.trash('decks', ident, d.get('revision'), restore=action == 'restore'))
+            if action == 'delete':
+                if self.app.ws.global_settings().get('deletePermanently'):
+                    return self.respond(self.app.store.purge('decks',ident,d.get('revision')))
+                return self.respond(self.app.store.trash('decks',ident,d.get('revision')))
+            if action == 'restore': return self.respond(self.app.store.trash('decks',ident,d.get('revision'),restore=True))
             if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(printing|token))?', p):
             if m[3] == 'printing': return self.respond(self.app.ws.replace_printing(m[1], m[2], d['source'], d['revision']))

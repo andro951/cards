@@ -23,9 +23,13 @@ class Workspace:
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
             'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
             'status':'draft', 'notes':'', 'importedSource':''})
-    def global_settings(self):return self.store.get('settings','global') or {'id':'global','refreshData':False,'defaults':{}}
+    def global_settings(self):
+        s=self.store.get('settings','global') or {'id':'global','refreshData':False,'deletePermanently':False,'defaults':{}}
+        s.setdefault('deletePermanently',False)
+        return s
     def set_global_settings(self,values):
-        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','defaults'}}
+        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','deletePermanently','defaults'}}
+        if 'deletePermanently' in safe:safe['deletePermanently']=bool(safe['deletePermanently'])
         if 'defaults' in safe and safe['defaults']:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
@@ -64,6 +68,8 @@ class Workspace:
                 total+=1
                 if f.get('error'):errors+=1
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
+                if not comp:
+                    d['status']='draft';d['upgradeRequired']=True
                 if comp:
                     comp['render']=r
                     if comp.get('generationVersion')!=PIPELINE_VERSION:

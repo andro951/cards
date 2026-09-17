@@ -115,6 +115,23 @@ class Store:
         old['deleted'] = not restore
         return self.put(kind, old, expected)
 
+    def purge(self, kind: str, ident: str, expected: int | None = None) -> dict[str, Any]:
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute('SELECT rev FROM documents WHERE kind=? AND id=?',(kind,ident)).fetchone()
+            if not row:raise ValidationError('That item no longer exists.')
+            if expected is not None and expected!=row['rev']:
+                raise ConflictError('This deck changed in another tab. Reload it before deleting it.')
+            db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))
+        return {'id':ident,'permanent':True}
+
+    def purge_trash(self, kind: str) -> dict[str, Any]:
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            count=db.execute('SELECT count(*) FROM documents WHERE kind=? AND deleted=1',(kind,)).fetchone()[0]
+            db.execute('DELETE FROM documents WHERE kind=? AND deleted=1',(kind,))
+        return {'deleted':count}
+
     def asset_path(self, ident: str) -> Path:
         if not re.fullmatch(r'[0-9a-f]{64}', str(ident)):
             raise ValidationError('Invalid asset identifier.')
