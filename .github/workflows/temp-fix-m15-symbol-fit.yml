@@ -1,0 +1,174 @@
+name: Fix M15 set symbol fit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-fix-m15-symbol-fit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Match CardConjurer set-symbol fit and placement
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text: raise SystemExit(f'missing expected text in {path}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          old = '''# The visible M15 type bar centers about six pixels above CardConjurer's
+          # type-text box center. Keep the symbol centered on the artwork, not the text box.
+          M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
+
+          def align_m15_set_symbol_vertical(data,symbol):
+              if str(data.get('version') or '')!='m15Regular' or not symbol:return
+              try:
+                  height=float(symbol.get('height') or 0)*float(data.get('setSymbolZoom') or 0)/float(data.get('height') or 0)
+              except (TypeError,ValueError,ZeroDivisionError):return
+              if height<=0 or not math.isfinite(height):return
+              data['setSymbolY']=M15_SET_SYMBOL_VERTICAL_CENTER-height/2
+              bounds=data.get('setSymbolBounds')
+              if isinstance(bounds,dict):
+                  bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
+                  bounds['vertical']='center'
+          '''.replace('          ','')
+          new = '''# The visible M15 type bar centers about six pixels above CardConjurer's
+          # type-text box center. Keep the symbol centered on the artwork, not the text box.
+          M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
+
+          def _js_round_positive(value):
+              return math.floor(value+0.5)
+
+          def align_m15_set_symbol_vertical(data,symbol):
+              """Fit ordinary M15 symbols exactly like CardConjurer resetSetSymbol().
+
+              CardConjurer fits an uploaded symbol inside setSymbolBounds, rounds the
+              zoom to one decimal percent, then right/center anchors the rendered image.
+              Our compiler already knows the uploaded asset dimensions, so emit that final
+              geometry directly instead of carrying the template's fixed 10.1% zoom.
+              """
+              if str(data.get('version') or '')!='m15Regular' or not symbol:return
+              bounds=data.get('setSymbolBounds')
+              if not isinstance(bounds,dict):return
+              try:
+                  card_w=float(data.get('width') or 0);card_h=float(data.get('height') or 0)
+                  symbol_w=float(symbol.get('width') or 0);symbol_h=float(symbol.get('height') or 0)
+                  bounds_w=_js_round_positive(float(bounds.get('width') or 0)*card_w)
+                  bounds_h=_js_round_positive(float(bounds.get('height') or 0)*card_h)
+                  anchor_x=_js_round_positive(float(bounds.get('x') or 0)*card_w)
+              except (TypeError,ValueError,ZeroDivisionError):return
+              values=(card_w,card_h,symbol_w,symbol_h,bounds_w,bounds_h,anchor_x)
+              if min(values)<=0 or not all(math.isfinite(x) for x in values):return
+
+              bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
+              bounds['vertical']='center'
+              anchor_y=_js_round_positive(M15_SET_SYMBOL_VERTICAL_CENTER*card_h)
+
+              # Mirrors creator-23.js resetSetSymbol(): fit by the limiting bounds
+              # dimension, then toFixed(1) on the percentage before converting back.
+              if symbol_w/symbol_h > bounds_w/bounds_h:
+                  percent=bounds_w/symbol_w*100
+              else:
+                  percent=bounds_h/symbol_h*100
+              percent=math.floor(percent*10+0.5)/10
+              zoom=percent/100
+              if zoom<=0:return
+              data['setSymbolZoom']=zoom
+
+              rendered_w=symbol_w*zoom;rendered_h=symbol_h*zoom
+              x=anchor_x
+              if bounds.get('horizontal')=='center':x-=rendered_w/2
+              elif bounds.get('horizontal')=='right':x-=rendered_w
+              y=anchor_y-rendered_h/2
+              x=_js_round_positive(x);y=_js_round_positive(y)
+              data['setSymbolX']=x/card_w;data['setSymbolY']=y/card_h
+
+              # Preserve the compiler's existing 1%-of-card gap between type text
+              # and the now-refitted symbol.
+              box=(data.get('text') or {}).get('type')
+              if isinstance(box,dict) and float(box.get('rotation') or 0)%360==0:
+                  try:box_x=float(box.get('x') or 0)
+                  except (TypeError,ValueError):return
+                  box['width']=max(0,data['setSymbolX']-.01-box_x)
+          '''.replace('          ','')
+          replace('ProxyFoundry/foundry/compiler.py',old,new)
+
+          old_test = '''    width=sym['width']*d['setSymbolZoom']/d['width'];height=sym['height']*d['setSymbolZoom']/d['height']
+              assert d['setSymbolX']+width==pytest.approx(.9213)
+              box=d['text']['type'];center=d['setSymbolY']+height/2
+              if d.get('version')=='m15Regular':
+                  assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+                  assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+                  assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)
+              else:
+                  assert center==pytest.approx(box['y']+box['height']/2)
+              assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)
+          '''.replace('              ','    ')
+          new_test = '''    width=sym['width']*d['setSymbolZoom']/d['width'];height=sym['height']*d['setSymbolZoom']/d['height']
+              box=d['text']['type'];center=d['setSymbolY']+height/2
+              if d.get('version')=='m15Regular':
+                  cw=d['width'];ch=d['height'];bounds=d['setSymbolBounds']
+                  rendered_w=sym['width']*d['setSymbolZoom'];rendered_h=sym['height']*d['setSymbolZoom']
+                  bounds_w=round(bounds['width']*cw);bounds_h=round(bounds['height']*ch)
+                  assert rendered_w<=bounds_w+.6 and rendered_h<=bounds_h+.6
+                  assert min(abs(rendered_w-bounds_w),abs(rendered_h-bounds_h))<=1.5
+                  assert d['setSymbolX']*cw+rendered_w==pytest.approx(round(bounds['x']*cw),abs=.6)
+                  assert center*ch==pytest.approx(round(M15_SET_SYMBOL_VERTICAL_CENTER*ch),abs=.7)
+                  assert bounds['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+              else:
+                  assert d['setSymbolX']+width==pytest.approx(.9213)
+                  assert center==pytest.approx(box['y']+box['height']/2)
+              assert (d['setSymbolX']-(box['x']+box['width']))*d['width']==pytest.approx(.01*d['width'],abs=.6)
+          '''.replace('              ','    ')
+          replace('ProxyFoundry/tests/test_v54_integration.py',old_test,new_test)
+
+          marker = '''def test_dfc_artist_is_per_face_and_does_not_follow_other_side(env):
+          '''.replace('          ','')
+          regression = '''def test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic(env):
+              w,c,a,s=env
+              raw=io.BytesIO();Image.new('RGBA',(869,1057),'#ff6600').save(raw,'PNG')
+              symbol=ingest_image(w.store,raw.getvalue());s={**s,'symbols':{r:symbol['id'] for r in ['common','uncommon','rare','mythic']}}
+              c=sf('Sol Ring',type_line='Artifact',colors=[],rarity='mythic')
+              d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
+              assert d['version']=='m15Regular'
+              assert d['setSymbolZoom']==pytest.approx(.109)
+              assert d['setSymbolX']*2010==pytest.approx(1757)
+              assert d['setSymbolY']*2814==pytest.approx(1606)
+              assert 869*d['setSymbolZoom']==pytest.approx(94.721)
+              assert 1057*d['setSymbolZoom']==pytest.approx(115.213)
+              assert d['setSymbolY']*2814+(1057*d['setSymbolZoom'])/2==pytest.approx(1664,abs=.7)
+
+
+          '''.replace('          ','')
+          replace('ProxyFoundry/tests/test_v54_integration.py',marker,regression+marker)
+
+          replace('ProxyFoundry/foundry/domain.py',
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v4'",
+              "PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v5'")
+          PY
+      - name: Test full Bulk Proxy Forge suite
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python ProxyFoundry/scripts/verify_vendor.py
+          cd ProxyFoundry
+          python -m pytest -q
+      - name: Commit correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ProxyFoundry/foundry/compiler.py ProxyFoundry/tests/test_v54_integration.py ProxyFoundry/foundry/domain.py
+          git commit -m 'Fit M15 set symbols to CardConjurer bounds'
+          git push origin HEAD:main
