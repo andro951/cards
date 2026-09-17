@@ -31,33 +31,55 @@ M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
 def _js_round_positive(value):
     return math.floor(value+0.5)
 
-def align_m15_set_symbol_vertical(data,symbol):
-    """Fit ordinary M15 symbols exactly like CardConjurer resetSetSymbol().
+def _standard_visible_type_bar(data,bounds):
+    """Recognize the shared ordinary type-bar geometry, independent of version."""
+    box=(data.get('text') or {}).get('type')
+    if not isinstance(box,dict):return False
+    try:
+        return (
+            float(box.get('rotation') or 0)%360==0
+            and abs(float(box.get('y') or 0)-.5664)<=.001
+            and abs(float(box.get('height') or 0)-.0543)<=.001
+            and abs(float(bounds.get('x') or 0)-.9213)<=.001
+            and abs(float(bounds.get('width') or 0)-.12)<=.001
+            and abs(float(bounds.get('height') or 0)-.041)<=.001
+        )
+    except (TypeError,ValueError):return False
 
-    CardConjurer fits an uploaded symbol inside setSymbolBounds, rounds the
-    zoom to one decimal percent, then right/center anchors the rendered image.
-    Our compiler already knows the uploaded asset dimensions, so emit that final
-    geometry directly instead of carrying the template's fixed 10.1% zoom.
+
+def fit_set_symbol_to_bounds(data,symbol):
+    """Fit every generated frame's set symbol like CardConjurer resetSetSymbol().
+
+    This deliberately has no CardConjurer version-name gate. Any generated frame
+    that exposes setSymbolBounds gets the same alpha-trimmed asset, aspect-safe
+    fit, percentage rounding, and anchor placement. Frames with the shared
+    ordinary visible type bar also use the measured visible-bar vertical center;
+    frames with different geometry retain their own anchor.
     """
-    if str(data.get('version') or '')!='m15Regular' or not symbol:return
+    if not symbol:return
     bounds=data.get('setSymbolBounds')
     if not isinstance(bounds,dict):return
     try:
         card_w=float(data.get('width') or 0);card_h=float(data.get('height') or 0)
         symbol_w=float(symbol.get('width') or 0);symbol_h=float(symbol.get('height') or 0)
-        bounds_w=_js_round_positive(float(bounds.get('width') or 0)*card_w)
-        bounds_h=_js_round_positive(float(bounds.get('height') or 0)*card_h)
-        anchor_x=_js_round_positive(float(bounds.get('x') or 0)*card_w)
+        bounds_x=float(bounds.get('x') or 0);bounds_y=float(bounds.get('y') or 0)
+        bounds_width=float(bounds.get('width') or 0);bounds_height=float(bounds.get('height') or 0)
+        bounds_w=_js_round_positive(bounds_width*card_w)
+        bounds_h=_js_round_positive(bounds_height*card_h)
     except (TypeError,ValueError,ZeroDivisionError):return
-    values=(card_w,card_h,symbol_w,symbol_h,bounds_w,bounds_h,anchor_x)
-    if min(values)<=0 or not all(math.isfinite(x) for x in values):return
+    values=(card_w,card_h,symbol_w,symbol_h,bounds_w,bounds_h,bounds_x,bounds_y)
+    if min(card_w,card_h,symbol_w,symbol_h,bounds_w,bounds_h)<=0 or not all(math.isfinite(x) for x in values):return
 
-    bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
-    bounds['vertical']='center'
-    anchor_y=_js_round_positive(M15_SET_SYMBOL_VERTICAL_CENTER*card_h)
+    if _standard_visible_type_bar(data,bounds):
+        bounds_y=M15_SET_SYMBOL_VERTICAL_CENTER
+        bounds['y']=bounds_y
+        bounds['vertical']='center'
 
-    # Mirrors creator-23.js resetSetSymbol(): fit by the limiting bounds
-    # dimension, then toFixed(1) on the percentage before converting back.
+    anchor_x=_js_round_positive(bounds_x*card_w)
+    anchor_y=_js_round_positive(bounds_y*card_h)
+
+    # Mirrors creator-23.js resetSetSymbol(): fit by the limiting dimension,
+    # round the percentage to one decimal place, then anchor the rendered image.
     if symbol_w/symbol_h > bounds_w/bounds_h:
         percent=bounds_w/symbol_w*100
     else:
@@ -68,20 +90,27 @@ def align_m15_set_symbol_vertical(data,symbol):
     data['setSymbolZoom']=zoom
 
     rendered_w=symbol_w*zoom;rendered_h=symbol_h*zoom
+    horizontal=str(bounds.get('horizontal') or 'center').lower()
+    vertical=str(bounds.get('vertical') or 'center').lower()
     x=anchor_x
-    if bounds.get('horizontal')=='center':x-=rendered_w/2
-    elif bounds.get('horizontal')=='right':x-=rendered_w
-    y=anchor_y-rendered_h/2
+    if horizontal=='center':x-=rendered_w/2
+    elif horizontal=='right':x-=rendered_w
+    y=anchor_y
+    if vertical=='center':y-=rendered_h/2
+    elif vertical=='bottom':y-=rendered_h
     x=_js_round_positive(x);y=_js_round_positive(y)
     data['setSymbolX']=x/card_w;data['setSymbolY']=y/card_h
 
-    # Preserve the compiler's existing 1%-of-card gap between type text
-    # and the now-refitted symbol.
+    # Preserve the existing 1%-of-card gap between type text and a right-anchored
+    # set symbol. Nonstandard/rotated type boxes keep their native geometry.
     box=(data.get('text') or {}).get('type')
-    if isinstance(box,dict) and float(box.get('rotation') or 0)%360==0:
+    if horizontal=='right' and isinstance(box,dict) and float(box.get('rotation') or 0)%360==0:
         try:box_x=float(box.get('x') or 0)
         except (TypeError,ValueError):return
         box['width']=max(0,data['setSymbolX']-.01-box_x)
+
+# Compatibility name for older tests/importers; behavior is now frame-agnostic.
+align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 
 
 def intentional_art_window_crop(group,choice,art,options,settings):
@@ -206,7 +235,7 @@ class Compiler:
                 data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                 if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                 if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
-                align_m15_set_symbol_vertical(data,self.store.asset(symbol_id))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id))
             except native.BuildError as e:raise ValidationError(str(e)) from e
             recipe=native.infer_layout(d0,native.get_type_info(d0))
         else:

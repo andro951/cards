@@ -3,7 +3,7 @@ import copy, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic
+from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds
 from foundry.domain import ValidationError, GENERATION_VERSION
 from foundry.images import ingest_image, data_uri
 from foundry.legacy import compiler as native
@@ -93,6 +93,7 @@ def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)
     sem=semantic(c,c);sem.update(art=data_uri(s,a['id']),art_local_path=str(s.asset_path(a['id'])),set_symbol_source=data_uri(s,settings['symbols']['rare']),artist='Original Station Artist · Modified by ChatGPT')
     expected=native.build_one(sem,{},True)['data']
+    fit_set_symbol_to_bounds(expected,s.asset(settings['symbols']['rare']))
     expected['artSource']='/api/assets/'+a['id'];expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
     actual=comp.compile_face(c,c,0,{},settings,a['id'],art_origin='Scryfall selected printing')['data']
     assert actual==expected
@@ -101,7 +102,9 @@ def test_flip_medallion_reserves_two_percent(env):
     s,comp,a,_,settings=env;c=flip_record()
     d=comp.compile_face(c,c['card_faces'][0],0,{},settings,a['id'])['data']
     sym=s.asset(settings['symbols']['rare']);right=d['setSymbolX']+sym['width']*d['setSymbolZoom']/d['width']
-    assert right==pytest.approx(d['text']['pt']['x']-.02-.01)
+    bounds=d['setSymbolBounds'];assert bounds['x']==pytest.approx(d['text']['pt']['x']-.02-.01)
+    # Native resetSetSymbol anchors in rounded canvas pixels.
+    assert right==pytest.approx(round(bounds['x']*d['width'])/d['width'],abs=.6/d['width'])
     lower_left=d['text']['type2']['x']-d['text']['type2']['width']
     assert lower_left==pytest.approx(d['text']['pt2']['x']+.02+.01)
     assert 'v58' in GENERATION_VERSION

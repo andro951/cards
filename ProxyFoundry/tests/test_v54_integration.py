@@ -3,7 +3,7 @@ import copy, hashlib, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER
+from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER, fit_set_symbol_to_bounds, _standard_visible_type_bar
 from foundry.credits import SCRYFALL_ART
 from foundry.domain import GENERATION_VERSION, ValidationError
 from foundry.images import ingest_image, data_uri
@@ -151,24 +151,47 @@ def test_multicolor_vehicle_bars_are_gold_body_stays_vehicle(env,legendary):
 @pytest.mark.parametrize('name,type_line,layout',[
     ('Creature','Creature — Elf','normal'),('Artifact','Artifact','normal'),
     ('Land','Land','normal'),('Legendary Land','Legendary Land','normal')])
-def test_symbol_right_edge_and_type_gap(env,name,type_line,layout):
+def test_symbol_fit_uses_each_frame_bounds(env,name,type_line,layout):
     w,_,a,s=env;c=sf(name,type_line=type_line,layout=layout)
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data'];sym=w.store.asset(s['symbols']['rare'])
-    width=sym['width']*d['setSymbolZoom']/d['width'];height=sym['height']*d['setSymbolZoom']/d['height']
-    box=d['text']['type'];center=d['setSymbolY']+height/2
-    if d.get('version')=='m15Regular':
-        cw=d['width'];ch=d['height'];bounds=d['setSymbolBounds']
-        rendered_w=sym['width']*d['setSymbolZoom'];rendered_h=sym['height']*d['setSymbolZoom']
-        bounds_w=round(bounds['width']*cw);bounds_h=round(bounds['height']*ch)
-        assert rendered_w<=bounds_w+.6 and rendered_h<=bounds_h+.6
-        assert min(abs(rendered_w-bounds_w),abs(rendered_h-bounds_h))<=1.5
-        assert d['setSymbolX']*cw+rendered_w==pytest.approx(round(bounds['x']*cw),abs=.6)
-        assert center*ch==pytest.approx(round(M15_SET_SYMBOL_VERTICAL_CENTER*ch),abs=.7)
-        assert bounds['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
-    else:
-        assert d['setSymbolX']+width==pytest.approx(.9213)
-        assert center==pytest.approx(box['y']+box['height']/2)
-    assert (d['setSymbolX']-(box['x']+box['width']))*d['width']==pytest.approx(.01*d['width'],abs=.6)
+    cw=d['width'];ch=d['height'];bounds=d['setSymbolBounds'];box=d['text']['type']
+    rendered_w=sym['width']*d['setSymbolZoom'];rendered_h=sym['height']*d['setSymbolZoom']
+    bounds_w=round(bounds['width']*cw);bounds_h=round(bounds['height']*ch)
+    assert rendered_w<=bounds_w+.6 and rendered_h<=bounds_h+.6
+    assert min(abs(rendered_w-bounds_w),abs(rendered_h-bounds_h))<=1.5
+    anchor_x=round(bounds['x']*cw);anchor_y=round(bounds['y']*ch)
+    horizontal=bounds.get('horizontal','center');vertical=bounds.get('vertical','center')
+    expected_x=anchor_x-rendered_w if horizontal=='right' else anchor_x-rendered_w/2 if horizontal=='center' else anchor_x
+    expected_y=anchor_y-rendered_h if vertical=='bottom' else anchor_y-rendered_h/2 if vertical=='center' else anchor_y
+    assert d['setSymbolX']*cw==pytest.approx(round(expected_x),abs=.6)
+    assert d['setSymbolY']*ch==pytest.approx(round(expected_y),abs=.6)
+    if _standard_visible_type_bar(d,bounds):assert bounds['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+    if horizontal=='right' and float(box.get('rotation') or 0)%360==0:
+        assert (d['setSymbolX']-(box['x']+box['width']))*cw==pytest.approx(.01*cw,abs=.6)
+
+
+@pytest.mark.parametrize('version',['m15Regular','modalRegular','genericShowcase','stationRegular','futureFrame'])
+def test_set_symbol_fit_is_version_independent(version):
+    data={'version':version,'width':2010,'height':2814,'setSymbolZoom':.101,
+          'setSymbolX':.85,'setSymbolY':.57,
+          'setSymbolBounds':{'x':.9213,'y':.59355,'width':.12,'height':.041,'vertical':'center','horizontal':'right'},
+          'text':{'type':{'x':.0854,'y':.5664,'width':.78,'height':.0543,'rotation':0}}}
+    fit_set_symbol_to_bounds(data,{'width':869,'height':1057})
+    assert data['setSymbolZoom']==pytest.approx(.109)
+    assert data['setSymbolX']*2010==pytest.approx(1757)
+    assert data['setSymbolY']*2814==pytest.approx(1606)
+    assert data['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+
+
+def test_set_symbol_fit_respects_nonstandard_frame_anchor():
+    data={'version':'anything','width':1000,'height':1000,
+          'setSymbolBounds':{'x':.5,'y':.4,'width':.2,'height':.1,'vertical':'bottom','horizontal':'center'},
+          'text':{'type':{'x':.1,'y':.3,'height':.08,'width':.5,'rotation':0}}}
+    fit_set_symbol_to_bounds(data,{'width':100,'height':200})
+    assert data['setSymbolZoom']==pytest.approx(.5)
+    assert data['setSymbolX']*1000==pytest.approx(475)
+    assert data['setSymbolY']*1000==pytest.approx(300)
+    assert data['setSymbolBounds']['y']==pytest.approx(.4)
 
 
 def test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic(env):
