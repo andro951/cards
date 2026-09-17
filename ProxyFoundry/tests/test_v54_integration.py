@@ -155,15 +155,35 @@ def test_symbol_right_edge_and_type_gap(env,name,type_line,layout):
     w,_,a,s=env;c=sf(name,type_line=type_line,layout=layout)
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data'];sym=w.store.asset(s['symbols']['rare'])
     width=sym['width']*d['setSymbolZoom']/d['width'];height=sym['height']*d['setSymbolZoom']/d['height']
-    assert d['setSymbolX']+width==pytest.approx(.9213)
     box=d['text']['type'];center=d['setSymbolY']+height/2
     if d.get('version')=='m15Regular':
-        assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
-        assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
-        assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)
+        cw=d['width'];ch=d['height'];bounds=d['setSymbolBounds']
+        rendered_w=sym['width']*d['setSymbolZoom'];rendered_h=sym['height']*d['setSymbolZoom']
+        bounds_w=round(bounds['width']*cw);bounds_h=round(bounds['height']*ch)
+        assert rendered_w<=bounds_w+.6 and rendered_h<=bounds_h+.6
+        assert min(abs(rendered_w-bounds_w),abs(rendered_h-bounds_h))<=1.5
+        assert d['setSymbolX']*cw+rendered_w==pytest.approx(round(bounds['x']*cw),abs=.6)
+        assert center*ch==pytest.approx(round(M15_SET_SYMBOL_VERTICAL_CENTER*ch),abs=.7)
+        assert bounds['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
     else:
+        assert d['setSymbolX']+width==pytest.approx(.9213)
         assert center==pytest.approx(box['y']+box['height']/2)
-    assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)
+    assert (d['setSymbolX']-(box['x']+box['width']))*d['width']==pytest.approx(.01*d['width'],abs=.6)
+
+
+def test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic(env):
+    w,c,a,s=env
+    raw=io.BytesIO();Image.new('RGBA',(869,1057),'#ff6600').save(raw,'PNG')
+    symbol=ingest_image(w.store,raw.getvalue());s={**s,'symbols':{r:symbol['id'] for r in ['common','uncommon','rare','mythic']}}
+    c=sf('Sol Ring',type_line='Artifact',colors=[],rarity='mythic')
+    d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
+    assert d['version']=='m15Regular'
+    assert d['setSymbolZoom']==pytest.approx(.109)
+    assert d['setSymbolX']*2010==pytest.approx(1757)
+    assert d['setSymbolY']*2814==pytest.approx(1606)
+    assert 869*d['setSymbolZoom']==pytest.approx(94.721)
+    assert 1057*d['setSymbolZoom']==pytest.approx(115.213)
+    assert d['setSymbolY']*2814+(1057*d['setSymbolZoom'])/2==pytest.approx(1664,abs=.7)
 
 
 def test_dfc_artist_is_per_face_and_does_not_follow_other_side(env):

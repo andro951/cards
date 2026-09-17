@@ -16,7 +16,7 @@ SCHEMA_VERSION=1
 STATION_SCRIPT_URL='https://cardconjurer.app/js/frames/versionStation.js'
 STATION_SCRIPT_SHA256='481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21'
 # Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.
-PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v4'
+PIPELINE_VERSION='card-tools-v58/credits-v1/pipeline-v5'
 # Backward-compatible name used by saved compiled faces and older callers.
 GENERATION_VERSION=PIPELINE_VERSION
 class ValidationError(ValueError): pass

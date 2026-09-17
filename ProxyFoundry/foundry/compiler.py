@@ -28,17 +28,60 @@ BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
 M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
 
+def _js_round_positive(value):
+    return math.floor(value+0.5)
+
 def align_m15_set_symbol_vertical(data,symbol):
+    """Fit ordinary M15 symbols exactly like CardConjurer resetSetSymbol().
+
+    CardConjurer fits an uploaded symbol inside setSymbolBounds, rounds the
+    zoom to one decimal percent, then right/center anchors the rendered image.
+    Our compiler already knows the uploaded asset dimensions, so emit that final
+    geometry directly instead of carrying the template's fixed 10.1% zoom.
+    """
     if str(data.get('version') or '')!='m15Regular' or not symbol:return
-    try:
-        height=float(symbol.get('height') or 0)*float(data.get('setSymbolZoom') or 0)/float(data.get('height') or 0)
-    except (TypeError,ValueError,ZeroDivisionError):return
-    if height<=0 or not math.isfinite(height):return
-    data['setSymbolY']=M15_SET_SYMBOL_VERTICAL_CENTER-height/2
     bounds=data.get('setSymbolBounds')
-    if isinstance(bounds,dict):
-        bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
-        bounds['vertical']='center'
+    if not isinstance(bounds,dict):return
+    try:
+        card_w=float(data.get('width') or 0);card_h=float(data.get('height') or 0)
+        symbol_w=float(symbol.get('width') or 0);symbol_h=float(symbol.get('height') or 0)
+        bounds_w=_js_round_positive(float(bounds.get('width') or 0)*card_w)
+        bounds_h=_js_round_positive(float(bounds.get('height') or 0)*card_h)
+        anchor_x=_js_round_positive(float(bounds.get('x') or 0)*card_w)
+    except (TypeError,ValueError,ZeroDivisionError):return
+    values=(card_w,card_h,symbol_w,symbol_h,bounds_w,bounds_h,anchor_x)
+    if min(values)<=0 or not all(math.isfinite(x) for x in values):return
+
+    bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
+    bounds['vertical']='center'
+    anchor_y=_js_round_positive(M15_SET_SYMBOL_VERTICAL_CENTER*card_h)
+
+    # Mirrors creator-23.js resetSetSymbol(): fit by the limiting bounds
+    # dimension, then toFixed(1) on the percentage before converting back.
+    if symbol_w/symbol_h > bounds_w/bounds_h:
+        percent=bounds_w/symbol_w*100
+    else:
+        percent=bounds_h/symbol_h*100
+    percent=math.floor(percent*10+0.5)/10
+    zoom=percent/100
+    if zoom<=0:return
+    data['setSymbolZoom']=zoom
+
+    rendered_w=symbol_w*zoom;rendered_h=symbol_h*zoom
+    x=anchor_x
+    if bounds.get('horizontal')=='center':x-=rendered_w/2
+    elif bounds.get('horizontal')=='right':x-=rendered_w
+    y=anchor_y-rendered_h/2
+    x=_js_round_positive(x);y=_js_round_positive(y)
+    data['setSymbolX']=x/card_w;data['setSymbolY']=y/card_h
+
+    # Preserve the compiler's existing 1%-of-card gap between type text
+    # and the now-refitted symbol.
+    box=(data.get('text') or {}).get('type')
+    if isinstance(box,dict) and float(box.get('rotation') or 0)%360==0:
+        try:box_x=float(box.get('x') or 0)
+        except (TypeError,ValueError):return
+        box['width']=max(0,data['setSymbolX']-.01-box_x)
 
 
 def intentional_art_window_crop(group,choice,art,options,settings):
