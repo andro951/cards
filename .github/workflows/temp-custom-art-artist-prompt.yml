@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/temp-custom-art-artist-prompt.yml'
+      - '.github/scripts/temp_custom_artist_patch.py'
 
 permissions:
   contents: write
