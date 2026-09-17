@@ -2,7 +2,7 @@ import copy,io,json,pytest
 from PIL import Image
 from foundry.storage import Store
 from foundry.images import ingest_image,rarity_variants,sanitize_svg
-from foundry.compiler import Compiler,semantic,choose_builtin
+from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical
 from foundry.legacy import compiler as native
 from foundry.domain import ValidationError
 from foundry.sources import Sources
@@ -21,6 +21,7 @@ def test_auto_same_as_v58(workspace):
     expected=native.build_one(sem,{'artist':'Test Artist'},True)['data']
     expected['artSource']='/api/assets/'+a
     expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
+    align_m15_set_symbol_vertical(expected,s.asset(settings['symbols']['rare']))
     assert result['data']==expected
 @pytest.mark.parametrize('choice',['auto','normal','land','legend-land'])
 def test_nonlegendary_choices(workspace,choice):

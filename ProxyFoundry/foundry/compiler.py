@@ -24,6 +24,22 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
+# The visible M15 type bar centers about six pixels above CardConjurer's
+# type-text box center. Keep the symbol centered on the artwork, not the text box.
+M15_SET_SYMBOL_VERTICAL_CENTER=0.59142
+
+def align_m15_set_symbol_vertical(data,symbol):
+    if str(data.get('version') or '')!='m15Regular' or not symbol:return
+    try:
+        height=float(symbol.get('height') or 0)*float(data.get('setSymbolZoom') or 0)/float(data.get('height') or 0)
+    except (TypeError,ValueError,ZeroDivisionError):return
+    if height<=0 or not math.isfinite(height):return
+    data['setSymbolY']=M15_SET_SYMBOL_VERTICAL_CENTER-height/2
+    bounds=data.get('setSymbolBounds')
+    if isinstance(bounds,dict):
+        bounds['y']=M15_SET_SYMBOL_VERTICAL_CENTER
+        bounds['vertical']='center'
+
 
 def intentional_art_window_crop(group,choice,art,options,settings):
     """True when native structural fitting intentionally consumes a landscape art crop.
@@ -147,6 +163,7 @@ class Compiler:
                 data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                 if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                 if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                align_m15_set_symbol_vertical(data,self.store.asset(symbol_id))
             except native.BuildError as e:raise ValidationError(str(e)) from e
             recipe=native.infer_layout(d0,native.get_type_info(d0))
         else:

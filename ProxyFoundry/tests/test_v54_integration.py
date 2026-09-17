@@ -3,7 +3,7 @@ import copy, hashlib, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic
+from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER
 from foundry.credits import SCRYFALL_ART
 from foundry.domain import GENERATION_VERSION, ValidationError
 from foundry.images import ingest_image, data_uri
@@ -156,8 +156,13 @@ def test_symbol_right_edge_and_type_gap(env,name,type_line,layout):
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data'];sym=w.store.asset(s['symbols']['rare'])
     width=sym['width']*d['setSymbolZoom']/d['width'];height=sym['height']*d['setSymbolZoom']/d['height']
     assert d['setSymbolX']+width==pytest.approx(.9213)
-    box=d['text']['type']
-    assert d['setSymbolY']+height/2==pytest.approx(box['y']+box['height']/2)
+    box=d['text']['type'];center=d['setSymbolY']+height/2
+    if d.get('version')=='m15Regular':
+        assert center==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+        assert d['setSymbolBounds']['y']==pytest.approx(M15_SET_SYMBOL_VERTICAL_CENTER)
+        assert (box['y']+box['height']/2-center)*d['height']==pytest.approx(6,abs=.05)
+    else:
+        assert center==pytest.approx(box['y']+box['height']/2)
     assert box['x']+box['width']==pytest.approx(d['setSymbolX']-.01)
 
 
