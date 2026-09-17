@@ -19,10 +19,6 @@ replace('ProxyFoundry/foundry/credits.py',
     "            'source': source, 'locked': source_is_scryfall,\n            'missingOriginalArtist': source in {'scryfall', 'printing'} and not original}\n",
     "            'source': source, 'locked': source_is_scryfall,\n            'missingOriginalArtist': source in {'scryfall', 'printing'} and not original,\n            'missingCustomArtist': source == 'missing-custom'}\n")
 
-replace('ProxyFoundry/foundry/compiler.py',
-    "        credit=resolve_credit(sf,face,options,settings,art_origin)\n        artist=credit['display']\n",
-    "        credit=resolve_credit(sf,face,options,settings,art_origin)\n        if credit.get('missingCustomArtist'):\n            raise ValidationError('Custom artwork needs an artist credit. Set one artist for all custom artwork or set this card’s artist before generating.')\n        artist=credit['display']\n")
-
 p=Path('ProxyFoundry/site/credits.js')
 text=p.read_text(encoding='utf-8')
 text=text.replace("import {$,$$,esc} from './ui.js';",
