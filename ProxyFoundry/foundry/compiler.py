@@ -18,6 +18,10 @@ NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','mel
 # Version 1 preserves the historical render key, so adding this system does not
 # itself invalidate existing finished cards.
 AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
+# Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
+# that canvas for each loaded Saga instead of reusing the previous Saga's
+# chapter shields/dividers. Scope invalidation to Saga cards only.
+AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 

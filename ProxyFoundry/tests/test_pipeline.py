@@ -109,3 +109,22 @@ def test_exact_printing(workspace):
     result=src.import_deck('2 Test Card (TST) 1')
     assert calls==['https://api.scryfall.com/cards/tst/1']
     assert result['cards'][0]['quantity']==2
+
+
+def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
+    from foundry.legacy import compiler as native
+    cases=[
+      ('An Unearthly Child','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III — Reveal cards from the top of your library until you reveal a Doctor card.',(3,),[3,0,0,0],1),
+      ('The Girl in the Fireplace','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create a 1/1 white Human Noble creature token.\nII — Create a 2/2 white Horse creature token.\nIII — Whenever a creature you control deals combat damage to a player this turn, time travel.',(1,1,1),[1,1,1,0],3),
+      ('Trial of a Time Lord','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II, III — Exile target nontoken creature an opponent controls until this Saga leaves the battlefield.\nIV — Starting with you, each player votes for innocent or guilty.',(3,1),[3,1,0,0],2),
+      ('Death in Heaven','(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with Death in Heaven onto the battlefield face down under your control.',(2,1),[2,1,0,0],2),
+    ]
+    for name,oracle,signature,chapter_groups,ability_count in cases:
+        card={'name':name,'type_line':'Enchantment — Saga','layout':'saga','colors':['W'],'mana_cost':'{2}{W}','oracle_text':oracle}
+        meta=native.saga_layout_metadata(card)
+        assert meta['signature']==signature
+        data=native.recipe_data('saga',card,native.get_type_info(card))['data']
+        native.apply_saga_text_layout(data,meta)
+        assert data['saga']['abilities']==chapter_groups
+        assert data['saga']['count']==ability_count
+        assert sum(1 for i in range(4) if data['text'][f'ability{i}']['height']>0)==ability_count

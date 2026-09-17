@@ -50,12 +50,30 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1050});browser_errors=[];page.on('pageerror',lambda e:browser_errors.append(str(e)))
         try:
-            page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+            page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
+            page.evaluate("""() => {
+              const originalRemove=HTMLIFrameElement.prototype.remove;
+              HTMLIFrameElement.prototype.remove=function(){
+                if(this.classList?.contains('render-frame')){this.dataset.testKept='1';return;}
+                return originalRemove.call(this);
+              };
+            }""")
+            page.click('#generate-deck')
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
             assert ready['summary']['rendered']==12
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
+            runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
+            saga_state=runtime_frame.evaluate("""() => ({
+              title: window.card?.text?.title?.text,
+              groups: [0,1,2,3].map(i=>Number(document.querySelector('#saga-chapters-'+i)?.value||0)),
+              count: Number(window.card?.saga?.count||0),
+              heights: [0,1,2,3].map(i=>Number(document.querySelector('#saga-height-'+i)?.value||0))
+            })""")
+            assert saga_state['title']=='Summon: Bahamut',saga_state
+            assert saga_state['groups']==[2,1,1,0],saga_state
+            assert saga_state['count']==3 and all(x>0 for x in saga_state['heights'][:3]) and saga_state['heights'][3]==0,saga_state
             for c in ready['cards']:
                 for f in c['faces']:
                     comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' · Modified by ChatGPT'

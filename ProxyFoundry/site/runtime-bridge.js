@@ -27,6 +27,25 @@
     }
     if(window.originalTextEdited){window.textEdited=baseTextEdited;delete window.originalTextEdited;}
   }
+  async function sagaReady(data){
+    if(!String(data.version).toLowerCase().includes('saga'))return;
+    if(!window.card?.saga||typeof window.sagaEdited!=='function'||typeof window.fixSagaInputs!=='function')throw new Error('Native Saga module did not initialize.');
+    // versionSaga.js initializes its controls/canvas only once per CardConjurer
+    // page. Later loadCard calls replace `card` but otherwise leave the old
+    // chapter shields/dividers on sagaCanvas. Synchronize the native inputs
+    // from the newly loaded card, then let the genuine Saga renderer redraw.
+    window.fixSagaInputs();
+    await readyImages([['Saga chapter',window.sagaChapter],['Saga divider',window.sagaDivider]]);
+    window.fixSagaInputs();window.sagaEdited();await sleep(40);window.sagaEdited();
+    const expected=(data.saga?.abilities||[]).map(Number);
+    const actual=(window.card.saga?.abilities||[]).map(Number);
+    if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error('Native Saga changed the saved chapter grouping.');
+    if(Number(window.card.saga.count)!==Number(data.saga?.count))throw new Error('Native Saga changed the saved ability count.');
+    for(let i=0;i<4;i++){
+      const input=document.querySelector('#saga-chapters-'+i);
+      if(!input||Number(input.value)!==Number(expected[i]||0))throw new Error('Native Saga controls did not synchronize chapter '+(i+1)+'.');
+    }
+  }
   async function stationReady(data){
     if(!String(data.version).toLowerCase().includes('station'))return;
     if(!window.card?.station||typeof window.stationEdited!=='function')throw new Error('Native Station module did not initialize.');
@@ -117,7 +136,7 @@
       S.phase='load';localStorage.setItem(storageKey,JSON.stringify(data));
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
       await window.loadCard(storageKey);await scriptsSettled();
-      await stationReady(data);
+      await sagaReady(data);await stationReady(data);
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
       await readyImages(imagesFor(window.card,symbols));await fontsReady(window.card);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
