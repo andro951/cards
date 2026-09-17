@@ -1,0 +1,47 @@
+name: Temporary frame symbol render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temp-frame-symbol-render.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies and Chromium
+        run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Verify approved Card Tools
+        run: python ProxyFoundry/scripts/verify_vendor.py
+      - name: Render five frame tests with actual Bulk Proxy Forge + native CardConjurer
+        env:
+          PF_BROWSER: '1'
+          PF_LIVE_CC: '1'
+        run: python .github/scripts/temp_frame_symbol_render.py
+      - name: Upload five rendered PNGs
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-square-frame-tests
+          path: ProxyFoundry/test-results/frame-symbol-render/black-square-frame-tests.zip
+          retention-days: 7
+          if-no-files-found: error
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-square-frame-test-manifest
+          path: ProxyFoundry/test-results/frame-symbol-render/manifest.json
+          retention-days: 7
+          if-no-files-found: error
