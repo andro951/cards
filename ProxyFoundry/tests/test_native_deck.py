@@ -24,6 +24,9 @@ def records():
       {'name':'Esika, God of the Tree // The Prismatic Bridge','layout':'modal_dfc','rarity':'mythic','type_line':'Legendary Creature — God // Legendary Enchantment','card_faces':[
         {'name':'Esika, God of the Tree','type_line':'Legendary Creature — God','colors':['G'],'mana_cost':'{1}{G}{G}','oracle_text':'Vigilance\n{T}: Add one mana of any color.','power':'1','toughness':'4','image_uris':base['image_uris']},
         {'name':'The Prismatic Bridge','type_line':'Legendary Enchantment','colors':['W','U','B','R','G'],'mana_cost':'{W}{U}{B}{R}{G}','oracle_text':'At the beginning of your upkeep, draw a card.','image_uris':base['image_uris']}]},
+      {'name':'The Everflowing Well // The Myriad Pools','layout':'transform','rarity':'rare','type_line':'Legendary Artifact // Legendary Artifact Land','card_faces':[
+        {'name':'The Everflowing Well','type_line':'Legendary Artifact','colors':['U'],'mana_cost':'{2}{U}','oracle_text':'When The Everflowing Well enters, mill two cards, then draw two cards.\\nDescend 8 — At the beginning of your upkeep, if there are eight or more permanent cards in your graveyard, transform The Everflowing Well.','artist':'David Álvarez','image_uris':base['image_uris']},
+        {'name':'The Myriad Pools','type_line':'Legendary Artifact Land','colors':[],'produced_mana':['U'],'mana_cost':'','oracle_text':'(Transforms from The Everflowing Well.)\\n{T}: Add {U}.\\nWhenever you cast a permanent spell using mana produced by The Myriad Pools, up to one other target permanent you control becomes a copy of that spell until end of turn.','artist':'David Álvarez','image_uris':base['image_uris']}]},
       {'name':'Chronicle Test','layout':'saga','type_line':'Enchantment — Saga','colors':['W'],'mana_cost':'{2}{W}','oracle_text':'I — Create a 1/1 white Soldier creature token.\nII — Draw a card.\nIII — Creatures you control get +1/+1 until end of turn.'},
       {'name':'Walker Test','type_line':'Legendary Planeswalker — Tester','colors':['U'],'mana_cost':'{2}{U}{U}','loyalty':'4','oracle_text':'+1: Draw a card.\n−2: Return target creature to its owner\'s hand.\n−7: Draw seven cards.'},
       {'name':'Budoka Gardener // Dokai, Weaver of Life','layout':'flip','type_line':'Creature — Human Monk','card_faces':[
@@ -62,8 +65,10 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
-            assert ready['summary']['rendered']==12
+            assert ready['summary']['rendered']==14
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
+            assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
+            assert '/img/frames/m15/transform/regular/new/backA.png' in app.runtime.requested
             runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
             saga_state=runtime_frame.evaluate("""() => ({
               title: window.card?.text?.title?.text,
@@ -82,14 +87,17 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
                     im.crop((0, int(im.height*.93), im.width, im.height)).save(evidence/('credit_'+slug(f['name'])+'.png'))
                     im.thumbnail((300,420));im.save(evidence/('native_'+slug(f['name'])+'.png'))
             order=app.orders.build([d['id']],acknowledge=True)
-            esika=next(c for c in ready['cards'] if len(c['faces'])==2)
+            esika=next(c for c in ready['cards'] if c['name'].startswith('Esika, God of the Tree'))
             expected=s.render_get(esika['faces'][1]['compiled']['renderKey'])['asset_id']
+            transform=next(c for c in ready['cards'] if c['name'].startswith('The Everflowing Well'))
+            transform_back=s.render_get(transform['faces'][1]['compiled']['renderKey'])['asset_id']
             with zipfile.ZipFile(s.home/'orders'/(order['id']+'.zip')) as z:
                 assert z.read('BACK/000005.png')==s.asset_path(expected).read_bytes()
+                assert z.read('BACK/000006.png')==s.asset_path(transform_back).read_bytes()
                 assert z.read('BACK/000001.png')==s.asset_path(back['id']).read_bytes()
-                assert len(z.namelist())==22
-                assert z.read('BACK/000008.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
-            flip=ready['cards'][7]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
+                assert len(z.namelist())==24
+                assert z.read('BACK/000009.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
+            flip=ready['cards'][8]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
             assert flip['text']['pt']['text']=='2/1' and flip['text']['pt2']['text']=='3/3'
             assert not browser_errors,browser_errors
         finally:
