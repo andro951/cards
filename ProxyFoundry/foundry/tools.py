@@ -39,7 +39,7 @@ class CardTools:
             else:
                 try:url=image_tools.deck_export_url(text)
                 except ValueError as exc:raise ValidationError(str(exc)) from exc
-                progress(0,1,'Fetching one Scryfall deck export');source=self.ws.net.json(url,refresh=refresh)
+                # Deck exports are mutable; always fetch the current list.\n                progress(0,1,'Fetching one Scryfall deck export');source=self.ws.net.json(url,ttl=0)
         if not isinstance(source,dict):raise ValidationError('Provide a Scryfall deck link or deck JSON export.')
         entries=[];seen=set()
         try:
