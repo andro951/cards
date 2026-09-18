@@ -11,10 +11,10 @@ from .images import decode_image
 ASSET_ROOT = Path(__file__).resolve().parents[1] / 'assets' / 'symbols'
 SYMBOL_SET_VERSION = 'forge-symbols-v1'
 BUILTINS = {
-    'common': {'file': 'common.webp', 'size': (92, 128), 'sha256': '76954ff3ca0176845c1ccbd15fece5a8a76bed5cf99b26919fbde4e0157406db'},
-    'uncommon': {'file': 'uncommon.webp', 'size': (92, 128), 'sha256': '684b550f3842d681877133971125aa3f10276acc4795e637d697078096a63cc2'},
-    'rare': {'file': 'rare.webp', 'size': (93, 128), 'sha256': '28df76a9a37d68b74d2ac0c746863549cc20521a777ecf47027bd15d3aa3aef2'},
-    'mythic': {'file': 'mythic.webp', 'size': (93, 128), 'sha256': '80c445e1b16f02722af5328767c6c17eab2acb8576198e71f791f278376e63c1'},
+    'common': {'file': 'common.webp', 'size': (92, 128), 'sha256': '54d071c6e681c8565f713550359a84c5ad4ea732051dfcf560ba775542c0e284'},
+    'uncommon': {'file': 'uncommon.webp', 'size': (92, 128), 'sha256': 'de83b76135252d79dc9d4f5d546fb942ef81e3b392fd3128c613df4572a107bf'},
+    'rare': {'file': 'rare.webp', 'size': (93, 128), 'sha256': 'fdaf47c959e9d194428d500d7fc1c735c77b78c814a52d802704c74be39a7dc3'},
+    'mythic': {'file': 'mythic.webp', 'size': (93, 128), 'sha256': '047593e99666abdc659ae4ed0f6219fb183f0de4bbb1745661ed1380b9355b81'},
 }
 
 
