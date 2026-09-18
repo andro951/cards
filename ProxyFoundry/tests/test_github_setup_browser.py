@@ -15,7 +15,9 @@ pytestmark = pytest.mark.skipif(os.environ.get('PF_BROWSER') != '1', reason='Opt
 def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(browser_app):
     app, server, page, errors = browser_app
     d = app.ws.create({'name': 'Bundle import', 'source': sf()['id']})
-    original_card = app.ws.deck(d['id'])['cards'][0]
+    original_deck = app.ws.deck(d['id'])
+    original_card = original_deck['cards'][0]
+    original_symbols = dict(original_deck['settings']['symbols'])
     remote = BundleRemote(back='icon')
     app.ws.net.transport = remote.transport
     page.goto(server.origin + '/#deck/' + d['id'] + '/setup')
@@ -37,7 +39,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed', 'true')
     expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
-    assert app.ws.deck(d['id'])['settings']['symbols'] == {}  # Staged until Save.
+    assert app.ws.deck(d['id'])['settings']['symbols'] == original_symbols  # GitHub import is staged until Save.
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
     expect(page.locator('#deck-notes')).to_have_value('Do not replace my notes')
     page.click('#save-setup')
@@ -86,6 +88,7 @@ def test_no_art_single_symbol_import_selects_scryfall_and_checks_hidden_fallback
 def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     app, server, page, errors = browser_app
     d = app.ws.new_deck('Failure then retry')
+    default_symbols = dict(d['settings']['symbols'])
     remote = BundleRemote(art=False, back='custom', single=True)
     missing = remote.child('set_symbols/mythic.png')
     raw = remote.images[missing]
@@ -101,8 +104,8 @@ def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     expect(page.locator('#deck-artist')).to_be_enabled()
     expect(page.locator('#deck-artist')).to_have_value('Unsaved artist')
     expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
-    assert page.locator('.symbol-upload img').count() == 0
-    assert app.ws.deck(d['id'])['settings']['symbols'] == {}
+    assert page.locator('.symbol-upload img').count() == 4
+    assert app.ws.deck(d['id'])['settings']['symbols'] == default_symbols
     remote.file(missing, raw)
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
@@ -114,6 +117,7 @@ def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
 def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
     app, server, page, errors = browser_app
     d = app.ws.new_deck('Cancel bundle')
+    default_symbols = dict(d['settings']['symbols'])
     remote = BundleRemote()
     release = threading.Event()
     def transport(url):
@@ -136,7 +140,8 @@ def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
         expect(page.locator('#save-setup')).to_be_enabled()
         assert not page.evaluate("document.querySelector('#setup-fields').inert")
         assert not page.evaluate("import('/site/ui.js').then(m=>m.state.dirty||m.state.busy)")
-        assert page.locator('.symbol-upload img').count() == 0
+        assert page.locator('.symbol-upload img').count() == 4
+        assert app.ws.deck(d['id'])['settings']['symbols'] == default_symbols
         assert app.ws.deck(d['id'])['revision'] == d['revision']
         assert not errors, errors
     finally:
