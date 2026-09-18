@@ -25,7 +25,7 @@ export async function showSettings(){
   });
   $('#global-refresh').onchange=()=>attempt(()=>persistToggle($('#global-refresh'),'refreshData','Automatic Scryfall refresh enabled.','Using the normal Scryfall cache policy.'));
   $('#permanent-delete').onchange=()=>attempt(()=>persistToggle($('#permanent-delete'),'deletePermanently','Permanent deck deletion enabled.','Decks will move to Trash.'));
-  $('#clear-defaults').onclick=()=>attempt(async()=>{if(!await confirmAction('Clear reusable style?','Existing decks are unchanged. New decks will start without a default artist, back or set symbols.','Clear defaults'))return;await api('/api/settings',{revision:settings.revision,defaults:{}});await showSettings();});
+  $('#clear-defaults').onclick=()=>attempt(async()=>{if(!await confirmAction('Clear reusable style?','Existing decks are unchanged. New decks will return to the built-in rarity symbols and forge back, with no saved artist or custom style.','Clear defaults'))return;await api('/api/settings',{revision:settings.revision,defaults:{}});await showSettings();});
   $('#export-backup').onclick=()=>attempt(async()=>{const out=await job('/api/backups/export',{}, {label:'Back up workspace'});const a=document.createElement('a');a.href=out.download;a.download=out.filename;a.click();toast(`Backup ready: ${out.decks} decks, ${bytes(out.bytes)}.`);});
   $('#import-backup').onclick=()=>attempt(async()=>{
     const file=await pickFile('.zip');if(!file)return;if(file.size>2*1024**3)throw new Error('Choose a backup under 2 GB.');
