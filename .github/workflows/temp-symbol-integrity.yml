@@ -12,18 +12,26 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -r ProxyFoundry/requirements.txt
-      - name: Inspect bundled symbols
+      - name: Compare repository symbol sets
         run: |
           python - <<'PY'
           from pathlib import Path
           from hashlib import sha256
           from PIL import Image
-          for p in sorted(Path('ProxyFoundry/assets/symbols').glob('*')):
-              raw=p.read_bytes()
-              print('FILE',p.name,'BYTES',len(raw),'SHA256',sha256(raw).hexdigest())
+          targets={
+            'common':'8adb40e8f86e5835f2dbe685413324c035b67b1b2f1948999d216c56d11f4e0c',
+            'uncommon':'d04114ee43e6aef807702fa574881c71a37e41da03f7e9e94d35d1bd4cd52e0c',
+            'rare':'1a89f7f5c4c2e45db84cc4c498b4fa047542eaeb260f952ededbd6cde71b3a5e',
+            'mythic':'3116628c6fba5f59dade0812b508f3d571d21d8c579c6fc076ed3e3caa735236',
+          }
+          for p in sorted(Path('.').glob('*/set_symbol/*')):
+              rarity=p.stem.lower()
+              if rarity not in targets or not p.is_file(): continue
               try:
-                  with Image.open(p) as im:
-                      print('IMAGE',p.name,'SIZE',im.size,'FORMAT',im.format,'MODE',im.mode)
+                  with Image.open(p) as source:
+                      im=source.convert('RGBA').resize((64,64),Image.Resampling.LANCZOS)
+                  h=sha256(im.tobytes()).hexdigest()
+                  print('CANDIDATE',p,source.size,h,'MATCH' if h==targets[rarity] else '')
               except Exception as exc:
-                  print('DECODE_ERROR',p.name,repr(exc))
+                  print('ERROR',p,repr(exc))
           PY
