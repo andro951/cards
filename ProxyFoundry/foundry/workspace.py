@@ -69,7 +69,13 @@ class Workspace:
                 if f.get('error'):errors+=1
                 comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
                 if not comp:
-                    d['status']='draft';d['upgradeRequired']=True
+                    # A failed preparation is a review/error state, not an
+                    # unprepared-change state. Keeping it out of "draft" lets
+                    # render planning save every valid face and report the real
+                    # preparation error instead of the vague "prepare changes"
+                    # message. Truly missing compilation data is still draft.
+                    if not f.get('error'):
+                        d['status']='draft';d['upgradeRequired']=True
                 if comp:
                     comp['render']=r
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
