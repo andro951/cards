@@ -166,7 +166,7 @@ def land_frame_colors(types,face,card,oracle_text):
 
     result=[]
     def add(color):
-        if color in 'WUBRG' and color not in result:result.append(color)
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
 
     # Printed basic land types are authoritative frame identity.
     for subtype in types.get('subtypes',[]):
