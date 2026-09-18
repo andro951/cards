@@ -1,0 +1,29 @@
+name: Temporary symbol integrity
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-symbol-integrity.yml'
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r ProxyFoundry/requirements.txt
+      - name: Inspect bundled symbols
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          from PIL import Image
+          for p in sorted(Path('ProxyFoundry/assets/symbols').glob('*')):
+              raw=p.read_bytes()
+              print('FILE',p.name,'BYTES',len(raw),'SHA256',sha256(raw).hexdigest())
+              try:
+                  with Image.open(p) as im:
+                      print('IMAGE',p.name,'SIZE',im.size,'FORMAT',im.format,'MODE',im.mode)
+              except Exception as exc:
+                  print('DECODE_ERROR',p.name,repr(exc))
+          PY
