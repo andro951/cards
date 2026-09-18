@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'transform-front':3,'transform-back':3})
+AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'transform-front':4,'transform-back':4})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -311,7 +311,7 @@ def _apply_transform_frame(data,side):
                 raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
             frame['src']=f'/img/frames/m15/transform/regular/pt{code}.png'
             continue
-        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\\.png',src)
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
         if crown:
             code,floating=crown.groups()
             if code not in set('WUBRGMAL'):
