@@ -178,11 +178,14 @@ class App:
         return {**d, 'zipBytes': p.stat().st_size if p.is_file() else 0,
                 'download': '/api/orders/' + ident + '/download'}
 
+    def diagnostic_data(self):
+        return {'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
+                'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}
+
     def diagnostic_zip(self):
         b = io.BytesIO()
         with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
-            z.writestr('diagnostics.json', json.dumps({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
-                'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}, indent=2))
+            z.writestr('diagnostics.json', json.dumps(self.diagnostic_data(), indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
             for p in sorted((self.store.home / 'logs').glob('job-*.json'), key=lambda p: p.stat().st_mtime)[-8:]:
@@ -359,7 +362,10 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/trash': return self.respond(self.app.store.list('decks', deleted=True))
         if p == '/api/orders':
             return self.respond([{k: v for k, v in self.app.order(x['id']).items() if k != 'cards'} for x in self.app.store.list('orders')])
-        if p == '/api/diagnostics': return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
+        if p in {'/api/diagnostics','/api/diagnostics.zip'}:
+            return self.send_bytes(self.app.diagnostic_zip(), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
+        if p == '/api/diagnostics.json':
+            return self.send_bytes(json.dumps(self.app.diagnostic_data(), indent=2).encode(), 'application/json', filename='diagnostics.json')
         if p == '/api/helper/download':
             b = io.BytesIO()
             with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
