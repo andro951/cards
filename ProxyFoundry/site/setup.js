@@ -51,7 +51,11 @@ export function renderSetup(root,deck,onSaved){
   const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
   const defaultSymbols=()=>Object.fromEntries(rarities.map(r=>[r,state.bootstrap.symbols?.defaults?.[r]?.id]).filter(([,id])=>!!id));
   const isDefaultSymbol=r=>s.symbols[r]===state.bootstrap.symbols?.defaults?.[r]?.id;
-  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Replace ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}${isDefaultSymbol(r)?' · default':''}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();$('#symbol-folder-status',root).textContent=`Replaced ${b.dataset.symbol}. The other rarity symbols are unchanged.`;}));};
+  const setSymbolControlsBusy=busy=>{
+    for(const id of ['restore-symbols','symbol-folder-button','generate-symbols','save-setup','save-generate']){const el=$('#'+id,root);if(el)el.disabled=busy;}
+    $('[data-symbol]',root).forEach(el=>el.disabled=busy);
+  };
+  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Replace ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}${isDefaultSymbol(r)?' · default':''}</small></button>`).join('');$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;setSymbolControlsBusy(true);try{const rarity=b.dataset.symbol,a=await uploadImage(f,{symbol:true});s.symbols[rarity]=a.id;redrawSymbols();mark();$('#symbol-folder-status',root).textContent=`Replaced ${rarity}. The other rarity symbols are unchanged.`;}finally{if(root.isConnected)setSymbolControlsBusy(false);}}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
     s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;mark();
   },{onBusy:busy=>{
@@ -102,7 +106,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     input.value='';button.disabled=false;restore.disabled=false;generate.disabled=false;save.disabled=false;render.disabled=false;
   }
 });
-  $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;const button=$('#generate-symbols',root);button.disabled=true;try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();}finally{button.disabled=false;}});
+  $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;setSymbolControlsBusy(true);try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();$('#symbol-folder-status',root).textContent='Replaced all four rarity symbols with generated treatments.';}finally{if(root.isConnected)setSymbolControlsBusy(false);}});
   $('#open-templates',root).onclick=()=>nav('templates');
   $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','modificationCredit','templateRules'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#deck-modification',root).value=s.modificationCredit||'';creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
   async function save(generate){
