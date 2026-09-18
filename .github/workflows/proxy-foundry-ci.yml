@@ -29,6 +29,11 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Preserve approved Card Tools
         run: python ProxyFoundry/scripts/verify_vendor.py
+      - name: Check browser JavaScript syntax
+        run: |
+          for file in ProxyFoundry/site/*.js; do
+            node --check "$file"
+          done
       - name: Unit, API, actual browser and actual native renderer tests
         working-directory: ProxyFoundry
         env:
