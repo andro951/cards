@@ -59,3 +59,14 @@ def test_legacy_deck_with_no_symbols_reads_with_defaults_then_persists_on_save(t
     assert opened['settings']['symbols']==ws.symbols.defaults()
     saved=ws.save(old['id'],{'revision':old['revision'],'settings':opened['settings']})
     assert saved['settings']['symbols']==ws.symbols.defaults()
+
+
+def test_saved_symbol_override_survives_reopen_without_touching_other_defaults(tmp_path):
+    ws=Workspace(Store(tmp_path));defaults=ws.symbols.defaults()
+    deck=ws.new_deck('Persist override')
+    custom=ingest_image(ws.store,png('#4455aa'))['id']
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'settings':{'symbols':{**deck['settings']['symbols'],'uncommon':custom}}})
+    reopened=ws.deck(saved['id'])
+    assert reopened['settings']['symbols']['uncommon']==custom
+    for rarity in ('common','rare','mythic'):
+        assert reopened['settings']['symbols'][rarity]==defaults[rarity]
