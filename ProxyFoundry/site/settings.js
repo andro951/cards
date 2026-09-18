@@ -1,4 +1,4 @@
-import {$,$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav} from './ui.js';
 import {pickFile} from './setup.js';
 export async function showSettings(){
   const [settings,stats,trash]=await Promise.all([api('/api/settings'),api('/api/stats'),api('/api/trash')]);
