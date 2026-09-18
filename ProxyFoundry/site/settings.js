@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,nav} from './ui.js';
+import {$,$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav} from './ui.js';
 import {pickFile} from './setup.js';
 export async function showSettings(){
   const [settings,stats,trash]=await Promise.all([api('/api/settings'),api('/api/stats'),api('/api/trash')]);
@@ -7,13 +7,22 @@ export async function showSettings(){
   <section class="panel"><div class="panel-head"><div><h2>Safe, portable backups</h2><p>Include decks, uploaded art, symbols, templates, and completed renders. No browser credentials or CardConjurer/font cache.</p></div></div><div class="well"><span class="eyebrow">SAVED OUTSIDE THE APP FOLDER</span><p><code>${esc(stats.home)}</code></p><small class="muted">Replacing or deleting an extracted app folder does not remove your saved workspace. Keep a backup before moving computers.</small></div><div class="actions section-gap"><button class="button primary" id="export-backup">Export workspace backup</button><button class="button" id="import-backup">Restore a backup</button></div><p class="subtitle-line">Restoring adds copies; it never overwrites existing decks. Uploaded backups must be under 2 GB.</p></section></div>
   <section class="panel section-gap"><div class="panel-head"><div><h2>Reusable deck style</h2><p>Save defaults from a deck’s More menu, then reuse its symbols, back, artist/modification credits and template choices when importing another deck.</p></div></div><div class="actions"><span class="badge">${Object.keys(settings.defaults?.symbols||{}).length}/4 rarity symbols</span><span class="badge">${settings.defaults?.backAsset?'Back saved':'No default back'}</span><span class="badge">${esc(settings.defaults?.artist||'Printing artist')}</span><span class="badge">${esc(settings.defaults?.modificationCredit||'No modification credit')}</span><button class="button quiet small" id="clear-defaults">Clear saved style defaults</button></div></section>
   <section class="panel section-gap"><div class="panel-head"><div><h2>Trash</h2><p>Deleted decks remain recoverable here. Shared artwork and render caches are not deleted.</p></div>${trash.length?'<button class="button danger small" id="empty-trash">Delete all permanently</button>':''}</div>${trash.length?trash.map(d=>`<div class="trash-row"><div><b>${esc(d.name)}</b><small class="muted">${d.cards?.length||0} card entries</small></div><div class="actions"><button class="button quiet small" data-trash-inspect="${d.id}">Inspect</button><button class="button small" data-restore="${d.id}">Restore deck</button><button class="button danger small" data-trash-delete="${d.id}">Delete permanently</button></div></div>`).join(''):'<p class="muted">No deleted decks.</p>'}</section>
-  <section class="panel section-gap"><div class="panel-head"><div><h2>Diagnostics</h2><p>Download recent errors and a list of runtime dependency requests. Review the ZIP before sharing: card names and public source URLs may appear in logs.</p></div></div><a class="button" href="/api/diagnostics" download>Download diagnostics ZIP</a></section>`;
+  <section class="panel section-gap"><div class="panel-head"><div><h2>Diagnostics</h2><p>Download recent errors and a list of runtime dependency requests. Review the ZIP before sharing: card names and public source URLs may appear in logs.</p></div></div><button class="button" id="download-diagnostics">Download diagnostics ZIP</button></section>`;
   async function persistToggle(input,key,onMessage,offMessage){
     const value=input.checked,toggles=[$('#global-refresh'),$('#permanent-delete')].filter(Boolean);toggles.forEach(x=>x.disabled=true);
     try{const out=await api('/api/settings',{revision:settings.revision,[key]:value});Object.assign(settings,out);state.bootstrap.settings=out;toast(value?onMessage:offMessage);}
     catch(e){input.checked=!value;throw e;}
     finally{toggles.forEach(x=>{if(document.body.contains(x))x.disabled=false;});}
   }
+  $('#download-diagnostics').onclick=()=>attempt(async()=>{
+    const response=await fetch('/api/diagnostics.zip',{cache:'no-store'});
+    if(!response.ok){
+      let detail='HTTP '+response.status;
+      try{const body=await response.json();if(body?.error)detail=body.error;}catch{}
+      throw new Error('Diagnostics download failed: '+detail);
+    }
+    downloadBlob(await response.blob(),'BulkProxyForge_Diagnostics.zip');
+  });
   $('#global-refresh').onchange=()=>attempt(()=>persistToggle($('#global-refresh'),'refreshData','Automatic Scryfall refresh enabled.','Using the normal Scryfall cache policy.'));
   $('#permanent-delete').onchange=()=>attempt(()=>persistToggle($('#permanent-delete'),'deletePermanently','Permanent deck deletion enabled.','Decks will move to Trash.'));
   $('#clear-defaults').onclick=()=>attempt(async()=>{if(!await confirmAction('Clear reusable style?','Existing decks are unchanged. New decks will start without a default artist, back or set symbols.','Clear defaults'))return;await api('/api/settings',{revision:settings.revision,defaults:{}});await showSettings();});
