@@ -1,4 +1,4 @@
-name: Temporary transform debug
+name: Temporary transform debug # rerun
 on:
   push:
     paths:
