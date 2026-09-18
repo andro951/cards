@@ -69,7 +69,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
             assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
             assert '/img/frames/m15/transform/regular/new/backA.png' in app.runtime.requested
-            assert '/img/frames/m15/transform/crowns/regular/a.png' in app.runtime.requested
+            assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/new/a.png' in app.runtime.requested
             runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
             saga_state=runtime_frame.evaluate("""() => ({
