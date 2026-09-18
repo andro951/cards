@@ -11,7 +11,7 @@ from .images import decode_image
 ASSET_ROOT = Path(__file__).resolve().parents[1] / 'assets' / 'symbols'
 SYMBOL_SET_VERSION = 'forge-symbols-v1'
 BUILTINS = {
-    'common': {'file': 'common.webp', 'size': (92, 128), 'sha256': '54d071c6e681c8565f713550359a84c5ad4ea732051dfcf560ba775542c0e284'},
+    'common': {'file': 'common.webp', 'size': (92, 128), 'sha256': 'cbefdf19c2171c3fbb2be0d43841bc01037f2ed09e3aa0ab8844c9d7b72dfe62'},
     'uncommon': {'file': 'uncommon.webp', 'size': (92, 128), 'sha256': 'de83b76135252d79dc9d4f5d546fb942ef81e3b392fd3128c613df4572a107bf'},
     'rare': {'file': 'rare.webp', 'size': (93, 128), 'sha256': 'fdaf47c959e9d194428d500d7fc1c735c77b78c814a52d802704c74be39a7dc3'},
     'mythic': {'file': 'mythic.webp', 'size': (93, 128), 'sha256': '047593e99666abdc659ae4ed0f6219fb183f0de4bbb1745661ed1380b9355b81'},
