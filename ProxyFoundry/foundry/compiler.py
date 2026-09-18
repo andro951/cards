@@ -11,7 +11,7 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
-NEEDS_CUSTOM={'transform-front','transform-back','split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','class','case','special-land','dungeon','conspiracy'}
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
 # affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'transform-front':2,'transform-back':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -245,6 +245,113 @@ def choose_builtin(d,choice):
     return d
 
 
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_classic_semantic(sem):
+    """Return a single-face semantic record safe for CardConjurer's classic base."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+    return choose_builtin(d,'normal')
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+def _apply_transform_frame(data,side):
+    """Convert a normal M15 face to CardConjurer's real transform frame assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            code=m.group(1)
+            if code not in allowed:
+                raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+            frame['src']=(f'/img/frames/m15/transform/regular/front{code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{code}.png')
+            _convert_frame_masks(frame,mapping);converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            code=pt.group(1)
+            if code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])Floating(?:Alt)?\.png',src)
+        if crown:
+            code=crown.group(1)
+            if code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            frame['src']=f'/img/frames/m15/transform/crowns/floating/{code.lower()}.png'
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+        data['frames'].insert(0,copy.deepcopy(_TRANSFORM_ICON))
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+def build_transform_data(sem,group,artist,autofit,flags):
+    """Build ordinary transform DFC faces from CardConjurer's pinned M15 packs."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+        if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side)
+    return d0,data,'m15_transform_'+side
+
+
 def custom_data(template,sem,other_faces=None):
     d=copy.deepcopy(template['data'])
     values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
@@ -300,14 +407,18 @@ class Compiler:
                 pair=[x.get('name') for x in sf.get('card_faces',[])]
                 if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
                     raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
-            d0=choose_builtin(sem,choice)
-            try:
-                data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
-                if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
-                if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
-                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),native.infer_layout(d0,native.get_type_info(d0)))
-            except native.BuildError as e:raise ValidationError(str(e)) from e
-            recipe=native.infer_layout(d0,native.get_type_info(d0))
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),native.infer_layout(d0,native.get_type_info(d0)))
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+                recipe=native.infer_layout(d0,native.get_type_info(d0))
         else:
             t=self.store.get('templates',choice)
             if not t:raise ValidationError('The selected template was deleted.')
