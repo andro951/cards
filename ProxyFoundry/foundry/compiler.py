@@ -1,6 +1,6 @@
 """Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
-import copy,math
+import copy,math,re
 from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
 from .legacy import compiler as native,ingest
 from .images import data_uri
@@ -152,6 +152,58 @@ def intentional_art_window_crop(group,choice,art,options,settings):
     )
 
 
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\\b(?:any(?: one)? color|any combination of colors|any type)\\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\\bAdd\\b([^.;\\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\\{([^{}]+)\\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\\b{re.escape(subtype)}\\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
@@ -159,7 +211,7 @@ def semantic(sf,face,index=0):
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
         if v is not None:d[k]=str(v)
-    lc=ingest.build_land_colors(types,face,sf,d['oracle_text'])
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
     if lc:d['land_colors']=lc
     if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
     if sf.get('layout')=='prepare':
