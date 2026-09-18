@@ -86,3 +86,13 @@ def test_conditional_choose_a_color_effect_does_not_turn_nykthos_gold():
         ['W','U','B','R','G','C'],
     )
     assert colors(card)==[]
+
+
+def test_nonbasic_land_subtypes_do_not_crash_color_inference():
+    card=land(
+        'Desert Test',
+        'Land — Desert',
+        '{T}: Add {C}.',
+        ['C'],
+    )
+    assert colors(card)==[]
