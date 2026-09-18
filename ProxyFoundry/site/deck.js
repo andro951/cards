@@ -78,7 +78,7 @@ export async function showDeck(id,tab='cards'){
 }
 async function generate(d){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
-  if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
+  if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Default rarity symbols are unavailable. Restore the built-in defaults or choose replacements.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
   await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
 }

@@ -19,7 +19,7 @@ export function githubSetupSection(folder=''){
 ├── back.png
 └── back_icon.png</code></pre>
       <div class="github-setup-notes">
-        <p><b>Required: choose one symbol option.</b><br><code>set_symbols/</code> with all four rarity images is <strong>recommended</strong>. Alternatively, <code>set_symbol.png</code> is color-shifted into four variants (<strong>not recommended</strong>). The four-image folder wins when both are present.</p>
+        <p><b>Set symbols are optional.</b><br>With no symbol files, the built-in common/uncommon/rare/mythic set is used. <code>set_symbols/</code> intentionally replaces all four; <code>set_symbol.png</code> intentionally generates four color variants. The four-image folder wins when both are present.</p>
         <p><b>Artwork is optional.</b><br><code>art/</code> becomes the live GitHub artwork source. Without it, Scryfall printing is selected. “Use Scryfall artwork when a custom image is missing” is enabled on import; individual art overrides are kept.</p>
         <p><b>Both back options are optional.</b><br><code>back.png</code> uses your complete back. <code>back_icon.png</code> centers your icon on the Bulk Proxy Forge back. A complete back takes priority over an icon. With neither file, the default forge back is used. Real reverse faces are kept.</p>
       </div>
@@ -51,7 +51,7 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       // A navigation during the job must not apply the result to a different deck.
       if(!host.isConnected)return;
       onImport(result.settings);applied=true;input.value=result.settings.githubSetupFolder;
-      const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols=result.summary.symbols==='folder'?'four rarity symbols':'four color-shifted symbols';
+      const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols=result.summary.symbols==='folder'?'four replacement rarity symbols':result.summary.symbols==='generated'?'four generated rarity symbols':'built-in default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       message(`Imported ${art}, ${symbols}, and ${back}. Review below, then save your setup.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}

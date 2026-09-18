@@ -20,8 +20,9 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     """Return a complete source/symbol/back settings patch, never a saved deck.
 
     Canonical set_symbols/ wins over the legacy set_symbol/ alias and the
-    single set_symbol image. A present but invalid symbol folder is an error,
-    not permission to silently recolor the single image. back wins over icon.
+    single set_symbol image. With no symbol files, the bundled defaults are used.
+    A present but invalid symbol folder is still an error, not permission to
+    silently fall back. back wins over icon.
     """
     net, store = workspace.net, workspace.store
     url = payload.get('url')
@@ -116,15 +117,14 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             raise ValidationError('The set-symbol folder is missing: ' + ', '.join(missing) + '. All four rarity symbols are required.')
     else:
         single = named_image(rows, 'set_symbol')
-        if single is None:
-            raise ValidationError('Provide set_symbols/ with common.png, uncommon.png, rare.png and mythic.png (recommended), or set_symbol.png for generated color variants.')
-        warnings.append('Generated four color-shifted symbols from set_symbol.png. This is not recommended; separate rarity images give better control. Review all four previews below.')
+        if single is not None:
+            warnings.append('Generated four color-shifted symbols from set_symbol.png. This is not recommended; separate rarity images give better control. Review all four previews below.')
 
     back = named_image(rows, 'back')
     icon = None if back else named_image(rows, 'back_icon')
     if back and any(PurePosixPath(name).stem == 'back_icon' and PurePosixPath(name).suffix in IMAGE_EXTENSIONS for name in rows):
         warnings.append('Both back.png and back_icon.png are present. The complete back.png takes priority; the icon was not used.')
-    total = (4 if symbol_rows else 1) + bool(back or icon)
+    total = (4 if symbol_rows else 1 if single else 0) + bool(back or icon)
     done = 0
 
     def download(row, *, trim_transparent_padding=False):
@@ -142,7 +142,15 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         progress(done, total, 'Imported ' + row['name'])
         return image
 
-    symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()} if symbol_rows else rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
+    if symbol_rows:
+        symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()}
+        symbol_summary = 'folder'
+    elif single:
+        symbols = rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
+        symbol_summary = 'generated'
+    else:
+        symbols = workspace.symbols.defaults()
+        symbol_summary = 'default'
     if back:
         back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
     elif icon:
@@ -159,6 +167,6 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
                          'githubSetupFolder': root_url},
             'summary': {'art': 'github' if art_folder else 'scryfall',
-                        'symbols': 'folder' if symbol_folder else 'generated',
+                        'symbols': symbol_summary,
                         'back': back_settings['backDesign']['mode']},
             'warnings': warnings}

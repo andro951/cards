@@ -8,7 +8,7 @@ A local-first workspace for turning multiple MTG decks into one explicitly paire
 2. Double-click **START_BULK_PROXY_FORGE.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
 3. The workspace opens automatically in your browser. Keep the launcher window open.
 4. Click **Import deck** and paste a public Scryfall deck URL, JSON export, or card list.
-5. In **Art & setup**, choose original printing art, a GitHub folder, or a computer folder. Select templates, supply four rarity symbols (or generate four treatments from one), and choose a deck back.
+5. In **Art & setup**, choose original printing art, a GitHub folder, or a computer folder. Select templates. Built-in rarity symbols and the default forge back are already selected; replace them only if you want a different look.
 6. Click **Save & generate images**. Completed cards appear in the grid and are cached locally.
 7. Select one or more decks, choose **Review print order**, check both sides and any crop/layout warnings, and build the paired ZIP.
 8. Save the images ZIP or use **Open in TCGPlaytest**. The printer opens in a **new tab**; Bulk Proxy Forge stays open. Review the printer proof and complete checkout yourself.
@@ -45,7 +45,7 @@ Artist credits are source-aware. Actual Scryfall artwork, including fallback ima
 
 For custom artwork, use a deck-wide artist or edit each card's credit. **Use the original printing artist for this custom image** keeps the original attribution when you upload modified/extended artwork. Add optional **Modification credit** such as `Modified by ChatGPT` in the deck setup or card inspector. It displays in the normal artist spot as `Artist Name · Modified by ChatGPT`. A per-face value replaces the deck suffix; **No modification credit on this face** suppresses it. Both screens preview the complete artist line before generation. The stored Scryfall artist is never modified, and regenerating does not duplicate the suffix.
 
-Four rarity symbols are required before generation. Upload all four or explicitly generate common/uncommon/rare/mythic color treatments from one image. Review those previews: they preserve transparency but do not redraw the original symbol. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
+Every deck starts with bundled common/uncommon/rare/mythic symbols. They are saved as concrete deck assets, so they do not change unless you intentionally replace an individual rarity, replace all four from a folder, generate four treatments from one image, or choose **Restore built-in defaults**. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
 
 ## Updating from the previous test build
 
