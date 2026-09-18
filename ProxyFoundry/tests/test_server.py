@@ -93,6 +93,39 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
     assert 'SET_SYMBOL_GEOMETRY' in log and 'alphaGt2=' in log and 'drawExpectedPx=' in log
 
 
+def test_diagnostics_download_routes_return_real_files(running):
+    app,s=running
+    status,raw,headers=request(s,'/api/diagnostics.zip',raw=True)
+    assert status==200 and headers.get_content_type()=='application/zip'
+    assert 'BulkProxyForge_Diagnostics.zip' in headers.get('Content-Disposition','')
+    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+        assert 'diagnostics.json' in z.namelist()
+        payload=json.loads(z.read('diagnostics.json'))
+        assert payload['pipelineVersion']==PIPELINE_VERSION
+    status,payload,headers=request(s,'/api/diagnostics.json')
+    assert status==200 and payload['pipelineVersion']==PIPELINE_VERSION
+    assert 'diagnostics.json' in headers.get('Content-Disposition','')
+
+
+def test_prepare_error_becomes_attention_and_render_plan_reports_the_real_error(running):
+    app,s=running
+    _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})
+    _,back,_=request(s,'/api/uploads',png((300,420),'#223355'))
+    _,symbols,_=request(s,'/api/symbols/generate',{'assetId':art['id']})
+    d=job_done(s,'/api/decks/import',{'name':'Artifact Combo','source':'1 Sample Card','settings':{'symbols':symbols,'backAsset':back['id']}})
+    d=job_done(s,'/api/decks/'+d['id']+'/prepare',{})
+    stored=app.store.get('decks',d['id'])
+    face=stored['cards'][0]['faces'][0]
+    face.pop('compiled',None);face['error']='Synthetic preparation failure'
+    stored['status']='prepared'
+    app.store.put('decks',stored,stored['revision'])
+    current=app.ws.deck(d['id'])
+    assert current['status']=='attention'
+    status,plan,_=request(s,'/api/render-sessions',{'deckIds':[d['id']]})
+    assert status==200 and plan['targets']==[]
+    assert plan['errors']==['Artifact Combo / Sample Card: Synthetic preparation failure']
+
+
 def test_runtime_symbol_diagnostic_endpoint(running):
     app,s=running
     payload={'key':'a'*64,'stage':'after-final-draw','diagnostic':{'version':'m15Regular','image':{'width':869,'height':1057},'card':{'x':.87,'y':.57,'zoom':.109},'lastDraw':{'args':[1757,1606,94.7,115.2]}}}
@@ -190,6 +223,7 @@ def test_trash_ui_and_missing_generation_contracts():
     assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
     assert 'deletePermanently' in deck
     assert 'before.upgradeRequired' in render
+    assert 'download-diagnostics' in settings and '/api/diagnostics.zip' in settings and 'downloadBlob' in settings
 
 
 def test_template_validation_and_seed(running):
