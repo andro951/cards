@@ -43,7 +43,10 @@ class Sources:
                 try:source=json.loads(text)
                 except ValueError as exc:raise ValidationError('Invalid deck-export JSON.') from exc
             elif re.match(r'^https://(?:www\.)?scryfall\.com/@[^/]+/decks/',text):
-                # A public deck export is mutable source data, not card metadata.\n                # Always fetch it live so re-importing the same Scryfall URL sees\n                # additions/removals immediately instead of the year/week cache.\n                source=self.net.json(deck_parser.deck_export_url(deck_parser.extract_deck_uuid(text)),ttl=0)
+                # A public deck export is mutable source data, not card metadata.
+                # Always fetch it live so re-importing the same Scryfall URL sees
+                # additions/removals immediately instead of the year/week cache.
+                source=self.net.json(deck_parser.deck_export_url(deck_parser.extract_deck_uuid(text)),ttl=0)
         title='New deck';digests={}
         if isinstance(source,dict) and 'entries' in source:
             try:_,rows=deck_parser.extract_card_sources(source,include_outside_the_game=include_outside)
