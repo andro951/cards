@@ -60,7 +60,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     assert front['group']=='transform-front' and front['recipe']=='m15_transform_front'
     assert back['group']=='transform-back' and back['recipe']=='m15_transform_back'
-    assert front['templateVersion']==3 and back['templateVersion']==3
+    assert front['templateVersion']==4 and back['templateVersion']==4
     assert front['data']['version']=='m15TransformFront'
     assert back['data']['version']=='m15TransformFront'
 
@@ -69,7 +69,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
     assert '/img/frames/m15/transform/icons/default.png' in front_sources
     assert any('/img/frames/m15/transform/regular/frontA.png'==x for x in front_sources)
     assert any('/img/frames/m15/transform/regular/new/backA.png'==x for x in back_sources)
-    assert any('/img/frames/m15/transform/crowns/regular/a.png'==x for x in front_sources)
+    assert any('/img/frames/m15/transform/crowns/regular/u.png'==x for x in front_sources)
     assert any('/img/frames/m15/transform/crowns/regular/new/a.png'==x for x in back_sources)
     assert '/img/frames/m15/transform/icons/default.png' not in back_sources
     assert front['data']['text']['title']['x']==0.16
