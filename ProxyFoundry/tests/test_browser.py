@@ -83,6 +83,8 @@ def test_browser_default_symbols_can_be_overridden_and_restored(browser_app,tmp_
     replacement=tmp_path/'rare-replacement.png';replacement.write_bytes(png((140,140),'#cc6633'))
     with page.expect_file_chooser() as chooser:page.locator('[data-symbol="rare"]').click()
     chooser.value.set_files(str(replacement))
+    expect(page.locator('#symbol-folder-status')).to_contain_text('Replaced rare',timeout=15000)
+    expect(page.locator('#save-setup')).to_be_enabled()
     page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     changed=app.ws.deck(d['id'])['settings']['symbols']
     assert changed['rare']!=defaults['rare']
