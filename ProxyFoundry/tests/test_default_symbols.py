@@ -1,3 +1,4 @@
+import hashlib
 import io
 
 from PIL import Image
@@ -5,6 +6,7 @@ from PIL import Image
 from foundry.domain import RARITIES
 from foundry.images import ingest_image, decode_image
 from foundry.storage import Store
+from foundry.symbols import ASSET_ROOT, BUILTINS
 from foundry.workspace import Workspace
 
 
@@ -14,6 +16,23 @@ EXPECTED_SIZES = {
     'rare': (93, 128),
     'mythic': (93, 128),
 }
+EXPECTED_SHA256 = {
+    'common': 'edf28920933fae71a7a8a3c404bb3ded697412126b07d9f3a45a56a6a1973f87',
+    'uncommon': 'cf2d3bc00d4f280b1819a6b32f6edff8d470717cfb82a740afcc761e1557a40c',
+    'rare': 'cc554cbc4e32b3f5b86b578f5b3945f3c2871ee1e333933451e9959cf8e96497',
+    'mythic': '7c8fd85c9009a3918679dd09b3b5355d17ef51b486ce929b569de933d869dfeb',
+}
+
+
+def test_bundled_files_are_exact_uploaded_defaults():
+    for rarity in RARITIES:
+        path=ASSET_ROOT/BUILTINS[rarity]['file']
+        raw=path.read_bytes()
+        assert hashlib.sha256(raw).hexdigest()==EXPECTED_SHA256[rarity]
+        with Image.open(path) as image:
+            image.load()
+            assert image.format=='WEBP'
+            assert image.size==EXPECTED_SIZES[rarity]
 
 
 def png(color='#556677'):
