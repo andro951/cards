@@ -153,7 +153,7 @@ def intentional_art_window_crop(group,choice,art,options,settings):
 
 
 _QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
-_ANY_COLOR_OUTPUT_RE=re.compile(r'\\b(?:any(?: one)? color|any combination of colors|any type)\\b',re.I)
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
 
 def land_frame_colors(types,face,card,oracle_text):
     """Infer land frame colors from the land's own mana production.
@@ -178,11 +178,11 @@ def land_frame_colors(types,face,card,oracle_text):
     clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
     has_direct_mana_ability=False
     for line in clean.splitlines():
-        for match in re.finditer(r'\\bAdd\\b([^.;\\n]*)',line,re.I):
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
             if ':' not in line[:match.start()]:continue
             has_direct_mana_ability=True
             clause=match.group(1)
-            for token in re.findall(r'\\{([^{}]+)\\}',clause):
+            for token in re.findall(r'\{([^{}]+)\}',clause):
                 for part in token.upper().split('/'):
                     add(part)
             if _ANY_COLOR_OUTPUT_RE.search(clause):
@@ -191,7 +191,7 @@ def land_frame_colors(types,face,card,oracle_text):
     # Fetch lands are the deliberate exception: their visual identity follows
     # the basic land types they search for even though they do not make that mana.
     for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
-        if re.search(rf'\\b{re.escape(subtype)}\\b',clean):add(color)
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
 
     # Once the printed rules/type line tells us anything useful, do not widen it
     # with produced_mana. This is what keeps The World Tree green and Nykthos
