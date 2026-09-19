@@ -189,8 +189,18 @@ class App:
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
             for p in sorted((self.store.home / 'logs').glob('job-*.json'), key=lambda p: p.stat().st_mtime)[-8:]:
-                job = json.loads(p.read_text())
-                job.pop('result', None)
+                # Job logs are normally UTF-8, but diagnostics must still be
+                # downloadable if an older/corrupt file contains invalid bytes.
+                # Never use the Windows locale codec here: bytes such as 0x81
+                # make cp1252/charmap throw before we can collect diagnostics.
+                text = p.read_bytes().decode('utf-8', errors='replace')
+                try:
+                    job = json.loads(text)
+                except json.JSONDecodeError:
+                    job = {'warning': 'This job log could not be parsed as JSON; sanitized text follows.',
+                           'raw': text[-150000:]}
+                if isinstance(job, dict):
+                    job.pop('result', None)
                 z.writestr(p.name, json.dumps(job, ensure_ascii=False))
         return b.getvalue()
 
