@@ -95,6 +95,10 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
 
 def test_diagnostics_download_routes_return_real_files(running):
     app,s=running
+    # Simulate a legacy/corrupt job log containing a byte that Windows cp1252
+    # cannot decode. Diagnostics should sanitize it instead of failing.
+    bad=app.store.home/'logs'/'job-legacy-corrupt.json'
+    bad.write_bytes(b'{"id":"legacy","message":"bad \\x81 byte","result":{"large":"omit"}}')
     status,raw,headers=request(s,'/api/diagnostics.zip',raw=True)
     assert status==200 and headers.get_content_type()=='application/zip'
     assert 'BulkProxyForge_Diagnostics.zip' in headers.get('Content-Disposition','')
@@ -102,6 +106,10 @@ def test_diagnostics_download_routes_return_real_files(running):
         assert 'diagnostics.json' in z.namelist()
         payload=json.loads(z.read('diagnostics.json'))
         assert payload['pipelineVersion']==PIPELINE_VERSION
+        legacy=json.loads(z.read('job-legacy-corrupt.json').decode('utf-8'))
+        assert legacy['id']=='legacy'
+        assert '\ufffd' in legacy['message']
+        assert 'result' not in legacy
     status,payload,headers=request(s,'/api/diagnostics.json')
     assert status==200 and payload['pipelineVersion']==PIPELINE_VERSION
     assert 'diagnostics.json' in headers.get('Content-Disposition','')
