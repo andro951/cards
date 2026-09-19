@@ -7,7 +7,7 @@ folder/
 ├── art/                     # Optional: live GitHub card artwork
 │   ├── sol_ring.png
 │   └── command_tower.png
-├── set_symbols/             # Optional override: all four rarity images
+├── set_symbols/             # Recommended: all four rarity images
 │   ├── common.png
 │   ├── uncommon.png
 │   ├── rare.png
@@ -17,7 +17,7 @@ folder/
 └── back_icon.png            # Optional: icon centered on the blank forge back
 ```
 
-Set-symbol files are optional. With neither `set_symbols/` nor `set_symbol.png`, the bundled common/uncommon/rare/mythic defaults are selected. Providing either is an intentional override: `set_symbols/` wins over `set_symbol.png`; the older folder name `set_symbol/` is also accepted internally. A present but incomplete, duplicated or invalid symbol folder fails clearly rather than silently falling back. Non-image notes files are ignored. PNG, JPEG, WebP and GIF work; for this importer, export SVGs as PNG or upload them individually using the existing controls.
+Only the symbols are required: provide the complete four-image folder **or** the single source image. `set_symbols/` wins over `set_symbol.png`; the older folder name `set_symbol/` is also accepted internally. A present but incomplete, duplicated or invalid symbol folder fails clearly rather than silently falling back to generated colors. Non-image notes files are ignored. PNG, JPEG, WebP and GIF work; for this importer, export SVGs as PNG or upload them individually using the existing controls.
 
 If `art/` is absent, the importer selects **Scryfall printing**. Scryfall fallback is enabled on import, including when an art folder is present. GitHub artwork stays live and is fetched during generation, not downloaded wholesale on import. Symbols and backs are copied on each import, bypassing the local HTTP cache; import again to update them.
 

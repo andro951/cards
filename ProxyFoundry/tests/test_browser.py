@@ -72,28 +72,6 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     assert not errors,errors
 
-def test_browser_default_symbols_can_be_overridden_and_restored(browser_app,tmp_path):
-    app,server,page,errors=browser_app
-    d=app.ws.new_deck('Default symbols')
-    defaults=app.ws.symbols.defaults()
-    assert d['settings']['symbols']==defaults
-    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#restore-symbols').wait_for()
-    expect(page.locator('.symbol-upload img')).to_have_count(4)
-    expect(page.locator('.symbol-upload small')).to_contain_text(['common · default','uncommon · default','rare · default','mythic · default'])
-    replacement=tmp_path/'rare-replacement.png';replacement.write_bytes(png((140,140),'#cc6633'))
-    with page.expect_file_chooser() as chooser:page.locator('[data-symbol="rare"]').click()
-    chooser.value.set_files(str(replacement))
-    expect(page.locator('#symbol-folder-status')).to_contain_text('Replaced rare',timeout=15000)
-    expect(page.locator('#save-setup')).to_be_enabled()
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
-    changed=app.ws.deck(d['id'])['settings']['symbols']
-    assert changed['rare']!=defaults['rare']
-    for rarity in ('common','uncommon','mythic'):assert changed[rarity]==defaults[rarity]
-    page.click('#restore-symbols');page.click('#save-setup')
-    assert app.ws.deck(d['id'])['settings']['symbols']==defaults
-    assert not errors,errors
-
-
 def test_browser_symbol_folder_upload(browser_app,tmp_path):
     app,server,page,errors=browser_app
     d=app.ws.new_deck('Folder symbols')

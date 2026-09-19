@@ -352,9 +352,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
             return self.respond({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
-                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog(), 'symbols': self.app.ws.symbols.catalog()})
+                                 'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
-        if p == '/api/symbols/catalog': return self.respond(self.app.ws.symbols.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
         if p == '/api/templates/seed': return self.respond(self.app.ws.template_seed(q.get('kind', ['normal'])[0]))

@@ -64,8 +64,6 @@ def test_csrf_and_runtime_isolation(running):
     bootstrap=request(s,'/api/bootstrap')[1]
     assert bootstrap['runtimeOrigin']!=s.origin
     assert bootstrap['pipelineVersion']==PIPELINE_VERSION
-    assert set(bootstrap['symbols']['defaults'])=={'common','uncommon','rare','mythic'}
-    assert request(s,'/api/symbols/catalog')[1]==bootstrap['symbols']
     assert request(s,'/api/decks/new',{'name':'x'},headers={'X-Proxy-CSRF':'bad'})[0]==403
     assert request(s,'/api/decks/new',{'name':'x'},origin='https://evil.example')[0]==403
     r=s.runtime_server
@@ -246,8 +244,7 @@ def test_backup_restore_copies_and_omits_runtime_fonts(running):
     backup=app.backups.export()
     path=app.store.home/'backups'/backup['filename']
     with zipfile.ZipFile(path) as z:
-        expected={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}|{'assets/'+ident+'.png' for ident in d['settings']['symbols'].values()}
-        assert set(z.namelist())==expected
+        assert set(z.namelist())=={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}
     result=app.backups.restore(path)
     assert result['decks']==1
     assert len(app.ws.list_decks())==2

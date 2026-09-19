@@ -12,14 +12,13 @@ from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
-from .symbols import Symbols
 
 HOSTED_LAND_LIBRARY='https://github.com/andro951/cards/tree/main/ProxyFoundry/full_art_lands'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
-        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self.symbols=Symbols(self.store)
+        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store)
     def new_deck(self, name='Untitled deck'):
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
             'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
@@ -35,8 +34,7 @@ class Workspace:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
-        if not isinstance(settings,dict):raise ValidationError('Invalid deck settings.')
-        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['symbols']=self.symbols.settings(s);s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None);s['source'].pop('refreshArt',None)
+        s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None);s['source'].pop('refreshArt',None)
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
         for ident in [s.get('backAsset'),*s.get('symbols',{}).values(),*s['source'].get('localFiles',{}).values()]:
@@ -60,8 +58,6 @@ class Workspace:
     def deck(self,ident):
         d=self.store.get('decks',ident)
         if not d:raise ValidationError('Deck not found. It may be in Trash.')
-        d.setdefault('settings',{})
-        d['settings']['symbols']=self.symbols.settings(d['settings'])
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             for f in c['faces']:
@@ -217,7 +213,7 @@ class Workspace:
         return ingest_image(self.store,out.getvalue())['id']
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
-        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Default rarity symbols are unavailable. Restore defaults or choose replacements.')
+        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
         index={};land_index={}
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
