@@ -109,7 +109,10 @@ def type_group(face,parent=None,index=0):
     for special in ('dungeon','conspiracy'):
         if special in types:return special
     if 'land' in types:
-        if 'creature' in types or 'enchantment' in types:return 'special-land'
+        # Enchantment lands use the ordinary land frame family; the displayed
+        # type line still keeps Enchantment. Creature lands remain structurally
+        # special because they need simultaneous land and P/T treatment.
+        if 'creature' in types:return 'special-land'
         if 'basic' in types:return 'basic-land'
         return 'legendary-land' if 'legendary' in types else 'land'
     if layout in {'token','emblem'}:return layout
