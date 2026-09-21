@@ -389,10 +389,10 @@ def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
     app.close()
 
 
-def test_render_targets_for_card_only_returns_the_requested_card(tmp_path):
+def test_render_targets_for_card_only_returns_the_requested_card_even_while_deck_is_draft(tmp_path):
     store=Store(tmp_path)
     app=App(store,Network(store,transport=lambda url: (png(),'image/png',{}),sleeper=lambda _:None))
-    deck={'id':'deck-1','name':'Render card deck','status':'prepared','cards':[
+    deck={'id':'deck-1','name':'Render card deck','status':'draft','cards':[
         {'id':'card-one','name':'Alpha','quantity':1,'scryfall':card('Alpha'),'faces':[{'id':'face-one','name':'Alpha','index':0,'compiled':{'renderKey':'1'*64,'data':{'width':1,'height':1}}}]},
         {'id':'card-two','name':'Beta','quantity':1,'scryfall':card('Beta'),'faces':[{'id':'face-two','name':'Beta','index':0,'compiled':{'renderKey':'2'*64,'data':{'width':1,'height':1}}}]},
     ]}
@@ -404,11 +404,34 @@ def test_render_targets_for_card_only_returns_the_requested_card(tmp_path):
     app.close()
 
 
+def test_single_card_prepare_endpoint_never_calls_full_deck_prepare(running):
+    app,s=running
+    _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})
+    _,back,_=request(s,'/api/uploads',png((300,420),'#223355'))
+    _,symbols,_=request(s,'/api/symbols/generate',{'assetId':art['id']})
+    d=job_done(s,'/api/decks/import',{'name':'Single prepare','source':'1 Sample Card','settings':{'symbols':symbols,'backAsset':back['id']}})
+    d=job_done(s,'/api/decks/'+d['id']+'/prepare',{})
+    c=d['cards'][0];f=c['faces'][0];before=f['compiled']['renderKey']
+    _,d,_=request(s,'/api/decks/'+d['id']+'/cards/'+c['id'],{'revision':d['revision'],'faceId':f['id'],'semanticOverrides':{'oracle_text':'Reach'}})
+    assert d['status']=='draft'
+    app.ws.prepare=lambda *a,**k: (_ for _ in ()).throw(AssertionError('full deck prepare must not run'))
+    d=job_done(s,'/api/decks/'+d['id']+'/cards/'+c['id']+'/prepare',{})
+    assert d['status']=='draft'
+    selected=next(x for x in d['cards'] if x['id']==c['id'])['faces'][0]
+    assert selected['compiled']['renderKey']!=before
+    assert selected['compiled']['data']['text']['rules']['text']=='Reach'
+    _,plan,_=request(s,'/api/render-sessions/card',{'deckId':d['id'],'cardId':c['id']})
+    assert len(plan['targets'])==1 and plan['targets'][0]['name']=='Sample Card'
+
+
 def test_card_inspector_actions_exist_in_source():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Generate this card' in source
     assert 'Download review image' in source
     assert '/review-image' in source
+    inspect=source[source.index('async function inspect'):source.index('async function printings')]
+    assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
+    assert "job('/api/decks/'+d.id+'/prepare'" not in inspect
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 
