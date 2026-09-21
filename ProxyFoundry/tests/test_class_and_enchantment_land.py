@@ -48,22 +48,13 @@ def test_cleric_class_uses_native_cardconjurer_class_frame(tmp_path):
 
     assert result['group']=='class'
     assert result['recipe']=='class'
-    assert result['templateVersion']==2
+    assert result['templateVersion']==3
     assert data['version']=='class'
     assert data['onload']=='/js/frames/versionClass.js'
     assert data['class']=={'x':0.5014,'width':0.422,'count':2}
     assert data['artBounds']=={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
     assert data['setSymbolBounds']=={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
-    assert frames[0]['src']=='/img/frames/class/w.png'
-    assert [m['src'] for m in frames[0]['masks']]==[
-        '/img/frames/class/pinline.svg',
-        '/img/frames/m15/regular/m15MaskTitle.png',
-        '/img/frames/saga/sagaMaskType.png',
-        '/img/frames/class/frame.svg',
-        '/img/frames/class/text.svg',
-        '/img/frames/class/textRight.png',
-        '/img/frames/class/border.svg',
-    ]
+    assert frames==[{'name':'White Frame','src':'/img/frames/class/w.png','masks':[]}]
     assert text['title']['text']=='Cleric Class'
     assert text['type']['text']=='Enchantment — Class'
     assert text['level1a']['text']=='{3}{W}:'
