@@ -1,6 +1,6 @@
 """Exact-printing Scryfall imports and explicit GitHub art folders."""
 from __future__ import annotations
-import json,re
+import hashlib,json,re
 from urllib.parse import quote,urlsplit
 from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug
 from .legacy import deck_parser,ingest
@@ -86,18 +86,63 @@ class Sources:
         for i,f in enumerate(faces):entry['faces'].append({'id':uid(),'name':f.get('name',sf['name']),'index':i,'artistOverride':None,'artOverride':None,'templateOverride':None})
         return entry
     def art_url(self,sf,face):return ingest.scryfall_art_crop_url(sf,face)
+    @staticmethod
+    def git_blob_sha(raw):
+        return hashlib.sha1(b'blob '+str(len(raw)).encode('ascii')+b'\0'+raw).hexdigest()
+    def github_art(self,entry):
+        # Production indexes carry the Git blob SHA plus a raw URL pinned to the
+        # exact commit that produced the directory listing. String entries remain
+        # accepted for old callers/tests, but cannot provide the integrity check.
+        if isinstance(entry,str):
+            raw,_,_=self.net.fetch(entry,refresh=True,ttl=0)
+            return raw,entry
+        if not isinstance(entry,dict):
+            raise ValidationError('GitHub artwork index entry is invalid.')
+        url=entry.get('url');expected=str(entry.get('blobSha') or '').lower()
+        if not isinstance(url,str) or not re.fullmatch(r'[0-9a-f]{40}',expected):
+            raise ValidationError('GitHub artwork index entry is invalid.')
+        raw,_,_=self.net.fetch(url,immutable=True)
+        if self.git_blob_sha(raw)!=expected:
+            raise ValidationError('GitHub returned artwork bytes that did not match the folder listing. Generate again after GitHub finishes updating.')
+        return raw,url
     def github_index(self,url,branch=None,refresh=False):
         loc=github_location(url,branch)
         if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0 if refresh else 600).get('default_branch','main')
-        api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+quote(loc['ref'],safe='')
+        requested=str(loc['ref'])
+        if re.fullmatch(r'[0-9a-fA-F]{40}',requested):
+            commit=requested.lower()
+        else:
+            resolved=self.net.json('https://api.github.com/repos/'+loc['repo']+'/commits/'+quote(requested,safe=''),ttl=0 if refresh else 600)
+            commit=str(resolved.get('sha','')).lower() if isinstance(resolved,dict) else ''
+            if not re.fullmatch(r'[0-9a-f]{40}',commit):
+                raise ValidationError('GitHub did not return an exact commit for the artwork folder.')
+        api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+commit
         rows=self.net.json(api,ttl=0 if refresh else 600)
         if not isinstance(rows,list):raise ValidationError('That GitHub link is a file, not an artwork folder.')
         index={}
         for r in rows:
-            if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)$',r.get('name',''),re.I):
+            if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)    def printings(self,name,refresh=False,next_page=None):
+        url=next_page or 'https://api.scryfall.com/cards/search?unique=prints&order=released&q='+quote('!"'+name.replace('"','')+'" game:paper')
+        if not url.startswith('https://api.scryfall.com/cards/search?'):raise ValidationError('Invalid printings page.')
+        d=self.net.json(url,refresh=refresh)
+        return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
+
+    def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
+        if policy=='resolved' or policy=='auto' and source_exact:return sf
+        name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')
+        url='https://api.scryfall.com/cards/search?unique=prints&order=released&dir=desc&q='+quote('!"'+name+'" game:paper lang:en')
+        try:
+            page=self.net.json(url,refresh=refresh)
+            rows=page.get('data',[])
+            return rows[0] if rows and isinstance(rows[0],dict) else sf
+        except ValidationError:
+            return sf,r.get('name',''),re.I):
                 stem=slug(r['name'].rsplit('.',1)[0])
                 if stem in index:raise ValidationError('Ambiguous filenames in GitHub folder: '+r['name'])
-                index[stem]='https://raw.githubusercontent.com/'+loc['repo']+'/'+quote(loc['ref'],safe='')+'/'+quote(r['path'],safe='/')
+                blob=str(r.get('sha') or '').lower()
+                if not re.fullmatch(r'[0-9a-f]{40}',blob):
+                    raise ValidationError('GitHub did not return a blob SHA for '+r['name']+'.')
+                index[stem]={'url':'https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(r['path'],safe='/'),'blobSha':blob}
         return index
     def printings(self,name,refresh=False,next_page=None):
         url=next_page or 'https://api.scryfall.com/cards/search?unique=prints&order=released&q='+quote('!"'+name.replace('"','')+'" game:paper')
