@@ -112,6 +112,38 @@ def test_exact_printing(workspace):
     assert result['cards'][0]['quantity']==2
 
 
+
+@pytest.mark.parametrize('type_line,colors,expected_mask',[
+    ('Enchantment — Saga',['U','G'],'/img/frames/saga/sagaMaskPinline.png'),
+    ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/saga/creature/masks/sagaMaskPinline.png'),
+])
+def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_line,colors,expected_mask):
+    s,a,settings=workspace
+    card=sf(type_line,colors)
+    card.update(
+        layout='saga',
+        oracle_text='I — Draw a card.\nII — Add one mana.\nIII — Scry 2.',
+        mana_cost='{1}{U}{G}',
+    )
+    if 'Creature' in type_line:
+        card.update(power='3',toughness='3')
+    result=Compiler(s).compile_face(card,card,0,{},settings,a)
+    assert result['group'] in {'saga','saga-creature'}
+    ordered=native.canonical_dual_color_order(colors)
+    expected_src=native.dual_gradient_fill_src(*ordered)
+    gradient=[
+        frame for frame in result['data']['frames']
+        if frame.get('src')==expected_src
+        and any(mask.get('src')==expected_mask and mask.get('name')=='Pinline' for mask in frame.get('masks',[]))
+    ]
+    assert len(gradient)==1
+    assert 'Gradient Saga Pinline' in gradient[0]['name']
+    if result['group']=='saga':
+        assert any(frame.get('src')=='/img/frames/saga/regular/sagaFrameM.png' for frame in result['data']['frames'])
+    else:
+        assert any(frame.get('src')=='/img/frames/saga/creature/m.png' for frame in result['data']['frames'])
+        assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in result['data']['frames'])
+
 def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
     from foundry.legacy import compiler as native
     cases=[
