@@ -24,7 +24,6 @@ def everflowing_pair():
         'set':'lci',
         'collector_number':'56',
         'artist':'David Álvarez',
-        'frame_effects':['compasslanddfc'],
         'card_faces':[
             {
                 'name':'The Everflowing Well',
@@ -67,12 +66,12 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     front_sources=[f.get('src','') for f in front['data']['frames']]
     back_sources=[f.get('src','') for f in back['data']['frames']]
-    assert '/img/frames/m15/transform/icons/compass.svg' in front_sources
+    assert '/img/frames/m15/transform/icons/default.png' in front_sources
     assert any('/img/frames/m15/transform/regular/frontA.png'==x for x in front_sources)
     assert any('/img/frames/m15/transform/regular/new/backL.png'==x for x in back_sources)
     assert any('/img/frames/m15/transform/crowns/regular/u.png'==x for x in front_sources)
     assert any('/img/frames/m15/transform/crowns/regular/new/l.png'==x for x in back_sources)
-    assert '/img/frames/m15/transform/icons/land.svg' in back_sources
+    assert '/img/frames/m15/transform/icons/default.png' not in back_sources
     assert front['data']['text']['title']['x']==0.16
     assert back['data']['text']['title']['x']==0.0854
     assert back['data']['text']['title']['color']=='white'
