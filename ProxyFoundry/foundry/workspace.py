@@ -315,6 +315,19 @@ class Workspace:
                     if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
                     targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors}
+    def render_targets_for_card(self,deck_id,card_id,force=False):
+        d=self.deck(deck_id)
+        if d['status']=='draft':raise ValidationError(d['name']+': prepare changes before rendering.')
+        c=next((x for x in d['cards'] if x['id']==card_id),None)
+        if not c:raise ValidationError('Card no longer exists.')
+        targets={};cached=0;errors=[]
+        for f in c.get('faces',[]):
+            comp=f.get('compiled')
+            if f.get('error') or not comp:
+                errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
+            if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
+            targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
+        return {'targets':list(targets.values()),'cached':cached,'errors':errors,'deckName':d['name'],'cardName':c['name']}
     def save_render(self,key,raw,expected_size):
         asset=ingest_image(self.store,raw)
         if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
@@ -369,6 +382,31 @@ class Workspace:
         canvas.paste(reference,(0,0),reference)
         canvas.paste(ours,(ours.width+1,0),ours)
         out=io.BytesIO();canvas.save(out,'PNG');return out.getvalue()
+
+    def review_image(self,deck_id,card_id,face_id=None,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(deck_id)
+        if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading a review image.')
+        c=next((x for x in d.get('cards',[]) if x['id']==card_id),None)
+        if not c:raise ValidationError('Card no longer exists.')
+        faces=c.get('faces') or []
+        if not faces:raise ValidationError(c['name']+': card has no renderable face.')
+        face=next((x for x in faces if x.get('id')==face_id),None) if face_id else faces[0]
+        if not face:raise ValidationError('Card face no longer exists.')
+        if cancel():raise ValidationError('Review-image export cancelled.')
+        sf=c['scryfall'];sf_faces=sf.get('card_faces') or [sf]
+        index=min(max(int(face.get('index',0) or 0),0),len(sf_faces)-1)
+        source_face=sf if index==0 and (sf.get('image_uris') or {}).get('png') else sf_faces[index]
+        reference_url=(source_face.get('image_uris') or {}).get('png')
+        if not reference_url:raise ValidationError(face.get('name',c['name'])+': selected printing has no full-card PNG for this face.')
+        render=self._review_render(face,d['name'])
+        refresh=bool(d.get('settings',{}).get('refreshData',False))
+        raw=self._review_composite(reference_url,render,refresh)
+        base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.png'
+        out=self.store.home/'orders'/filename
+        if out.exists():
+            filename=base+'_'+uid()[:8]+'_review.png';out=self.store.home/'orders'/filename
+        out.write_bytes(raw);progress(1,1,'Saved review image for '+face.get('name',c['name']))
+        return {'filename':filename,'count':1,'bytes':out.stat().st_size,'download':'/api/files/'+filename}
 
     def review_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident)
