@@ -3,7 +3,7 @@ import copy, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds
+from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds, apply_station_underframe_policy
 from foundry.domain import ValidationError, GENERATION_VERSION
 from foundry.images import ingest_image, data_uri
 from foundry.legacy import compiler as native
@@ -67,7 +67,10 @@ def test_native_station_structure_and_layering(env,colors,legendary):
     base=next(i for i,f in enumerate(d['frames']) if native._is_station_base_overlay(f))
     pin=next(i for i,f in enumerate(d['frames']) if native._is_station_pinline_layer(f))
     assert pin<base and d['frames'][pin]['masks'][0]['src'].endswith('m15MaskPinline.png')
-    assert any('m15FrameA.png' in f.get('src','') for f in d['frames'][base+1:])
+    frame_components=[f for f in d['frames'][base+1:] if any(mask.get('name')=='Frame' for mask in f.get('masks',[]))]
+    if len(colors)==0:assert frame_components==[]
+    elif len(colors)==1:assert len(frame_components)==1 and frame_components[0]['src']==f'/img/frames/m15/regular/m15Frame{colors[0]}.png'
+    else:assert len(frame_components)==1 and frame_components[0]['src']=='/img/frames/m15/regular/m15FrameM.png'
     assert all(i<pin for i,f in enumerate(d['frames']) if '/crowns/' in str(f.get('src','')) or 'legend crown' in f.get('name','').lower())
     pinframe=d['frames'][pin]
     if len(colors)==0:assert pinframe['src']=='/img/frames/station/a.png'
@@ -76,23 +79,54 @@ def test_native_station_structure_and_layering(env,colors,legendary):
     else:assert pinframe['src']=='/img/frames/station/m.png'
     assert d['infoArtist']=='Original Station Artist · Modified by ChatGPT'
 
-def test_fixed_landscape_and_unchanged_portrait_autofit(env):
+def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement(env):
     s,comp,landscape,portrait,settings=env;c=card()
-    result=comp.compile_face(c,c,0,{},settings,landscape['id']);d=result['data']
+    result=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='Scryfall selected printing');d=result['data']
     assert (d['artX'],d['artY'],d['artZoom'])==(156/2010,320/2814,2.73)
+    assert d['artBounds']=={'x':0.068,'y':0.027,'width':0.864,'height':0.9}
     assert result['crop']['cropX']>.20 and not result['crop']['warning']
     assert result['crop']['intentionalArtWindow'] is True
-    d=comp.compile_face(c,c,0,{},settings,portrait['id'])['data']
-    expected=copy.deepcopy(d);native.auto_fit(expected,str(s.asset_path(portrait['id'])))
-    assert all(d[k]==expected[k] for k in ['artX','artY','artZoom'])
-    custom=comp.compile_face(c,c,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])
-    assert custom['data']['artZoom']==1.2
-    assert custom['crop']['warning'] and not custom['crop'].get('intentionalArtWindow')
+
+    for art in (landscape,portrait):
+        custom=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder');data=custom['data']
+        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
+        expected=copy.deepcopy(data);expected['artX']=0;expected['artY']=0;expected['artZoom']=1
+        native.auto_fit(expected,str(s.asset_path(art['id'])))
+        assert all(data[k]==expected[k] for k in ['artX','artY','artZoom'])
+        assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in data['frames'])
+
+    manual=comp.compile_face(c,c,0,{'fit':{'artX':.1,'artY':.2,'artZoom':1.2,'artRotate':0}},settings,landscape['id'],art_origin='uploaded override')
+    assert manual['data']['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
+    assert (manual['data']['artX'],manual['data']['artY'],manual['data']['artZoom'])==(.1,.2,1.2)
+    assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
+
+
+def test_station_underframe_policy_depends_on_art_source_and_color(env):
+    _,comp,landscape,_,settings=env
+    cases=[
+        ([],None),
+        (['W'],'W'),
+        (['U','R'],'M'),
+        (['W','U','B'],'M'),
+    ]
+    for colors,code in cases:
+        c=card(colors=colors)
+        result=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='Scryfall selected printing')
+        frame_components=[frame for frame in result['data']['frames'] if any(mask.get('name')=='Frame' for mask in frame.get('masks',[]))]
+        if code is None:
+            assert frame_components==[]
+        else:
+            assert len(frame_components)==1
+            assert frame_components[0]['src']==f'/img/frames/m15/regular/m15Frame{code}.png'
+
+        custom=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='computer folder')
+        assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in custom['data']['frames'])
 
 def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)
     sem=semantic(c,c);sem.update(art=data_uri(s,a['id']),art_local_path=str(s.asset_path(a['id'])),set_symbol_source=data_uri(s,settings['symbols']['rare']),artist='Original Station Artist · Modified by ChatGPT')
     expected=native.build_one(sem,{},True)['data']
+    apply_station_underframe_policy(expected,sem,'Scryfall selected printing')
     fit_set_symbol_to_bounds(expected,s.asset(settings['symbols']['rare']))
     expected['artSource']='/api/assets/'+a['id'];expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
     actual=comp.compile_face(c,c,0,{},settings,a['id'],art_origin='Scryfall selected printing')['data']

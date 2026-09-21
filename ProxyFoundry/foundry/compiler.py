@@ -130,6 +130,54 @@ def fit_set_symbol_to_bounds(data,symbol,recipe=None):
 # Compatibility name for older tests/importers; behavior is now frame-agnostic.
 align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 
+# Reuse the approved full-art land geometry instead of inventing a second set of
+# full-bleed bounds. Custom art behind transparent frame regions should be fitted
+# to this well; Scryfall art crops keep their normal art-window placement.
+FULL_ART_ART_BOUNDS=copy.deepcopy(native.LAYOUTS['land_full_dual']['data']['artBounds'])
+
+def _is_custom_art_origin(art_origin):
+    return str(art_origin or '')!='Scryfall selected printing'
+
+def _station_frame_component(frame):
+    return (
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name')=='Frame' for mask in frame.get('masks',[]))
+        and str(frame.get('src','')).startswith('/img/frames/m15/regular/m15Frame')
+    )
+
+def apply_station_underframe_policy(data,sem,art_origin):
+    """Expose full/custom art through Station transparency; fill Scryfall color gaps.
+
+    Custom Station art is full-bleed, so the ordinary M15 Frame component must
+    not sit behind the transparent portion of the Station overlay. Colorless
+    Scryfall Stations intentionally leave that portion transparent too. Colored
+    Scryfall Stations use the corresponding normal W/U/B/R/G frame component;
+    two or more colors use the normal multicolor frame. Other masked pieces are
+    left alone because the Station overlay owns the visible Station treatment.
+    """
+    frames=data.get('frames',[])
+    components=[frame for frame in frames if _station_frame_component(frame)]
+    if not components:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if _is_custom_art_origin(art_origin) or not colors:
+        data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
+        return True
+    code=colors[0] if len(colors)==1 else 'M'
+    for frame in components:
+        frame['src']=f'/img/frames/m15/regular/m15Frame{code}.png'
+        frame['name']=native.COLOR_NAMES[code]+' Frame'
+    return True
+
+def apply_custom_full_art_placement(data,sem,recipe,group,art_origin,autofit):
+    """Fit custom art full-bleed for transparent colorless and Station frames."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_ART_BOUNDS)
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return True
+
 
 def intentional_art_window_crop(group,choice,art,options,settings):
     """True when native structural fitting intentionally consumes a landscape art crop.
@@ -619,6 +667,11 @@ class Compiler:
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
                     if choice=='auto' and group in {'saga','saga-creature'}:
                         apply_dual_saga_gradient(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,sem,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
         else:

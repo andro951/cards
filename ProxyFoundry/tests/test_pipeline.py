@@ -113,6 +113,25 @@ def test_exact_printing(workspace):
 
 
 
+
+def test_custom_colorless_clara_uses_full_art_placement_while_scryfall_keeps_normal_window(workspace):
+    s,_,settings=workspace
+    b=io.BytesIO();Image.new('RGB',(1200,1600),'#556677').save(b,'PNG');art=ingest_image(s,b.getvalue())
+    clara=sf('Legendary Creature — Human Advisor',[])
+    clara.update(name='Clara Oswald',mana_cost='{6}',power='2',toughness='6',oracle_text='Doctor companion test.')
+    comp=Compiler(s)
+
+    scryfall=comp.compile_face(clara,clara,0,{},settings,art['id'],art_origin='Scryfall selected printing')
+    custom=comp.compile_face(clara,clara,0,{},settings,art['id'],art_origin='GitHub folder')
+
+    assert scryfall['recipe']=='colorless_creature_legendary'
+    assert scryfall['data']['artBounds']=={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429}
+    assert custom['data']['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
+    expected=copy.deepcopy(custom['data']);expected['artX']=0;expected['artY']=0;expected['artZoom']=1
+    native.auto_fit(expected,str(s.asset_path(art['id'])))
+    assert all(custom['data'][k]==expected[k] for k in ['artX','artY','artZoom'])
+    assert (custom['data']['artX'],custom['data']['artY'],custom['data']['artZoom'])!=(scryfall['data']['artX'],scryfall['data']['artY'],scryfall['data']['artZoom'])
+
 def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
     s,a,settings=workspace
     card=sf('Legendary Creature — Shapeshifter',[])
