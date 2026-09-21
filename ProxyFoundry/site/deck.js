@@ -71,7 +71,7 @@ export async function showDeck(id,tab='cards'){
     $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
     $$('[data-hover-back]').forEach(img=>{const card=img.closest('[data-card]'),front=img.dataset.hoverFront,back=img.dataset.hoverBack;if(!card||!front||!back)return;card.onmouseenter=()=>{img.src=back;};card.onmouseleave=()=>{img.src=front;};});
     $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;cardsGrid();});
-    $('#card-search').oninput=e=>{v.query=e.target.value;cardsGrid();$('#card-search').focus();};
+    $('#card-search').oninput=e=>{v.query=e.target.value;const start=e.target.selectionStart??v.query.length,end=e.target.selectionEnd??start;cardsGrid();const search=$('#card-search');search.focus();try{search.setSelectionRange(start,end)}catch{}};
     $('#quick-order').onclick=()=>attempt(()=>chooseOrder([id]));if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
   }
   cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
