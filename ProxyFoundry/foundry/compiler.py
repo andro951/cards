@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'class':2,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -419,15 +419,6 @@ def build_transform_data(sem,group,card,artist,autofit,flags):
     return d0,data,'m15_transform_'+side
 
 
-_CLASS_MASKS=[
-    {'src':'/img/frames/class/pinline.svg','name':'Pinline'},
-    {'src':'/img/frames/m15/regular/m15MaskTitle.png','name':'Title'},
-    {'src':'/img/frames/saga/sagaMaskType.png','name':'Type'},
-    {'src':'/img/frames/class/frame.svg','name':'Frame'},
-    {'src':'/img/frames/class/text.svg','name':'Text'},
-    {'src':'/img/frames/class/textRight.png','name':'Text, Right Half'},
-    {'src':'/img/frames/class/border.svg','name':'Border'},
-]
 _CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
 
 
@@ -460,7 +451,7 @@ def _class_parts(oracle_text):
 
 
 def build_class_data(sem,artist,autofit,flags):
-    """Build the pinned CardConjurer Class frame rather than flattening it."""
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
     if sem.get('legendary'):
         raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
     base=copy.deepcopy(sem)
@@ -479,7 +470,7 @@ def build_class_data(sem,artist,autofit,flags):
     heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
 
     data['version']='class';data['onload']='/js/frames/versionClass.js'
-    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':copy.deepcopy(_CLASS_MASKS)}]
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
     data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
     data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
     data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
