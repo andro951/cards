@@ -350,3 +350,57 @@ class Workspace:
                     progress(count,0,'Saved '+c['name'])
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
         except Exception:out.unlink(missing_ok=True);raise
+
+    def _review_render(self,face,deck_name):
+        if face.get('error'):raise ValidationError(deck_name+' / '+face['name']+': '+face['error'])
+        render=self.store.render_get((face.get('compiled') or {}).get('renderKey',''))
+        if not render:raise ValidationError(deck_name+' / '+face['name']+': render is missing or out of date.')
+        return render
+
+    def _review_composite(self,reference_url,render,refresh=False):
+        raw,_,_=self.net.fetch(reference_url,refresh=refresh)
+        reference=decode_image(raw)
+        ours=decode_image(self.store.asset_path(render['asset_id']).read_bytes())
+        if reference.size!=ours.size:
+            reference=reference.resize(ours.size,Image.Resampling.LANCZOS)
+        canvas=Image.new('RGBA',(ours.width*2+1,ours.height),(0,0,0,255))
+        canvas.paste(reference,(0,0),reference)
+        canvas.paste(ours,(ours.width+1,0),ours)
+        out=io.BytesIO();canvas.save(out,'PNG');return out.getvalue()
+
+    def review_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(ident)
+        if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading review images.')
+        stem=slug(d['name'])[:80] or 'deck'
+        out=self.store.home/'orders'/('BulkProxyForge_Review_Images_'+stem+'_'+uid()[:8]+'.zip')
+        names=set();count=0;refresh=bool(d.get('settings',{}).get('refreshData',False))
+        dfc_layouts={'transform','modal_dfc','double_faced_token','reversible_card'}
+        total=sum(1+(1 if c.get('scryfall',{}).get('layout') in dfc_layouts and len(c.get('faces',[]))>=2 else 0) for c in d['cards'])
+        def unique_name(face_name,sf,card_id):
+            base=slug(face_name) or 'card';name=base+'_review.png'
+            if name in names:
+                suffix=slug(str(sf.get('set',''))+'_'+str(sf.get('collector_number',''))+'_'+card_id[:8])
+                name=base+'_'+suffix+'_review.png'
+            names.add(name);return name
+        try:
+            with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED) as z:
+                for c in d['cards']:
+                    if cancel():raise ValidationError('Review-image export cancelled.')
+                    sf=c['scryfall'];faces=c.get('faces') or []
+                    if not faces:raise ValidationError(c['name']+': card has no renderable face.')
+                    sf_faces=sf.get('card_faces') or [sf]
+                    front_sf=sf if (sf.get('image_uris') or {}).get('png') else sf_faces[0]
+                    front_url=(front_sf.get('image_uris') or {}).get('png')
+                    if not front_url:raise ValidationError(c['name']+': selected printing has no full-card PNG for the front.')
+                    front=faces[0];render=self._review_render(front,d['name'])
+                    z.writestr(unique_name(front.get('name',c['name']),sf,c['id']),self._review_composite(front_url,render,refresh));count+=1
+                    progress(count,total,'Saved review image for '+front.get('name',c['name']))
+                    if sf.get('layout') in dfc_layouts and len(faces)>=2:
+                        if len(sf_faces)<2:raise ValidationError(c['name']+': selected printing is missing its reverse face.')
+                        back_url=(sf_faces[1].get('image_uris') or {}).get('png')
+                        if not back_url:raise ValidationError(c['name']+': selected printing has no full-card PNG for the reverse face.')
+                        back=faces[1];render=self._review_render(back,d['name'])
+                        z.writestr(unique_name(back.get('name',c['name']+' back'),sf,c['id']),self._review_composite(back_url,render,refresh));count+=1
+                        progress(count,total,'Saved review image for '+back.get('name',c['name']))
+            return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
+        except Exception:out.unlink(missing_ok=True);raise
