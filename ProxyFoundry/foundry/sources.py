@@ -121,22 +121,7 @@ class Sources:
         if not isinstance(rows,list):raise ValidationError('That GitHub link is a file, not an artwork folder.')
         index={}
         for r in rows:
-            if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)    def printings(self,name,refresh=False,next_page=None):
-        url=next_page or 'https://api.scryfall.com/cards/search?unique=prints&order=released&q='+quote('!"'+name.replace('"','')+'" game:paper')
-        if not url.startswith('https://api.scryfall.com/cards/search?'):raise ValidationError('Invalid printings page.')
-        d=self.net.json(url,refresh=refresh)
-        return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
-
-    def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
-        if policy=='resolved' or policy=='auto' and source_exact:return sf
-        name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')
-        url='https://api.scryfall.com/cards/search?unique=prints&order=released&dir=desc&q='+quote('!"'+name+'" game:paper lang:en')
-        try:
-            page=self.net.json(url,refresh=refresh)
-            rows=page.get('data',[])
-            return rows[0] if rows and isinstance(rows[0],dict) else sf
-        except ValidationError:
-            return sf,r.get('name',''),re.I):
+            if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)$',r.get('name',''),re.I):
                 stem=slug(r['name'].rsplit('.',1)[0])
                 if stem in index:raise ValidationError('Ambiguous filenames in GitHub folder: '+r['name'])
                 blob=str(r.get('sha') or '').lower()
