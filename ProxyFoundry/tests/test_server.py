@@ -352,3 +352,62 @@ def test_review_images_action_is_in_deck_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download review Images' in source
     assert '/review-images' in source
+
+def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
+    store=Store(tmp_path)
+    reference={
+        'https://cards.scryfall.io/png/front/review_transform.png':_review_test_png((100,140),(30,220,30,255)),
+        'https://cards.scryfall.io/png/back/review_back.png':_review_test_png((100,140),(30,30,220,255)),
+    }
+    def transport(url):
+        if url in reference:return reference[url],'image/png',{}
+        raise AssertionError('Unexpected review-image URL: '+url)
+    app=App(store,Network(store,transport=transport,sleeper=lambda _:None))
+    dfc={'id':'22222222-2222-4222-8222-222222222222','name':'Review Transform // Review Back','layout':'transform','set':'tst','collector_number':'11',
+         'card_faces':[
+             {'name':'Review Transform','type_line':'Creature — Human','image_uris':{'png':'https://cards.scryfall.io/png/front/review_transform.png'}},
+             {'name':'Review Back','type_line':'Land','image_uris':{'png':'https://cards.scryfall.io/png/back/review_back.png'}}]}
+    deck=store.put('decks',{'name':'Review Deck','cards':[
+        {'id':'dfc-card','name':'Review Transform // Review Back','quantity':1,'scryfall':dfc,'faces':[{'id':'dfc-front','name':'Review Transform','index':0},{'id':'dfc-back','name':'Review Back','index':1}]},
+    ],'settings':{'refreshData':False,'templateRules':{}},'status':'draft','notes':'','importedSource':''})
+    deck=app.ws.deck(deck['id'])
+    colors=[(20,180,240,255),(180,20,240,255)]
+    for n,f in enumerate(deck['cards'][0]['faces']):
+        asset=ingest_image(store,_review_test_png((101,141),colors[n]))
+        key=(str(n+1)*64)[:64];render=store.render_put(key,asset)
+        template_key,template_version,_=app.ws.compiler.template_identity(f.get('group'),'auto')
+        f['compiled']={'renderKey':key,'render':render,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version}
+    deck['status']='prepared';deck=store.put('decks',deck,deck['revision'])
+    out=app.ws.review_image(deck['id'],'dfc-card','dfc-back')
+    path=store.home/'orders'/out['filename']
+    assert path.suffix=='.png' and out['download'].endswith('.png')
+    image=Image.open(path);image.load()
+    assert image.size==(203,141)
+    assert image.getpixel((5,5))[:3]==(30,30,220)
+    assert image.getpixel((150,5))[:3]==(180,20,240)
+    app.close()
+
+
+def test_render_targets_for_card_only_returns_the_requested_card(tmp_path):
+    store=Store(tmp_path)
+    app=App(store,Network(store,transport=lambda url: (png(),'image/png',{}),sleeper=lambda _:None))
+    deck={'id':'deck-1','name':'Render card deck','status':'prepared','cards':[
+        {'id':'card-one','name':'Alpha','quantity':1,'scryfall':card('Alpha'),'faces':[{'id':'face-one','name':'Alpha','index':0,'compiled':{'renderKey':'1'*64,'data':{'width':1,'height':1}}}]},
+        {'id':'card-two','name':'Beta','quantity':1,'scryfall':card('Beta'),'faces':[{'id':'face-two','name':'Beta','index':0,'compiled':{'renderKey':'2'*64,'data':{'width':1,'height':1}}}]},
+    ]}
+    app.ws.deck=lambda ident: deck
+    plan=app.ws.render_targets_for_card(deck['id'],'card-two')
+    assert plan['cardName']=='Beta'
+    assert [t['name'] for t in plan['targets']]==['Beta']
+    assert [t['key'] for t in plan['targets']]==['2'*64]
+    app.close()
+
+
+def test_card_inspector_actions_exist_in_source():
+    source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
+    assert 'Generate this card' in source
+    assert 'Download review image' in source
+    assert '/review-image' in source
+    render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
+    assert '/api/render-sessions/card' in render
+
