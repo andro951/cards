@@ -47,9 +47,9 @@ def test_custom_template_fingerprint_changes_only_for_edited_template(tmp_path):
     assert one_after[2]==1  # custom data itself is already part of the render key
 
 
-def test_saga_runtime_fix_invalidates_only_saga_auto_templates(tmp_path):
+def test_saga_updates_invalidate_only_saga_auto_templates(tmp_path):
     compiler=Compiler(Store(tmp_path))
-    assert compiler.template_identity('saga','auto')[1:]==(2,2)
-    assert compiler.template_identity('saga-creature','auto')[1:]==(2,2)
+    assert compiler.template_identity('saga','auto')[1:]==(3,3)
+    assert compiler.template_identity('saga-creature','auto')[1:]==(3,3)
     assert compiler.template_identity('standard','auto')[1:]==(1,1)
     assert compiler.template_identity('planeswalker','auto')[1:]==(1,1)
