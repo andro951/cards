@@ -100,6 +100,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             cleric=next(c for c in ready['cards'] if c['name']=='Cleric Class')
             cleric_data=cleric['faces'][0]['compiled']['data']
             assert cleric_data['version']=='class' and cleric_data['class']['count']==2
+            assert cleric_data['frames']==[{'name':'White Frame','src':'/img/frames/class/w.png','masks':[]}]
             assert cleric_data['text']['level1a']['text']=='{3}{W}:' and cleric_data['text']['level2a']['text']=='{4}{W}:'
             search=next(c for c in ready['cards'] if c['name'].startswith('Search for Azcanta'))
             search_front=[x.get('src','') for x in search['faces'][0]['compiled']['data']['frames']]
