@@ -449,12 +449,13 @@ def _class_parts(oracle_text):
     if current:levels.append(current)
     if not levels or len(levels)>3:
         raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
-    base=[]
-    for i,line in enumerate(initial):
-        if i==0 and line.startswith('(') and line.endswith(')'):
-            base.append('{i}'+line+'{/i}')
-            if len(initial)>1:base.append('{bar}')
-        else:base.append(line)
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base=['{i}'+reminder+'{/i}','{bar}',*initial]
     return '\n'.join(base),[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
 
 
