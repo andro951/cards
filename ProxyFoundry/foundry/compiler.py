@@ -581,7 +581,7 @@ class Compiler:
             elif group=='class':
                 d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
-            elif 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+            elif choice=='auto' and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
                 d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
