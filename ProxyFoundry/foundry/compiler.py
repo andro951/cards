@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':2,'saga-creature':2,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':3,'saga-creature':3,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -407,6 +407,41 @@ def _apply_transform_frame(data,side,sem,card):
     return data
 
 
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+
+
+def apply_dual_saga_gradient(data,sem,group):
+    """Give two-color Sagas the same eased dual-color pinline as other cards."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    left,right=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name')=='Pinline' for mask in frame.get('masks',[]))
+        and 'Gradient Saga Pinline' in str(frame.get('name',''))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    frames.insert(target,{
+        'name':f"{native.COLOR_NAMES[left]}/{native.COLOR_NAMES[right]} Gradient Saga Pinline",
+        'src':native.dual_gradient_fill_src(left,right),
+        'masks':[{'src':_SAGA_PINLINE_MASKS[group],'name':'Pinline'}],
+    })
+    return True
+
 def build_transform_data(sem,group,card,artist,autofit,flags):
     """Treat each DFC face normally, then replace only its shell with transform."""
     d0=_transform_classic_semantic(sem)
@@ -581,9 +616,11 @@ class Compiler:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
-                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),native.infer_layout(d0,native.get_type_info(d0)))
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_gradient(data,sem,group)
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
-                recipe=native.infer_layout(d0,native.get_type_info(d0))
         else:
             t=self.store.get('templates',choice)
             if not t:raise ValidationError('The selected template was deleted.')
