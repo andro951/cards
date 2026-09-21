@@ -23,6 +23,77 @@ class Runtime:
         if u.scheme not in {'http','https'} or u.username or u.password:return None
         if u.hostname not in {'cardconjurer.app','www.cardconjurer.app','cardconjurer.com','www.cardconjurer.com'}:return None
         return cls.path(u.path)
+    def creator_script(self):
+        """Patch native inline mana wrapping while preserving the pinned renderer."""
+        path='/js/creator-23.js'
+        url='https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/')
+        raw,mime,meta=self.net.fetch(url,immutable=True)
+        text=raw.decode('utf-8').replace('\r\n','\n')
+        loop_anchor="""		//Begin looping through words/codes
+		innerloop: for (word of splitText) {
+			var wordToWrite = word;"""
+        loop_replacement="""		//Begin looping through words/codes
+		function proxyFoundryManaSymbolForToken(token) {
+			if (typeof token != 'string' || !token.includes('{') || !token.includes('}')) return null;
+			var code = token.toLowerCase().replace('{', '').replace('}', '').replaceAll('/', '');
+			if (['bar', 'whitebar', 'planechase'].includes(code)) return null;
+			var symbol = null;
+			if (textObject.manaPrefix) {
+				symbol = getManaSymbol(textObject.manaPrefix + code) || getManaSymbol(textObject.manaPrefix + code.split('').reverse().join(''));
+			}
+			return symbol || getManaSymbol(code) || getManaSymbol(code.split('').reverse().join('')) || null;
+		}
+		function proxyFoundryManaClusterWidth(startIndex) {
+			var total = 0;
+			var index = startIndex;
+			var lastBaseWidth = 0;
+			var lastSpacing = 0;
+			while (index < splitText.length) {
+				var symbol = proxyFoundryManaSymbolForToken(splitText[index]);
+				if (!symbol) break;
+				var spacing = textSize * 0.04 + textManaSpacing;
+				var baseWidth = symbol.width * textSize * 0.78;
+				total += baseWidth + spacing * 2;
+				lastBaseWidth = baseWidth;
+				lastSpacing = spacing;
+				index ++;
+			}
+			if (index < splitText.length && typeof splitText[index] == 'string' && /^[,:;.?!]+$/.test(splitText[index])) {
+				total += lineContext.measureText(splitText[index]).width;
+			}
+			if (textObject.manaImageScale > 1 && lastBaseWidth) {
+				total += Math.max(0, (textObject.manaImageScale - 1) * lastBaseWidth / 2 - lastSpacing);
+			}
+			return total;
+		}
+		innerloop: for (var proxyFoundryWordIndex = 0; proxyFoundryWordIndex < splitText.length; proxyFoundryWordIndex ++) {
+			var word = splitText[proxyFoundryWordIndex];
+			var wordToWrite = word;"""
+        mana_anchor="""					var manaSymbolSpacing = textSize * 0.04 + textManaSpacing;
+					var manaSymbolWidth = manaSymbol.width * textSize * 0.78;
+					var manaSymbolHeight = manaSymbol.height * textSize * 0.78;
+					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;"""
+        mana_replacement="""					var manaSymbolSpacing = textSize * 0.04 + textManaSpacing;
+					var manaSymbolWidth = manaSymbol.width * textSize * 0.78;
+					var manaSymbolHeight = manaSymbol.height * textSize * 0.78;
+					if (!textObject.manaPlacement && !textObject.manaLayout && !textOneLine && textArcRadius == 0 && currentX > startingCurrentX) {
+						var previousManaSymbol = proxyFoundryManaSymbolForToken(splitText[proxyFoundryWordIndex - 1]);
+						if (!previousManaSymbol) {
+							var manaClusterWidth = proxyFoundryManaClusterWidth(proxyFoundryWordIndex);
+							if (manaClusterWidth > 0 && currentX + manaClusterWidth >= textWidth) {
+								splitText.splice(proxyFoundryWordIndex, 0, '{lns}');
+								proxyFoundryWordIndex --;
+								continue innerloop;
+							}
+						}
+					}
+					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;"""
+        if text.count(loop_anchor)!=1 or text.count(mana_anchor)!=1:
+            raise ValidationError('Pinned CardConjurer text renderer changed unexpectedly; inline mana wrapping was not patched.')
+        text=text.replace(loop_anchor,loop_replacement).replace(mana_anchor,mana_replacement)
+        with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':hashlib.sha256(raw).hexdigest(),'adapter':'inline mana cluster wrapping'}
+        return text.encode(),'application/javascript'
+
     def station_script(self):
         """Use the real native Station module, pinned by content rather than a moving site version.
 
@@ -46,6 +117,7 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        if path=='/js/creator-23.js':return self.creator_script()
         if path=='/js/frames/versionStation.js':return self.station_script()
         # The hidden native frame picker does not need its thumbnail catalogue.
         if re.search(r'Thumb\.png$',path,re.I):
