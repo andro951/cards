@@ -295,3 +295,60 @@ def test_back_catalog_and_composition_endpoint(running):
     assert (result['width'],result['height'])==(1055,1491)
     assert request(s,'/api/backs/compose',{'iconAsset':image['id']},headers={'X-Proxy-CSRF':'wrong'})[0]==403
     assert request(s.runtime_server,'/api/backs/catalog')[0]==404
+
+
+def _review_test_png(size,color):
+    out=io.BytesIO();Image.new('RGBA',size,color).save(out,'PNG');return out.getvalue()
+
+
+def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_path):
+    store=Store(tmp_path)
+    reference={
+        'https://cards.scryfall.io/png/front/review_normal.png':_review_test_png((100,140),(220,30,30,255)),
+        'https://cards.scryfall.io/png/front/review_transform.png':_review_test_png((100,140),(30,220,30,255)),
+        'https://cards.scryfall.io/png/back/review_back.png':_review_test_png((100,140),(30,30,220,255)),
+    }
+    def transport(url):
+        if url in reference:return reference[url],'image/png',{}
+        raise AssertionError('Unexpected review-image URL: '+url)
+    app=App(store,Network(store,transport=transport,sleeper=lambda _:None))
+    normal={'id':'11111111-1111-4111-8111-111111111111','name':'Review Normal','layout':'normal','type_line':'Creature — Human','set':'tst','collector_number':'10',
+            'image_uris':{'png':'https://cards.scryfall.io/png/front/review_normal.png'}}
+    dfc={'id':'22222222-2222-4222-8222-222222222222','name':'Review Transform // Review Back','layout':'transform','set':'tst','collector_number':'11',
+         'card_faces':[
+             {'name':'Review Transform','type_line':'Creature — Human','image_uris':{'png':'https://cards.scryfall.io/png/front/review_transform.png'}},
+             {'name':'Review Back','type_line':'Land','image_uris':{'png':'https://cards.scryfall.io/png/back/review_back.png'}}]}
+    deck=store.put('decks',{'name':'Review Deck','cards':[
+        {'id':'normal-card','name':'Review Normal','quantity':1,'scryfall':normal,'faces':[{'id':'normal-face','name':'Review Normal','index':0}]},
+        {'id':'dfc-card','name':'Review Transform // Review Back','quantity':1,'scryfall':dfc,'faces':[{'id':'dfc-front','name':'Review Transform','index':0},{'id':'dfc-back','name':'Review Back','index':1}]},
+    ],'settings':{'refreshData':False,'templateRules':{}},'status':'draft','notes':'','importedSource':''})
+    deck=app.ws.deck(deck['id'])
+    colors=[(240,180,20,255),(20,180,240,255),(180,20,240,255)];n=0
+    deck_back=ingest_image(store,_review_test_png((101,141),(5,5,5,255)))['id'];deck['settings']['backAsset']=deck_back
+    for c in deck['cards']:
+        for f in c['faces']:
+            asset=ingest_image(store,_review_test_png((101,141),colors[n]));n+=1
+            key=(str(n)*64)[:64];render=store.render_put(key,asset)
+            template_key,template_version,_=app.ws.compiler.template_identity(f['group'],'auto')
+            f['compiled']={'renderKey':key,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version}
+    deck['status']='prepared';deck=store.put('decks',deck,deck['revision'])
+    assert app.ws.deck(deck['id'])['status']=='ready'
+    out=app.ws.review_images(deck['id'])
+    with zipfile.ZipFile(store.home/'orders'/out['filename']) as z:
+        assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
+        assert out['count']==3
+        image=Image.open(io.BytesIO(z.read('review_normal_review.png')));image.load()
+        assert image.size==(203,141)
+        assert image.getpixel((5,5))[:3]==(220,30,30)
+        assert image.getpixel((101,5))[:3]==(0,0,0)
+        assert image.getpixel((150,5))[:3]==(240,180,20)
+        back=Image.open(io.BytesIO(z.read('review_back_review.png')));back.load()
+        assert back.getpixel((5,5))[:3]==(30,30,220)
+        assert back.getpixel((150,5))[:3]==(180,20,240)
+    app.close()
+
+
+def test_review_images_action_is_in_deck_menu():
+    source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
+    assert 'Download review Images' in source
+    assert '/review-images' in source
