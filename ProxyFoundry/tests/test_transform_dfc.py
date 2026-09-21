@@ -24,6 +24,7 @@ def everflowing_pair():
         'set':'lci',
         'collector_number':'56',
         'artist':'David Álvarez',
+        'frame_effects':['compasslanddfc'],
         'card_faces':[
             {
                 'name':'The Everflowing Well',
@@ -60,23 +61,55 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     assert front['group']=='transform-front' and front['recipe']=='m15_transform_front'
     assert back['group']=='transform-back' and back['recipe']=='m15_transform_back'
-    assert front['templateVersion']==4 and back['templateVersion']==4
+    assert front['templateVersion']==5 and back['templateVersion']==5
     assert front['data']['version']=='m15TransformFront'
     assert back['data']['version']=='m15TransformFront'
 
     front_sources=[f.get('src','') for f in front['data']['frames']]
     back_sources=[f.get('src','') for f in back['data']['frames']]
-    assert '/img/frames/m15/transform/icons/default.png' in front_sources
+    assert '/img/frames/m15/transform/icons/compass.svg' in front_sources
     assert any('/img/frames/m15/transform/regular/frontA.png'==x for x in front_sources)
-    assert any('/img/frames/m15/transform/regular/new/backA.png'==x for x in back_sources)
+    assert any('/img/frames/m15/transform/regular/new/backL.png'==x for x in back_sources)
     assert any('/img/frames/m15/transform/crowns/regular/u.png'==x for x in front_sources)
-    assert any('/img/frames/m15/transform/crowns/regular/new/a.png'==x for x in back_sources)
-    assert '/img/frames/m15/transform/icons/default.png' not in back_sources
+    assert any('/img/frames/m15/transform/crowns/regular/new/l.png'==x for x in back_sources)
+    assert '/img/frames/m15/transform/icons/land.svg' in back_sources
     assert front['data']['text']['title']['x']==0.16
     assert back['data']['text']['title']['x']==0.0854
     assert back['data']['text']['title']['color']=='white'
     assert back['data']['text']['type']['color']=='white'
     assert front['renderKey']!=back['renderKey']
+
+
+def test_search_for_azcanta_uses_transform_enchantment_front_and_land_back(tmp_path):
+    store,art,settings=env(tmp_path)
+    card={
+        'object':'card','id':'22222222-2222-4222-8222-222222222222',
+        'name':'Search for Azcanta // Azcanta, the Sunken Ruin','layout':'transform',
+        'rarity':'rare','set':'xln','collector_number':'74','artist':'Magali Villeneuve',
+        'frame_effects':['compasslanddfc'],
+        'card_faces':[
+            {'name':'Search for Azcanta','type_line':'Legendary Enchantment','mana_cost':'{1}{U}',
+             'oracle_text':'At the beginning of your upkeep, surveil 1. Then if you have seven or more cards in your graveyard, you may transform Search for Azcanta.',
+             'colors':['U'],'artist':'Magali Villeneuve'},
+            {'name':'Azcanta, the Sunken Ruin','type_line':'Legendary Land','mana_cost':'',
+             'oracle_text':'(Transforms from Search for Azcanta.)\n{T}: Add {U}.\n{2}{U}, {T}: Look at the top four cards of your library.',
+             'colors':[],'produced_mana':['U'],'artist':'Magali Villeneuve'},
+        ],
+    }
+    compiler=Compiler(store)
+    front=compiler.compile_face(card,card['card_faces'][0],0,{},settings,art,art_origin='Scryfall selected printing')
+    back=compiler.compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
+    front_sources=[f.get('src','') for f in front['data']['frames']]
+    back_sources=[f.get('src','') for f in back['data']['frames']]
+    assert front['templateVersion']==5 and back['templateVersion']==5
+    assert '/img/frames/m15/transform/regular/frontU.png' in front_sources
+    assert '/img/frames/m15/transform/regular/new/backL.png' in back_sources
+    assert '/img/frames/m15/transform/crowns/regular/u.png' in front_sources
+    assert '/img/frames/m15/transform/crowns/regular/new/l.png' in back_sources
+    assert '/img/frames/m15/transform/icons/compass.svg' in front_sources
+    assert '/img/frames/m15/transform/icons/land.svg' in back_sources
+    assert front['data']['text']['type']['text']=='Legendary Enchantment'
+    assert back['data']['text']['type']['text']=='Legendary Land'
 
 
 def test_transform_structural_faces_still_require_compatible_template(tmp_path):
