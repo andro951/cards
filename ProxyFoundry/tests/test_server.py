@@ -98,7 +98,7 @@ def test_diagnostics_download_routes_return_real_files(running):
     # Simulate a legacy/corrupt job log containing a byte that Windows cp1252
     # cannot decode. Diagnostics should sanitize it instead of failing.
     bad=app.store.home/'logs'/'job-legacy-corrupt.json'
-    bad.write_bytes(b'{"id":"legacy","message":"bad \\x81 byte","result":{"large":"omit"}}')
+    bad.write_bytes(b'{"id":"legacy","message":"bad '+bytes([0x81])+b' byte","result":{"large":"omit"}}')
     status,raw,headers=request(s,'/api/diagnostics.zip',raw=True)
     assert status==200 and headers.get_content_type()=='application/zip'
     assert 'BulkProxyForge_Diagnostics.zip' in headers.get('Content-Disposition','')
