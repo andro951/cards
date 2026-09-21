@@ -89,3 +89,7 @@ def test_valgavoths_lair_is_land_family_with_five_color_mana_identity(tmp_path):
     assert result['recipe']=='land_five_color'
     assert data['text']['type']['text']=='Enchantment Land'
     assert result['templateVersion']==1
+
+    classic=Compiler(store).compile_face(card,card,0,{'templateOverride':'normal'},settings,art,art_origin='Scryfall selected printing')
+    assert classic['recipe']=='card_noncreature'
+    assert classic['data']['text']['type']['text']=='Enchantment Land'
