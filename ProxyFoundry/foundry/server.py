@@ -544,7 +544,8 @@ class Handler(BaseHTTPRequestHandler):
             if action == 'restore': return self.respond(self.app.store.trash('decks',ident,d.get('revision'),restore=True))
             if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))
             if action == 'review-images': return self.respond(self.app.jobs.start('Download review images', lambda u, c: self.app.ws.review_images(ident, u, c)))
-        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(printing|token|review-image))?', p):
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(prepare|printing|token|review-image))?', p):
+            if m[3] == 'prepare': return self.respond(self.app.jobs.start('Prepare card', lambda u, c: self.app.ws.prepare_card(m[1], m[2], u, c)))
             if m[3] == 'printing': return self.respond(self.app.ws.replace_printing(m[1], m[2], d['source'], d['revision']))
             if m[3] == 'token': return self.respond(self.app.ws.copy_token(m[1], m[2], d.get('spec', {}), d['revision']))
             if m[3] == 'review-image': return self.respond(self.app.jobs.start('Download review image', lambda u, c: self.app.ws.review_image(m[1], m[2], d.get('faceId'), u, c)))
