@@ -1,7 +1,7 @@
 import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
-import {renderDecks} from './render.js';
+import {renderDecks,renderCard} from './render.js';
 import {chooseOrder} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
@@ -95,18 +95,54 @@ function deckMenu(d){
 }
 async function inspect(deck,card,index=0){
   let d=await api('/api/decks/'+deck.id);let c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed in another tab.');
-  let f=c.faces[index]||c.faces[0],fit={...(f.fit||{})},artOverride=f.artOverride,backOverride=c.backOverride,backDesignOverride=c.backDesignOverride||null;let changedArt=false;
+  let f=c.faces[index]||c.faces[0],fit={...(f.fit||{})},artOverride=f.artOverride,backOverride=c.backOverride,backDesignOverride=c.backDesignOverride||null;
   const comp=f.compiled,group=f.group||comp?.group||'standard',sfFace=c.scryfall.card_faces?.[f.index]||c.scryfall,legendary=String(sfFace.type_line||c.scryfall.type_line||'').includes('Legendary');
   const data=comp?.data||{};
-  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${c.faces.length===2?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line">${esc(comp?.render?'CardConjurer render':'Artwork preview; generate images for the full card.')}</div>${comp?.crop?.warning?`<div class="notice">Crop warning: ${(comp.crop.cropX*100).toFixed(1)}% width / ${(comp.crop.cropY*100).toFixed(1)}% height outside the art window.</div>`:''}</div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity in this deck</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Selected printing</span><button class="button" id="choose-printing">${esc((c.scryfall.set||'').toUpperCase())} · ${esc(c.scryfall.collector_number||'')} &nbsp; Change ↗</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
+  const renderNotice=()=>{
+    const parts=[];
+    if(f.compiled?.crop?.warning){const crop=f.compiled.crop;parts.push(`<div class="notice">Crop warning: ${(crop.cropX*100).toFixed(1)}% width / ${(crop.cropY*100).toFixed(1)}% height outside the art window.</div>`);}
+    if(f.error)parts.push(`<div class="notice error">${esc(f.error)}</div>`);
+    return parts.join('');
+  };
+  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${c.faces.length===2?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line" id="inspector-status">${esc(comp?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.')}</div><div id="inspector-notices">${renderNotice()}</div></div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity in this deck</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Selected printing</span><button class="button" id="choose-printing">${esc((c.scryfall.set||'').toUpperCase())} · ${esc(c.scryfall.collector_number||'')} &nbsp; Change ↗</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
   <div class="field"><span>Custom artwork override</span><div class="actions"><button class="button small" id="face-art">Upload art</button><button class="button quiet small" id="clear-face-art">Use deck artwork source</button></div><small id="face-art-state">${artOverride?'Individual custom artwork selected':esc(comp?.artOrigin||'Using deck source')}</small></div>
   <div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">${c.faces.length===2?'Use actual reverse':'Use deck back'}</button></div><small id="face-back-state">${backOverride?'Individual back selected':c.faces.length===2?'Paired with '+esc(c.faces[1].name):'Using deck default back'}</small><div id="face-back-picker" class="hidden"></div></div>
-  <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details>${f.error?`<div class="notice error">${esc(f.error)}</div>`:''}<div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="cancel-card">Cancel</button><button class="button primary" id="save-card">Save card</button>`});
+  <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details><div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="cancel-card">Cancel</button><button class="button quiet" id="download-review-image">Download review image</button><button class="button" id="generate-card">Generate this card</button><button class="button primary" id="save-card">Save card</button>`});
   const creditControls=bindCreditFields(host,d,c,f,()=>artOverride);
   $('#face-template').value=f.templateOverride||'';
+  const syncCurrent=updated=>{d=updated;c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed.');f=c.faces.find(x=>x.id===f.id)||c.faces[index]||c.faces[0];};
+  const refreshInspector=()=>{
+    const img=$('#inspector-image');const src=preview(c,f);if(img&&src)img.src=src;
+    if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.';
+    if($('#inspector-notices'))$('#inspector-notices').innerHTML=renderNotice();
+  };
+  const setBusy=busy=>['cancel-card','download-review-image','generate-card','save-card'].forEach(id=>{const el=$('#'+id);if(el)el.disabled=busy;});
+  const buildPatch=()=>{
+    const credits=creditControls.values();
+    const semantic={...f.semanticOverrides};const rules=$('#rules-override').value;if(rules)semantic.oracle_text=rules;else delete semantic.oracle_text;
+    if($('#remove-flavor').checked)semantic.flavor_text='';else if($('#flavor-override').value)semantic.flavor_text=$('#flavor-override').value;else delete semantic.flavor_text;
+    if($('#rarity-override').value)semantic.rarity=$('#rarity-override').value;else delete semantic.rarity;
+    const patch={revision:d.revision,quantity:$('#card-qty').value,backOverride:backOverride||null,backDesignOverride,faceId:f.id};
+    const changes={...credits,artOverride:artOverride||null,templateOverride:$('#face-template').value||null,fit,semanticOverrides:semantic};
+    for(const [k,value] of Object.entries(changes))if(JSON.stringify(value)!==JSON.stringify(f[k]??(['fit','semanticOverrides'].includes(k)?{}:null)))patch[k]=value;
+    return patch;
+  };
+  const persistCard=async()=>{
+    const patch=buildPatch();
+    if(Object.keys(patch).length<=4)return d;
+    syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,patch));
+    refreshInspector();
+    return d;
+  };
+  const prepareIfNeeded=async()=>{
+    if(d.status!=='draft')return d;
+    syncCurrent(await job('/api/decks/'+d.id+'/prepare',{}, {label:'Prepare deck'}));
+    refreshInspector();
+    return d;
+  };
   $('#cancel-card').onclick=closeModal;
-  $('#face-art').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;artOverride=(await uploadImage(file)).id;changedArt=true;fit={};$('#face-art-state').textContent='Custom art: '+file.name;if($('#inspector-image'))$('#inspector-image').src=asset(artOverride);creditControls.refresh();});
-  $('#clear-face-art').onclick=()=>{artOverride=null;changedArt=true;fit={};$('#face-art-state').textContent='Using deck source after regeneration';creditControls.refresh();};
+  $('#face-art').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;artOverride=(await uploadImage(file)).id;fit={};$('#face-art-state').textContent='Custom art: '+file.name;if($('#inspector-image'))$('#inspector-image').src=asset(artOverride);creditControls.refresh();});
+  $('#clear-face-art').onclick=()=>{artOverride=null;fit={};$('#face-art-state').textContent='Using deck source after regeneration';creditControls.refresh();};
   $('#face-back').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;backOverride=(await uploadImage(file,{back:true})).id;backDesignOverride={mode:'custom'};$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent='Custom back: '+file.name;});
   $('#clear-face-back').onclick=()=>{backOverride=null;backDesignOverride=null;$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent=c.faces.length===2?'Actual reverse will be used':'Deck default back will be used';};
   $('#face-back-designer').onclick=()=>{
@@ -120,23 +156,16 @@ async function inspect(deck,card,index=0){
     fit={artX:Number($('#fit-x').value)/(data.width||2010),artY:Number($('#fit-y').value)/(data.height||2814),artZoom:Number($('#fit-zoom').value)/100,artRotate:Number($('#fit-rotation').value)};
   };
   $('#reset-fit').onclick=()=>{fit={};toast('Automatic artwork fit will be applied when regenerated.');};
-  $('#save-card').onclick=async()=>{
-    try{
-      const credits=creditControls.values();
-      const semantic={...f.semanticOverrides};const rules=$('#rules-override').value;if(rules)semantic.oracle_text=rules;else delete semantic.oracle_text;
-      if($('#remove-flavor').checked)semantic.flavor_text='';else if($('#flavor-override').value)semantic.flavor_text=$('#flavor-override').value;else delete semantic.flavor_text;
-      if($('#rarity-override').value)semantic.rarity=$('#rarity-override').value;else delete semantic.rarity;
-      const patch={revision:d.revision,quantity:$('#card-qty').value,backOverride:backOverride||null,backDesignOverride,faceId:f.id};
-      const changes={...credits,artOverride:artOverride||null,templateOverride:$('#face-template').value||null,fit,semanticOverrides:semantic};
-      for(const [k,value] of Object.entries(changes))if(JSON.stringify(value)!==JSON.stringify(f[k]??(['fit','semanticOverrides'].includes(k)?{}:null)))patch[k]=value;
-      $('#save-card').disabled=true;await api('/api/decks/'+d.id+'/cards/'+c.id,patch);closeModal();await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');
-    }catch(e){errorBox($('.modal-body',host),e.message);if($('#save-card'))$('#save-card').disabled=false;}
-  };
+  $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();closeModal();await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');}finally{setBusy(false);}});
+  $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();await showDeck(d.id,'cards');}finally{setBusy(false);}});
+  $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
+    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();attempt(()=>inspect(d,c,index===0?1:0));};
   $('#choose-printing').onclick=()=>attempt(()=>printings(d,c));
   $('#remove-card').onclick=()=>attempt(async()=>{closeModal();if(!await confirmAction('Remove '+c.name+'?',`Remove all ${c.quantity} copies from this deck? Other decks are not changed.`,'Remove card',true))return;await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,remove:true});await showDeck(d.id);});
   $('#copy-token').onclick=()=>copyToken(d,c);
 }
+
 async function printings(d,c){
   const host=modal('Choose a printing · '+c.name,loading(),{size:'large'});let next=null;
   async function load(append=false){
