@@ -141,6 +141,35 @@ class App:
         return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION}
 
+    def start_card_render_session(self, deck_id, card_id, force=False):
+        self.log.info('RENDER_CARD_PLAN_BEGIN pipeline=%s force=%s deck=%s card=%s', PIPELINE_VERSION, bool(force), self._short(deck_id), self._short(card_id))
+        plan = self.ws.render_targets_for_card(deck_id, card_id, force=force)
+        ident = uid()
+        now = time.time()
+        targets = {x['key']: x for x in plan['targets']}
+        with self.lock:
+            self.render_sessions = {k: v for k, v in self.render_sessions.items() if now - v['created'] < 7200}
+            self.render_sessions[ident] = {'targets': targets, 'created': now}
+            for t in targets.values():
+                from .backup import referenced_assets
+                self.runtime_assets.update(referenced_assets(t['data']))
+        queued=set(targets)
+        self.log.info('RENDER_CARD_PLAN_DONE session=%s pipeline=%s force=%s queued=%s cached=%s errors=%s deck=%s card=%s',
+                      self._short(ident), PIPELINE_VERSION, bool(force), len(queued), plan['cached'], len(plan.get('errors', [])),
+                      self._short(deck_id), self._short(card_id))
+        deck=self.ws.deck(deck_id)
+        card=next((x for x in deck.get('cards',[]) if x.get('id')==card_id),None)
+        for face in (card or {}).get('faces', []):
+            comp=face.get('compiled') or {};key=comp.get('renderKey') or '';render=self.store.render_get(key) if key else None
+            data=comp.get('data') or {}
+            self.log.info('RENDER_CARD_FACE_DECISION deck=%s card=%s face=%s generation=%s key=%s cachePresent=%s cacheAsset=%s queued=%s force=%s ccVersion=%s zoom=%s x=%s y=%s',
+                          self._short(deck_id), self._short(card_id), face.get('name'), comp.get('generationVersion') or '-', self._short(key),
+                          bool(render), self._short(render.get('asset_id') if render else ''), key in queued, bool(force),
+                          data.get('version','-'), data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'))
+        return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
+                'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION,
+                'deckName': plan.get('deckName'), 'cardName': plan.get('cardName')}
+
     def target(self, session, key):
         with self.lock:
             s = self.render_sessions.get(session)
@@ -399,8 +428,11 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
-        if m := re.fullmatch(r'/api/(files|backups)/([A-Za-z0-9_.-]+\.zip)', p):
-            return self.file(self.app.store.home / ('orders' if m[1] == 'files' else 'backups') / m[2], 'application/zip', m[2])
+        if m := re.fullmatch(r'/api/files/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
+            mime='application/zip' if m[1].lower().endswith('.zip') else 'image/png'
+            return self.file(self.app.store.home / 'orders' / m[1], mime, m[1])
+        if m := re.fullmatch(r'/api/backups/([A-Za-z0-9_.-]+\.zip)', p):
+            return self.file(self.app.store.home / 'backups' / m[1], 'application/zip', m[1])
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
             if m[2] == 'metadata':
@@ -475,6 +507,7 @@ class Handler(BaseHTTPRequestHandler):
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})
         if p == '/api/render-sessions': return self.respond(self.app.start_render_session(d.get('deckIds', []), force=d.get('force') is True))
+        if p == '/api/render-sessions/card': return self.respond(self.app.start_card_render_session(d['deckId'], d['cardId'], force=d.get('force') is True))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))
@@ -511,9 +544,10 @@ class Handler(BaseHTTPRequestHandler):
             if action == 'restore': return self.respond(self.app.store.trash('decks',ident,d.get('revision'),restore=True))
             if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))
             if action == 'review-images': return self.respond(self.app.jobs.start('Download review images', lambda u, c: self.app.ws.review_images(ident, u, c)))
-        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(printing|token))?', p):
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(printing|token|review-image))?', p):
             if m[3] == 'printing': return self.respond(self.app.ws.replace_printing(m[1], m[2], d['source'], d['revision']))
             if m[3] == 'token': return self.respond(self.app.ws.copy_token(m[1], m[2], d.get('spec', {}), d['revision']))
+            if m[3] == 'review-image': return self.respond(self.app.jobs.start('Download review image', lambda u, c: self.app.ws.review_image(m[1], m[2], d.get('faceId'), u, c)))
             return self.respond(self.app.ws.mutate_card(m[1], m[2], d))
         raise FileNotFoundError('That API action does not exist.')
 
