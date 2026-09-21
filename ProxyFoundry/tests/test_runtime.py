@@ -48,6 +48,30 @@ def test_modern_saga_asset_source_is_not_a_global_fallback():
     assert len(calls)==2
     assert Runtime.COLORLESS_SAGA_CREATURE_REPO not in calls[-1]
 
+def test_creator_script_patches_inline_mana_cluster_wrapping():
+    source='''function writeText(textObject, targetContext) {
+		//Begin looping through words/codes
+		innerloop: for (word of splitText) {
+			var wordToWrite = word;
+					var manaSymbolSpacing = textSize * 0.04 + textManaSpacing;
+					var manaSymbolWidth = manaSymbol.width * textSize * 0.78;
+					var manaSymbolHeight = manaSymbol.height * textSize * 0.78;
+					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;
+}'''
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert CC_COMMIT in url and kwargs.get('immutable') is True
+            return source.encode(),'application/javascript',{}
+    runtime=Runtime(FakeNet())
+    raw,mime=runtime.fetch('/js/creator-23.js');text=raw.decode()
+    assert mime=='application/javascript'
+    assert 'proxyFoundryManaClusterWidth' in text
+    assert "splitText.splice(proxyFoundryWordIndex, 0, '{lns}')" in text
+    assert 'currentX + manaClusterWidth >= textWidth' in text
+    assert 'innerloop: for (word of splitText)' not in text
+    assert runtime.diagnostic()['files']['/js/creator-23.js']['adapter']=='inline mana cluster wrapping'
+
+
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer dependency inspection')
 def test_colorless_saga_creature_gap_asset_exists_at_pinned_commit():
     url='https://raw.githubusercontent.com/'+Runtime.COLORLESS_SAGA_CREATURE_REPO+'/'+Runtime.COLORLESS_SAGA_CREATURE_COMMIT+Runtime.COLORLESS_SAGA_CREATURE_PATH
