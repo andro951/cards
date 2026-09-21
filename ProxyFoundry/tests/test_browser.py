@@ -97,6 +97,20 @@ def test_browser_symbol_folder_upload(browser_app,tmp_path):
     expect(page.locator('.toast.error')).to_contain_text('common.*, uncommon.*, rare.*, and mythic.*',timeout=10000)
     assert app.ws.deck(d['id'])['settings']['symbols']==before
     assert not errors,errors
+def test_browser_card_search_preserves_typing_order_and_caret(browser_app):
+    app,server,page,errors=browser_app
+    d=app.ws.create({'name':'Search deck','source':'1 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+d['id']+'/cards')
+    search=page.locator('#card-search');search.wait_for();search.click()
+    page.keyboard.type('Test')
+    expect(search).to_have_value('Test')
+    assert search.evaluate('(el)=>[el.selectionStart,el.selectionEnd]')==[4,4]
+    page.keyboard.press('ArrowLeft');page.keyboard.type('X')
+    expect(page.locator('#card-search')).to_have_value('TesXt')
+    assert page.locator('#card-search').evaluate('(el)=>[el.selectionStart,el.selectionEnd]')==[4,4]
+    assert not errors,errors
+
+
 def test_browser_card_hover_shows_assigned_back_without_flip_button(browser_app):
     app,server,page,errors=browser_app
     art=ingest_image(app.store,png());back=ingest_image(app.store,png((300,420),'#775544'));symbols=rarity_variants(app.store,art['id'])
