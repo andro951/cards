@@ -1,19 +1,18 @@
 import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast} from './ui.js';
 let activeFrame=null;
-export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false}={}){
+
+async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.'}={}){
   if(state.busy)throw new Error('Another task is running. Wait for it or cancel first.');
   state.busy=true;let cancelled=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
   const origin=state.bootstrap.runtimeOrigin;
   const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.remove();activeFrame=null;};
   try{
-    if(prepare)for(const id of ids){const before=await api('/api/decks/'+id);force=force||!!before.upgradeRequired;await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
-    const plan=await api('/api/render-sessions',{deckIds:ids,force});
-    activity('Render deck','Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
-    if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity('All images are already up to date');toast('Cached images reused. No rendering needed.');return;}
-    if(force)activity('Render deck','Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
+    activity(label,'Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
+    if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity(idleMessage);toast(idleToast);return;}
+    if(plan.force)activity(label,'Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
     await job('/api/runtime/prepare',{}, {label:'Load CardConjurer'});
     $('#activity-cancel').textContent='Cancel';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>{cancelled=true;rejectPending?.(new Error('Rendering cancelled. Completed images are saved.'));readyReject?.(new Error('Rendering cancelled.'));cleanup();};
-    activity('Render deck','Starting native renderer','Loading the pinned CardConjurer runtime…',0,plan.targets.length);
+    activity(label,'Starting native renderer','Loading the pinned CardConjurer runtime…',0,plan.targets.length);
     const readyPromise=new Promise((r,j)=>{readyResolve=r;readyReject=j;});
     listener=event=>{
       if(event.origin!==origin||event.source!==activeFrame?.contentWindow||event.data?.source!=='pf-native-runtime')return;
@@ -22,7 +21,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
       if(m.type==='failed'&&!ready){readyReject(new Error(m.error));return;}
       if(m.type==='diagnostic'){api('/api/render-diagnostic',{key:m.key,stage:m.stage,diagnostic:m.diagnostic}).catch(()=>{});return;}
       if(!pending||m.key!==pending.key)return;
-      if(m.type==='progress'){activity('Render deck',pending.name,m.message,pending.index,plan.targets.length);return;}
+      if(m.type==='progress'){activity(label,pending.name,m.message,pending.index,plan.targets.length);return;}
       if(m.type==='failed')pending.reject(new Error(m.error));
       if(m.type==='rendered'){if(!(m.blob instanceof Blob)||m.blob.size===0)pending.reject(new Error('Native renderer returned an empty PNG.'));else pending.resolve(m);}
     };
@@ -33,19 +32,31 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     await withTimeout(readyPromise,65000,'The native renderer did not start. Check Diagnostics in Settings.');clearInterval(ping);
     for(let i=0;i<plan.targets.length;i++){
       if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-      const t=plan.targets[i];activity('Render deck',t.name,'Loading saved face…',i,plan.targets.length);
+      const t=plan.targets[i];activity(label,t.name,'Loading saved face…',i,plan.targets.length);
       const detail=await api('/api/render-sessions/'+plan.id+'/'+t.key);
-      activity('Render deck',t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);
+      activity(label,t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);
       const promise=new Promise((resolve,reject)=>{pending={...t,index:i,resolve,reject};rejectPending=reject;});
       activeFrame.contentWindow.postMessage({source:'pf-app',type:'render',key:t.key,data:detail.data},origin);
       const output=await withTimeout(promise,150000,t.name+': native render timed out. Retry will keep completed images.');
       pending=null;rejectPending=null;
       await blobRequest('/api/render-sessions/'+plan.id+'/'+t.key,output.blob,'image/png');
-      activity('Render deck',t.name,'PNG saved · '+output.width+' × '+output.height,i+1,plan.targets.length);
+      activity(label,t.name,'PNG saved · '+output.width+' × '+output.height,i+1,plan.targets.length);
       await onUpdate();
     }
     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true);throw new Error(plan.errors.join('\n'));}
-    endActivity('All card images saved');toast('Rendering complete. Your decks are ready for order review.');
+    endActivity(successMessage);toast(successToast);
   }catch(e){api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
 }
+
+export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false}={}){
+  if(prepare)for(const id of ids){const before=await api('/api/decks/'+id);force=force||!!before.upgradeRequired;await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
+  const plan=await api('/api/render-sessions',{deckIds:ids,force});
+  return runRenderPlan(plan,{label:'Render deck',onUpdate,successMessage:'All card images saved',successToast:'Rendering complete. Your decks are ready for order review.'});
+}
+
+export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false}={}){
+  const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
+  return runRenderPlan(plan,{label:'Render card',onUpdate,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
+}
+
 function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}
