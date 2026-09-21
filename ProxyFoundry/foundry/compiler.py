@@ -455,8 +455,8 @@ def _class_parts(oracle_text):
     reminder='(Gain the next level as a sorcery to add its ability.)'
     if initial and initial[0].startswith('(') and initial[0].endswith(')'):
         reminder=initial.pop(0)
-    base=['{i}'+reminder+'{/i}','{bar}',*initial]
-    return '\n'.join(base),[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
 
 
 def build_class_data(sem,artist,autofit,flags):
