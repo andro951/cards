@@ -412,14 +412,21 @@ def test_single_card_prepare_endpoint_never_calls_full_deck_prepare(running):
     d=job_done(s,'/api/decks/import',{'name':'Single prepare','source':'1 Sample Card','settings':{'symbols':symbols,'backAsset':back['id']}})
     d=job_done(s,'/api/decks/'+d['id']+'/prepare',{})
     c=d['cards'][0];f=c['faces'][0];before=f['compiled']['renderKey']
+    other=json.loads(json.dumps(c));other['id']='22222222-2222-4222-8222-222222222222';other['name']='Untouched Card'
+    other['faces'][0]['id']='33333333-3333-4333-8333-333333333333';other['faces'][0]['name']='Untouched Card'
+    other['faces'][0]['compiled']['data']['_single_prepare_sentinel']='keep-me'
+    stored=app.store.get('decks',d['id']);stored['cards'].append(other);stored.pop('summary',None)
+    d=app.store.put('decks',stored,stored['revision']);d=app.ws.deck(d['id'])
     _,d,_=request(s,'/api/decks/'+d['id']+'/cards/'+c['id'],{'revision':d['revision'],'faceId':f['id'],'semanticOverrides':{'oracle_text':'Reach'}})
     assert d['status']=='draft'
     app.ws.prepare=lambda *a,**k: (_ for _ in ()).throw(AssertionError('full deck prepare must not run'))
     d=job_done(s,'/api/decks/'+d['id']+'/cards/'+c['id']+'/prepare',{})
     assert d['status']=='draft'
     selected=next(x for x in d['cards'] if x['id']==c['id'])['faces'][0]
+    untouched=next(x for x in d['cards'] if x['id']==other['id'])['faces'][0]
     assert selected['compiled']['renderKey']!=before
     assert selected['compiled']['data']['text']['rules']['text']=='Reach'
+    assert untouched['compiled']['data']['_single_prepare_sentinel']=='keep-me'
     _,plan,_=request(s,'/api/render-sessions/card',{'deckId':d['id'],'cardId':c['id']})
     assert len(plan['targets'])==1 and plan['targets'][0]['name']=='Sample Card'
 
