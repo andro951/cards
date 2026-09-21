@@ -113,6 +113,24 @@ def test_exact_printing(workspace):
 
 
 
+def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
+    s,a,settings=workspace
+    card=sf('Legendary Creature — Shapeshifter',[])
+    card.update(
+        name='Morophon, the Boundless',mana_cost='{7}',power='6',toughness='6',
+        oracle_text='Changeling (This card is every creature type.)\n'
+                    'As Morophon, the Boundless enters, choose a creature type.\n'
+                    'Spells of the chosen type you cast cost {W}{U}{B}{R}{G} less to cast. '
+                    'This effect reduces only the amount of colored mana you pay.\n'
+                    'Other creatures you control of the chosen type get +1/+1.',
+    )
+    result=Compiler(s).compile_face(card,card,0,{},settings,a)
+    rules=result['data']['text']['rules']['text']
+    assert result['recipe']=='colorless_creature_legendary'
+    assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
+    assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+
+
 @pytest.mark.parametrize('type_line,colors,expected_mask',[
     ('Enchantment — Saga',['U','G'],'/img/frames/saga/sagaMaskPinline.png'),
     ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/saga/creature/masks/sagaMaskPinline.png'),
