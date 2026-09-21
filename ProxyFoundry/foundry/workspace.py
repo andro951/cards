@@ -213,49 +213,67 @@ class Workspace:
                 half=source.crop(box).transpose(Image.Transpose.ROTATE_90);out=io.BytesIO();half.save(out,'PNG')
         except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc
         return ingest_image(self.store,out.getvalue())['id']
-    def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
-        d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
-        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
+    def _prepare_card_faces(self,d,c,s,index,land_index,progress,cancel,done,total):
+        if cancel():raise ValidationError('Preparation cancelled.')
+        sf=c['scryfall']
+        refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
+        if sf.get('id'):
+            progress(done,total,'Checking cached metadata for '+c['name'])
+            sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
+        if sf.get('_meld_result'):c['meldBackAsset']=self._meld_back(sf,refresh)
+        else:c.pop('meldBackAsset',None)
+        flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
+        sf_faces=ingest.face_list(sf)
+        for f in c['faces']:
+            if cancel():raise ValidationError('Preparation cancelled.')
+            progress(done,total,'Preparing '+f['name']);f.pop('error',None)
+            try:
+                face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
+                art_id,origin,url=self._art(sf,face,f,s,index,land_index)
+                options=copy.deepcopy(f)
+                flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
+                options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
+                if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
+                    nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
+                    secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
+                    options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
+                comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
+                if c.get('tokenSpec'):
+                    entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
+                    comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])
+                comp['artOrigin']=origin;comp['exportArtUrl']=url;f['compiled']=comp
+            except (ValidationError,native.BuildError,ValueError,OSError) as e:
+                f['error']=str(e);f.pop('compiled',None)
+            done+=1;progress(done,total,'Prepared '+f['name'])
+        return done
+    def _prepare_sources(self,s,progress):
         index={};land_index={}
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
         if s.get('useLandLibrary'):
             progress(0,1,'Reading hosted full-art land library');land_index=self.sources.github_index(HOSTED_LAND_LIBRARY,refresh=True)
+        return index,land_index
+    def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
+        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
+        index,land_index=self._prepare_sources(s,progress)
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
-            if cancel():raise ValidationError('Preparation cancelled.')
-            sf=c['scryfall']
-            refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
-            if sf.get('id'):
-                progress(done,total,'Checking cached metadata for '+c['name'])
-                sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
-            if sf.get('_meld_result'):c['meldBackAsset']=self._meld_back(sf,refresh)
-            else:c.pop('meldBackAsset',None)
-            flavor_sf=self.sources.flavor_source(sf,s.get('flavorPolicy','auto'),c.get('sourceIsExact',True),refresh)
-            sf_faces=ingest.face_list(sf)
-            for f in c['faces']:
-                if cancel():raise ValidationError('Preparation cancelled.')
-                progress(done,total,'Preparing '+f['name']);f.pop('error',None)
-                try:
-                    face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
-                    art_id,origin,url=self._art(sf,face,f,s,index,land_index)
-                    options=copy.deepcopy(f)
-                    flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
-                    options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
-                    if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
-                        nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
-                        secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
-                        options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
-                    comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
-                    if c.get('tokenSpec'):
-                        entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
-                        comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])
-                    comp['artOrigin']=origin;comp['exportArtUrl']=url;f['compiled']=comp
-                except (ValidationError,native.BuildError,ValueError,OSError) as e:
-                    f['error']=str(e);f.pop('compiled',None)
-                done+=1;progress(done,total,'Prepared '+f['name'])
+            done=self._prepare_card_faces(d,c,s,index,land_index,progress,cancel,done,total)
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
+        self.store.put('decks',d,rev);return self.deck(ident)
+    def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
+        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing this card.')
+        c=next((x for x in d['cards'] if x['id']==card_id),None)
+        if not c:raise ValidationError('Card no longer exists.')
+        index,land_index=self._prepare_sources(s,progress)
+        self._prepare_card_faces(d,c,s,index,land_index,progress,cancel,0,len(c.get('faces',[])))
+        # Preparing one card must not imply that unrelated pending deck changes
+        # were prepared. Clear derived upgrade metadata so deck() can recompute it,
+        # but preserve the deck's draft/prepared state exactly as it was.
+        d['settings']=s;d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     def copy_token(self,deck_id,card_id,spec,revision):
         d=self.deck(deck_id);c=next((x for x in d['cards'] if x['id']==card_id),None)
@@ -317,7 +335,6 @@ class Workspace:
         return {'targets':list(targets.values()),'cached':cached,'errors':errors}
     def render_targets_for_card(self,deck_id,card_id,force=False):
         d=self.deck(deck_id)
-        if d['status']=='draft':raise ValidationError(d['name']+': prepare changes before rendering.')
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
         targets={};cached=0;errors=[]
@@ -385,7 +402,6 @@ class Workspace:
 
     def review_image(self,deck_id,card_id,face_id=None,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(deck_id)
-        if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading a review image.')
         c=next((x for x in d.get('cards',[]) if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
         faces=c.get('faces') or []
