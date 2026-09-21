@@ -175,20 +175,22 @@ class Workspace:
         return self.store.put('decks',d,revision)
     def _art(self,sf,face,opts,settings,index,land_index):
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
-        name=face.get('name',sf['name']);stem=slug(name);url=None;origin=''
+        name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
         local=settings['source'].get('localFiles',{})
         if settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
-        if settings['source']['mode']=='github' and stem in index:url=index[stem];origin='GitHub folder'
-        if not url and settings.get('useLandLibrary') and 'Land' in str(face.get('type_line') or sf.get('type_line','')).split(' — ')[0] and stem in land_index:url=land_index[stem];origin='land art library'
-        if not url:
+        if settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
+        if remote_entry is None and settings.get('useLandLibrary') and 'Land' in str(face.get('type_line') or sf.get('type_line','')).split(' — ')[0] and stem in land_index:remote_entry=land_index[stem];origin='land art library'
+        if remote_entry is None:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',True):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
-        if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
+            if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
         refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
-        # GitHub artwork is a live source: every generation rechecks the remote
-        # bytes. Scryfall keeps its separate year/week cache policy.
-        if origin in {'GitHub folder','land art library'}:
-            raw,_,_=self.net.fetch(url,refresh=True,ttl=0)
+        # GitHub indexes resolve the branch to an exact commit and retain the
+        # directory listing's blob SHA. The raw URL is therefore immutable and
+        # its bytes are verified before normalization. Scryfall keeps its
+        # separate year/week cache policy.
+        if remote_entry is not None:
+            raw,url=self.sources.github_art(remote_entry)
         else:
             raw,_,_=self.net.fetch(url,refresh=refresh,ttl=None)
         asset=ingest_image(self.store,raw)
