@@ -39,6 +39,7 @@ def records():
         {'name':'Search for Azcanta','type_line':'Legendary Enchantment','colors':['U'],'mana_cost':'{1}{U}','oracle_text':'At the beginning of your upkeep, surveil 1. Then if you have seven or more cards in your graveyard, you may transform Search for Azcanta.','artist':'Search Artist','image_uris':base['image_uris']},
         {'name':'Azcanta, the Sunken Ruin','type_line':'Legendary Land','colors':[],'produced_mana':['U'],'mana_cost':'','oracle_text':'(Transforms from Search for Azcanta.)\n{T}: Add {U}.\n{2}{U}, {T}: Look at the top four cards of your library.','artist':'Search Artist','image_uris':base['image_uris']}]},
       {'name':"Valgavoth's Lair",'layout':'normal','rarity':'rare','type_line':'Enchantment Land','colors':[],'produced_mana':['W','U','B','R','G'],'mana_cost':'','oracle_text':'Hexproof\nThis land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.'},
+      {'name':'Binding Test','layout':'saga','rarity':'uncommon','type_line':'Enchantment — Saga','colors':['B','G'],'mana_cost':'{2}{B}{G}','oracle_text':'I — Destroy target nonland permanent.\nII — Search your library for a Forest card.\nIII — Creatures you control gain deathtouch until end of turn.'},
       {'name':'Summon: Bahamut','layout':'saga','rarity':'mythic','type_line':'Enchantment Creature — Saga Dragon','colors':[],'mana_cost':'{9}','power':'9','toughness':'9','oracle_text':'(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II — Destroy up to one target nonland permanent.\nIII — Draw two cards.\nIV — Mega Flare — This creature deals damage equal to the total mana value of other permanents you control to each opponent.\nFlying'},
     ]
     return [{**base,**d,'id':f'11111111-1111-4111-8111-{i:012d}','oracle_id':f'22222222-2222-4222-8222-{i:012d}','collector_number':str(i)} for i,d in enumerate(defs,1)]
@@ -70,8 +71,9 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=480000)
             ready=app.ws.deck(d['id'])
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
-            assert ready['summary']['rendered']==18
+            assert ready['summary']['rendered']==19
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
+            assert '/img/frames/saga/sagaMaskPinline.png' in app.runtime.requested, 'Dual-color Saga gradient pinline mask was not exercised by the native renderer'
             assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
             assert '/img/frames/m15/transform/regular/new/backL.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
@@ -97,6 +99,12 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
                     assert im.size==(comp['data']['width'],comp['data']['height'])
                     im.crop((0, int(im.height*.93), im.width, im.height)).save(evidence/('credit_'+slug(f['name'])+'.png'))
                     im.thumbnail((300,420));im.save(evidence/('native_'+slug(f['name'])+'.png'))
+            dual_saga=next(c for c in ready['cards'] if c['name']=='Binding Test')
+            dual_frames=dual_saga['faces'][0]['compiled']['data']['frames']
+            gradient=next(f for f in dual_frames if 'Gradient Saga Pinline' in f.get('name',''))
+            assert gradient['src'].startswith('data:image/svg+xml;utf8,')
+            assert gradient['masks']==[{'src':'/img/frames/saga/sagaMaskPinline.png','name':'Pinline'}]
+            assert any(f.get('src')=='/img/frames/saga/regular/sagaFrameM.png' for f in dual_frames)
             cleric=next(c for c in ready['cards'] if c['name']=='Cleric Class')
             cleric_data=cleric['faces'][0]['compiled']['data']
             assert cleric_data['version']=='class' and cleric_data['class']['count']==2
@@ -120,7 +128,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
                 assert z.read('BACK/000005.png')==s.asset_path(expected).read_bytes()
                 assert z.read('BACK/000006.png')==s.asset_path(transform_back).read_bytes()
                 assert z.read('BACK/000001.png')==s.asset_path(back['id']).read_bytes()
-                assert len(z.namelist())==30
+                assert len(z.namelist())==32
                 assert z.read('BACK/000009.png')==s.asset_path(back['id']).read_bytes(), 'Flip card must use the deck back'
             flip=ready['cards'][8]['faces'][0]['compiled']['data'];assert flip['text']['title2']['rotation']==180
             assert flip['text']['pt']['text']=='2/1' and flip['text']['pt2']['text']=='3/3'
