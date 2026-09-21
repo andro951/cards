@@ -180,6 +180,72 @@ def test_real_cardconjurer_roundtrip(tmp_path):
             browser.close();server.shutdown();server.server_close();app.close()
 
 
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
+def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
+    from playwright.sync_api import sync_playwright
+    card={
+        'object':'card','id':'33333333-3333-4333-8333-333333333333',
+        'oracle_id':'44444444-4444-4444-8444-444444444444',
+        'name':'Morophon, the Boundless','layout':'normal','type_line':'Legendary Creature — Shapeshifter',
+        'colors':[],'mana_cost':'{7}','power':'6','toughness':'6','rarity':'mythic',
+        'set':'mh1','collector_number':'1','artist':'Fixture Artist',
+        'oracle_text':'Changeling (This card is every creature type.)\n'
+                      'As Morophon, the Boundless enters, choose a creature type.\n'
+                      'Spells of the chosen type you cast cost {W}{U}{B}{R}{G} less to cast. '
+                      'This effect reduces only the amount of colored mana you pay.\n'
+                      'Other creatures you control of the chosen type get +1/+1.',
+        'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/morophon.jpg'},
+    }
+    store=Store(tmp_path/'mana-wrap');net=Network(store);native_transport=net._transport
+    def transport(url):
+        if 'api.scryfall.com' in url:return json.dumps(card).encode(),'application/json',{}
+        if 'cards.scryfall.io' in url:return png(),'image/png',{}
+        return native_transport(url)
+    net.transport=transport;app=App(store,net);server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png());symbols=rarity_variants(store,art['id'])
+    d=app.ws.create({'name':'Mana wrapping','source':[{'id':card['id']}],'settings':{'symbols':symbols}})
+    with sync_playwright() as p:
+        browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});errors=[]
+        page.on('pageerror',lambda e:errors.append(str(e)))
+        try:
+            page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
+            page.evaluate("""() => {
+              const originalRemove=HTMLIFrameElement.prototype.remove;
+              HTMLIFrameElement.prototype.remove=function(){
+                if(this.classList?.contains('render-frame')){this.dataset.testKept='1';return;}
+                return originalRemove.call(this);
+              };
+            }""")
+            page.click('#generate-deck');page.locator('.badge.ready,.toast.error').first.wait_for(timeout=240000)
+            current=app.ws.deck(d['id'])
+            assert current['status']=='ready',{'status':current['status'],'errors':errors,'activity':page.locator('#activity-log').text_content()}
+            rules=current['cards'][0]['faces'][0]['compiled']['data']['text']['rules']['text']
+            assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
+            assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+            runtime_frame=next(frame for frame in page.frames if '/runtime/host' in frame.url)
+            metrics=runtime_frame.evaluate("""() => {
+              const box=window.card?.text?.rules;
+              const canvas=window.textCanvas,ctx=window.textContext;
+              if(!box||!canvas||!ctx) return null;
+              const right=Math.round((box.x+box.width)*window.card.width);
+              const top=Math.max(0,Math.floor(box.y*window.card.height));
+              const bottom=Math.min(canvas.height,Math.ceil((box.y+box.height)*window.card.height));
+              const image=ctx.getImageData(0,top,canvas.width,bottom-top);
+              let maxX=-1;
+              for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+                if(image.data[(y*image.width+x)*4+3])maxX=Math.max(maxX,x);
+              }
+              return {title:window.card?.text?.title?.text,right,maxX,overflow:Math.max(0,maxX-right)};
+            }""")
+            assert metrics and metrics['title']=='Morophon, the Boundless',metrics
+            assert metrics['overflow']<=8,metrics
+            assert not errors,errors
+        finally:
+            page.screenshot(path=str(ROOT/'test-results/morophon-mana-wrap.png'),full_page=True)
+            browser.close();server.shutdown();server.server_close();app.close()
+
+
 def test_browser_artist_credit_and_modified_upload(browser_app):
     app,server,page,errors=browser_app
     art=ingest_image(app.store,png());symbols=rarity_variants(app.store,art['id'])
