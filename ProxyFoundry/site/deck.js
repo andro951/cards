@@ -136,7 +136,7 @@ async function inspect(deck,card,index=0){
   };
   const prepareIfNeeded=async()=>{
     if(d.status!=='draft')return d;
-    syncCurrent(await job('/api/decks/'+d.id+'/prepare',{}, {label:'Prepare deck'}));
+    syncCurrent(await job('/api/decks/'+d.id+'/cards/'+c.id+'/prepare',{}, {label:'Prepare card'}));
     refreshInspector();
     return d;
   };
