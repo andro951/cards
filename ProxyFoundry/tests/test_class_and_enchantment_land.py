@@ -23,8 +23,7 @@ def cleric_class():
         'object':'card','id':'11111111-1111-4111-8111-111111111111',
         'name':'Cleric Class','layout':'class','rarity':'uncommon','set':'afr','collector_number':'6',
         'artist':'Alayna Danner','type_line':'Enchantment — Class','mana_cost':'{W}','colors':['W'],
-        'oracle_text':'(Gain the next level as a sorcery to add its ability.)\n'
-                      'If you would gain life, you gain that much life plus 1 instead.\n'
+        'oracle_text':'If you would gain life, you gain that much life plus 1 instead.\n'
                       '{3}{W}: Level 2\n'
                       'Whenever you gain life, put a +1/+1 counter on target creature you control.\n'
                       '{4}{W}: Level 3\n'
