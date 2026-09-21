@@ -102,8 +102,8 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert cleric_data['version']=='class' and cleric_data['class']['count']==2
             assert cleric_data['text']['level1a']['text']=='{3}{W}:' and cleric_data['text']['level2a']['text']=='{4}{W}:'
             search=next(c for c in ready['cards'] if c['name'].startswith('Search for Azcanta'))
-            search_front=[x.get('src','') for x in search['faces'][0]['compiled']['data']['frames']
-            search_back=[x.get('src','') for x in search['faces'][1]['compiled']['data']['frames']
+            search_front=[x.get('src','') for x in search['faces'][0]['compiled']['data']['frames']]
+            search_back=[x.get('src','') for x in search['faces'][1]['compiled']['data']['frames']]
             assert '/img/frames/m15/transform/regular/frontU.png' in search_front
             assert '/img/frames/m15/transform/regular/new/backL.png' in search_back
             lair=next(c for c in ready['cards'] if c['name']=="Valgavoth's Lair")
