@@ -488,7 +488,7 @@ def build_class_data(sem,artist,autofit,flags):
     text={
         'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
         'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
-        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'],'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
         'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
     }
     last_y=0.1129+heights[0]+0.0481
