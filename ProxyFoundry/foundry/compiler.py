@@ -185,6 +185,30 @@ def apply_station_underframe_policy(data,sem,art_origin):
         frame['name']=native.COLOR_NAMES[code]+' Frame'
     return True
 
+def apply_colored_artifact_label_bars(data,sem):
+    """Use muted W/U/B/R/G or gold label bars while retaining the artifact body."""
+    types=set(sem.get('types',[]))
+    if 'Artifact' not in types or 'Land' in types:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if not colors:return False
+    code=colors[0] if len(colors)==1 else 'M'
+    targets=[
+        frame for frame in data.get('frames',[])
+        if isinstance(frame,dict)
+        and {'Title','Type'} & {
+            mask.get('name') for mask in frame.get('masks',[])
+            if isinstance(mask,dict)
+        }
+    ]
+    if not targets:return False
+    # Reuse Card Tools' real M15 frame textures rather than flat/generated
+    # fills: mono artifacts get their color's muted bars and 2+ colors get the
+    # normal textured multicolor/gold bars. Other artifact pieces stay metallic.
+    native.set_title_type_frame_color(data,code)
+    return True
+
 def full_art_nonland_placement(art):
     """Cover the 80px-inset full-art area and center only overflowing axes."""
     iw=float(art.get('width') or 0)
@@ -736,6 +760,8 @@ class Compiler:
                     d0['layout']='saga' if group=='saga' else 'saga_creature'
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'}:
+                        apply_colored_artifact_label_bars(data,sem)
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
