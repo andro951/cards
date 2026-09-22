@@ -439,6 +439,9 @@ def test_card_inspector_actions_exist_in_source():
     inspect=source[source.index('async function inspect'):source.index('async function printings')]
     assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
     assert "job('/api/decks/'+d.id+'/prepare'" not in inspect
+    generate=inspect[inspect.index("$('#generate-card')"):inspect.index("$('#download-review-image')")]
+    assert 'await prepareCard();' in generate
+    assert 'await prepareIfNeeded();' not in generate
     assert 'This card already matches the cached render.' in inspect
     assert 'Regenerating it now should produce the same image.' in inspect
     assert 'Regenerate anyway' in inspect

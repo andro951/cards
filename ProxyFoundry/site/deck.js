@@ -143,11 +143,14 @@ async function inspect(deck,card,index=0){
     refreshInspector();
     return d;
   };
-  const prepareIfNeeded=async()=>{
-    if(d.status!=='draft')return d;
+  const prepareCard=async()=>{
     syncCurrent(await job('/api/decks/'+d.id+'/cards/'+c.id+'/prepare',{}, {label:'Prepare card'}));
     refreshInspector();
     return d;
+  };
+  const prepareIfNeeded=async()=>{
+    if(d.status!=='draft')return d;
+    return prepareCard();
   };
   $('#cancel-card').onclick=closeModal;
   $('#face-art').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;artOverride=(await uploadImage(file)).id;fit={};$('#face-art-state').textContent='Custom art: '+file.name;if($('#inspector-image'))$('#inspector-image').src=asset(artOverride);creditControls.refresh();});
@@ -168,7 +171,7 @@ async function inspect(deck,card,index=0){
   $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();closeModal();await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');}finally{setBusy(false);}});
   $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{
     await persistCard();
-    await prepareIfNeeded();
+    await prepareCard();
     syncCurrent(await api('/api/decks/'+d.id));
     refreshInspector();
     let force=!!d.upgradeRequired;
