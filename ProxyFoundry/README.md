@@ -41,6 +41,8 @@ Name matching normalizes to lowercase underscores, removes apostrophes and strip
 
 The optional full-art land library is hosted by Bulk Proxy Forge. Enable it with the single checkbox in a deck's Artwork setup; matching filenames in `full_art_lands/` are used automatically. Individual art overrides and the main custom-art folder take priority.
 
+**Artwork shape policy:** use **5:7** source artwork for full-art lands, Planeswalkers, and full-art non-land treatments (currently custom colorless creatures and Stations). This replaces the older 2:3, 3:4 and 8:11 guidance for those categories.
+
 Artist credits are source-aware. Actual Scryfall artwork, including fallback images, always uses the selected printing's real artist (face-specific when provided). A custom-art deck default or per-card override cannot overwrite or hide that original credit. Missing Scryfall metadata stays blank rather than being attributed to the custom-art artist.
 
 For custom artwork, use a deck-wide artist or edit each card's credit. **Use the original printing artist for this custom image** keeps the original attribution when you upload modified/extended artwork. Add optional **Modification credit** such as `Modified by ChatGPT` in the deck setup or card inspector. It displays in the normal artist spot as `Artist Name · Modified by ChatGPT`. A per-face value replaces the deck suffix; **No modification credit on this face** suppresses it. Both screens preview the complete artist line before generation. The stored Scryfall artist is never modified, and regenerating does not duplicate the suffix.

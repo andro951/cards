@@ -442,6 +442,8 @@ def test_card_inspector_actions_exist_in_source():
     assert 'This card already matches the cached render.' in inspect
     assert 'Regenerating it now should produce the same image.' in inspect
     assert 'Regenerate anyway' in inspect
+    assert 'Recommended source shape: <b>5:7</b>.' in inspect
+    assert 'colorlessCreature' in inspect
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 
