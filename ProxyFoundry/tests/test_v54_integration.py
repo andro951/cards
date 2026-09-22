@@ -136,21 +136,24 @@ def test_iron_man_normal_artifact_recipe(env):
     assert r['recipe']!='iron_man_fullart_dual_creature'
     assert r['data']['version']=='m15Regular'
     assert r['recipe']==native.infer_layout(semantic(c,c),native.get_type_info(semantic(c,c)))
-    bars=[f for f in r['data']['frames'] if {'Title','Type'} & {m['name'] for m in f.get('masks',[])}]
-    assert len(bars)==2
-    assert all(f['src'].endswith('m15FrameM.png') for f in bars)
+    accents=[f for f in r['data']['frames'] if {'Title','Type','Rules'} & {m['name'] for m in f.get('masks',[])}]
+    assert len(accents)==3
+    assert all(f['src'].endswith('m15FrameM.png') for f in accents)
+    pinline=next(f for f in r['data']['frames'] if 'Pinline' in {m['name'] for m in f.get('masks',[])})
+    assert pinline['src'].startswith('data:image/svg+xml;utf8,')
     body=[f for f in r['data']['frames'] if 'Frame' in {m['name'] for m in f.get('masks',[])}]
     assert body and all(f['src'].endswith('m15FrameA.png') for f in body)
 
 
 @pytest.mark.parametrize('colors,expected',[([], 'A'),(['U'],'U'),(['W'],'W'),(['U','R'],'M'),(['W','U','B'],'M')])
-def test_artifact_title_type_bars_follow_card_color_but_body_stays_metallic(env,colors,expected):
+def test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic(env,colors,expected):
     w,_,a,s=env
     c=sf('Colored Artifact',type_line='Artifact — Equipment',colors=colors,mana_cost='',power=None,toughness=None)
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
-    bars=[f for f in d['frames'] if {'Title','Type'} & {m['name'] for m in f.get('masks',[])}]
-    assert len(bars)==2
-    assert all(f['src'].endswith(f'm15Frame{expected}.png') for f in bars)
+    for piece in ('Title','Type','Rules'):
+        matches=[f for f in d['frames'] if piece in {m['name'] for m in f.get('masks',[])}]
+        assert len(matches)==1
+        assert matches[0]['src'].endswith(f'm15Frame{expected}.png')
     body=[f for f in d['frames'] if 'Frame' in {m['name'] for m in f.get('masks',[])}]
     assert body and all(f['src'].endswith('m15FrameA.png') for f in body)
 
@@ -159,8 +162,10 @@ def test_colored_artifact_creature_keeps_metallic_pt_box(env):
     w,_,a,s=env
     c=sf('Colored Artifact Creature',type_line='Artifact Creature — Construct',colors=['R'],mana_cost='{2}{R}',power='3',toughness='3')
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
-    bars=[f for f in d['frames'] if {'Title','Type'} & {m['name'] for m in f.get('masks',[])}]
-    assert len(bars)==2 and all(f['src'].endswith('m15FrameR.png') for f in bars)
+    accents=[f for f in d['frames'] if {'Title','Type','Rules'} & {m['name'] for m in f.get('masks',[])}]
+    assert len(accents)==3 and all(f['src'].endswith('m15FrameR.png') for f in accents)
+    pinline=next(f for f in d['frames'] if 'Pinline' in {m['name'] for m in f.get('masks',[])})
+    assert pinline['src'].endswith('m15FrameR.png')
     pt=[f for f in d['frames'] if 'power/toughness' in f.get('name','').lower()]
     assert len(pt)==1 and pt[0]['src'].endswith('m15PTA.png')
 
@@ -170,8 +175,13 @@ def test_multicolor_vehicle_bars_are_gold_body_stays_vehicle(env,legendary):
     w,_,a,s=env;c=sf('Vehicle',type_line=('Legendary ' if legendary else '')+'Artifact — Vehicle',colors=['U','R'])
     d=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
     for f in d['frames']:
-        if {'Title','Type'} & {m['name'] for m in f['masks']}:
+        masks={m['name'] for m in f.get('masks',[])}
+        if {'Title','Type'} & masks:
             assert f['src'].endswith('m15FrameM.png')
+        if 'Rules' in masks:
+            assert f['src'].endswith('m15FrameV.png')
+    pinline=next(f for f in d['frames'] if 'Pinline' in {m['name'] for m in f.get('masks',[])})
+    assert pinline['src'].startswith('data:image/svg+xml;utf8,')
     assert any('Vehicle' in f.get('name','') for f in d['frames'])
 
 
