@@ -147,7 +147,7 @@ FULL_ART_NONLAND_BOUNDS={
     'x':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
     'y':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
     'width':(native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_WIDTH,
-    'height':(native.CARD_HEIGHT-FULL_ART_NONLAND_INSET_PX)/native.CARD_HEIGHT,
+    'height':(native.CARD_HEIGHT-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_HEIGHT,
 }
 
 def _is_custom_art_origin(art_origin):
@@ -186,16 +186,22 @@ def apply_station_underframe_policy(data,sem,art_origin):
     return True
 
 def full_art_nonland_placement(art):
-    """Return width-fit/top-aligned placement for the full-art non-land treatment."""
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
     iw=float(art.get('width') or 0)
-    if iw<=0:raise ValidationError('Artwork width is missing.')
-    available=native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX
-    # Match Card Tools' one-decimal-percent zoom convention.
-    zoom=math.floor((available/iw*100)*10+0.5)/10/100
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
     return {
         'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
-        'artX':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
-        'artY':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
         'artZoom':zoom,
         'artRotate':'0',
     }

@@ -120,7 +120,7 @@ def test_exact_printing(workspace):
 
 
 
-def test_custom_colorless_clara_uses_full_art_nonland_width_fit_top_alignment(workspace):
+def test_custom_colorless_clara_covers_full_art_nonland_area_and_centers_overflow(workspace):
     s,_,settings=workspace
     b=io.BytesIO();Image.new('RGB',(1024,1536),'#556677').save(b,'PNG');art=ingest_image(s,b.getvalue())
     clara=sf('Legendary Creature — Human Advisor',[])
@@ -129,16 +129,34 @@ def test_custom_colorless_clara_uses_full_art_nonland_width_fit_top_alignment(wo
 
     scryfall=comp.compile_face(clara,clara,0,{},settings,art['id'],art_origin='Scryfall selected printing')
     custom=comp.compile_face(clara,clara,0,{},settings,art['id'],art_origin='GitHub folder')
+    data=custom['data']
 
     assert scryfall['recipe']=='colorless_creature_legendary'
     assert scryfall['data']['artBounds']=={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429}
-    assert custom['data']['artX']*custom['data']['width']==pytest.approx(80)
-    assert custom['data']['artY']*custom['data']['height']==pytest.approx(80)
-    assert custom['data']['artZoom']==pytest.approx(1.807)
-    assert custom['data']['artZoom']*1024==pytest.approx(1850.368)
-    assert custom['data']['artBounds']['x']*custom['data']['width']==pytest.approx(80)
-    assert custom['data']['artBounds']['y']*custom['data']['height']==pytest.approx(80)
-    assert custom['data']['artBounds']['width']*custom['data']['width']==pytest.approx(1850)
+    expected_zoom=1850/1024
+    expected_height=1536*expected_zoom
+    assert data['artZoom']==pytest.approx(expected_zoom)
+    assert data['artX']*data['width']==pytest.approx(80)
+    assert data['artY']*data['height']==pytest.approx((2814-expected_height)/2)
+    assert data['artBounds']['x']*data['width']==pytest.approx(80)
+    assert data['artBounds']['y']*data['height']==pytest.approx(80)
+    assert data['artBounds']['width']*data['width']==pytest.approx(1850)
+    assert data['artBounds']['height']*data['height']==pytest.approx(2654)
+
+
+def test_full_art_nonland_centers_only_the_axis_that_overflows():
+    from foundry.compiler import full_art_nonland_placement
+    portrait=full_art_nonland_placement({'width':1024,'height':1536})
+    pzoom=1850/1024
+    assert portrait['artX']*2010==pytest.approx(80)
+    assert portrait['artY']*2814==pytest.approx((2814-1536*pzoom)/2)
+    assert portrait['artZoom']==pytest.approx(pzoom)
+
+    landscape=full_art_nonland_placement({'width':1536,'height':1024})
+    lzoom=2654/1024
+    assert landscape['artX']*2010==pytest.approx((2010-1536*lzoom)/2)
+    assert landscape['artY']*2814==pytest.approx(80)
+    assert landscape['artZoom']==pytest.approx(lzoom)
 
 def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
     s,a,settings=workspace
