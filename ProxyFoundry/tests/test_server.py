@@ -335,6 +335,7 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     deck['status']='prepared';deck=store.put('decks',deck,deck['revision'])
     assert app.ws.deck(deck['id'])['status']=='ready'
     out=app.ws.review_images(deck['id'])
+    assert all(store.cache_get(url) is None for url in reference)
     with zipfile.ZipFile(store.home/'orders'/out['filename']) as z:
         assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
         assert out['count']==3
@@ -381,6 +382,16 @@ def test_download_cropped_art_is_in_deck_actions_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download Cropped Art' in source
     assert '/cropped-art' in source
+
+
+def test_review_images_export_is_bounded_parallel_and_transient():
+    root=Path(__file__).resolve().parents[1]
+    workspace=(root/'foundry/workspace.py').read_text(encoding='utf-8')
+    network=(root/'foundry/network.py').read_text(encoding='utf-8')
+    assert "ThreadPoolExecutor(max_workers=min(4,total)" in workspace
+    assert "as_completed(futures)" in workspace
+    assert "fetch_transient(reference_url)" in workspace
+    assert "def fetch_transient" in network
 
 
 def test_review_images_action_is_in_deck_menu():

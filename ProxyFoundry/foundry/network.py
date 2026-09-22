@@ -112,6 +112,14 @@ class Network:
             self.misses += 1
             return body, mime, {'cache': False, 'fetchedAt': now}
 
+    def fetch_transient(self, url: str) -> tuple[bytes, str, dict[str, Any]]:
+        """Fetch a remote asset without adding it to the persistent workspace cache."""
+        url = validate_remote_url(url)
+        body, mime, headers = self.transport(url)
+        if not body:
+            raise ValidationError('The server returned an empty file: ' + url)
+        return body, mime, {'cache': False, 'transient': True}
+
     def json(self, url: str, *, refresh: bool = False, ttl: float | None = None) -> Any:
         raw, _, _ = self.fetch(url, refresh=refresh, ttl=ttl)
         try: return json.loads(raw)
