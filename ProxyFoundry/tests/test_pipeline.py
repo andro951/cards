@@ -177,9 +177,26 @@ def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_lin
     ]
     assert len(gradient)==1
     assert 'Gradient Saga Pinline' in gradient[0]['name']
+    tassels=[
+        frame for frame in result['data']['frames']
+        if any(mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+    ]
+    assert len(tassels)==2
+    first,second=ordered
+    by_mask={frame['masks'][0]['name']:frame for frame in tassels}
+    assert native.COLOR_NAMES[first] in by_mask['Saga Tassel 1']['name']
+    assert native.COLOR_NAMES[second] in by_mask['Saga Tassel 2']['name']
     if result['group']=='saga':
+        assert by_mask['Saga Tassel 1']['src']==f'/img/frames/saga/regular/sagaFrame{first}.png'
+        assert by_mask['Saga Tassel 2']['src']==f'/img/frames/saga/regular/sagaFrame{second}.png'
+        assert by_mask['Saga Tassel 1']['masks'][0]['src']=='/img/frames/saga/sagaMaskBanner.png'
+        assert by_mask['Saga Tassel 2']['masks'][0]['src']=='/img/frames/saga/sagaMaskBannerRight.png'
         assert any(frame.get('src')=='/img/frames/saga/regular/sagaFrameM.png' for frame in result['data']['frames'])
     else:
+        assert by_mask['Saga Tassel 1']['src']==f'/img/frames/saga/creature/{first.lower()}.png'
+        assert by_mask['Saga Tassel 2']['src']==f'/img/frames/saga/creature/{second.lower()}.png'
+        assert by_mask['Saga Tassel 1']['masks'][0]['src']=='/img/frames/saga/creature/masks/sagaMaskBanner.png'
+        assert by_mask['Saga Tassel 2']['masks'][0]['src']=='/img/frames/saga/creature/masks/sagaMaskBannerRight.png'
         assert any(frame.get('src')=='/img/frames/saga/creature/m.png' for frame in result['data']['frames'])
         assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in result['data']['frames'])
 

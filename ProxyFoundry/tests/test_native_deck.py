@@ -104,6 +104,12 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             gradient=next(f for f in dual_frames if 'Gradient Saga Pinline' in f.get('name',''))
             assert gradient['src'].startswith('data:image/svg+xml;utf8,')
             assert gradient['masks']==[{'src':'/img/frames/saga/sagaMaskPinline.png','name':'Pinline'}]
+            tassels=[f for f in dual_frames if any(m.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for m in f.get('masks',[]))]
+            assert len(tassels)==2
+            assert {f['masks'][0]['src'] for f in tassels}=={
+                '/img/frames/saga/sagaMaskBanner.png',
+                '/img/frames/saga/sagaMaskBannerRight.png',
+            }
             assert any(f.get('src')=='/img/frames/saga/regular/sagaFrameM.png' for f in dual_frames)
             cleric=next(c for c in ready['cards'] if c['name']=='Cleric Class')
             cleric_data=cleric['faces'][0]['compiled']['data']

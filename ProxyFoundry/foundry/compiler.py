@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':3,'saga-creature':3,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':4,'saga-creature':4,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -483,21 +483,36 @@ _SAGA_PINLINE_MASKS={
     'saga':'/img/frames/saga/sagaMaskPinline.png',
     'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
 }
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
 
 
 def apply_dual_saga_gradient(data,sem,group):
-    """Give two-color Sagas the same eased dual-color pinline as other cards."""
+    """Give two-color Sagas an eased pinline and one color per left tassel."""
     if group not in _SAGA_PINLINE_MASKS:return False
     colors=[]
     for color in sem.get('colors',[]) or []:
         if color in 'WUBRG' and color not in colors:colors.append(color)
     if len(colors)!=2:return False
-    left,right=native.canonical_dual_color_order(colors)
+    first,second=native.canonical_dual_color_order(colors)
     frames=data.setdefault('frames',[])
     if any(
         isinstance(frame,dict)
-        and any(isinstance(mask,dict) and mask.get('name')=='Pinline' for mask in frame.get('masks',[]))
-        and 'Gradient Saga Pinline' in str(frame.get('name',''))
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
         for frame in frames
     ):return False
     prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
@@ -506,11 +521,25 @@ def apply_dual_saga_gradient(data,sem,group):
                  and not frame.get('masks')),None)
     if target is None:
         raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
-    frames.insert(target,{
-        'name':f"{native.COLOR_NAMES[left]}/{native.COLOR_NAMES[right]} Gradient Saga Pinline",
-        'src':native.dual_gradient_fill_src(left,right),
-        'masks':[{'src':_SAGA_PINLINE_MASKS[group],'name':'Pinline'}],
-    })
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient Saga Pinline",
+            'src':native.dual_gradient_fill_src(first,second),
+            'masks':[{'src':_SAGA_PINLINE_MASKS[group],'name':'Pinline'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+    ]
+    frames[target:target]=overlays
     return True
 
 def build_transform_data(sem,group,card,artist,autofit,flags):
