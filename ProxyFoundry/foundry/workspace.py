@@ -555,22 +555,19 @@ class Workspace:
         total=len(items)
         if not total:raise ValidationError(d['name']+': deck has no review images to export.')
         progress(0,total,'Preparing '+str(total)+' review images…')
-        executor=ThreadPoolExecutor(max_workers=min(4,total),thread_name_prefix='review-images')
-        futures={}
+        count=0
         try:
-            for filename,label,url,render in items:
-                if cancel():raise ValidationError('Review-image export cancelled.')
-                futures[executor.submit(self._review_composite,url,render,refresh)]=(filename,label)
-            count=0
-            with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED) as z:
-                for future in as_completed(futures):
+            # This already runs inside the Jobs background executor. Keep the
+            # image downloads in that one bounded job instead of nesting another
+            # thread pool; nested workers made failures/cancellation look stuck
+            # and could burst Scryfall's image CDN with concurrent PNG requests.
+            with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as z:
+                for filename,label,url,render in items:
                     if cancel():raise ValidationError('Review-image export cancelled.')
-                    filename,label=futures[future]
-                    z.writestr(filename,future.result())
+                    progress(count,total,'Downloading review image for '+label)
+                    z.writestr(filename,self._review_composite(url,render,refresh))
                     count+=1;progress(count,total,'Saved review image for '+label)
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
         except Exception:
             out.unlink(missing_ok=True);raise
-        finally:
-            executor.shutdown(wait=True,cancel_futures=True)
 

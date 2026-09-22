@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':6,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -728,6 +728,12 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
                 d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)

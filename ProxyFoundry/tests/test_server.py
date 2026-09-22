@@ -350,6 +350,44 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     app.close()
 
 
+
+def test_review_images_export_is_single_worker_and_reaches_complete_progress(tmp_path):
+    import threading
+    store=Store(tmp_path)
+    urls={f'https://cards.scryfall.io/png/front/review_{i}.png':_review_test_png((100,140),(20*i,40,80,255)) for i in range(1,5)}
+    active=0;max_active=0;lock=threading.Lock()
+    def transport(url):
+        nonlocal active,max_active
+        if url not in urls:raise AssertionError('Unexpected review-image URL: '+url)
+        with lock:
+            active+=1;max_active=max(max_active,active)
+        try:
+            time.sleep(.01)
+            return urls[url],'image/png',{}
+        finally:
+            with lock:active-=1
+    app=App(store,Network(store,transport=transport,sleeper=lambda _:None))
+    cards=[]
+    for i,url in enumerate(urls,1):
+        sf={'id':f'00000000-0000-4000-8000-{i:012d}','name':f'Review {i}','layout':'normal','type_line':'Creature — Human','set':'tst','collector_number':str(i),'image_uris':{'png':url}}
+        face={'id':f'face-{i}','name':f'Review {i}','index':0}
+        cards.append({'id':f'card-{i}','name':f'Review {i}','quantity':1,'scryfall':sf,'faces':[face]})
+    deck=store.put('decks',{'name':'Sequential Reviews','cards':cards,'settings':{'refreshData':False,'templateRules':{}},'status':'prepared','notes':'','importedSource':''})
+    d=app.ws.deck(deck['id'])
+    for i,c in enumerate(d['cards'],1):
+        f=c['faces'][0];asset=ingest_image(store,_review_test_png((101,141),(10*i,120,180,255)));key=(str(i)*64)[:64]
+        store.render_put(key,asset,deck_id=d['id'],card_id=c['id'],face_id=f['id'],deck_name=d['name'],face_name=f['name'])
+        template_key,template_version,_=app.ws.compiler.template_identity(f['group'],'auto')
+        f['compiled']={'renderKey':key,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version}
+    d['status']='prepared';store.put('decks',d,d['revision'])
+    progress=[]
+    out=app.ws.review_images(d['id'],lambda done,total,message:progress.append((done,total,message)))
+    assert out['count']==4
+    assert max_active==1
+    assert progress[-1][0:2]==(4,4)
+    assert all(store.cache_get(url) is None for url in urls)
+    app.close()
+
 def test_cropped_art_export_uses_compiled_window_and_readable_names(tmp_path):
     store=Store(tmp_path)
     source=Image.new('RGB',(100,100),'red')
@@ -384,12 +422,14 @@ def test_download_cropped_art_is_in_deck_actions_menu():
     assert '/cropped-art' in source
 
 
-def test_review_images_export_is_bounded_parallel_and_transient():
+def test_review_images_export_uses_one_background_job_and_transient_fetches():
     root=Path(__file__).resolve().parents[1]
     workspace=(root/'foundry/workspace.py').read_text(encoding='utf-8')
     network=(root/'foundry/network.py').read_text(encoding='utf-8')
-    assert "ThreadPoolExecutor(max_workers=min(4,total)" in workspace
-    assert "as_completed(futures)" in workspace
+    review=workspace[workspace.index('    def review_images'):]
+    assert 'ThreadPoolExecutor' not in review
+    assert 'as_completed(' not in review
+    assert "self._review_composite(url,render,refresh)" in review
     assert "fetch_transient(reference_url)" in workspace
     assert "def fetch_transient" in network
 

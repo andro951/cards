@@ -186,6 +186,7 @@ def default_home() -> Path:
 def display_name(text: str, fallback='item') -> str:
     value = ' '.join(str(text or '').strip().split()) or fallback
     value = re.sub(r'[<>:"/\\|?*]+', ' ', value).strip(' .')
+    value = ' '.join(value.split())
     return value or fallback
 
 

@@ -164,7 +164,7 @@ def test_urzas_saga_uses_saga_recipe_instead_of_enchantment_land_recipe(workspac
         'id':'00000000-0000-4000-8000-000000000777',
         'name':"Urza's Saga",
         'type_line':"Enchantment Land — Urza's Saga",
-        'layout':'saga',
+        'layout':'normal',
         'mana_cost':'',
         'oracle_text':"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
                       "I — Urza's Saga gains “{T}: Add {C}.”\n"
