@@ -439,6 +439,9 @@ def test_card_inspector_actions_exist_in_source():
     inspect=source[source.index('async function inspect'):source.index('async function printings')]
     assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
     assert "job('/api/decks/'+d.id+'/prepare'" not in inspect
+    assert 'This card already matches the cached render.' in inspect
+    assert 'Regenerating it now should produce the same image.' in inspect
+    assert 'Regenerate anyway' in inspect
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 

@@ -117,6 +117,10 @@ async function inspect(deck,card,index=0){
     if($('#inspector-notices'))$('#inspector-notices').innerHTML=renderNotice();
   };
   const setBusy=busy=>['cancel-card','download-review-image','generate-card','save-card'].forEach(id=>{const el=$('#'+id);if(el)el.disabled=busy;});
+  const cardRenderMatchesCache=card=>{
+    const faces=card?.faces||[];
+    return faces.length>0 && faces.every(face=>!face.error && face.compiled?.renderKey && face.compiled?.render);
+  };
   const buildPatch=()=>{
     const credits=creditControls.values();
     const semantic={...f.semanticOverrides};const rules=$('#rules-override').value;if(rules)semantic.oracle_text=rules;else delete semantic.oracle_text;
@@ -157,7 +161,26 @@ async function inspect(deck,card,index=0){
   };
   $('#reset-fit').onclick=()=>{fit={};toast('Automatic artwork fit will be applied when regenerated.');};
   $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();closeModal();await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');}finally{setBusy(false);}});
-  $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();await showDeck(d.id,'cards');}finally{setBusy(false);}});
+  $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{
+    await persistCard();
+    await prepareIfNeeded();
+    syncCurrent(await api('/api/decks/'+d.id));
+    refreshInspector();
+    let force=!!d.upgradeRequired;
+    if(!force && cardRenderMatchesCache(c)){
+      const ok=await confirmAction(
+        'This card already matches the cached render.',
+        'Regenerating it now should produce the same image. Do you want to regenerate it anyway?',
+        'Regenerate anyway'
+      );
+      if(!ok)return;
+      force=true;
+    }
+    await renderCard(d.id,c.id,{force});
+    syncCurrent(await api('/api/decks/'+d.id));
+    refreshInspector();
+    await showDeck(d.id,'cards');
+  }finally{setBusy(false);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
     const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();attempt(()=>inspect(d,c,index===0?1:0));};
