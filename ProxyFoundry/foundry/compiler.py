@@ -5,6 +5,13 @@ from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop
 from .legacy import compiler as native,ingest
 from .images import data_uri
 from .credits import resolve_credit
+
+# Sampled from the supplied real MTG red pinline reference image.
+# Keep the preserved vendor compiler unchanged; override only the palette used
+# by Bulk Proxy Forge's generated dual/multicolor gradients.
+PINLINE_RED_HEX='e43c24'
+native.DUAL_EASE_SOLID_HEX['R']=PINLINE_RED_HEX
+native.DUAL_PALETTE['R']=(PINLINE_RED_HEX,native.DUAL_PALETTE['R'][1])
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},

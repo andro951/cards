@@ -14,6 +14,12 @@ def workspace(tmp_path):
     return s,a['id'],{'symbols':symbols,'artist':'Test Artist'}
 def sf(types='Legendary Creature — Human',colors=['G']):
     return {'id':'00000000-0000-4000-8000-000000000001','name':'Test Card','type_line':types,'mana_cost':'{2}{G}','oracle_text':'Vigilance','colors':colors,'rarity':'rare','power':'2','toughness':'3','set':'tst','collector_number':'1','artist':'Source Artist'}
+def test_generated_pinline_red_uses_sampled_mtg_reference_color():
+    assert native.DUAL_EASE_SOLID_HEX['R']=='e43c24'
+    assert native.DUAL_PALETTE['R'][0]=='e43c24'
+    assert 'e43c24' in native.dual_gradient_fill_src('R','U')
+
+
 def test_auto_same_as_v58(workspace):
     from foundry.images import data_uri
     s,a,settings=workspace;c=sf();result=Compiler(s).compile_face(c,c,0,{},settings,a)
