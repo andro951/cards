@@ -185,6 +185,34 @@ def test_multicolor_vehicle_bars_are_gold_body_stays_vehicle(env,legendary):
     assert any('Vehicle' in f.get('name','') for f in d['frames'])
 
 
+def test_miracle_keyword_uses_cardconjurer_miracle_overlay(env):
+    w,_,a,s=env
+    c=sf('Temporal Mastery',type_line='Sorcery',colors=['U'],mana_cost='{5}{U}{U}',
+         oracle_text='Take an extra turn after this one. Exile Temporal Mastery.\\nMiracle {1}{U}',
+         keywords=['Miracle'],power=None,toughness=None)
+    r=w.compiler.compile_face(c,c,0,{},s,a['id'])
+    d=r['data'];miracle=[f for f in d['frames'] if 'Miracle Frame' in f.get('name','')]
+    assert len(miracle)==1
+    assert miracle[0]['name']=='Blue Miracle Frame'
+    assert miracle[0]['src']=='/img/frames/m15/miracle/u.png'
+    assert miracle[0]['bounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+    assert d['frames'][0] is miracle[0]
+
+
+def test_miracle_oracle_fallback_is_strict_and_classic_override_can_skip_it(env):
+    w,_,a,s=env
+    miracle=sf('Fallback Miracle',type_line='Instant',colors=['W'],mana_cost='{2}{W}',
+               oracle_text='Miracle {W}',keywords=[],power=None,toughness=None)
+    auto=w.compiler.compile_face(miracle,miracle,0,{},s,a['id'])['data']
+    assert any(f.get('src')=='/img/frames/m15/miracle/w.png' for f in auto['frames'])
+    classic=w.compiler.compile_face(miracle,miracle,0,{'templateOverride':'normal'},s,a['id'])['data']
+    assert not any('Miracle Frame' in f.get('name','') for f in classic['frames'])
+    prose=sf('Not A Miracle',type_line='Instant',colors=['W'],mana_cost='{W}',
+             oracle_text='Create a Miracle Worker token.',keywords=[],power=None,toughness=None)
+    ordinary=w.compiler.compile_face(prose,prose,0,{},s,a['id'])['data']
+    assert not any('Miracle Frame' in f.get('name','') for f in ordinary['frames'])
+
+
 @pytest.mark.parametrize('name,type_line,layout',[
     ('Creature','Creature — Elf','normal'),('Artifact','Artifact','normal'),
     ('Land','Land','normal'),('Legendary Land','Legendary Land','normal')])

@@ -219,6 +219,38 @@ def apply_colored_artifact_frame_treatment(data,sem):
         if 'name' in frame:frame['name']=f'{cname} Rules'
     return True
 
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
 def full_art_nonland_placement(art):
     """Cover the 80px-inset full-art area and center only overflowing axes."""
     iw=float(art.get('width') or 0)
@@ -325,7 +357,7 @@ def land_frame_colors(types,face,card,oracle_text):
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
-    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'rarity':sf.get('rarity','common'),'flavor_text':get('flavor_text')}
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':get('flavor_text')}
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
         if v is not None:d[k]=str(v)
@@ -772,6 +804,7 @@ class Compiler:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if group in {'standard','legendary'}:
                         apply_colored_artifact_frame_treatment(data,sem)
+                        if choice=='auto':apply_miracle_frame(data,sem)
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
