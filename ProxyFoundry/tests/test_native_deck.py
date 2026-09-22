@@ -106,6 +106,8 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert gradient['masks']==[{'src':'/img/frames/saga/sagaMaskPinline.png','name':'Pinline'}]
             tassels=[f for f in dual_frames if any(m.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for m in f.get('masks',[]))]
             assert len(tassels)==2
+            by_tassel={f['masks'][0]['name']:f for f in tassels}
+            assert dual_frames.index(by_tassel['Saga Tassel 2']) < dual_frames.index(by_tassel['Saga Tassel 1'])
             assert {f['masks'][0]['src'] for f in tassels}=={
                 '/img/frames/saga/sagaMaskBanner.png',
                 '/img/frames/saga/sagaMaskBannerRight.png',

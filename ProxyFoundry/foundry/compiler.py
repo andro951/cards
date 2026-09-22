@@ -21,7 +21,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':4,'saga-creature':4,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':5,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -522,6 +522,9 @@ def apply_dual_saga_gradient(data,sem,group):
     if target is None:
         raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
     tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
     overlays=[
         {
             'name':f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient Saga Pinline",
@@ -529,14 +532,14 @@ def apply_dual_saga_gradient(data,sem,group):
             'masks':[{'src':_SAGA_PINLINE_MASKS[group],'name':'Pinline'}],
         },
         {
-            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
-            'src':_saga_color_frame_src(group,first),
-            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
-        },
-        {
             'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
             'src':_saga_color_frame_src(group,second),
             'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
         },
     ]
     frames[target:target]=overlays
