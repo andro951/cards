@@ -8,6 +8,7 @@ from foundry.storage import Store
 from foundry.network import Network
 from foundry.images import ingest_image,rarity_variants
 from foundry.domain import PIPELINE_VERSION
+from foundry.workspace import Workspace
 
 
 def png(size=(900,600),color='#aa7733'):
@@ -346,6 +347,40 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
         assert back.getpixel((5,5))[:3]==(30,30,220)
         assert back.getpixel((150,5))[:3]==(180,20,240)
     app.close()
+
+
+def test_cropped_art_export_uses_compiled_window_and_readable_names(tmp_path):
+    store=Store(tmp_path)
+    source=Image.new('RGB',(100,100),'red')
+    source.paste('green',(50,0,100,50));source.paste('blue',(0,50,50,100));source.paste('yellow',(50,50,100,100))
+    raw=io.BytesIO();source.save(raw,'PNG');art=ingest_image(store,raw.getvalue())
+    ws=Workspace(store,Network(store,transport=lambda url: (png(),'image/png',{}),sleeper=lambda _:None))
+    deck={'id':'deck','name':'Crop Deck','status':'prepared','cards':[{
+        'id':'card','name':'Card: One','faces':[{
+            'id':'face','name':'Card: One','compiled':{
+                'artId':art['id'],
+                'data':{'width':100,'height':100,'marginX':0,'marginY':0,
+                        'artBounds':{'x':.25,'y':.25,'width':.5,'height':.5},
+                        'artX':0,'artY':0,'artZoom':1,'artRotate':0}
+            }
+        }]
+    }]}
+    ws.deck=lambda ident: deck
+    out=ws.cropped_art('deck')
+    with zipfile.ZipFile(store.home/'orders'/out['filename']) as archive:
+        assert archive.namelist()==['Card One.png']
+        image=Image.open(io.BytesIO(archive.read('Card One.png')));image.load()
+        assert image.size==(50,50)
+        assert image.getpixel((0,0))[:3]==(255,0,0)
+        assert image.getpixel((49,0))[:3]==(0,128,0)
+        assert image.getpixel((0,49))[:3]==(0,0,255)
+        assert image.getpixel((49,49))[:3]==(255,255,0)
+
+
+def test_download_cropped_art_is_in_deck_actions_menu():
+    source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
+    assert 'Download Cropped Art' in source
+    assert '/cropped-art' in source
 
 
 def test_review_images_action_is_in_deck_menu():

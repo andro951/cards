@@ -532,7 +532,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
-        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|review-images)', p):
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|cropped-art|review-images)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))
             if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c)))
@@ -544,6 +544,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(self.app.store.trash('decks',ident,d.get('revision')))
             if action == 'restore': return self.respond(self.app.store.trash('decks',ident,d.get('revision'),restore=True))
             if action == 'originals': return self.respond(self.app.jobs.start('Download original images', lambda u, c: self.app.ws.original_images(ident, u, c)))
+            if action == 'cropped-art': return self.respond(self.app.jobs.start('Download cropped art', lambda u, c: self.app.ws.cropped_art(ident, u, c)))
             if action == 'review-images': return self.respond(self.app.jobs.start('Download review images', lambda u, c: self.app.ws.review_images(ident, u, c)))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/cards/([-a-f0-9]{36})(?:/(prepare|printing|token|review-image))?', p):
             if m[3] == 'prepare': return self.respond(self.app.jobs.start('Prepare card', lambda u, c: self.app.ws.prepare_card(m[1], m[2], u, c)))

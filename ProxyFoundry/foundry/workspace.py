@@ -1,10 +1,10 @@
 """Deck orchestration. Source changes invalidate front renders; backs/quantities do not."""
 from __future__ import annotations
-import base64,copy,io,json,re,time,zipfile
+import base64,copy,io,json,math,re,time,zipfile
 from pathlib import PurePosixPath
 from PIL import Image
 from .domain import *
-from .storage import Store
+from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
@@ -349,7 +349,17 @@ class Workspace:
             if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
             targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'deckName':d['name'],'deckId':d['id'],'cardName':c['name'],'cardId':c['id'],'faceId':f['id'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors,'deckName':d['name'],'cardName':c['name']}
+    def _render_target_from_key(self,key):
+        for d in self.store.list('decks'):
+            for c in d.get('cards',[]):
+                for f in c.get('faces',[]):
+                    comp=f.get('compiled') or {}
+                    if comp.get('renderKey')==key:
+                        return {'key':key,'name':f.get('name') or c.get('name') or 'Card','deckName':d.get('name') or 'Deck','deckId':d.get('id'),'cardName':c.get('name') or 'Card','cardId':c.get('id'),'faceId':f.get('id'),'data':comp.get('data') or {}}
+        return {'key':key,'name':'Card','deckName':'Deck','data':{}}
+
     def save_render(self,target,raw,expected_size):
+        if isinstance(target,str):target=self._render_target_from_key(target)
         asset=ingest_image(self.store,raw)
         if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
         return self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
@@ -386,6 +396,79 @@ class Workspace:
                     progress(count,0,'Saved '+c['name'])
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
         except Exception:out.unlink(missing_ok=True);raise
+
+    @staticmethod
+    def _js_round(value):
+        return math.floor(float(value)+0.5)
+
+    def _cropped_art_png(self,face,deck_name):
+        if face.get('error'):raise ValidationError(deck_name+' / '+face.get('name','Card')+': '+str(face['error']))
+        comp=face.get('compiled') or {}
+        data=comp.get('data') or {}
+        art_id=comp.get('artId')
+        asset=self.store.asset(art_id) if art_id else None
+        if not asset:raise ValidationError(deck_name+' / '+face.get('name','Card')+': prepared artwork is missing.')
+        try:
+            cw=float(data.get('width') or 2010);ch=float(data.get('height') or 2814)
+            mx=float(data.get('marginX') or 0);my=float(data.get('marginY') or 0)
+            bounds=data.get('artBounds') or {'x':0,'y':0,'width':1,'height':1}
+            bx=float(bounds.get('x') or 0);by=float(bounds.get('y') or 0)
+            bw=float(bounds.get('width') or 0);bh=float(bounds.get('height') or 0)
+            zoom=float(data.get('artZoom') or 0);angle=float(data.get('artRotate') or 0)
+            art_x=float(data.get('artX') or 0);art_y=float(data.get('artY') or 0)
+        except (TypeError,ValueError) as exc:
+            raise ValidationError(deck_name+' / '+face.get('name','Card')+': artwork placement contains an invalid number.') from exc
+        if not all(math.isfinite(x) for x in (cw,ch,mx,my,bx,by,bw,bh,zoom,angle,art_x,art_y)) or min(cw,ch,bw,bh,zoom)<=0:
+            raise ValidationError(deck_name+' / '+face.get('name','Card')+': artwork placement is invalid.')
+
+        # Mirror CardConjurer's canvas transform exactly: translate to artX/Y,
+        # rotate around the art's top-left origin, then scale the source image.
+        out_w=max(1,self._js_round(bw*cw));out_h=max(1,self._js_round(bh*ch))
+        window_x=self._js_round((bx+mx)*cw);window_y=self._js_round((by+my)*ch)
+        placed_x=self._js_round((art_x+mx)*cw);placed_y=self._js_round((art_y+my)*ch)
+        radians=math.radians(angle);cos_a=math.cos(radians);sin_a=math.sin(radians);inv=1.0/zoom
+        affine=(
+            cos_a*inv,
+            sin_a*inv,
+            (cos_a*(window_x-placed_x)+sin_a*(window_y-placed_y))*inv,
+            -sin_a*inv,
+            cos_a*inv,
+            (-sin_a*(window_x-placed_x)+cos_a*(window_y-placed_y))*inv,
+        )
+        source=decode_image(self.store.asset_path(art_id).read_bytes()).convert('RGBA')
+        cropped=source.transform(
+            (out_w,out_h),
+            Image.Transform.AFFINE,
+            affine,
+            resample=Image.Resampling.BICUBIC,
+            fillcolor=(0,0,0,0),
+        )
+        output=io.BytesIO();cropped.save(output,'PNG');return output.getvalue()
+
+    def cropped_art(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(ident)
+        if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading cropped art.')
+        total=sum(len(c.get('faces',[])) for c in d.get('cards',[]))
+        if not total:raise ValidationError(d['name']+': this deck has no card artwork to export.')
+        stem=slug(d['name'])[:80] or 'deck'
+        out=self.store.home/'orders'/('BulkProxyForge_Cropped_Art_'+stem+'_'+uid()[:8]+'.zip')
+        used=set();count=0
+        def unique_name(value):
+            base=display_name(value,'Card');name=base+'.png';number=2
+            while name.casefold() in used:
+                name=f'{base} ({number}).png';number+=1
+            used.add(name.casefold());return name
+        try:
+            with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as archive:
+                for c in d.get('cards',[]):
+                    for f in c.get('faces',[]):
+                        if cancel():raise ValidationError('Cropped-art export cancelled.')
+                        raw=self._cropped_art_png(f,d['name'])
+                        archive.writestr(unique_name(f.get('name') or c.get('name') or 'Card'),raw)
+                        count+=1;progress(count,total,'Cropped art for '+str(f.get('name') or c.get('name') or 'Card'))
+            return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
+        except Exception:
+            out.unlink(missing_ok=True);raise
 
     def _review_render(self,face,deck_name):
         if face.get('error'):raise ValidationError(deck_name+' / '+face['name']+': '+face['error'])
