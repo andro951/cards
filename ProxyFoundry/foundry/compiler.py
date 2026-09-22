@@ -130,10 +130,18 @@ def fit_set_symbol_to_bounds(data,symbol,recipe=None):
 # Compatibility name for older tests/importers; behavior is now frame-agnostic.
 align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 
-# Reuse the approved full-art land geometry instead of inventing a second set of
-# full-bleed bounds. Custom art behind transparent frame regions should be fitted
-# to this well; Scryfall art crops keep their normal art-window placement.
-FULL_ART_ART_BOUNDS=copy.deepcopy(native.LAYOUTS['land_full_dual']['data']['artBounds'])
+# Full-art non-land cards use an inset card opening, not the land/full-canvas
+# center-crop geometry. The treatment is intentionally pixel-defined so the
+# result is stable across frame families: 80 px in from the top/left/right,
+# width-fit the source art, and top-align it. Any excess height falls below the
+# card and is naturally clipped by the canvas/frame.
+FULL_ART_NONLAND_INSET_PX=80
+FULL_ART_NONLAND_BOUNDS={
+    'x':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
+    'y':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
+    'width':(native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_WIDTH,
+    'height':(native.CARD_HEIGHT-FULL_ART_NONLAND_INSET_PX)/native.CARD_HEIGHT,
+}
 
 def _is_custom_art_origin(art_origin):
     return str(art_origin or '')!='Scryfall selected printing'
@@ -170,14 +178,29 @@ def apply_station_underframe_policy(data,sem,art_origin):
         frame['name']=native.COLOR_NAMES[code]+' Frame'
     return True
 
-def apply_custom_full_art_placement(data,sem,recipe,group,art_origin,autofit):
-    """Fit custom art full-bleed for transparent colorless and Station frames."""
+def full_art_nonland_placement(art):
+    """Return width-fit/top-aligned placement for the full-art non-land treatment."""
+    iw=float(art.get('width') or 0)
+    if iw<=0:raise ValidationError('Artwork width is missing.')
+    available=native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX
+    # Match Card Tools' one-decimal-percent zoom convention.
+    zoom=math.floor((available/iw*100)*10+0.5)/10/100
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
+        'artY':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
     if not _is_custom_art_origin(art_origin):return False
     if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
-    data['artBounds']=copy.deepcopy(FULL_ART_ART_BOUNDS)
-    if autofit:native.auto_fit(data,sem['art_local_path'])
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
     return True
-
 
 def intentional_art_window_crop(group,choice,art,options,settings):
     """True when native structural fitting intentionally consumes a landscape art crop.
@@ -670,7 +693,7 @@ class Compiler:
                     if choice=='auto' and group=='station':
                         apply_station_underframe_policy(data,sem,art_origin)
                     apply_custom_full_art_placement(
-                        data,sem,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
                     )
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e

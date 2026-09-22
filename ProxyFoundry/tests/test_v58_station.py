@@ -89,14 +89,14 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
 
     for art in (landscape,portrait):
         custom=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder');data=custom['data']
-        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
-        expected=copy.deepcopy(data);expected['artX']=0;expected['artY']=0;expected['artZoom']=1
-        native.auto_fit(expected,str(s.asset_path(art['id'])))
-        assert all(data[k]==expected[k] for k in ['artX','artY','artZoom'])
+        assert data['artX']*data['width']==pytest.approx(80)
+        assert data['artY']*data['height']==pytest.approx(80)
+        expected_zoom=round(((data['width']-160)/art['width'])*100,1)/100
+        assert data['artZoom']==pytest.approx(expected_zoom)
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in data['frames'])
 
     manual=comp.compile_face(c,c,0,{'fit':{'artX':.1,'artY':.2,'artZoom':1.2,'artRotate':0}},settings,landscape['id'],art_origin='uploaded override')
-    assert manual['data']['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
+    assert manual['data']['artBounds']['x']*manual['data']['width']==pytest.approx(80)
     assert (manual['data']['artX'],manual['data']['artY'],manual['data']['artZoom'])==(.1,.2,1.2)
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
 

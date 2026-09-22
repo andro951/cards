@@ -114,9 +114,9 @@ def test_exact_printing(workspace):
 
 
 
-def test_custom_colorless_clara_uses_full_art_placement_while_scryfall_keeps_normal_window(workspace):
+def test_custom_colorless_clara_uses_full_art_nonland_width_fit_top_alignment(workspace):
     s,_,settings=workspace
-    b=io.BytesIO();Image.new('RGB',(1200,1600),'#556677').save(b,'PNG');art=ingest_image(s,b.getvalue())
+    b=io.BytesIO();Image.new('RGB',(1024,1536),'#556677').save(b,'PNG');art=ingest_image(s,b.getvalue())
     clara=sf('Legendary Creature — Human Advisor',[])
     clara.update(name='Clara Oswald',mana_cost='{6}',power='2',toughness='6',oracle_text='Doctor companion test.')
     comp=Compiler(s)
@@ -126,11 +126,13 @@ def test_custom_colorless_clara_uses_full_art_placement_while_scryfall_keeps_nor
 
     assert scryfall['recipe']=='colorless_creature_legendary'
     assert scryfall['data']['artBounds']=={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429}
-    assert custom['data']['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
-    expected=copy.deepcopy(custom['data']);expected['artX']=0;expected['artY']=0;expected['artZoom']=1
-    native.auto_fit(expected,str(s.asset_path(art['id'])))
-    assert all(custom['data'][k]==expected[k] for k in ['artX','artY','artZoom'])
-    assert (custom['data']['artX'],custom['data']['artY'],custom['data']['artZoom'])!=(scryfall['data']['artX'],scryfall['data']['artY'],scryfall['data']['artZoom'])
+    assert custom['data']['artX']*custom['data']['width']==pytest.approx(80)
+    assert custom['data']['artY']*custom['data']['height']==pytest.approx(80)
+    assert custom['data']['artZoom']==pytest.approx(1.807)
+    assert custom['data']['artZoom']*1024==pytest.approx(1850.368)
+    assert custom['data']['artBounds']['x']*custom['data']['width']==pytest.approx(80)
+    assert custom['data']['artBounds']['y']*custom['data']['height']==pytest.approx(80)
+    assert custom['data']['artBounds']['width']*custom['data']['width']==pytest.approx(1850)
 
 def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
     s,a,settings=workspace
