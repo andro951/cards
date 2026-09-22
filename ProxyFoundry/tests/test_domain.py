@@ -38,7 +38,7 @@ def test_deck_text():
 @pytest.mark.parametrize('types,layout,index,expected', [
     ('Artifact Creature — Myr','normal',0,'standard'), ('Legendary Artifact — Equipment','normal',0,'legendary'),
     ('Artifact Land','normal',0,'land'), ('Legendary Land','normal',0,'legendary-land'),
-    ('Enchantment Land','normal',0,'land'), ('Creature Land','normal',0,'special-land'),
+    ('Enchantment Land','normal',0,'land'), ("Enchantment Land — Urza's Saga",'saga',0,'saga'), ('Creature Land','normal',0,'special-land'),
     ('Basic Snow Land — Forest','normal',0,'basic-land'), ('Enchantment Creature — Saga','normal',0,'saga-creature'),
     ('Enchantment — Saga','saga',0,'saga'), ('Legendary Planeswalker — Jace','normal',0,'planeswalker'),
     ('Land','modal_dfc',1,'modal-back'), ('Creature','transform',0,'transform-front'),

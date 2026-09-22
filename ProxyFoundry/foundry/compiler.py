@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':5,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':6,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -723,7 +723,7 @@ class Compiler:
             elif group=='class':
                 d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
-            elif choice=='auto' and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
                 d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:

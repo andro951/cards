@@ -158,6 +158,32 @@ def test_full_art_nonland_centers_only_the_axis_that_overflows():
     assert landscape['artY']*2814==pytest.approx(80)
     assert landscape['artZoom']==pytest.approx(lzoom)
 
+def test_urzas_saga_uses_saga_recipe_instead_of_enchantment_land_recipe(workspace):
+    s,a,settings=workspace
+    card={
+        'id':'00000000-0000-4000-8000-000000000777',
+        'name':"Urza's Saga",
+        'type_line':"Enchantment Land — Urza's Saga",
+        'layout':'saga',
+        'mana_cost':'',
+        'oracle_text':"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+                      "I — Urza's Saga gains “{T}: Add {C}.”\n"
+                      "II — Urza's Saga gains “{2}, {T}: Create a 0/0 colorless Construct artifact creature token with ‘This creature gets +1/+1 for each artifact you control.’”\n"
+                      "III — Search your library for an artifact card with mana cost {0} or {1}, put it onto the battlefield, then shuffle.",
+        'colors':[],
+        'rarity':'rare',
+        'set':'mh2',
+        'collector_number':'259',
+        'artist':'Mark Tedin',
+        'produced_mana':['C'],
+    }
+    result=Compiler(s).compile_face(card,card,0,{},settings,a)
+    assert result['group']=='saga'
+    assert result['recipe']=='saga'
+    assert result['data']['version']=='sagaRegular'
+    assert any('/img/frames/saga/' in str(frame.get('src','')) for frame in result['data']['frames'])
+
+
 def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
     s,a,settings=workspace
     card=sf('Legendary Creature — Shapeshifter',[])
