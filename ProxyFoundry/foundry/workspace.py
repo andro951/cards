@@ -241,6 +241,10 @@ class Workspace:
                 if c.get('tokenSpec'):
                     entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
                     comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])
+                content_key=comp['renderKey']
+                comp['contentRenderKey']=content_key
+                comp['renderKey']=stable_hash({'content':content_key,'deck':d['id'],'face':f['id']})
+                comp['render']=self.store.render_get(comp['renderKey'])
                 comp['artOrigin']=origin;comp['exportArtUrl']=url;f['compiled']=comp
             except (ValidationError,native.BuildError,ValueError,OSError) as e:
                 f['error']=str(e);f.pop('compiled',None)
@@ -331,7 +335,7 @@ class Workspace:
                     if f.get('error') or not comp:
                         errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
                     if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
-                    targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
+                    targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'deckName':d['name'],'deckId':d['id'],'cardName':c['name'],'cardId':c['id'],'faceId':f['id'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors}
     def render_targets_for_card(self,deck_id,card_id,force=False):
         d=self.deck(deck_id)
@@ -343,12 +347,12 @@ class Workspace:
             if f.get('error') or not comp:
                 errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
             if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
-            targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'data':comp['data']})
+            targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'deckName':d['name'],'deckId':d['id'],'cardName':c['name'],'cardId':c['id'],'faceId':f['id'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors,'deckName':d['name'],'cardName':c['name']}
-    def save_render(self,key,raw,expected_size):
+    def save_render(self,target,raw,expected_size):
         asset=ingest_image(self.store,raw)
         if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
-        return self.store.render_put(key,asset)
+        return self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
     def export_cc(self,deck_ids):
         entries=[];used_keys=set()
         for ident in deck_ids:

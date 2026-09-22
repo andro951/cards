@@ -467,7 +467,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/render-sessions/([-a-f0-9]{36})/([a-f0-9]{64})', p):
             t = self.app.target(m[1], m[2]); d = t['data']
             size = [round(d['width'] * (1 + 2 * d.get('marginX', 0))), round(d['height'] * (1 + 2 * d.get('marginY', 0)))]
-            saved=self.app.ws.save_render(m[2], self.body(), size)
+            saved=self.app.ws.save_render(t, self.body(), size)
             self.app.log.info('RENDER_SAVE session=%s key=%s asset=%s size=%sx%s pipeline=%s ccVersion=%s zoom=%s x=%s y=%s',
                               self.app._short(m[1]), self.app._short(m[2]), self.app._short(saved.get('asset_id')),
                               saved.get('width'), saved.get('height'), PIPELINE_VERSION, d.get('version','-'),
@@ -494,6 +494,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
+        if p == '/api/images/delete-all': return self.respond(self.app.store.clear_renders())
         if p == '/api/trash/empty': return self.respond(self.app.store.purge_trash('decks'))
         if m := re.fullmatch(r'/api/trash/([-a-f0-9]{36})/delete', p):
             old=self.app.store.get('decks',m[1],include_deleted=True)

@@ -85,13 +85,13 @@ Every physical card has explicit matching filenames, for example `FRONT/000001.p
 
 ## Storage, cache and backups
 
-New Windows workspaces use `%LOCALAPPDATA%\BulkProxyForge`; macOS/Linux use `~/.local/share/BulkProxyForge` or `$XDG_DATA_HOME/BulkProxyForge`. Existing `ProxyFoundry` workspaces continue in place automatically so the rename never strands saved decks. Set `BULK_PROXY_FORGE_HOME` to choose another location; the old `PROXY_FOUNDRY_HOME` override remains accepted for compatibility.
+On first launch, Bulk Proxy Forge asks which drive should hold the workspace before the browser app opens. The selected drive uses a human-readable `BulkProxyForge` folder by default, with an expandable **Pick a specific folder** option for choosing another path. The small launcher preference that remembers this selection is stored separately.
 
-Replacing the extracted app folder does not remove the workspace. Do not delete that workspace directory unless you intend to erase its saved data.
+Generated card images are stored under `renders/<Deck Name>/<Card Name>.png`. Each prepared face has only one current generated image for that deck; generating a replacement deletes the previous render entry and its unused image data. Duplicate human-readable names receive a numeric suffix only when necessary to avoid a filesystem collision.
 
-Scryfall data/art cache is **365 days**, or **7 days** with Fetch new data enabled. Fresh Scryfall entries are reused, not fetched on every request. GitHub folder artwork and the hosted full-art land library are treated as live sources: their folder listings and selected image bytes are re-fetched whenever images are generated. Pinned CardConjurer dependencies are cached individually.
+Settings & backup includes **Delete All Images**, which removes all generated card renders while preserving decks, source artwork, symbols, backs, and settings. Generated images can be recreated at any time.
 
-SQLite transactions and revision checks prevent two tabs from silently overwriting deck edits. Portable backups include decks, custom templates, referenced images and completed renders, excluding runtime/font/HTTP caches, browser credentials and printer transfer secrets. Restore adds copies rather than overwriting existing decks. Export a backup before moving computers or deleting the workspace.
+Set `BULK_PROXY_FORGE_HOME` to override the saved location explicitly; the old `PROXY_FOUNDRY_HOME` variable remains accepted for compatibility. Replacing the extracted app folder does not remove the selected workspace.
 
 ## Original Card Tools and tests
 
