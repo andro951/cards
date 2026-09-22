@@ -90,7 +90,20 @@ function deckMenu(d){
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
   $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});location.href=out.download;});
   $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});location.href=out.download;});
-  $('#download-review-images').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});location.href=out.download;});
+  $('#download-review-images').onclick=()=>attempt(async()=>{
+    closeModal();
+    let current=await api('/api/decks/'+d.id);
+    const needsGeneration=!!current.upgradeRequired||current.status==='draft'||Number(current.summary?.rendered||0)<Number(current.summary?.faces||0);
+    if(needsGeneration){
+      await generate(current);
+      current=await api('/api/decks/'+d.id);
+      if(Number(current.summary?.rendered||0)<Number(current.summary?.faces||0)){
+        throw new Error('Some card images could not be generated. Fix those cards before downloading review images.');
+      }
+    }
+    const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
+    location.href=out.download;
+  });
   $('#use-as-defaults').onclick=()=>attempt(async()=>{const defaults={symbols:d.settings.symbols,backAsset:d.settings.backAsset,backDesign:d.settings.backDesign||null,artist:d.settings.artist,modificationCredit:d.settings.modificationCredit||'',templateRules:d.settings.templateRules};await api('/api/settings',{defaults});closeModal();toast('Symbols, back, artist credits and templates saved as defaults for new decks.');});
   $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
 }

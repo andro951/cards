@@ -398,6 +398,11 @@ def test_review_images_action_is_in_deck_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download review Images' in source
     assert '/review-images' in source
+    handler=source[source.index("$('#download-review-images')"):source.index("$('#use-as-defaults')")]
+    assert 'needsGeneration' in handler
+    assert "await generate(current)" in handler
+    assert handler.index("await generate(current)") < handler.index("/review-images")
+    assert 'Some card images could not be generated.' in handler
 
 
 def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
