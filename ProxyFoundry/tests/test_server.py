@@ -456,7 +456,7 @@ def test_single_card_prepare_endpoint_never_calls_full_deck_prepare(running):
     assert d['status']=='draft'
     app.ws.prepare=lambda *a,**k: (_ for _ in ()).throw(AssertionError('full deck prepare must not run'))
     d=job_done(s,'/api/decks/'+d['id']+'/cards/'+c['id']+'/prepare',{})
-    assert d['status']=='draft'
+    assert d['status']!='draft'
     selected=next(x for x in d['cards'] if x['id']==c['id'])['faces'][0]
     untouched=next(x for x in d['cards'] if x['id']==other['id'])['faces'][0]
     assert selected['compiled']['renderKey']!=before
@@ -464,6 +464,24 @@ def test_single_card_prepare_endpoint_never_calls_full_deck_prepare(running):
     assert untouched['compiled']['data']['_single_prepare_sentinel']=='keep-me'
     _,plan,_=request(s,'/api/render-sessions/card',{'deckId':d['id'],'cardId':c['id']})
     assert len(plan['targets'])==1 and plan['targets'][0]['name']=='Sample Card'
+
+
+def test_single_card_prepare_keeps_deck_draft_when_another_face_is_pending(running):
+    app,s=running
+    _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})
+    _,back,_=request(s,'/api/uploads',png((300,420),'#223355'))
+    _,symbols,_=request(s,'/api/symbols/generate',{'assetId':art['id']})
+    d=job_done(s,'/api/decks/import',{'name':'Two pending cards','source':'1 Sample Card','settings':{'symbols':symbols,'backAsset':back['id']}})
+    d=job_done(s,'/api/decks/'+d['id']+'/prepare',{})
+    stored=app.store.get('decks',d['id']);other=json.loads(json.dumps(stored['cards'][0]))
+    other['id']='22222222-2222-4222-8222-222222222222';other['name']='Other Sample';other['faces'][0]['id']='33333333-3333-4333-8333-333333333333';other['faces'][0]['name']='Other Sample'
+    stored['cards'].append(other);d=app.store.put('decks',stored,stored['revision']);d=app.ws.deck(d['id'])
+    first=d['cards'][0];other=d['cards'][1]
+    _,d,_=request(s,'/api/decks/'+d['id']+'/cards/'+first['id'],{'revision':d['revision'],'faceId':first['faces'][0]['id'],'semanticOverrides':{'oracle_text':'Reach'}})
+    _,d,_=request(s,'/api/decks/'+d['id']+'/cards/'+other['id'],{'revision':d['revision'],'faceId':other['faces'][0]['id'],'semanticOverrides':{'oracle_text':'Flying'}})
+    d=job_done(s,'/api/decks/'+d['id']+'/cards/'+first['id']+'/prepare',{})
+    assert d['status']=='draft'
+    assert next(x for x in d['cards'] if x['id']==other['id'])['faces'][0].get('compiled') is None
 
 
 def test_card_inspector_actions_exist_in_source():

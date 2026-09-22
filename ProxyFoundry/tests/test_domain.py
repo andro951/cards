@@ -47,6 +47,11 @@ def test_groups(types,layout,index,expected):
     assert type_group({'type_line':types}, {'layout':layout},index) == expected
 
 
+def test_urzas_saga_structural_priority_beats_land():
+    card={'name':"Urza's Saga",'type_line':"Enchantment Land — Urza's Saga",'layout':'saga'}
+    assert type_group(card,card,0)=='saga'
+
+
 def test_crop_threshold():
     d = {'width':1000,'height':1000,'artBounds':{'width':1,'height':1}}
     assert not crop_metrics(1000,1000,d)['warning']

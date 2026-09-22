@@ -120,7 +120,11 @@ class Workspace:
             if 'backAsset' in patch['settings'] and 'backDesign' not in patch['settings']:incoming.pop('backDesign',None)
             new=self.validate_settings(incoming)
             dirty=any(new.get(k)!=d['settings'].get(k) for k in FRONT_SETTINGS);d['settings']=new
-        if dirty:d['status']='draft'
+        if dirty:
+            d['status']='draft'
+            for card in d.get('cards',[]):
+                for face in card.get('faces',[]):
+                    face.pop('compiled',None);face.pop('error',None)
         d.pop('summary',None);return self.store.put('decks',d,expected)
     def mutate_card(self,deck_id,card_id,patch):
         d=self.deck(deck_id);c=next((c for c in d['cards'] if c['id']==card_id),None)
@@ -141,13 +145,16 @@ class Workspace:
             if patch.get('faceId'):
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
+                face_dirty=False
                 for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride','fit','semanticOverrides'):
                     if k in patch:
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
                         if k in {'artistOverride','modificationCreditOverride'} and patch[k] is not None:
                             credit_text(patch[k], 'Modification credit' if k=='modificationCreditOverride' else 'Artist credit', maximum=160 if k=='modificationCreditOverride' else 300)
                         if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
-                        if f.get(k)!=patch[k]:f[k]=patch[k];d['status']='draft'
+                        if f.get(k)!=patch[k]:f[k]=patch[k];face_dirty=True
+                if face_dirty:
+                    f.pop('compiled',None);f.pop('error',None);d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,rev)
     def add_cards(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=payload.get('revision')
@@ -274,10 +281,10 @@ class Workspace:
         if not c:raise ValidationError('Card no longer exists.')
         index,land_index=self._prepare_sources(s,progress)
         self._prepare_card_faces(d,c,s,index,land_index,progress,cancel,0,len(c.get('faces',[])))
-        # Preparing one card must not imply that unrelated pending deck changes
-        # were prepared. Clear derived upgrade metadata so deck() can recompute it,
-        # but preserve the deck's draft/prepared state exactly as it was.
-        d['settings']=s;d.pop('summary',None);d.pop('upgradeRequired',None)
+        # Recompute draft state from actual face data after this card is prepared.
+        # Front-affecting edits clear their face's compiled data, so unrelated
+        # pending cards remain draft while a fully prepared deck can leave draft.
+        d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     def copy_token(self,deck_id,card_id,spec,revision):
         d=self.deck(deck_id);c=next((x for x in d['cards'] if x['id']==card_id),None)
