@@ -3,7 +3,7 @@ import copy, hashlib, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER, fit_set_symbol_to_bounds, _standard_visible_type_bar, SET_SYMBOL_RECIPE_Y_OFFSET_PX
+from foundry.compiler import Compiler, semantic, M15_SET_SYMBOL_VERTICAL_CENTER, fit_set_symbol_to_bounds, _standard_visible_type_bar, SET_SYMBOL_RECIPE_Y_OFFSET_PX, normalize_scryfall_inline_italics
 from foundry.credits import SCRYFALL_ART
 from foundry.domain import GENERATION_VERSION, ValidationError
 from foundry.images import ingest_image, data_uri
@@ -100,6 +100,19 @@ def test_modified_custom_template_keeps_geometry(env):
     r=w.compiler.compile_face(c,c,0,{'templateOverride':t['id'],'modificationCreditOverride':'Modified by ChatGPT'},s,a['id'],art_origin=SCRYFALL_ART)
     assert r['data']['setSymbolX']==.68 and r['data']['text']['type']['width']==.5
     assert r['data']['infoArtist']=='Actual Artist · Modified by ChatGPT'
+
+
+def test_scryfall_inline_flavor_italics_render_without_literal_asterisks(env):
+    w,_,a,s=env
+    flavor='"Scouts of the Sakura Tribe spent two years wandering the forest."\n—*The History of Kamigawa*'
+    assert normalize_scryfall_inline_italics(flavor).endswith('—{i}The History of Kamigawa{/i}')
+    c=sf('Sakura-Tribe Scout',type_line='Creature — Snake Shaman Scout',colors=['G'],
+         mana_cost='{G}',oracle_text='{T}: You may put a land card from your hand onto the battlefield.',
+         flavor_text=flavor,power='1',toughness='1')
+    data=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
+    rendered=data['text']['rules']['text']
+    assert '—{i}The History of Kamigawa{/i}' in rendered
+    assert '*The History of Kamigawa*' not in rendered
 
 
 def flip_record():

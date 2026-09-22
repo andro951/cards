@@ -188,10 +188,13 @@ def apply_station_underframe_policy(data,sem,art_origin):
 def apply_colored_artifact_frame_treatment(data,sem):
     """Use muted color accents while retaining each artifact's structural shell."""
     types=set(sem.get('types',[]))
-    if 'Artifact' not in types or 'Land' in types:return False
+    if 'Artifact' not in types:return False
     colors=[]
     for color in sem.get('colors',[]) or []:
         if color in 'WUBRG' and color not in colors:colors.append(color)
+    if not colors and 'Land' in types:
+        for color in sem.get('land_colors',[]) or []:
+            if color in 'WUBRG' and color not in colors:colors.append(color)
     if not colors:return False
     code=colors[0] if len(colors)==1 else 'M'
 
@@ -302,6 +305,12 @@ def intentional_art_window_crop(group,choice,art,options,settings):
     )
 
 
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
 _QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
 _ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
 
@@ -357,7 +366,7 @@ def land_frame_colors(types,face,card,oracle_text):
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
-    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':get('flavor_text')}
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
         if v is not None:d[k]=str(v)
@@ -484,9 +493,10 @@ def _transform_classic_semantic(sem):
     pt='Creature' in card_types
     d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
     if 'Land' in card_types:
-        # Native normal M15 needs a W/U/B/R/G/M seed color. The actual transform
-        # shell below replaces it with CardConjurer's real L land frame.
-        d['frame_color']='M'
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
     elif not d.get('colors') and 'Artifact' not in card_types:
         d['frame_color']='M'
     return d
@@ -509,12 +519,22 @@ def _apply_transform_frame(data,side,sem,card):
     converted=0
     for frame in data.get('frames',[]):
         if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
         src=str(frame.get('src') or '')
         m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
         if m:
-            frame['src']=(f'/img/frames/m15/transform/regular/front{body_code}.png' if side=='front'
-                          else f'/img/frames/m15/transform/regular/new/back{body_code}.png')
-            _convert_frame_masks(frame,mapping);converted+=1
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
             continue
         pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
         if pt and side=='back':
@@ -631,6 +651,9 @@ def build_transform_data(sem,group,card,artist,autofit,flags):
         data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    apply_colored_artifact_frame_treatment(data,sem)
     side='front' if group=='transform-front' else 'back'
     _apply_transform_frame(data,side,sem,card)
     return d0,data,'m15_transform_'+side
@@ -761,9 +784,12 @@ class Compiler:
         sem=semantic(sf,face,index)
         for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
         for nested in ('flip_face','prepared_spell'):
-            if nested in sem and nested in options.get('nestedFlavorTexts',{}):
-                sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
         symbols=settings.get('symbols',{})
         if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
         symbol_id=symbols.get(sem.get('rarity','common'))
