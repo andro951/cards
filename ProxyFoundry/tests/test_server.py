@@ -556,6 +556,11 @@ def test_card_inspector_actions_exist_in_source():
     assert 'Regenerate anyway' in inspect
     assert 'Recommended source shape: <b>5:7</b>.' in inspect
     assert 'colorlessCreature' in inspect
+    assert "const hasPhysicalReverse=c=>c.faces.length===2||Boolean(c.meldBackAsset||c.scryfall?._meld_result);" in source
+    assert 'async function inspectMeldReverse' in source
+    assert 'Use actual meld reverse' in source
+    assert 'attempt(()=>inspectMeldReverse(d,c))' in inspect
+    assert 'hasPhysicalReverse(c)?' in inspect
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 
