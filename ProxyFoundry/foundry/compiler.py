@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':6,'transform-back':6,'station':2,'meld':3})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':7,'transform-back':7,'station':2,'meld':4})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -825,14 +825,20 @@ def _apply_transform_frame(data,side,sem,card):
             continue
         crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
         if crown:
-            _,floating=crown.groups()
-            if crown_code not in set('WUBRGMAL'):
+            source_code,floating=crown.groups()
+            # Native Card Tools may already have built a two-color legendary
+            # crown as two separate W/U/B/R/G PNG layers plus Right Blend.
+            # Preserve each layer's color identity while changing only its
+            # structural family to Transform/Meld. The universal pass that runs
+            # afterward can then recognize and preserve that approved blend.
+            target_code=source_code if source_code in set('WUBRGMAL') else crown_code
+            if target_code not in set('WUBRGMAL'):
                 raise ValidationError('This legendary transform face uses an unsupported crown color.')
             if floating:
-                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{target_code.lower()}.png'
             else:
-                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
-                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{target_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{target_code.lower()}.png')
             continue
         if frame.get('name')=='Legend Crown Lower Cutout':
             frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
