@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 from foundry.compiler import apply_universal_frame_color_treatment,_crown_color_variant
 
@@ -259,7 +260,7 @@ def test_crown_family_color_variant_detection_is_filename_agnostic():
         assert _crown_color_variant(source,'G')==expected
     assert _crown_color_variant('/img/frames/m15/crowns/m15MaskLegendCrown.png','G') is None
     assert _crown_color_variant('/img/frames/m15/crowns/m15CrownFloatingOutline.png','G') is None
-    assert _crown_color_variant('/img/frames/m15/innerCrowns/m15InnerCrownANyx.png','G') is None
+    assert _crown_color_variant('/img/frames/m15/innerCrowns/m15InnerCrownANyx.png','G')=='/img/frames/m15/innerCrowns/m15InnerCrownGNyx.png'
     assert _crown_color_variant('/img/frames/m15/mid/bCrown.png','G') is None
     assert _crown_color_variant('/img/frames/dndSourcebook/crown.png','G') is None
 
@@ -309,3 +310,53 @@ def test_filename_crown_families_receive_native_dual_layers(source,expected_righ
     assert crowns[0]['masks'][0]['name']=='Right Blend'
     assert crowns[0]['masks'][0]['src'].startswith('data:image/svg+xml;utf8,')
     assert crowns[1]['masks']==[]
+
+
+def test_outer_dual_crown_does_not_suppress_inner_crown_coloring():
+    outer_right={
+        'name':'Red Legend Crown (Right Blend)',
+        'src':'/img/frames/m15/crowns/m15CrownR.png',
+        'masks':[{'src':'data:image/svg+xml;utf8,OLDMASK','name':'Right Blend'}],
+        'bounds':{'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191},
+    }
+    outer_left={
+        'name':'Blue Legend Crown',
+        'src':'/img/frames/m15/crowns/m15CrownU.png',
+        'masks':[],
+        'bounds':{'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191},
+    }
+    inner={
+        'name':'Artifact Inner Crown (Nyx)',
+        'src':'/img/frames/m15/innerCrowns/new/nyx/a.png',
+        'masks':[],
+        'bounds':{'x':329/2010,'y':70/2814,'width':1353/2010,'height':64/2814},
+    }
+    data={'frames':[outer_right,outer_left,inner]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Artifact','Enchantment'],'subtypes':[],'colors':['U','R']}
+    )
+
+    outer=[f for f in data['frames'] if '/m15/crowns/m15Crown' in str(f.get('src',''))]
+    assert outer==[outer_right,outer_left]
+
+    inner_layers=[f for f in data['frames'] if '/innerCrowns/new/nyx/' in str(f.get('src',''))]
+    assert [f['src'] for f in inner_layers]==[
+        '/img/frames/m15/innerCrowns/new/nyx/r.png',
+        '/img/frames/m15/innerCrowns/new/nyx/u.png',
+    ]
+    assert inner_layers[0]['masks'][0]['name']=='Right Blend'
+    assert inner_layers[0]['masks'][0]['src'].startswith('data:image/svg+xml;utf8,')
+    assert inner_layers[1]['masks']==[]
+
+
+def test_inner_crown_monocolor_is_universal_too():
+    data={'frames':[{
+        'name':'Artifact Inner Crown (Companion)',
+        'src':'/img/frames/etched/regular/innerCrowns/companion/a.png',
+        'masks':[],
+        'bounds':{'x':.16,'y':.02,'width':.68,'height':.03},
+    }]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Artifact'],'subtypes':[],'colors':['G']}
+    )
+    assert data['frames'][0]['src']=='/img/frames/etched/regular/innerCrowns/companion/g.png'

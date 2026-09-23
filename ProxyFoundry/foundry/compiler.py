@@ -260,10 +260,11 @@ def _crown_color_variant(src,code):
     lower=code.lower()
     lowered=src.lower()
 
-    # Never treat supporting/decorative crown assets as the legendary crown.
+    # Never treat supporting/decorative crown assets as color-bearing crown
+    # components. Inner crowns are visible Nyx/Companion crown components and
+    # intentionally receive the same universal treatment as the outer crown.
     if any(token in lowered for token in (
-        'thumb','mask','outline','bordercover','border_cover','cutout',
-        'innercrown','innercrowns','pinline',
+        'thumb','mask','outline','bordercover','border_cover','cutout','pinline',
     )):
         return None
 
@@ -286,6 +287,13 @@ def _crown_color_variant(src,code):
         m=re.fullmatch(pattern,src)
         if m:return m.group(1)+code+m.group(3)
 
+    # Older M15 Nyx/Companion inner crowns embed the color before the style.
+    m=re.fullmatch(
+        r'(.*?/m15/innerCrowns/m15InnerCrown)([WUBRGMALC])(Nyx|Companion)(\.png)',
+        src,
+    )
+    if m:return m.group(1)+code+m.group(3)+m.group(4)
+
     # Complete families that use a lower-case color prefix before "Crown".
     m=re.fullmatch(r'(.*?/m15/(?:oilslick|praetors)/)([wubrgmalc])(Crown\.png)',src)
     if m:return m.group(1)+lower+m.group(3)
@@ -294,7 +302,7 @@ def _crown_color_variant(src,code):
     # packs put the colored crown in a literal crown/crowns directory and use a
     # one-letter filename. Requiring the directory segment prevents accidental
     # matches on unrelated files such as m15/mid/bCrown.png.
-    m=re.fullmatch(r'(.*?/(?:crown|crowns)(?:/[^/]+)*/)([wubrgmalc])(\.png)',src)
+    m=re.fullmatch(r'(.*?/(?:crown|crowns|innerCrowns)(?:/[^/]+)*/)([wubrgmalc])(\.png)',src)
     if m:return m.group(1)+lower+m.group(3)
 
     return None
@@ -310,20 +318,26 @@ def _is_crown_source(src):
 def _is_pinline_mask(mask):
     return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
 
-def _has_old_dual_crown_stack(frames):
-    """Recognize the approved pre-universal two-native-crown blend."""
-    crown_layers=[
-        frame for frame in frames
-        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
-    ]
-    return (
-        len(crown_layers)>=2
-        and any(
+def _crown_family_key(src):
+    """Stable identity for one native crown component's color-variant family."""
+    return _crown_color_variant(src,'M')
+
+def _old_dual_crown_families(frames):
+    """Return only crown families that already contain the approved old blend."""
+    families={}
+    for frame in frames:
+        if not isinstance(frame,dict):continue
+        key=_crown_family_key(str(frame.get('src','')))
+        if not key:continue
+        families.setdefault(key,[]).append(frame)
+    return {
+        key for key,layers in families.items()
+        if len(layers)>=2 and any(
             any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
                 for mask in frame.get('masks',[]))
-            for frame in crown_layers
+            for frame in layers
         )
-    )
+    }
 
 def _dual_crown_layers_like(frame,dual):
     """Restore the old native-PNG crown blend in the reference crown family."""
@@ -398,28 +412,25 @@ def apply_universal_frame_color_treatment(data,sem):
     if not code and not dual:return False
 
     source_frames=data.get('frames',[])
-    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
-    rebuilt=[];changed=False;dual_crown_inserted=False
+    preserved_dual_crown_families=_old_dual_crown_families(source_frames) if dual else set()
+    rebuilt=[];changed=False;dualized_crown_families=set()
     for frame in source_frames:
         if not isinstance(frame,dict):
             rebuilt.append(frame);continue
 
         old_src=str(frame.get('src',''))
 
-        # Crowns are an effect in their own right. Handle them before generic
-        # mask splitting so regular masked crowns and floating unmasked crowns
-        # follow exactly the same semantic rule.
-        if _is_crown_source(old_src):
+        # A card can contain multiple independent crown components. Process
+        # each native color family independently, just as pinlines are handled
+        # independently by their masks.
+        crown_family=_crown_family_key(old_src)
+        if crown_family:
             if dual:
-                if preserve_old_dual_crown:
-                    # Native Card Tools already built the approved left crown +
-                    # right crown/full-card fade-mask stack. Do not flatten or
-                    # recolor those native PNG textures a second time.
+                if crown_family in preserved_dual_crown_families:
                     rebuilt.append(copy.deepcopy(frame))
-                elif not dual_crown_inserted:
+                elif crown_family not in dualized_crown_families:
                     rebuilt.extend(_dual_crown_layers_like(frame,dual))
-                    dual_crown_inserted=True;changed=True
-                # Skip any additional single-color crown layers after fallback.
+                    dualized_crown_families.add(crown_family);changed=True
             else:
                 copied=copy.deepcopy(frame)
                 new=_universal_crown_source(old_src,code)
