@@ -167,18 +167,54 @@ def test_colorless_transform_land_keeps_land_crown(tmp_path):
     assert '/img/frames/m15/transform/crowns/regular/new/l.png' in sources
 
 
-def test_transform_structural_faces_still_require_compatible_template(tmp_path):
+def test_transform_saga_front_uses_native_saga_structure(tmp_path):
     store,art,settings=env(tmp_path)
     card={
         'object':'card','id':'11111111-1111-4111-8111-111111111111',
         'name':'Saga Transform Test // Back','layout':'transform','rarity':'rare',
         'set':'tst','collector_number':'1','artist':'Test Artist',
+        'frame_effects':['sunmoondfc'],
         'card_faces':[
             {'name':'Saga Transform Test','type_line':'Enchantment — Saga','mana_cost':'{2}{W}',
-             'oracle_text':'I — Draw a card.','colors':['W'],'artist':'Test Artist'},
+             'oracle_text':'I — Draw a card.\nII — Create a token.\nIII — Transform this permanent.',
+             'colors':['W'],'artist':'Test Artist'},
             {'name':'Back','type_line':'Creature — Spirit','mana_cost':'','oracle_text':'Flying',
              'colors':['W'],'power':'3','toughness':'3','artist':'Test Artist'},
         ],
     }
-    with pytest.raises(ValidationError,match='structural subtype'):
-        Compiler(store).compile_face(card,card['card_faces'][0],0,{},settings,art,art_origin='Scryfall selected printing')
+    result=Compiler(store).compile_face(card,card['card_faces'][0],0,{},settings,art,art_origin='Scryfall selected printing')
+    data=result['data']
+    assert result['group']=='transform-front'
+    assert result['recipe']=='saga_transform_front'
+    assert any(str(f.get('src','')).startswith('/img/frames/saga/') for f in data['frames'])
+    assert not any('/img/frames/m15/transform/regular/front' in str(f.get('src','')) for f in data['frames'])
+    assert '/img/frames/m15/transform/icons/sun.svg' in [f.get('src','') for f in data['frames']]
+    assert data['text']['type']['text']=='Enchantment — Saga'
+
+
+def test_the_great_synthesis_transform_back_uses_native_saga_structure(tmp_path):
+    store,art,settings=env(tmp_path)
+    card={
+        'object':'card','id':'22222222-2222-4222-8222-222222222222',
+        'name':'Jin-Gitaxias // The Great Synthesis','layout':'transform','rarity':'mythic',
+        'set':'mom','collector_number':'65','artist':'Test Artist',
+        'frame_effects':['sunmoondfc'],
+        'card_faces':[
+            {'name':'Jin-Gitaxias','type_line':'Legendary Creature — Phyrexian Praetor',
+             'mana_cost':'{3}{U}{U}','oracle_text':'Ward {2}\n{3}{U}: Transform Jin-Gitaxias.',
+             'colors':['U'],'power':'5','toughness':'5','artist':'Test Artist'},
+            {'name':'The Great Synthesis','type_line':'Enchantment — Saga','mana_cost':'',
+             'oracle_text':'I — Draw cards equal to the number of cards in your hand.\n'
+                           'II — Return all non-Phyrexian creatures to their owners\' hands.\n'
+                           'III — You may cast any number of spells from your hand without paying their mana costs.',
+             'colors':['U'],'artist':'Test Artist'},
+        ],
+    }
+    result=Compiler(store).compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
+    data=result['data']
+    assert result['group']=='transform-back'
+    assert result['recipe']=='saga_transform_back'
+    assert any(str(f.get('src','')).startswith('/img/frames/saga/') for f in data['frames'])
+    assert not any('/img/frames/m15/transform/regular/new/back' in str(f.get('src','')) for f in data['frames'])
+    assert '/img/frames/m15/transform/icons/moon.svg' in [f.get('src','') for f in data['frames']]
+    assert data['text']['type']['text']=='Enchantment — Saga'

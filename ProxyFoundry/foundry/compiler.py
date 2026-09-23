@@ -925,15 +925,55 @@ def apply_dual_saga_tassels(data,sem,group):
     frames[target:target]=overlays
     return True
 
+def build_transform_saga_data(sem,group,card,artist,autofit,flags):
+    """Build a transform face that is structurally a Saga.
+
+    CardConjurer has genuine Saga structural frames but no separate transform-
+    Saga frame pack. Preserve the complete Saga frame/chapter layout, then add
+    the DFC identity icon for the appropriate side. The universal frame-color
+    pass still runs afterward, exactly as it does for every other card family.
+    """
+    d0=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d0.pop(key,None)
+    types=set(d0.get('types',[]))
+    subtypes=set(d0.get('subtypes',[]))
+    if 'Saga' not in subtypes or 'Enchantment' not in types:
+        raise ValidationError('Transform Saga support requires an Enchantment — Saga face.')
+    saga_group='saga-creature' if 'Creature' in types else 'saga'
+    d0['layout']='saga_creature' if saga_group=='saga-creature' else 'saga'
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    apply_dual_saga_tassels(data,sem,saga_group)
+    side='front' if group=='transform-front' else 'back'
+    icon=_transform_icon_for(card,side)
+    if icon:
+        data.setdefault('frames',[]).insert(0,icon)
+        title=(data.get('text') or {}).get('title')
+        if isinstance(title,dict):
+            # Reserve the same left-side transform-icon clearance used by the
+            # ordinary transform front instead of letting the icon cover title.
+            old_x=float(title.get('x') or 0)
+            right=old_x+float(title.get('width') or 0)
+            title['x']=max(old_x,0.16)
+            title['width']=max(0,right-title['x'])
+
+    return d0,data,'saga_transform_'+side
+
+
 def build_transform_data(sem,group,card,artist,autofit,flags):
-    """Treat each DFC face normally, then replace only its shell with transform."""
+    """Build a transform face using its real structural family."""
+    if 'Saga' in set(sem.get('subtypes',[])):
+        return build_transform_saga_data(sem,group,card,artist,autofit,flags)
+
     d0=_transform_classic_semantic(sem)
     try:
         data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
-    # Color treatment is semantic, not single-sided-card-specific. Apply it
-    # before replacing the structural shell so DFCs preserve the same accents.
     side='front' if group=='transform-front' else 'back'
     _apply_transform_frame(data,side,sem,card)
     return d0,data,'m15_transform_'+side
