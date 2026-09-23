@@ -88,7 +88,6 @@ ORDINARY_GROUPS={'standard','legendary','land','legendary-land','basic-land'}
 def type_group(face,parent=None,index=0):
     parent=parent or face
     layout=str(parent.get('layout') or face.get('scryfall_layout') or 'normal')
-    if layout=='meld' and parent.get('_meld_proxy'):layout='normal'
     tl=str(face.get('type_line') or '').lower()
     if not tl:
         tl=(' '.join(face.get('types',[]))+' — '+' '.join(face.get('subtypes',[]))).lower()

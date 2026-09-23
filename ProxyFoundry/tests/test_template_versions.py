@@ -13,11 +13,11 @@ def test_auto_template_version_is_scoped_to_structural_group(tmp_path,monkeypatc
     station=compiler.template_identity('station','auto')
     planeswalker=compiler.template_identity('planeswalker','auto')
     assert station[0]=='auto:station' and planeswalker[0]=='auto:planeswalker'
-    assert station[1]==1 and planeswalker[1]==1
-    monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',2)
+    assert station[1]==2 and planeswalker[1]==1
+    monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',3)
     station2=compiler.template_identity('station','auto')
     planeswalker2=compiler.template_identity('planeswalker','auto')
-    assert station2[1]==2 and station2[2]==2
+    assert station2[1]==3 and station2[2]==3
     assert planeswalker2==planeswalker
     data={'artSource':'/api/assets/art','frames':[]}
     assert render_key(data,'art',station[2]) != render_key(data,'art',station2[2])

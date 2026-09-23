@@ -96,8 +96,19 @@ def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace)
     assert might_card['scryfall']['_meld_result']['name']=='Urza, Planeswalker'
     assert [c['faces'][0]['name'] for c in d['cards']]==['Urza, Lord Protector','The Mightstone and Weakstone']
     d=ws.prepare(d['id']);urza_card,might_card=d['cards']
-    assert urza_card['faces'][0]['compiled']['group']=='legendary'
-    assert might_card['faces'][0]['compiled']['group']=='legendary'
+    assert urza_card['faces'][0]['compiled']['group']=='meld'
+    assert might_card['faces'][0]['compiled']['group']=='meld'
+    for card in (urza_card,might_card):
+        comp=card['faces'][0]['compiled']
+        assert comp['recipe']=='m15_meld_front'
+        assert comp['templateVersion']==2
+        icons=[f for f in comp['data']['frames'] if f.get('name')=='Meld']
+        assert icons==[{'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524}}]
+        assert comp['data']['text']['title']['x']==0.16
+    urza_frames=urza_card['faces'][0]['compiled']['data']['frames']
+    might_frames=might_card['faces'][0]['compiled']['data']['frames']
+    assert any(f.get('src')=='/img/frames/m15/transform/regular/frontM.png' for f in urza_frames)
+    assert any(f.get('src')=='/img/frames/m15/transform/regular/frontA.png' for f in might_frames)
     urza_back=s.asset(urza_card['meldBackAsset']);might_back=s.asset(might_card['meldBackAsset'])
     assert (urza_back['width'],urza_back['height'])==(630,900)
     assert (might_back['width'],might_back['height'])==(630,900)

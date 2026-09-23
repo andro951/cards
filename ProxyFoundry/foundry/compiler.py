@@ -18,7 +18,7 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
-NEEDS_CUSTOM={'split','adventure','room','meld','art-series','planar','scheme','vanguard','token','emblem','battle','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','token','emblem','battle','case','special-land','dungeon','conspiracy'}
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
 # affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5,'station':2,'meld':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -161,28 +161,22 @@ def _station_frame_component(frame):
     )
 
 def apply_station_underframe_policy(data,sem,art_origin):
-    """Expose full/custom art through Station transparency; fill Scryfall color gaps.
+    """Use an artifact underframe for Scryfall Stations; expose custom full art.
 
     Custom Station art is full-bleed, so the ordinary M15 Frame component must
-    not sit behind the transparent portion of the Station overlay. Colorless
-    Scryfall Stations intentionally leave that portion transparent too. Colored
-    Scryfall Stations use the corresponding normal W/U/B/R/G frame component;
-    two or more colors use the normal multicolor frame. Other masked pieces are
-    left alone because the Station overlay owns the visible Station treatment.
+    not sit behind the transparent portion of the Station overlay. Scryfall art
+    keeps a complete underframe, but Stations always use the neutral artifact
+    shell there regardless of the card's colors.
     """
     frames=data.get('frames',[])
     components=[frame for frame in frames if _station_frame_component(frame)]
     if not components:return False
-    colors=[]
-    for color in sem.get('colors',[]) or []:
-        if color in 'WUBRG' and color not in colors:colors.append(color)
-    if _is_custom_art_origin(art_origin) or not colors:
+    if _is_custom_art_origin(art_origin):
         data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
         return True
-    code=colors[0] if len(colors)==1 else 'M'
     for frame in components:
-        frame['src']=f'/img/frames/m15/regular/m15Frame{code}.png'
-        frame['name']=native.COLOR_NAMES[code]+' Frame'
+        frame['src']='/img/frames/m15/regular/m15FrameA.png'
+        frame['name']='Artifact Frame'
     return True
 
 def apply_colored_artifact_frame_treatment(data,sem):
@@ -464,6 +458,8 @@ _TRANSFORM_EFFECT_ICONS={
 
 
 def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
     effects=set(card.get('frame_effects') or [])
     for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
         if effect in effects:
@@ -659,6 +655,18 @@ def build_transform_data(sem,group,card,artist,autofit,flags):
     return d0,data,'m15_transform_'+side
 
 
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    apply_colored_artifact_frame_treatment(data,sem)
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
 _CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
 
 
@@ -811,6 +819,9 @@ class Compiler:
                     raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
             if group in {'transform-front','transform-back'}:
                 d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='class':
                 d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)

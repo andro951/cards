@@ -107,23 +107,15 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
 
 
-def test_station_underframe_policy_depends_on_art_source_and_color(env):
+def test_station_underframe_policy_depends_on_art_source_not_card_color(env):
     _,comp,landscape,_,settings=env
-    cases=[
-        ([],None),
-        (['W'],'W'),
-        (['U','R'],'M'),
-        (['W','U','B'],'M'),
-    ]
-    for colors,code in cases:
+    for colors in ([],['W'],['U','R'],['W','U','B']):
         c=card(colors=colors)
         result=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='Scryfall selected printing')
         frame_components=[frame for frame in result['data']['frames'] if any(mask.get('name')=='Frame' for mask in frame.get('masks',[]))]
-        if code is None:
-            assert frame_components==[]
-        else:
-            assert len(frame_components)==1
-            assert frame_components[0]['src']==f'/img/frames/m15/regular/m15Frame{code}.png'
+        assert len(frame_components)==1
+        assert frame_components[0]['src']=='/img/frames/m15/regular/m15FrameA.png'
+        assert frame_components[0]['name']=='Artifact Frame'
 
         custom=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='computer folder')
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in custom['data']['frames'])
