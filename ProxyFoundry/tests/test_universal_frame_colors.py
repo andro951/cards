@@ -1,4 +1,4 @@
-from foundry.compiler import apply_universal_frame_color_treatment
+from foundry.compiler import apply_universal_frame_color_treatment,_crown_color_variant
 
 
 def mask(name,src='/mask.png'):
@@ -235,3 +235,22 @@ def test_showcase_ucrown_filename_family_is_also_detected():
     ]
     assert crowns[0]['masks'][0]['name']=='Right Blend'
     assert crowns[1]['masks']==[]
+
+
+def test_crown_family_color_variant_detection_is_filename_agnostic():
+    cases={
+        '/img/frames/m15/crowns/m15CrownAFloatingAlt.png':
+            '/img/frames/m15/crowns/m15CrownGFloatingAlt.png',
+        '/img/frames/modal/crowns/regular/a.png':
+            '/img/frames/modal/crowns/regular/g.png',
+        '/img/frames/m15/ub/crowns/floating/a.png':
+            '/img/frames/m15/ub/crowns/floating/g.png',
+        '/img/frames/m15/oilslick/aCrown.png':
+            '/img/frames/m15/oilslick/gCrown.png',
+        '/img/frames/m15/nickname/m15NicknameCrownA.png':
+            '/img/frames/m15/nickname/m15NicknameCrownG.png',
+    }
+    for source,expected in cases.items():
+        assert _crown_color_variant(source,'G')==expected
+    assert _crown_color_variant('/img/frames/m15/crowns/m15MaskLegendCrown.png','G') is None
+    assert _crown_color_variant('/img/frames/m15/crowns/m15CrownFloatingOutline.png','G') is None

@@ -249,11 +249,37 @@ def _frame_effect_source(src,code):
 def _crown_color_variant(src,code):
     """Return the same native crown asset in another color, across frame families."""
     if code not in 'WUBRGMALC':return None
+    src=str(src or '')
     lower=code.lower()
 
-    # M15-family filenames encode color inside the filename.
-    patterns=[
-        r'^(.*?/m15Crown)([WUBRGMALC])(Floating(?:Alt)?\.png)
+    # Standard M15 names put the color immediately after "Crown", including
+    # floating/alternate variants.
+    m=re.fullmatch(r'(.*Crown)([WUBRGMALC])(.*\.png)',src)
+    if m and '/crown' in src.lower():
+        return m.group(1)+code+m.group(3)
+
+    # Many showcase families use a lower-case color as the filename prefix:
+    # uCrown.png, bCrown.png, etc.
+    m=re.fullmatch(r'(.*?/)([wubrgmalc])(Crown.*\.png)',src)
+    if m and '/crown' in src.lower():
+        return m.group(1)+lower+m.group(3)
+
+    # Modal, transform, UB and many other packs put colored crown PNGs in a
+    # crown/crowns directory with a one-letter filename.
+    m=re.fullmatch(r'(.*?/(?:crown|crowns)(?:/[^/]+)*/)([wubrgmalc])(\.png)',src)
+    if m:
+        return m.group(1)+lower+m.group(3)
+
+    return None
+
+def _universal_crown_source(src,code):
+    """Recolor any recognized native crown without changing its frame family."""
+    return _crown_color_variant(src,code) or src
+
+def _is_crown_source(src):
+    """True only for native color-variant crown assets, never masks/outlines."""
+    return _crown_color_variant(src,'M') is not None
+
 def _is_pinline_mask(mask):
     return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
 
