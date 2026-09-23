@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4,'battle':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4,'battle':3})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1061,17 +1061,8 @@ def build_meld_data(sem,card,artist,autofit,flags):
     return d0,data,'m15_meld_front'
 
 
-_BATTLE_MASKS=[
-    {'src':'/img/frames/m15/battle/maskPinline.png','name':'Pinline'},
-    {'src':'/img/frames/m15/battle/maskTitle.png','name':'Title'},
-    {'src':'/img/frames/m15/battle/maskType.png','name':'Type'},
-    {'src':'/img/frames/m15/battle/maskRules.png','name':'Rules'},
-    {'src':'/img/frames/m15/battle/maskDefense.png','name':'Defense'},
-    {'src':'/img/frames/m15/battle/maskBorder.png','name':'Border'},
-]
 _BATTLE_ART_BOUNDS={'x':167/2100,'y':60/1500,'width':1873/2100,'height':1371/1500}
 _BATTLE_SYMBOL_BOUNDS={'x':1945/2100,'y':925/1500,'width':180/2100,'height':86/1500,'vertical':'center','horizontal':'right'}
-_BATTLE_HOLO_BOUNDS={'x':103/2100,'y':657/1500,'width':93/2100,'height':186/1500}
 
 def _battle_frame_code(sem):
     colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
@@ -1103,19 +1094,14 @@ def build_battle_data(sem,card,artist,autofit,flags):
         raise ValidationError(str(exc)) from exc
 
     code=_battle_frame_code(sem)
-    frames=[]
-    if str(sem.get('rarity','common')).lower() in {'rare','mythic'}:
-        frames.append({
-            'name':'Holo Stamp',
-            'src':'/img/frames/m15/battle/holostamp.png',
-            'masks':[],
-            'bounds':copy.deepcopy(_BATTLE_HOLO_BOUNDS),
-        })
-    frames.append({
+    # The Battle PNG is already the complete printed Invasion frame. Do not
+    # mask it down to individual components and do not add the separate holo
+    # sticker; both made the built-in frame appear incomplete.
+    frames=[{
         'name':native.COLOR_NAMES.get(code,code)+' Battle Frame',
         'src':f'/img/frames/m15/battle/{code.lower()}.png',
-        'masks':copy.deepcopy(_BATTLE_MASKS),
-    })
+        'masks':[],
+    }]
 
     reverse_pt=''
     faces=card.get('card_faces') or []

@@ -79,7 +79,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
 
     assert front['group']=='battle'
     assert front['recipe']=='m15_battle'
-    assert front['templateVersion']==2
+    assert front['templateVersion']==3
     assert front['data']['version']=='battle'
     assert front['data']['landscape'] is True
     assert (front['data']['width'],front['data']['height'])==(2814,2010)
@@ -89,9 +89,12 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
     assert front['data']['text']['type']['text']=='Battle — Siege'
     assert front['data']['text']['defense']['text']=='6'
     assert front['data']['text']['reminder']['text']=='8/8'
+    battle_frames=[f for f in front['data']['frames'] if f.get('src')=='/img/frames/m15/battle/g.png']
+    assert len(battle_frames)==1
+    assert battle_frames[0]['masks']==[]
+    assert not any('holostamp' in str(f.get('src','')).lower() for f in front['data']['frames'])
     for piece in ('Pinline','Title','Type','Rules','Defense','Border'):
-        assert sources_for_mask(front['data'],piece)==['/img/frames/m15/battle/g.png']
-    assert any(f.get('src')=='/img/frames/m15/battle/holostamp.png' for f in front['data']['frames'])
+        assert sources_for_mask(front['data'],piece)==[]
 
     assert back['group']=='transform-back'
     assert back['recipe']=='m15_transform_back'
@@ -100,7 +103,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
     assert back['data']['text']['pt']['text']=='8/8'
 
 
-def test_two_color_battle_keeps_battle_structure_and_gets_universal_gradient(tmp_path):
+def test_two_color_battle_uses_complete_multicolor_frame_without_component_masks(tmp_path):
     store,art,settings=env(tmp_path)
     card=invasion_of_ikoria()
     front=card['card_faces'][0]
@@ -108,9 +111,11 @@ def test_two_color_battle_keeps_battle_structure_and_gets_universal_gradient(tmp
     front['mana_cost']='{X}{G}{U}'
     data=Compiler(store).compile_face(card,front,0,{},settings,art,art_origin='Scryfall selected printing')['data']
 
-    assert sources_for_mask(data,'Defense')==['/img/frames/m15/battle/m.png']
-    assert sources_for_mask(data,'Border')==['/img/frames/m15/battle/m.png']
-    for piece in ('Title','Type','Rules'):
-        assert sources_for_mask(data,piece)==['/img/frames/m15/battle/m.png']
-    pinline=sources_for_mask(data,'Pinline')
-    assert len(pinline)==1 and pinline[0].startswith('data:image/svg+xml;utf8,')
+    battle_frames=[f for f in data['frames'] if f.get('src')=='/img/frames/m15/battle/m.png']
+    assert len(battle_frames)==1
+    assert battle_frames[0]['masks']==[]
+    assert not any('holostamp' in str(f.get('src','')).lower() for f in data['frames'])
+    assert not any(
+        any('pinline' in str(mask.get('name','')).lower() for mask in f.get('masks',[]) if isinstance(mask,dict))
+        for f in data['frames']
+    )
