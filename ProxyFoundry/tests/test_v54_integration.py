@@ -171,6 +171,21 @@ def test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_me
     assert body and all(f['src'].endswith('m15FrameA.png') for f in body)
 
 
+def test_two_color_legendary_crown_and_pinline_share_universal_gradient(env):
+    w,_,a,s=env
+    c=sf('Dual Legend',type_line='Legendary Creature — Human Wizard',colors=['U','R'],mana_cost='{1}{U}{R}',power='3',toughness='3')
+    data=w.compiler.compile_face(c,c,0,{},s,a['id'])['data']
+    pinline=next(f for f in data['frames'] if any(
+        'pinline' in str(m.get('name','')).lower() for m in f.get('masks',[]) if isinstance(m,dict)
+    ))
+    crown=next(f for f in data['frames'] if 'Gradient Legend Crown' in f.get('name',''))
+    assert pinline['src'].startswith('data:image/svg+xml;utf8,')
+    assert crown['src']==pinline['src']
+    for effect in ('Title','Type','Rules'):
+        layers=[f for f in data['frames'] if effect in {m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)}]
+        assert layers and all(f['src'].endswith('m15FrameM.png') for f in layers)
+
+
 def test_colored_artifact_creature_keeps_metallic_pt_box(env):
     w,_,a,s=env
     c=sf('Colored Artifact Creature',type_line='Artifact Creature — Construct',colors=['R'],mana_cost='{2}{R}',power='3',toughness='3')

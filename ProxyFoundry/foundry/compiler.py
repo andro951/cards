@@ -257,6 +257,32 @@ def _universal_crown_source(src,code):
         return f"/img/frames/m15/transform/crowns/{m.group(1)}/{code.lower()}.png"
     return src
 
+def _is_crown_source(src):
+    return bool(
+        re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC](?:Floating(?:Alt)?)?\.png',src)
+        or re.fullmatch(r'/img/frames/m15/transform/crowns/(?:floating|regular|regular/new|nickname|brawl)/[wubrgmal]\.png',src)
+    )
+
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _dual_gradient_crown(frame,dual):
+    """Use the same eased two-color gradient as pinlines, clipped to crown shape."""
+    first,second=dual
+    layer=copy.deepcopy(frame)
+    original=str(layer.get('src',''))
+    layer['src']=native.dual_gradient_fill_src(first,second)
+    layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient Legend Crown"
+    masks=layer.get('masks')
+    if not isinstance(masks,list) or not masks:
+        # Floating crowns are standalone alpha PNGs rather than masked full-card
+        # layers. Reuse that exact PNG as the alpha mask while the shared
+        # gradient supplies the color.
+        layer['masks']=[{'src':original,'name':'Legend Crown'}]
+        if isinstance(layer.get('bounds'),dict):
+            layer['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+    return layer
+
 def apply_universal_frame_color_treatment(data,sem):
     """Apply the five shared color effects once, after structural frame selection.
 
@@ -266,9 +292,10 @@ def apply_universal_frame_color_treatment(data,sem):
     or another structural family. Structural masks are split away first so the
     card's body/frame remains whatever its recipe selected.
 
-    Exactly two colors use the shared eased dual-color pinline gradient. Two or
-    more colors use multicolor/gold for title/type/rules/crown. Lands use only
-    land_colors, so colored activation costs do not color a colorless land.
+    Exactly two colors use the same shared eased dual-color gradient for both
+    pinlines and legendary crowns. Title/type/rules use multicolor/gold for two
+    or more colors. Lands use only land_colors, so colored activation costs do
+    not color a colorless land.
     """
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
@@ -280,20 +307,47 @@ def apply_universal_frame_color_treatment(data,sem):
         if not isinstance(frame,dict):
             rebuilt.append(frame);continue
 
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                rebuilt.append(_dual_gradient_crown(frame,dual))
+                changed=True
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
         masks=frame.get('masks',[])
         if not isinstance(masks,list) or not masks:
             copied=copy.deepcopy(frame)
-            old=str(copied.get('src',''))
-            new=_universal_crown_source(old,code)
-            if new!=old:
-                copied['src']=new;changed=True
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
             rebuilt.append(copied);continue
 
-        pin=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name')==_FRAME_PINLINE_MASK]
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
         boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
         other=[copy.deepcopy(m) for m in masks if not (
             isinstance(m,dict) and (
-                m.get('name')==_FRAME_PINLINE_MASK or m.get('name') in _FRAME_BOX_MASKS
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
             )
         )]
 
@@ -312,7 +366,7 @@ def apply_universal_frame_color_treatment(data,sem):
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
-        # Pinline is the only effect with a two-color gradient rule.
+        # Pinline uses the same two-color gradient source as the crown.
         if pin:
             layer=copy.deepcopy(frame)
             layer['masks']=pin

@@ -140,7 +140,9 @@ def test_multicolor_transform_artifact_keeps_gold_accents_and_gradient_pinline(t
     })
     assert pinline['masks']==[{'src':'/img/frames/m15/transform/regular/maskPinlineFront.png','name':'Pinline'}]
     assert '/img/frames/m15/transform/regular/frontA.png' in sources_for_mask(data,'Frame')
-    assert '/img/frames/m15/transform/crowns/regular/m.png' in [f.get('src','') for f in data['frames']]
+    crowns=[f for f in data['frames'] if 'Gradient Legend Crown' in f.get('name','')]
+    assert len(crowns)==1 and crowns[0]['src'].startswith('data:image/svg+xml;utf8,')
+    assert crowns[0]['src']==pinline['src']
 
 
 def test_colorless_transform_land_keeps_land_crown(tmp_path):

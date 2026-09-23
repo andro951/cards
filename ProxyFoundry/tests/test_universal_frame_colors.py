@@ -34,11 +34,12 @@ def test_dual_color_universal_pass_splits_structure_and_colors_all_five_effects(
     assert layers(data,'Frame')[0]['src'].endswith('m15FrameA.png')
     for effect in ('Title','Type','Rules'):
         assert layers(data,effect)[0]['src'].endswith('m15FrameM.png')
-    assert layers(data,'Pinline')[0]['src'].startswith('data:image/svg+xml;utf8,')
-    assert any(
-        frame.get('src')=='/img/frames/m15/crowns/m15CrownMFloating.png'
-        for frame in data['frames']
-    )
+    pinline=layers(data,'Pinline')[0]
+    assert pinline['src'].startswith('data:image/svg+xml;utf8,')
+    crown=next(frame for frame in data['frames'] if 'Gradient Legend Crown' in frame.get('name',''))
+    assert crown['src']==pinline['src']
+    assert crown['masks']==[{'src':'/img/frames/m15/crowns/m15CrownAFloating.png','name':'Legend Crown'}]
+    assert crown['ogBounds']=={'x':0,'y':0,'width':1,'height':1}
 
 
 def test_universal_pass_uses_same_semantics_across_frame_families():
@@ -118,3 +119,21 @@ def test_colorless_land_uses_neutral_effects_without_recoloring_structure():
         frame.get('src')=='/img/frames/m15/crowns/m15CrownLFloating.png'
         for frame in data['frames']
     )
+
+
+def test_masked_regular_crown_also_uses_dual_gradient():
+    crown_masks=[
+        {'src':'/img/frames/m15/crowns/m15MaskLegendCrown.png','name':'Crown Without Pinlines'},
+        {'src':'/img/frames/m15/crowns/m15MaskLegendCrownPinline.png','name':'Crown With Pinlines'},
+    ]
+    data={'frames':[
+        {'name':'Artifact Legend Crown','src':'/img/frames/m15/crowns/m15CrownA.png','masks':crown_masks},
+        {'name':'Artifact Pinline','src':'/img/frames/m15/regular/m15FrameA.png','masks':[mask('Pinline')]},
+    ]}
+    sem={'types':['Artifact'],'subtypes':[],'colors':['W','U']}
+    apply_universal_frame_color_treatment(data,sem)
+    crown=next(frame for frame in data['frames'] if 'Gradient Legend Crown' in frame.get('name',''))
+    pinline=layers(data,'Pinline')[0]
+    assert crown['src']==pinline['src']
+    assert crown['src'].startswith('data:image/svg+xml;utf8,')
+    assert crown['masks']==crown_masks
