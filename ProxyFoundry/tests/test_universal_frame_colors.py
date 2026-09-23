@@ -248,13 +248,20 @@ def test_crown_family_color_variant_detection_is_filename_agnostic():
             '/img/frames/m15/ub/crowns/floating/g.png',
         '/img/frames/m15/oilslick/aCrown.png':
             '/img/frames/m15/oilslick/gCrown.png',
+        '/img/frames/m15/praetors/aCrown.png':
+            '/img/frames/m15/praetors/gCrown.png',
         '/img/frames/m15/nickname/m15NicknameCrownA.png':
             '/img/frames/m15/nickname/m15NicknameCrownG.png',
+        '/img/frames/m15/zendikarRising/m15ZendikarRisingCrownA.png':
+            '/img/frames/m15/zendikarRising/m15ZendikarRisingCrownG.png',
     }
     for source,expected in cases.items():
         assert _crown_color_variant(source,'G')==expected
     assert _crown_color_variant('/img/frames/m15/crowns/m15MaskLegendCrown.png','G') is None
     assert _crown_color_variant('/img/frames/m15/crowns/m15CrownFloatingOutline.png','G') is None
+    assert _crown_color_variant('/img/frames/m15/innerCrowns/m15InnerCrownANyx.png','G') is None
+    assert _crown_color_variant('/img/frames/m15/mid/bCrown.png','G') is None
+    assert _crown_color_variant('/img/frames/dndSourcebook/crown.png','G') is None
 
 
 def test_compiler_source_is_single_complete_module():
@@ -263,3 +270,42 @@ def test_compiler_source_is_single_complete_module():
     assert source.count('def apply_universal_frame_color_treatment')==1
     assert source.count('def _crown_color_variant')==1
     compile(source,'foundry/compiler.py','exec')
+
+
+@pytest.mark.parametrize('source,expected_right,expected_left',[
+    (
+        '/img/frames/m15/nickname/m15NicknameCrownA.png',
+        '/img/frames/m15/nickname/m15NicknameCrownR.png',
+        '/img/frames/m15/nickname/m15NicknameCrownU.png',
+    ),
+    (
+        '/img/frames/m15/oilslick/aCrown.png',
+        '/img/frames/m15/oilslick/rCrown.png',
+        '/img/frames/m15/oilslick/uCrown.png',
+    ),
+    (
+        '/img/frames/m15/praetors/aCrown.png',
+        '/img/frames/m15/praetors/rCrown.png',
+        '/img/frames/m15/praetors/uCrown.png',
+    ),
+    (
+        '/img/frames/m15/zendikarRising/m15ZendikarRisingCrownA.png',
+        '/img/frames/m15/zendikarRising/m15ZendikarRisingCrownR.png',
+        '/img/frames/m15/zendikarRising/m15ZendikarRisingCrownU.png',
+    ),
+])
+def test_filename_crown_families_receive_native_dual_layers(source,expected_right,expected_left):
+    data={'frames':[{
+        'name':'Artifact Legend Crown',
+        'src':source,
+        'masks':[],
+        'bounds':{'x':0.0274,'y':0.0191,'width':0.9454,'height':0.1667},
+    }]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Creature'],'subtypes':[],'colors':['U','R']}
+    )
+    crowns=[f for f in data['frames'] if 'Legend Crown' in f.get('name','')]
+    assert [f['src'] for f in crowns]==[expected_right,expected_left]
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
+    assert crowns[0]['masks'][0]['src'].startswith('data:image/svg+xml;utf8,')
+    assert crowns[1]['masks']==[]

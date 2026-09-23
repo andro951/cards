@@ -247,28 +247,55 @@ def _frame_effect_source(src,code):
     return src
 
 def _crown_color_variant(src,code):
-    """Return the same native crown asset in another color, across frame families."""
+    """Return the same native legendary-crown asset in another color.
+
+    Do not infer this from card type or from a vague "crown" substring. Card
+    Conjurer has several complete W/U/B/R/G crown families with different
+    filename conventions, plus unrelated inner crowns, masks, outlines and
+    one-off decorative crowns. Only complete legendary-crown color families
+    belong here.
+    """
     if code not in 'WUBRGMALC':return None
     src=str(src or '')
     lower=code.lower()
+    lowered=src.lower()
 
-    # Standard M15 names put the color immediately after "Crown", including
-    # floating/alternate variants.
-    m=re.fullmatch(r'(.*Crown)([WUBRGMALC])(.*\.png)',src)
-    if m and '/crown' in src.lower():
-        return m.group(1)+code+m.group(3)
+    # Never treat supporting/decorative crown assets as the legendary crown.
+    if any(token in lowered for token in (
+        'thumb','mask','outline','bordercover','border_cover','cutout',
+        'innercrown','innercrowns','pinline',
+    )):
+        return None
 
-    # Many showcase families use a lower-case color as the filename prefix:
-    # uCrown.png, bCrown.png, etc.
-    m=re.fullmatch(r'(.*?/)([wubrgmalc])(Crown.*\.png)',src)
-    if m and '/crown' in src.lower():
-        return m.group(1)+lower+m.group(3)
+    # Standard M15 crown family, including floating/alternate floating crowns.
+    m=re.fullmatch(
+        r'(.*?/m15/crowns/m15Crown)([WUBRGMALC])(Floating(?:Alt)?\.png|\.png)',
+        src,
+    )
+    if m:return m.group(1)+code+m.group(3)
 
-    # Modal, transform, UB and many other packs put colored crown PNGs in a
-    # crown/crowns directory with a one-letter filename.
+    # Universes Beyond M15-style crown filenames.
+    m=re.fullmatch(r'(.*?/m15/ub/crowns/m15Crown)([WUBRGMALC])(\.png)',src)
+    if m:return m.group(1)+code+m.group(3)
+
+    # Complete families where the color is embedded in a longer crown filename.
+    for pattern in (
+        r'(.*?/m15/nickname/m15NicknameCrown)([WUBRGMALC])(\.png)',
+        r'(.*?/m15/zendikarRising/m15ZendikarRisingCrown)([WUBRGMALC])(\.png)',
+    ):
+        m=re.fullmatch(pattern,src)
+        if m:return m.group(1)+code+m.group(3)
+
+    # Complete families that use a lower-case color prefix before "Crown".
+    m=re.fullmatch(r'(.*?/m15/(?:oilslick|praetors)/)([wubrgmalc])(Crown\.png)',src)
+    if m:return m.group(1)+lower+m.group(3)
+
+    # Modal, transform, crystal, dossier, etched, LOTR, custom and similar
+    # packs put the colored crown in a literal crown/crowns directory and use a
+    # one-letter filename. Requiring the directory segment prevents accidental
+    # matches on unrelated files such as m15/mid/bCrown.png.
     m=re.fullmatch(r'(.*?/(?:crown|crowns)(?:/[^/]+)*/)([wubrgmalc])(\.png)',src)
-    if m:
-        return m.group(1)+lower+m.group(3)
+    if m:return m.group(1)+lower+m.group(3)
 
     return None
 
