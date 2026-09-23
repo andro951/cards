@@ -96,3 +96,13 @@ def test_nonbasic_land_subtypes_do_not_crash_color_inference():
         ['C'],
     )
     assert colors(card)==[]
+
+
+def test_academy_ruins_is_colorless_despite_blue_nonmana_activation_cost():
+    card=land(
+        'Academy Ruins',
+        'Legendary Land',
+        '{T}: Add {C}.\n{1}{U}, {T}: Put target artifact card from your graveyard on top of your library.',
+        ['C'],
+    )
+    assert colors(card)==[]

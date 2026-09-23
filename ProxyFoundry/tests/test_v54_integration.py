@@ -273,6 +273,31 @@ def test_set_symbol_fit_respects_nonstandard_frame_anchor():
     assert data['setSymbolBounds']['y']==pytest.approx(.4)
 
 
+def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
+    w,_,a,s=env
+    c=sf(
+        'Academy Ruins',
+        type_line='Legendary Land',
+        colors=[],
+        mana_cost='',
+        oracle_text='{T}: Add {C}.\n{1}{U}, {T}: Put target artifact card from your graveyard on top of your library.',
+        produced_mana=['C'],
+        power=None,
+        toughness=None,
+    )
+    comp=w.compiler.compile_face(c,c,0,{},s,a['id'])
+    assert comp['recipe']=='land_full_legendary'
+    assert semantic(c,c).get('land_colors',[])==[]
+    sources=[str(frame.get('src','')) for frame in comp['data']['frames']]
+    # No blue template default may survive on a colorless land.
+    assert not any(
+        'FrameU.png' in src or '/ul.png' in src or 'CrownU' in src
+        for src in sources
+    )
+    assert any('m15GenericShowcaseFrameL.png' in src for src in sources)
+    assert any('m15CrownL' in src for src in sources)
+
+
 def test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic(env):
     w,c,a,s=env
     raw=io.BytesIO();Image.new('RGBA',(869,1057),'#ff6600').save(raw,'PNG')
