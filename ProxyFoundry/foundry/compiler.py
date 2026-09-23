@@ -18,7 +18,7 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
-NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','token','emblem','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','emblem','case','special-land','dungeon','conspiracy'}
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
 # affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4,'battle':3})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1073,6 +1073,136 @@ def _battle_frame_code(sem):
     if len(colors)>=2:return 'M'
     return 'C'
 
+
+_TOKEN_REGULAR_MASKS=[
+    {'src':'/img/frames/token/tokenMaskRegularPinline.png','name':'Pinline'},
+    {'src':'/img/frames/m15/regular/m15MaskTitle.png','name':'Title'},
+    {'src':'/img/frames/token/tokenMaskRegularType.png','name':'Type'},
+    {'src':'/img/frames/token/tokenMaskRegularRules.png','name':'Rules'},
+    {'src':'/img/frames/m15/regular/m15MaskBorder.png','name':'Border'},
+    {'src':'/img/frames/token/regular/bevel.svg','name':'Bevel'},
+]
+_TOKEN_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
+_TOKEN_ART_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+_TOKEN_SET_SYMBOL_BOUNDS={'x':0.9213,'y':0.6743,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+_TOKEN_WATERMARK_BOUNDS={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472}
+
+def _token_frame_code(sem):
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)>=2:return 'M'
+    if colors:return colors[0]
+    types=set(sem.get('types',[]))
+    if 'Artifact' in types:return 'A'
+    if 'Land' in types:return 'L'
+    return 'C'
+
+def _token_frame_src(code):
+    if code=='C':return '/img/frames/token/regular/frameC.png'
+    return f'/img/frames/token/regular/tokenFrame{code}Regular.png'
+
+def _token_pt_src(code):
+    return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
+
+def build_token_data(sem,artist,autofit,flags):
+    """Build normal Scryfall tokens with CardConjurer's genuine Token Regular pack."""
+    types=set(sem.get('types',[]))
+    creature='Creature' in types
+    base=copy.deepcopy(sem)
+    # Start from the preserved ordinary compiler only to inherit its text,
+    # credits, bottom-info, watermark and mana-symbol structures. Token-specific
+    # geometry and every visible structural frame are replaced below.
+    base['layout']=('creature_legendary' if sem.get('legendary') else 'creature') if creature else ('card_legendary' if sem.get('legendary') else 'card_noncreature')
+    try:
+        data=native.build_one(base,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    code=_token_frame_code(sem)
+    cname=native.COLOR_NAMES.get(code,'Colorless')
+    frames=[]
+    if creature and sem.get('power') is not None and sem.get('toughness') is not None:
+        frames.append({
+            'name':f'{cname} Power/Toughness',
+            'src':_token_pt_src(code),
+            'masks':[],
+            'bounds':copy.deepcopy(_TOKEN_PT_BOUNDS),
+        })
+
+    # CardConjurer exposes Floating Legend Crowns as an addon for tokens.
+    # Preserve that native token-compatible treatment for legendary token cards.
+    if sem.get('legendary'):
+        crown_code=code if code in 'WUBRGMALC' else 'M'
+        frames.extend([
+            {
+                'name':f'{native.COLOR_NAMES.get(crown_code,crown_code)} Legend Crown',
+                'src':f'/img/frames/m15/crowns/m15Crown{crown_code}Floating.png',
+                'masks':[],
+                'bounds':{'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024},
+            },
+            {
+                'name':'Legend Crown Border Cover',
+                'src':'/img/black.png','masks':[],
+                'bounds':{'x':0.0394,'y':0.0277,'width':0.9214,'height':0.0177},
+            },
+            {
+                'name':'Legend Crown Lower Cutout',
+                'src':'/img/black.png','masks':[],'erase':True,
+                'bounds':{'x':0.0734,'y':0.1096,'width':0.8532,'height':0.0143},
+            },
+            {
+                'name':'Legend Crown Outline',
+                'src':'/img/frames/m15/crowns/m15CrownFloatingOutline.png','masks':[],
+                'bounds':{'x':0.028,'y':0.0172,'width':0.944,'height':0.1062},
+            },
+        ])
+
+    frames.append({
+        'name':f'{cname} Token Frame',
+        'src':_token_frame_src(code),
+        'masks':copy.deepcopy(_TOKEN_REGULAR_MASKS),
+    })
+    data['frames']=frames
+    data['version']='tokenRegular'
+    data['artBounds']=copy.deepcopy(_TOKEN_ART_BOUNDS)
+    data['setSymbolBounds']=copy.deepcopy(_TOKEN_SET_SYMBOL_BOUNDS)
+    data['watermarkBounds']=copy.deepcopy(_TOKEN_WATERMARK_BOUNDS)
+
+    text=data.setdefault('text',{})
+    mana=text.setdefault('mana',{})
+    title=text.setdefault('title',{})
+    typ=text.setdefault('type',{})
+    rules=text.setdefault('rules',{})
+    pt=text.setdefault('pt',{})
+
+    mana.update({
+        'name':'Mana Cost','y':0.0613,'width':0.9292,'height':71/2100,
+        'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,
+        'shadowY':0.0029,'manaCost':True,'manaSpacing':0,
+    })
+    title.update({
+        'name':'Title','x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,
+        'oneLine':True,'font':'belerenbsc','size':0.0381,'color':'white','align':'center',
+    })
+    typ.update({
+        'name':'Type','x':0.0854,'y':0.65,'width':0.8292,'height':0.0543,
+        'oneLine':True,'font':'belerenb','size':0.0324,
+    })
+    rules.update({
+        'name':'Rules Text','x':0.086,'y':0.7143,'width':0.828,
+        'height':0.2048,'size':0.0362,
+    })
+    pt.update({
+        'name':'Power/Toughness','x':0.7928,'y':0.902,'width':0.1367,
+        'height':0.0372,'size':0.0372,'font':'belerenbsc',
+        'oneLine':True,'align':'center',
+    })
+
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'token_regular'
+
+
 def build_battle_data(sem,card,artist,autofit,flags):
     """Build CardConjurer's genuine landscape M15 Battle — Siege frame."""
     if 'Battle' not in set(sem.get('types',[])):
@@ -1324,6 +1454,9 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='battle':
                 d0,data,recipe=build_battle_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='token':
+                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)

@@ -333,3 +333,66 @@ def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
         assert data['saga']['abilities']==chapter_groups
         assert data['saga']['count']==ability_count
         assert sum(1 for i in range(4) if data['text'][f'ability{i}']['height']>0)==ability_count
+
+
+def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
+    s,a,settings=workspace
+    beast={
+        'id':'90000000-0000-4000-8000-000000000001',
+        'name':'Beast','layout':'token','type_line':'Token Creature — Beast',
+        'mana_cost':'','oracle_text':'','colors':['G'],'rarity':'common',
+        'power':'3','toughness':'3','set':'ttst','collector_number':'1',
+        'artist':'Token Artist',
+    }
+    result=Compiler(s).compile_face(beast,beast,0,{},settings,a,art_origin='Scryfall selected printing')
+    data=result['data']
+    assert result['group']=='token'
+    assert result['recipe']=='token_regular'
+    assert result['templateVersion']==2
+    assert data['version']=='tokenRegular'
+    assert data['text']['title']['text']=='Beast'
+    assert data['text']['type']['text']=='Token Creature — Beast'
+    assert data['text']['pt']['text']=='3/3'
+    token=[f for f in data['frames'] if f.get('name')=='Green Token Frame']
+    assert len(token)==1
+    assert token[0]['src']=='/img/frames/token/regular/tokenFrameGRegular.png'
+    assert {m['name'] for m in token[0]['masks']}=={'Pinline','Title','Type','Rules','Border','Bevel'}
+    pt=[f for f in data['frames'] if 'Power/Toughness' in f.get('name','')]
+    assert len(pt)==1 and pt[0]['src']=='/img/frames/m15/regular/m15PTG.png'
+    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+
+
+def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
+    s,a,settings=workspace
+    treasure={
+        'id':'90000000-0000-4000-8000-000000000002',
+        'name':'Treasure','layout':'token','type_line':'Token Artifact — Treasure',
+        'mana_cost':'','oracle_text':'{T}, Sacrifice this artifact: Add one mana of any color.',
+        'colors':[],'rarity':'common','set':'ttst','collector_number':'2',
+        'artist':'Token Artist',
+    }
+    result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
+    data=result['data']
+    assert result['group']=='token' and result['recipe']=='token_regular'
+    assert data['text']['rules']['text']=='{T}, Sacrifice this artifact: Add one mana of any color.'
+    assert any(f.get('src')=='/img/frames/token/regular/tokenFrameARegular.png' for f in data['frames'])
+    assert not any('Power/Toughness' in f.get('name','') for f in data['frames'])
+
+
+def test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline(workspace):
+    s,a,settings=workspace
+    token={
+        'id':'90000000-0000-4000-8000-000000000003',
+        'name':'Hero','layout':'token','type_line':'Legendary Token Creature — Human',
+        'mana_cost':'','oracle_text':'Vigilance','colors':['W','U'],'rarity':'rare',
+        'power':'2','toughness':'2','set':'ttst','collector_number':'3',
+        'artist':'Token Artist',
+    }
+    data=Compiler(s).compile_face(token,token,0,{},settings,a)['data']
+    pinline=next(f for f in data['frames'] if any(
+        'pinline' in str(m.get('name','')).lower() for m in f.get('masks',[]) if isinstance(m,dict)
+    ))
+    assert pinline['src'].startswith('data:image/svg+xml;utf8,')
+    crowns=[f for f in data['frames'] if 'Legend Crown' in f.get('name','') and 'Outline' not in f.get('name','') and 'Border' not in f.get('name','') and 'Cutout' not in f.get('name','')]
+    assert len(crowns)==2
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
