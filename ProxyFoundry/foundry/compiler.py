@@ -246,22 +246,5052 @@ def _frame_effect_source(src,code):
         return f'/img/frames/class/{code.lower()}.png' if code in 'WUBRGMAL' else src
     return src
 
-def _universal_crown_source(src,code):
-    """Recolor any recognized legendary crown independently of frame family."""
-    if not code:return src
-    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC](Floating(?:Alt)?)?\.png',src)
-    if m and code in 'WUBRGMALC':
-        return f"/img/frames/m15/crowns/m15Crown{code}{m.group(1) or ''}.png"
+def _crown_color_variant(src,code):
+    """Return the same native crown asset in another color, across frame families."""
+    if code not in 'WUBRGMALC':return None
+    lower=code.lower()
+
+    # M15-family filenames encode color inside the filename.
+    patterns=[
+        r'^(.*?/m15Crown)([WUBRGMALC])(Floating(?:Alt)?\.png)
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Every other CardConjurer crown family gets the same approved construction:
+    # two genuine native crown PNGs, with only the second/right color faded in by
+    # the old full-card smooth blend mask. This preserves each family's own
+    # texture, shading, alpha, bounds and opacity instead of painting an SVG over it.
+    first_src=_crown_color_variant(src,first)
+    second_src=_crown_color_variant(src,second)
+    if first_src and second_src:
+        base=copy.deepcopy(frame)
+        base['src']=first_src
+        base['name']=f"{native.COLOR_NAMES[first]} Legend Crown"
+        base['masks']=[]
+
+        right=copy.deepcopy(frame)
+        right['src']=second_src
+        right['name']=f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)"
+        right['masks']=[{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]
+        # Earlier entries render later in CardConjurer, matching the preserved
+        # old helper's right-blend-over-left ordering.
+        return [right,base]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,
+        r'^(.*?/m15Crown)([WUBRGMALC])(\.png)
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
     m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
-    if m and code in 'WUBRGMAL':
-        return f"/img/frames/m15/transform/crowns/{m.group(1)}/{code.lower()}.png"
-    return src
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,
+        r'^(.*?/m15NicknameCrown)([WUBRGMALC])(\.png)
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
+    m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,
+        r'^(.*?/[^/]*Crown)([WUBRGMALC])([^/]*\.png)
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
+    m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,
+    ]
+    for pattern in patterns:
+        m=re.fullmatch(pattern,src)
+        if m and 'innercrown' not in src.lower():
+            return m.group(1)+code+m.group(3)
+
+    # Most modern CardConjurer crown packs use one-letter sibling files:
+    # modal/crowns/regular/u.png, UB/crowns/floating/r.png, etched/.../g.png, etc.
+    m=re.fullmatch(r'^(.*?/(?:crown|crowns)(?:/[^/]+)*/)([wubrgmalc])\.png
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
+    m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,src,re.I)
+    if m and 'innercrown' not in src.lower():
+        return m.group(1)+lower+'.png'
+
+    # Some showcase packs use uCrown.png/rCrown.png naming.
+    m=re.fullmatch(r'^(.*?/)([wubrgmalc])(Crown[^/]*\.png)
+def _is_pinline_mask(mask):
+    return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
+
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
+    first,second=dual
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
+    m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
+
+def apply_universal_frame_color_treatment(data,sem):
+    """Apply the five shared color effects once, after structural frame selection.
+
+    Pinline, title bar, type bar, rules/text box, and legendary crown all use
+    the same semantic color decision regardless of whether the card is an
+    Artifact, Vehicle, Saga, Station, Transform/Meld card, land, planeswalker,
+    or another structural family. Structural masks are split away first so the
+    card's body/frame remains whatever its recipe selected.
+
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
+    """
+    colors=frame_treatment_colors(sem)
+    code=frame_treatment_code(sem)
+    dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
+    if not code and not dual:return False
+
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
+        if not isinstance(frame,dict):
+            rebuilt.append(frame);continue
+
+        old_src=str(frame.get('src',''))
+
+        # Crowns are an effect in their own right. Handle them before generic
+        # mask splitting so regular masked crowns and floating unmasked crowns
+        # follow exactly the same semantic rule.
+        if _is_crown_source(old_src):
+            if dual:
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
+            else:
+                copied=copy.deepcopy(frame)
+                new=_universal_crown_source(old_src,code)
+                if new!=old_src:
+                    copied['src']=new;changed=True
+                rebuilt.append(copied)
+            continue
+
+        masks=frame.get('masks',[])
+        if not isinstance(masks,list) or not masks:
+            copied=copy.deepcopy(frame)
+            # Standalone pinline layers are uncommon, but if a frame explicitly
+            # identifies itself as one, give it the same universal gradient rule
+            # instead of silently skipping it.
+            if 'pinline' in str(copied.get('name','')).lower():
+                if dual and not old_src.startswith('data:image'):
+                    copied['src']=native.dual_gradient_fill_src(*dual)
+                    copied['masks']=[{'src':old_src,'name':'Pinline'}]
+                    if isinstance(copied.get('bounds'),dict):
+                        copied['ogBounds']={'x':0,'y':0,'width':1,'height':1}
+                    changed=True
+                elif not dual:
+                    new=_frame_effect_source(old_src,code)
+                    if new!=old_src:
+                        copied['src']=new;changed=True
+            rebuilt.append(copied);continue
+
+        pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
+        boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        other=[copy.deepcopy(m) for m in masks if not (
+            isinstance(m,dict) and (
+                _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
+            )
+        )]
+
+        # The structural portion keeps its exact original source.
+        if other:
+            structural=copy.deepcopy(frame)
+            structural['masks']=other
+            rebuilt.append(structural)
+
+        # Title/type/rules all share the same semantic single/gold color.
+        if boxes:
+            layer=copy.deepcopy(frame)
+            layer['masks']=boxes
+            old=str(layer.get('src',''))
+            layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        # Pinline uses the same two-color gradient source as the crown.
+        if pin:
+            layer=copy.deepcopy(frame)
+            layer['masks']=pin
+            old=str(layer.get('src',''))
+            if dual:
+                first,second=dual
+                layer['src']=native.dual_gradient_fill_src(first,second)
+                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
+            else:
+                layer['src']=_frame_effect_source(old,code)
+            if layer['src']!=old:changed=True
+            rebuilt.append(layer)
+
+        if not other and not boxes and not pin:
+            rebuilt.append(copy.deepcopy(frame))
+
+    data['frames']=rebuilt
+    return changed
+
+MIRACLE_FRAME_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.5324}
+
+def is_miracle_card(sem):
+    """Recognize Miracle from Scryfall keywords, with a strict Oracle fallback."""
+    keywords=sem.get('keywords',[]) or []
+    if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
+        return True
+    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+
+def apply_miracle_frame(data,sem):
+    """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
+    if not is_miracle_card(sem):return False
+    if any(isinstance(frame,dict) and 'Miracle Frame' in str(frame.get('name','')) for frame in data.get('frames',[])):
+        return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    types=set(sem.get('types',[]))
+    code=('A' if 'Artifact' in types else
+          'L' if 'Land' in types else
+          colors[0] if len(colors)==1 else 'M')
+    name=native.COLOR_NAMES.get(code,code)+' Miracle Frame'
+    # CardConjurer draws frames in reverse order. Index 0 is therefore drawn
+    # last/on top, matching the Miracle pack's intended upper-frame overlay.
+    data.setdefault('frames',[]).insert(0,{
+        'name':name,
+        'src':f'/img/frames/m15/miracle/{code.lower()}.png',
+        'masks':[],
+        'bounds':copy.deepcopy(MIRACLE_FRAME_BOUNDS),
+    })
+    return True
+
+def full_art_nonland_placement(art):
+    """Cover the 80px-inset full-art area and center only overflowing axes."""
+    iw=float(art.get('width') or 0)
+    ih=float(art.get('height') or 0)
+    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
+    inset=FULL_ART_NONLAND_INSET_PX
+    inner_w=native.CARD_WIDTH-2*inset
+    inner_h=native.CARD_HEIGHT-2*inset
+    zoom=max(inner_w/iw,inner_h/ih)
+    scaled_w=iw*zoom
+    scaled_h=ih*zoom
+    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
+    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
+    return {
+        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
+        'artX':x/native.CARD_WIDTH,
+        'artY':y/native.CARD_HEIGHT,
+        'artZoom':zoom,
+        'artRotate':'0',
+    }
+
+def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
+    """Apply the reusable full-art non-land treatment to custom art."""
+    if not _is_custom_art_origin(art_origin):return False
+    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    if autofit:
+        for key,value in full_art_nonland_placement(art).items():data[key]=value
+    return True
+
+def intentional_art_window_crop(group,choice,art,options,settings):
+    """True when native structural fitting intentionally consumes a landscape art crop.
+
+    Planeswalker and Station source art is commonly the illustration window from
+    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
+    places that landscape source into these structural frames, so comparing its
+    aspect ratio to the full structural art well produces a false crop warning.
+    Manual placement, custom templates/raw cards and disabled autofit must still
+    receive the ordinary crop warning.
+    """
+    fit=options.get('fit') or {}
+    return (
+        choice=='auto'
+        and group in {'planeswalker','station'}
+        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
+        and not settings.get('disableAutofit',False)
+        and not options.get('rawCard')
+        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
+    )
+
+
+_SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
+
+def normalize_scryfall_inline_italics(value):
+    """Translate Scryfall's *inline italics* to CardConjurer's text markup."""
+    return _SCRYFALL_INLINE_ITALIC_RE.sub(lambda match:'{i}'+match.group(1)+'{/i}',str(value or ''))
+
+_QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
+_ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+
+def land_frame_colors(types,face,card,oracle_text):
+    """Infer land frame colors from the land's own mana production.
+
+    Scryfall produced_mana is intentionally only a last fallback. It can include
+    colors available through conditional/granted effects (The World Tree is the
+    canonical example), which should not turn an otherwise green land gold.
+    """
+    if 'Land' not in types.get('types',[]):return []
+
+    result=[]
+    def add(color):
+        if isinstance(color,str) and color in 'WUBRG' and color not in result:result.append(color)
+
+    # Printed basic land types are authoritative frame identity.
+    for subtype in types.get('subtypes',[]):
+        add(getattr(ingest,'BASIC_LAND_COLORS',{}).get(subtype))
+
+    # Ignore quoted abilities granted to lands/other permanents, then inspect
+    # activated mana abilities only. Colored symbols before "Add" are costs and
+    # therefore never contribute to the frame color.
+    clean=_QUOTED_ORACLE_RE.sub('',str(oracle_text or ''))
+    has_direct_mana_ability=False
+    for line in clean.splitlines():
+        for match in re.finditer(r'\bAdd\b([^.;\n]*)',line,re.I):
+            if ':' not in line[:match.start()]:continue
+            has_direct_mana_ability=True
+            clause=match.group(1)
+            for token in re.findall(r'\{([^{}]+)\}',clause):
+                for part in token.upper().split('/'):
+                    add(part)
+            if _ANY_COLOR_OUTPUT_RE.search(clause):
+                for color in 'WUBRG':add(color)
+
+    # Fetch lands are the deliberate exception: their visual identity follows
+    # the basic land types they search for even though they do not make that mana.
+    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+
+    # Once the printed rules/type line tells us anything useful, do not widen it
+    # with produced_mana. This is what keeps The World Tree green and Nykthos
+    # colorless rather than treating conditional mana access as intrinsic color.
+    if result or has_direct_mana_ability:return result
+
+    produced=ingest.face_value(face,card,'produced_mana',[])
+    if isinstance(produced,list):
+        for color in produced:add(color)
+    return result
+
+
+def semantic(sf,face,index=0):
+    get=lambda k,default='':ingest.face_value(face,sf,k,default)
+    types=ingest.split_type_line(get('type_line'))
+    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    for k in ('power','toughness','loyalty','defense'):
+        v=get(k,None)
+        if v is not None:d[k]=str(v)
+    lc=land_frame_colors(types,face,sf,d['oracle_text'])
+    # Enchantment lands such as Valgavoth's Lair are still land-frame cards.
+    # Its printed ability says "chosen color", so the direct Add-clause parser
+    # has no literal mana symbol to collect; use Scryfall produced_mana only for
+    # this previously unsupported type combination.
+    if not lc and 'Land' in types.get('types',[]) and 'Enchantment' in types.get('types',[]):
+        produced=get('produced_mana',[])
+        if isinstance(produced,list):
+            lc=[color for color in 'WUBRG' if color in produced]
+    if lc:d['land_colors']=lc
+    if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
+    if sf.get('layout')=='prepare':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+    if sf.get('layout')=='flip':
+        faces=sf.get('card_faces',[])
+        if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
+        d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
+        d['scryfall_layout']='flip'
+    return d
+
+
+def choose_builtin(d,choice):
+    if choice=='auto':return d
+    if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
+    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
+    d=copy.deepcopy(d)
+    if choice=='normal':
+        pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
+        d['layout']=('creature_legendary' if d['legendary'] else 'creature') if pt else ('card_legendary' if d['legendary'] else 'card_noncreature')
+        if 'Land' not in d['types']:
+            d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
+        if not d.get('colors') and 'Artifact' not in d['types']:
+            d['frame_color']='M';d['_neutral_classic']=True
+    elif choice in {'land','legend-land'}:
+        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+        if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
+    else:raise ValidationError('Unknown built-in template.')
+    return d
+
+
+
+_TRANSFORM_FRONT_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/maskPinlineFront.png',
+    'Title':'/img/frames/m15/transform/regular/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/transform/regular/maskRulesFront.png',
+    'Frame':'/img/frames/m15/transform/regular/maskFrameFront.png',
+    'Border':'/img/frames/m15/transform/regular/maskBorderFront.png',
+}
+_TRANSFORM_BACK_MASKS={
+    'Pinline':'/img/frames/m15/transform/regular/new/maskPinlineBack.png',
+    'Title':'/img/frames/m15/transform/regular/new/maskTitle.png',
+    'Type':'/img/frames/m15/regular/m15MaskType.png',
+    'Rules':'/img/frames/m15/regular/m15MaskRules.png',
+    'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
+    'Border':'/img/frames/m15/regular/m15MaskBorder.png',
+}
+_TRANSFORM_ICON={
+    'name':'Transform Icon',
+    'src':'/img/frames/m15/transform/icons/default.png',
+    'masks':[],
+    'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524},
+}
+
+def _transform_color_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return 'L'
+
+
+def _transform_frame_codes(sem):
+    """Pick structural shell only; universal post-processing owns crown color."""
+    types=set(sem.get('types',[]))
+    color=_transform_color_code(sem)
+    if 'Land' in types:return 'L','L'
+    if 'Artifact' in types:return 'A','A'
+    return color,color
+
+
+_TRANSFORM_EFFECT_ICONS={
+    'compasslanddfc':('Compass','/img/frames/m15/transform/icons/compass.svg','Land','/img/frames/m15/transform/icons/land.svg'),
+    'sunmoondfc':('Sun','/img/frames/m15/transform/icons/sun.svg','Crescent Moon','/img/frames/m15/transform/icons/moon.svg'),
+    'mooneldrazidfc':('Crescent Moon','/img/frames/m15/transform/icons/moon.svg','Emrakul','/img/frames/m15/transform/icons/emrakul.svg'),
+    'originpwdfc':('Planeswalker Ember','/img/frames/m15/transform/icons/spark.svg','Planeswalker Spark','/img/frames/m15/transform/icons/planeswalker.svg'),
+    'fandfc':('Closed Fan','/img/frames/m15/transform/icons/fanClosed.svg','Open Fan','/img/frames/m15/transform/icons/fanOpen.svg'),
+}
+
+
+def _transform_icon_for(card,side):
+    if card.get('layout')=='meld' and side=='front':
+        return {'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    effects=set(card.get('frame_effects') or [])
+    for effect,(front_name,front_src,back_name,back_src) in _TRANSFORM_EFFECT_ICONS.items():
+        if effect in effects:
+            name,src=(front_name,front_src) if side=='front' else (back_name,back_src)
+            return {'name':name,'src':src,'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    # Preserve the existing fallback for transform families whose Scryfall frame
+    # effect is absent/unknown. Do not invent a reverse icon in that case.
+    return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
+
+
+def _transform_classic_semantic(sem):
+    """Build classic M15 text geometry while keeping the face's own semantics."""
+    d=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        d.pop(key,None)
+    card_types=set(d.get('types',[]));subtypes=set(d.get('subtypes',[]))
+    if not card_types or not card_types <= {'Creature','Artifact','Enchantment','Land'}:
+        raise ValidationError('This transform face needs a compatible custom template; its card type is not supported by the built-in M15 transform frame.')
+    if 'Land' in card_types and 'Creature' in card_types:
+        raise ValidationError('This transform face needs a compatible custom template; simultaneous land and creature treatment is not supported by the built-in M15 transform frame.')
+    if {'Saga','Class','Case','Room','Vehicle','Spacecraft'} & subtypes:
+        raise ValidationError('This transform face needs a compatible custom template; its structural subtype is not supported by the built-in M15 transform frame.')
+
+    # Resolve the face as itself, but explicitly choose classic M15 geometry so
+    # Enchantments do not become Nyx and Lands do not become full-art showcase
+    # frames before the transform shell is applied.
+    pt='Creature' in card_types
+    d['layout']=('creature_legendary' if d.get('legendary') else 'creature') if pt else ('card_legendary' if d.get('legendary') else 'card_noncreature')
+    if 'Land' in card_types:
+        # Native normal M15 needs a seed color before the transform shell replaces
+        # only structural body pieces with CardConjurer's real L land frame.
+        land_colors=[c for c in d.get('land_colors',[]) if c in 'WUBRG']
+        d['frame_color']=land_colors[0] if len(land_colors)==1 else 'M'
+    elif not d.get('colors') and 'Artifact' not in card_types:
+        d['frame_color']='M'
+    return d
+
+
+def _convert_frame_masks(frame,mapping):
+    for mask in frame.get('masks',[]) if isinstance(frame.get('masks'),list) else []:
+        if isinstance(mask,dict) and mask.get('name') in mapping:
+            mask['src']=mapping[mask['name']]
+
+
+def _apply_transform_frame(data,side,sem,card):
+    """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
+    if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    body_code,crown_code=_transform_frame_codes(sem)
+    allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
+    if body_code not in allowed:
+        raise ValidationError('This transform face resolves to a CardConjurer frame color that the built-in transform pack does not provide.')
+    converted=0
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        # Convert mask geometry for every layer, including generated dual-color
+        # gradient pinlines whose src is a data URI rather than an M15 PNG.
+        _convert_frame_masks(frame,mapping)
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/m15/regular/m15Frame([WUBRGMALCV])\.png',src)
+        if m:
+            mask_names={
+                mask.get('name') for mask in frame.get('masks',[])
+                if isinstance(mask,dict)
+            }
+            # Structural shell pieces stay Artifact/Land/etc. Accent pieces keep
+            # the semantic color already chosen by the ordinary M15 compiler.
+            layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
+            frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
+                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+            converted+=1
+            continue
+        pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
+        if pt and side=='back':
+            pt_code=body_code if body_code in set('WUBRGMAV') else pt.group(1)
+            if pt_code not in set('WUBRGMAV'):
+                raise ValidationError('This transform back uses an unsupported power/toughness frame color.')
+            frame['src']=f'/img/frames/m15/transform/regular/pt{pt_code}.png'
+            continue
+        crown=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])(?:(Floating)(?:Alt)?)?\.png',src)
+        if crown:
+            _,floating=crown.groups()
+            if crown_code not in set('WUBRGMAL'):
+                raise ValidationError('This legendary transform face uses an unsupported crown color.')
+            if floating:
+                frame['src']=f'/img/frames/m15/transform/crowns/floating/{crown_code.lower()}.png'
+            else:
+                frame['src']=(f'/img/frames/m15/transform/crowns/regular/{crown_code.lower()}.png' if side=='front'
+                              else f'/img/frames/m15/transform/crowns/regular/new/{crown_code.lower()}.png')
+            continue
+        if frame.get('name')=='Legend Crown Lower Cutout':
+            frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
+    if not converted:
+        raise ValidationError('This transform face does not resolve to CardConjurer’s supported M15 transform frame.')
+
+    data['version']='m15TransformFront'
+    text=data.setdefault('text',{})
+    title=text.get('title')
+    if isinstance(title,dict):
+        title['x']=0.16 if side=='front' else 0.0854
+        title['width']=0.7547
+        if side=='back':title['color']='white'
+    icon=_transform_icon_for(card,side)
+    if icon:data['frames'].insert(0,icon)
+    if side=='front':
+        text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
+                                    'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
+    else:
+        for key in ('type','pt'):
+            if isinstance(text.get(key),dict):text[key]['color']='white'
+    return data
+
+
+
+_SAGA_PINLINE_MASKS={
+    'saga':'/img/frames/saga/sagaMaskPinline.png',
+    'saga-creature':'/img/frames/saga/creature/masks/sagaMaskPinline.png',
+}
+_SAGA_TASSEL_MASKS={
+    'saga':(
+        '/img/frames/saga/sagaMaskBanner.png',
+        '/img/frames/saga/sagaMaskBannerRight.png',
+    ),
+    'saga-creature':(
+        '/img/frames/saga/creature/masks/sagaMaskBanner.png',
+        '/img/frames/saga/creature/masks/sagaMaskBannerRight.png',
+    ),
+}
+
+
+def _saga_color_frame_src(group,code):
+    if group=='saga':return f'/img/frames/saga/regular/sagaFrame{code}.png'
+    if group=='saga-creature':return f'/img/frames/saga/creature/{code.lower()}.png'
+    raise ValidationError('Unsupported Saga frame group.')
+
+
+def apply_dual_saga_tassels(data,sem,group):
+    """Add only the Saga-specific two-color tassels; pinline is universal."""
+    if group not in _SAGA_PINLINE_MASKS:return False
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)!=2:return False
+    first,second=native.canonical_dual_color_order(colors)
+    frames=data.setdefault('frames',[])
+    if any(
+        isinstance(frame,dict)
+        and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
+        for frame in frames
+    ):return False
+    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
+    target=next((i for i,frame in enumerate(frames)
+                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
+                 and not frame.get('masks')),None)
+    if target is None:
+        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+    tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # CardConjurer draws card.frames in reverse order. Banner is the broad/base
+    # banner mask; BannerRight is the second/right piece. Put the right overlay
+    # earlier in the array so it is drawn after the broad first-color banner.
+    overlays=[
+        {
+            'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
+            'src':_saga_color_frame_src(group,second),
+            'masks':[{'src':tassel2,'name':'Saga Tassel 2'}],
+        },
+        {
+            'name':f"{native.COLOR_NAMES[first]} Saga Tassel 1",
+            'src':_saga_color_frame_src(group,first),
+            'masks':[{'src':tassel1,'name':'Saga Tassel 1'}],
+        },
+    ]
+    frames[target:target]=overlays
+    return True
+
+def build_transform_data(sem,group,card,artist,autofit,flags):
+    """Treat each DFC face normally, then replace only its shell with transform."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Color treatment is semantic, not single-sided-card-specific. Apply it
+    # before replacing the structural shell so DFCs preserve the same accents.
+    side='front' if group=='transform-front' else 'back'
+    _apply_transform_frame(data,side,sem,card)
+    return d0,data,'m15_transform_'+side
+
+
+def build_meld_data(sem,card,artist,autofit,flags):
+    """Build the printed front of a meld card with CardConjurer's meld treatment."""
+    d0=_transform_classic_semantic(sem)
+    try:
+        data=native.build_one(copy.deepcopy(d0),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    _apply_transform_frame(data,'front',sem,card)
+    return d0,data,'m15_meld_front'
+
+
+_CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
+
+
+def _class_parts(oracle_text):
+    lines=str(oracle_text or '').splitlines()
+    initial=[];levels=[];current=None
+    marker=re.compile(r'^(.*?):\s*Level\s+(\d+)\s*$',re.I)
+    for raw in lines:
+        line=raw.strip()
+        if not line:continue
+        found=marker.match(line)
+        if found:
+            if current:levels.append(current)
+            current={'cost':found.group(1).strip()+':','name':'Level '+found.group(2),'text':[]}
+        elif current:
+            current['text'].append(line)
+        else:
+            initial.append(line)
+    if current:levels.append(current)
+    if not levels or len(levels)>3:
+        raise ValidationError('This Class card does not resolve to CardConjurer’s supported 2–4 level Class frame.')
+    # Scryfall Oracle text normally omits the printed Class reminder, while
+    # CardConjurer's native Class frame includes it. Preserve an explicit
+    # reminder if one was supplied; otherwise restore the standard reminder.
+    reminder='(Gain the next level as a sorcery to add its ability.)'
+    if initial and initial[0].startswith('(') and initial[0].endswith(')'):
+        reminder=initial.pop(0)
+    base_text='{i}'+reminder+'{/i}{lns}{bar}{lns}'+'\n'.join(initial)
+    return base_text,[{'cost':x['cost'],'name':x['name'],'text':'\n'.join(x['text'])} for x in levels]
+
+
+def build_class_data(sem,artist,autofit,flags):
+    """Build the pinned CardConjurer Class layout with its complete frame image."""
+    if sem.get('legendary'):
+        raise ValidationError('Legendary Class cards need a compatible custom template; CardConjurer’s Class pack has no legendary crown treatment.')
+    base=copy.deepcopy(sem)
+    base['subtypes']=[x for x in base.get('subtypes',[]) if x!='Class']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    code=('a' if 'Artifact' in sem.get('types',[]) else
+          'l' if 'Land' in sem.get('types',[]) else
+          'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
+    base_text,levels=_class_parts(sem.get('oracle_text',''))
+    level_count=1+len(levels)
+    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+
+    data['version']='class';data['onload']='/js/frames/versionClass.js'
+    data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
+    data['artBounds']={'x':0.0753,'y':0.1124,'width':0.4247,'height':0.7253}
+    data['setSymbolBounds']={'x':0.9227,'y':0.8739,'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right'}
+    data['watermarkBounds']={'x':0.5214,'y':0.4748,'width':0.38,'height':0.6767}
+    data['class']={'x':0.5014,'width':0.422,'count':len(levels)}
+    data['showsFlavorBar']=False
+    text={
+        'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
+        'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
+        'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
+        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+    }
+    last_y=0.1129+heights[0]+0.0481
+    for i in range(1,4):
+        active=i<=len(levels)
+        height=heights[i] if active else 0
+        y=last_y if active else 2
+        info=levels[i-1] if active else {'cost':'','name':'','text':''}
+        text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
+        text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
+        if active:last_y+=height+0.0481
+    data['text']=text
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return base,data,'class'
+
+
+def build_enchantment_land_data(sem,artist,autofit,flags):
+    """Use the ordinary land family while preserving the Enchantment Land type."""
+    base=copy.deepcopy(sem)
+    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    if isinstance((data.get('text') or {}).get('type'),dict):
+        data['text']['type']['text']=native.get_type_info(sem)['normalized']
+    recipe=native.infer_layout(base,native.get_type_info(base))
+    return base,data,recipe
+
+
+def custom_data(template,sem,other_faces=None):
+    d=copy.deepcopy(template['data'])
+    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+      'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
+      'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
+      'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
+    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+        if slot not in d['text']:continue
+        if field in values:d['text'][slot]['text']=str(values[field])
+        elif field.startswith('face2.') and other_faces:
+            key=field.split('.',1)[1];d['text'][slot]['text']=str(other_faces[0].get({'title':'name','mana':'mana_cost','rules':'oracle_text','type':'type_line'}.get(key,key),'') or '')
+    if 'pt' in d['text'] and not values['pt']:d['text']['pt']['text']=''
+    return d
+
+
+class Compiler:
+    def __init__(self,store):self.store=store
+    def template_identity(self,group,choice):
+        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice in BUILTIN_TEMPLATE_VERSIONS:
+            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+        t=self.store.get('templates',choice)
+        if not t:raise ValidationError('The selected template was deleted.')
+        # Custom template data is already embedded in compiled CardConjurer data,
+        # so its fingerprint is for stale-template detection; render-key salting
+        # stays at baseline v1 to avoid redundant cache invalidation.
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        return 'custom:'+choice,fingerprint,1
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+        sem=semantic(sf,face,index)
+        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
+        for nested in ('flip_face','prepared_spell'):
+            if nested in sem:
+                if nested in options.get('nestedFlavorTexts',{}):
+                    sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
+                sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        symbols=settings.get('symbols',{})
+        if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
+        symbol_id=symbols.get(sem.get('rarity','common'))
+        if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
+        art=self.store.asset(art_id)
+        if not art:raise ValidationError('Artwork is missing.')
+        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        credit=resolve_credit(sf,face,options,settings,art_origin)
+        artist=credit['display']
+        sem['artist']=artist
+        group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if choice in {x['id'] for x in BUILTINS}:
+            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
+            if group in {'modal-front','modal-back'}:
+                pair=[x.get('name') for x in sf.get('card_faces',[])]
+                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
+                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+            if group in {'transform-front','transform-back'}:
+                d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='meld':
+                d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='class':
+                d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
+                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            else:
+                d0=choose_builtin(sem,choice)
+                # Saga is the highest-priority structural card treatment. Do not
+                # let another type on the same line (notably Land on Urza's Saga)
+                # win inside the preserved native recipe classifier.
+                if choice=='auto' and group in {'saga','saga-creature'}:
+                    d0=copy.deepcopy(d0)
+                    d0['layout']='saga' if group=='saga' else 'saga_creature'
+                try:
+                    data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
+                    if group in {'standard','legendary'} and choice=='auto':
+                        apply_miracle_frame(data,sem)
+                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'saga','saga-creature'}:
+                        apply_dual_saga_tassels(data,sem,group)
+                    if choice=='auto' and group=='station':
+                        apply_station_underframe_policy(data,sem,art_origin)
+                    apply_custom_full_art_placement(
+                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                    )
+                    fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+                except native.BuildError as e:raise ValidationError(str(e)) from e
+        else:
+            t=self.store.get('templates',choice)
+            if not t:raise ValidationError('The selected template was deleted.')
+            if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
+            if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
+            if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
+            recipe='custom:'+choice
+        for k in ('artX','artY','artZoom','artRotate'):
+            if k in options.get('fit',{}):
+                v=float(options['fit'][k])
+                if not math.isfinite(v) or (k=='artZoom' and v<=0):raise ValidationError('Invalid artwork placement.')
+                data[k]=v
+        if options.get('rawCard'):
+            data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
+        apply_universal_frame_color_treatment(data,sem)
+        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
+        if intentional_art_window_crop(group,choice,art,options,settings):
+            warning={**warning,'warning':False,'intentionalArtWindow':True}
+        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+,src,re.I)
+    if m and '/crown' in src.lower() and 'innercrown' not in src.lower():
+        return m.group(1)+lower+m.group(3)
+    return None
+
+def _universal_crown_source(src,code):
+    """Recolor any color-coded legendary crown without changing its native family."""
+    return _crown_color_variant(src,code) or src
 
 def _is_crown_source(src):
-    return bool(
-        re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC](?:Floating(?:Alt)?)?\.png',src)
-        or re.fullmatch(r'/img/frames/m15/transform/crowns/(?:floating|regular|regular/new|nickname|brawl)/[wubrgmal]\.png',src)
-    )
+    """Recognize only true color-variant crown assets, not outlines/covers/masks."""
+    return _crown_color_variant(src,'W') is not None
 
 def _is_pinline_mask(mask):
     return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()

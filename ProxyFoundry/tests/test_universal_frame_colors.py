@@ -166,3 +166,72 @@ def test_existing_old_dual_crown_stack_is_preserved_byte_for_byte():
     crowns=[frame for frame in data['frames'] if '/crowns/' in str(frame.get('src',''))]
     assert crowns[0]==right
     assert crowns[1]==left
+
+
+def test_modal_crown_family_uses_native_layered_dual_blend():
+    data={'frames':[
+        {
+            'name':'Artifact Legend Crown',
+            'src':'/img/frames/modal/crowns/regular/a.png',
+            'masks':[],
+            'bounds':{'x':0.0274,'y':0.0191,'width':0.9454,'height':0.1667},
+            'complementary':8,
+        },
+        {'name':'Pinline','src':'/img/frames/m15/regular/m15FrameM.png','masks':[mask('Pinline')]},
+    ]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Creature'],'subtypes':[],'colors':['W','U']}
+    )
+    crowns=[f for f in data['frames'] if '/modal/crowns/regular/' in str(f.get('src',''))]
+    assert [f['src'] for f in crowns]==[
+        '/img/frames/modal/crowns/regular/u.png',
+        '/img/frames/modal/crowns/regular/w.png',
+    ]
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
+    assert crowns[0]['masks'][0]['src'].startswith('data:image/svg+xml;utf8,')
+    assert crowns[1]['masks']==[]
+    assert crowns[0]['bounds']==crowns[1]['bounds']=={'x':0.0274,'y':0.0191,'width':0.9454,'height':0.1667}
+
+
+def test_ub_floating_crown_family_uses_same_native_layered_dual_blend():
+    data={'frames':[
+        {
+            'name':'Artifact Legend Crown',
+            'src':'/img/frames/m15/ub/crowns/floating/a.png',
+            'masks':[],
+            'bounds':{'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024},
+            'opacity':85,
+        },
+    ]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Artifact'],'subtypes':[],'colors':['U','R']}
+    )
+    crowns=[f for f in data['frames'] if '/ub/crowns/floating/' in str(f.get('src',''))]
+    assert [f['src'] for f in crowns]==[
+        '/img/frames/m15/ub/crowns/floating/r.png',
+        '/img/frames/m15/ub/crowns/floating/u.png',
+    ]
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
+    assert crowns[1]['masks']==[]
+    assert crowns[0]['opacity']==crowns[1]['opacity']==85
+
+
+def test_showcase_ucrown_filename_family_is_also_detected():
+    data={'frames':[
+        {
+            'name':'Blue Legend Crown',
+            'src':'/img/frames/m15/oilslick/uCrown.png',
+            'masks':[],
+            'bounds':{'x':0,'y':0,'width':1,'height':1},
+        },
+    ]}
+    apply_universal_frame_color_treatment(
+        data,{'types':['Creature'],'subtypes':[],'colors':['B','G']}
+    )
+    crowns=[f for f in data['frames'] if '/oilslick/' in str(f.get('src',''))]
+    assert [f['src'] for f in crowns]==[
+        '/img/frames/m15/oilslick/gCrown.png',
+        '/img/frames/m15/oilslick/bCrown.png',
+    ]
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
+    assert crowns[1]['masks']==[]
