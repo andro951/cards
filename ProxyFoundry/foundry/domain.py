@@ -95,7 +95,9 @@ def type_group(face,parent=None,index=0):
         if face.get('basic'):tl='basic '+tl
     types,_,subtypes=tl.replace(' - ',' — ').partition(' — ')
     if layout=='modal_dfc':return 'modal-back' if index else 'modal-front'
-    if layout in {'transform','double_faced_token','reversible_card'}:return 'transform-back' if index else 'transform-front'
+    if layout in {'transform','double_faced_token','reversible_card'}:
+        if not index and 'battle' in types.split():return 'battle'
+        return 'transform-back' if index else 'transform-front'
     if 'room' in subtypes.split():return 'room'
     if layout in {'split','flip','adventure','meld','planar','scheme','vanguard','art_series','prototype'}:return layout.replace('_','-')
     if layout=='prepare' or face.get('prepared_spell'):return 'prepare'

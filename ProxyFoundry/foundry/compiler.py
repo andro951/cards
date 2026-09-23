@@ -18,7 +18,7 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
-NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','token','emblem','battle','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','token','emblem','case','special-land','dungeon','conspiracy'}
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
 # affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4,'battle':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -218,6 +218,10 @@ def _frame_effect_source(src,code):
         return f'/img/frames/m15/transform/regular/new/back{code}.png' if code in 'WUBRGMALV' else src
     if re.fullmatch(r'/img/frames/m15/transform/regular/back[WUBRGMALV]\.png',src):
         return f'/img/frames/m15/transform/regular/back{code}.png' if code in 'WUBRGMAL' else src
+
+    # Battle family.
+    if re.fullmatch(r'/img/frames/m15/battle/[wubrgmalc]\.png',src):
+        return f'/img/frames/m15/battle/{code.lower()}.png' if code in 'WUBRGMALC' else src
 
     # Saga families.
     if re.fullmatch(r'/img/frames/saga/regular/sagaFrame[WUBRGMA]\.png',src) or src=='/img/frames/saga/regular/l.png':
@@ -1057,6 +1061,128 @@ def build_meld_data(sem,card,artist,autofit,flags):
     return d0,data,'m15_meld_front'
 
 
+_BATTLE_MASKS=[
+    {'src':'/img/frames/m15/battle/maskPinline.png','name':'Pinline'},
+    {'src':'/img/frames/m15/battle/maskTitle.png','name':'Title'},
+    {'src':'/img/frames/m15/battle/maskType.png','name':'Type'},
+    {'src':'/img/frames/m15/battle/maskRules.png','name':'Rules'},
+    {'src':'/img/frames/m15/battle/maskDefense.png','name':'Defense'},
+    {'src':'/img/frames/m15/battle/maskBorder.png','name':'Border'},
+]
+_BATTLE_ART_BOUNDS={'x':167/2100,'y':60/1500,'width':1873/2100,'height':1371/1500}
+_BATTLE_SYMBOL_BOUNDS={'x':1945/2100,'y':925/1500,'width':180/2100,'height':86/1500,'vertical':'center','horizontal':'right'}
+_BATTLE_HOLO_BOUNDS={'x':103/2100,'y':657/1500,'width':93/2100,'height':186/1500}
+
+def _battle_frame_code(sem):
+    colors=[c for c in sem.get('colors',[]) if c in 'WUBRG']
+    types=set(sem.get('types',[]))
+    if 'Artifact' in types:return 'A'
+    if 'Land' in types:return 'L'
+    if len(colors)==1:return colors[0]
+    if len(colors)>=2:return 'M'
+    return 'C'
+
+def build_battle_data(sem,card,artist,autofit,flags):
+    """Build CardConjurer's genuine landscape M15 Battle — Siege frame."""
+    if 'Battle' not in set(sem.get('types',[])):
+        raise ValidationError('Battle frame requested for a non-Battle face.')
+    defense=str(sem.get('defense') or '').strip()
+    if not defense:
+        raise ValidationError('Battle cards need a defense value.')
+
+    # Use an ordinary noncreature only as a metadata donor. Battle replaces the
+    # complete structural frame, canvas orientation, text geometry and art well.
+    base=copy.deepcopy(sem)
+    base['types']=['Enchantment']
+    base['subtypes']=[]
+    base['legendary']=False
+    base['layout']='card_noncreature'
+    try:
+        data=native.build_one(copy.deepcopy(base),{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    code=_battle_frame_code(sem)
+    frames=[]
+    if str(sem.get('rarity','common')).lower() in {'rare','mythic'}:
+        frames.append({
+            'name':'Holo Stamp',
+            'src':'/img/frames/m15/battle/holostamp.png',
+            'masks':[],
+            'bounds':copy.deepcopy(_BATTLE_HOLO_BOUNDS),
+        })
+    frames.append({
+        'name':native.COLOR_NAMES.get(code,code)+' Battle Frame',
+        'src':f'/img/frames/m15/battle/{code.lower()}.png',
+        'masks':copy.deepcopy(_BATTLE_MASKS),
+    })
+
+    reverse_pt=''
+    faces=card.get('card_faces') or []
+    if len(faces)>1:
+        power=faces[1].get('power')
+        toughness=faces[1].get('toughness')
+        if power is not None and toughness is not None:
+            reverse_pt=f'{power}/{toughness}'
+
+    rules=native.italicize_dash_labels(sem.get('oracle_text',''))
+    if sem.get('flavor_text'):
+        rules+=('{flavor}' if rules else '')+str(sem['flavor_text'])
+
+    data.update({
+        'width':2814,
+        'height':2010,
+        'landscape':True,
+        'version':'battle',
+        'frames':frames,
+        'artBounds':copy.deepcopy(_BATTLE_ART_BOUNDS),
+        'setSymbolBounds':copy.deepcopy(_BATTLE_SYMBOL_BOUNDS),
+        'watermarkBounds':{'x':0,'y':0,'width':0,'height':0},
+        'artX':0,'artY':0,'artZoom':1,'artRotate':0,
+        'bottomInfoTranslate':{'x':-123,'y':-2814},
+        'bottomInfoRotate':90,
+        'bottomInfoZoom':1.4,
+    })
+    data['text']={
+        'mana':{
+            'name':'Mana Cost','text':sem.get('mana_cost',''),
+            'x':0,'y':100/1500,'width':1957/2100,'height':71/1500,
+            'oneLine':True,'size':((71/1638)*2100)/1500,'align':'right',
+            'shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0,
+        },
+        'title':{
+            'name':'Title','text':sem['name'],
+            'x':387/2100,'y':81/1500,'width':1547/2100,'height':114/1500,
+            'oneLine':True,'font':'belerenb','size':(0.0381*2100)/1500,
+        },
+        'type':{
+            'name':'Type',
+            'text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),
+            'x':268/2100,'y':873/1500,'width':1667/2100,'height':114/1500,
+            'oneLine':True,'font':'belerenb','size':(0.0324*2100)/1500,
+        },
+        'rules':{
+            'name':'Rules Text','text':rules,
+            'x':272/2100,'y':1008/1500,'width':1661/2100,'height':414/1500,
+            'size':(0.0362*2100)/1500,
+        },
+        'reminder':{
+            'name':'Reverse PT','text':reverse_pt,
+            'x':257/2100,'y':1219/1500,'width':1667/2100,'height':43/1500,
+            'size':(0.0291*2100)/1500,'oneLine':True,'color':'#666',
+            'align':'right','font':'belerenbsc',
+        },
+        'defense':{
+            'name':'Defense','text':defense,
+            'x':1920/2100,'y':1320/1500,'width':86/2100,'height':123/1500,
+            'size':(0.0372*2100)/1500,'color':'white','font':'belerenbsc',
+            'oneLine':True,'align':'center',
+        },
+    }
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'m15_battle'
+
+
 _CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
 
 
@@ -1209,6 +1335,9 @@ class Compiler:
                     raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
             if group in {'transform-front','transform-back'}:
                 d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='battle':
+                d0,data,recipe=build_battle_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
