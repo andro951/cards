@@ -266,22 +266,72 @@ def _is_crown_source(src):
 def _is_pinline_mask(mask):
     return isinstance(mask,dict) and 'pinline' in str(mask.get('name','')).lower()
 
-def _dual_gradient_crown(frame,dual):
-    """Use the same eased two-color gradient as pinlines, clipped to crown shape."""
+def _has_old_dual_crown_stack(frames):
+    """Recognize the approved pre-universal two-native-crown blend."""
+    crown_layers=[
+        frame for frame in frames
+        if isinstance(frame,dict) and _is_crown_source(str(frame.get('src','')))
+    ]
+    return (
+        len(crown_layers)>=2
+        and any(
+            any(isinstance(mask,dict) and mask.get('name')=='Right Blend'
+                for mask in frame.get('masks',[]))
+            for frame in crown_layers
+        )
+    )
+
+def _dual_crown_layers_like(frame,dual):
+    """Restore the old native-PNG crown blend in the reference crown family."""
     first,second=dual
-    layer=copy.deepcopy(frame)
-    original=str(layer.get('src',''))
-    layer['src']=native.dual_gradient_fill_src(first,second)
-    layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient Legend Crown"
-    masks=layer.get('masks')
-    if not isinstance(masks,list) or not masks:
-        # Floating crowns are standalone alpha PNGs rather than masked full-card
-        # layers. Reuse that exact PNG as the alpha mask while the shared
-        # gradient supplies the color.
-        layer['masks']=[{'src':original,'name':'Legend Crown'}]
-        if isinstance(layer.get('bounds'),dict):
-            layer['ogBounds']={'x':0,'y':0,'width':1,'height':1}
-    return layer
+    src=str(frame.get('src',''))
+
+    # Ordinary M15 regular crown: use the exact old helper that produced the
+    # approved look before universal post-processing existed.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]\.png',src):
+        return native.build_dual_standard_crown_layers(first,second,include_border_cover=False)
+
+    # Academy-Ruins/full-art floating crown: use the exact old floating helper.
+    if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
+        return native.build_floating_land_crown_layers([first,second])
+
+    # Preserve the alternate floating geometry/assets if a custom frame uses it.
+    m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
+    if m:
+        bounds=copy.deepcopy(frame.get('bounds') or {'x':0.0307,'y':0.0191,'width':0.9387,'height':0.1024})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,'src':f'/img/frames/m15/crowns/m15Crown{code}FloatingAlt.png',
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    # Transform/Meld crowns reached this point only after the ordinary old crown
+    # stack was converted to the matching transform asset family. If a custom
+    # transform crown arrives as one layer, recreate that same two-layer stack.
+    m=re.fullmatch(r'/img/frames/m15/transform/crowns/(floating|regular|regular/new|nickname|brawl)/([wubrgmal])\.png',src)
+    if m:
+        family=m.group(1)
+        bounds=copy.deepcopy(frame.get('bounds') or {'height':0.1667,'width':0.9454,'x':0.0274,'y':0.0191})
+        opacity=frame.get('opacity')
+        def layer(code,name,masks=None):
+            out={'name':name,
+                 'src':f"/img/frames/m15/transform/crowns/{family}/{code.lower()}.png",
+                 'masks':masks or [],'bounds':copy.deepcopy(bounds)}
+            if opacity is not None:out['opacity']=opacity
+            return out
+        return [
+            layer(second,f"{native.COLOR_NAMES[second]} Legend Crown (Right Blend)",
+                  [{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}]),
+            layer(first,f"{native.COLOR_NAMES[first]} Legend Crown"),
+        ]
+
+    return [copy.deepcopy(frame)]
 
 def apply_universal_frame_color_treatment(data,sem):
     """Apply the five shared color effects once, after structural frame selection.
@@ -292,18 +342,21 @@ def apply_universal_frame_color_treatment(data,sem):
     or another structural family. Structural masks are split away first so the
     card's body/frame remains whatever its recipe selected.
 
-    Exactly two colors use the same shared eased dual-color gradient for both
-    pinlines and legendary crowns. Title/type/rules use multicolor/gold for two
-    or more colors. Lands use only land_colors, so colored activation costs do
-    not color a colorless land.
+    Exactly two colors use the same approved left-to-right color transition on
+    pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
+    retain the old two-native-PNG construction with a full-card smooth fade mask
+    so their texture, shading, geometry and alpha are preserved. Title/type/rules
+    use multicolor/gold for two or more colors. Lands use only land_colors.
     """
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
     dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
     if not code and not dual:return False
 
-    rebuilt=[];changed=False
-    for frame in data.get('frames',[]):
+    source_frames=data.get('frames',[])
+    preserve_old_dual_crown=bool(dual) and _has_old_dual_crown_stack(source_frames)
+    rebuilt=[];changed=False;dual_crown_inserted=False
+    for frame in source_frames:
         if not isinstance(frame,dict):
             rebuilt.append(frame);continue
 
@@ -314,8 +367,15 @@ def apply_universal_frame_color_treatment(data,sem):
         # follow exactly the same semantic rule.
         if _is_crown_source(old_src):
             if dual:
-                rebuilt.append(_dual_gradient_crown(frame,dual))
-                changed=True
+                if preserve_old_dual_crown:
+                    # Native Card Tools already built the approved left crown +
+                    # right crown/full-card fade-mask stack. Do not flatten or
+                    # recolor those native PNG textures a second time.
+                    rebuilt.append(copy.deepcopy(frame))
+                elif not dual_crown_inserted:
+                    rebuilt.extend(_dual_crown_layers_like(frame,dual))
+                    dual_crown_inserted=True;changed=True
+                # Skip any additional single-color crown layers after fallback.
             else:
                 copied=copy.deepcopy(frame)
                 new=_universal_crown_source(old_src,code)

@@ -178,9 +178,14 @@ def test_two_color_legendary_crown_and_pinline_share_universal_gradient(env):
     pinline=next(f for f in data['frames'] if any(
         'pinline' in str(m.get('name','')).lower() for m in f.get('masks',[]) if isinstance(m,dict)
     ))
-    crown=next(f for f in data['frames'] if 'Gradient Legend Crown' in f.get('name',''))
+    crowns=[f for f in data['frames'] if '/img/frames/m15/crowns/m15Crown' in str(f.get('src',''))]
     assert pinline['src'].startswith('data:image/svg+xml;utf8,')
-    assert crown['src']==pinline['src']
+    assert [f['src'] for f in crowns[:2]]==[
+        '/img/frames/m15/crowns/m15CrownR.png',
+        '/img/frames/m15/crowns/m15CrownU.png',
+    ]
+    assert crowns[0]['masks'][0]['name']=='Right Blend'
+    assert crowns[0]['masks'][0]['src'].startswith('data:image/svg+xml;utf8,')
     for effect in ('Title','Type','Rules'):
         layers=[f for f in data['frames'] if effect in {m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)}]
         assert layers and all(f['src'].endswith('m15FrameM.png') for f in layers)
