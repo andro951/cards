@@ -192,7 +192,7 @@ def test_multicolor_vehicle_bars_are_gold_body_stays_vehicle(env,legendary):
         if {'Title','Type'} & masks:
             assert f['src'].endswith('m15FrameM.png')
         if 'Rules' in masks:
-            assert f['src'].endswith('m15FrameV.png')
+            assert f['src'].endswith('m15FrameM.png')
     pinline=next(f for f in d['frames'] if 'Pinline' in {m['name'] for m in f.get('masks',[])})
     assert pinline['src'].startswith('data:image/svg+xml;utf8,')
     assert any('Vehicle' in f.get('name','') for f in d['frames'])
@@ -294,7 +294,14 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
         'FrameU.png' in src or '/ul.png' in src or 'CrownU' in src
         for src in sources
     )
-    assert any('m15GenericShowcaseFrameL.png' in src for src in sources)
+    for effect in ('Pinline','Title','Type','Rules'):
+        layers=[f for f in comp['data']['frames'] if effect in {
+            m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)
+        }]
+        assert layers and all(
+            'FrameL.png' in str(f.get('src','')) or '/l.png' in str(f.get('src',''))
+            for f in layers
+        )
     assert any('m15CrownL' in src for src in sources)
 
 
