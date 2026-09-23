@@ -1,3 +1,4 @@
+from pathlib import Path
 from foundry.compiler import apply_universal_frame_color_treatment,_crown_color_variant
 
 
@@ -254,3 +255,11 @@ def test_crown_family_color_variant_detection_is_filename_agnostic():
         assert _crown_color_variant(source,'G')==expected
     assert _crown_color_variant('/img/frames/m15/crowns/m15MaskLegendCrown.png','G') is None
     assert _crown_color_variant('/img/frames/m15/crowns/m15CrownFloatingOutline.png','G') is None
+
+
+def test_compiler_source_is_single_complete_module():
+    source=(Path(__file__).resolve().parents[1]/'foundry/compiler.py').read_text(encoding='utf-8')
+    assert source.count('class Compiler:')==1
+    assert source.count('def apply_universal_frame_color_treatment')==1
+    assert source.count('def _crown_color_variant')==1
+    compile(source,'foundry/compiler.py','exec')
