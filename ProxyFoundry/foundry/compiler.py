@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':7,'transform-back':7,'station':2,'meld':4})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':6,'class':3,'transform-front':8,'transform-back':8,'station':2,'meld':4})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -886,6 +886,63 @@ def _saga_color_frame_src(group,code):
     raise ValidationError('Unsupported Saga frame group.')
 
 
+def enforce_saga_creature_rules_frame(data,sem):
+    """Keep creature Sagas with ordinary trailing rules on the short full-frame pack.
+
+    FINAL FANTASY Saga creatures such as Summon: Leviathan put chapter abilities
+    above the type line and ordinary creature rules (for example Ward {2}) in
+    the lower rules2 box.  That printed treatment uses Card-Cipherist's complete
+    Saga Creature PNG and its shorter 1009/588/844/1533 art well.  Do not split,
+    mask, stretch, or substitute a normal Saga frame for this structural layer.
+    """
+    meta=native.saga_creature_layout_metadata(sem)
+    if not str(meta.get('rules2') or '').strip():
+        return False
+
+    frames=data.setdefault('frames',[])
+    full=[
+        frame for frame in frames
+        if isinstance(frame,dict)
+        and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\\.png',str(frame.get('src','')))
+    ]
+    if len(full)!=1:
+        raise ValidationError('Saga Creature with trailing rules must contain exactly one complete short Saga Creature frame.')
+    # The creature-Saga PNG is already the complete structural frame.  Masking
+    # it into ordinary Saga pieces is what creates the incorrect full-height look.
+    full[0]['masks']=[]
+
+    art=native.SAGA_CREATURE_ART_BOUNDS_PX
+    data['artBounds']={
+        'x':art['x']/native.CARD_WIDTH,
+        'y':art['y']/native.CARD_HEIGHT,
+        'width':art['width']/native.CARD_WIDTH,
+        'height':art['height']/native.CARD_HEIGHT,
+    }
+    data['setSymbolBounds']={
+        'x':0.9227,
+        'y':native.SAGA_CREATURE_SET_SYMBOL_Y_PX/native.CARD_HEIGHT,
+        'width':0.12,'height':0.0381,'vertical':'center','horizontal':'right',
+    }
+    data['setSymbolX']=native.SAGA_CREATURE_SET_SYMBOL_X_PX/native.CARD_WIDTH
+    data['setSymbolY']=native.SAGA_CREATURE_SET_SYMBOL_ANCHOR_Y_PX/native.CARD_HEIGHT
+
+    text=data.setdefault('text',{})
+    type_box=text.get('type')
+    if isinstance(type_box,dict):
+        type_box['y']=native.SAGA_CREATURE_TYPE_Y_PX/native.CARD_HEIGHT
+    rules2=text.get('rules2')
+    if not isinstance(rules2,dict):
+        raise ValidationError('Saga Creature with trailing rules is missing its lower rules text box.')
+    rb=native.SAGA_CREATURE_RULES2_BOUNDS_PX
+    rules2.update({
+        'x':rb['x']/native.CARD_WIDTH,
+        'y':rb['y']/native.CARD_HEIGHT,
+        'width':rb['width']/native.CARD_WIDTH,
+        'height':rb['height']/native.CARD_HEIGHT,
+    })
+    return True
+
+
 def apply_dual_saga_tassels(data,sem,group):
     """Add only the Saga-specific two-color tassels; pinline is universal."""
     if group not in _SAGA_PINLINE_MASKS:return False
@@ -900,12 +957,20 @@ def apply_dual_saga_tassels(data,sem,group):
         and any(isinstance(mask,dict) and mask.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for mask in frame.get('masks',[]))
         for frame in frames
     ):return False
-    prefix='/img/frames/saga/regular/' if group=='saga' else '/img/frames/saga/creature/'
-    target=next((i for i,frame in enumerate(frames)
-                 if isinstance(frame,dict) and str(frame.get('src','')).startswith(prefix)
-                 and not frame.get('masks')),None)
+    if group=='saga-creature':
+        target=next((i for i,frame in enumerate(frames)
+                     if isinstance(frame,dict)
+                     and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\\.png',str(frame.get('src','')))
+                     and not frame.get('masks')),None)
+        missing='Two-color Saga Creature did not contain its complete short Saga Creature frame layer.'
+    else:
+        target=next((i for i,frame in enumerate(frames)
+                     if isinstance(frame,dict)
+                     and re.fullmatch(r'/img/frames/saga/regular/sagaFrame[WUBRGMALC]\\.png',str(frame.get('src','')))
+                     and not frame.get('masks')),None)
+        missing='Two-color Saga did not contain its complete Saga frame layer.'
     if target is None:
-        raise ValidationError('Two-color Saga did not contain its complete Saga frame layer.')
+        raise ValidationError(missing)
     tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
     # CardConjurer draws card.frames in reverse order. Banner is the broad/base
     # banner mask; BannerRight is the second/right piece. Put the right overlay
@@ -947,6 +1012,8 @@ def build_transform_saga_data(sem,group,card,artist,autofit,flags):
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
 
+    if saga_group=='saga-creature':
+        enforce_saga_creature_rules_frame(data,sem)
     apply_dual_saga_tassels(data,sem,saga_group)
     side='front' if group=='transform-front' else 'back'
     icon=_transform_icon_for(card,side)
@@ -1167,6 +1234,8 @@ class Compiler:
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group=='saga-creature':
+                        enforce_saga_creature_rules_frame(data,sem)
                     if choice=='auto' and group in {'saga','saga-creature'}:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':

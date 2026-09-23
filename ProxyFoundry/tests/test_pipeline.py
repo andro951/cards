@@ -240,7 +240,8 @@ def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_lin
     card=sf(type_line,colors)
     card.update(
         layout='saga',
-        oracle_text='I — Draw a card.\nII — Add one mana.\nIII — Scry 2.',
+        oracle_text=('I — Draw a card.\nII — Add one mana.\nIII — Scry 2.'
+                     + ('\nWard {2}' if 'Creature' in type_line else '')),
         mana_cost='{1}{U}{G}',
     )
     if 'Creature' in type_line:
@@ -278,8 +279,42 @@ def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_lin
         assert by_mask['Saga Tassel 2']['src']==f'/img/frames/saga/creature/{second.lower()}.png'
         assert by_mask['Saga Tassel 1']['masks'][0]['src']=='/img/frames/saga/creature/masks/sagaMaskBanner.png'
         assert by_mask['Saga Tassel 2']['masks'][0]['src']=='/img/frames/saga/creature/masks/sagaMaskBannerRight.png'
-        assert any(frame.get('src')=='/img/frames/saga/creature/m.png' for frame in result['data']['frames'])
+        base=next(frame for frame in result['data']['frames'] if frame.get('src')=='/img/frames/saga/creature/m.png')
+        assert base['masks']==[]
+        assert result['data']['artBounds']=={
+            'x':1009/native.CARD_WIDTH,'y':588/native.CARD_HEIGHT,
+            'width':844/native.CARD_WIDTH,'height':1533/native.CARD_HEIGHT,
+        }
+        assert result['data']['text']['rules2']['text']=='Ward {2}'
+        assert result['data']['text']['rules2']['y']==2333/native.CARD_HEIGHT
         assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in result['data']['frames'])
+
+def test_summon_leviathan_signature_uses_short_creature_saga_frame(workspace):
+    s,a,settings=workspace
+    card=sf('Enchantment Creature — Saga Leviathan',['U'])
+    card.update(
+        name='Summon: Leviathan',layout='saga',mana_cost='{4}{U}{U}',
+        power='6',toughness='6',
+        oracle_text=(
+            '(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n'
+            "I — Return each creature that isn't a Kraken, Leviathan, Merfolk, Octopus, or Serpent to its owner's hand.\n"
+            'II, III — Until end of turn, whenever a Kraken, Leviathan, Merfolk, Octopus, or Serpent attacks, draw a card.\n'
+            'Ward {2}'
+        ),
+    )
+    result=Compiler(s).compile_face(card,card,0,{},settings,a)
+    assert result['group']=='saga-creature'
+    assert result['recipe']=='saga_creature'
+    data=result['data']
+    frame=next(f for f in data['frames'] if f.get('src')=='/img/frames/saga/creature/u.png')
+    assert frame['masks']==[]
+    assert data['artBounds']=={
+        'x':1009/native.CARD_WIDTH,'y':588/native.CARD_HEIGHT,
+        'width':844/native.CARD_WIDTH,'height':1533/native.CARD_HEIGHT,
+    }
+    assert data['text']['rules2']['text']=='Ward {2}'
+    assert data['text']['rules2']['y']==2333/native.CARD_HEIGHT
+
 
 def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
     from foundry.legacy import compiler as native
