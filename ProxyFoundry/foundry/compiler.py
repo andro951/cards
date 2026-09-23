@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':5,'transform-back':5,'station':2,'meld':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':5,'class':3,'transform-front':6,'transform-back':6,'station':2,'meld':3})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -437,15 +437,28 @@ def _transform_color_code(sem):
     return 'L'
 
 
+def _transform_crown_code(sem,fallback):
+    """Color legendary crowns from the same semantic identity as frame accents."""
+    colors=[]
+    for color in sem.get('colors',[]) or []:
+        if color in 'WUBRG' and color not in colors:colors.append(color)
+    if not colors and 'Land' in set(sem.get('types',[])):
+        for color in sem.get('land_colors',[]) or []:
+            if color in 'WUBRG' and color not in colors:colors.append(color)
+    if len(colors)>1:return 'M'
+    if colors:return colors[0]
+    return fallback
+
+
 def _transform_frame_codes(sem):
-    """Pick the transform shell from the face's standalone card identity."""
+    """Pick structural shell and independently colored legendary crown."""
     types=set(sem.get('types',[]))
     color=_transform_color_code(sem)
     if 'Land' in types:
-        return 'L','L'
+        return 'L',_transform_crown_code(sem,'L')
     if 'Artifact' in types:
-        return 'A',(color if sem.get('colors') else 'A')
-    return color,color
+        return 'A',_transform_crown_code(sem,'A')
+    return color,_transform_crown_code(sem,color)
 
 
 _TRANSFORM_EFFECT_ICONS={

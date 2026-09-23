@@ -101,7 +101,7 @@ def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace)
     for card in (urza_card,might_card):
         comp=card['faces'][0]['compiled']
         assert comp['recipe']=='m15_meld_front'
-        assert comp['templateVersion']==2
+        assert comp['templateVersion']==3
         icons=[f for f in comp['data']['frames'] if f.get('name')=='Meld']
         assert icons==[{'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524}}]
         assert comp['data']['text']['title']['x']==0.16

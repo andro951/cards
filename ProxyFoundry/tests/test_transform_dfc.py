@@ -70,7 +70,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     assert front['group']=='transform-front' and front['recipe']=='m15_transform_front'
     assert back['group']=='transform-back' and back['recipe']=='m15_transform_back'
-    assert front['templateVersion']==5 and back['templateVersion']==5
+    assert front['templateVersion']==6 and back['templateVersion']==6
     assert front['data']['version']=='m15TransformFront'
     assert back['data']['version']=='m15TransformFront'
 
@@ -83,7 +83,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
         assert sources_for_mask(front['data'],piece)==['/img/frames/m15/transform/regular/frontU.png']
         assert sources_for_mask(back['data'],piece)==['/img/frames/m15/transform/regular/new/backU.png']
     assert any('/img/frames/m15/transform/crowns/regular/u.png'==x for x in front_sources)
-    assert any('/img/frames/m15/transform/crowns/regular/new/l.png'==x for x in back_sources)
+    assert any('/img/frames/m15/transform/crowns/regular/new/u.png'==x for x in back_sources)
     assert '/img/frames/m15/transform/icons/default.png' not in back_sources
     assert front['data']['text']['title']['x']==0.16
     assert back['data']['text']['title']['x']==0.0854
@@ -113,13 +113,13 @@ def test_search_for_azcanta_uses_transform_enchantment_front_and_land_back(tmp_p
     back=compiler.compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
     front_sources=[f.get('src','') for f in front['data']['frames']]
     back_sources=[f.get('src','') for f in back['data']['frames']]
-    assert front['templateVersion']==5 and back['templateVersion']==5
+    assert front['templateVersion']==6 and back['templateVersion']==6
     assert '/img/frames/m15/transform/regular/frontU.png' in front_sources
     assert '/img/frames/m15/transform/regular/new/backL.png' in back_sources
     for piece in ('Title','Type','Rules','Pinline'):
         assert sources_for_mask(back['data'],piece)==['/img/frames/m15/transform/regular/new/backU.png']
     assert '/img/frames/m15/transform/crowns/regular/u.png' in front_sources
-    assert '/img/frames/m15/transform/crowns/regular/new/l.png' in back_sources
+    assert '/img/frames/m15/transform/crowns/regular/new/u.png' in back_sources
     assert '/img/frames/m15/transform/icons/compass.svg' in front_sources
     assert '/img/frames/m15/transform/icons/land.svg' in back_sources
     assert front['data']['text']['type']['text']=='Legendary Enchantment'
@@ -140,6 +140,24 @@ def test_multicolor_transform_artifact_keeps_gold_accents_and_gradient_pinline(t
     })
     assert pinline['masks']==[{'src':'/img/frames/m15/transform/regular/maskPinlineFront.png','name':'Pinline'}]
     assert '/img/frames/m15/transform/regular/frontA.png' in sources_for_mask(data,'Frame')
+    assert '/img/frames/m15/transform/crowns/regular/m.png' in [f.get('src','') for f in data['frames']]
+
+
+def test_colorless_transform_land_keeps_land_crown(tmp_path):
+    store,art,settings=env(tmp_path)
+    card={
+        'object':'card','id':'33333333-3333-4333-8333-333333333333',
+        'name':'Front // Empty Back','layout':'transform','rarity':'rare','artist':'Test Artist',
+        'card_faces':[
+            {'name':'Front','type_line':'Legendary Creature — Human','mana_cost':'{1}{W}',
+             'oracle_text':'Transform this permanent.','colors':['W'],'power':'2','toughness':'2','artist':'Test Artist'},
+            {'name':'Empty Back','type_line':'Legendary Land','mana_cost':'',
+             'oracle_text':'{T}: Add {C}.','colors':[],'produced_mana':['C'],'artist':'Test Artist'},
+        ],
+    }
+    back=Compiler(store).compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
+    sources=[f.get('src','') for f in back['data']['frames']]
+    assert '/img/frames/m15/transform/crowns/regular/new/l.png' in sources
 
 
 def test_transform_structural_faces_still_require_compatible_template(tmp_path):
