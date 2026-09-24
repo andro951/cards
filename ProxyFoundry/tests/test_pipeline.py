@@ -289,6 +289,14 @@ def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_lin
         assert result['data']['text']['rules2']['y']==2333/native.CARD_HEIGHT
         assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in result['data']['frames'])
 
+def test_saga_creature_short_frame_regex_matches_real_asset_paths():
+    import re
+    pattern=r'/img/frames/saga/creature/[wubrgmcl]\.png'
+    assert re.fullmatch(pattern,'/img/frames/saga/creature/u.png')
+    assert re.fullmatch(pattern,'/img/frames/saga/creature/m.png')
+    assert not re.fullmatch(pattern,'/img/frames/saga/creature/u\\.png')
+
+
 def test_summon_leviathan_signature_uses_short_creature_saga_frame(workspace):
     s,a,settings=workspace
     card=sf('Enchantment Creature — Saga Leviathan',['U'])

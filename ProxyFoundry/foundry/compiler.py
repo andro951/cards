@@ -907,7 +907,7 @@ def enforce_saga_creature_rules_frame(data,sem):
     full=[
         frame for frame in frames
         if isinstance(frame,dict)
-        and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\\.png',str(frame.get('src','')))
+        and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\.png',str(frame.get('src','')))
     ]
     if len(full)!=1:
         raise ValidationError('Saga Creature with trailing rules must contain exactly one complete short Saga Creature frame.')
@@ -964,7 +964,7 @@ def apply_dual_saga_tassels(data,sem,group):
     if group=='saga-creature':
         target=next((i for i,frame in enumerate(frames)
                      if isinstance(frame,dict)
-                     and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\\.png',str(frame.get('src','')))
+                     and re.fullmatch(r'/img/frames/saga/creature/[wubrgmcl]\.png',str(frame.get('src','')))
                      and not frame.get('masks')),None)
         missing='Two-color Saga Creature did not contain its complete short Saga Creature frame layer.'
     else:
