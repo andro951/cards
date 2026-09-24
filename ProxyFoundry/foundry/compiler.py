@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':7,'class':3,'transform-front':9,'transform-back':9,'station':2,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':8,'class':3,'transform-front':10,'transform-back':10,'station':2,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -947,13 +947,12 @@ def enforce_saga_creature_rules_frame(data,sem):
     return True
 
 
-def fit_art_inside_window(data,art):
-    """Contain the complete source image inside the final artBounds.
+def cover_art_window(data,art):
+    """Fill the complete artBounds and center-crop whichever source axis overflows.
 
-    Card Tools' normal auto-fit is a cover fit: it fills the art well by
-    cropping whichever source axis overflows. Short Saga-creature frames with
-    trailing creature rules need the opposite behavior: the complete image must
-    remain visible inside their smaller art window.
+    The source is scaled until both the art-window width and height are covered.
+    One axis will normally extend beyond the window; that overflow is cropped
+    equally from both sides by centering the scaled image in the art window.
     """
     bounds=data.get('artBounds')
     if not isinstance(bounds,dict):raise ValidationError('This frame is missing its art window.')
@@ -971,7 +970,7 @@ def fit_art_inside_window(data,art):
     if min(card_w,card_h,image_w,image_h,window_w,window_h)<=0:
         raise ValidationError('Artwork or art-window dimensions are invalid.')
 
-    zoom=min(window_w/image_w,window_h/image_h)
+    zoom=max(window_w/image_w,window_h/image_h)
     scaled_w=image_w*zoom
     scaled_h=image_h*zoom
     x=window_x+(window_w-scaled_w)/2
@@ -983,7 +982,7 @@ def fit_art_inside_window(data,art):
     return True
 
 
-def _short_saga_creature_needs_contain_fit(sem):
+def _short_saga_creature_needs_cover_fit(sem):
     if 'Creature' not in set(sem.get('types',[])) or 'Saga' not in set(sem.get('subtypes',[])):
         return False
     meta=native.saga_creature_layout_metadata(sem)
@@ -1545,14 +1544,14 @@ class Compiler:
             data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
             if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
             recipe='custom:'+choice
-        short_saga_contain_fit=(
+        short_saga_cover_fit=(
             choice=='auto'
             and not settings.get('disableAutofit',False)
-            and _short_saga_creature_needs_contain_fit(sem)
+            and _short_saga_creature_needs_cover_fit(sem)
             and not options.get('rawCard')
         )
-        if short_saga_contain_fit:
-            fit_art_inside_window(data,art)
+        if short_saga_cover_fit:
+            cover_art_window(data,art)
         for k in ('artX','artY','artZoom','artRotate'):
             if k in options.get('fit',{}):
                 v=float(options['fit'][k])
@@ -1563,8 +1562,11 @@ class Compiler:
         apply_universal_frame_color_treatment(data,sem)
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
-        if short_saga_contain_fit and not options.get('fit'):
-            warning={**warning,'cropX':0.0,'cropY':0.0,'warning':False,'fitInsideArtWindow':True}
+        if short_saga_cover_fit and not options.get('fit'):
+            # This crop is the intended cover-fit behavior for the shortened
+            # Saga-creature art window. Preserve the measured crop amounts for
+            # review/debugging, but do not report them as a warning.
+            warning={**warning,'warning':False,'coverArtWindow':True}
         elif intentional_art_window_crop(group,choice,art,options,settings):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
         return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}

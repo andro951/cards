@@ -343,17 +343,18 @@ def test_summon_leviathan_signature_uses_short_creature_saga_frame(workspace):
     }
     assert data['text']['rules2']['text']=='Ward {2}'
     assert data['text']['rules2']['y']==2333/native.CARD_HEIGHT
-    expected_zoom=844/900
+    expected_zoom=1533/900
+    scaled_w=900*expected_zoom
     assert data['artZoom']==pytest.approx(expected_zoom)
-    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009)
-    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588+(1533-844)/2)
-    assert result['crop']['cropX']==0
+    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009+(844-scaled_w)/2)
+    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588)
+    assert result['crop']['cropX']>0
     assert result['crop']['cropY']==0
     assert result['crop']['warning'] is False
-    assert result['crop']['fitInsideArtWindow'] is True
+    assert result['crop']['coverArtWindow'] is True
 
 
-def test_saga_creature_contain_fit_uses_height_when_source_is_tall(workspace):
+def test_saga_creature_cover_fit_uses_width_when_source_is_tall(workspace):
     s,_,settings=workspace
     raw=io.BytesIO();Image.new('RGBA',(500,1400),'#56789a').save(raw,'PNG')
     art=ingest_image(s,raw.getvalue())
@@ -367,13 +368,15 @@ def test_saga_creature_contain_fit_uses_height_when_source_is_tall(workspace):
     )
     result=Compiler(s).compile_face(card,card,0,{},settings,art['id'])
     data=result['data']
-    expected_zoom=1533/1400
-    scaled_w=500*expected_zoom
+    expected_zoom=844/500
+    scaled_h=1400*expected_zoom
     assert data['artZoom']==pytest.approx(expected_zoom)
-    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009+(844-scaled_w)/2)
-    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588)
-    assert result['crop']['cropX']==result['crop']['cropY']==0
+    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009)
+    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588+(1533-scaled_h)/2)
+    assert result['crop']['cropX']==0
+    assert result['crop']['cropY']>0
     assert result['crop']['warning'] is False
+    assert result['crop']['coverArtWindow'] is True
 
 
 def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
