@@ -1,5 +1,6 @@
 import io
 
+import pytest
 from PIL import Image
 
 from foundry.compiler import Compiler, semantic
@@ -48,7 +49,7 @@ def test_cleric_class_uses_native_cardconjurer_class_frame(tmp_path):
 
     assert result['group']=='class'
     assert result['recipe']=='class'
-    assert result['templateVersion']==3
+    assert result['templateVersion']==4
     assert data['version']=='class'
     assert data['onload']=='/js/frames/versionClass.js'
     assert data['class']=={'x':0.5014,'width':0.422,'count':2}
@@ -66,6 +67,23 @@ def test_cleric_class_uses_native_cardconjurer_class_frame(tmp_path):
     assert text['level3c']['height']==0
     assert 'Gain the next level as a sorcery' in text['level0c']['text']
     assert 'If you would gain life' in text['level0c']['text']
+
+    # Class now uses Saga's shared-font / variable-height strategy.
+    active=[text['level0c'],text['level1c'],text['level2c']]
+    assert len({box['size'] for box in active})==1
+    assert active[0]['y']==pytest.approx(0.1129+10/2814)
+    # The first separator stays where the balanced allocation puts it: the
+    # +10 px y shift is exactly canceled by -10 px text height.
+    assert text['level1c']['y']==pytest.approx(
+        text['level0c']['y']+text['level0c']['height']+0.0481
+    )
+    assert text['level2c']['y']==pytest.approx(
+        text['level1c']['y']+text['level1c']['height']+0.0481
+    )
+    assert text['level2c']['y']+text['level2c']['height']==pytest.approx(0.8368,abs=1/2814)
+    # Cleric Class's final ability is much longer, so the separator should move
+    # to give that box more room instead of shrinking only its font.
+    assert text['level2c']['height']>text['level1c']['height']
 
 
 def test_valgavoths_lair_is_land_family_with_five_color_mana_identity(tmp_path):

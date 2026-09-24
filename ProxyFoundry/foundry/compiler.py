@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':9,'class':3,'transform-front':11,'transform-back':11,'station':2,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':9,'class':4,'transform-front':11,'transform-back':11,'station':2,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1351,6 +1351,44 @@ def build_battle_data(sem,card,artist,autofit,flags):
 
 _CLASS_FRAME_NAMES={'w':'White','u':'Blue','b':'Black','r':'Red','g':'Green','m':'Multicolored','a':'Artifact','l':'Land'}
 
+# Class uses the same shared-font strategy as Saga: one font size for every
+# ability text box, with the separators moving to give longer abilities more
+# vertical room. CardConjurer's Class renderer reserves 0.0481 card-height for
+# each level header/separator and hard-stops the final text box at y=0.8368.
+_CLASS_TEXT_START_Y=0.1129
+_CLASS_TEXT_END_Y=0.8368
+_CLASS_SEPARATOR_HEIGHT=0.0481
+_CLASS_FIRST_TEXT_TOP_INSET_PX=10
+_CLASS_ABILITY_FONT_SIZE=0.0305
+_CLASS_MIN_FONT_SIZE=0.024
+_CLASS_FONT_STEP=0.0005
+
+
+def _shared_class_text_layout(texts):
+    """Balance Class separators so all ability text can share one font size."""
+    if not texts:
+        return {'heights':[],'size':_CLASS_ABILITY_FONT_SIZE,'required':[],'lines':[]}
+
+    separator_px=max(0,len(texts)-1)*_CLASS_SEPARATOR_HEIGHT*native.CARD_HEIGHT
+    available_total=int(round(
+        (_CLASS_TEXT_END_Y-_CLASS_TEXT_START_Y)*native.CARD_HEIGHT-separator_px
+    ))
+    if available_total<=0:
+        raise ValidationError('Class ability region has no usable text height.')
+
+    size=_CLASS_ABILITY_FONT_SIZE
+    while True:
+        line_counts=[native.estimated_saga_wrapped_lines(text,size=size) for text in texts]
+        heights=native.allocate_saga_heights(line_counts,available_total)
+        required=[
+            native.saga_required_height_px(lines,size)
+            + (_CLASS_FIRST_TEXT_TOP_INSET_PX if i==0 else 0)
+            for i,lines in enumerate(line_counts)
+        ]
+        if all(req<=height for req,height in zip(required,heights)) or size<=_CLASS_MIN_FONT_SIZE:
+            return {'heights':heights,'size':size,'required':required,'lines':line_counts}
+        size=max(_CLASS_MIN_FONT_SIZE,round(size-_CLASS_FONT_STEP,4))
+
 
 def _class_parts(oracle_text):
     lines=str(oracle_text or '').splitlines()
@@ -1397,7 +1435,12 @@ def build_class_data(sem,artist,autofit,flags):
           'm' if len(colors)>1 else colors[0].lower() if colors else 'm')
     base_text,levels=_class_parts(sem.get('oracle_text',''))
     level_count=1+len(levels)
-    heights={2:[.31,.20,0,0],3:[.2096,.2091,.2091,0],4:[.15,.15,.15,.10]}[level_count]
+    ability_texts=[base_text]+[level['text'] for level in levels]
+    shared_layout=_shared_class_text_layout(ability_texts)
+    heights_px=list(shared_layout['heights'])
+    shared_size=float(shared_layout['size'])
+    if len(heights_px)!=level_count:
+        raise ValidationError('Class shared text layout returned the wrong number of ability boxes.')
 
     data['version']='class';data['onload']='/js/frames/versionClass.js'
     data['frames']=[{'name':_CLASS_FRAME_NAMES[code]+' Frame','src':f'/img/frames/class/{code}.png','masks':[]}]
@@ -1410,18 +1453,30 @@ def build_class_data(sem,artist,autofit,flags):
         'mana':{'name':'Mana Cost','text':sem.get('mana_cost',''),'y':0.0613,'width':0.9292,'height':71/2100,'oneLine':True,'size':71/1638,'align':'right','shadowX':-0.001,'shadowY':0.0029,'manaCost':True,'manaSpacing':0},
         'title':{'name':'Title','text':sem['name'],'x':0.0854,'y':0.0522,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0381},
         'type':{'name':'Type','text':native.get_type_info(sem)['normalized'].replace(' - ',' — '),'x':0.0854,'y':0.8481,'width':0.8292,'height':0.0543,'oneLine':True,'font':'belerenb','size':0.0324},
-        'level0c':{'name':'1 - Text','text':base_text,'x':0.5093,'y':0.1129,'width':0.404,'height':heights[0],'size':0.0305},
+        # Give the first ability 10 px more top breathing room without moving
+        # its separator: move the text top down 10 px and remove the same 10 px
+        # from that text box's height.
+        'level0c':{
+            'name':'1 - Text','text':base_text,'x':0.5093,
+            'y':_CLASS_TEXT_START_Y+_CLASS_FIRST_TEXT_TOP_INSET_PX/native.CARD_HEIGHT,
+            'width':0.404,
+            'height':max(0,heights_px[0]-_CLASS_FIRST_TEXT_TOP_INSET_PX)/native.CARD_HEIGHT,
+            'size':shared_size,
+        },
     }
-    last_y=0.1129+heights[0]+0.0481
+    # Separator positions use the full balanced allocation. The 10 px inset
+    # above level0c therefore changes only its text padding, not the first
+    # separator's intended balanced position.
+    last_y=_CLASS_TEXT_START_Y+heights_px[0]/native.CARD_HEIGHT+_CLASS_SEPARATOR_HEIGHT
     for i in range(1,4):
         active=i<=len(levels)
-        height=heights[i] if active else 0
+        height=(heights_px[i]/native.CARD_HEIGHT) if active else 0
         y=last_y if active else 2
         info=levels[i-1] if active else {'cost':'','name':'','text':''}
         text[f'level{i}a']={'name':f'{i+1} - Cost','text':info['cost'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0277,'size':0.0277}
         text[f'level{i}b']={'name':f'{i+1} - Name','text':info['name'],'x':0.5093,'y':y-0.0361 if active else 2,'width':0.3967,'height':0.0281,'size':0.0281,'align':'right'}
-        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':0.0305}
-        if active:last_y+=height+0.0481
+        text[f'level{i}c']={'name':f'{i+1} - Text','text':info['text'],'x':0.5093,'y':y,'width':0.404,'height':height,'size':shared_size}
+        if active:last_y+=height+_CLASS_SEPARATOR_HEIGHT
     data['text']=text
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return base,data,'class'

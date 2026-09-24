@@ -118,6 +118,9 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert cleric_data['version']=='class' and cleric_data['class']['count']==2
             assert cleric_data['frames']==[{'name':'White Frame','src':'/img/frames/class/w.png','masks':[]}]
             assert cleric_data['text']['level1a']['text']=='{3}{W}:' and cleric_data['text']['level2a']['text']=='{4}{W}:'
+            class_abilities=[cleric_data['text'][key] for key in ('level0c','level1c','level2c')]
+            assert len({box['size'] for box in class_abilities})==1
+            assert class_abilities[0]['y']==pytest.approx(0.1129+10/2814)
             search=next(c for c in ready['cards'] if c['name'].startswith('Search for Azcanta'))
             search_front=[x.get('src','') for x in search['faces'][0]['compiled']['data']['frames']]
             search_back=[x.get('src','') for x in search['faces'][1]['compiled']['data']['frames']]
