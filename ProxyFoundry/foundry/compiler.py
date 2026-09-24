@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':7,'saga-creature':8,'class':3,'transform-front':10,'transform-back':10,'station':2,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':9,'class':3,'transform-front':11,'transform-back':11,'station':2,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1012,16 +1012,24 @@ def apply_dual_saga_tassels(data,sem,group):
     else:
         target=next((i for i,frame in enumerate(frames)
                      if isinstance(frame,dict)
-                     and re.fullmatch(r'/img/frames/saga/regular/sagaFrame[WUBRGMALC]\\.png',str(frame.get('src','')))
+                     and re.fullmatch(r'/img/frames/saga/regular/sagaFrame[WUBRGMALC]\.png',str(frame.get('src','')))
                      and not frame.get('masks')),None)
         missing='Two-color Saga did not contain its complete Saga frame layer.'
     if target is None:
         raise ValidationError(missing)
     tassel1,tassel2=_SAGA_TASSEL_MASKS[group]
+    # Native Saga and Saga-Creature frames are complete unmasked PNGs. Expose
+    # only the pinline mask here; the universal color post-pass still owns the
+    # actual dual-gradient selection, just as it does for every other card.
     # CardConjurer draws card.frames in reverse order. Banner is the broad/base
     # banner mask; BannerRight is the second/right piece. Put the right overlay
     # earlier in the array so it is drawn after the broad first-color banner.
     overlays=[
+        {
+            'name':'Saga Pinline',
+            'src':_saga_color_frame_src(group,'M'),
+            'masks':[{'src':_SAGA_PINLINE_MASKS[group],'name':'Pinline'}],
+        },
         {
             'name':f"{native.COLOR_NAMES[second]} Saga Tassel 2",
             'src':_saga_color_frame_src(group,second),
