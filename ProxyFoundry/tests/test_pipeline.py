@@ -65,6 +65,27 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
+def test_short_saga_creature_scryfall_art_is_not_precropped(workspace):
+    from foundry.workspace import Workspace
+    s,_,settings=workspace
+    raw=io.BytesIO();Image.new('RGB',(1000,700),'#345678').save(raw,'PNG')
+    card=sf('Enchantment Creature — Saga Leviathan',['U'])
+    card.update(
+        name='Source Saga',layout='saga',
+        oracle_text='I — Test.\nII, III — Test.\nWard {2}',
+        image_uris={'art_crop':'https://cards.scryfall.io/source-saga.jpg'},
+    )
+    def transport(url):
+        if url.endswith('source-saga.jpg'):return raw.getvalue(),'image/jpeg',{}
+        raise AssertionError(url)
+    ws=Workspace(s,Network(s,transport=transport,sleeper=lambda n:None))
+    configured={**settings,'source':{'mode':'scryfall','localFiles':{},'fallback':True}}
+    art_id,origin,_=ws._art(card,card,{},configured,{}, {})
+    stored=s.asset(art_id)
+    assert origin=='Scryfall selected printing'
+    assert (stored['width'],stored['height'])==(1000,700)
+
+
 def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace):
     from foundry.workspace import Workspace
     from foundry.orders import Orders
@@ -322,6 +343,37 @@ def test_summon_leviathan_signature_uses_short_creature_saga_frame(workspace):
     }
     assert data['text']['rules2']['text']=='Ward {2}'
     assert data['text']['rules2']['y']==2333/native.CARD_HEIGHT
+    expected_zoom=844/900
+    assert data['artZoom']==pytest.approx(expected_zoom)
+    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009)
+    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588+(1533-844)/2)
+    assert result['crop']['cropX']==0
+    assert result['crop']['cropY']==0
+    assert result['crop']['warning'] is False
+    assert result['crop']['fitInsideArtWindow'] is True
+
+
+def test_saga_creature_contain_fit_uses_height_when_source_is_tall(workspace):
+    s,_,settings=workspace
+    raw=io.BytesIO();Image.new('RGBA',(500,1400),'#56789a').save(raw,'PNG')
+    art=ingest_image(s,raw.getvalue())
+    card=sf('Enchantment Creature — Saga Leviathan',['U'])
+    card.update(
+        name='Tall Summon',layout='saga',mana_cost='{4}{U}{U}',power='6',toughness='6',
+        oracle_text=(
+            '(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n'
+            'I — Test chapter.\nII, III — Test chapter.\nWard {2}'
+        ),
+    )
+    result=Compiler(s).compile_face(card,card,0,{},settings,art['id'])
+    data=result['data']
+    expected_zoom=1533/1400
+    scaled_w=500*expected_zoom
+    assert data['artZoom']==pytest.approx(expected_zoom)
+    assert data['artX']*native.CARD_WIDTH==pytest.approx(1009+(844-scaled_w)/2)
+    assert data['artY']*native.CARD_HEIGHT==pytest.approx(588)
+    assert result['crop']['cropX']==result['crop']['cropY']==0
+    assert result['crop']['warning'] is False
 
 
 def test_doctor_who_saga_chapter_groupings_and_ability_boxes():

@@ -201,10 +201,6 @@ class Workspace:
         else:
             raw,_,_=self.net.fetch(url,refresh=refresh,ttl=None)
         asset=ingest_image(self.store,raw)
-        if origin=='Scryfall selected printing' and ingest.saga_creature_trailing_rules_text(face.get('type_line',sf.get('type_line','')),face.get('oracle_text',sf.get('oracle_text',''))):
-            im=decode_image(self.store.asset_path(asset['id']).read_bytes())
-            if im.height<=182:raise ValidationError('Saga-creature artwork is too short for the approved 99/83-pixel crop.')
-            im=im.crop((0,99,im.width,im.height-83));out=io.BytesIO();im.save(out,'PNG');asset=ingest_image(self.store,out.getvalue());url=None
         return asset['id'],origin,url
     def _meld_back(self,sf,refresh=False):
         result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}
