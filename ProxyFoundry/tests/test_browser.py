@@ -246,53 +246,43 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
             browser.close();server.shutdown();server.server_close();app.close()
 
 
-def test_browser_artist_credit_and_modified_upload(browser_app):
+def test_browser_artist_credit_and_custom_upload(browser_app):
     app,server,page,errors=browser_app
     art=ingest_image(app.store,png());symbols=rarity_variants(app.store,art['id'])
     d=app.ws.create({'name':'Artist credits','source':[{'id':sf()['id']}],
-        'settings':{'symbols':symbols,'artist':'Deck Custom Artist','modificationCredit':'Modified by ChatGPT'}})
+        'settings':{'symbols':symbols,'artist':'Deck Custom Artist'}})
     d=app.ws.prepare(d['id'])
     page.goto(server.origin+'/#deck/'+d['id']);page.locator('[data-card]').first.click()
     expect(page.locator('#printing-artist')).to_have_text('Original Artist')
     expect(page.locator('#face-artist')).to_be_disabled()
-    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Modified by ChatGPT')
-    page.fill('#face-modification','Extended by Isaac')
-    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
-    page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
-    d=app.ws.prepare(d['id'])
-    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
-    page.reload();page.locator('[data-card]').first.click()
+    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist (Scryfall) • Art © respective rights holders')
+    assert page.locator('#face-modification').count()==0
     with page.expect_file_chooser() as chooser:page.click('#face-art')
-    chooser.value.set_files({'name':'modified_art.png','mimeType':'image/png','buffer':png((900,650),'#113355')})
-    expect(page.locator('#face-art-state')).to_contain_text('Custom art:')
+    chooser.value.set_files({'name':'custom_art.png','mimeType':'image/png','buffer':png((900,650),'#113355')})
     expect(page.locator('#face-artist')).to_be_enabled()
     page.fill('#face-artist','Custom Per-Card Artist')
-    expect(page.locator('#face-credit-preview')).to_have_text('Custom Per-Card Artist · Extended by Isaac')
-    page.check('#use-printing-artist')
-    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist · Extended by Isaac')
-    page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
-    d=app.ws.prepare(d['id']);f=d['cards'][0]['faces'][0]
-    assert f['artistCreditMode']=='printing'
-    assert f['compiled']['data']['infoArtist']=='Original Artist · Extended by Isaac'
-    page.reload();page.locator('[data-card]').first.click();page.check('#no-modification')
-    expect(page.locator('#face-credit-preview')).to_have_text('Original Artist')
+    expect(page.locator('#face-credit-preview')).to_have_text('Custom Per-Card Artist')
     page.click('#save-card');page.locator('#save-card').wait_for(state='detached');page.locator('[data-card]').first.wait_for()
     d=app.ws.prepare(d['id'])
-    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Original Artist'
+    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Custom Per-Card Artist'
+    assert d['cards'][0]['faces'][0]['compiled']['data']['infoNote']=='BulkProxyForge • Unofficial Proxy'
     assert not errors,errors
 
 
-def test_browser_deck_artist_modification_previews(browser_app):
+def test_browser_deck_artist_previews(browser_app):
     app,server,page,errors=browser_app
     d=app.ws.create({'name':'Deck credit defaults','source':[{'id':sf()['id']}]})
     page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#deck-name').wait_for()
-    page.fill('#deck-artist','My Custom Artist');page.fill('#deck-modification','Modified by ChatGPT')
-    expect(page.locator('#scryfall-credit-preview')).to_have_text('Original Artist · Modified by ChatGPT')
-    expect(page.locator('#custom-credit-preview')).to_have_text('My Custom Artist · Modified by ChatGPT')
+    page.fill('#deck-artist','My Custom Artist')
+    expect(page.locator('#scryfall-credit-preview')).to_have_text('Original Artist (Scryfall) • Art © respective rights holders')
+    expect(page.locator('#custom-credit-preview')).to_have_text('My Custom Artist')
+    assert page.locator('#deck-modification').count()==0
+    assert page.locator('#use-land-library').count()==0
     page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     current=app.ws.deck(d['id'])
     assert current['settings']['artist']=='My Custom Artist'
-    assert current['settings']['modificationCredit']=='Modified by ChatGPT'
+    assert 'modificationCredit' not in current['settings']
+    assert 'useLandLibrary' not in current['settings']
     assert not errors,errors
 
 
