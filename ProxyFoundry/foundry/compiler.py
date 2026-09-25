@@ -28,7 +28,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':9,'class':4,'transform-front':11,'transform-back':11,'station':2,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':10,'class':4,'transform-front':12,'transform-back':12,'station':3,'planeswalker':2,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -568,21 +568,20 @@ def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
         for key,value in full_art_nonland_placement(art).items():data[key]=value
     return True
 
-def intentional_art_window_crop(group,choice,art,options,settings):
-    """True when native structural fitting intentionally consumes a landscape art crop.
+def intentional_art_window_crop(group,choice,art_origin,options,settings):
+    """True only for untouched Scryfall art intentionally fitted by a native frame.
 
-    Planeswalker and Station source art is commonly the illustration window from
-    Scryfall rather than a portrait/full-bleed image. Card Tools deliberately
-    places that landscape source into these structural frames, so comparing its
-    aspect ratio to the full structural art well produces a false crop warning.
-    Manual placement, custom templates/raw cards and disabled autofit must still
-    receive the ordinary crop warning.
+    This exemption is about provenance, not image orientation. Scryfall's
+    selected-printing art may already be an illustration-window crop, so the
+    native Planeswalker/Station placement can legitimately exceed the review
+    threshold. Custom, GitHub, local-library and uploaded art must always keep
+    the normal crop warning, whether portrait or landscape.
     """
     fit=options.get('fit') or {}
     return (
-        choice=='auto'
+        art_origin=='Scryfall selected printing'
+        and choice=='auto'
         and group in {'planeswalker','station'}
-        and int(art.get('width') or 0)>int(art.get('height') or 0)>0
         and not settings.get('disableAutofit',False)
         and not options.get('rawCard')
         and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
@@ -987,6 +986,28 @@ def _short_saga_creature_needs_cover_fit(sem):
         return False
     meta=native.saga_creature_layout_metadata(sem)
     return bool(str(meta.get('rules2') or '').strip())
+
+
+# Approved fit for Scryfall art on the shorter Saga-creature frame after the
+# source art_crop has been trimmed by 99 px at the top and 83 px at the bottom.
+SAGA_CREATURE_SCRYFALL_ART_X=0.5019900497512437
+SAGA_CREATURE_SCRYFALL_ART_Y=0.20753375977256575
+SAGA_CREATURE_SCRYFALL_ART_ZOOM=2.705
+
+def apply_short_saga_creature_art_fit(data,art,art_origin):
+    """Fit short Saga-creature art according to its actual source.
+
+    Scryfall uses the calibrated placement for its pre-trimmed art_crop.
+    Custom art is instead cover-fitted to the final short art window so its own
+    dimensions determine scaling; any excessive crop remains reviewable.
+    """
+    if art_origin=='Scryfall selected printing':
+        data['artX']=SAGA_CREATURE_SCRYFALL_ART_X
+        data['artY']=SAGA_CREATURE_SCRYFALL_ART_Y
+        data['artZoom']=SAGA_CREATURE_SCRYFALL_ART_ZOOM
+        data['artRotate']=0
+        return True
+    return cover_art_window(data,art)
 
 
 def apply_dual_saga_tassels(data,sem,group):
@@ -1614,7 +1635,7 @@ class Compiler:
             and not options.get('rawCard')
         )
         if short_saga_cover_fit:
-            cover_art_window(data,art)
+            apply_short_saga_creature_art_fit(data,art,art_origin)
         for k in ('artX','artY','artZoom','artRotate'):
             if k in options.get('fit',{}):
                 v=float(options['fit'][k])
@@ -1625,11 +1646,15 @@ class Compiler:
         apply_universal_frame_color_treatment(data,sem)
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
-        if short_saga_cover_fit and not options.get('fit'):
-            # This crop is the intended cover-fit behavior for the shortened
-            # Saga-creature art window. Preserve the measured crop amounts for
-            # review/debugging, but do not report them as a warning.
-            warning={**warning,'warning':False,'coverArtWindow':True}
-        elif intentional_art_window_crop(group,choice,art,options,settings):
+        if (
+            short_saga_cover_fit
+            and art_origin=='Scryfall selected printing'
+            and not options.get('fit')
+        ):
+            # The selected-printing art is intentionally trimmed/fitted for the
+            # printed short Saga-creature window. Custom art never receives this
+            # exemption.
+            warning={**warning,'warning':False,'scryfallShortSagaFit':True}
+        elif intentional_art_window_crop(group,choice,art_origin,options,settings):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
         return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}

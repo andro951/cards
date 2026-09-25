@@ -2,7 +2,7 @@ import copy,io,json,pytest
 from PIL import Image
 from foundry.storage import Store
 from foundry.images import ingest_image,rarity_variants,sanitize_svg
-from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical
+from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,intentional_art_window_crop,SAGA_CREATURE_SCRYFALL_ART_X,SAGA_CREATURE_SCRYFALL_ART_Y,SAGA_CREATURE_SCRYFALL_ART_ZOOM
 from foundry.legacy import compiler as native
 from foundry.domain import ValidationError
 from foundry.sources import Sources
@@ -60,12 +60,17 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     assert result['crop']['intentionalArtWindow'] is True
     manual=comp.compile_face(walker,walker,0,{'fit':{'artZoom':1.2}},settings,landscape['id'])
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
+    custom=comp.compile_face(walker,walker,0,{},settings,landscape['id'],art_origin='uploaded override')
+    assert custom['crop']['warning'] and not custom['crop'].get('intentionalArtWindow')
+    assert intentional_art_window_crop('planeswalker','auto','Scryfall selected printing',{},settings)
+    assert intentional_art_window_crop('planeswalker','auto','Scryfall selected printing',{},settings)
+    assert not intentional_art_window_crop('planeswalker','auto','GitHub folder',{},settings)
     wide=io.BytesIO();Image.new('RGB',(1600,400),'#775533').save(wide,'PNG');wide_art=ingest_image(s,wide.getvalue())
     ordinary=sf('Creature — Human',['U'])
     ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
-def test_short_saga_creature_scryfall_art_is_not_precropped(workspace):
+def test_short_saga_creature_scryfall_art_uses_approved_trim(workspace):
     from foundry.workspace import Workspace
     s,_,settings=workspace
     raw=io.BytesIO();Image.new('RGB',(1000,700),'#345678').save(raw,'PNG')
@@ -83,7 +88,10 @@ def test_short_saga_creature_scryfall_art_is_not_precropped(workspace):
     art_id,origin,_=ws._art(card,card,{},configured,{}, {})
     stored=s.asset(art_id)
     assert origin=='Scryfall selected printing'
-    assert (stored['width'],stored['height'])==(1000,700)
+    assert (stored['width'],stored['height'])==(
+        1000,
+        700-ingest.SAGA_CREATURE_RULES_ART_TRIM_TOP-ingest.SAGA_CREATURE_RULES_ART_TRIM_BOTTOM,
+    )
 
 
 def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace):
@@ -350,8 +358,28 @@ def test_summon_leviathan_signature_uses_short_creature_saga_frame(workspace):
     assert data['artY']*native.CARD_HEIGHT==pytest.approx(588)
     assert result['crop']['cropX']>0
     assert result['crop']['cropY']==0
+    # Default/direct test art is custom. Cover-fit may crop it, but custom art
+    # must retain the normal review warning.
+    assert result['crop']['warning'] is True
+    assert not result['crop'].get('scryfallShortSagaFit')
+
+
+def test_short_saga_scryfall_uses_calibrated_fit_and_skips_review_warning(workspace):
+    s,a,settings=workspace
+    card=sf('Enchantment Creature — Saga Leviathan',['U'])
+    card.update(
+        name='Scryfall Summon',layout='saga',mana_cost='{4}{U}{U}',power='6',toughness='6',
+        oracle_text='I — Test chapter.\nII, III — Test chapter.\nWard {2}',
+    )
+    result=Compiler(s).compile_face(
+        card,card,0,{},settings,a,art_origin='Scryfall selected printing'
+    )
+    data=result['data']
+    assert data['artX']==pytest.approx(SAGA_CREATURE_SCRYFALL_ART_X)
+    assert data['artY']==pytest.approx(SAGA_CREATURE_SCRYFALL_ART_Y)
+    assert data['artZoom']==pytest.approx(SAGA_CREATURE_SCRYFALL_ART_ZOOM)
     assert result['crop']['warning'] is False
-    assert result['crop']['coverArtWindow'] is True
+    assert result['crop']['scryfallShortSagaFit'] is True
 
 
 def test_saga_creature_cover_fit_uses_width_when_source_is_tall(workspace):
@@ -375,8 +403,8 @@ def test_saga_creature_cover_fit_uses_width_when_source_is_tall(workspace):
     assert data['artY']*native.CARD_HEIGHT==pytest.approx(588+(1533-scaled_h)/2)
     assert result['crop']['cropX']==0
     assert result['crop']['cropY']>0
-    assert result['crop']['warning'] is False
-    assert result['crop']['coverArtWindow'] is True
+    assert result['crop']['warning'] is True
+    assert not result['crop'].get('scryfallShortSagaFit')
 
 
 def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
