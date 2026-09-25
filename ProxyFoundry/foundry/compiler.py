@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':4,'legendary':4,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':6,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':5,'legendary':5,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':6,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -699,7 +699,7 @@ _DEVOID_EFFECT_MASKS={'Pinline','Title','Type','Rules','Frame','Border'}
 def _devoid_frame_code(sem):
     """Use colored mana symbols for Devoid's visual frame while the card remains colorless."""
     found=[]
-    for token in re.findall(r'\\{([^{}]+)\\}',str(sem.get('mana_cost') or '')):
+    for token in re.findall(r'\{([^{}]+)\}',str(sem.get('mana_cost') or '')):
         for part in token.upper().split('/'):
             if part in 'WUBRG' and part not in found:found.append(part)
     if len(found)>=2:return 'M'
