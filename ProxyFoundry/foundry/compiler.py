@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':2,'legendary':2,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':3,'legendary':3,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -690,8 +690,7 @@ def semantic(sf,face,index=0):
 
 
 _DEVOID_ART_BOUNDS={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
-_DEVOID_REGULAR_FRAME_RE=re.compile(r'^/img/frames/m15/regular/(?:m15Frame[WUBRGMALCV]|eldrazi)\\.png$')
-_DEVOID_PT_RE=re.compile(r'^/img/frames/m15/regular/m15PT[WUBRGMACV]\\.png$')
+_DEVOID_EFFECT_MASKS={'Pinline','Title','Type','Rules','Frame','Border'}
 
 def _devoid_frame_code(sem):
     """Use colored mana symbols for Devoid's visual frame while the card remains colorless."""
@@ -705,25 +704,53 @@ def _devoid_frame_code(sem):
     if 'Land' in set(sem.get('types',[])):return 'L'
     return 'A'
 
-def apply_devoid_frame(data,sem):
-    """Swap an ordinary M15 shell to CardConjurer's genuine Zendikar Devoid pack."""
+def apply_devoid_frame(data,sem,autofit=True):
+    """Retarget ordinary M15 layers to CardConjurer's genuine Zendikar Devoid pack.
+
+    Native colorless-creature recipes may use different source filenames, so
+    identify the structural frame by its M15 mask roles rather than by the old
+    image path. This mirrors the M15Devoid pack: every structural mask samples
+    the same colored Devoid frame, while the creature P/T uses m15DevoidPT.png.
+    """
     if not sem.get('devoid'):return False
     code=_devoid_frame_code(sem)
     frame_src=f'/img/frames/m15/devoid/m15DevoidFrame{code}.png'
-    changed=False
+    changed=False;structural=0;pt_found=False
     for frame in data.get('frames',[]):
         if not isinstance(frame,dict):continue
-        src=str(frame.get('src') or '')
-        if _DEVOID_REGULAR_FRAME_RE.fullmatch(src):
+        masks={
+            str(mask.get('name') or '')
+            for mask in frame.get('masks',[])
+            if isinstance(mask,dict)
+        }
+        if masks & _DEVOID_EFFECT_MASKS:
             frame['src']=frame_src
             frame['name']=native.COLOR_NAMES.get(code,code)+' Devoid Frame'
-            changed=True
-        elif _DEVOID_PT_RE.fullmatch(src):
+            structural+=1;changed=True
+            continue
+        if 'power/toughness' in str(frame.get('name') or '').lower():
             frame['src']='/img/frames/m15/devoid/m15DevoidPT.png'
             frame['name']='Devoid Power/Toughness'
-            changed=True
+            frame['bounds']={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
+            pt_found=True;changed=True
+
+    # Fail closed if the preserved native recipe ever stops exposing ordinary
+    # M15 structural masks. Silently claiming m15Devoid while drawing another
+    # frame is exactly the regression this guard prevents.
+    if not structural:
+        raise ValidationError('Devoid frame support could not find the native M15 structural frame layers.')
+    if 'Creature' in set(sem.get('types',[])) and sem.get('power') is not None and not pt_found:
+        data.setdefault('frames',[]).insert(0,{
+            'name':'Devoid Power/Toughness',
+            'src':'/img/frames/m15/devoid/m15DevoidPT.png',
+            'masks':[],
+            'bounds':{'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733},
+        })
+
     data['version']='m15Devoid'
     data['artBounds']=copy.deepcopy(_DEVOID_ART_BOUNDS)
+    if autofit:
+        native.auto_fit(data,sem['art_local_path'])
     return changed
 
 
@@ -1776,7 +1803,7 @@ class Compiler:
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if group in {'standard','legendary'} and choice=='auto':
-                        if sem.get('devoid'):apply_devoid_frame(data,sem)
+                        if sem.get('devoid'):apply_devoid_frame(data,sem,not settings.get('disableAutofit',False))
                         apply_miracle_frame(data,sem)
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
@@ -1789,9 +1816,10 @@ class Compiler:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':
                         apply_station_underframe_policy(data,sem,art_origin)
-                    apply_custom_full_art_placement(
-                        data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
-                    )
+                    if not sem.get('devoid'):
+                        apply_custom_full_art_placement(
+                            data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
+                        )
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
         else:
@@ -1831,6 +1859,8 @@ class Compiler:
         apply_universal_frame_color_treatment(data,sem)
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE
+        bottom_info=data.get('bottomInfo') or {}
+        if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
@@ -1842,6 +1872,15 @@ class Compiler:
             # printed short Saga-creature window. Custom art never receives this
             # exemption.
             warning={**warning,'warning':False,'scryfallShortSagaFit':True}
+        elif (
+            sem.get('devoid')
+            and choice=='auto'
+            and art_origin=='Scryfall selected printing'
+            and not settings.get('disableAutofit',False)
+            and not options.get('rawCard')
+            and not options.get('fit')
+        ):
+            warning={**warning,'warning':False,'intentionalDevoidArtWindow':True}
         elif intentional_art_window_crop(group,choice,art_origin,options,settings):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
         return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
