@@ -47,6 +47,7 @@ def test_esika_approved_modal_pair_unchanged(tmp_path):
     y=Compiler(w.store).compile_face(sf,back,1,{},settings,a['id'])
     assert y['data']['text']['flipSideReminder']['text']=='{1}{G}{G}'
     assert y['data']['text']['flipsideType']['text']=='God'
+    assert x['data']['text']['flipsideType']['width'] < y['data']['text']['flipsideType']['width']
 
 
 def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path):
@@ -78,6 +79,7 @@ def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path
     assert front_data['text']['flipsideType']['text']=='8/8 Creature'
     assert back_data['text']['flipSideReminder']['text']=='{U}'
     assert back_data['text']['flipsideType']['text']=='1/1 Creature'
+    assert front_data['text']['flipsideType']['width'] < back_data['text']['flipsideType']['width']
     assert front_data['text']['pt']['text']=='1/1'
     assert back_data['text']['pt']['text']=='8/8'
 
