@@ -27,7 +27,7 @@ def env(tmp_path):
     def image(size):
         b=io.BytesIO();Image.new('RGB',size,'#657ca0').save(b,'PNG');return ingest_image(s,b.getvalue())
     symbol=image((600,300));landscape=image((900,600));portrait=image((900,1400))
-    settings={'symbols':{r:symbol['id'] for r in ['common','uncommon','rare','mythic']},'modificationCredit':'Modified by ChatGPT'}
+    settings={'symbols':{r:symbol['id'] for r in ['common','uncommon','rare','mythic']}}
     return s,Compiler(s),landscape,portrait,settings
 
 def test_threshold_continuation_and_seriema_shape():
@@ -77,7 +77,7 @@ def test_native_station_structure_and_layering(env,colors,legendary):
     elif len(colors)==1:assert pinframe['src']=='/img/frames/station/u.png'
     elif len(colors)==2:assert pinframe['src']==native.dual_gradient_fill_src(*native.canonical_dual_color_order(colors))
     else:assert pinframe['src']=='/img/frames/station/m.png'
-    assert d['infoArtist']=='Original Station Artist · Modified by ChatGPT'
+    assert d['infoArtist']=='Original Station Artist (Scryfall) • Art © respective rights holders'
 
 def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement(env):
     s,comp,landscape,portrait,settings=env;c=card()
@@ -122,7 +122,7 @@ def test_station_underframe_policy_depends_on_art_source_not_card_color(env):
 
 def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)
-    sem=semantic(c,c);sem.update(art=data_uri(s,a['id']),art_local_path=str(s.asset_path(a['id'])),set_symbol_source=data_uri(s,settings['symbols']['rare']),artist='Original Station Artist · Modified by ChatGPT')
+    sem=semantic(c,c);sem.update(art=data_uri(s,a['id']),art_local_path=str(s.asset_path(a['id'])),set_symbol_source=data_uri(s,settings['symbols']['rare']),artist='Original Station Artist (Scryfall) • Art © respective rights holders')
     expected=native.build_one(sem,{},True)['data']
     apply_station_underframe_policy(expected,sem,'Scryfall selected printing')
     fit_set_symbol_to_bounds(expected,s.asset(settings['symbols']['rare']))
