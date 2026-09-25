@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':3,'legendary':3,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':4,'legendary':4,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':6,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -565,33 +565,38 @@ def full_art_nonland_placement(art):
         'artRotate':'0',
     }
 
-def apply_custom_full_art_placement(data,art,recipe,group,art_origin,autofit):
-    """Apply the reusable full-art non-land treatment to custom art."""
-    if not _is_custom_art_origin(art_origin):return False
-    if group!='station' and recipe not in {'colorless_creature','colorless_creature_legendary'}:return False
+_SOURCE_AWARE_FULL_ART_RECIPES={'colorless_creature','colorless_creature_legendary'}
+
+def source_aware_art_family(sem,recipe,group):
+    """Cards that use an art-window Scryfall image but a full-art custom image."""
+    return bool(
+        sem.get('devoid')
+        or group in {'station','planeswalker'}
+        or recipe in _SOURCE_AWARE_FULL_ART_RECIPES
+    )
+
+def apply_source_aware_art_placement(data,art,sem,recipe,group,art_origin,autofit,raw_card=False):
+    """Apply one provenance-based art policy across colorless/Devoid/Station/PW frames.
+
+    Scryfall selected-printing artwork keeps the native printed art window and
+    its native placement. The only exception is the approved tall-textbox
+    Planeswalker recipe, whose shorter art well uses the same art-window bounds
+    but the established height-only fit.
+
+    Custom artwork uses the common 80px-inset full-art region and the same
+    centered-overflow placement math across all supported frame families.
+    """
+    if raw_card or not source_aware_art_family(sem,recipe,group):return None
+
+    if art_origin=='Scryfall selected printing':
+        if autofit and group=='planeswalker' and recipe=='planeswalker_tall_4':
+            fit_art_window_height_only(data,art)
+        return {'mode':'art-window','suppressCropWarning':bool(autofit)}
+
     data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
     if autofit:
         for key,value in full_art_nonland_placement(art).items():data[key]=value
-    return True
-
-def intentional_art_window_crop(group,choice,art_origin,options,settings):
-    """True only for untouched Scryfall art intentionally fitted by a native frame.
-
-    This exemption is about provenance, not image orientation. Scryfall's
-    selected-printing art may already be an illustration-window crop, so the
-    native Planeswalker/Station placement can legitimately exceed the review
-    threshold. Custom, GitHub, local-library and uploaded art must always keep
-    the normal crop warning, whether portrait or landscape.
-    """
-    fit=options.get('fit') or {}
-    return (
-        art_origin=='Scryfall selected printing'
-        and choice=='auto'
-        and group in {'planeswalker','station'}
-        and not settings.get('disableAutofit',False)
-        and not options.get('rawCard')
-        and not any(k in fit for k in ('artX','artY','artZoom','artRotate'))
-    )
+    return {'mode':'full-art','suppressCropWarning':False}
 
 
 _SCRYFALL_INLINE_ITALIC_RE=re.compile(r'(?<!\*)\*([^*\n]+?)\*(?!\*)')
@@ -689,7 +694,6 @@ def semantic(sf,face,index=0):
     return d
 
 
-_DEVOID_ART_BOUNDS={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
 _DEVOID_EFFECT_MASKS={'Pinline','Title','Type','Rules','Frame','Border'}
 
 def _devoid_frame_code(sem):
@@ -704,7 +708,7 @@ def _devoid_frame_code(sem):
     if 'Land' in set(sem.get('types',[])):return 'L'
     return 'A'
 
-def apply_devoid_frame(data,sem,autofit=True):
+def apply_devoid_frame(data,sem):
     """Retarget ordinary M15 layers to CardConjurer's genuine Zendikar Devoid pack.
 
     Native colorless-creature recipes may use different source filenames, so
@@ -748,9 +752,6 @@ def apply_devoid_frame(data,sem,autofit=True):
         })
 
     data['version']='m15Devoid'
-    data['artBounds']=copy.deepcopy(_DEVOID_ART_BOUNDS)
-    if autofit:
-        native.auto_fit(data,sem['art_local_path'])
     return changed
 
 
@@ -1803,7 +1804,7 @@ class Compiler:
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if group in {'standard','legendary'} and choice=='auto':
-                        if sem.get('devoid'):apply_devoid_frame(data,sem,not settings.get('disableAutofit',False))
+                        if sem.get('devoid'):apply_devoid_frame(data,sem)
                         apply_miracle_frame(data,sem)
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
@@ -1816,10 +1817,6 @@ class Compiler:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':
                         apply_station_underframe_policy(data,sem,art_origin)
-                    if not sem.get('devoid'):
-                        apply_custom_full_art_placement(
-                            data,art,recipe,group,art_origin,not settings.get('disableAutofit',False)
-                        )
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
         else:
@@ -1831,15 +1828,13 @@ class Compiler:
             data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
             if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
             recipe='custom:'+choice
-        tall_planeswalker_height_fit=(
-            choice=='auto'
-            and group=='planeswalker'
-            and recipe=='planeswalker_tall_4'
-            and not settings.get('disableAutofit',False)
-            and not options.get('rawCard')
-        )
-        if tall_planeswalker_height_fit:
-            fit_art_window_height_only(data,art)
+        source_aware_placement=None
+        if choice=='auto':
+            source_aware_placement=apply_source_aware_art_placement(
+                data,art,sem,recipe,group,art_origin,
+                not settings.get('disableAutofit',False),
+                raw_card=bool(options.get('rawCard')),
+            )
 
         short_saga_cover_fit=(
             choice=='auto'
@@ -1873,14 +1868,10 @@ class Compiler:
             # exemption.
             warning={**warning,'warning':False,'scryfallShortSagaFit':True}
         elif (
-            sem.get('devoid')
-            and choice=='auto'
-            and art_origin=='Scryfall selected printing'
-            and not settings.get('disableAutofit',False)
-            and not options.get('rawCard')
+            source_aware_placement
+            and source_aware_placement.get('mode')=='art-window'
+            and source_aware_placement.get('suppressCropWarning')
             and not options.get('fit')
         ):
-            warning={**warning,'warning':False,'intentionalDevoidArtWindow':True}
-        elif intentional_art_window_crop(group,choice,art_origin,options,settings):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
         return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
