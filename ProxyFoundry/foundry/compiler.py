@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':2,'legendary':2,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -662,6 +662,7 @@ def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
     d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
         if v is not None:d[k]=str(v)
@@ -686,6 +687,44 @@ def semantic(sf,face,index=0):
         d['flip_face']=ingest.build_nested_face_semantic(sf,faces[1],faces[1],{})
         d['scryfall_layout']='flip'
     return d
+
+
+_DEVOID_ART_BOUNDS={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
+_DEVOID_REGULAR_FRAME_RE=re.compile(r'^/img/frames/m15/regular/(?:m15Frame[WUBRGMALCV]|eldrazi)\\.png$')
+_DEVOID_PT_RE=re.compile(r'^/img/frames/m15/regular/m15PT[WUBRGMACV]\\.png$')
+
+def _devoid_frame_code(sem):
+    """Use colored mana symbols for Devoid's visual frame while the card remains colorless."""
+    found=[]
+    for token in re.findall(r'\\{([^{}]+)\\}',str(sem.get('mana_cost') or '')):
+        for part in token.upper().split('/'):
+            if part in 'WUBRG' and part not in found:found.append(part)
+    if len(found)>=2:return 'M'
+    if found:return found[0]
+    if 'Artifact' in set(sem.get('types',[])):return 'A'
+    if 'Land' in set(sem.get('types',[])):return 'L'
+    return 'A'
+
+def apply_devoid_frame(data,sem):
+    """Swap an ordinary M15 shell to CardConjurer's genuine Zendikar Devoid pack."""
+    if not sem.get('devoid'):return False
+    code=_devoid_frame_code(sem)
+    frame_src=f'/img/frames/m15/devoid/m15DevoidFrame{code}.png'
+    changed=False
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src') or '')
+        if _DEVOID_REGULAR_FRAME_RE.fullmatch(src):
+            frame['src']=frame_src
+            frame['name']=native.COLOR_NAMES.get(code,code)+' Devoid Frame'
+            changed=True
+        elif _DEVOID_PT_RE.fullmatch(src):
+            frame['src']='/img/frames/m15/devoid/m15DevoidPT.png'
+            frame['name']='Devoid Power/Toughness'
+            changed=True
+    data['version']='m15Devoid'
+    data['artBounds']=copy.deepcopy(_DEVOID_ART_BOUNDS)
+    return changed
 
 
 def choose_builtin(d,choice):
@@ -1737,6 +1776,7 @@ class Compiler:
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
                     if group in {'standard','legendary'} and choice=='auto':
+                        if sem.get('devoid'):apply_devoid_frame(data,sem)
                         apply_miracle_frame(data,sem)
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
