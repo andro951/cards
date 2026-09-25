@@ -70,9 +70,9 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
-def test_tall_planeswalker_auto_fit_covers_box_and_centers_overflow(workspace):
+def test_tall_planeswalker_auto_fit_crops_width_only(workspace):
     s,_,settings=workspace
-    raw=io.BytesIO();Image.new('RGB',(500,1400),'#445566').save(raw,'PNG')
+    raw=io.BytesIO();Image.new('RGB',(1000,600),'#445566').save(raw,'PNG')
     art=ingest_image(s,raw.getvalue())
     walker={
         'id':'00000000-0000-4000-8000-000000000198',
@@ -88,26 +88,14 @@ def test_tall_planeswalker_auto_fit_covers_box_and_centers_overflow(workspace):
     assert result['group']=='planeswalker'
     assert result['recipe']=='planeswalker_tall_4'
     data=result['data'];bounds=data['artBounds']
-    window_x=bounds['x']*data['width'];window_y=bounds['y']*data['height']
-    window_w=bounds['width']*data['width'];window_h=bounds['height']*data['height']
-    scaled_w=art['width']*data['artZoom'];scaled_h=art['height']*data['artZoom']
-
-    # Cover-fit invariant: neither axis may be smaller than the box, and at
-    # least one axis must fit exactly.
-    assert scaled_w>=window_w-1e-6
-    assert scaled_h>=window_h-1e-6
-    assert min(abs(scaled_w-window_w),abs(scaled_h-window_h))==pytest.approx(0,abs=1e-6)
-
-    # This deliberately tall source must width-fit and crop equal vertical
-    # overflow from the top and bottom.
-    assert scaled_w==pytest.approx(window_w)
-    assert data['artX']*data['width']==pytest.approx(window_x)
-    assert data['artY']*data['height']==pytest.approx(window_y+(window_h-scaled_h)/2)
-    assert result['crop']['cropX']==pytest.approx(0)
-    assert result['crop']['cropY']>0
+    window_h=bounds['height']*data['height']
+    window_y=bounds['y']*data['height']
+    assert art['height']*data['artZoom']==pytest.approx(window_h)
+    assert data['artY']*data['height']==pytest.approx(window_y)
+    assert result['crop']['cropY']==pytest.approx(0)
+    assert result['crop']['cropX']>0
     assert result['crop']['warning'] is True
     assert not result['crop'].get('intentionalArtWindow')
-
 
 def test_short_saga_creature_scryfall_art_uses_approved_trim(workspace):
     from foundry.workspace import Workspace
