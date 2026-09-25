@@ -116,14 +116,28 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
         'power':'3','toughness':'3',
         'artist':'Slawomir Maniak',
     }
-    result=Compiler(w.store).compile_face(card,card,0,{},settings,a['id'])
+    result=Compiler(w.store).compile_face(
+        card,card,0,{},settings,a['id'],art_origin='Scryfall selected printing'
+    )
     data=result['data']
     assert result['group']=='standard'
     assert data['version']=='m15Devoid'
     assert data['artBounds']=={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
-    assert any(frame.get('src')=='/img/frames/m15/devoid/m15DevoidFrameG.png' for frame in data['frames'])
-    assert any(frame.get('src')=='/img/frames/m15/devoid/m15DevoidPT.png' for frame in data['frames'])
-    assert result['artist']=='Slawomir Maniak'
+
+    structural=[
+        frame for frame in data['frames']
+        if {str(mask.get('name') or '') for mask in frame.get('masks',[]) if isinstance(mask,dict)}
+           & {'Pinline','Title','Type','Rules','Frame','Border'}
+    ]
+    assert structural
+    assert all(frame.get('src')=='/img/frames/m15/devoid/m15DevoidFrameG.png' for frame in structural)
+
+    pt=[frame for frame in data['frames'] if 'Power/Toughness' in str(frame.get('name') or '')]
+    assert len(pt)==1
+    assert pt[0]['src']=='/img/frames/m15/devoid/m15DevoidPT.png'
+    assert result['crop']['warning'] is False
+    assert result['crop']['intentionalDevoidArtWindow'] is True
+    assert data['bottomInfo']['bottomLeft']['text']=='BulkProxyForge • Unofficial Proxy'
 
 
 def test_colorless_eldrazi_without_devoid_keeps_normal_frame_family(tmp_path):
