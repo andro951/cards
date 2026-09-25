@@ -454,75 +454,81 @@ class Workspace:
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
         except Exception:out.unlink(missing_ok=True);raise
 
-    @staticmethod
-    def _js_round(value):
-        return math.floor(float(value)+0.5)
-
-    def _cropped_art_png(self,face,deck_name):
-        if face.get('error'):raise ValidationError(deck_name+' / '+face.get('name','Card')+': '+str(face['error']))
-        comp=face.get('compiled') or {}
-        data=comp.get('data') or {}
-        art_id=comp.get('artId')
-        asset=self.store.asset(art_id) if art_id else None
-        if not asset:raise ValidationError(deck_name+' / '+face.get('name','Card')+': prepared artwork is missing.')
-        try:
-            cw=float(data.get('width') or 2010);ch=float(data.get('height') or 2814)
-            mx=float(data.get('marginX') or 0);my=float(data.get('marginY') or 0)
-            bounds=data.get('artBounds') or {'x':0,'y':0,'width':1,'height':1}
-            bx=float(bounds.get('x') or 0);by=float(bounds.get('y') or 0)
-            bw=float(bounds.get('width') or 0);bh=float(bounds.get('height') or 0)
-            zoom=float(data.get('artZoom') or 0);angle=float(data.get('artRotate') or 0)
-            art_x=float(data.get('artX') or 0);art_y=float(data.get('artY') or 0)
-        except (TypeError,ValueError) as exc:
-            raise ValidationError(deck_name+' / '+face.get('name','Card')+': artwork placement contains an invalid number.') from exc
-        if not all(math.isfinite(x) for x in (cw,ch,mx,my,bx,by,bw,bh,zoom,angle,art_x,art_y)) or min(cw,ch,bw,bh,zoom)<=0:
-            raise ValidationError(deck_name+' / '+face.get('name','Card')+': artwork placement is invalid.')
-
-        # Mirror CardConjurer's canvas transform exactly: translate to artX/Y,
-        # rotate around the art's top-left origin, then scale the source image.
-        out_w=max(1,self._js_round(bw*cw));out_h=max(1,self._js_round(bh*ch))
-        window_x=self._js_round((bx+mx)*cw);window_y=self._js_round((by+my)*ch)
-        placed_x=self._js_round((art_x+mx)*cw);placed_y=self._js_round((art_y+my)*ch)
-        radians=math.radians(angle);cos_a=math.cos(radians);sin_a=math.sin(radians);inv=1.0/zoom
-        affine=(
-            cos_a*inv,
-            sin_a*inv,
-            (cos_a*(window_x-placed_x)+sin_a*(window_y-placed_y))*inv,
-            -sin_a*inv,
-            cos_a*inv,
-            (-sin_a*(window_x-placed_x)+cos_a*(window_y-placed_y))*inv,
-        )
-        source=decode_image(self.store.asset_path(art_id).read_bytes()).convert('RGBA')
-        cropped=source.transform(
-            (out_w,out_h),
-            Image.Transform.AFFINE,
-            affine,
-            resample=Image.Resampling.BICUBIC,
-            fillcolor=(0,0,0,0),
-        )
-        output=io.BytesIO();cropped.save(output,'PNG');return output.getvalue()
-
     def cropped_art(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        """Download Scryfall art_crop files for the deck without modifying bytes."""
         d=self.deck(ident)
-        if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading cropped art.')
-        total=sum(len(c.get('faces',[])) for c in d.get('cards',[]))
-        if not total:raise ValidationError(d['name']+': this deck has no card artwork to export.')
+        entries=[]
+        for c in d.get('cards',[]):
+            sf=c.get('scryfall') or {}
+            faces=sf.get('card_faces') or [sf]
+            # Single-image layouts (ordinary, split, adventure, etc.) expose the
+            # selected printing's art crop at the card level. True DFCs expose
+            # one art_crop per face instead.
+            if (sf.get('image_uris') or {}).get('art_crop'):
+                faces=[sf]
+            for face in faces:
+                url=(face.get('image_uris') or {}).get('art_crop')
+                if not url:
+                    raise ValidationError(
+                        str(c.get('name') or face.get('name') or 'Card')
+                        +': selected Scryfall printing has no cropped artwork.'
+                    )
+                entries.append((c,sf,face,url))
+        if not entries:
+            raise ValidationError(d['name']+': this deck has no Scryfall cropped artwork to export.')
+
         stem=slug(d['name'])[:80] or 'deck'
         out=self.store.home/'orders'/('BulkProxyForge_Cropped_Art_'+stem+'_'+uid()[:8]+'.zip')
         used=set();count=0
-        def unique_name(value):
-            base=display_name(value,'Card');name=base+'.png';number=2
-            while name.casefold() in used:
-                name=f'{base} ({number}).png';number+=1
-            used.add(name.casefold());return name
+
+        def extension(url,mime):
+            suffix=PurePosixPath(str(url).split('?',1)[0]).suffix.lower()
+            if suffix in {'.jpg','.jpeg','.png','.webp','.gif'}:
+                return suffix
+            kind=str(mime or '').split(';',1)[0].strip().lower()
+            return {
+                'image/jpeg':'.jpg',
+                'image/png':'.png',
+                'image/webp':'.webp',
+                'image/gif':'.gif',
+            }.get(kind,'.img')
+
+        def unique_name(value,ext,sf,card_id):
+            base=display_name(value,'Card')
+            name=base+ext
+            if name.casefold() not in used:
+                used.add(name.casefold());return name
+            extra=display_name(
+                str(sf.get('set',''))+' '+str(sf.get('collector_number',''))+' '+str(card_id or '')[:8],
+                'copy'
+            )
+            number=2
+            candidate=base+' '+extra+ext
+            while candidate.casefold() in used:
+                candidate=f'{base} {extra} ({number}){ext}';number+=1
+            used.add(candidate.casefold());return candidate
+
         try:
             with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as archive:
-                for c in d.get('cards',[]):
-                    for f in c.get('faces',[]):
-                        if cancel():raise ValidationError('Cropped-art export cancelled.')
-                        raw=self._cropped_art_png(f,d['name'])
-                        archive.writestr(unique_name(f.get('name') or c.get('name') or 'Card'),raw)
-                        count+=1;progress(count,total,'Cropped art for '+str(f.get('name') or c.get('name') or 'Card'))
+                total=len(entries)
+                for c,sf,face,url in entries:
+                    if cancel():raise ValidationError('Cropped-art export cancelled.')
+                    raw,mime,_=self.net.fetch_transient(url)
+                    if not str(mime or '').lower().startswith('image/'):
+                        raise ValidationError(
+                            str(face.get('name') or c.get('name') or 'Card')
+                            +': Scryfall cropped-art URL did not return an image.'
+                        )
+                    ext=extension(url,mime)
+                    name=unique_name(
+                        face.get('name') or c.get('name') or 'Card',
+                        ext,sf,c.get('id')
+                    )
+                    # Write the response body exactly as received from Scryfall:
+                    # no decode, crop, resize, rotation, or re-encoding.
+                    archive.writestr(name,raw)
+                    count+=1
+                    progress(count,total,'Downloaded cropped art for '+str(face.get('name') or c.get('name') or 'Card'))
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
         except Exception:
             out.unlink(missing_ok=True);raise

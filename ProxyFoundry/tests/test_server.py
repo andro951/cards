@@ -388,38 +388,70 @@ def test_review_images_export_is_single_worker_and_reaches_complete_progress(tmp
     assert all(store.cache_get(url) is None for url in urls)
     app.close()
 
-def test_cropped_art_export_uses_compiled_window_and_readable_names(tmp_path):
+def test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged(tmp_path):
     store=Store(tmp_path)
-    source=Image.new('RGB',(100,100),'red')
-    source.paste('green',(50,0,100,50));source.paste('blue',(0,50,50,100));source.paste('yellow',(50,50,100,100))
-    raw=io.BytesIO();source.save(raw,'PNG');art=ingest_image(store,raw.getvalue())
-    ws=Workspace(store,Network(store,transport=lambda url: (png(),'image/png',{}),sleeper=lambda _:None))
-    deck={'id':'deck','name':'Crop Deck','status':'prepared','cards':[{
-        'id':'card','name':'Card: One','faces':[{
-            'id':'face','name':'Card: One','compiled':{
-                'artId':art['id'],
-                'data':{'width':100,'height':100,'marginX':0,'marginY':0,
-                        'artBounds':{'x':.25,'y':.25,'width':.5,'height':.5},
-                        'artX':0,'artY':0,'artZoom':1,'artRotate':0}
-            }
-        }]
-    }]}
+    urls={
+        'https://cards.scryfall.io/art_crop/front/a/a/card_one.jpg':b'RAW-JPEG-CARD-ONE',
+        'https://cards.scryfall.io/art_crop/front/b/b/banner.jpg':b'RAW-JPEG-BANNER',
+        'https://cards.scryfall.io/art_crop/back/b/b/hulk.jpg':b'RAW-JPEG-HULK',
+    }
+    calls=[]
+    def transport(url):
+        calls.append(url)
+        if url in urls:return urls[url],'image/jpeg',{}
+        raise AssertionError('Unexpected cropped-art URL: '+url)
+
+    ws=Workspace(store,Network(store,transport=transport,sleeper=lambda _:None))
+    deck={
+        'id':'deck','name':'Crop Deck','status':'draft','settings':{'refreshData':False},
+        'cards':[
+            {
+                'id':'card-1','name':'Card: One','scryfall':{
+                    'name':'Card: One','layout':'normal','set':'tst','collector_number':'1',
+                    'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/a/card_one.jpg'},
+                },
+                'faces':[],
+            },
+            {
+                'id':'card-2','name':'Bruce Banner // Hulk','scryfall':{
+                    'name':'Bruce Banner // Hulk','layout':'modal_dfc','set':'spm','collector_number':'2',
+                    'card_faces':[
+                        {'name':'Bruce Banner','image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/b/b/banner.jpg'}},
+                        {'name':'Hulk','image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/back/b/b/hulk.jpg'}},
+                    ],
+                },
+                'faces':[],
+            },
+        ],
+    }
     ws.deck=lambda ident: deck
+
     out=ws.cropped_art('deck')
     with zipfile.ZipFile(store.home/'orders'/out['filename']) as archive:
-        assert archive.namelist()==['Card One.png']
-        image=Image.open(io.BytesIO(archive.read('Card One.png')));image.load()
-        assert image.size==(50,50)
-        assert image.getpixel((0,0))[:3]==(255,0,0)
-        assert image.getpixel((49,0))[:3]==(0,128,0)
-        assert image.getpixel((0,49))[:3]==(0,0,255)
-        assert image.getpixel((49,49))[:3]==(255,255,0)
+        assert archive.namelist()==['Card One.jpg','Bruce Banner.jpg','Hulk.jpg']
+        assert archive.read('Card One.jpg')==urls['https://cards.scryfall.io/art_crop/front/a/a/card_one.jpg']
+        assert archive.read('Bruce Banner.jpg')==urls['https://cards.scryfall.io/art_crop/front/b/b/banner.jpg']
+        assert archive.read('Hulk.jpg')==urls['https://cards.scryfall.io/art_crop/back/b/b/hulk.jpg']
+
+    # Draft/unprepared decks are allowed because this export depends only on the
+    # selected Scryfall printing, not compiled CardConjurer art placement.
+    assert calls==list(urls)
+    assert all(store.cache_get(url) is None for url in urls)
+
 
 
 def test_download_cropped_art_is_in_deck_actions_menu():
-    source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
+    root=Path(__file__).resolve().parents[1]
+    source=(root/'site/deck.js').read_text(encoding='utf-8')
+    workspace=(root/'foundry/workspace.py').read_text(encoding='utf-8')
     assert 'Download Cropped Art' in source
     assert '/cropped-art' in source
+    handler=source[source.index("$('#download-cropped-art')"):source.index("$('#download-review-images')")]
+    assert 'generate(' not in handler
+    cropped=workspace[workspace.index('    def cropped_art'):workspace.index('    def _review_render')]
+    assert "image_uris') or {}).get('art_crop')" in cropped
+    assert 'fetch_transient(url)' in cropped
+    assert '_cropped_art_png' not in workspace
 
 
 def test_review_images_export_uses_one_background_job_and_transient_fetches():
