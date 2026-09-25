@@ -13,10 +13,9 @@ from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
 
-HOSTED_LAND_LIBRARY='https://github.com/andro951/cards/tree/main/ProxyFoundry/full_art_lands'
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','disableAutofit','flavorPolicy'}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self._default_symbols=None
@@ -61,6 +60,7 @@ class Workspace:
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
         settings=self._with_default_symbols(settings)
+        settings.pop('modificationCredit',None);settings.pop('useLandLibrary',None);settings.pop('landLibrary',None)
         s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None);s['source'].pop('refreshArt',None)
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
@@ -69,7 +69,6 @@ class Workspace:
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
         s['artist']=credit_text(s.get('artist'))
-        s['modificationCredit']=credit_text(s.get('modificationCredit'), 'Modification credit', maximum=160)
         for group,choice in s.get('templateRules',{}).items():
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
             if choice not in {t['id'] for t in BUILTINS} and not self.store.get('templates',choice):raise ValidationError('A selected custom template is missing.')
@@ -176,11 +175,11 @@ class Workspace:
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
                 face_dirty=False
-                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride','fit','semanticOverrides'):
+                for k in ('artistOverride','artistCreditMode','artOverride','templateOverride','fit','semanticOverrides'):
                     if k in patch:
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
-                        if k in {'artistOverride','modificationCreditOverride'} and patch[k] is not None:
-                            credit_text(patch[k], 'Modification credit' if k=='modificationCreditOverride' else 'Artist credit', maximum=160 if k=='modificationCreditOverride' else 300)
+                        if k=='artistOverride' and patch[k] is not None:
+                            credit_text(patch[k], 'Artist credit', maximum=300)
                         if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
                         if f.get(k)!=patch[k]:f[k]=patch[k];face_dirty=True
                 if face_dirty:
@@ -207,16 +206,15 @@ class Workspace:
         new=self.sources.entry(sf,old['quantity'],old['section']);new['id']=old['id'];new['backOverride']=old.get('backOverride');new['backDesignOverride']=old.get('backDesignOverride')
         for i,f in enumerate(new['faces']):
             if i<len(old['faces']):
-                for k in ('artistOverride','artistCreditMode','modificationCreditOverride','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
+                for k in ('artistOverride','artistCreditMode','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
         d['cards']=[new if c['id']==card_id else c for c in d['cards']];d['status']='draft';d.pop('summary',None)
         return self.store.put('decks',d,revision)
-    def _art(self,sf,face,opts,settings,index,land_index):
+    def _art(self,sf,face,opts,settings,index):
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
         name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
         local=settings['source'].get('localFiles',{})
         if settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
         if settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
-        if remote_entry is None and settings.get('useLandLibrary') and 'Land' in str(face.get('type_line') or sf.get('type_line','')).split(' — ')[0] and stem in land_index:remote_entry=land_index[stem];origin='land art library'
         if remote_entry is None:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',True):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
@@ -270,7 +268,7 @@ class Workspace:
                 half=source.crop(box).transpose(Image.Transpose.ROTATE_90);out=io.BytesIO();half.save(out,'PNG')
         except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc
         return ingest_image(self.store,out.getvalue())['id']
-    def _prepare_card_faces(self,d,c,s,index,land_index,progress,cancel,done,total):
+    def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total):
         if cancel():raise ValidationError('Preparation cancelled.')
         sf=c['scryfall']
         refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
@@ -286,7 +284,7 @@ class Workspace:
             progress(done,total,'Preparing '+f['name']);f.pop('error',None)
             try:
                 face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
-                art_id,origin,url=self._art(sf,face,f,s,index,land_index)
+                art_id,origin,url=self._art(sf,face,f,s,index)
                 options=copy.deepcopy(f)
                 flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
                 options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
@@ -308,20 +306,18 @@ class Workspace:
             done+=1;progress(done,total,'Prepared '+f['name'])
         return done
     def _prepare_sources(self,s,progress):
-        index={};land_index={}
+        index={}
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
-        if s.get('useLandLibrary'):
-            progress(0,1,'Reading hosted full-art land library');land_index=self.sources.github_index(HOSTED_LAND_LIBRARY,refresh=True)
-        return index,land_index
+        return index
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
-        index,land_index=self._prepare_sources(s,progress)
+        index=self._prepare_sources(s,progress)
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
-            done=self._prepare_card_faces(d,c,s,index,land_index,progress,cancel,done,total)
+            done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
@@ -329,8 +325,8 @@ class Workspace:
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing this card.')
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
-        index,land_index=self._prepare_sources(s,progress)
-        self._prepare_card_faces(d,c,s,index,land_index,progress,cancel,0,len(c.get('faces',[])))
+        index=self._prepare_sources(s,progress)
+        self._prepare_card_faces(d,c,s,index,progress,cancel,0,len(c.get('faces',[])))
         # Recompute draft state from actual face data after this card is prepared.
         # Front-affecting edits clear their face's compiled data, so unrelated
         # pending cards remain draft while a fully prepared deck can leave draft.
