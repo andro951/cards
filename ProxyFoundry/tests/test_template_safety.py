@@ -100,3 +100,41 @@ def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path
     assert layer(back_data,'Flipside')['src']=='/img/frames/modal/regular/back/u.png'
     assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in back_data['frames'])
     assert layer(back_data,'Pinline')['src'].startswith('data:image/svg+xml;utf8,')
+
+
+def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
+    w,a,settings=setup(tmp_path)
+    card={
+        'name':'Sowing Mycospawn',
+        'layout':'normal',
+        'rarity':'rare',
+        'type_line':'Creature — Eldrazi Fungus',
+        'mana_cost':'{3}{G}',
+        'colors':[],
+        'keywords':['Devoid','Kicker'],
+        'oracle_text':'Devoid (This card has no color.)\nKicker {1}{C}\nWhen you cast this spell, search your library for a land card, put it onto the battlefield, then shuffle.',
+        'power':'3','toughness':'3',
+        'artist':'Slawomir Maniak',
+    }
+    result=Compiler(w.store).compile_face(card,card,0,{},settings,a['id'])
+    data=result['data']
+    assert result['group']=='standard'
+    assert data['version']=='m15Devoid'
+    assert data['artBounds']=={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
+    assert any(frame.get('src')=='/img/frames/m15/devoid/m15DevoidFrameG.png' for frame in data['frames'])
+    assert any(frame.get('src')=='/img/frames/m15/devoid/m15DevoidPT.png' for frame in data['frames'])
+    assert result['artist']=='Slawomir Maniak'
+
+
+def test_colorless_eldrazi_without_devoid_keeps_normal_frame_family(tmp_path):
+    w,a,settings=setup(tmp_path)
+    card={
+        'name':'Plain Eldrazi',
+        'layout':'normal','rarity':'rare',
+        'type_line':'Creature — Eldrazi',
+        'mana_cost':'{5}','colors':[],'keywords':[],
+        'oracle_text':'Trample','power':'5','toughness':'5',
+    }
+    data=Compiler(w.store).compile_face(card,card,0,{},settings,a['id'])['data']
+    assert data.get('version')!='m15Devoid'
+    assert not any('/m15/devoid/' in str(frame.get('src') or '') for frame in data['frames'])
