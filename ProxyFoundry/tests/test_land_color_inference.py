@@ -106,3 +106,25 @@ def test_academy_ruins_is_colorless_despite_blue_nonmana_activation_cost():
         ['C'],
     )
     assert colors(card)==[]
+
+
+def test_unrestricted_basic_land_fetch_is_five_color_gold():
+    card=land(
+        'Prismatic Vista',
+        'Land',
+        '{T}, Pay 1 life, Sacrifice Prismatic Vista: Search your library for a basic land card, '
+        'put it onto the battlefield, then shuffle.',
+        [],
+    )
+    assert colors(card)==list('WUBRG')
+
+
+def test_typed_fetch_does_not_become_five_color_just_because_it_is_a_fetch_land():
+    card=land(
+        'Verdant Catacombs',
+        'Land',
+        '{T}, Pay 1 life, Sacrifice Verdant Catacombs: Search your library for a Swamp or Forest card, '
+        'put it onto the battlefield, then shuffle.',
+        [],
+    )
+    assert colors(card)==['B','G']
