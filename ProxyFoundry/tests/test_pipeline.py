@@ -70,6 +70,34 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
+def test_tall_planeswalker_auto_fit_crops_width_only(workspace):
+    s,_,settings=workspace
+    raw=io.BytesIO();Image.new('RGB',(1000,600),'#445566').save(raw,'PNG')
+    art=ingest_image(s,raw.getvalue())
+    walker={
+        'id':'00000000-0000-4000-8000-000000000198',
+        'name':'Tall Walker Test',
+        'type_line':'Legendary Planeswalker — Tester',
+        'mana_cost':'{3}{U}{U}',
+        'oracle_text':'+2: Draw a card.\n+1: Scry 2.\n-3: Return target permanent.\n-8: Draw seven cards.',
+        'colors':['U'],'rarity':'mythic','loyalty':'5','artist':'Source Artist',
+    }
+    result=Compiler(s).compile_face(
+        walker,walker,0,{},settings,art['id'],art_origin='uploaded override'
+    )
+    assert result['group']=='planeswalker'
+    assert result['recipe']=='planeswalker_tall_4'
+    data=result['data'];bounds=data['artBounds']
+    window_h=bounds['height']*data['height']
+    window_y=bounds['y']*data['height']
+    assert art['height']*data['artZoom']==pytest.approx(window_h)
+    assert data['artY']*data['height']==pytest.approx(window_y)
+    assert result['crop']['cropY']==pytest.approx(0)
+    assert result['crop']['cropX']>0
+    assert result['crop']['warning'] is True
+    assert not result['crop'].get('intentionalArtWindow')
+
+
 def test_short_saga_creature_scryfall_art_uses_approved_trim(workspace):
     from foundry.workspace import Workspace
     s,_,settings=workspace
