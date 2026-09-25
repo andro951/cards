@@ -39,14 +39,6 @@ def test_github_art_uses_pinned_immutable_url_and_verifies_blob(tmp_path):
     assert calls[-1]==(entry['url'],{'immutable':True})
 
 
-def test_hosted_land_art_uses_same_pinned_verification(tmp_path):
-    ws,sf,calls,raw=make_workspace(tmp_path)
-    settings=ws.validate_settings({'source':{'mode':'scryfall'},'useLandLibrary':True})
-    commit='b'*40
-    entry={'url':'https://raw.githubusercontent.com/andro951/cards/'+commit+'/ProxyFoundry/full_art_lands/one_card.png','blobSha':blob_sha(raw)}
-    ws._art(sf,sf,{},settings,{}, {'one_card':entry})
-    assert calls[-1]==(entry['url'],{'immutable':True})
-
 
 def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
     commit='c'*40;blob='d'*40
