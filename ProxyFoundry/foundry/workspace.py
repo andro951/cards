@@ -1,7 +1,7 @@
 """Deck orchestration. Source changes invalidate front renders; backs/quantities do not."""
 from __future__ import annotations
 import base64,copy,io,json,math,re,time,zipfile
-from pathlib import PurePosixPath
+from pathlib import Path,PurePosixPath
 from PIL import Image
 from .domain import *
 from .storage import Store,display_name
@@ -14,11 +14,37 @@ from .credits import credit_text,printing_artist
 from .backs import Backs
 
 HOSTED_LAND_LIBRARY='https://github.com/andro951/cards/tree/main/ProxyFoundry/full_art_lands'
+BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','modificationCredit':'','backAsset':None,'templateRules':{},'useLandLibrary':False,'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','modificationCredit','templateRules','useLandLibrary','disableAutofit','flavorPolicy'}
 class Workspace:
     def __init__(self,store=None,network=None):
-        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store)
+        self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self._default_symbols=None
+    def default_symbols(self):
+        """Import the four bundled rarity symbols into this workspace once."""
+        if self._default_symbols is None:
+            symbols={}
+            for rarity in RARITIES:
+                path=BUNDLED_SYMBOL_ROOT/(rarity+'.png')
+                if not path.is_file():
+                    raise ValidationError('The bundled default set symbols are missing. Extract the complete application ZIP, including assets/symbols.')
+                symbols[rarity]=ingest_image(
+                    self.store,path.read_bytes(),trim_transparent_padding=True
+                )['id']
+            self._default_symbols=symbols
+        return dict(self._default_symbols)
+    def _with_default_symbols(self,settings):
+        """Fill missing rarity slots from the bundled defaults; explicit uploads win."""
+        values=copy.deepcopy(settings or {})
+        explicit=values.get('symbols') or {}
+        if not isinstance(explicit,dict):
+            raise ValidationError('Invalid set-symbol selection.')
+        symbols=self.default_symbols()
+        for rarity in RARITIES:
+            if explicit.get(rarity):
+                symbols[rarity]=explicit[rarity]
+        values['symbols']=symbols
+        return values
     def new_deck(self, name='Untitled deck'):
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
             'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
@@ -34,6 +60,7 @@ class Workspace:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
     def validate_settings(self,settings):
+        settings=self._with_default_symbols(settings)
         s={**copy.deepcopy(DEFAULT_SETTINGS),**settings,**self.backs.settings(settings)};s['source']={**DEFAULT_SETTINGS['source'],**s.get('source',{})};s.pop('landLibrary',None);s['source'].pop('refreshArt',None)
         if s['source']['mode'] not in {'scryfall','github','local'}:raise ValidationError('Select Scryfall, GitHub folder, or Computer folder.')
         if s['source']['mode']=='github' and s['source'].get('githubFolder'):github_location(s['source']['githubFolder'],s['source'].get('ref') or None)
@@ -58,6 +85,9 @@ class Workspace:
     def deck(self,ident):
         d=self.store.get('decks',ident)
         if not d:raise ValidationError('Deck not found. It may be in Trash.')
+        # Legacy decks created before bundled defaults existed gain them on read;
+        # uploaded/custom rarity IDs continue to override the matching defaults.
+        d['settings']=self._with_default_symbols(d.get('settings',{}))
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             for f in c['faces']:

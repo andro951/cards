@@ -1,7 +1,10 @@
-import copy
+import copy,io
 import pytest
+from PIL import Image
 from foundry.domain import *
 from foundry.storage import Store
+from foundry.workspace import Workspace
+from foundry.images import ingest_image
 
 @pytest.mark.parametrize('age,refresh,expected',[(365*DAY-1,False,True),(365*DAY,False,False),(7*DAY-1,True,True),(7*DAY,True,False)])
 def test_cache_boundaries(age,refresh,expected):assert cache_is_fresh(0,age,refresh)==expected
@@ -45,3 +48,29 @@ def test_revisions(tmp_path):
 def test_assets(tmp_path):
     s=Store(tmp_path);a=s.add_asset(b'abc','text/plain');assert a['id']==s.add_asset(b'abc','text/plain')['id']
     with pytest.raises(ValidationError):s.asset_path('../x')
+
+
+def test_bundled_set_symbols_are_defaults_and_uploads_replace_them(tmp_path):
+    ws=Workspace(Store(tmp_path))
+    deck=ws.new_deck('Bundled symbols')
+    defaults=dict(deck['settings']['symbols'])
+    assert set(defaults)==set(RARITIES)
+    assert all(ws.store.asset(defaults[r]) for r in RARITIES)
+
+    # A legacy deck with no selections should present the bundled defaults too.
+    legacy=ws.store.put('decks',{
+        'name':'Legacy symbols','cards':[],'settings':{'symbols':{}},
+        'status':'draft','notes':'','importedSource':'',
+    })
+    assert ws.deck(legacy['id'])['settings']['symbols']==defaults
+
+    # Replacing one rarity keeps the bundled defaults for the other three.
+    raw=io.BytesIO();Image.new('RGBA',(96,96),'#ba812b').save(raw,'PNG')
+    custom=ingest_image(ws.store,raw.getvalue())['id']
+    saved=ws.save(deck['id'],{
+        'revision':deck['revision'],
+        'settings':{'symbols':{'rare':custom}},
+    })
+    assert saved['settings']['symbols']['rare']==custom
+    for rarity in ('common','uncommon','mythic'):
+        assert saved['settings']['symbols'][rarity]==defaults[rarity]

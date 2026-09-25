@@ -47,7 +47,7 @@ Artist credits are source-aware. Actual Scryfall artwork, including fallback ima
 
 For custom artwork, use a deck-wide artist or edit each card's credit. **Use the original printing artist for this custom image** keeps the original attribution when you upload modified/extended artwork. Add optional **Modification credit** such as `Modified by ChatGPT` in the deck setup or card inspector. It displays in the normal artist spot as `Artist Name · Modified by ChatGPT`. A per-face value replaces the deck suffix; **No modification credit on this face** suppresses it. Both screens preview the complete artist line before generation. The stored Scryfall artist is never modified, and regenerating does not duplicate the suffix.
 
-Four rarity symbols are required before generation. Upload all four or explicitly generate common/uncommon/rare/mythic color treatments from one image. Review those previews: they preserve transparency but do not redraw the original symbol. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
+The bundled common/uncommon/rare/mythic set symbols are selected automatically for every new deck and for older decks that have no symbol selection. Click any rarity to replace just that default, upload a complete four-image folder to replace all four, or explicitly generate four color treatments from one image. Generated previews preserve transparency but do not redraw the original symbol. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
 
 ## Updating from the previous test build
 

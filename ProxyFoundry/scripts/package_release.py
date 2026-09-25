@@ -8,16 +8,18 @@ EXCLUDED={'.git','.venv','__pycache__','.pytest_cache','workspace','_work','.cac
 EXTENSIONS={'.py','.js','.html','.css','.md','.txt','.json','.ini','.bat','.svg'}
 
 BACK_FILES={'assets/backs/forge_default.png','assets/backs/forge_blank.png'}
+SYMBOL_FILES={f'assets/symbols/{rarity}.png' for rarity in ('common','uncommon','rare','mythic')}
+BUNDLED_IMAGE_FILES=BACK_FILES|SYMBOL_FILES
 
 def build(destination):
     files=[]
     for p in sorted(ROOT.rglob('*')):
         if not p.is_file() or any(part in EXCLUDED for part in p.relative_to(ROOT).parts):continue
-        if p.suffix.lower() not in EXTENSIONS and p.name!='.gitignore' and p.relative_to(ROOT).as_posix() not in BACK_FILES:continue
+        if p.suffix.lower() not in EXTENSIONS and p.name!='.gitignore' and p.relative_to(ROOT).as_posix() not in BUNDLED_IMAGE_FILES:continue
         if p.name=='RELEASE_MANIFEST.json':continue
         files.append(p)
     assert any(p.name=='START_PROXY_FOUNDRY.bat' for p in files)
-    assert BACK_FILES <= {p.relative_to(ROOT).as_posix() for p in files}, 'Release is missing its two approved back assets'
+    assert BUNDLED_IMAGE_FILES <= {p.relative_to(ROOT).as_posix() for p in files}, 'Release is missing bundled image assets'
     back_manifest=json.loads((ROOT/'assets/backs/manifest.json').read_text())
     for name in BACK_FILES:
         assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==back_manifest['files'][Path(name).name]['sha256']
