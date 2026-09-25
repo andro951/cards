@@ -23,6 +23,8 @@ APPROVED_MODAL_DFC_PAIRS={
     ('Bruce Banner','The Incredible Hulk'),
 }
 NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','emblem','case','special-land','dungeon','conspiracy'}
+CARD_FOOTER_NOTE='BulkProxyForge • Unofficial Proxy'
+_MODAL_MANA_TOKEN_RE=re.compile(r'\{[^{}]+\}')
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
 # affected structural group (for example AUTO_TEMPLATE_VERSIONS['station']=2).
@@ -1565,6 +1567,26 @@ def _modal_dfc_flipside_label(pair,index,face):
         return 'Creature'
     raise ValidationError('This modal DFC needs a compatible custom template.')
 
+def _fit_modal_flipside_label_width(data,mana_cost):
+    """Reserve helper-strip space for the opposite face's rendered mana cluster."""
+    text=data.get('text') or {};label=text.get('flipsideType');reminder=text.get('flipSideReminder')
+    if not isinstance(label,dict) or not isinstance(reminder,dict):return False
+    tokens=_MODAL_MANA_TOKEN_RE.findall(str(mana_cost or ''))
+    if not tokens:return False
+    try:
+        left=float(label.get('x') or 0);original_width=float(label.get('width') or 0)
+        reminder_x=float(reminder.get('x') or 0);reminder_width=float(reminder.get('width') or 0)
+        size=float(reminder.get('size') or label.get('size') or .03)
+        card_w=float(data.get('width') or native.CARD_WIDTH);card_h=float(data.get('height') or native.CARD_HEIGHT)
+    except (TypeError,ValueError,ZeroDivisionError):return False
+    if min(original_width,size,card_w,card_h)<=0:return False
+    symbol_width=size*card_h/card_w
+    reserved=len(tokens)*symbol_width
+    gap=max(.006,symbol_width*.18)
+    strip_right=max(left+original_width,reminder_x+reminder_width)
+    label['width']=max(.03,min(original_width,strip_right-left-reserved-gap))
+    return True
+
 def apply_approved_modal_dfc_semantics(data,sem,sf,index):
     """Retarget the Esika-seeded modal frame to an approved pair's real faces.
 
@@ -1612,10 +1634,12 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
             frame['src']=pt.group(1)+current_code+pt.group(3)
 
     text=data.setdefault('text',{})
+    mana_cost=str(other.get('mana_cost') or '')
     if isinstance(text.get('flipsideType'),dict):
         text['flipsideType']['text']=_modal_dfc_flipside_label(pair,index,other)
     if isinstance(text.get('flipSideReminder'),dict):
-        text['flipSideReminder']['text']=str(other.get('mana_cost') or '')
+        text['flipSideReminder']['text']=mana_cost
+    _fit_modal_flipside_label_width(data,mana_cost)
     return True
 
 
@@ -1759,6 +1783,8 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
+        data['infoArtist']=str(artist)
+        data['infoNote']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
