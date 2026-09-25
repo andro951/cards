@@ -46,7 +46,7 @@ def test_vendor_exact_manifest():
 
 @pytest.mark.parametrize('origin',[SCRYFALL_ART,'GitHub folder','computer folder','uploaded override'])
 def test_source_driven_credit_kept_through_compiler_and_export(env,origin):
-    w,c,a,s=env;s={**s,'modificationCredit':'Modified by ChatGPT'}
+    w,c,a,s=env;s={**s}
     r=w.compiler.compile_face(c,c,0,{'artistOverride':'Face Override'},s,a['id'],art_origin=origin)
     expected=('Actual Artist' if origin==SCRYFALL_ART else 'Face Override')+' · Modified by ChatGPT'
     assert r['artist']==r['credit']['display']==r['data']['infoArtist']==expected
@@ -57,21 +57,21 @@ def test_source_driven_credit_kept_through_compiler_and_export(env,origin):
 
 def test_scryfall_fallback_ignores_custom_deck_artist(env):
     w,c,a,s=env
-    s={**s,'source':{'mode':'local','localFiles':{},'fallback':True},'modificationCredit':'Modified by ChatGPT'}
+    s={**s,'source':{'mode':'local','localFiles':{},'fallback':True}}
     d=w.create({'source':[{'id':c['id']}],'settings':s});d=w.prepare(d['id'])
     f=d['cards'][0]['faces'][0]
     assert f['compiled']['artOrigin']==SCRYFALL_ART
-    assert f['compiled']['data']['infoArtist']=='Actual Artist · Modified by ChatGPT'
+    assert f['compiled']['data']['infoArtist']=='Actual Artist (Scryfall) • Art © respective rights holders'
     assert c['artist']=='Actual Artist'
 
 
 def test_local_custom_and_scryfall_art_in_same_deck_have_separate_credits(env):
     w,c,a,s=env
-    s={**s,'source':{'mode':'local','localFiles':{'a_card':a['id']},'fallback':True},'modificationCredit':'Modified by ChatGPT'}
+    s={**s,'source':{'mode':'local','localFiles':{'a_card':a['id']},'fallback':True}}
     d=w.create({'source':[{'id':c['id']}],'settings':s});d=w.prepare(d['id'])
-    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Custom Artist · Modified by ChatGPT'
+    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Custom Artist'
     d=w.save(d['id'],{'revision':d['revision'],'settings':{'source':{'mode':'local','localFiles':{},'fallback':True}}});d=w.prepare(d['id'])
-    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Actual Artist · Modified by ChatGPT'
+    assert d['cards'][0]['faces'][0]['compiled']['data']['infoArtist']=='Actual Artist (Scryfall) • Art © respective rights holders'
 
 
 def test_old_generation_cannot_be_ordered_as_current(env):
@@ -85,21 +85,20 @@ def test_old_generation_cannot_be_ordered_as_current(env):
     assert w.store.render_get(r['renderKey']) # No historical PNG deleted.
 
 
-def test_modification_changes_hash_but_back_quantity_do_not(env):
+def test_back_quantity_do_not_change_front_hash(env):
     w,c,a,s=env
     r=w.compiler.compile_face(c,c,0,{},s,a['id'],art_origin=SCRYFALL_ART)
     r2=w.compiler.compile_face(c,c,0,{},dict(s,backAsset='other',quantity=12),a['id'],art_origin=SCRYFALL_ART)
-    r3=w.compiler.compile_face(c,c,0,{'modificationCreditOverride':'Modified by ChatGPT'},s,a['id'],art_origin=SCRYFALL_ART)
-    assert r['renderKey']==r2['renderKey']!=r3['renderKey']
+    assert r['renderKey']==r2['renderKey']
 
 
 def test_modified_custom_template_keeps_geometry(env):
     w,c,a,s=env
     data=copy.deepcopy(native.LAYOUTS['creature']['data']);data['setSymbolX']=.68;data['text']['type']['width']=.5
     t=w.save_template({'data':data,'groups':['standard'],'name':'My untouched layout'})
-    r=w.compiler.compile_face(c,c,0,{'templateOverride':t['id'],'modificationCreditOverride':'Modified by ChatGPT'},s,a['id'],art_origin=SCRYFALL_ART)
+    r=w.compiler.compile_face(c,c,0,{'templateOverride':t['id']},s,a['id'],art_origin=SCRYFALL_ART)
     assert r['data']['setSymbolX']==.68 and r['data']['text']['type']['width']==.5
-    assert r['data']['infoArtist']=='Actual Artist · Modified by ChatGPT'
+    assert r['data']['infoArtist']=='Actual Artist (Scryfall) • Art © respective rights holders'
 
 
 def test_scryfall_inline_flavor_italics_render_without_literal_asterisks(env):
@@ -345,26 +344,24 @@ def test_dfc_artist_is_per_face_and_does_not_follow_other_side(env):
     front={'name':'Esika, God of the Tree','type_line':'Legendary Creature — God','colors':['G'],'power':'1','toughness':'4','mana_cost':'{1}{G}{G}','oracle_text':'Vigilance','artist':'Front Illustrator'}
     back={'name':'The Prismatic Bridge','type_line':'Legendary Enchantment','colors':['W','U','B','R','G'],'mana_cost':'{W}{U}{B}{R}{G}','oracle_text':'Upkeep test.','artist':'Back Illustrator'}
     record={'name':front['name']+' // '+back['name'],'layout':'modal_dfc','rarity':'mythic','card_faces':[front,back],'artist':'Top-Level Credit'}
-    s=dict(s,modificationCredit='Modified by ChatGPT')
+    s=dict(s)
     for i,face in enumerate(record['card_faces']):
         r=w.compiler.compile_face(record,face,i,{},s,a['id'],art_origin=SCRYFALL_ART)
-        assert r['data']['infoArtist']==face['artist']+' · Modified by ChatGPT'
+        assert r['data']['infoArtist']==face['artist']+' (Scryfall) • Art © respective rights holders'
 
 
-def test_credit_fields_survive_style_defaults_duplicate_and_backup(env):
+def test_artist_credit_mode_survives_style_defaults_duplicate_and_backup(env):
     from foundry.backup import Backups
-    w,c,a,s=env;s=dict(s,modificationCredit='Modified by ChatGPT')
+    w,c,a,s=env
     w.set_global_settings({'defaults':s})
     d=w.create({'source':[{'id':c['id']}], 'name':'Credits saved'})
     f=d['cards'][0]['faces'][0]
-    d=w.mutate_card(d['id'],d['cards'][0]['id'],{'revision':d['revision'],'faceId':f['id'],'artistCreditMode':'printing','modificationCreditOverride':'Extended by Isaac'})
+    d=w.mutate_card(d['id'],d['cards'][0]['id'],{'revision':d['revision'],'faceId':f['id'],'artistCreditMode':'printing'})
     duplicated=w.duplicate(d['id'])
-    assert duplicated['settings']['modificationCredit']=='Modified by ChatGPT'
-    assert duplicated['cards'][0]['faces'][0]['modificationCreditOverride']=='Extended by Isaac'
+    assert duplicated['cards'][0]['faces'][0]['artistCreditMode']=='printing'
     backups=Backups(w);out=backups.export();result=backups.restore(w.store.home/'backups'/out['filename'])
     restored=w.deck(result['ids'][0])
     assert restored['cards'][0]['faces'][0]['artistCreditMode']=='printing'
-    assert restored['cards'][0]['faces'][0]['modificationCreditOverride']=='Extended by Isaac'
 
 
 def test_missing_generation_metadata_forces_once_then_reuses(env):
