@@ -4,7 +4,7 @@ from PIL import Image
 from foundry.domain import ValidationError
 from foundry.workspace import Workspace
 from foundry.storage import Store
-from foundry.compiler import Compiler
+from foundry.compiler import Compiler,FULL_ART_NONLAND_BOUNDS
 from foundry.images import ingest_image,rarity_variants
 
 def setup(tmp_path):
@@ -116,13 +116,22 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
         'power':'3','toughness':'3',
         'artist':'Slawomir Maniak',
     }
-    result=Compiler(w.store).compile_face(
+    plain={**card,'keywords':['Kicker'],'oracle_text':card['oracle_text'].split('\n',1)[1]}
+    comp=Compiler(w.store)
+    normal=comp.compile_face(
+        plain,plain,0,{},settings,a['id'],art_origin='Scryfall selected printing'
+    )
+    result=comp.compile_face(
         card,card,0,{},settings,a['id'],art_origin='Scryfall selected printing'
     )
     data=result['data']
     assert result['group']=='standard'
     assert data['version']=='m15Devoid'
-    assert data['artBounds']=={'x':0.04,'y':0.1039,'width':0.92,'height':0.9229}
+
+    # Devoid changes only the frame. Scryfall art keeps the already-correct
+    # native colorless-creature art-window geometry and placement.
+    for key in ('artBounds','artX','artY','artZoom','artRotate'):
+        assert data[key]==normal['data'][key]
 
     structural=[
         frame for frame in data['frames']
@@ -136,8 +145,25 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
     assert len(pt)==1
     assert pt[0]['src']=='/img/frames/m15/devoid/m15DevoidPT.png'
     assert result['crop']['warning'] is False
-    assert result['crop']['intentionalDevoidArtWindow'] is True
+    assert result['crop']['intentionalArtWindow'] is True
     assert data['bottomInfo']['bottomLeft']['text']=='BulkProxyForge • Unofficial Proxy'
+
+
+def test_sowing_mycospawn_custom_art_uses_shared_full_art_area(tmp_path):
+    w,a,settings=setup(tmp_path)
+    card={
+        'name':'Sowing Mycospawn','layout':'normal','rarity':'rare',
+        'type_line':'Creature — Eldrazi Fungus','mana_cost':'{3}{G}',
+        'colors':[],'keywords':['Devoid'],
+        'oracle_text':'Devoid (This card has no color.)',
+        'power':'3','toughness':'3','artist':'Slawomir Maniak',
+    }
+    result=Compiler(w.store).compile_face(
+        card,card,0,{},settings,a['id'],art_origin='uploaded override'
+    )
+    assert result['data']['version']=='m15Devoid'
+    assert result['data']['artBounds']==FULL_ART_NONLAND_BOUNDS
+    assert not result['crop'].get('intentionalArtWindow')
 
 
 def test_colorless_eldrazi_without_devoid_keeps_normal_frame_family(tmp_path):
