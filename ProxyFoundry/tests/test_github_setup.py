@@ -279,7 +279,7 @@ def test_http_bundle_import_stages_then_revision_save_preserves_cards_and_option
     app.ws.net.transport = remote.transport
     result = job_done(server, '/api/setup/github-import', {'url': remote.url})
     assert app.ws.deck(d['id']) == original  # Import itself is nonmutating.
-    result['settings'].update(artist='Preserve artist', templateRules={'standard': 'normal'}, modificationCredit='Modified by ChatGPT')
+    result['settings'].update(artist='Preserve artist', templateRules={'standard': 'normal'})
     status, saved, _ = request(server, '/api/decks/' + d['id'] + '/save', {'revision': d['revision'], 'settings': result['settings']})
     assert status == 200
     assert saved['cards'] == original['cards']
