@@ -32,7 +32,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1548,14 +1548,22 @@ _MODAL_FRAME_RE=re.compile(r'^(.*?/img/frames/modal/regular/(?:back/)?)([wubrgma
 _MODAL_CROWN_RE=re.compile(r'^(.*?/img/frames/modal/crowns/regular/)([wubrgmalc])(\.png)$')
 _M15_PT_RE=re.compile(r'^(.*?/img/frames/m15/regular/m15PT)([WUBRGMACV])(\.png)$')
 
-def _modal_dfc_flipside_label(face):
-    """Match the compact opposite-face type label used by the native modal frame."""
-    info=ingest.split_type_line(str(face.get('type_line') or ''))
-    types=list(info.get('types') or [])
-    subtypes=list(info.get('subtypes') or [])
-    if 'Creature' in types and subtypes:
-        return ' '.join(subtypes)
-    return ' '.join(types)
+def _modal_dfc_flipside_label(pair,index,face):
+    """Return the approved printed helper-strip label for known modal DFC pairs."""
+    if pair==('Esika, God of the Tree','The Prismatic Bridge'):
+        # Front previews the back's card type; back previews Esika's God subtype.
+        if index==0:
+            info=ingest.split_type_line(str(face.get('type_line') or ''))
+            return ' '.join(info.get('types') or [])
+        return 'God'
+    if pair==('Bruce Banner','The Incredible Hulk'):
+        # The printed Marvel treatment uses P/T + Creature on both sides.
+        power=str(face.get('power') or '').strip()
+        toughness=str(face.get('toughness') or '').strip()
+        if power and toughness:
+            return power+'/'+toughness+' Creature'
+        return 'Creature'
+    raise ValidationError('This modal DFC needs a compatible custom template.')
 
 def apply_approved_modal_dfc_semantics(data,sem,sf,index):
     """Retarget the Esika-seeded modal frame to an approved pair's real faces.
@@ -1605,7 +1613,7 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
 
     text=data.setdefault('text',{})
     if isinstance(text.get('flipsideType'),dict):
-        text['flipsideType']['text']=_modal_dfc_flipside_label(other)
+        text['flipsideType']['text']=_modal_dfc_flipside_label(pair,index,other)
     if isinstance(text.get('flipSideReminder'),dict):
         text['flipSideReminder']['text']=str(other.get('mana_cost') or '')
     return True

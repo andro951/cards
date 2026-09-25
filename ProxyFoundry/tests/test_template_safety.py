@@ -43,8 +43,10 @@ def test_esika_approved_modal_pair_unchanged(tmp_path):
     sf={'name':front['name']+' // '+back['name'],'layout':'modal_dfc','rarity':'mythic','card_faces':[front,back]}
     x=Compiler(w.store).compile_face(sf,front,0,{},settings,a['id'])
     assert x['data']['text']['flipSideReminder']['text']=='{W}{U}{B}{R}{G}'
+    assert x['data']['text']['flipsideType']['text']=='Enchantment'
     y=Compiler(w.store).compile_face(sf,back,1,{},settings,a['id'])
     assert y['data']['text']['flipSideReminder']['text']=='{1}{G}{G}'
+    assert y['data']['text']['flipsideType']['text']=='God'
 
 
 def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path):
@@ -73,9 +75,9 @@ def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path
 
     front_data=front_result['data'];back_data=back_result['data']
     assert front_data['text']['flipSideReminder']['text']=='{2}{R}{R}{G}{G}'
-    assert front_data['text']['flipsideType']['text']=='Gamma Berserker Hero'
+    assert front_data['text']['flipsideType']['text']=='8/8 Creature'
     assert back_data['text']['flipSideReminder']['text']=='{U}'
-    assert back_data['text']['flipsideType']['text']=='Human Scientist Hero'
+    assert back_data['text']['flipsideType']['text']=='1/1 Creature'
     assert front_data['text']['pt']['text']=='1/1'
     assert back_data['text']['pt']['text']=='8/8'
 
