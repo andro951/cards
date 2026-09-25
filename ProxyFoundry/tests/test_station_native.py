@@ -39,7 +39,7 @@ def test_native_station_full_compact_two_tier_and_sequence(tmp_path):
     net.transport=remote;app=App(s,net);server=LocalServer(app);threading.Thread(target=server.serve_forever,daemon=True).start()
     a=ingest_image(s,art((300,420)));sym=ingest_image(s,art((100,100)))
     d=app.ws.create({'name':'Station release tests','source':[{'id':i} for i in records],
-      'settings':{'symbols':rarity_variants(s,sym['id']),'backAsset':a['id'],'modificationCredit':'Modified by ChatGPT'}})
+      'settings':{'symbols':rarity_variants(s,sym['id']),'backAsset':a['id']}})
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1500,'height':1040});errors=[]
