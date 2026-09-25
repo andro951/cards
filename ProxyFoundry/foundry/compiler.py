@@ -18,6 +18,10 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
+APPROVED_MODAL_DFC_PAIRS={
+    ('Esika, God of the Tree','The Prismatic Bridge'),
+    ('Bruce Banner','The Incredible Hulk'),
+}
 NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','emblem','case','special-land','dungeon','conspiracy'}
 
 # Built-in cache versions are intentionally scoped. For Automatic, bump only the
@@ -1540,6 +1544,73 @@ def build_enchantment_land_data(sem,artist,autofit,flags):
     return base,data,recipe
 
 
+_MODAL_FRAME_RE=re.compile(r'^(.*?/img/frames/modal/regular/(?:back/)?)([wubrgmalc])(\.png)$')
+_MODAL_CROWN_RE=re.compile(r'^(.*?/img/frames/modal/crowns/regular/)([wubrgmalc])(\.png)$')
+_M15_PT_RE=re.compile(r'^(.*?/img/frames/m15/regular/m15PT)([WUBRGMACV])(\.png)$')
+
+def _modal_dfc_flipside_label(face):
+    """Match the compact opposite-face type label used by the native modal frame."""
+    info=ingest.split_type_line(str(face.get('type_line') or ''))
+    types=list(info.get('types') or [])
+    subtypes=list(info.get('subtypes') or [])
+    if 'Creature' in types and subtypes:
+        return ' '.join(subtypes)
+    return ' '.join(types)
+
+def apply_approved_modal_dfc_semantics(data,sem,sf,index):
+    """Retarget the Esika-seeded modal frame to an approved pair's real faces.
+
+    The preserved vendor template contains Esika-specific G/M frame sources and
+    hardcoded opposite-face reminder text. Keep its geometry, masks and typography,
+    but derive visible colors and reminder content from the actual modal DFC.
+    """
+    faces=sf.get('card_faces') or []
+    if len(faces)!=2 or index not in {0,1}:
+        raise ValidationError('Approved modal DFC support requires exactly two faces.')
+    pair=tuple(str(face.get('name') or '') for face in faces)
+    if pair not in APPROVED_MODAL_DFC_PAIRS:
+        raise ValidationError('This modal DFC needs a compatible custom template.')
+
+    other_index=1-index
+    other=faces[other_index]
+    other_sem=semantic(sf,other,other_index)
+    current_code=frame_treatment_code(sem)
+    other_code=frame_treatment_code(other_sem)
+    if current_code not in {'W','U','B','R','G','M'} or other_code not in {'W','U','B','R','G','M'}:
+        raise ValidationError('This approved modal DFC resolves to an unsupported frame color.')
+
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src') or '')
+        masks={
+            str(mask.get('name') or '')
+            for mask in frame.get('masks',[])
+            if isinstance(mask,dict)
+        }
+
+        crown=_MODAL_CROWN_RE.fullmatch(src)
+        if crown:
+            frame['src']=crown.group(1)+current_code.lower()+crown.group(3)
+            continue
+
+        modal=_MODAL_FRAME_RE.fullmatch(src)
+        if modal:
+            code=other_code if 'Flipside' in masks else current_code
+            frame['src']=modal.group(1)+code.lower()+modal.group(3)
+            continue
+
+        pt=_M15_PT_RE.fullmatch(src)
+        if pt and 'Creature' in set(sem.get('types',[])):
+            frame['src']=pt.group(1)+current_code+pt.group(3)
+
+    text=data.setdefault('text',{})
+    if isinstance(text.get('flipsideType'),dict):
+        text['flipsideType']['text']=_modal_dfc_flipside_label(other)
+    if isinstance(text.get('flipSideReminder'),dict):
+        text['flipSideReminder']['text']=str(other.get('mana_cost') or '')
+    return True
+
+
 def custom_data(template,sem,other_faces=None):
     d=copy.deepcopy(template['data'])
     values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
@@ -1595,9 +1666,10 @@ class Compiler:
             if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
             if group in {'modal-front','modal-back'}:
-                pair=[x.get('name') for x in sf.get('card_faces',[])]
-                if pair!=['Esika, God of the Tree','The Prismatic Bridge']:
-                    raise ValidationError('This modal DFC needs a compatible custom template. The approved built-in pair is Esika / The Prismatic Bridge; its colors and reminder strip must not be reused for another card.')
+                pair=tuple(x.get('name') for x in sf.get('card_faces',[]))
+                if pair not in APPROVED_MODAL_DFC_PAIRS:
+                    approved='; '.join(' / '.join(x) for x in sorted(APPROVED_MODAL_DFC_PAIRS))
+                    raise ValidationError('This modal DFC needs a compatible custom template. Approved built-in pairs: '+approved+'.')
             if group in {'transform-front','transform-back'}:
                 d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
@@ -1631,6 +1703,8 @@ class Compiler:
                     if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
+                    if choice=='auto' and group in {'modal-front','modal-back'}:
+                        apply_approved_modal_dfc_semantics(data,sem,sf,index)
                     if choice=='auto' and group=='saga-creature':
                         enforce_saga_creature_rules_frame(data,sem)
                     if choice=='auto' and group in {'saga','saga-creature'}:

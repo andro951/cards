@@ -34,7 +34,7 @@ def test_unapproved_modal_dfc_fails_closed(tmp_path):
     front={'name':'Other DFC','type_line':'Creature — Wizard','colors':['G'],'power':'2','toughness':'3','mana_cost':'{2}{G}','oracle_text':'Vigilance'}
     back={'name':'Other Reverse','type_line':'Land','mana_cost':'','oracle_text':'{T}: Add {G}.'}
     sf={'name':'Other DFC // Other Reverse','layout':'modal_dfc','rarity':'rare','card_faces':[front,back]}
-    with pytest.raises(ValidationError,match='approved built-in pair'):Compiler(w.store).compile_face(sf,front,0,{},settings,a['id'])
+    with pytest.raises(ValidationError,match='Approved built-in pairs'):Compiler(w.store).compile_face(sf,front,0,{},settings,a['id'])
 
 def test_esika_approved_modal_pair_unchanged(tmp_path):
     w,a,settings=setup(tmp_path)
@@ -45,3 +45,54 @@ def test_esika_approved_modal_pair_unchanged(tmp_path):
     assert x['data']['text']['flipSideReminder']['text']=='{W}{U}{B}{R}{G}'
     y=Compiler(w.store).compile_face(sf,back,1,{},settings,a['id'])
     assert y['data']['text']['flipSideReminder']['text']=='{1}{G}{G}'
+
+
+def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path):
+    w,a,settings=setup(tmp_path)
+    front={
+        'name':'Bruce Banner',
+        'type_line':'Legendary Creature — Human Scientist Hero',
+        'colors':['U'],'power':'1','toughness':'1','mana_cost':'{U}',
+        'oracle_text':'{X}{X}, {T}: Draw X cards. Activate only as a sorcery.\n{2}{R}{R}{G}{G}: Transform Bruce Banner. Activate only as a sorcery.',
+    }
+    back={
+        'name':'The Incredible Hulk',
+        'type_line':'Legendary Creature — Gamma Berserker Hero',
+        'colors':['R','G'],'power':'8','toughness':'8','mana_cost':'{2}{R}{R}{G}{G}',
+        'oracle_text':"Reach, trample\nEnrage — Whenever The Incredible Hulk is dealt damage, put a +1/+1 counter on him. If he's attacking, untap him and there is an additional combat phase after this phase.",
+    }
+    sf={
+        'name':'Bruce Banner // The Incredible Hulk',
+        'layout':'modal_dfc','rarity':'mythic','card_faces':[front,back],
+    }
+
+    front_result=Compiler(w.store).compile_face(sf,front,0,{},settings,a['id'])
+    back_result=Compiler(w.store).compile_face(sf,back,1,{},settings,a['id'])
+    assert front_result['group']=='modal-front' and front_result['recipe']=='modal_dfc_front'
+    assert back_result['group']=='modal-back' and back_result['recipe']=='modal_dfc_back'
+
+    front_data=front_result['data'];back_data=back_result['data']
+    assert front_data['text']['flipSideReminder']['text']=='{2}{R}{R}{G}{G}'
+    assert front_data['text']['flipsideType']['text']=='Gamma Berserker Hero'
+    assert back_data['text']['flipSideReminder']['text']=='{U}'
+    assert back_data['text']['flipsideType']['text']=='Human Scientist Hero'
+    assert front_data['text']['pt']['text']=='1/1'
+    assert back_data['text']['pt']['text']=='8/8'
+
+    def layer(data,mask_name):
+        return next(
+            frame for frame in data['frames']
+            if any(mask.get('name')==mask_name for mask in frame.get('masks',[]) if isinstance(mask,dict))
+        )
+
+    # Bruce is blue; his opposite-face strip previews the R/G multicolor Hulk.
+    assert layer(front_data,'Frame')['src']=='/img/frames/modal/regular/u.png'
+    assert layer(front_data,'Flipside')['src']=='/img/frames/modal/regular/m.png'
+    assert any(frame.get('src')=='/img/frames/m15/regular/m15PTU.png' for frame in front_data['frames'])
+
+    # Hulk is R/G: structural body is multicolor, the reminder strip previews blue Bruce,
+    # and the universal two-color policy supplies the R/G gradient pinline/crown treatment.
+    assert layer(back_data,'Frame')['src']=='/img/frames/modal/regular/back/m.png'
+    assert layer(back_data,'Flipside')['src']=='/img/frames/modal/regular/back/u.png'
+    assert any(frame.get('src')=='/img/frames/m15/regular/m15PTM.png' for frame in back_data['frames'])
+    assert layer(back_data,'Pinline')['src'].startswith('data:image/svg+xml;utf8,')
