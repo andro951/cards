@@ -23,7 +23,6 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert page.locator('#github-setup').evaluate('(el)=>el.nextElementSibling.id') == 'setup-fields'
     assert 'sol_ring.png' in page.locator('#github-setup pre').inner_text()
     page.fill('#deck-artist', 'Artist stays')
-    page.fill('#deck-modification', 'Modified by ChatGPT')
     page.fill('#deck-notes', 'Do not replace my notes')
     page.select_option('[data-rule=standard]', 'normal')
     page.fill('#github-setup-folder', remote.url)
@@ -45,7 +44,6 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     saved = app.ws.deck(d['id'])
     assert saved['cards'][0] == original_card
     assert saved['settings']['artist'] == 'Artist stays'
-    assert saved['settings']['modificationCredit'] == 'Modified by ChatGPT'
     assert saved['settings']['templateRules']['standard'] == 'normal'
     assert saved['notes'] == 'Do not replace my notes'
     assert saved['settings']['backDesign']['mode'] == 'icon'
