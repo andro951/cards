@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':3,'planeswalker':5,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -637,9 +637,15 @@ def land_frame_colors(types,face,card,oracle_text):
                 for color in 'WUBRG':add(color)
 
     # Fetch lands are the deliberate exception: their visual identity follows
-    # the basic land types they search for even though they do not make that mana.
-    for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
-        if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
+    # what their search ability can find even though they do not make that mana.
+    # "a basic land card" is unrestricted across all five basic land types, so
+    # cards such as Prismatic Vista use the gold/five-color land treatment.
+    if re.search(r'\bbasic\s+land\s+cards?\b',clean,re.I):
+        for color in 'WUBRG':add(color)
+    else:
+        # Typed fetches such as "Swamp or Forest card" keep only those colors.
+        for subtype,color in getattr(ingest,'BASIC_LAND_COLORS',{}).items():
+            if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
 
     # Once the printed rules/type line tells us anything useful, do not widen it
     # with produced_mana. This is what keeps The World Tree green and Nykthos
