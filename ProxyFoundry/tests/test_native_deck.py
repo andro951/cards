@@ -52,7 +52,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
         return transport(url)
     net.transport=remote;app=App(s,net);server=LocalServer(app);threading.Thread(target=server.serve_forever,daemon=True).start()
     a=ingest_image(s,art);symbols=rarity_variants(s,a['id']);back=ingest_image(s,art)
-    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id'],'artist':'Wrong Custom Default','modificationCredit':'Modified by ChatGPT'}})
+    d=app.ws.create({'name':'Native structural smoke deck','source':[{'id':i,'quantity':1} for i in byid],'settings':{'symbols':symbols,'backAsset':back['id'],'artist':'Wrong Custom Default'}})
     d=app.ws.prepare(d['id']);errors=[f['name']+': '+f['error'] for c in d['cards'] for f in c['faces'] if f.get('error')]
     assert not errors,errors
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
@@ -94,7 +94,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert saga_state['count']==3 and all(x>0 for x in saga_state['heights'][:3]) and saga_state['heights'][3]==0,saga_state
             for c in ready['cards']:
                 for f in c['faces']:
-                    comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' · Modified by ChatGPT'
+                    comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' (Scryfall) • Art © respective rights holders'
                     render=s.render_get(comp['renderKey']);im=Image.open(s.asset_path(render['asset_id']))
                     assert im.size==(comp['data']['width'],comp['data']['height'])
                     im.crop((0, int(im.height*.93), im.width, im.height)).save(evidence/('credit_'+slug(f['name'])+'.png'))
