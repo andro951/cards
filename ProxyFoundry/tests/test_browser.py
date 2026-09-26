@@ -1,6 +1,6 @@
 """Real HTTP/browser tests. Opt in with PF_BROWSER=1 (CI installs Chromium)."""
 from __future__ import annotations
-import io,json,os,threading,time,zipfile
+import io,json,os,re,threading,time,zipfile
 from pathlib import Path
 import pytest
 from playwright.sync_api import expect
