@@ -24,7 +24,7 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};
+  const s=structuredClone(deck.settings),groups={};s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
@@ -46,6 +46,15 @@ export function renderSetup(root,deck,onSaved){
       <label class="field"><span>Reuse style from another deck</span><select id="reuse-style"><option value="">Choose a deck…</option>${state.decks.filter(d=>d.id!==deck.id).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select><small>Copies its symbols, back, artist credit and template choices—not its card list or artwork folder.</small></label>
       <label class="field"><span>Flavor text source</span><select id="flavor-policy"><option value="auto" ${(!s.flavorPolicy||s.flavorPolicy==='auto')?'selected':''}>Automatic · preserve exact printings</option><option value="resolved" ${s.flavorPolicy==='resolved'?'selected':''}>Selected printing</option><option value="latest" ${s.flavorPolicy==='latest'?'selected':''}>Latest English paper printing</option></select><small>Only flavor text changes. The selected card printing and artwork remain unchanged.</small></label><label class="check-line"><input type="checkbox" id="refresh-data" ${s.refreshData?'checked':''}><span>Fetch new data when the cached copy is at least one week old<small>Normal mode reuses Scryfall data for one year. This does not refetch every time.</small></span></label>
     </section>
+    <section class="panel"><div class="panel-head"><div><span class="eyebrow">06 / OTHER OPTIONS</span><h2>Other Options</h2><p>Apply optional deck-wide transformations before the cards are rendered.</p></div></div>
+      <label class="check-line"><input type="checkbox" id="all-cards-tokens" ${s.allCardsTokens?'checked':''}><span>Make all cards tokens<small>Uses the existing M15 token-frame conversion for every card face in this deck.</small></span></label>
+      <div id="all-token-options" class="${s.allCardsTokens?'':'hidden'}">
+        <label class="field"><span>Power override <small>optional</small></span><input id="token-power" maxlength="20" value="${esc(s.tokenOptions.power||'')}" placeholder="Keep each card’s power"><small>Blank leaves each card’s original power unchanged.</small></label>
+        <label class="field"><span>Toughness override <small>optional</small></span><input id="token-toughness" maxlength="20" value="${esc(s.tokenOptions.toughness||'')}" placeholder="Keep each card’s toughness"><small>Blank leaves each card’s original toughness unchanged.</small></label>
+        <label class="field"><span>Subtype override <small>optional</small></span><input id="token-subtypes" maxlength="200" value="${esc(s.tokenOptions.subtypes||'')}" placeholder="e.g. Illusion"><small>When nonblank, replaces the complete subtype list on every token.</small></label>
+        <label class="check-line"><input type="checkbox" id="token-nonlegendary" ${s.tokenOptions.nonlegendary?'checked':''}><span>Make nonlegendary<small>Removes Legendary from the supertype when it is present.</small></span></label>
+      </div>
+    </section>
   </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div></fieldset>`;
   const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
@@ -65,6 +74,8 @@ export function renderSetup(root,deck,onSaved){
   $('#deck-artist',root).addEventListener('input',creditPreview);creditPreview();
   redrawSymbols();redrawBack();
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
+  const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
+  $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
     $$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x.dataset.mode===s.source.mode));
     $$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));
@@ -100,12 +111,19 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
 });
   $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;const button=$('#generate-symbols',root);button.disabled=true;try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();}finally{button.disabled=false;}});
   $('#open-templates',root).onclick=()=>nav('templates');
-  $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','templateRules'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
+  $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','templateRules','allCardsTokens','tokenOptions'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:key==='allCardsTokens'?false:key==='tokenOptions'?{power:'',toughness:'',subtypes:'',nonlegendary:false}:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#all-cards-tokens',root).checked=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};$('#token-power',root).value=s.tokenOptions.power;$('#token-toughness',root).value=s.tokenOptions.toughness;$('#token-subtypes',root).value=s.tokenOptions.subtypes;$('#token-nonlegendary',root).checked=Boolean(s.tokenOptions.nonlegendary);redrawTokenOptions();creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
   async function save(generate){
     if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
     if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
     s.source.githubFolder=$('#github-folder',root).value.trim();s.source.ref=$('#github-ref',root).value.trim();s.source.fallback=$('#art-fallback',root).checked;
     s.artist=$('#deck-artist',root).value;
+    s.allCardsTokens=$('#all-cards-tokens',root).checked;
+    s.tokenOptions={
+      power:$('#token-power',root).value.trim(),
+      toughness:$('#token-toughness',root).value.trim(),
+      subtypes:$('#token-subtypes',root).value.trim(),
+      nonlegendary:$('#token-nonlegendary',root).checked
+    };
     s.disableAutofit=$('#disable-autofit',root).checked;s.refreshData=$('#refresh-data',root).checked;s.flavorPolicy=$('#flavor-policy',root).value;
     $$('[data-rule]',root).forEach(el=>s.templateRules[el.dataset.rule]=el.value);
     if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
