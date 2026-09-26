@@ -8,7 +8,7 @@ from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
-from .compiler import Compiler,BUILTINS,SINGLE_SURFACE
+from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
@@ -308,11 +308,13 @@ class Workspace:
             spec['power_toughness']=(power or current_power)+'/'+(toughness or current_toughness)
         return spec
 
-    @staticmethod
-    def _apply_token_spec(comp,spec,art_id,recipe_label):
+    def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True):
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
+        fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
+        art=self.store.asset(art_id)
+        if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
 
@@ -342,10 +344,10 @@ class Workspace:
                     options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                 if c.get('tokenSpec'):
-                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token')
+                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False))
                 deck_token_spec=self._deck_token_spec(s,comp)
                 if deck_token_spec:
-                    comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token')
+                    comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False))
                 content_key=comp['renderKey']
                 comp['contentRenderKey']=content_key
                 comp['renderKey']=stable_hash({'content':content_key,'deck':d['id'],'face':f['id']})
