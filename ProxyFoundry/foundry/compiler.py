@@ -34,7 +34,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':5,'legendary':5,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':6,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':5,'legendary':5,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -579,9 +579,8 @@ def apply_source_aware_art_placement(data,art,sem,recipe,group,art_origin,autofi
     """Apply one provenance-based art policy across colorless/Devoid/Station/PW frames.
 
     Scryfall selected-printing artwork keeps the native printed art window and
-    its native placement. The only exception is the approved tall-textbox
-    Planeswalker recipe, whose shorter art well uses the same art-window bounds
-    but the established height-only fit.
+    its native CardConjurer placement for every supported family, including
+    tall-textbox Planeswalkers.
 
     Custom artwork uses the common 80px-inset full-art region and the same
     centered-overflow placement math across all supported frame families.
@@ -589,8 +588,6 @@ def apply_source_aware_art_placement(data,art,sem,recipe,group,art_origin,autofi
     if raw_card or not source_aware_art_family(sem,recipe,group):return None
 
     if art_origin=='Scryfall selected printing':
-        if autofit and group=='planeswalker' and recipe=='planeswalker_tall_4':
-            fit_art_window_height_only(data,art)
         return {'mode':'art-window','suppressCropWarning':bool(autofit)}
 
     data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
@@ -1055,40 +1052,6 @@ def cover_art_window(data,art):
     y=window_y+(window_h-scaled_h)/2
     data['artX']=x/card_w
     data['artY']=y/card_h
-    data['artZoom']=zoom
-    data['artRotate']=0
-    return True
-
-
-def fit_art_window_height_only(data,art):
-    """Fill the full art-window height and crop only horizontal overflow.
-
-    Tall planeswalker art wells are meant to preserve the complete vertical
-    composition. Scale from the art-window height, pin the scaled image exactly
-    to the window's top/bottom, and center any excess width. This deliberately
-    does not use generic cover-fit, which can crop vertically.
-    """
-    bounds=data.get('artBounds')
-    if not isinstance(bounds,dict):raise ValidationError('This frame is missing its art window.')
-    try:
-        card_w=float(data.get('width') or native.CARD_WIDTH)
-        card_h=float(data.get('height') or native.CARD_HEIGHT)
-        image_w=float(art.get('width') or 0)
-        image_h=float(art.get('height') or 0)
-        window_x=float(bounds.get('x') or 0)*card_w
-        window_y=float(bounds.get('y') or 0)*card_h
-        window_w=float(bounds.get('width') or 0)*card_w
-        window_h=float(bounds.get('height') or 0)*card_h
-    except (TypeError,ValueError):
-        raise ValidationError('This frame has invalid art-window geometry.')
-    if min(card_w,card_h,image_w,image_h,window_w,window_h)<=0:
-        raise ValidationError('Artwork or art-window dimensions are invalid.')
-
-    zoom=window_h/image_h
-    scaled_w=image_w*zoom
-    x=window_x+(window_w-scaled_w)/2
-    data['artX']=x/card_w
-    data['artY']=window_y/card_h
     data['artZoom']=zoom
     data['artRotate']=0
     return True
