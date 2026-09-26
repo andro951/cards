@@ -1220,12 +1220,18 @@ _TOKEN_REGULAR_MASKS=[
 ]
 _TOKEN_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
 _TOKEN_ART_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+_TOKEN_M15_ART_WINDOW_BOUNDS={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.5143}
 _TOKEN_SET_SYMBOL_BOUNDS={'x':0.9213,'y':0.6743,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
 _TOKEN_WATERMARK_BOUNDS={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472}
 
 def fit_token_art(data,art_local_path,autofit=True):
-    """Give copy-token conversions the real token art bounds and native autofit."""
-    data['artBounds']=copy.deepcopy(_TOKEN_ART_BOUNDS)
+    """Fit token artwork to the visible art window for the active token frame."""
+    bounds=(
+        _TOKEN_M15_ART_WINDOW_BOUNDS
+        if str(data.get('version') or '')=='tokenRegularM15'
+        else _TOKEN_ART_BOUNDS
+    )
+    data['artBounds']=copy.deepcopy(bounds)
     if autofit:native.auto_fit(data,art_local_path)
     return True
 
