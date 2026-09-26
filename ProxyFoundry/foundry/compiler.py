@@ -1223,6 +1223,12 @@ _TOKEN_ART_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 _TOKEN_SET_SYMBOL_BOUNDS={'x':0.9213,'y':0.6743,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
 _TOKEN_WATERMARK_BOUNDS={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472}
 
+def fit_token_art(data,art_local_path,autofit=True):
+    """Give copy-token conversions the real token art bounds and native autofit."""
+    data['artBounds']=copy.deepcopy(_TOKEN_ART_BOUNDS)
+    if autofit:native.auto_fit(data,art_local_path)
+    return True
+
 def _token_frame_code(sem):
     colors=[]
     for color in sem.get('colors',[]) or []:
@@ -1335,7 +1341,7 @@ def build_token_data(sem,artist,autofit,flags):
         'oneLine':True,'align':'center',
     })
 
-    if autofit:native.auto_fit(data,sem['art_local_path'])
+    fit_token_art(data,sem['art_local_path'],autofit)
     return base,data,'token_regular'
 
 
