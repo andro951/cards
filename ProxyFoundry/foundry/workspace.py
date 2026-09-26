@@ -310,7 +310,8 @@ class Workspace:
 
     @staticmethod
     def _apply_token_spec(comp,spec,art_id,recipe_label):
-        entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
+        try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
+        except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
