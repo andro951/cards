@@ -68,7 +68,8 @@ def test_planeswalker_landscape_art_window_crop_does_not_warn(workspace):
     ordinary_result=comp.compile_face(ordinary,ordinary,0,{},settings,wide_art['id'])
     assert ordinary_result['crop']['warning'] and not ordinary_result['crop'].get('intentionalArtWindow')
 
-def test_tall_planeswalker_auto_fit_crops_width_only(workspace):
+def test_tall_planeswalker_scryfall_keeps_native_art_window_fit(workspace):
+    from foundry.images import data_uri
     s,_,settings=workspace
     raw=io.BytesIO();Image.new('RGB',(1000,600),'#445566').save(raw,'PNG')
     art=ingest_image(s,raw.getvalue())
@@ -80,18 +81,23 @@ def test_tall_planeswalker_auto_fit_crops_width_only(workspace):
         'oracle_text':'+2: Draw a card.\n+1: Scry 2.\n-3: Return target permanent.\n-8: Draw seven cards.',
         'colors':['U'],'rarity':'mythic','loyalty':'5','artist':'Source Artist',
     }
+
+    sem=semantic(walker,walker,0)
+    sem.update(
+        art=data_uri(s,art['id']),
+        art_local_path=str(s.asset_path(art['id'])),
+        set_symbol_source=data_uri(s,settings['symbols']['mythic']),
+    )
+    expected=native.build_one(copy.deepcopy(sem),{'artist':'Source Artist'},True)['data']
+
     result=Compiler(s).compile_face(
         walker,walker,0,{},settings,art['id'],art_origin='Scryfall selected printing'
     )
     assert result['group']=='planeswalker'
     assert result['recipe']=='planeswalker_tall_4'
-    data=result['data'];bounds=data['artBounds']
-    window_h=bounds['height']*data['height']
-    window_y=bounds['y']*data['height']
-    assert art['height']*data['artZoom']==pytest.approx(window_h)
-    assert data['artY']*data['height']==pytest.approx(window_y)
-    assert result['crop']['cropY']==pytest.approx(0)
-    assert result['crop']['cropX']>0
+    data=result['data']
+    for key in ('artBounds','artX','artY','artZoom','artRotate'):
+        assert data[key]==expected[key]
     assert result['crop']['warning'] is False
     assert result['crop']['intentionalArtWindow'] is True
 
