@@ -312,3 +312,28 @@ def test_browser_default_icon_full_back_and_reload(browser_app):
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     assert not errors,errors
+
+
+def test_browser_other_options_all_cards_tokens(browser_app):
+    app,server,page,errors=browser_app
+    d=app.ws.new_deck('All token options')
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup')
+    page.locator('#all-cards-tokens').wait_for()
+    expect(page.get_by_text('06 / OTHER OPTIONS',exact=True)).to_be_visible()
+    expect(page.locator('#all-token-options')).to_have_class(re.compile(r'\bhidden\b'))
+
+    page.check('#all-cards-tokens')
+    expect(page.locator('#all-token-options')).not_to_have_class(re.compile(r'\bhidden\b'))
+    page.fill('#token-power','7')
+    page.fill('#token-toughness','8')
+    page.fill('#token-subtypes','Illusion')
+    page.check('#token-nonlegendary')
+    page.click('#save-setup')
+    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+
+    saved=app.ws.deck(d['id'])['settings']
+    assert saved['allCardsTokens'] is True
+    assert saved['tokenOptions']=={
+        'power':'7','toughness':'8','subtypes':'Illusion','nonlegendary':True,
+    }
+    assert not errors,errors
