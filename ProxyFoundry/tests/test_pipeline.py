@@ -604,3 +604,29 @@ def test_deck_wide_token_setting_is_front_affecting(workspace):
     ws=Workspace(s)
     assert 'allCardsTokens' in __import__('foundry.workspace',fromlist=['FRONT_SETTINGS']).FRONT_SETTINGS
     assert 'tokenOptions' in __import__('foundry.workspace',fromlist=['FRONT_SETTINGS']).FRONT_SETTINGS
+
+
+def test_copy_token_conversion_refits_art_to_token_bounds(workspace):
+    from foundry.workspace import Workspace
+    from foundry.compiler import fit_token_art
+    s,_,settings=workspace
+    raw=io.BytesIO();Image.new('RGB',(1000,600),'#336699').save(raw,'PNG')
+    art=ingest_image(s,raw.getvalue())
+    ws=Workspace(s)
+    card=sf('Creature — Human Rogue',['U'])
+    card.update(name='Nephalia Smuggler',power='1',toughness='1')
+    comp=Compiler(s).compile_face(card,card,0,{},settings,art['id'])
+    token=ws._apply_token_spec(
+        comp,
+        {'replace_creature_subtypes':'Illusion','power_toughness':'0/1','output_key':'Nephalia Smuggler','token_key_suffix':''},
+        art['id'],
+        'Deck-wide token',
+    )
+    data=token['data']
+    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+    assert data['artZoom']!=pytest.approx(1.413)
+    window_w=data['artBounds']['width']*data['width']
+    window_h=data['artBounds']['height']*data['height']
+    assert art['width']*data['artZoom']>=window_w-1e-6
+    assert art['height']*data['artZoom']>=window_h-1e-6
+    assert token['crop']==crop_metrics(art['width'],art['height'],data)
