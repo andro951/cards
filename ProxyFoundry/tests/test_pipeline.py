@@ -550,3 +550,57 @@ def test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline(w
     crowns=[f for f in data['frames'] if 'Legend Crown' in f.get('name','') and 'Outline' not in f.get('name','') and 'Border' not in f.get('name','') and 'Cutout' not in f.get('name','')]
     assert len(crowns)==2
     assert crowns[0]['masks'][0]['name']=='Right Blend'
+
+
+def test_deck_wide_token_options_apply_independent_overrides(workspace):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace
+    ws=Workspace(s)
+    configured=ws.validate_settings({
+        **settings,
+        'allCardsTokens':True,
+        'tokenOptions':{
+            'power':'7',
+            'toughness':'',
+            'subtypes':'Illusion',
+            'nonlegendary':True,
+        },
+    })
+    card=sf('Legendary Creature — Human Wizard',['U'])
+    card.update(power='2',toughness='3',mana_cost='{2}{U}')
+    comp=Compiler(s).compile_face(card,card,0,{},configured,a)
+    spec=ws._deck_token_spec(configured,comp)
+    assert spec['power_toughness']=='7/3'
+    token=ws._apply_token_spec(comp,spec,a,'Deck-wide token')
+    assert token['group']=='token'
+    assert token['recipe']=='Deck-wide token'
+    assert token['data']['version']=='tokenRegularM15'
+    assert token['data']['text']['pt']['text']=='7/3'
+    assert token['data']['text']['type']['text']=='Creature - Illusion'
+    assert 'Legendary' not in token['data']['text']['type']['text']
+
+
+def test_deck_wide_token_power_and_toughness_are_independent(workspace):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace
+    ws=Workspace(s)
+    card=sf('Creature — Beast',['G'])
+    card.update(power='4',toughness='5')
+    comp=Compiler(s).compile_face(card,card,0,{},settings,a)
+
+    power_only=ws.validate_settings({**settings,'allCardsTokens':True,'tokenOptions':{'power':'9'}})
+    assert ws._deck_token_spec(power_only,comp)['power_toughness']=='9/5'
+
+    toughness_only=ws.validate_settings({**settings,'allCardsTokens':True,'tokenOptions':{'toughness':'8'}})
+    assert ws._deck_token_spec(toughness_only,comp)['power_toughness']=='4/8'
+
+    no_pt_override=ws.validate_settings({**settings,'allCardsTokens':True,'tokenOptions':{}})
+    assert 'power_toughness' not in ws._deck_token_spec(no_pt_override,comp)
+
+
+def test_deck_wide_token_setting_is_front_affecting(workspace):
+    from foundry.workspace import Workspace
+    s,_,_=workspace
+    ws=Workspace(s)
+    assert 'allCardsTokens' in __import__('foundry.workspace',fromlist=['FRONT_SETTINGS']).FRONT_SETTINGS
+    assert 'tokenOptions' in __import__('foundry.workspace',fromlist=['FRONT_SETTINGS']).FRONT_SETTINGS
