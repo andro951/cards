@@ -14,8 +14,8 @@ from .credits import credit_text,printing_artist
 from .backs import Backs
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy'}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self._default_symbols=None
@@ -68,6 +68,27 @@ class Workspace:
             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
+        s['allCardsTokens']=bool(s.get('allCardsTokens',False))
+        raw_token_options=s.get('tokenOptions') or {}
+        if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')
+        def token_text(key,label,maximum):
+            value=raw_token_options.get(key,'')
+            if value is None:value=''
+            if not isinstance(value,str):raise ValidationError(label+' must be text.')
+            value=value.strip()
+            if len(value)>maximum or any(ord(ch)<32 or ord(ch)==127 for ch in value):
+                raise ValidationError(label+' is invalid.')
+            return value
+        token_power=token_text('power','Token power override',20)
+        token_toughness=token_text('toughness','Token toughness override',20)
+        if '/' in token_power or '/' in token_toughness:
+            raise ValidationError('Use the separate Power and Toughness boxes; do not include a slash.')
+        s['tokenOptions']={
+            'power':token_power,
+            'toughness':token_toughness,
+            'subtypes':token_text('subtypes','Token subtype override',200),
+            'nonlegendary':bool(raw_token_options.get('nonlegendary',False)),
+        }
         s['artist']=credit_text(s.get('artist'))
         for group,choice in s.get('templateRules',{}).items():
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
@@ -268,6 +289,32 @@ class Workspace:
                 half=source.crop(box).transpose(Image.Transpose.ROTATE_90);out=io.BytesIO();half.save(out,'PNG')
         except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc
         return ingest_image(self.store,out.getvalue())['id']
+    @staticmethod
+    def _deck_token_spec(settings,comp):
+        """Translate deck-wide token options to the preserved Card Tools token spec."""
+        if not settings.get('allCardsTokens'):return None
+        options=settings.get('tokenOptions') or {}
+        spec={'output_key':str(comp.get('name') or ''),'token_key_suffix':''}
+        if options.get('nonlegendary'):spec['nonlegendary']=True
+        if options.get('subtypes'):spec['replace_creature_subtypes']=options['subtypes']
+        power=str(options.get('power') or '')
+        toughness=str(options.get('toughness') or '')
+        if power or toughness:
+            current=str((((comp.get('data') or {}).get('text') or {}).get('pt') or {}).get('text') or '')
+            if '/' in current:
+                current_power,current_toughness=current.split('/',1)
+            else:
+                current_power,current_toughness=current,''
+            spec['power_toughness']=(power or current_power)+'/'+(toughness or current_toughness)
+        return spec
+
+    @staticmethod
+    def _apply_token_spec(comp,spec,art_id,recipe_label):
+        entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
+        comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
+        comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
+        return comp
+
     def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total):
         if cancel():raise ValidationError('Preparation cancelled.')
         sf=c['scryfall']
@@ -294,8 +341,10 @@ class Workspace:
                     options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                 if c.get('tokenSpec'):
-                    entry=tokens.build_token({'key':comp['name'],'data':comp['data']},c['tokenSpec']);comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']='Card Tools copy token'
-                    comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=self.store.render_get(comp['renderKey'])
+                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token')
+                deck_token_spec=self._deck_token_spec(s,comp)
+                if deck_token_spec:
+                    comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token')
                 content_key=comp['renderKey']
                 comp['contentRenderKey']=content_key
                 comp['renderKey']=stable_hash({'content':content_key,'deck':d['id'],'face':f['id']})
