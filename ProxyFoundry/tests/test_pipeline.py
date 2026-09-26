@@ -608,7 +608,7 @@ def test_deck_wide_token_setting_is_front_affecting(workspace):
 
 def test_copy_token_conversion_refits_art_to_token_bounds(workspace):
     from foundry.workspace import Workspace
-    from foundry.compiler import fit_token_art
+    from foundry.domain import crop_metrics
     s,_,settings=workspace
     raw=io.BytesIO();Image.new('RGB',(1000,600),'#336699').save(raw,'PNG')
     art=ingest_image(s,raw.getvalue())
