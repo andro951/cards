@@ -516,6 +516,21 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 
 
+
+
+def test_native_token_regular_keeps_its_own_broad_art_bounds(workspace):
+    s,a,settings=workspace
+    beast={
+        'id':'90000000-0000-4000-8000-000000000009',
+        'name':'Beast','layout':'token','type_line':'Token Creature — Beast',
+        'mana_cost':'','oracle_text':'','colors':['G'],'rarity':'common',
+        'power':'3','toughness':'3','set':'ttst','collector_number':'9',
+        'artist':'Token Artist',
+    }
+    data=Compiler(s).compile_face(beast,beast,0,{},settings,a)['data']
+    assert data['version']=='tokenRegular'
+    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+
 def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
     s,a,settings=workspace
     treasure={
@@ -623,7 +638,8 @@ def test_copy_token_conversion_refits_art_to_token_bounds(workspace):
         'Deck-wide token',
     )
     data=token['data']
-    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+    assert data['version']=='tokenRegularM15'
+    assert data['artBounds']=={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.5143}
     assert data['artZoom']!=pytest.approx(1.413)
     window_w=data['artBounds']['width']*data['width']
     window_h=data['artBounds']['height']*data['height']
