@@ -663,7 +663,7 @@ def land_frame_colors(types,face,card,oracle_text):
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     types=ingest.split_type_line(get('type_line'))
-    d={**types,'name':get('name'),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    d={**types,'name':get('name'),'nickname':str(get('flavor_name','') or '').strip(),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
     d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
@@ -1691,6 +1691,115 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
     return True
 
 
+
+_NICKNAME_TITLE_BOUNDS={'x':0.0494,'y':0.0405,'width':0.9014,'height':0.1053}
+_NICKNAME_CROWN_BOUNDS={'x':0.024,'y':0.0172,'width':0.952,'height':0.1286}
+_NICKNAME_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
+
+def _nickname_code(sem):
+    code=frame_treatment_code(sem)
+    if code in 'WUBRGMAL':return code
+    return 'C'
+
+def _nickname_title_src(code):
+    if code=='C':return '/img/frames/m15/nickname/addons/m15NicknameTitleC.png'
+    return f'/img/frames/m15/nickname/m15NicknameTitle{code}.png'
+
+def _nickname_crown_src(code):
+    if code=='C':return '/img/frames/m15/nickname/smooth/c.png'
+    return f'/img/frames/m15/nickname/m15NicknameCrown{code}.png'
+
+def _nickname_frame_src(code):
+    if code not in 'WUBRGMAL':return None
+    return f'/img/frames/m15/nickname/m15NicknameFrame{code}.png'
+
+def _nickname_pt_src(code):
+    return f'/img/frames/m15/nickname/m15NicknamePT{code if code in "WUBRGMAC" else "C"}.png'
+
+def _nickname_text(data,sem,group):
+    text=data.setdefault('text',{})
+    true_name=str(sem.get('name') or '')
+    nickname=str(sem.get('nickname') or '').strip()
+    if not nickname:return False
+
+    if group=='battle':
+        # Battle is compiled directly onto a landscape canvas. Keep its native
+        # Battle frame, and use the same landscape title axis for both names.
+        old=text.get('title') if isinstance(text.get('title'),dict) else {}
+        text['nickname']={
+            'name':'Nickname','text':nickname,
+            'x':old.get('x',387/2100),'y':old.get('y',81/1500),
+            'width':old.get('width',1547/2100),'height':old.get('height',114/1500),
+            'oneLine':True,'font':'belerenb','size':old.get('size',(0.0381*2100)/1500),
+        }
+        text['title']={
+            'name':'Title','text':true_name,
+            'x':387/2100,'y':155/1500,'width':1547/2100,'height':50/1500,
+            'oneLine':True,'font':'mplantini','size':(0.0229*2100)/1500,
+            'color':'white','align':'center',
+        }
+        return True
+
+    # Standard portrait nickname typography. Special card families keep all of
+    # their own type/rules/chapter/loyalty/helper-strip geometry.
+    nickname_x=.0854;nickname_w=.8292
+    if group in {'transform-front','modal-front'}:
+        nickname_x=.1614;nickname_w=.7534
+    elif group=='planeswalker':
+        nickname_x=.0867;nickname_w=.8267
+    nickname_y=.0372 if group=='planeswalker' else .0522
+    title_y=.1015 if group=='planeswalker' else .1129
+    text['nickname']={
+        'name':'Nickname','text':nickname,'x':nickname_x,'y':nickname_y,
+        'width':nickname_w,'height':.0548 if group=='planeswalker' else .0543,
+        'oneLine':True,'font':'belerenb','size':.0381,'color':'white',
+        'shadowX':.0014,'shadowY':.001,
+    }
+    text['title']={
+        'name':'Title','text':true_name,'x':.14,'y':title_y,'width':.72,'height':.0243,
+        'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
+        'shadowX':.0014,'shadowY':.001,'align':'center',
+    }
+    return True
+
+def apply_nickname_treatment(data,sem,group):
+    """Apply Godzilla-style alternate-name framing without discarding special layouts."""
+    nickname=str(sem.get('nickname') or '').strip()
+    if not nickname:return False
+    if not _nickname_text(data,sem,group):return False
+
+    # Battle has no rotatable nickname frame asset in CardConjurer. Its native
+    # Battle frame stays intact; only the two-name text treatment is applied.
+    if group=='battle':return True
+
+    code=_nickname_code(sem)
+    legendary=bool(sem.get('legendary'))
+    frames=data.setdefault('frames',[])
+
+    if group in ORDINARY_GROUPS:
+        # Ordinary cards use the complete Godzilla treatment. No masking:
+        # full Frame + matching P/T (when present) + Title/Crown.
+        frame_src=_nickname_frame_src(code)
+        if frame_src:
+            frames.append({'name':'Nickname Frame','src':frame_src,'masks':[]})
+        pt=((data.get('text') or {}).get('pt') or {}).get('text')
+        if str(pt or '').strip():
+            frames.append({'name':'Nickname Power/Toughness','src':_nickname_pt_src(code),
+                           'masks':[],'bounds':copy.deepcopy(_NICKNAME_PT_BOUNDS)})
+    # Special layouts deliberately keep their Saga/Class/Prepare/Transform/
+    # Modal/Planeswalker/Token/etc structural frame and only receive the top
+    # nickname treatment.
+
+    if legendary:
+        frames.append({'name':'Nickname Crown','src':_nickname_crown_src(code),
+                       'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
+                       if code!='C' else {'x':0,'y':0,'width':1,'height':1}})
+    else:
+        frames.append({'name':'Nickname Title','src':_nickname_title_src(code),
+                       'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS)})
+    return True
+
+
 def custom_data(template,sem,other_faces=None):
     d=copy.deepcopy(template['data'])
     values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
@@ -1722,7 +1831,7 @@ class Compiler:
         return 'custom:'+choice,fingerprint,1
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
-        for k in ('flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+        for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
         sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
         for nested in ('flip_face','prepared_spell'):
@@ -1827,6 +1936,7 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
+        apply_nickname_treatment(data,sem,group)
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE
         bottom_info=data.get('bottomInfo') or {}
