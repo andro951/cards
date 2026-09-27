@@ -646,3 +646,78 @@ def test_copy_token_conversion_refits_art_to_token_bounds(workspace):
     assert art['width']*data['artZoom']>=window_w-1e-6
     assert art['height']*data['artZoom']>=window_h-1e-6
     assert token['crop']==crop_metrics(art['width'],art['height'],data)
+
+
+def test_semantic_uses_scryfall_flavor_name_as_nickname():
+    card=sf('Creature — Human',['W'])
+    card['flavor_name']='Dean Winchester'
+    sem=semantic(card,card)
+    assert sem['nickname']=='Dean Winchester'
+    assert sem['name']==card['name']
+
+
+def test_nickname_ordinary_uses_full_godzilla_frame_without_masks(workspace):
+    s,a,settings=workspace
+    card=sf('Creature — Human',['R'])
+    card.update(name='Underlying Card',flavor_name='Reskinned Hero',power='3',toughness='2')
+    result=Compiler(s).compile_face(card,card,0,{},settings,a)
+    data=result['data']
+    assert data['text']['nickname']['text']=='Reskinned Hero'
+    assert data['text']['title']['text']=='Underlying Card'
+    nickname=[f for f in data['frames'] if str(f.get('name','')).startswith('Nickname')]
+    assert any(f['name']=='Nickname Frame' and f['src'].endswith('m15NicknameFrameR.png') for f in nickname)
+    assert any(f['name']=='Nickname Title' and f['src'].endswith('m15NicknameTitleR.png') for f in nickname)
+    assert all(f.get('masks')==[] for f in nickname)
+
+
+def test_nickname_legendary_uses_crown_not_title(workspace):
+    s,a,settings=workspace
+    card=sf('Legendary Creature — Human',['U'])
+    card.update(name='Underlying Legend',flavor_name='Reskinned Legend',power='2',toughness='2')
+    data=Compiler(s).compile_face(card,card,0,{},settings,a)['data']
+    assert any(f.get('name')=='Nickname Crown' and f.get('src','').endswith('m15NicknameCrownU.png') for f in data['frames'])
+    assert not any(f.get('name')=='Nickname Title' for f in data['frames'])
+
+
+def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay():
+    special_groups={
+        'modal-front','modal-back','transform-front','transform-back','saga','saga-creature',
+        'planeswalker','prepare','class','flip','meld','token','prototype','station'
+    }
+    for group in special_groups:
+        data={
+            'width':2010,'height':2814,'version':group,
+            'frames':[{'name':'Original Structural Frame','src':'/keep/me.png','masks':[]}],
+            'text':{'title':{'name':'Title','text':'Underlying','x':.0854,'y':.0522,'width':.8292,'height':.0543,'size':.0381}}
+        }
+        sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':False}
+        assert apply_nickname_treatment(data,sem,group)
+        assert data['frames'][0]['src']=='/keep/me.png'
+        assert not any(f.get('name')=='Nickname Frame' for f in data['frames'])
+        assert any(f.get('name')=='Nickname Title' for f in data['frames'])
+        assert data['text']['nickname']['text']=='Reskin'
+        assert data['text']['title']['text']=='Underlying'
+
+
+def test_nickname_battle_preserves_battle_frame_and_uses_landscape_text_only():
+    data={
+        'width':2814,'height':2010,'version':'battle',
+        'frames':[{'name':'Battle Frame','src':'/img/frames/m15/battle/r.png','masks':[]}],
+        'text':{'title':{'name':'Title','text':'Underlying','x':.18,'y':.05,'width':.74,'height':.07,'size':.05}}
+    }
+    sem={'name':'Underlying','nickname':'Reskin','colors':['R'],'types':['Battle'],'subtypes':['Siege'],'legendary':False}
+    assert apply_nickname_treatment(data,sem,'battle')
+    assert len(data['frames'])==1
+    assert data['frames'][0]['src']=='/img/frames/m15/battle/r.png'
+    assert data['text']['nickname']['text']=='Reskin'
+    assert data['text']['title']['text']=='Underlying'
+
+
+def test_nickname_semantic_override_beats_scryfall_flavor_name(workspace):
+    s,a,settings=workspace
+    card=sf('Creature — Human',['W'])
+    card['flavor_name']='Printed Reskin'
+    result=Compiler(s).compile_face(
+        card,card,0,{'semanticOverrides':{'nickname':'Custom Reskin'}},settings,a
+    )
+    assert result['data']['text']['nickname']['text']=='Custom Reskin'
