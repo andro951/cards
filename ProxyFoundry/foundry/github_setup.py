@@ -6,6 +6,7 @@ only after success. Failed or cancelled imports cannot half-update a deck.
 """
 from __future__ import annotations
 
+import json
 from pathlib import PurePosixPath
 from urllib.parse import quote
 
@@ -14,6 +15,73 @@ from .images import ingest_image, rarity_variants
 
 RASTER_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
 IMAGE_EXTENSIONS = RASTER_EXTENSIONS | {'.svg'}
+DATA_JSON_MAX_BYTES = 2 * 1024 * 1024
+DATA_JSON_MAX_CARDS = 10000
+
+
+def parse_card_data_json(raw):
+    """Validate the optional v1 nickname/flavor metadata file."""
+    if not isinstance(raw, (bytes, bytearray)) or len(raw) > DATA_JSON_MAX_BYTES:
+        raise ValidationError('data.json must be a UTF-8 JSON file no larger than 2 MB.')
+    try:
+        value = json.loads(bytes(raw).decode('utf-8-sig'))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
+    if not isinstance(value, dict):
+        raise ValidationError('data.json must contain a JSON object.')
+    unknown_root = set(value) - {'version', 'cards'}
+    if unknown_root:
+        raise ValidationError('data.json has unsupported top-level field(s): ' + ', '.join(sorted(unknown_root)) + '.')
+    if value.get('version') != 1:
+        raise ValidationError('data.json version must be 1.')
+    cards = value.get('cards')
+    if not isinstance(cards, list):
+        raise ValidationError('data.json cards must be an array.')
+    if len(cards) > DATA_JSON_MAX_CARDS:
+        raise ValidationError('data.json may contain at most 10,000 card entries.')
+
+    def clean(item, key, label, maximum, *, multiline=False, required=False):
+        raw_value = item.get(key, '')
+        if raw_value is None:
+            raw_value = ''
+        if not isinstance(raw_value, str):
+            raise ValidationError(label + ' must be text.')
+        text = raw_value.strip()
+        if required and not text:
+            raise ValidationError(label + ' is required.')
+        if len(text) > maximum:
+            raise ValidationError(label + ' is too long.')
+        allowed = {'\n', '\t'} if multiline else set()
+        if any((ord(ch) < 32 and ch not in allowed) or ord(ch) == 127 for ch in text):
+            raise ValidationError(label + ' contains unsupported control characters.')
+        return text
+
+    result = []
+    seen = set()
+    allowed_keys = {'name', 'nickname', 'flavor_text'}
+    for index, item in enumerate(cards, 1):
+        if not isinstance(item, dict):
+            raise ValidationError(f'data.json card entry {index} must be an object.')
+        unknown = set(item) - allowed_keys
+        if unknown:
+            raise ValidationError(
+                f'data.json card entry {index} has unsupported field(s): ' + ', '.join(sorted(unknown)) + '.'
+            )
+        name = clean(item, 'name', f'data.json card entry {index} name', 300, required=True)
+        nickname = clean(item, 'nickname', f'data.json nickname for {name}', 300)
+        flavor = clean(item, 'flavor_text', f'data.json flavor_text for {name}', 20000, multiline=True)
+        if not nickname and not flavor:
+            continue
+        if name in seen:
+            raise ValidationError('data.json contains more than one nonempty entry for ' + name + '.')
+        seen.add(name)
+        entry = {'name': name}
+        if nickname:
+            entry['nickname'] = nickname
+        if flavor:
+            entry['flavor_text'] = flavor
+        result.append(entry)
+    return result
 
 
 def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
@@ -79,6 +147,17 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             raise ValidationError(name + ' must be a regular GitHub folder, not a file or symlink.')
         return row['path']
 
+    def named_file(rows, name):
+        matches = rows.get(name.lower(), [])
+        if len(matches) > 1:
+            raise ValidationError('Duplicate ' + name + ' files. Keep only one.')
+        if not matches:
+            return None
+        row = matches[0]
+        if row.get('type') != 'file' or row.get('submodule_git_url') or row.get('target'):
+            raise ValidationError(name + ' must be a regular GitHub file, not a symlink or submodule.')
+        return row
+
     def named_image(rows, stem):
         matches = [r for items in rows.values() for r in items
                    if PurePosixPath(r['name'].lower()).stem == stem
@@ -95,6 +174,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         return row
 
     rows = folder_rows(loc['folder'])
+    data_row = named_file(rows, 'data.json')
     art_folder = named_folder(rows, 'art')
     # Do not fetch every art image here; the normal generation path stays live.
     symbol_folder = named_folder(rows, 'set_symbols')
@@ -124,7 +204,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     icon = None if back else named_image(rows, 'back_icon')
     if back and any(PurePosixPath(name).stem == 'back_icon' and PurePosixPath(name).suffix in IMAGE_EXTENSIONS for name in rows):
         warnings.append('Both back.png and back_icon.png are present. The complete back.png takes priority; the icon was not used.')
-    total = (4 if symbol_rows else 1) + bool(back or icon)
+    total = (4 if symbol_rows else 1) + bool(back or icon) + bool(data_row)
     done = 0
 
     def download(row, *, trim_transparent_padding=False):
@@ -142,6 +222,25 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         progress(done, total, 'Imported ' + row['name'])
         return image
 
+    card_data = []
+    if data_row:
+        check_cancel()
+        progress(done, total, 'Importing data.json')
+        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + ref + '/' + quote(data_row['path'], safe='/')
+        raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
+        check_cancel()
+        card_data = parse_card_data_json(raw)
+        deck_id = payload.get('deckId')
+        if deck_id and card_data:
+            deck = workspace.deck(str(deck_id))
+            face_names = {str(face.get('name') or '') for card in deck.get('cards', []) for face in card.get('faces', [])}
+            missing = [entry['name'] for entry in card_data if entry['name'] not in face_names]
+            if missing:
+                preview = ', '.join(missing[:8]) + ('…' if len(missing) > 8 else '')
+                raise ValidationError('data.json card name(s) were not found in this deck: ' + preview + '. Names must exactly match a card face.')
+        done += 1
+        progress(done, total, 'Imported data.json')
+
     symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()} if symbol_rows else rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
     if back:
         back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
@@ -156,9 +255,13 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
               'githubFolder': base + '/' + quote(art_folder, safe='/') if art_folder else '',
               'ref': loc['ref'] if art_folder else '', 'fallback': True, 'localFiles': {}}
     progress(done, total, 'GitHub setup ready to review')
+    summary = {'art': 'github' if art_folder else 'scryfall',
+               'symbols': 'folder' if symbol_folder else 'generated',
+               'back': back_settings['backDesign']['mode']}
+    if data_row:
+        summary['data'] = len(card_data)
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
                          'githubSetupFolder': root_url},
-            'summary': {'art': 'github' if art_folder else 'scryfall',
-                        'symbols': 'folder' if symbol_folder else 'generated',
-                        'back': back_settings['backDesign']['mode']},
+            'cardData': card_data,
+            'summary': summary,
             'warnings': warnings}
