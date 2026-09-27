@@ -13,6 +13,7 @@ folder/
 │   ├── rare.png
 │   └── mythic.png
 ├── set_symbol.png           # Alternative: color-shift into four (not recommended)
+├── data.json                # Optional: nickname / flavor metadata
 ├── back.png                 # Optional: complete custom back
 └── back_icon.png            # Optional: icon centered on the blank forge back
 ```
@@ -23,3 +24,29 @@ If `art/` is absent, the importer selects **Scryfall printing**. Scryfall fallba
 
 A complete `back.png` takes priority over `back_icon.png` when both exist. An icon uses the existing proportional, transparent-safe forge-back composition. With neither, the default Bulk Proxy Forge back is selected. Individual back overrides, real double-faced reverses and meld backs keep their existing priority. Import failures and cancellation leave the current setup draft and saved deck unchanged; the eventual save still uses the existing revision/conflict checks.
 
+
+
+## Optional `data.json`
+
+The 1-click importer checks the project root for `data.json`. If the file is absent, import works exactly as before. If present, it must use schema version 1:
+
+```json
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Isshin, Two Heavens as One",
+      "nickname": "Dean Winchester",
+      "flavor_text": "Saving people, hunting things. The family business."
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "flavor_text": "Custom flavor text."
+    }
+  ]
+}
+```
+
+`name` is required and must exactly match a card face in the current deck. `nickname` and `flavor_text` are optional. Missing values and empty strings are ignored, so an empty field never clears an existing override. A nonempty nickname activates the automatic nickname/Godzilla treatment. A nonempty flavor string overrides that face's resolved Scryfall flavor text.
+
+Like the art/symbol/back setup, `data.json` is **staged** by 1-click import. The saved deck is not changed until **Save changes** or **Save & generate images** is clicked. Invalid JSON, duplicate nonempty entries, unsupported fields, or nonempty names that are not in the deck fail the import without partially applying the bundle.
