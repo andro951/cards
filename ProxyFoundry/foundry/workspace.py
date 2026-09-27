@@ -158,12 +158,70 @@ class Workspace:
                 if not cover and c['scryfall'].get('card_faces'):cover=(c['scryfall']['card_faces'][0].get('image_uris') or {}).get('art_crop','')
             out.append({**{k:v for k,v in d.items() if k!='cards'},'cover':cover})
         return out
+    @staticmethod
+    def _validated_card_data(value):
+        if value is None:return []
+        if not isinstance(value,list):raise ValidationError('Imported card data must be an array.')
+        if len(value)>10000:raise ValidationError('Imported card data may contain at most 10,000 entries.')
+        result=[];seen=set()
+        for index,item in enumerate(value,1):
+            if not isinstance(item,dict):raise ValidationError(f'Imported card data entry {index} must be an object.')
+            unknown=set(item)-{'name','nickname','flavor_text'}
+            if unknown:raise ValidationError(f'Imported card data entry {index} has unsupported fields.')
+            name=item.get('name')
+            if not isinstance(name,str) or not name.strip() or len(name.strip())>300:
+                raise ValidationError(f'Imported card data entry {index} has an invalid name.')
+            name=name.strip()
+            values={}
+            for key,maximum in (('nickname',300),('flavor_text',20000)):
+                raw=item.get(key,'')
+                if raw is None:raw=''
+                if not isinstance(raw,str):raise ValidationError(f'Imported {key} for {name} must be text.')
+                text=raw.strip()
+                if len(text)>maximum:raise ValidationError(f'Imported {key} for {name} is too long.')
+                allowed={'\n','\t'} if key=='flavor_text' else set()
+                if any((ord(ch)<32 and ch not in allowed) or ord(ch)==127 for ch in text):
+                    raise ValidationError(f'Imported {key} for {name} contains unsupported control characters.')
+                if text:values[key]=text
+            if not values:continue
+            if name in seen:raise ValidationError('Imported card data contains more than one nonempty entry for '+name+'.')
+            seen.add(name);result.append({'name':name,**values})
+        return result
+
+    def _apply_card_data(self,d,value):
+        entries=self._validated_card_data(value)
+        if not entries:return False
+        targets={}
+        for card in d.get('cards',[]):
+            for face in card.get('faces',[]):
+                targets.setdefault(str(face.get('name') or ''),[]).append(face)
+        missing=[entry['name'] for entry in entries if entry['name'] not in targets]
+        if missing:
+            preview=', '.join(missing[:8])+('…' if len(missing)>8 else '')
+            raise ValidationError('Imported card data name(s) were not found in this deck: '+preview+'.')
+        dirty=False
+        for entry in entries:
+            for face in targets[entry['name']]:
+                current=face.get('semanticOverrides')
+                overrides=copy.deepcopy(current) if isinstance(current,dict) else {}
+                changed=False
+                for key in ('nickname','flavor_text'):
+                    if key in entry and overrides.get(key)!=entry[key]:
+                        overrides[key]=entry[key];changed=True
+                if changed:
+                    face['semanticOverrides']=overrides
+                    face.pop('compiled',None);face.pop('error',None)
+                    dirty=True
+        if dirty:d['status']='draft'
+        return dirty
+
     def save(self,ident,patch):
         d=self.deck(ident);expected=patch.get('revision')
         if expected is None:raise ValidationError('A revision is required to save a deck safely.')
         dirty=False
         if 'name' in patch:d['name']=str(patch['name']).strip()[:200] or 'Untitled deck'
         if 'notes' in patch:d['notes']=str(patch['notes'])[:20000]
+        if 'cardData' in patch:dirty=self._apply_card_data(d,patch.get('cardData')) or dirty
         if 'settings' in patch:
             incoming={**d['settings'],**patch['settings']}
             # Old callers sending a complete back by ID remain supported.
