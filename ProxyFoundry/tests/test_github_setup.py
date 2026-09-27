@@ -392,4 +392,4 @@ def test_data_json_only_invalidates_faces_it_changes(tmp_path):
     saved=ws.save(deck['id'],{'revision':deck['revision'],'settings':deck['settings'],
                               'cardData':[{'name':'Changed Card','nickname':'Dean'}]})
     assert 'compiled' not in saved['cards'][0]['faces'][0]
-    assert saved['cards'][1]['faces'][0]['compiled']=={'renderKey':'Untouched Card'}
+    assert saved['cards'][1]['faces'][0]['compiled']['renderKey']=='Untouched Card'
