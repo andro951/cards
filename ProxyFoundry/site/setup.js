@@ -24,7 +24,7 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
+  const s=structuredClone(deck.settings),groups={};let stagedCardData=[];s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
@@ -85,7 +85,9 @@ export function renderSetup(root,deck,onSaved){
   const githubImport=mountGithubSetupImport($('#github-setup',root),{
     isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#generate-symbols:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
-    onImport:patch=>{
+    deckId:deck.id,
+    onImport:(patch,cardData)=>{
+      stagedCardData=structuredClone(cardData||[]);
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;$('#github-ref',root).value=s.source.ref;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
@@ -128,7 +130,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     $$('[data-rule]',root).forEach(el=>s.templateRules[el.dataset.rule]=el.value);
     if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
-    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,name:$('#deck-name',root).value,notes:$('#deck-notes',root).value,settings:s});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
+    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,name:$('#deck-name',root).value,notes:$('#deck-notes',root).value,settings:s,cardData:stagedCardData});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
   }
   $('#save-setup',root).onclick=()=>attempt(()=>save(false));$('#save-generate',root).onclick=()=>attempt(()=>save(true));
 }
