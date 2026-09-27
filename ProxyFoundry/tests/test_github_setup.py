@@ -31,7 +31,7 @@ def padded_png(size, visible_box, color=(100,140,200,180)):
 class BundleRemote:
     """A bounded public GitHub-like transport; unexpected requests fail the test."""
     def __init__(self, *, art=True, folder='set_symbols', single=False, back=None,
-                 project='my deck', ref='main'):
+                 data=None, project='my deck', ref='main'):
         self.repo = 'owner/repo'
         self.project, self.ref = project, ref
         self.rows, self.images, self.calls = {}, {}, []
@@ -50,6 +50,9 @@ class BundleRemote:
             self.file(self.child('back.png'), png((15, 40, 80, 255), (300, 420)))
         if back in {'icon', 'both'}:
             self.file(self.child('back_icon.png'), png((80, 150, 40, 140), (800, 400)))
+        if data is not None:
+            raw = data if isinstance(data, bytes) else json.dumps(data).encode('utf-8')
+            self.file(self.child('data.json'), raw)
 
     def child(self, path):
         return self.project + '/' + path if self.project else path
@@ -306,3 +309,67 @@ def test_live_existing_eggs_fall_folder(tmp_path):
     cached = ws.store.cache_get(raw_url)
     raw = ws.store.asset_path(cached['asset_id']).read_bytes()
     assert hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() == '917b086452111d0501e6ac011a2a9d70505291a8'
+
+
+def _deck_with_card(ws, name='A Test Creature'):
+    deck=ws.new_deck('Data deck')
+    raw=ws.store.get('decks',deck['id'])
+    sf={'id':'11111111-1111-4111-8111-111111111111','name':name,'layout':'normal',
+        'type_line':'Creature — Human','colors':['W'],'mana_cost':'{1}{W}',
+        'oracle_text':'Vigilance','rarity':'rare','power':'2','toughness':'2',
+        'artist':'Artist','set':'tst','collector_number':'1'}
+    raw['cards']=[ws.sources.entry(sf)]
+    return ws.store.put('decks',raw,raw['revision'])
+
+
+def test_optional_data_json_is_staged_then_applied_on_save(tmp_path):
+    data={'version':1,'cards':[
+        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'},
+        {'name':'Ignored completely','nickname':'','flavor_text':''},
+    ]}
+    remote=BundleRemote(data=data)
+    ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    before=copy.deepcopy(ws.store.get('decks',deck['id']))
+    result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'}]
+    assert result['summary']['data']==1
+    assert ws.store.get('decks',deck['id'])==before
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
+    face=saved['cards'][0]['faces'][0]
+    assert face['semanticOverrides']['nickname']=='Dean Winchester'
+    assert face['semanticOverrides']['flavor_text']=='Saving people, hunting things.'
+    assert saved['status']=='draft'
+
+
+def test_data_json_merges_fields_without_clearing_existing_overrides(tmp_path):
+    remote=BundleRemote(data={'version':1,'cards':[{'name':'A Test Creature','nickname':'Dean','flavor_text':''}]})
+    ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    raw=ws.store.get('decks',deck['id']);face=raw['cards'][0]['faces'][0]
+    face['semanticOverrides']={'oracle_text':'Keep me','flavor_text':'Existing flavor'}
+    deck=ws.store.put('decks',raw,raw['revision'])
+    result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
+    overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
+    assert overrides=={'oracle_text':'Keep me','flavor_text':'Existing flavor','nickname':'Dean'}
+
+
+def test_data_json_nonempty_unknown_card_name_fails_atomically(tmp_path):
+    remote=BundleRemote(data={'version':1,'cards':[{'name':'Typo Card','nickname':'Dean'}]})
+    ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    before=copy.deepcopy(ws.store.get('decks',deck['id']))
+    with pytest.raises(ValidationError,match='not found in this deck'):
+        import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    assert ws.store.get('decks',deck['id'])==before
+
+
+@pytest.mark.parametrize('data,match',[
+    (b'{bad json','valid UTF-8 JSON'),
+    ({'version':2,'cards':[]},'version must be 1'),
+    ({'version':1,'cards':{}},'cards must be an array'),
+    ({'version':1,'cards':[{'name':'A Test Creature','nickname':7}]},'nickname.*must be text'),
+    ({'version':1,'cards':[{'name':'A Test Creature','nickname':'One'},{'name':'A Test Creature','flavor_text':'Two'}]},'more than one nonempty entry'),
+])
+def test_bad_data_json_fails_import(tmp_path,data,match):
+    remote=BundleRemote(data=data);ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    with pytest.raises(ValidationError,match=match):
+        import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
