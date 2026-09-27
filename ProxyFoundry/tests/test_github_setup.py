@@ -373,3 +373,23 @@ def test_bad_data_json_fails_import(tmp_path,data,match):
     remote=BundleRemote(data=data);ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
     with pytest.raises(ValidationError,match=match):
         import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+
+
+def test_data_json_only_invalidates_faces_it_changes(tmp_path):
+    remote=BundleRemote()
+    ws=workspace(tmp_path,remote);deck=ws.new_deck('Scoped data')
+    raw=ws.store.get('decks',deck['id'])
+    def card(name,ident):
+        sf={'id':ident,'name':name,'layout':'normal','type_line':'Creature — Human','colors':['W'],
+            'mana_cost':'{W}','oracle_text':'Vigilance','rarity':'rare','power':'2','toughness':'2',
+            'artist':'Artist','set':'tst','collector_number':'1'}
+        return ws.sources.entry(sf)
+    raw['cards']=[card('Changed Card','11111111-1111-4111-8111-111111111111'),
+                  card('Untouched Card','33333333-3333-4333-8333-333333333333')]
+    for c in raw['cards']:
+        c['faces'][0]['compiled']={'renderKey':c['name']}
+    deck=ws.store.put('decks',raw,raw['revision'])
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'settings':deck['settings'],
+                              'cardData':[{'name':'Changed Card','nickname':'Dean'}]})
+    assert 'compiled' not in saved['cards'][0]['faces'][0]
+    assert saved['cards'][1]['faces'][0]['compiled']=={'renderKey':'Untouched Card'}
