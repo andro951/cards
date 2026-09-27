@@ -16,7 +16,9 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     app, server, page, errors = browser_app
     d = app.ws.create({'name': 'Bundle import', 'source': sf()['id']})
     original_card = app.ws.deck(d['id'])['cards'][0]
-    remote = BundleRemote(back='icon')
+    remote = BundleRemote(back='icon', data={'version':1,'cards':[
+        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'The family business.'}
+    ]})
     app.ws.net.transport = remote.transport
     page.goto(server.origin + '/#deck/' + d['id'] + '/setup')
     page.locator('#github-setup-button').wait_for()
@@ -37,12 +39,16 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed', 'true')
     expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
     assert app.ws.deck(d['id'])['settings']['symbols'] == {}  # Staged until Save.
+    assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')  # data.json is staged too.
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
     expect(page.locator('#deck-notes')).to_have_value('Do not replace my notes')
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     saved = app.ws.deck(d['id'])
-    assert saved['cards'][0] == original_card
+    assert saved['cards'][0] != original_card
+    overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
+    assert overrides['nickname']=='Dean Winchester'
+    assert overrides['flavor_text']=='The family business.'
     assert saved['settings']['artist'] == 'Artist stays'
     assert saved['settings']['templateRules']['standard'] == 'normal'
     assert saved['notes'] == 'Do not replace my notes'
