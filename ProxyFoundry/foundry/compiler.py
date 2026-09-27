@@ -1698,7 +1698,7 @@ _NICKNAME_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
 
 def _nickname_code(sem):
     code=frame_treatment_code(sem)
-    if code in 'WUBRGMAL':return code
+    if code and code in 'WUBRGMAL':return code
     return 'C'
 
 def _nickname_title_src(code):
@@ -1743,7 +1743,7 @@ def _nickname_text(data,sem,group):
     # Standard portrait nickname typography. Special card families keep all of
     # their own type/rules/chapter/loyalty/helper-strip geometry.
     nickname_x=.0854;nickname_w=.8292
-    if group in {'transform-front','modal-front'}:
+    if group=='transform-front' or group in {'modal-front','modal-back'}:
         nickname_x=.1614;nickname_w=.7534
     elif group=='planeswalker':
         nickname_x=.0867;nickname_w=.8267
@@ -1762,6 +1762,33 @@ def _nickname_text(data,sem,group):
     }
     return True
 
+
+def _apply_planeswalker_nickname_frame(data):
+    changed=False
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame([WUBRGMA])\.png',src)
+        if not m:continue
+        frame['src']=f'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame{m.group(1)}.png'
+        changed=True
+    if changed:data['version']='planeswalkerNickname'
+    return changed
+
+def _apply_modal_nickname_frame(data):
+    changed=False
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src') or '')
+        m=re.fullmatch(r'/img/frames/modal/regular/(back/)?([wubrgma])\.png',src)
+        if not m:continue
+        side='b' if m.group(1) else 'f'
+        frame['src']=f'/img/frames/modal/nickname/{m.group(2)}{side}.png'
+        changed=True
+    if changed:data['version']='modalNickname'
+    return changed
+
+
 def apply_nickname_treatment(data,sem,group):
     """Apply Godzilla-style alternate-name framing without discarding special layouts."""
     nickname=str(sem.get('nickname') or '').strip()
@@ -1771,6 +1798,14 @@ def apply_nickname_treatment(data,sem,group):
     # Battle has no rotatable nickname frame asset in CardConjurer. Its native
     # Battle frame stays intact; only the two-name text treatment is applied.
     if group=='battle':return True
+
+    # These two structural families have real CardConjurer nickname packs.
+    # Retarget their existing masked structural layers so loyalty/helper-strip
+    # geometry remains native instead of layering an ordinary M15 title over it.
+    if group=='planeswalker' and _apply_planeswalker_nickname_frame(data):
+        return True
+    if group in {'modal-front','modal-back'} and _apply_modal_nickname_frame(data):
+        return True
 
     code=_nickname_code(sem)
     legendary=bool(sem.get('legendary'))
