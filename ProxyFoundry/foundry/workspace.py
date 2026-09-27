@@ -218,7 +218,7 @@ class Workspace:
     def save(self,ident,patch):
         d=self.deck(ident);expected=patch.get('revision')
         if expected is None:raise ValidationError('A revision is required to save a deck safely.')
-        dirty=False
+        dirty=False;front_settings_dirty=False
         if 'name' in patch:d['name']=str(patch['name']).strip()[:200] or 'Untitled deck'
         if 'notes' in patch:d['notes']=str(patch['notes'])[:20000]
         if 'cardData' in patch:dirty=self._apply_card_data(d,patch.get('cardData')) or dirty
@@ -227,12 +227,14 @@ class Workspace:
             # Old callers sending a complete back by ID remain supported.
             if 'backAsset' in patch['settings'] and 'backDesign' not in patch['settings']:incoming.pop('backDesign',None)
             new=self.validate_settings(incoming)
-            dirty=any(new.get(k)!=d['settings'].get(k) for k in FRONT_SETTINGS);d['settings']=new
+            front_settings_dirty=any(new.get(k)!=d['settings'].get(k) for k in FRONT_SETTINGS)
+            dirty=front_settings_dirty or dirty;d['settings']=new
         if dirty:
             d['status']='draft'
-            for card in d.get('cards',[]):
-                for face in card.get('faces',[]):
-                    face.pop('compiled',None);face.pop('error',None)
+            if front_settings_dirty:
+                for card in d.get('cards',[]):
+                    for face in card.get('faces',[]):
+                        face.pop('compiled',None);face.pop('error',None)
         d.pop('summary',None);return self.store.put('decks',d,expected)
     def mutate_card(self,deck_id,card_id,patch):
         d=self.deck(deck_id);c=next((c for c in d['cards'] if c['id']==card_id),None)
