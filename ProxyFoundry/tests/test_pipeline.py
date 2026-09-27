@@ -2,7 +2,7 @@ import copy,io,json,pytest
 from PIL import Image
 from foundry.storage import Store
 from foundry.images import ingest_image,rarity_variants,sanitize_svg
-from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,FULL_ART_NONLAND_BOUNDS
+from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,FULL_ART_NONLAND_BOUNDS,apply_nickname_treatment
 from foundry.legacy import compiler as native
 from foundry.domain import ValidationError
 from foundry.sources import Sources
@@ -681,8 +681,8 @@ def test_nickname_legendary_uses_crown_not_title(workspace):
 
 def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay():
     special_groups={
-        'modal-front','modal-back','transform-front','transform-back','saga','saga-creature',
-        'planeswalker','prepare','class','flip','meld','token','prototype','station'
+        'transform-front','transform-back','saga','saga-creature','prepare','class',
+        'flip','meld','token','prototype','station','adventure'
     }
     for group in special_groups:
         data={
@@ -721,3 +721,40 @@ def test_nickname_semantic_override_beats_scryfall_flavor_name(workspace):
         card,card,0,{'semanticOverrides':{'nickname':'Custom Reskin'}},settings,a
     )
     assert result['data']['text']['nickname']['text']=='Custom Reskin'
+
+
+def test_nickname_colorless_uses_colorless_addon_without_crashing():
+    data={'width':2010,'height':2814,'frames':[],'text':{'title':{'text':'Underlying'}}}
+    sem={'name':'Underlying','nickname':'Reskin','colors':[],'types':['Creature'],'subtypes':[],'legendary':False}
+    assert apply_nickname_treatment(data,sem,'standard')
+    assert any(f.get('src','').endswith('m15NicknameTitleC.png') for f in data['frames'])
+
+
+def test_planeswalker_nickname_uses_native_planeswalker_nickname_pack():
+    data={
+        'width':2010,'height':2814,'version':'planeswalker',
+        'frames':[{'name':'Blue PW','src':'/img/frames/planeswalker/regular/planeswalkerFrameU.png','masks':[{'name':'Title','src':'/mask.png'}]}],
+        'text':{'title':{'text':'Underlying'}}
+    }
+    sem={'name':'Underlying','nickname':'Reskin','colors':['U'],'types':['Planeswalker'],'subtypes':[],'legendary':True}
+    assert apply_nickname_treatment(data,sem,'planeswalker')
+    assert data['version']=='planeswalkerNickname'
+    assert data['frames'][0]['src']=='/img/frames/planeswalker/nickname/planeswalkerNicknameFrameU.png'
+    assert not any(f.get('name')=='Nickname Crown' for f in data['frames'])
+
+
+def test_modal_nickname_uses_native_modal_nickname_pack():
+    data={
+        'width':2010,'height':2814,'version':'modalFront',
+        'frames':[
+            {'name':'Front','src':'/img/frames/modal/regular/g.png','masks':[]},
+            {'name':'Back helper','src':'/img/frames/modal/regular/back/u.png','masks':[]},
+        ],
+        'text':{'title':{'text':'Underlying'}}
+    }
+    sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':True}
+    assert apply_nickname_treatment(data,sem,'modal-front')
+    assert data['version']=='modalNickname'
+    assert data['frames'][0]['src']=='/img/frames/modal/nickname/gf.png'
+    assert data['frames'][1]['src']=='/img/frames/modal/nickname/ub.png'
+    assert data['text']['nickname']['x']==pytest.approx(.1614)
