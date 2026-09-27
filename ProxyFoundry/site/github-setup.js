@@ -16,21 +16,23 @@ export function githubSetupSection(folder=''){
 │   ├── rare.png
 │   └── mythic.png
 ├── set_symbol.png
+├── data.json
 ├── back.png
 └── back_icon.png</code></pre>
       <div class="github-setup-notes">
         <p><b>Required: choose one symbol option.</b><br><code>set_symbols/</code> with all four rarity images is <strong>recommended</strong>. Alternatively, <code>set_symbol.png</code> is color-shifted into four variants (<strong>not recommended</strong>). The four-image folder wins when both are present.</p>
         <p><b>Artwork is optional.</b><br><code>art/</code> becomes the live GitHub artwork source. Without it, Scryfall printing is selected. “Use Scryfall artwork when a custom image is missing” is enabled on import; individual art overrides are kept.</p>
+        <p><b>Card data is optional.</b><br><code>data.json</code> can supply nicknames and flavor text by exact card-face name. Missing or empty values do nothing. The file is staged with the rest of the import and applied only when you save.</p>
         <p><b>Both back options are optional.</b><br><code>back.png</code> uses your complete back. <code>back_icon.png</code> centers your icon on the Bulk Proxy Forge back. A complete back takes priority over an icon. With neither file, the default forge back is used. Real reverse faces are kept.</p>
       </div>
     </div>
     <p class="subtitle-line">PNG examples shown; JPEG, WebP and GIF also work. Symbols and backs are copied on import; GitHub art is fetched when generating. Import again to update symbols or a back.</p>
-    <p class="subtitle-line">This replaces the artwork source, symbols and deck back in the setup below. Your card list, printing choices, credits and templates stay unchanged. Review, then Save changes or Save &amp; generate images.</p>
+    <p class="subtitle-line">This replaces the artwork source, symbols and deck back in the setup below. If <code>data.json</code> exists, its nonempty nickname/flavor entries are staged too. Your card list, printing choices, credits and templates stay unchanged. Review, then Save changes or Save &amp; generate images.</p>
     <div id="github-setup-status" class="notice hidden" role="status" aria-live="polite"></div><div id="github-setup-warnings"></div>
   </section>`;
 }
 
-export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onImport}){
+export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onImport,deckId=''}){
   const input=$('#github-setup-folder',host),button=$('#github-setup-button',host),status=$('#github-setup-status',host),warnings=$('#github-setup-warnings',host);
   let importing=false;
   function message(text,kind='info'){
@@ -47,13 +49,14 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
     button.disabled=true;input.disabled=true;button.textContent='Importing…';onBusy(true);
     warnings.replaceChildren();message('Reading GitHub project folder…');
     try{
-      const result=await job('/api/setup/github-import',{url},{label:'GitHub setup',onProgress:j=>{if(host.isConnected)message(j.message);}});
+      const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',onProgress:j=>{if(host.isConnected)message(j.message);}});
       // A navigation during the job must not apply the result to a different deck.
       if(!host.isConnected)return;
-      onImport(result.settings);applied=true;input.value=result.settings.githubSetupFolder;
+      onImport(result.settings,result.cardData||[]);applied=true;input.value=result.settings.githubSetupFolder;
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols=result.summary.symbols==='folder'?'four rarity symbols':'four color-shifted symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
-      message(`Imported ${art}, ${symbols}, and ${back}. Review below, then save your setup.`,'success');
+      const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?`, plus ${result.summary.data} nonempty data.json entr${result.summary.data===1?'y':'ies'}`:'';
+      message(`Imported ${art}, ${symbols}, and ${back}${data}. Review below, then save your setup.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}
       toast('GitHub setup imported. Review below, then save.');
     }catch(error){
