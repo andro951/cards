@@ -108,7 +108,7 @@ def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     expect(page.locator('#deck-artist')).to_have_value('Unsaved artist')
     expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
     assert page.locator('.symbol-upload img').count() == 4  # Bundled defaults remain visible after the failed import.
-    assert app.ws.deck(d['id'])['settings']['symbols'] == {}
+    assert app.ws.deck(d['id'])['settings']['symbols'] == app.ws.default_symbols()
     remote.file(missing, raw)
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
