@@ -177,34 +177,41 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     data_row = named_file(rows, 'data.json')
     art_folder = named_folder(rows, 'art')
     # Do not fetch every art image here; the normal generation path stays live.
-    symbol_folder = named_folder(rows, 'set_symbols')
-    if symbol_folder is None:
-        symbol_folder = named_folder(rows, 'set_symbol')
+    symbol_folder = None
     symbol_rows = {}
-    single = None
-    if symbol_folder is not None:
+    # A completely empty symbol folder is equivalent to no override at all.
+    # If both folder spellings exist, the canonical plural folder is checked first.
+    for candidate in (named_folder(rows, 'set_symbols'), named_folder(rows, 'set_symbol')):
+        if candidate is None:
+            continue
         progress(0, 0, 'Checking the four rarity symbols')
-        contents = folder_rows(symbol_folder)
-        unexpected = [r['name'] for items in contents.values() for r in items
-                      if PurePosixPath(r['name'].lower()).suffix in IMAGE_EXTENSIONS
-                      and PurePosixPath(r['name'].lower()).stem not in RARITIES]
+        contents = folder_rows(candidate)
+        image_rows = [r for items in contents.values() for r in items
+                      if PurePosixPath(r['name'].lower()).suffix in IMAGE_EXTENSIONS]
+        if not image_rows:
+            continue
+        unexpected = [r['name'] for r in image_rows
+                      if PurePosixPath(r['name'].lower()).stem not in RARITIES]
         if unexpected:
             raise ValidationError('The set-symbol folder must contain only common.*, uncommon.*, rare.*, and mythic.* image files. Unexpected: ' + ', '.join(unexpected))
-        symbol_rows = {r: named_image(contents, r) for r in RARITIES}
-        missing = [r + '.png' for r, row in symbol_rows.items() if row is None]
+        candidate_rows = {r: named_image(contents, r) for r in RARITIES}
+        missing = [r + '.png' for r, row in candidate_rows.items() if row is None]
         if missing:
-            raise ValidationError('The set-symbol folder is missing: ' + ', '.join(missing) + '. All four rarity symbols are required.')
-    else:
-        single = named_image(rows, 'set_symbol')
-        if single is None:
-            raise ValidationError('Provide set_symbols/ with common.png, uncommon.png, rare.png and mythic.png (recommended), or set_symbol.png for generated color variants.')
+            raise ValidationError('The set-symbol folder is missing: ' + ', '.join(missing) + '. Use all four rarity symbols, or leave the folder empty to use the bundled defaults.')
+        symbol_folder = candidate
+        symbol_rows = candidate_rows
+        break
+
+    single = None if symbol_rows else named_image(rows, 'set_symbol')
+    symbol_mode = 'folder' if symbol_rows else 'generated' if single else 'default'
+    if single:
         warnings.append('Generated four color-shifted symbols from set_symbol.png. This is not recommended; separate rarity images give better control. Review all four previews below.')
 
     back = named_image(rows, 'back')
     icon = None if back else named_image(rows, 'back_icon')
     if back and any(PurePosixPath(name).stem == 'back_icon' and PurePosixPath(name).suffix in IMAGE_EXTENSIONS for name in rows):
         warnings.append('Both back.png and back_icon.png are present. The complete back.png takes priority; the icon was not used.')
-    total = (4 if symbol_rows else 1) + bool(back or icon) + bool(data_row)
+    total = (4 if symbol_rows else 1 if single else 0) + bool(back or icon) + bool(data_row)
     done = 0
 
     def download(row, *, trim_transparent_padding=False):
@@ -241,7 +248,12 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         done += 1
         progress(done, total, 'Imported data.json')
 
-    symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()} if symbol_rows else rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
+    if symbol_rows:
+        symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()}
+    elif single:
+        symbols = rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
+    else:
+        symbols = workspace.default_symbols()
     if back:
         back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
     elif icon:
@@ -256,7 +268,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
               'ref': loc['ref'] if art_folder else '', 'fallback': True, 'localFiles': {}}
     progress(done, total, 'GitHub setup ready to review')
     summary = {'art': 'github' if art_folder else 'scryfall',
-               'symbols': 'folder' if symbol_folder else 'generated',
+               'symbols': symbol_mode,
                'back': back_settings['backDesign']['mode']}
     if data_row:
         summary['data'] = len(card_data)
