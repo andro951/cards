@@ -18,7 +18,7 @@ folder/
 └── back_icon.png            # Optional: icon centered on the blank forge back
 ```
 
-Only the symbols are required: provide the complete four-image folder **or** the single source image. `set_symbols/` wins over `set_symbol.png`; the older folder name `set_symbol/` is also accepted internally. A present but incomplete, duplicated or invalid symbol folder fails clearly rather than silently falling back to generated colors. Non-image notes files are ignored. PNG, JPEG, WebP and GIF work; for this importer, export SVGs as PNG or upload them individually using the existing controls.
+Set symbols are optional. A complete `set_symbols/` folder wins, and the older folder name `set_symbol/` is also accepted internally. A root-level `set_symbol.png` is the fallback custom option and is color-shifted into four rarity variants. If there is no custom symbol source, or the symbol folder contains no image files, the importer uses Bulk Proxy Forge’s bundled default common/uncommon/rare/mythic symbols. A partially populated, duplicated or invalid nonempty symbol folder still fails clearly rather than silently ignoring the mistake. Non-image notes files are ignored. PNG, JPEG, WebP and GIF work; for this importer, export SVGs as PNG or upload them individually using the existing controls.
 
 If `art/` is absent, the importer selects **Scryfall printing**. Scryfall fallback is enabled on import, including when an art folder is present. GitHub artwork stays live and is fetched during generation, not downloaded wholesale on import. Symbols and backs are copied on each import, bypassing the local HTTP cache; import again to update them.
 
