@@ -393,3 +393,31 @@ def test_data_json_only_invalidates_faces_it_changes(tmp_path):
                               'cardData':[{'name':'Changed Card','nickname':'Dean'}]})
     assert 'compiled' not in saved['cards'][0]['faces'][0]
     assert saved['cards'][1]['faces'][0]['compiled']['renderKey']=='Untouched Card'
+
+
+def test_missing_symbol_sources_use_bundled_defaults(tmp_path):
+    remote=BundleRemote(art=False,folder=None,single=False)
+    ws=workspace(tmp_path,remote)
+    result=import_github_setup(ws,{'url':remote.url})
+    assert result['summary']['symbols']=='default'
+    assert result['settings']['symbols']==ws.default_symbols()
+    assert not any('set_symbol.png' in url for url in remote.calls)
+
+
+@pytest.mark.parametrize('folder', ['set_symbols', 'set_symbol'])
+def test_empty_symbol_folder_uses_bundled_defaults(tmp_path,folder):
+    remote=BundleRemote(art=False,folder=None,single=False)
+    remote.directory(remote.child(folder))
+    ws=workspace(tmp_path,remote)
+    result=import_github_setup(ws,{'url':remote.url})
+    assert result['summary']['symbols']=='default'
+    assert result['settings']['symbols']==ws.default_symbols()
+
+
+def test_empty_symbol_folder_can_fall_through_to_single_symbol_override(tmp_path):
+    remote=BundleRemote(art=False,folder=None,single=True)
+    remote.directory(remote.child('set_symbols'))
+    ws=workspace(tmp_path,remote)
+    result=import_github_setup(ws,{'url':remote.url})
+    assert result['summary']['symbols']=='generated'
+    assert result['settings']['symbols']!=ws.default_symbols()
