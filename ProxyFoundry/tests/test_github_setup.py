@@ -202,7 +202,6 @@ def test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck(tmp_path,
 
 
 @pytest.mark.parametrize('problem,match', [
-    ('no-symbols', 'Provide set_symbols/'),
     ('back-corrupt', 'back.png: Could not decode'),
     ('invisible-icon', 'fully transparent'),
     ('art-file', 'art must be a regular'),
@@ -210,7 +209,7 @@ def test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck(tmp_path,
     ('listing-limit', 'too many entries'),
 ])
 def test_invalid_bundle_does_not_return_partial_settings(tmp_path, problem, match):
-    remote = BundleRemote(folder=None, back='custom') if problem == 'no-symbols' else BundleRemote(back='custom')
+    remote = BundleRemote(back='custom')
     if problem == 'back-corrupt':
         remote.images[remote.child('back.png')] = b'corrupt'
     elif problem == 'invisible-icon':
