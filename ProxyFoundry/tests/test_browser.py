@@ -319,7 +319,8 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     d=app.ws.new_deck('All token options')
     page.goto(server.origin+'/#deck/'+d['id']+'/setup')
     page.locator('#all-cards-tokens').wait_for()
-    expect(page.get_by_text('06 / OTHER OPTIONS',exact=True)).to_be_visible()
+    expect(page.get_by_text('06 / DATA.JSON',exact=True)).to_be_visible()
+    expect(page.get_by_text('07 / OTHER OPTIONS',exact=True)).to_be_visible()
     expect(page.locator('#all-token-options')).to_have_class(re.compile(r'\bhidden\b'))
 
     page.check('#all-cards-tokens')
@@ -336,4 +337,21 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     assert saved['tokenOptions']=={
         'power':'7','toughness':'8','subtypes':'Illusion','nonlegendary':True,
     }
+    assert not errors,errors
+
+
+def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
+    app,server,page,errors=browser_app
+    d=app.ws.create({'name':'Data JSON section','source':sf()['id']})
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup')
+    page.locator('#data-json-file').wait_for()
+    expect(page.get_by_text('06 / DATA.JSON',exact=True)).to_be_visible()
+    payload={'version':1,'cards':[{'name':'A Test Creature','nickname':'Test Nickname','flavor_text':'Test flavor text.'}]}
+    page.locator('#data-json-file').set_input_files({'name':'data.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
+    expect(page.locator('#data-json-status')).to_contain_text('1 nonempty data.json entry is staged')
+    assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')
+    page.click('#save-setup')
+    saved=app.ws.deck(d['id']);overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
+    assert overrides['nickname']=='Test Nickname'
+    assert overrides['flavor_text']=='Test flavor text.'
     assert not errors,errors
