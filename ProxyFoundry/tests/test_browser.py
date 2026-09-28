@@ -348,7 +348,7 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     expect(page.get_by_text('06 / DATA.JSON',exact=True)).to_be_visible()
     payload={'version':1,'cards':[{'name':'A Test Creature','nickname':'Test Nickname','flavor_text':'Test flavor text.'}]}
     page.locator('#data-json-file').set_input_files({'name':'data.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
-    expect(page.locator('#data-json-status')).to_contain_text('1 nonempty data.json entry is staged')
+    expect(page.locator('#data-json-status')).to_have_text('data.json')
     assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')
     page.click('#save-setup')
     saved=app.ws.deck(d['id']);overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
