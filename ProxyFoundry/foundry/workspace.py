@@ -14,7 +14,7 @@ from .credits import credit_text,printing_artist
 from .backs import Backs
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
@@ -68,6 +68,17 @@ class Workspace:
             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
+        raw_data_source=s.get('dataJsonSource')
+        if raw_data_source in (None,''):
+            s['dataJsonSource']=None
+        elif isinstance(raw_data_source,dict):
+            kind=raw_data_source.get('kind');value=raw_data_source.get('value')
+            if kind not in {'local','github'} or not isinstance(value,str):raise ValidationError('Invalid data.json source reference.')
+            value=value.strip()
+            if not value or len(value)>1000 or any(ord(ch)<32 or ord(ch)==127 for ch in value):raise ValidationError('Invalid data.json source reference.')
+            s['dataJsonSource']={'kind':kind,'value':value}
+        else:
+            raise ValidationError('Invalid data.json source reference.')
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
         raw_token_options=s.get('tokenOptions') or {}
         if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')
