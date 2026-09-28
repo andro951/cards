@@ -25,7 +25,8 @@ export function templateOptions(group,legendary=false,value='auto'){
 }
 export function renderSetup(root,deck,onSaved){
   const s=structuredClone(deck.settings),groups={};let stagedCardData=[],stagedDataLabel='';
-  const savedCardDataCount=deck.cards.reduce((count,card)=>count+card.faces.filter(face=>{const o=face.semanticOverrides||{};return String(o.nickname||'').trim()||String(o.flavor_text||'').trim();}).length,0);s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
+  const savedCardData=deck.cards.flatMap(card=>card.faces.flatMap(face=>{const o=face.semanticOverrides||{},entry={name:face.name};if(String(o.nickname||'').trim())entry.nickname=o.nickname;if(String(o.flavor_text||'').trim())entry.flavor_text=o.flavor_text;return entry.nickname||entry.flavor_text?[entry]:[];}));
+  const savedCardDataCount=savedCardData.length;s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
@@ -50,6 +51,7 @@ export function renderSetup(root,deck,onSaved){
     <section class="panel" id="data-json-section"><div class="panel-head"><div><span class="eyebrow">06 / DATA.JSON</span><h2>Nicknames &amp; flavor text</h2><p>Optionally apply per-card nicknames and flavor text without editing cards one at a time.</p></div></div>
       <label class="field"><span>Import data.json <small>optional</small></span><input type="file" id="data-json-file" accept=".json,application/json"><small>The 1-click GitHub import also checks the project root for <code>data.json</code> automatically. Names must exactly match card faces. Empty nickname or flavor values are ignored.</small></label>
       <div class="notice info" id="data-json-status">${savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.'}</div>
+      <div id="data-json-preview" class="stack"></div>
       <div class="well"><small><b>Format</b><br><code>{"version":1,"cards":[{"name":"Sol Ring","nickname":"The Colt","flavor_text":"Custom flavor text."}]}</code></small></div>
     </section>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">07 / OTHER OPTIONS</span><h2>Other Options</h2><p>Apply optional deck-wide transformations before the cards are rendered.</p></div></div>
@@ -81,7 +83,15 @@ export function renderSetup(root,deck,onSaved){
   redrawSymbols();redrawBack();
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
   const nonemptyCardDataCount=entries=>(entries||[]).filter(entry=>entry&&typeof entry==='object'&&(String(entry.nickname||'').trim()||String(entry.flavor_text||'').trim())).length;
-  const redrawDataJsonStatus=()=>{const status=$('#data-json-status',root);if(!status)return;if(stagedDataLabel){const count=nonemptyCardDataCount(stagedCardData);status.textContent=count?`${count} nonempty data.json entr${count===1?'y is':'ies are'} staged from ${stagedDataLabel}. Save to apply.`:`${stagedDataLabel} contains no nonempty nickname/flavor entries. Saving will not remove existing overrides.`;return;}status.textContent=savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.';};
+  const redrawDataJsonStatus=()=>{
+    const status=$('#data-json-status',root),preview=$('#data-json-preview',root);if(!status||!preview)return;
+    const entries=stagedDataLabel?stagedCardData:savedCardData,count=nonemptyCardDataCount(entries);
+    if(stagedDataLabel)status.textContent=count?`${count} nonempty data.json entr${count===1?'y is':'ies are'} staged from ${stagedDataLabel}. Save to apply.`:`${stagedDataLabel} contains no nonempty nickname/flavor entries. Saving will not remove existing overrides.`;
+    else status.textContent=savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.';
+    const visible=(entries||[]).filter(entry=>entry&&typeof entry==='object'&&(String(entry.nickname||'').trim()||String(entry.flavor_text||'').trim()));
+    preview.innerHTML=visible.slice(0,20).map(entry=>`<div class="well"><b>${esc(entry.name||'Unnamed card')}</b>${entry.nickname?`<small style="display:block;margin-top:5px">Nickname: ${esc(entry.nickname)}</small>`:''}${entry.flavor_text?`<small style="display:block;margin-top:5px">Flavor: ${esc(entry.flavor_text)}</small>`:''}</div>`).join('')+(visible.length>20?`<div class="muted">+${visible.length-20} more entries</div>`:'');
+  };
+  redrawDataJsonStatus();
   $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{let parsed;try{parsed=JSON.parse(await file.text());}catch{throw new Error('data.json is not valid JSON.');}if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||parsed.version!==1||!Array.isArray(parsed.cards))throw new Error('data.json must contain {"version":1,"cards":[...]}.');stagedCardData=structuredClone(parsed.cards);stagedDataLabel=file.name||'data.json';redrawDataJsonStatus();mark();}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
