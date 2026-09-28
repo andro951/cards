@@ -14,6 +14,14 @@ _MOROPHON_WRAP_RULE='''    if name=="Morophon, the Boundless":
 
 '''
 
+_OLD_SUPERTYPES='SUPERTYPES = {"Basic", "Legendary", "Snow", "World"}'
+_NEW_SUPERTYPES='SUPERTYPES = {"Basic", "Legendary", "Snow", "World", "Token"}'
+
+def _token_supertype_source(text):
+    if text.count(_OLD_SUPERTYPES)!=1:
+        raise RuntimeError('Unexpected v58 supertype schema; refusing to silently alter Card Tools.')
+    return text.replace(_OLD_SUPERTYPES,_NEW_SUPERTYPES)
+
 def _compiler_source(text):
     if text.count(_MOROPHON_WRAP_RULE)!=1:
         raise RuntimeError('Unexpected v58 Morophon compatibility rule; refusing to silently alter Card Tools.')
@@ -30,7 +38,7 @@ def load(name,relative,adapter=None):
         exec(compile(source,str(path),'exec'),module.__dict__)
     return module
 compiler=load('pf_v58_compiler','pipeline/card_data_to_cardconjurer.py',_compiler_source)
-ingest=load('pf_v58_ingest','pipeline/scryfall_to_card_data.py')
+ingest=load('pf_v58_ingest','pipeline/scryfall_to_card_data.py',_token_supertype_source)
 deck_parser=load('pf_v58_deck','pipeline/scryfall_deck_to_cardconjurer.py')
-tokens=load('pf_v58_tokens','tools/make_copy_tokens.py')
+tokens=load('pf_v58_tokens','tools/make_copy_tokens.py',_token_supertype_source)
 image_tools=load('pf_v58_images','tools/download_scryfall_deck_images_zip.py')
