@@ -41,7 +41,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     expect(page.locator('#data-json-status')).to_contain_text('1 nonempty data.json entry is staged from GitHub data.json')
     expect(page.locator('#data-json-preview')).to_contain_text('Dean Winchester')
     expect(page.locator('#data-json-preview')).to_contain_text('The family business.')
-    assert app.ws.deck(d['id'])['settings']['symbols'] == {}  # Staged until Save.
+    assert app.ws.deck(d['id'])['settings']['symbols'] == app.ws.default_symbols()  # Existing defaults are unchanged until Save.
     assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')  # data.json is staged too.
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
     expect(page.locator('#deck-notes')).to_have_value('Do not replace my notes')
@@ -108,7 +108,7 @@ def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     expect(page.locator('#deck-artist')).to_be_enabled()
     expect(page.locator('#deck-artist')).to_have_value('Unsaved artist')
     expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
-    assert page.locator('.symbol-upload img').count() == 0
+    assert page.locator('.symbol-upload img').count() == 4  # Bundled defaults remain visible after the failed import.
     assert app.ws.deck(d['id'])['settings']['symbols'] == {}
     remote.file(missing, raw)
     page.click('#github-setup-button')
