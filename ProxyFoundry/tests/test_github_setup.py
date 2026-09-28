@@ -332,6 +332,7 @@ def test_optional_data_json_is_staged_then_applied_on_save(tmp_path):
     result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
     assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'}]
     assert result['summary']['data']==1
+    assert result['settings']['dataJsonSource']=={'kind':'github','value':remote.child('data.json')}
     assert ws.store.get('decks',deck['id'])==before
     saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
     face=saved['cards'][0]['faces'][0]
