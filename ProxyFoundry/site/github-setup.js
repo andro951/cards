@@ -55,7 +55,7 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'));applied=true;input.value=result.settings.githubSetupFolder;
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
-      const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?`, plus ${result.summary.data} nonempty data.json entr${result.summary.data===1?'y':'ies'}`:'';
+      const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?', plus data.json':'';
       message(`Imported ${art}, ${symbols}, and ${back}${data}. Review below, then save your setup.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}
       toast('GitHub setup imported. Review below, then save.');
