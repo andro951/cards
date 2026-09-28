@@ -3,7 +3,7 @@ from PIL import Image
 from foundry.storage import Store
 from foundry.images import ingest_image,rarity_variants,sanitize_svg
 from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,FULL_ART_NONLAND_BOUNDS,apply_nickname_treatment
-from foundry.legacy import compiler as native
+from foundry.legacy import compiler as native,ingest,tokens
 from foundry.domain import ValidationError
 from foundry.sources import Sources
 from foundry.network import Network
@@ -758,3 +758,22 @@ def test_modal_nickname_uses_native_modal_nickname_pack():
     assert data['frames'][0]['src']=='/img/frames/modal/nickname/gf.png'
     assert data['frames'][1]['src']=='/img/frames/modal/nickname/ub.png'
     assert data['text']['nickname']['x']==pytest.approx(.1614)
+
+
+def test_scryfall_token_supertype_is_supported_by_adapter(workspace):
+    card=sf('Token Artifact Creature — Construct',[])
+    card.update(layout='token',name='Construct',mana_cost='',oracle_text='',power='1',toughness='1')
+    parsed=ingest.split_type_line(card['type_line'])
+    assert parsed['supertypes']==['Token']
+    assert parsed['types']==['Artifact','Creature']
+    assert parsed['subtypes']==['Construct']
+    sem=semantic(card,card)
+    assert sem['supertypes']==['Token']
+    result=Compiler(workspace[0]).compile_face(card,card,0,{},workspace[2],workspace[1])
+    assert result['group']=='token'
+
+def test_copy_token_type_parser_preserves_token_supertype():
+    parsed=tokens.split_type_line('Token Artifact Creature — Construct')
+    assert parsed['supertypes']==['Token']
+    assert parsed['types']==['Artifact','Creature']
+    assert tokens.join_type_line(parsed['supertypes'],parsed['types'],parsed['subtypes'])=='Token Artifact Creature - Construct'
