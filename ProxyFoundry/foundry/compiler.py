@@ -2076,7 +2076,7 @@ class Compiler:
         apply_universal_frame_color_treatment(data,sem)
         apply_nickname_treatment(
             data,sem,group,
-            refit=bool(choice=='auto' and not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
+            refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
         )
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE
