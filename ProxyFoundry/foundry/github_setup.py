@@ -273,7 +273,8 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     if data_row:
         summary['data'] = len(card_data)
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
-                         'githubSetupFolder': root_url},
+                         'githubSetupFolder': root_url,
+                         'dataJsonSource': {'kind':'github','value':data_row['path']} if data_row else None},
             'cardData': card_data,
             'summary': summary,
             'warnings': warnings}
