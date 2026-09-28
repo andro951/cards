@@ -20,7 +20,7 @@ export function githubSetupSection(folder=''){
 ├── back.png
 └── back_icon.png</code></pre>
       <div class="github-setup-notes">
-        <p><b>Required: choose one symbol option.</b><br><code>set_symbols/</code> with all four rarity images is <strong>recommended</strong>. Alternatively, <code>set_symbol.png</code> is color-shifted into four variants (<strong>not recommended</strong>). The four-image folder wins when both are present.</p>
+        <p><b>Set symbols are optional.</b><br><code>set_symbols/</code> with all four rarity images is <strong>recommended</strong>. Alternatively, <code>set_symbol.png</code> is color-shifted into four variants (<strong>not recommended</strong>). If neither exists, or the symbol folder is empty, Bulk Proxy Forge uses its bundled default common/uncommon/rare/mythic symbols. A partially filled folder still fails so missing files are not silently ignored.</p>
         <p><b>Artwork is optional.</b><br><code>art/</code> becomes the live GitHub artwork source. Without it, Scryfall printing is selected. “Use Scryfall artwork when a custom image is missing” is enabled on import; individual art overrides are kept.</p>
         <p><b>Card data is optional.</b><br><code>data.json</code> can supply nicknames and flavor text by exact card-face name. Missing or empty values do nothing. The file is staged with the rest of the import and applied only when you save.</p>
         <p><b>Both back options are optional.</b><br><code>back.png</code> uses your complete back. <code>back_icon.png</code> centers your icon on the Bulk Proxy Forge back. A complete back takes priority over an icon. With neither file, the default forge back is used. Real reverse faces are kept.</p>
@@ -53,7 +53,7 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       // A navigation during the job must not apply the result to a different deck.
       if(!host.isConnected)return;
       onImport(result.settings,result.cardData||[]);applied=true;input.value=result.settings.githubSetupFolder;
-      const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols=result.summary.symbols==='folder'?'four rarity symbols':'four color-shifted symbols';
+      const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?`, plus ${result.summary.data} nonempty data.json entr${result.summary.data===1?'y':'ies'}`:'';
       message(`Imported ${art}, ${symbols}, and ${back}${data}. Review below, then save your setup.`,'success');
