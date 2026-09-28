@@ -1261,6 +1261,14 @@ def build_token_data(sem,artist,autofit,flags):
     # Start from the preserved ordinary compiler only to inherit its text,
     # credits, bottom-info, watermark and mana-symbol structures. Token-specific
     # geometry and every visible structural frame are replaced below.
+    #
+    # Colorless Scryfall tokens (notably Construct/Spirit) have no WUBRG color.
+    # The ordinary donor compiler requires an inferable M15 color before we get
+    # a chance to replace its frames, so give only the disposable donor a white
+    # color when necessary. The real token frame below still resolves from the
+    # original semantic data: Artifact -> A, otherwise truly colorless -> C.
+    donor_colors=[x for x in base.get('colors',[]) if x in 'WUBRG']
+    if not donor_colors:base['colors']=['W']
     base['layout']=('creature_legendary' if sem.get('legendary') else 'creature') if creature else ('card_legendary' if sem.get('legendary') else 'card_noncreature')
     try:
         data=native.build_one(base,{'artist':artist},False,flagged_sagas=flags)['data']
