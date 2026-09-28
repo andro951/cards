@@ -857,3 +857,16 @@ def test_test_deck_nickname_cases_use_expected_godzilla_frames(workspace,name,ty
     assert data['text']['type']['color']=='white'
     if result['group']=='token':
         assert all('/img/frames/token/' not in str(frame.get('src','')) for frame in data['frames'])
+
+
+def test_token_nickname_refits_set_symbol_to_m15nickname_type_bar(workspace):
+    store,art_id,settings=workspace
+    card=sf('Token Creature — Spirit',['B'])
+    card.update(layout='token',name='Spirit',mana_cost='',oracle_text='',power='1',toughness='1')
+    data=Compiler(store).compile_face(
+        card,card,0,{'semanticOverrides':{'nickname':'Test Spirit Nickname'}},settings,art_id
+    )['data']
+    assert data['version']=='m15Nickname'
+    assert data['setSymbolBounds']['y']==pytest.approx(0.59142)
+    assert data['setSymbolY'] < 0.65
+    assert data['text']['type']['width'] < 0.8292
