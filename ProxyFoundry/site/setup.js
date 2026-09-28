@@ -24,7 +24,8 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};let stagedCardData=[];s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
+  const s=structuredClone(deck.settings),groups={};let stagedCardData=[],stagedDataLabel='';
+  const savedCardDataCount=deck.cards.reduce((count,card)=>count+card.faces.filter(face=>{const o=face.semanticOverrides||{};return String(o.nickname||'').trim()||String(o.flavor_text||'').trim();}).length,0);s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
@@ -46,7 +47,12 @@ export function renderSetup(root,deck,onSaved){
       <label class="field"><span>Reuse style from another deck</span><select id="reuse-style"><option value="">Choose a deck…</option>${state.decks.filter(d=>d.id!==deck.id).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select><small>Copies its symbols, back, artist credit and template choices—not its card list or artwork folder.</small></label>
       <label class="field"><span>Flavor text source</span><select id="flavor-policy"><option value="auto" ${(!s.flavorPolicy||s.flavorPolicy==='auto')?'selected':''}>Automatic · preserve exact printings</option><option value="resolved" ${s.flavorPolicy==='resolved'?'selected':''}>Selected printing</option><option value="latest" ${s.flavorPolicy==='latest'?'selected':''}>Latest English paper printing</option></select><small>Only flavor text changes. The selected card printing and artwork remain unchanged.</small></label><label class="check-line"><input type="checkbox" id="refresh-data" ${s.refreshData?'checked':''}><span>Fetch new data when the cached copy is at least one week old<small>Normal mode reuses Scryfall data for one year. This does not refetch every time.</small></span></label>
     </section>
-    <section class="panel"><div class="panel-head"><div><span class="eyebrow">06 / OTHER OPTIONS</span><h2>Other Options</h2><p>Apply optional deck-wide transformations before the cards are rendered.</p></div></div>
+    <section class="panel" id="data-json-section"><div class="panel-head"><div><span class="eyebrow">06 / DATA.JSON</span><h2>Nicknames &amp; flavor text</h2><p>Optionally apply per-card nicknames and flavor text without editing cards one at a time.</p></div></div>
+      <label class="field"><span>Import data.json <small>optional</small></span><input type="file" id="data-json-file" accept=".json,application/json"><small>The 1-click GitHub import also checks the project root for <code>data.json</code> automatically. Names must exactly match card faces. Empty nickname or flavor values are ignored.</small></label>
+      <div class="notice info" id="data-json-status">${savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.'}</div>
+      <div class="well"><small><b>Format</b><br><code>{"version":1,"cards":[{"name":"Sol Ring","nickname":"The Colt","flavor_text":"Custom flavor text."}]}</code></small></div>
+    </section>
+    <section class="panel"><div class="panel-head"><div><span class="eyebrow">07 / OTHER OPTIONS</span><h2>Other Options</h2><p>Apply optional deck-wide transformations before the cards are rendered.</p></div></div>
       <label class="check-line"><input type="checkbox" id="all-cards-tokens" ${s.allCardsTokens?'checked':''}><span>Make all cards tokens<small>Uses the existing M15 token-frame conversion for every card face in this deck.</small></span></label>
       <div id="all-token-options" class="${s.allCardsTokens?'':'hidden'}">
         <label class="field"><span>Power override <small>optional</small></span><input id="token-power" maxlength="20" value="${esc(s.tokenOptions.power||'')}" placeholder="Keep each card’s power"><small>Blank leaves each card’s original power unchanged.</small></label>
@@ -74,6 +80,9 @@ export function renderSetup(root,deck,onSaved){
   $('#deck-artist',root).addEventListener('input',creditPreview);creditPreview();
   redrawSymbols();redrawBack();
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
+  const nonemptyCardDataCount=entries=>(entries||[]).filter(entry=>entry&&typeof entry==='object'&&(String(entry.nickname||'').trim()||String(entry.flavor_text||'').trim())).length;
+  const redrawDataJsonStatus=()=>{const status=$('#data-json-status',root);if(!status)return;if(stagedDataLabel){const count=nonemptyCardDataCount(stagedCardData);status.textContent=count?`${count} nonempty data.json entr${count===1?'y is':'ies are'} staged from ${stagedDataLabel}. Save to apply.`:`${stagedDataLabel} contains no nonempty nickname/flavor entries. Saving will not remove existing overrides.`;return;}status.textContent=savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.';};
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{let parsed;try{parsed=JSON.parse(await file.text());}catch{throw new Error('data.json is not valid JSON.');}if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||parsed.version!==1||!Array.isArray(parsed.cards))throw new Error('data.json must contain {"version":1,"cards":[...]}.');stagedCardData=structuredClone(parsed.cards);stagedDataLabel=file.name||'data.json';redrawDataJsonStatus();mark();}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
@@ -86,8 +95,8 @@ export function renderSetup(root,deck,onSaved){
     isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#generate-symbols:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
-    onImport:(patch,cardData)=>{
-      stagedCardData=structuredClone(cardData||[]);
+    onImport:(patch,cardData,hasDataJson)=>{
+      stagedCardData=structuredClone(cardData||[]);stagedDataLabel=hasDataJson?'GitHub data.json':'';redrawDataJsonStatus();
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;$('#github-ref',root).value=s.source.ref;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
