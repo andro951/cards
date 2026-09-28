@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Archivist of Oghma",
+      "nickname": "Test Archivist Nickname",
+      "flavor_text": "Test flavor text for Archivist of Oghma."
+    },
+    {
+      "name": "Syr Gwyn, Hero of Ashvale",
+      "nickname": "Test Commander Nickname",
+      "flavor_text": "Test flavor text for Syr Gwyn, Hero of Ashvale."
+    },
+    {
+      "name": "Construct",
+      "nickname": "Test Construct Nickname",
+      "flavor_text": "Test flavor text for the Construct token."
+    },
+    {
+      "name": "Spirit",
+      "nickname": "Test Spirit Nickname",
+      "flavor_text": "Test flavor text for the Spirit token."
+    }
+  ]
+}
