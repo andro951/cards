@@ -828,3 +828,32 @@ def test_colored_or_artifact_token_nickname_uses_full_godzilla_pack(workspace,ty
     _assert_full_nickname_pack(data,code)
     assert data['text']['nickname']['text']=='Test '+name+' Nickname'
     assert all('/img/frames/token/regular/' not in str(frame.get('src','')) for frame in data['frames'])
+
+
+@pytest.mark.parametrize('name,type_line,colors,nickname,code,legendary',[
+    ('Archivist of Oghma','Creature — Halfling Cleric',['W'],'Test Archivist Nickname','W',False),
+    ('Syr Gwyn, Hero of Ashvale','Legendary Creature — Human Knight',['W','B','R'],'Test Commander Nickname','M',True),
+    ('Construct','Token Artifact Creature — Construct',[],'Test Construct Nickname','A',False),
+    ('Spirit','Token Creature — Spirit',['B'],'Test Spirit Nickname','B',False),
+])
+def test_test_deck_nickname_cases_use_expected_godzilla_frames(workspace,name,type_line,colors,nickname,code,legendary):
+    store,art_id,settings=workspace
+    card=sf(type_line,colors)
+    card.update(
+        name=name,
+        layout='token' if type_line.startswith('Token ') else 'normal',
+        mana_cost='' if type_line.startswith('Token ') else card['mana_cost'],
+        power='1' if type_line.startswith('Token ') else card['power'],
+        toughness='1' if type_line.startswith('Token ') else card['toughness'],
+    )
+    result=Compiler(store).compile_face(
+        card,card,0,{'semanticOverrides':{'nickname':nickname,'flavor_text':'Test flavor text.'}},settings,art_id
+    )
+    data=result['data']
+    _assert_full_nickname_pack(data,code,legendary=legendary)
+    assert data['text']['nickname']['text']==nickname
+    assert data['text']['title']['text']==name
+    assert data['text']['rules']['color']=='white'
+    assert data['text']['type']['color']=='white'
+    if result['group']=='token':
+        assert all('/img/frames/token/' not in str(frame.get('src','')) for frame in data['frames'])
