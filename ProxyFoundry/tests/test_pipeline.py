@@ -656,33 +656,46 @@ def test_semantic_uses_scryfall_flavor_name_as_nickname():
     assert sem['name']==card['name']
 
 
-def test_nickname_ordinary_uses_full_godzilla_frame_without_masks(workspace):
+def _assert_full_nickname_pack(data,code,legendary=False):
+    color={'W':'White','U':'Blue','B':'Black','R':'Red','G':'Green','M':'Multicolored','A':'Artifact','L':'Land'}[code]
+    assert data['version']=='m15Nickname'
+    assert data['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
+    assert data['setSymbolBounds']=={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+    assert data['frames'][0]=={'name':color+' Frame','src':f'/img/frames/m15/nickname/m15NicknameFrame{code}.png','masks':[]}
+    expected_second=(color+' Crown',f'/img/frames/m15/nickname/m15NicknameCrown{code}.png') if legendary else (color+' Title',f'/img/frames/m15/nickname/m15NicknameTitle{code}.png')
+    assert data['frames'][1]['name']==expected_second[0]
+    assert data['frames'][1]['src']==expected_second[1]
+    assert data['frames'][1]['masks']==[]
+    assert all('/img/frames/m15/regular/m15Frame' not in str(frame.get('src','')) for frame in data['frames'])
+    for key in ('nickname','title','type','rules','pt'):
+        assert data['text'][key]['color']=='white'
+
+
+def test_nickname_ordinary_is_actual_m15nickname_pack(workspace):
     s,a,settings=workspace
     card=sf('Creature — Human',['R'])
     card.update(name='Underlying Card',flavor_name='Reskinned Hero',power='3',toughness='2')
-    result=Compiler(s).compile_face(card,card,0,{},settings,a)
-    data=result['data']
+    data=Compiler(s).compile_face(card,card,0,{},settings,a)['data']
+    _assert_full_nickname_pack(data,'R')
     assert data['text']['nickname']['text']=='Reskinned Hero'
     assert data['text']['title']['text']=='Underlying Card'
-    nickname=[f for f in data['frames'] if str(f.get('name','')).startswith('Nickname')]
-    assert any(f['name']=='Nickname Frame' and f['src'].endswith('m15NicknameFrameR.png') for f in nickname)
-    assert any(f['name']=='Nickname Title' and f['src'].endswith('m15NicknameTitleR.png') for f in nickname)
-    assert all(f.get('masks')==[] for f in nickname)
+    assert data['text']['type']['y']==pytest.approx(.5664)
+    assert data['text']['rules']['y']==pytest.approx(.6303)
 
 
-def test_nickname_legendary_uses_crown_not_title(workspace):
+def test_nickname_legendary_is_actual_crowned_m15nickname_pack(workspace):
     s,a,settings=workspace
     card=sf('Legendary Creature — Human',['U'])
     card.update(name='Underlying Legend',flavor_name='Reskinned Legend',power='2',toughness='2')
     data=Compiler(s).compile_face(card,card,0,{},settings,a)['data']
-    assert any(f.get('name')=='Nickname Crown' and f.get('src','').endswith('m15NicknameCrownU.png') for f in data['frames'])
-    assert not any(f.get('name')=='Nickname Title' for f in data['frames'])
+    _assert_full_nickname_pack(data,'U',legendary=True)
+    assert not any(frame.get('name')=='Blue Title' for frame in data['frames'])
 
 
 def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay():
     special_groups={
         'transform-front','transform-back','saga','saga-creature','prepare','class',
-        'flip','meld','token','prototype','station','adventure'
+        'flip','meld','prototype','station','adventure'
     }
     for group in special_groups:
         data={
@@ -693,10 +706,30 @@ def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay(
         sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':False}
         assert apply_nickname_treatment(data,sem,group)
         assert data['frames'][0]['src']=='/keep/me.png'
-        assert not any(f.get('name')=='Nickname Frame' for f in data['frames'])
         assert any(f.get('name')=='Nickname Title' for f in data['frames'])
         assert data['text']['nickname']['text']=='Reskin'
         assert data['text']['title']['text']=='Underlying'
+
+
+def test_colorless_token_nickname_keeps_token_frame_but_forces_white_text():
+    data={
+        'width':2010,'height':2814,'version':'tokenRegular',
+        'frames':[{'name':'Colorless Token Frame','src':'/img/frames/token/regular/frameC.png','masks':[]}],
+        'text':{
+            'title':{'text':'Spirit','color':'white'},
+            'type':{'text':'Token Creature — Spirit','color':'black'},
+            'rules':{'text':'','color':'black'},
+            'pt':{'text':'1/1','color':'black'},
+        },
+    }
+    sem={'name':'Spirit','nickname':'Test Spirit','colors':[],'types':['Creature'],'subtypes':['Spirit'],'legendary':False}
+    assert apply_nickname_treatment(data,sem,'token')
+    assert data['version']=='tokenRegular'
+    assert data['frames'][0]['src']=='/img/frames/token/regular/frameC.png'
+    assert any(f.get('src','').endswith('addons/m15NicknameTitleC.png') for f in data['frames'])
+    for key in ('nickname','title','type','rules','pt'):
+        assert data['text'][key]['color']=='white'
+
 
 
 def test_nickname_battle_preserves_battle_frame_and_uses_landscape_text_only():
@@ -779,18 +812,19 @@ def test_copy_token_type_parser_preserves_token_supertype():
     assert tokens.join_type_line(parsed['supertypes'],parsed['types'],parsed['subtypes'])=='Token Artifact Creature - Construct'
 
 
-@pytest.mark.parametrize('type_line,name,expected_src',[
-    ('Token Artifact Creature — Construct','Construct','/img/frames/token/regular/tokenFrameARegular.png'),
-    ('Token Creature — Spirit','Spirit','/img/frames/token/regular/frameC.png'),
+@pytest.mark.parametrize('type_line,name,colors,code',[
+    ('Token Artifact Creature — Construct','Construct',[],'A'),
+    ('Token Creature — Spirit','Spirit',['B'],'B'),
 ])
-def test_colorless_scryfall_tokens_build_native_token_frame_and_nickname(workspace,type_line,name,expected_src):
+def test_colored_or_artifact_token_nickname_uses_full_godzilla_pack(workspace,type_line,name,colors,code):
     store,art_id,settings=workspace
-    card=sf(type_line,[])
+    card=sf(type_line,colors)
     card.update(layout='token',name=name,mana_cost='',oracle_text='',power='1',toughness='1')
     result=Compiler(store).compile_face(
         card,card,0,{'semanticOverrides':{'nickname':'Test '+name+' Nickname'}},settings,art_id
     )
     assert result['group']=='token'
-    assert any(frame.get('src')==expected_src for frame in result['data']['frames'])
-    assert result['data']['text']['nickname']['text']=='Test '+name+' Nickname'
-    assert any(frame.get('name')=='Nickname Title' for frame in result['data']['frames'])
+    data=result['data']
+    _assert_full_nickname_pack(data,code)
+    assert data['text']['nickname']['text']=='Test '+name+' Nickname'
+    assert all('/img/frames/token/regular/' not in str(frame.get('src','')) for frame in data['frames'])
