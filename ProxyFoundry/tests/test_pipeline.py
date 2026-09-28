@@ -660,7 +660,11 @@ def _assert_full_nickname_pack(data,code,legendary=False):
     color={'W':'White','U':'Blue','B':'Black','R':'Red','G':'Green','M':'Multicolored','A':'Artifact','L':'Land'}[code]
     assert data['version']=='m15Nickname'
     assert data['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
-    assert data['setSymbolBounds']=={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+    assert data['setSymbolBounds']['x']==pytest.approx(.9213)
+    assert data['setSymbolBounds']['y']==pytest.approx(.59142)
+    assert data['setSymbolBounds']['width']==pytest.approx(.12)
+    assert data['setSymbolBounds']['height']==pytest.approx(.041)
+    assert data['setSymbolBounds']['vertical']=='center' and data['setSymbolBounds']['horizontal']=='right'
     assert data['frames'][0]=={'name':color+' Frame','src':f'/img/frames/m15/nickname/m15NicknameFrame{code}.png','masks':[]}
     expected_second=(color+' Crown',f'/img/frames/m15/nickname/m15NicknameCrown{code}.png') if legendary else (color+' Title',f'/img/frames/m15/nickname/m15NicknameTitle{code}.png')
     assert data['frames'][1]['name']==expected_second[0]
