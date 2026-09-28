@@ -145,3 +145,19 @@ def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
         assert not errors, errors
     finally:
         release.set()
+
+
+def test_one_click_without_symbols_uses_bundled_defaults(browser_app):
+    app,server,page,errors=browser_app
+    d=app.ws.create({'name':'Default symbols bundle','source':sf()['id']})
+    remote=BundleRemote(art=False,folder=None,single=False,data={'version':1,'cards':[]})
+    app.ws.net.transport=remote.transport
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup')
+    page.fill('#github-setup-folder',remote.url)
+    page.click('#github-setup-button')
+    expect(page.locator('#github-setup-status')).to_contain_text('bundled default rarity symbols',timeout=20000)
+    expect(page.locator('.symbol-upload img')).to_have_count(4)
+    page.click('#save-setup')
+    saved=app.ws.deck(d['id'])
+    assert saved['settings']['symbols']==app.ws.default_symbols()
+    assert not errors,errors
