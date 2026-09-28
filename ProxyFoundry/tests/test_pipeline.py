@@ -777,3 +777,20 @@ def test_copy_token_type_parser_preserves_token_supertype():
     assert parsed['supertypes']==['Token']
     assert parsed['types']==['Artifact','Creature']
     assert tokens.join_type_line(parsed['supertypes'],parsed['types'],parsed['subtypes'])=='Token Artifact Creature - Construct'
+
+
+@pytest.mark.parametrize('type_line,name,expected_src',[
+    ('Token Artifact Creature — Construct','Construct','/img/frames/token/regular/tokenFrameARegular.png'),
+    ('Token Creature — Spirit','Spirit','/img/frames/token/regular/frameC.png'),
+])
+def test_colorless_scryfall_tokens_build_native_token_frame_and_nickname(workspace,type_line,name,expected_src):
+    store,art_id,settings=workspace
+    card=sf(type_line,[])
+    card.update(layout='token',name=name,mana_cost='',oracle_text='',power='1',toughness='1')
+    result=Compiler(store).compile_face(
+        card,card,0,{'semanticOverrides':{'nickname':'Test '+name+' Nickname'}},settings,art_id
+    )
+    assert result['group']=='token'
+    assert any(frame.get('src')==expected_src for frame in result['data']['frames'])
+    assert result['data']['text']['nickname']['text']=='Test '+name+' Nickname'
+    assert any(frame.get('name')=='Nickname Title' for frame in result['data']['frames'])
