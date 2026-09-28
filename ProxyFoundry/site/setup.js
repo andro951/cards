@@ -24,7 +24,7 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};let stagedCardData=[],stagedDataLabel='';
+  const s=structuredClone(deck.settings),groups={};let stagedCardData=[],stagedDataLabel='',dataJsonImportNote='';
   const savedCardData=deck.cards.flatMap(card=>card.faces.flatMap(face=>{const o=face.semanticOverrides||{},entry={name:face.name};if(String(o.nickname||'').trim())entry.nickname=o.nickname;if(String(o.flavor_text||'').trim())entry.flavor_text=o.flavor_text;return entry.nickname||entry.flavor_text?[entry]:[];}));
   const savedCardDataCount=savedCardData.length;s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:true,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
@@ -87,6 +87,7 @@ export function renderSetup(root,deck,onSaved){
     const status=$('#data-json-status',root),preview=$('#data-json-preview',root);if(!status||!preview)return;
     const entries=stagedDataLabel?stagedCardData:savedCardData,count=nonemptyCardDataCount(entries);
     if(stagedDataLabel)status.textContent=count?`${count} nonempty data.json entr${count===1?'y is':'ies are'} staged from ${stagedDataLabel}. Save to apply.`:`${stagedDataLabel} contains no nonempty nickname/flavor entries. Saving will not remove existing overrides.`;
+    else if(dataJsonImportNote)status.textContent=dataJsonImportNote;
     else status.textContent=savedCardDataCount?`${savedCardDataCount} card face${savedCardDataCount===1?'':'s'} currently ${savedCardDataCount===1?'has':'have'} saved nickname/flavor data.`:'No nickname or flavor data is currently saved for this deck.';
     const visible=(entries||[]).filter(entry=>entry&&typeof entry==='object'&&(String(entry.nickname||'').trim()||String(entry.flavor_text||'').trim()));
     preview.innerHTML=visible.slice(0,20).map(entry=>`<div class="well"><b>${esc(entry.name||'Unnamed card')}</b>${entry.nickname?`<small style="display:block;margin-top:5px">Nickname: ${esc(entry.nickname)}</small>`:''}${entry.flavor_text?`<small style="display:block;margin-top:5px">Flavor: ${esc(entry.flavor_text)}</small>`:''}</div>`).join('')+(visible.length>20?`<div class="muted">+${visible.length-20} more entries</div>`:'');
@@ -106,7 +107,7 @@ export function renderSetup(root,deck,onSaved){
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
     onImport:(patch,cardData,hasDataJson)=>{
-      stagedCardData=structuredClone(cardData||[]);stagedDataLabel=hasDataJson?'GitHub data.json':'';redrawDataJsonStatus();
+      stagedCardData=structuredClone(cardData||[]);stagedDataLabel=hasDataJson?'GitHub data.json':'';dataJsonImportNote=hasDataJson?'':'No data.json was found in the GitHub project root. Existing nickname/flavor data is unchanged.';redrawDataJsonStatus();
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;$('#github-ref',root).value=s.source.ref;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
