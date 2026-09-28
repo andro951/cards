@@ -2074,10 +2074,15 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
-        apply_nickname_treatment(
+        nickname_applied=apply_nickname_treatment(
             data,sem,group,
             refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
         )
+        if nickname_applied and data.get('version')=='m15Nickname':
+            # Full M15Nickname changes the type-bar/set-symbol geometry. Re-run
+            # the same native-style symbol fit after the frame conversion so
+            # token sources do not retain their old lower token-bar position.
+            fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE
         bottom_info=data.get('bottomInfo') or {}
