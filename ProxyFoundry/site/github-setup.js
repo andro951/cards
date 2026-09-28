@@ -52,7 +52,7 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',onProgress:j=>{if(host.isConnected)message(j.message);}});
       // A navigation during the job must not apply the result to a different deck.
       if(!host.isConnected)return;
-      onImport(result.settings,result.cardData||[]);applied=true;input.value=result.settings.githubSetupFolder;
+      onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'));applied=true;input.value=result.settings.githubSetupFolder;
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?`, plus ${result.summary.data} nonempty data.json entr${result.summary.data===1?'y':'ies'}`:'';
