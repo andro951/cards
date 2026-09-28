@@ -1703,6 +1703,9 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
 _NICKNAME_TITLE_BOUNDS={'x':0.0494,'y':0.0405,'width':0.9014,'height':0.1053}
 _NICKNAME_CROWN_BOUNDS={'x':0.024,'y':0.0172,'width':0.952,'height':0.1286}
 _NICKNAME_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
+_NICKNAME_ART_BOUNDS={'x':0,'y':0,'width':1,'height':0.9224}
+_NICKNAME_SYMBOL_BOUNDS={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
+_NICKNAME_WATERMARK_BOUNDS={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
 
 def _nickname_code(sem):
     code=frame_treatment_code(sem)
@@ -1771,6 +1774,97 @@ def _nickname_text(data,sem,group):
     return True
 
 
+def _apply_full_m15_nickname_pack(data,sem,refit=False):
+    """Replace the current structural frame with CardConjurer's M15Nickname pack.
+
+    The pack has complete W/U/B/R/G/M/A/L frames but no complete C frame.
+    It is deliberately mask-free here: one full Frame plus Title/Crown and P/T.
+    """
+    code=_nickname_code(sem)
+    frame_src=_nickname_frame_src(code)
+    if not frame_src:return False
+
+    color_name=native.COLOR_NAMES.get(code,code)
+    legendary=bool(sem.get('legendary'))
+    pt_text=str((((data.get('text') or {}).get('pt') or {}).get('text') or '')).strip()
+
+    frames=[
+        {'name':f'{color_name} Frame','src':frame_src,'masks':[]},
+    ]
+    if legendary:
+        frames.append({
+            'name':f'{color_name} Crown','src':_nickname_crown_src(code),
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS),
+        })
+    else:
+        frames.append({
+            'name':f'{color_name} Title','src':_nickname_title_src(code),
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
+        })
+    if pt_text:
+        frames.append({
+            'name':f'{color_name} Power/Toughness','src':_nickname_pt_src(code),
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_PT_BOUNDS),
+        })
+
+    data['frames']=frames
+    data['version']='m15Nickname'
+    data['artBounds']=copy.deepcopy(_NICKNAME_ART_BOUNDS)
+    data['setSymbolBounds']=copy.deepcopy(_NICKNAME_SYMBOL_BOUNDS)
+    data['watermarkBounds']=copy.deepcopy(_NICKNAME_WATERMARK_BOUNDS)
+
+    text=data.setdefault('text',{})
+    mana=text.setdefault('mana',{})
+    nickname=text.setdefault('nickname',{})
+    title=text.setdefault('title',{})
+    typ=text.setdefault('type',{})
+    rules=text.setdefault('rules',{})
+    pt=text.setdefault('pt',{})
+
+    mana.update({
+        'name':'Mana Cost','y':.0613,'width':.9292,'height':71/2100,
+        'oneLine':True,'size':71/1638,'align':'right','shadowX':-.001,
+        'shadowY':.0029,'manaCost':True,'manaSpacing':0,
+    })
+    nickname.update({
+        'name':'Nickname','text':str(sem.get('nickname') or '').strip(),
+        'x':.0854,'y':.0522,'width':.8292,'height':.0543,
+        'oneLine':True,'font':'belerenb','size':.0381,'color':'white',
+        'shadowX':.0014,'shadowY':.001,
+    })
+    title.update({
+        'name':'Title','text':str(sem.get('name') or ''),
+        'x':.14,'y':.1129,'width':.72,'height':.0243,
+        'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
+        'shadowX':.0014,'shadowY':.001,'align':'center',
+    })
+    typ.update({
+        'name':'Type','x':.0854,'y':.5664,'width':.8292,'height':.0543,
+        'oneLine':True,'font':'belerenb','size':.0324,'color':'white',
+        'shadowX':.0014,'shadowY':.001,
+    })
+    rules.update({
+        'name':'Rules Text','x':.086,'y':.6303,'width':.828,'height':.2875,
+        'size':.0362,'color':'white','shadowX':.0014,'shadowY':.001,
+    })
+    pt.update({
+        'name':'Power/Toughness','x':.7928,'y':.902,'width':.1367,
+        'height':.0372,'size':.0372,'font':'belerenbsc',
+        'oneLine':True,'align':'center','color':'white',
+    })
+
+    if refit:native.auto_fit(data,sem['art_local_path'])
+    return True
+
+
+def _force_token_text_white(data):
+    """Token nickname fallback must remain legible over the dark token boxes."""
+    text=data.get('text') or {}
+    for key in ('nickname','title','type','rules','pt'):
+        field=text.get(key)
+        if isinstance(field,dict):field['color']='white'
+
+
 def _apply_planeswalker_nickname_frame(data):
     changed=False
     for frame in data.get('frames',[]):
@@ -1797,19 +1891,31 @@ def _apply_modal_nickname_frame(data):
     return changed
 
 
-def apply_nickname_treatment(data,sem,group):
-    """Apply Godzilla-style alternate-name framing without discarding special layouts."""
+def apply_nickname_treatment(data,sem,group,refit=False):
+    """Apply a real CardConjurer nickname pack, not a title-only imitation."""
     nickname=str(sem.get('nickname') or '').strip()
     if not nickname:return False
+
+    # Ordinary cards and normal Scryfall tokens use the complete M15Nickname
+    # pack whenever CardConjurer actually provides a complete frame for the
+    # semantic color. This replaces the old structural frame rather than
+    # stacking a title over it.
+    if group in ORDINARY_GROUPS or group=='token':
+        if _apply_full_m15_nickname_pack(data,sem,refit):
+            return True
+
+    # CardConjurer has no complete colorless (C) M15Nickname frame. Keep the
+    # genuine colorless token structure and use the C nickname title addon.
+    # Make every visible token text field white so the dark token boxes remain
+    # readable.
     if not _nickname_text(data,sem,group):return False
+    if group=='token':_force_token_text_white(data)
 
     # Battle has no rotatable nickname frame asset in CardConjurer. Its native
     # Battle frame stays intact; only the two-name text treatment is applied.
     if group=='battle':return True
 
     # These two structural families have real CardConjurer nickname packs.
-    # Retarget their existing masked structural layers so loyalty/helper-strip
-    # geometry remains native instead of layering an ordinary M15 title over it.
     if group=='planeswalker' and _apply_planeswalker_nickname_frame(data):
         return True
     if group in {'modal-front','modal-back'} and _apply_modal_nickname_frame(data):
@@ -1818,28 +1924,17 @@ def apply_nickname_treatment(data,sem,group):
     code=_nickname_code(sem)
     legendary=bool(sem.get('legendary'))
     frames=data.setdefault('frames',[])
-
-    if group in ORDINARY_GROUPS:
-        # Ordinary cards use the complete Godzilla treatment. No masking:
-        # full Frame + matching P/T (when present) + Title/Crown.
-        frame_src=_nickname_frame_src(code)
-        if frame_src:
-            frames.append({'name':'Nickname Frame','src':frame_src,'masks':[]})
-        pt=((data.get('text') or {}).get('pt') or {}).get('text')
-        if str(pt or '').strip():
-            frames.append({'name':'Nickname Power/Toughness','src':_nickname_pt_src(code),
-                           'masks':[],'bounds':copy.deepcopy(_NICKNAME_PT_BOUNDS)})
-    # Special layouts deliberately keep their Saga/Class/Prepare/Transform/
-    # Modal/Planeswalker/Token/etc structural frame and only receive the top
-    # nickname treatment.
-
     if legendary:
-        frames.append({'name':'Nickname Crown','src':_nickname_crown_src(code),
-                       'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
-                       if code!='C' else {'x':0,'y':0,'width':1,'height':1}})
+        frames.append({
+            'name':'Nickname Crown','src':_nickname_crown_src(code),
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
+            if code!='C' else {'x':0,'y':0,'width':1,'height':1},
+        })
     else:
-        frames.append({'name':'Nickname Title','src':_nickname_title_src(code),
-                       'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS)})
+        frames.append({
+            'name':'Nickname Title','src':_nickname_title_src(code),
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
+        })
     return True
 
 
@@ -1979,7 +2074,10 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
-        apply_nickname_treatment(data,sem,group)
+        apply_nickname_treatment(
+            data,sem,group,
+            refit=bool(choice=='auto' and not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
+        )
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE
         bottom_info=data.get('bottomInfo') or {}
