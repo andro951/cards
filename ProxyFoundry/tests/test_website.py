@@ -66,7 +66,7 @@ def test_static_website_prepare_frames_load_from_pinned_fallback():
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
-                paths=['b.png','pinline.png','prepare.png','preparePinline.png','rules.png','frame.png']
+                paths=['b.png','u.png','m.png','a.png','pinline.png','prepare.png','preparePinline.png','rules.png','frame.png']
                 results=page.evaluate('''async names=>{
                   const output=[];
                   for(const name of names){

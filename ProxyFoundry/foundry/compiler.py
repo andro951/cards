@@ -40,7 +40,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -191,6 +191,22 @@ def apply_station_underframe_policy(data,sem,art_origin):
         frame['name']='Artifact Frame'
     return True
 
+def apply_prepare_frame_color(data,sem):
+    """Color the approved Prepare geometry using the host card's frame color."""
+    if data.get('version')!='prepare':return False
+    color=frame_treatment_code(sem)
+    body='A' if 'Artifact' in sem.get('types',[]) else (color if color and color in 'WUBRGM' else 'A')
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src',''))
+        if src=='/img/frames/m15/regular/m15PTB.png':
+            frame['src']=f'/img/frames/m15/regular/m15PT{body}.png'
+            frame['name']=f'{native.COLOR_NAMES[body]} Power/Toughness'
+        elif src=='/img/frames/prepare/regular/b.png':
+            frame['src']=f'/img/frames/prepare/regular/{body.lower()}.png'
+            frame['name']=f'{native.COLOR_NAMES[body]} Prepare Frame'
+    return True
+
 _FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)'}
 _FRAME_PINLINE_MASK='Pinline'
 
@@ -216,6 +232,11 @@ def frame_treatment_code(sem):
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
+
+    # Prepare uses one native color image with different masks for its bars,
+    # rules, and body. The body remains owned by the structural recipe.
+    if re.fullmatch(r'/img/frames/prepare/regular/[wubrgma]\.png',src):
+        return f'/img/frames/prepare/regular/{code.lower()}.png' if code in 'WUBRGMA' else src
 
     # Ordinary M15 families.
     if re.fullmatch(r'/img/frames/m15/regular/m15Frame[WUBRGMALCV]\.png',src):
@@ -2106,6 +2127,8 @@ class Compiler:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':
                         apply_station_underframe_policy(data,sem,art_origin)
+                    if choice=='auto' and group=='prepare':
+                        apply_prepare_frame_color(data,sem)
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
         else:

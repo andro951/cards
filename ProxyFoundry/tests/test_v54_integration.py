@@ -45,6 +45,48 @@ def test_vendor_exact_manifest():
         assert hashlib.sha256(raw).hexdigest()==expected['sha256'],name
 
 
+@pytest.mark.parametrize('colors,expected',[
+    (['W'],'w'),(['U'],'u'),(['B'],'b'),(['R'],'r'),(['G'],'g'),(['U','R'],'m'),([], 'a'),
+])
+def test_prepare_host_frame_uses_its_color(env,colors,expected):
+    w,_,art,settings=env
+    host={'name':'Harmonized Trio','type_line':'Creature — Merfolk Bard Wizard',
+          'mana_cost':'{U}','oracle_text':'{T}, Tap two untapped creatures you control: This creature becomes prepared.',
+          'power':'1','toughness':'1'}
+    spell={'name':'Brainstorm','type_line':'Instant','mana_cost':'{U}',
+           'oracle_text':'Draw three cards, then put two cards from your hand on top of your library in any order.'}
+    card=sf('Harmonized Trio // Brainstorm',layout='prepare',colors=colors,card_faces=[host,spell])
+    compiled=w.compiler.compile_face(card,host,0,{},settings,art['id'])
+    assert compiled['group']=='prepare' and compiled['templateVersion']==2
+    frames=compiled['data']['frames']
+    prepare_frames=[f for f in frames if f.get('src','').startswith('/img/frames/prepare/regular/')]
+    assert len(prepare_frames)==(6 if len(colors)==2 else 8)
+    if len(colors)==2:
+        # Both native pinline masks become the existing two-color gradient.
+        assert all(f['src'].endswith('/m.png') for f in prepare_frames)
+        gradients=[f for f in frames if f.get('src','').startswith('data:image/svg+xml')
+                   and any('pinline' in m.get('name','').lower() for m in f.get('masks',[]))]
+        assert len(gradients)==2
+    else:
+        assert all(f['src']==f'/img/frames/prepare/regular/{expected}.png' for f in prepare_frames)
+    assert any(f.get('src')==f'/img/frames/m15/regular/m15PT{expected.upper()}.png' for f in frames)
+    assert compiled['data']['text']['title']['text']=='Harmonized Trio'
+
+
+def test_prepare_colored_artifact_keeps_metal_body_and_blue_bars(env):
+    w,_,art,settings=env
+    host={'name':'Prepared Construct','type_line':'Artifact Creature — Construct',
+          'mana_cost':'{U}','oracle_text':'This creature becomes prepared.','power':'1','toughness':'1'}
+    spell={'name':'Prepared Spell','type_line':'Instant','mana_cost':'{U}','oracle_text':'Draw a card.'}
+    card=sf('Prepared Construct // Prepared Spell',layout='prepare',colors=['U'],card_faces=[host,spell])
+    frames=w.compiler.compile_face(card,host,0,{},settings,art['id'])['data']['frames']
+    by_mask={f['masks'][0]['name']:f['src'] for f in frames if f.get('masks') and '/prepare/regular/' in f.get('src','')}
+    assert by_mask['Frame']=='/img/frames/prepare/regular/a.png'
+    assert by_mask['Pinline']=='/img/frames/prepare/regular/u.png'
+    assert by_mask['Title']==by_mask['Type']==by_mask['Rules']=='/img/frames/prepare/regular/u.png'
+    assert any(f.get('src')=='/img/frames/m15/regular/m15PTA.png' for f in frames)
+
+
 @pytest.mark.parametrize('origin',[SCRYFALL_ART,'GitHub folder','computer folder','uploaded override'])
 def test_source_driven_credit_kept_through_compiler_and_export(env,origin):
     w,c,a,s=env;s={**s}

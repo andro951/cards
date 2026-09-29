@@ -218,6 +218,9 @@ tests/test_pipeline.py::test_nonlegendary_choices[auto],routine,0.283,passed,202
 tests/test_pipeline.py::test_nonlegendary_choices[land],routine,0.242,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_pipeline.py::test_nonlegendary_choices[legend-land],routine,0.253,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_pipeline.py::test_nonlegendary_choices[normal],routine,0.246,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Basic Land \u2014 Forest-basic-land-card_noncreature],routine,0.286,passed,2026-09-29T19:34:56.605952-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Land-land-card_noncreature],routine,0.375,passed,2026-09-29T19:34:56.605952-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Legendary Land-legendary-land-card_legendary],routine,0.291,passed,2026-09-29T19:34:56.605952-04:00
 tests/test_pipeline.py::test_normal_scryfall_creature_token_uses_real_token_frame,routine,0.242,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_pipeline.py::test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame,routine,0.240,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_pipeline.py::test_planeswalker_landscape_art_window_crop_does_not_warn,routine,0.427,passed,2026-09-29T13:35:26.945698-04:00
@@ -277,6 +280,7 @@ tests/test_server.py::test_runtime_symbol_source_instrumentation,routine,0.011,p
 tests/test_server.py::test_single_card_prepare_endpoint_never_calls_full_deck_prepare,routine,2.063,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_server.py::test_single_card_prepare_keeps_deck_draft_when_another_face_is_pending,routine,2.573,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_server.py::test_single_review_image_export_can_download_a_specific_face_png,routine,0.907,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_server.py::test_site_png_assets_are_served,routine,1.064,passed,2026-09-29T19:35:18.002755-04:00
 tests/test_server.py::test_symbol_and_back_uploads_trim_only_fully_transparent_edges,routine,1.065,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_server.py::test_template_validation_and_seed,routine,1.071,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_server.py::test_trash_controls_and_permanent_delete_setting,routine,2.062,passed,2026-09-29T13:35:26.945698-04:00
@@ -288,8 +292,8 @@ tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_dual-data1-1601],routine,0.007,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_legendary-data2-1728],routine,0.004,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[original_dual_land_textless-data4-2402],routine,0.005,passed,2026-09-29T13:35:26.945698-04:00
-tests/test_station_runtime_security.py::test_only_exact_native_script_allowed,routine,0.005,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_station_runtime_security.py::test_station_script_checksum_and_csp_safe_assignment,routine,0.006,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_station_runtime_security.py::test_station_script_uses_allowed_pinned_host,routine,0.007,passed,2026-09-29T19:35:18.002755-04:00
 tests/test_storage_selection.py::test_first_run_storage_prompt_contract_is_present,routine,0.007,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_storage_selection.py::test_saved_storage_location_is_persistent,routine,0.023,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_template_model_v2.py::test_cardconjurer_conversion_discards_card_specific_media,routine,0.033,passed,2026-09-29T13:35:26.945698-04:00
@@ -366,6 +370,14 @@ tests/test_v54_integration.py::test_modified_custom_template_keeps_geometry,rout
 tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[False],routine,0.147,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[True],routine,0.148,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_v54_integration.py::test_old_generation_cannot_be_ordered_as_current,routine,1.199,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_v54_integration.py::test_prepare_colored_artifact_keeps_metal_body_and_blue_bars,routine,0.133,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors0-w],routine,0.171,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors1-u],routine,0.129,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors2-b],routine,0.129,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors3-r],routine,0.127,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors4-g],routine,0.137,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors5-m],routine,0.139,passed,2026-09-29T19:33:11.264280-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors6-a],routine,0.128,passed,2026-09-29T19:33:11.264280-04:00
 tests/test_v54_integration.py::test_scryfall_fallback_ignores_custom_deck_artist,routine,1.080,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_v54_integration.py::test_scryfall_inline_flavor_italics_render_without_literal_asterisks,routine,0.151,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[futureFrame],routine,0.005,passed,2026-09-29T13:35:26.945698-04:00
@@ -418,6 +430,8 @@ tests/test_browser.py::test_browser_other_options_all_cards_tokens,extended,3.09
 tests/test_browser.py::test_browser_paired_order_snapshot,extended,5.626,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_browser.py::test_browser_saved_orders_are_reachable_from_library,extended,3.587,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_browser.py::test_browser_symbol_folder_upload,extended,5.644,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_browser.py::test_new_deck_import_stays_simple_and_chooses_look_afterward,extended,11.773,passed,2026-09-29T19:34:22.710733-04:00
+tests/test_browser.py::test_normal_look_uses_classic_frames_for_every_ordinary_group,extended,5.168,passed,2026-09-29T19:34:22.710733-04:00
 tests/test_browser.py::test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box,extended,34.294,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_browser.py::test_real_cardconjurer_roundtrip,extended,31.735,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,2.467,passed,2026-09-29T06:38:32.298111-04:00
@@ -439,6 +453,7 @@ tests/test_order_dialog.py::test_large_order_modal_has_clipped_rounded_header_an
 tests/test_order_dialog.py::test_large_order_modal_has_clipped_rounded_header_and_scrollable_body[390-844],extended,1.356,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_order_dialog.py::test_order_build_closes_before_job_and_keeps_acknowledgement,extended,2.756,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_order_dialog.py::test_order_build_failure_uses_toast_not_detached_dialog,extended,1.812,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_prepare_native.py::test_harmonized_trio_native_prepare_frame_is_blue,extended,55.530,passed,2026-09-29T23:35:56+00:00
 tests/test_print_bridge.py::test_close_before_choice_does_not_upload_or_delete,extended,3.185,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_print_bridge.py::test_corrupt_chunk_stops_before_upload,extended,2.255,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_print_bridge.py::test_paired_zip_empty_add_replace[0-None-2-0],extended,5.923,passed,2026-09-29T06:38:32.298111-04:00
@@ -448,6 +463,6 @@ tests/test_runtime.py::test_colorless_saga_creature_gap_asset_exists_at_pinned_c
 tests/test_station_native.py::test_native_station_full_compact_two_tier_and_sequence,extended,176.940,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_station_source_probe.py::test_station_source_probe,extended,0.582,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extended,144.095,passed,2026-09-29T06:38:32.298111-04:00
-tests/test_website.py::test_static_website_import_frame_review_and_zip,extended,160.846,passed,2026-09-29T06:38:32.298111-04:00
-tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,12.946,passed,2026-09-29T16:49:21.968831-04:00
 tests/test_website.py::test_static_website_fetches_pinned_station_script,extended,14.152,passed,2026-09-29T17:24:05.385745-04:00
+tests/test_website.py::test_static_website_import_frame_review_and_zip,extended,160.846,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,14.300,passed,2026-09-29T23:35:56+00:00

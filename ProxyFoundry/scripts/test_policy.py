@@ -11,6 +11,7 @@ EXTENDED_MODULES={
     'test_native_deck.py',
     'test_order_dialog.py',
     'test_print_bridge.py',
+    'test_prepare_native.py',
     'test_station_native.py',
     'test_website.py',
 }
