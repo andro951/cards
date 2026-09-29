@@ -1,4 +1,4 @@
-"""Legacy Python application entry point for development and older workflows."""
+"""Double-click START_PROXY_FOUNDRY.bat on Windows; python run.py elsewhere."""
 import argparse,threading,webbrowser
 from foundry.server import App,LocalServer
 from foundry.storage import Store,ensure_storage_home_selected

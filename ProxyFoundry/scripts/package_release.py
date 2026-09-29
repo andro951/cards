@@ -19,6 +19,8 @@ def build(destination):
         if p.name=='RELEASE_MANIFEST.json':continue
         files.append(p)
     assert any(p.name=='START_PROXY_FOUNDRY.bat' for p in files)
+    assert any(p.name=='START_BULK_PROXY_FORGE.bat' for p in files)
+    assert any(p.name=='START_BULK_PROXY_FORGE.pyw' for p in files)
     assert BUNDLED_IMAGE_FILES <= {p.relative_to(ROOT).as_posix() for p in files}, 'Release is missing bundled image assets'
     back_manifest=json.loads((ROOT/'assets/backs/manifest.json').read_text())
     for name in BACK_FILES:

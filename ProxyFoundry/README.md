@@ -17,7 +17,7 @@ The first load downloads the pinned card engine and renderer assets. Rendering, 
 
 ## Preview the checked-out website on Windows
 
-Double-click `START_PROXY_FOUNDRY.bat` in the `ProxyFoundry` folder. It builds the static site, opens `http://127.0.0.1:8767/` in your browser, and shows a small **Local Preview** window. Keep that window open while using the site; choose **Stop preview** when finished. You do not need to type commands or install Node.js. Python 3.10 or newer is required to start this local preview. You can also double-click `START_PROXY_FOUNDRY.pyw` directly.
+Double-click `START_BULK_PROXY_FORGE.bat` in the `ProxyFoundry` folder. It builds the static site, opens `http://127.0.0.1:8767/` in your browser, and shows a small **Local Preview** window. Keep that window open while using the site; choose **Stop preview** when finished. You do not need to type commands or install Node.js. Python 3.10 or newer is required to start this local preview. You can also double-click `START_BULK_PROXY_FORGE.pyw` directly. `START_PROXY_FOUNDRY.bat` continues to open the original Python app.
 
 This temporary local HTTP server serves only the site's files to your own computer. The card engine, saved decks, and images still run and live in your browser. The fixed address keeps browser storage tied to the same origin between preview sessions. The published website will not require this launcher.
 
@@ -58,4 +58,4 @@ node --test tests_web/*.test.mjs
 
 `RUN_TESTS.bat` runs routine, extended, or complete groups. The extended group includes native rendering, browser website smoke, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
 
-The legacy Python app remains available through `run.py` for development and older workflows. The website does not ask users to run it.
+The original Python app remains available through `START_PROXY_FOUNDRY.bat` and `run.py`.

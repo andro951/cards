@@ -2,19 +2,36 @@
 setlocal
 cd /d "%~dp0"
 title Bulk Proxy Forge
-where pyw >nul 2>nul
+where py >nul 2>nul
 if not errorlevel 1 (
-  start "" pyw -3 "%~dp0START_PROXY_FOUNDRY.pyw"
-  exit /b 0
+  set "PYTHON=py -3"
+) else (
+  set "PYTHON=python"
 )
-where pythonw >nul 2>nul
-if not errorlevel 1 (
-  start "" pythonw "%~dp0START_PROXY_FOUNDRY.pyw"
-  exit /b 0
+%PYTHON% -c "import sys; assert sys.version_info >= (3,10)" >nul 2>nul
+if errorlevel 1 (
+  echo Python 3.10 or newer is required. Install Python from python.org with the launcher enabled.
+  echo Then double-click this file again.
+  pause
+  exit /b 1
 )
-if exist "%~dp0.venv\Scripts\pythonw.exe" (
-  start "" "%~dp0.venv\Scripts\pythonw.exe" "%~dp0START_PROXY_FOUNDRY.pyw"
-  exit /b 0
+if not exist ".venv\Scripts\python.exe" (
+  echo Preparing the isolated Bulk Proxy Forge environment...
+  %PYTHON% -m venv .venv
+  if errorlevel 1 goto failed
 )
-powershell -NoProfile -WindowStyle Hidden -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('Install Python 3.10 or newer, then double-click START_PROXY_FOUNDRY.bat again.','Bulk Proxy Forge')"
+".venv\Scripts\python.exe" -c "from PIL import Image" >nul 2>nul
+if errorlevel 1 (
+  echo Installing the image-processing dependency. No CardConjurer repository is downloaded.
+  ".venv\Scripts\python.exe" -m pip install -r requirements.txt
+  if errorlevel 1 goto failed
+)
+echo Opening Bulk Proxy Forge. Your decks are stored outside this extracted app folder.
+".venv\Scripts\python.exe" run.py
+if errorlevel 1 goto failed
+exit /b 0
+:failed
+echo.
+echo Bulk Proxy Forge could not start. The error is shown above; your saved decks are unchanged.
+pause
 exit /b 1
