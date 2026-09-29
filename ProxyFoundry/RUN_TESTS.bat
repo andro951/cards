@@ -16,10 +16,11 @@ set "PF_LIVE_CC="
 set "PF_DOM="
 set "PF_LIVE_GITHUB_SETUP="
 set "PF_LARGE_TRANSFER="
+set "PF_LIVE_DECK_SITES="
 echo.
-echo 1 = Routine tests only (383 local tests; about 2-3 minutes)
-echo 2 = Extended tests only (45 browser/live/stress tests; about 21 minutes)
-echo 3 = Full sweep (both groups; about 23 minutes)
+echo 1 = Routine tests and deck-adapter checks
+echo 2 = Extended browser/live/stress tests and live deck sites
+echo 3 = Full sweep of both groups
 choice /c 123 /n /m "Choose 1, 2 or 3: "
 if errorlevel 3 goto full
 if errorlevel 2 goto extended
@@ -41,12 +42,17 @@ set "PF_LIVE_CC=1"
 set "PF_DOM=1"
 set "PF_LIVE_GITHUB_SETUP=1"
 set "PF_LARGE_TRANSFER=1"
+set "PF_LIVE_DECK_SITES=1"
 :run
 ".venv\Scripts\python.exe" -m pytest -q --tb=short %PYTEST_SELECTOR% --junitxml=test-results\local.xml
 set "TEST_EXIT=%ERRORLEVEL%"
 ".venv\Scripts\python.exe" scripts\update_test_timings.py test-results\local.xml
 if errorlevel 1 goto failed
 if not "%TEST_EXIT%"=="0" goto failed
+for %%F in (tests_web\*.test.mjs) do (
+  node --test "%%F"
+  if errorlevel 1 goto failed
+)
 echo.
 echo All selected tests passed.
 pause

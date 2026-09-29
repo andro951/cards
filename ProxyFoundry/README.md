@@ -1,123 +1,54 @@
 # Bulk Proxy Forge
 
-A local-first workspace for turning multiple MTG decks into one explicitly paired print order. Built around the approved Card Tools v58 compiler and CardConjurer's actual native renderer.
+Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered proxy cards and an explicitly paired front/back ZIP for printing. The production app is a static website: the card engine runs in a browser worker, and the workspace stays on the user's device. Users do not start a local server.
 
-## Start here
+## Use the website
 
-1. Extract the complete ZIP into a permanent folder.
-2. Double-click **START_PROXY_FOUNDRY.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
-3. The workspace opens automatically in your browser. Keep the launcher window open.
-4. Click **Import deck** and paste a public Scryfall deck URL, JSON export, or card list.
-5. In **Art & setup**, choose original printing art, a GitHub folder, or a computer folder. Select templates, supply four rarity symbols (or generate four treatments from one), and choose a deck back.
-6. Click **Save & generate images**. Completed cards appear in the grid and are cached locally.
-7. Select one or more decks, choose **Review print order**, check both sides and any crop/layout warnings, and build the paired ZIP.
-8. Save the images ZIP or use **Open in TCGPlaytest**. The printer opens in a **new tab**; Bulk Proxy Forge stays open. Review the printer proof and complete checkout yourself.
+1. Open the deployed website in a current Chrome or Edge browser.
+2. Choose **Add New Deck** and paste a public Scryfall, Archidekt, or MTGGoldfish deck link. Outside-the-Game cards are included by default and can be excluded before import. Exact printing details are preserved when the deck source supplies them; otherwise Scryfall chooses its ordinary default result.
+3. Choose **Default Look** for automatic art, frames, symbols, and back, or **Custom** for artwork folders, frames, credits, symbols, backs, and `data.json`.
+4. Generate images. Select a frame by inspecting actual rendered previews for a card from the deck. Godzilla land and non-land frames are separate choices. A nickname appears above the real card name.
+5. Choose **Review & Print**. Inspect front images and any unique backs. Crop and layout warnings must be reviewed one card at a time; **It Looks Fine** accepts only that face's current render.
+6. Build the paired ZIP, then choose **Print Cards**. Without the optional helper, download the ZIP, open TCGPlaytest, and choose **Upload Deck ZIP**. The completion screen shows the exact control. The optional Chrome/Edge helper can send repeat orders automatically. The printer checkout remains in the user's hands.
 
-**Do not double-click `site/index.html`.** Bulk Proxy Forge uses the local server started by the BAT. Normal use requires no Git, Node, Playwright or full CardConjurer repository download.
+The first load downloads the pinned card engine and renderer assets. Rendering, imported art, templates, decks, and saved orders can use substantial browser storage. **Settings → Workspace storage** lets supported browsers use a chosen `BulkProxyForge` folder; browser storage is the fallback. **Export Backup** and **Import from Backup** move selected objects and source assets between workspaces. A backup can optionally include generated images.
 
-On macOS/Linux: install `requirements.txt` in a Python environment and run `python run.py`. `python run.py --no-browser --port 8765` starts without opening a tab.
+## Deploy the website
 
-## Printer helper: one-time setup
+The static site uses Cloudflare Pages. Its only server function is a stateless deck-site gateway for public Archidekt and MTGGoldfish pages whose browser CORS behavior prevents direct import. It stores no deck, image, or workspace data. Scryfall and GitHub data are fetched by the browser.
 
-The app imports, prepares, renders and exports without an extension. The helper is needed only to fill TCGPlaytest's editor automatically.
-
-Remove the old test helper. Open `edge://extensions` or `chrome://extensions`, enable Developer mode, and choose **Load unpacked → extension/** from this package. Reload the app; the top-right indicator should say **connected**. The app's helper setup dialog also offers a small standalone helper ZIP. No file-URL permission toggle is needed.
-
-The helper asks **Add** or **Replace** when the printer already contains cards. Replace confirms recognized deletion dialogs and checks the count decreases. An unfamiliar flow stops before upload. The overlay can be minimized or closed and closes automatically after success. The helper does not enter payment details or click Checkout.
-
-Print Helper **1.1.0** automatically transfers large orders as sequential paired ZIP batches, each at most **1 GiB (1,073,741,824 bytes)** including archive headers. The 1 GB whole-order helper limit is gone. Card image bytes and full-resolution renders are unchanged; the full downloadable order ZIP is still available. Batches append to one TCGPlaytest design, with Add/Replace asked once and each cumulative card count verified before the next upload. The helper holds only one batch at a time; TCGPlaytest still controls its own memory and order limits. The implemented printer integration is **TCGPlaytest**, not every service named MTGProxy.
-
-## Deck and artwork management
-
-Manage independent decks, duplicates, editable names and notes, quantities, bulk additions, removal, trash and restore. Scryfall deck exports and set/collector-number lists preserve exact printings. The inspector can select a different printing or override a face's artwork, credit, template, rarity, rules/flavor text and artwork placement.
-
-Artwork source choices are deliberately separate:
-
-- **Scryfall printing** uses the illustration from the chosen printing.
-- **GitHub folder** accepts an explicit public folder URL, without a local repository path.
-- **Computer folder** copies chosen images into the local workspace; it does not upload them to GitHub.
-
-Card nickname and flavor metadata can be staged from a local `data.json` file, a direct public GitHub `data.json` file link, or the optional root `data.json` discovered by **1-click GitHub import**. All three use the same version-1 schema described in `docs/GITHUB_SETUP_IMPORT.md` and apply only when setup is saved.
-
-Name matching normalizes to lowercase underscores, removes apostrophes and strips accents. Duplicate normalized filenames are reported rather than selected arbitrarily. Missing custom art can fall back to the original printing when that option is enabled.
-
-
-**Artwork shape policy:** use **5:7** source artwork for full-art lands, Planeswalkers, and full-art non-land treatments (currently custom colorless creatures and Stations). This replaces the older 2:3, 3:4 and 8:11 guidance for those categories.
-
-Artist credits are source-aware. Actual Scryfall artwork, including fallback images, always uses the selected printing's real artist (face-specific when provided). A custom-art deck default or per-card override cannot overwrite or hide that original credit. Missing Scryfall metadata stays blank rather than being attributed to the custom-art artist.
-
-For custom artwork, use a deck-wide artist or edit each card's credit. Scryfall artwork prints its real selected-printing artist as `Artist Name (Scryfall) • Art © respective rights holders`. Every generated card also carries the concise footer `BulkProxyForge • Unofficial Proxy`.
-
-The bundled common/uncommon/rare/mythic set symbols are selected automatically for every new deck and for older decks that have no symbol selection. Click any rarity to replace just that default, upload a complete four-image folder to replace all four, or explicitly generate four color treatments from one image. Generated previews preserve transparency but do not redraw the original symbol. PNG/JPEG/WebP/GIF images and sanitized SVG symbols are accepted.
-
-## Updating from the previous test build
-
-This release uses the supplied **Card Tools v58**, with the existing source-aware artist/modification controls retained. Existing decks prepared with the old generator are marked as needing generation. Generate them once to apply native Station rendering and the updated Flip spacing; their previously saved PNGs and order ZIPs are not deleted. Future back-only and quantity-only changes still reuse front renders.
-
-Large-order batching requires **Print Helper 1.1.0**. For an unpacked helper loaded from this repository, pull the update and click **Reload** for the existing extension in `edge://extensions` or `chrome://extensions`, then reload Bulk Proxy Forge and reopen the saved order. No uninstall is needed. For a separately extracted helper, update the files in that same extension folder first. A 1.0.0 helper remains compatible with small orders but cannot batch large ones.
-
-The previous v48-to-v54 comparison remains in `docs/CARD_TOOLS_V54_REVIEW.md`. This update follows the supplied v54-to-v58 handoff; see `docs/CARD_TOOLS_V58_UPDATE.md`. `docs/CARD_TOOLS_V58_MANIFEST.json` records exact hashes for all ten supplied source/document files.
-
-## Templates and accuracy
-
-**Automatic** delegates to the original v58 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
-
-For ordinary layouts, **Classic card** and **Crowned full art** support legendary/nonlegendary cards; **Full-art land** supports nonlegendary cards only because its frame has no compatible crown. Creature overrides retain a power/toughness box. **Godzilla full art · land** and **Godzilla full art · non-land** are separate choices, and the non-land option also supports tokens. A nickname supplies the large alternate name above the true card name; without one, the true name occupies the top line. Click a layout's **Select frames** button to render a card from the deck in each compatible style before choosing.
-
-Token full-art text uses native CardConjurer white fill with a black outline. Nickname token treatments use complete frame images, including after deck-wide or copy-token conversion.
-
-Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. Approved built-in modal-DFC pairs include **Esika / The Prismatic Bridge** and **Bruce Banner / The Incredible Hulk**. Their modal frame colors, P/T treatment, and opposite-face reminder strip are derived from the actual faces rather than reusing Esika-specific values. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v58 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
-
-Create a separate custom style from a protected built-in copy, or upload a `.cardconjurer` face. Map its named text boxes to card fields and select the groups it supports. The advanced editor exposes native template JSON. Editing or deleting a custom template invalidates only dependent decks; existing order snapshots do not change.
-
-Review an example of a new style before ordering. Generic text-slot mapping cannot invent missing second-face rules boxes or infer every custom layout. No AI image generation is used.
-
-## Native Station support in 1.2
-
-Spacecraft use the supplied v58 `station` recipe with the ordinary artifact body underneath, color-correct Station pinline above the Station overlay, and native three-section rules, threshold badges and Station P/T. One/two-threshold parsing retains continuation lines in the correct tier. Unsupported structures fail instead of being flattened into ordinary artifact rules. Flip cards retain an additional 2% of card width around their visible P/T medallions.
-
-The existing pinned GitHub core predates Station. For Stations only, the app additionally fetches the genuine `https://cardconjurer.app/js/frames/versionStation.js` module, pinned by SHA-256 `481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21`. It is fetched individually and cached, not bundled or re-created. A different upstream version is rejected rather than executed silently. Station images come from the existing pinned GitHub asset source. The adapter replaces one UI `eval` assignment with an equivalent checked property assignment and composites the native Station canvases in the same order as the newer core. Native drawing and layout are unchanged.
-
-## Rendering and ordering
-
-The app fetches individual code/assets from pinned CardConjurer commits and runs native `loadCard()` / `cardCanvas` rendering in a separate-origin local frame. The full upstream repository archive and thumbnail catalogue are never downloaded. Only completed, correctly sized PNGs enter the render cache.
-
-The grid stays on the Bulk Proxy Forge page. Cancelled/failed runs retain completed images. Changing a back or quantity does not redraw unchanged fronts. Finished fronts are keyed by exact compiled data, artwork, the common pipeline version, and a scoped built-in template version. Automatic template versions are per structural group (for example Station vs Planeswalker), so a template-only change can invalidate only cards using that template; pipeline-version changes invalidate all affected compiled fronts. Custom template edits already invalidate only decks that reference that template, and their template data is part of the render key. Crop warnings appear when more than 20% of image width or height lies outside the chosen art window.
-
-Every physical card has explicit matching filenames, for example `FRONT/000001.png` and `BACK/000001.png`. Real reverse faces, deck-default backs, individual overrides and quantities are included. Multiple selected decks become one order ZIP. Saved order packages are immutable snapshots and do not change when a deck is later edited.
-
-## Storage, cache and backups
-
-On first launch, Bulk Proxy Forge asks which drive should hold the workspace before the browser app opens. The selected drive uses a human-readable `BulkProxyForge` folder by default, with an expandable **Pick a specific folder** option for choosing another path. The small launcher preference that remembers this selection is stored separately.
-
-Generated card images are stored under `renders/<Deck Name>/<Card Name>.png`. Each prepared face has only one current generated image for that deck; generating a replacement deletes the previous render entry and its unused image data. Duplicate human-readable names receive a numeric suffix only when necessary to avoid a filesystem collision.
-
-Settings & backup includes **Delete All Images**, which removes all generated card renders while preserving decks, source artwork, symbols, backs, and settings. Generated images can be recreated at any time.
-
-Set `BULK_PROXY_FORGE_HOME` to override the saved location explicitly; the old `PROXY_FOUNDRY_HOME` variable remains accepted for compatibility. Replacing the extracted app folder does not remove the selected workspace.
-
-## Original Card Tools and tests
-
-Original-printing PNG download and copy-token utilities are available under **Quick start & Card Tools**. The complete original interface and command-line tools remain under `vendor/card_tools`. Double-click **START_LEGACY_CARD_TOOLS.bat** for advanced original workflows using the same private Python environment.
-
-Double-click **RUN_TESTS.bat** and choose routine, extended, or full sweep.
-The [per-test timing list](docs/test-timings.csv) and [test group guide](docs/TESTING.md)
-show exactly what runs in each group and how long each test took in the last
-all-enabled measurement. Development setup:
-
+```powershell
+cd ProxyFoundry
+python scripts/build_web.py
+npx wrangler pages deploy dist --project-name bulk-proxy-forge
 ```
+
+Configure Cloudflare Pages to serve the `dist` directory. The build includes `functions/gateway/deck.js` as the stateless gateway; deploy from the repository root if the Pages tool requires the `functions` directory beside `dist`. For local development and browser testing only, `npx wrangler pages dev dist --port 8767` serves the same website. No local server is part of the delivered product.
+
+The optional print helper currently recognizes Cloudflare `*.pages.dev` sites and localhost development builds. Its permission list can be extended when a custom domain is assigned. The helper is not needed to download a print ZIP.
+
+## Artwork and templates
+
+The four bundled rarity symbols and Bulk Proxy Forge back are selected automatically. Custom setup can use a public GitHub art folder or a computer art folder. Missing custom art is an error by default; the user can explicitly enable Scryfall fallback. Set symbols can be replaced individually, from a four-image computer folder, or from a four-image public GitHub folder. The one-click GitHub project import keeps its existing folder format; see [GitHub setup import](docs/GITHUB_SETUP_IMPORT.md).
+
+`data.json` can be chosen locally, linked directly on GitHub, or discovered in a one-click GitHub project folder. Its version-1 card entries support `nickname`, `flavor_text`, and `artist`. Custom artwork requires a credit for each image, supplied by a deck-wide artist, per-card artist entry, or `data.json`. Selected Scryfall art retains the printing's artist credit.
+
+Templates are reusable, versioned objects with semantic text regions. The Templates area creates them from built-ins or converts a CardConjurer save, validates compatibility, and imports/exports portable template JSON. Uploaded frame images travel with a template export. A template in use by a saved deck cannot be deleted until the dependency is removed.
+
+The renderer uses the pinned Card Tools v58 source and native CardConjurer runtime. Special layouts are routed to their appropriate renderer. Unsupported structures fail with a clear preparation error instead of receiving an ordinary frame. Finished PNGs are cached by render inputs; saved print orders are immutable snapshots with matching `FRONT/000001.png` and `BACK/000001.png` names for each physical card.
+
+## Development and tests
+
+Install development dependencies from `requirements-dev.txt`, then build the site and run the routine group:
+
+```powershell
 python -m pip install -r requirements-dev.txt
 python scripts/verify_vendor.py
+python scripts/build_web.py
 python -m pytest -q -m routine
-python -m playwright install chromium
+node --test tests_web/*.test.mjs
 ```
 
-Set `PF_BROWSER=1` and `PF_LIVE_CC=1` for real HTTP/browser and pinned upstream-render tests. The optional `PF_DOM=1` component tests use a controlled about:blank DOM. CI distinguishes these from real browser navigation and native rendering. The installed-extension test loads the actual MV3 extension but intercepts the merchant page with a controlled editor fixture. No tests place a real order or pay.
+`RUN_TESTS.bat` runs routine, extended, or complete groups. The extended group includes native rendering, browser website smoke, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
 
-The release ZIP includes source, launchers, tests and a SHA-256 file manifest. Runtime caches, font files and keys are excluded. Source/checkpoints are stored in `andro951/cards/ProxyFoundry`.
-
-## Troubleshooting and scope
-
-Keep the launcher open until rendering or printer transfer finishes. Fix the reported face/source/template and retry; completed images remain saved. Settings → **Download diagnostics ZIP** records recent errors and dependency paths. Review it before sharing because card names and public URLs may appear. Browser storage and printer authorization tokens are omitted.
-
-The Windows launcher is supplied for local use; automated browser runs use Linux Chromium. The live merchant's current UI and actual Windows installation remain distinct from CI's controlled printer fixture. Use the paired ZIP manually if the merchant changes its editor. Always review the printer proof: correct PNGs do not certify bleed settings, paper choice or manufacturing alignment.
+The old Python launcher and `vendor/card_tools` remain in the repository for development and legacy workflows. The website does not ask users to run either.

@@ -1,6 +1,7 @@
 /* Preview and controls only. The compiler independently enforces the same provenance rules. */
 import {$,$$,esc,api,modal,closeModal,errorBox} from './ui.js';
 export function originalArtist(card, face={}) {
+  if(face.selectedArtPrintingId&&face.selectedArtArtist)return String(face.selectedArtArtist).trim();
   const sf=card.scryfall||card;
   const sfFace=sf.card_faces?.[face.index||0]||sf;
   return String(sfFace.artist?.trim()||sf.artist?.trim()||'');
@@ -15,6 +16,7 @@ export function composeCredit(original, artistOverride, deckArtist, mode, kind) 
 function stem(value){return String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[Ææ]/g,'ae').replace(/[Œœ]/g,'oe').replace(/['’]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase();}
 export function artworkKind(deck, card, face, artOverride) {
   if(artOverride)return 'custom';
+  if(face.selectedArtPrintingId)return 'scryfall';
   const source=deck.settings.source||{},mode=source.mode||'scryfall';
   const sfFace=card.scryfall.card_faces?.[face.index||0]||card.scryfall;
   if(mode==='scryfall')return 'scryfall';
@@ -84,13 +86,15 @@ export function creditFields(deck,card,face) {
   <label class="check-line"><input type="checkbox" id="blank-credit" ${face.artistOverride===''?'checked':''}><span>Intentionally leave the custom artist blank</span></label>
   <div class="credit-preview" aria-live="polite"><span class="eyebrow">PRINTED ARTIST LINE</span><strong id="face-credit-preview"></strong><small id="credit-preview-note"></small></div></section>`;
 }
-export function bindCreditFields(root,deck,card,face,getArtOverride){
-  const original=originalArtist(card,face);
+export function bindCreditFields(root,deck,card,face,getArtOverride,getCurrentFace=()=>face){
   const values=()=>({
     artistOverride:$('#blank-credit',root).checked?'':($('#face-artist',root).value.trim()||null),
     artistCreditMode:$('#use-printing-artist',root).checked?'printing':null
   });
   function refresh(){
+    face=getCurrentFace();
+    const original=originalArtist(card,face);
+    $('#printing-artist',root).textContent=original||'Not supplied by Scryfall';
     const kind=artworkKind(deck,card,face,getArtOverride()),locked=kind==='scryfall';
     const value=values();
     $('#face-artist',root).disabled=locked||value.artistCreditMode==='printing'||$('#blank-credit',root).checked;

@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,empty,badge,date,nav,confirmAction} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,empty,badge,date,nav,confirmAction,saveApiFile} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
@@ -14,7 +14,7 @@ function selectTray(){
   const tray=$('#selection-tray'),ids=[...state.selected];
   if(!ids.length){tray.classList.add('hidden');return;}
   const count=state.decks.filter(d=>state.selected.has(d.id)).reduce((s,d)=>s+(d.summary?.cards||0),0);
-  tray.classList.remove('hidden');tray.innerHTML=`<strong>${ids.length} deck${ids.length===1?'':'s'} · ${count} cards</strong><button class="button quiet small" id="clear-selection">Clear</button><button class="button small" id="render-selected">Generate images</button><button class="button primary small" id="order-selected">Review print order →</button>`;
+  tray.classList.remove('hidden');tray.innerHTML=`<strong>${ids.length} deck${ids.length===1?'s':''} · ${count} cards</strong><button class="button quiet small" id="clear-selection">Clear</button><button class="button small" id="render-selected">Generate images</button><button class="button primary small" id="order-selected">Review & Print</button>`;
   $('#clear-selection').onclick=()=>{state.selected.clear();showLibrary();};
   $('#render-selected').onclick=()=>attempt(async()=>{await renderDecks(ids,{onUpdate:async()=>{await refreshLibrary();if(state.route==='decks')showLibrary();}});});
   $('#order-selected').onclick=()=>attempt(()=>chooseOrder(ids));
@@ -45,6 +45,11 @@ function showLibrary(){
   const action=$('#import-deck');if(action)action.textContent='＋ Add New Deck';
   const all=$('[data-filter="all"]');if(all)all.textContent='All Decks';
   const work=$('[data-filter="work"]');if(work)work.textContent='Needs Preparation';
+  const selectAll=document.createElement('button');selectAll.type='button';selectAll.className='button quiet small';
+  const allVisible=decks.length>0&&decks.every(deck=>state.selected.has(deck.id));
+  selectAll.textContent=allVisible?'Deselect All':'Select All';selectAll.disabled=!decks.length;
+  selectAll.onclick=()=>{for(const deck of decks)allVisible?state.selected.delete(deck.id):state.selected.add(deck.id);showLibrary();};
+  $('.filter-pills')?.append(selectAll);
   for(const tile of $$('.deck-tile')){
     $('.tile-open',tile)?.remove();
     tile.style.cursor='pointer';
@@ -63,11 +68,17 @@ function mountNavigation(){
   const name=document.createElement('span');name.textContent='Bulk Proxy Forge';brand.append(mark,name);bar.append(brand);
   const links=document.createElement('nav');links.setAttribute('aria-label','Main navigation');
   links.style.display='flex';links.style.gap='8px';links.style.marginLeft='auto';
-  const items=[['decks','▦','Deck Library','#decks'],['templates','▤','Templates','#templates'],
-               ['settings','⚙','Settings','#settings'],['discord','◉','Discord','https://discord.com/']];
-  for(const [key,icon,title,href] of items){
+  const icons={
+    decks:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 3h8v8H2zM14 3h8v8h-8zM2 14h8v8H2zM14 14h8v8h-8z"/><path d="M4 1h8v8M16 1h8v8M4 12h8v8M16 12h8v8"/></svg>',
+    templates:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="1.5" width="14" height="21" rx="1.7"/><path d="M7 5h10M7 16h10M7 19h10"/></svg>',
+    settings:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.5 2.2 1.7.7 1.9-1.2 2.8 2.8-1.2 1.9.7 1.7L22 10v4l-2.2.5-.7 1.7 1.2 1.9-2.8 2.8-1.9-1.2-1.7.7L14 22h-4l-.5-2.2-1.7-.7-1.9 1.2-2.8-2.8 1.2-1.9-.7-1.7L2 14v-4l2.2-.5.7-1.7-1.2-1.9 2.8-2.8 1.9 1.2 1.7-.7z"/></svg>',
+    discord:'<img src="/site/discord.svg" alt="" width="22" height="22" style="filter:invert(1)">'
+  };
+  const items=[['decks','Deck Library','#decks'],['templates','Templates','#templates'],
+               ['settings','Settings','#settings'],['discord','Discord','https://discord.com/']];
+  for(const [key,title,href] of items){
     const link=document.createElement('a');link.href=href;link.title=title;link.setAttribute('aria-label',title);
-    link.textContent=icon;link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
+    link.innerHTML=icons[key];link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
     if(key==='discord'){link.target='_blank';link.rel='noopener noreferrer';}
     links.append(link);
   }
@@ -104,9 +115,18 @@ async function boot(){
     });
     const ping=()=>window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);
     ping();setTimeout(ping,1000);
+    document.addEventListener('click',event=>{
+      if(!state.bootstrap?.browser)return;
+      const link=event.target.closest('a[download][href^="/api/"]');
+      if(!link)return;
+      event.preventDefault();
+      const name=link.getAttribute('download')||
+        (link.href.includes('/helper/')?'BulkProxyForge_Print_Helper.zip':'BulkProxyForge_Order.zip');
+      attempt(()=>saveApiFile(link.getAttribute('href'),name));
+    });
     document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a&&state.dirty){e.preventDefault();nav(a.getAttribute('href').slice(1));}});
     await route();
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nKeep the launcher window open, then reload this page.</div>`;}
+  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nReload this page to reopen your workspace.</div>`;}
 }
 window.addEventListener('error',e=>{if(state.csrf)api('/api/client-error',{error:e.message+'\n'+(e.error?.stack||'')}).catch(()=>{});});
 boot();

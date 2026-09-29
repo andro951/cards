@@ -18,6 +18,16 @@ from .storage import Store
 from . import server
 
 
+class BrowserHeaders(dict):
+    """Fetch Headers are lowercase; the HTTP handler uses canonical names."""
+
+    def __init__(self, headers):
+        super().__init__((str(key).lower(), value) for key, value in headers.items())
+
+    def get(self, key, default=None):
+        return super().get(str(key).lower(), default)
+
+
 class BrowserJobs:
     def __init__(self, store):
         self.store = store
@@ -63,7 +73,7 @@ class BrowserHandler(server.Handler):
         self.command = method
         self.path = path
         self._body = body
-        self.headers = headers
+        self.headers = BrowserHeaders(headers)
         self.response = None
 
     @property
@@ -83,8 +93,20 @@ class BrowserHandler(server.Handler):
         path = Path(path)
         if not path.is_file():
             raise FileNotFoundError('The saved file is missing.')
-        self.send_bytes(path.read_bytes(), mime or mimetypes.guess_type(path.name)[0]
-                        or 'application/octet-stream', filename=filename)
+        kind=mime or mimetypes.guess_type(path.name)[0] or 'application/octet-stream'
+        requested=re.fullmatch(r'bytes=(\d+)-(\d+)',self.headers.get('Range',''))
+        if requested:
+            start,end=map(int,requested.groups())
+            size=path.stat().st_size
+            if start>=size or end<start or end-start>=8*1024*1024:
+                raise ValidationError('Choose a valid bounded download range.')
+            count=min(end,size-1)-start+1
+            with path.open('rb') as source:
+                source.seek(start)
+                content=source.read(count)
+            return self.send_bytes(content,kind,206,filename=filename,headers={
+                'Accept-Ranges':'bytes','Content-Range':f'bytes {start}-{start+len(content)-1}/{size}'})
+        self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
         if path == '/api/backups/inspect':

@@ -1,6 +1,6 @@
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob} from './ui.js';
-import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
+import {renderSetup,templateOptions,pickFile,rarities,cancelSetupPreviews} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {chooseOrder} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
@@ -83,7 +83,7 @@ export async function importDeck(existing=null){
   };
 }
 function preview(c,f){
-  return f.compiled?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
+  return f.compiled?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
 }
 function backPreview(c,d){
   if(c.backOverride)return asset(c.backOverride);
@@ -104,6 +104,22 @@ export async function showDeck(id,tab='cards'){
     <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
   $('.back-to-library')?.remove();
+  const deckTitle=$('.page-head h1');
+  deckTitle.title='Click to rename deck';deckTitle.tabIndex=0;deckTitle.style.cursor='text';
+  deckTitle.onclick=()=>{
+    const input=document.createElement('input');input.type='text';input.maxLength=200;input.value=d.name;
+    input.style.cssText='font:inherit;max-width:100%;min-width:300px';deckTitle.replaceWith(input);input.focus();input.select();
+    let done=false;
+    const finish=async(save)=>{if(done)return;done=true;
+      if(save&&input.value.trim()&&input.value.trim()!==d.name){
+        try{await api('/api/decks/'+id+'/save',{revision:d.revision,name:input.value.trim()});await showDeck(id,tab);}
+        catch(error){toast(error.message,true);await showDeck(id,tab);}
+      }else await showDeck(id,tab);
+    };
+    input.onkeydown=event=>{if(event.key==='Enter')finish(true);if(event.key==='Escape')finish(false);};
+    input.onblur=()=>finish(true);
+  };
+  deckTitle.onkeydown=event=>{if(event.key==='Enter')deckTitle.click();};
   $('.page-head .eyebrow')?.remove();
   $('#add-cards')?.remove();
   $('[data-tab="review"]')?.remove();
@@ -130,11 +146,11 @@ export async function showDeck(id,tab='cards'){
   }
   function cardsGrid(){
     let cards=d.cards.filter(c=>c.name.toLowerCase().includes(v.query.toLowerCase()));
-    if(v.filter==='attention')cards=cards.filter(c=>c.faces.some(f=>f.error||f.compiled?.crop?.warning||f.compiled?.flags?.length));
+    if(v.filter==='attention')cards=cards.filter(c=>c.faces.some(f=>f.error||(((f.compiled?.crop?.warning||f.compiled?.flags?.length)&&f.acceptedWarningKey!==f.compiled?.renderKey))));
     if(v.filter==='unrendered')cards=cards.filter(c=>c.faces.some(f=>!f.compiled?.render));
     $('#deck-body').innerHTML=`${dirty?'<div class="notice info">You have saved changes to prepare. Generate images will rebuild only the affected faces and reuse unchanged PNGs.</div>':''}<div class="toolbar"><div class="filter-pills"><button data-card-filter="all" class="${v.filter==='all'?'active':''}">All cards</button><button data-card-filter="unrendered" class="${v.filter==='unrendered'?'active':''}">Not rendered</button><button data-card-filter="attention" class="${v.filter==='attention'?'active':''}">Needs review</button></div><label class="search"><input id="card-search" type="search" aria-label="Find a card" placeholder="Find a card…" value="${esc(v.query)}"></label><button class="button small" id="quick-order">Review order ↗</button></div>${cards.length?`<div class="card-grid">${cards.map(c=>{
       const f=c.faces[0],front=preview(c,f),back=backPreview(c,d),done=!!f.compiled?.render;
-    const warning=c.faces.some(x=>x.error||x.compiled?.crop?.warning||x.compiled?.flags?.length);
+    const warning=c.faces.some(x=>x.error||(((x.compiled?.crop?.warning||x.compiled?.flags?.length)&&x.acceptedWarningKey!==x.compiled?.renderKey)));
     return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span><span class="card-name-pill" title="${esc(c.name)}">${esc(c.name)}</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button></article>`;
     }).join('')}</div>`:empty(d.cards.length?'No cards match':'This deck is waiting for cards',d.cards.length?'Try a different search or review filter.':'Add a card list or a Scryfall export to get started.',`<button class="button primary" id="empty-add">＋ Add cards</button>`)}<div class="subtitle-line">Hover a card to see its back. Click it to edit its artist, art, printing, quantity or template. Real double-faced cards hover to their actual reverse face.</div>`;
     $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
@@ -147,11 +163,12 @@ export async function showDeck(id,tab='cards'){
     $('#quick-order')?.remove();
     $('.subtitle-line', $('#deck-body'))?.remove();
     $('#card-search').oninput=e=>{v.query=e.target.value;const start=e.target.selectionStart??v.query.length,end=e.target.selectionEnd??start;cardsGrid();const search=$('#card-search');search.focus();try{search.setSelectionRange(start,end)}catch{}};
-    $('#quick-order').onclick=()=>attempt(()=>chooseOrder([id]));if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
+    if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
   }
   cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
 }
 async function generate(d){
+  await cancelSetupPreviews();
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
@@ -178,8 +195,8 @@ function deckMenu(d){
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
-  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});location.href=out.download;});
-  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});location.href=out.download;});
+  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Originals.zip');else location.href=out.download;});
+  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Cropped_Art.zip');else location.href=out.download;});
   $('#download-review-images').onclick=()=>attempt(async()=>{
     closeModal();
     let current=await api('/api/decks/'+d.id);
@@ -192,7 +209,7 @@ function deckMenu(d){
       }
     }
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
-    location.href=out.download;
+    if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip');else location.href=out.download;
   });
   $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
 }
@@ -236,22 +253,95 @@ async function inspect(deck,card,index=0){
   const artShapeHint=fiveSevenArt?'<small>Recommended source shape: <b>5:7</b>.</small>':'';
   const renderNotice=()=>{
     const parts=[];
-    if(f.compiled?.crop?.warning){const crop=f.compiled.crop;parts.push(`<div class="notice">Crop warning: ${(crop.cropX*100).toFixed(1)}% width / ${(crop.cropY*100).toFixed(1)}% height outside the art window.</div>`);}
     if(f.error)parts.push(`<div class="notice error">${esc(f.error)}</div>`);
     return parts.join('');
   };
-  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${hasPhysicalReverse(c)?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line" id="inspector-status">${esc(comp?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.')}</div><div id="inspector-notices">${renderNotice()}</div></div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity in this deck</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Selected printing</span><button class="button" id="choose-printing">${esc((c.scryfall.set||'').toUpperCase())} · ${esc(c.scryfall.collector_number||'')} &nbsp; Change ↗</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
+  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${hasPhysicalReverse(c)?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line" id="inspector-status">${esc(comp?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.')}</div><div id="inspector-notices">${renderNotice()}</div></div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Artwork</span><button class="button" id="choose-printing">Select Art</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
   <div class="field"><span>Custom artwork override</span><div class="actions"><button class="button small" id="face-art">Upload art</button><button class="button quiet small" id="clear-face-art">Use deck artwork source</button></div><small id="face-art-state">${artOverride?'Individual custom artwork selected':esc(comp?.artOrigin||'Using deck source')}</small>${artShapeHint}</div>
   <div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">${hasPhysicalReverse(c)?'Use actual reverse':'Use deck back'}</button></div><small id="face-back-state">${backOverride?'Individual back selected':hasPhysicalReverse(c)?'Paired with '+esc(physicalReverseName(c)):'Using deck default back'}</small><div id="face-back-picker" class="hidden"></div></div>
   <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Nickname / reskin name <small>optional</small></span><input id="nickname-override" value="${esc(f.semanticOverrides?.nickname??c.scryfall.flavor_name??'')}" placeholder="Use Scryfall flavor name, if any"><small>When nonblank, automatically uses the Godzilla-style alternate-name treatment while the real card name stays underneath.</small></label><label class="field"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details><div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="cancel-card">Cancel</button><button class="button quiet" id="download-review-image">Download review image</button><button class="button" id="generate-card">Generate this card</button><button class="button primary" id="save-card">Save card</button>`});
-  const creditControls=bindCreditFields(host,d,c,f,()=>artOverride);
+  let selectedSide=index===1?'back':'front';
+  const large=$('#inspector-image',host);
+  let setSide=()=>{};
+  if(large){
+    const sideChoices=document.createElement('div');sideChoices.className='actions';sideChoices.style.cssText='justify-content:center;margin:10px 0';
+    const sideButtons={};
+    for(const [side,label] of [['front','Front'],['back','Back']]){
+      const button=document.createElement('button');button.type='button';button.className='button quiet small';button.setAttribute('aria-label','Show '+label.toLowerCase()+' side');
+      button.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px';
+      const picture=document.createElement('img');picture.style.cssText='width:52px;height:73px;object-fit:contain';picture.alt='';
+      button.append(picture,document.createTextNode(label));button.onclick=()=>setSide(side);
+      sideButtons[side]={button,picture};sideChoices.append(button);
+    }
+    large.after(sideChoices);
+    setSide=side=>{
+      selectedSide=side;
+      const front=preview(c,c.faces[0]),back=backPreview(c,d);
+      sideButtons.front.picture.src=front||'';sideButtons.back.picture.src=back||'';
+      large.src=(side==='back'?back:front)||'';large.alt=c.name+' '+side;
+      for(const [key,item] of Object.entries(sideButtons)){
+        item.button.classList.toggle('primary',side===key);
+        item.button.style.borderColor=side===key?'#f28b32':'';
+      }
+    };
+    setSide(selectedSide);
+  }
+  const quantityInput=$('#card-qty',host),quantityRow=document.createElement('div');quantityRow.className='actions';
+  const decrease=document.createElement('button'),increase=document.createElement('button');
+  decrease.type=increase.type='button';decrease.className=increase.className='button small';decrease.textContent='−';increase.textContent='+';
+  decrease.setAttribute('aria-label','Decrease quantity');increase.setAttribute('aria-label','Increase quantity');
+  quantityInput.style.width='68px';quantityInput.before(quantityRow);quantityRow.append(decrease,quantityInput,increase);
+  const updateQuantity=()=>{decrease.disabled=Number(quantityInput.value)<=1;increase.disabled=Number(quantityInput.value)>=9999;};
+  decrease.onclick=()=>{quantityInput.value=Math.max(1,Number(quantityInput.value||1)-1);updateQuantity();};
+  increase.onclick=()=>{quantityInput.value=Math.min(9999,Number(quantityInput.value||1)+1);updateQuantity();};
+  quantityInput.oninput=updateQuantity;updateQuantity();
+  const templateSelect=$('#face-template',host);templateSelect.closest('label').remove();
+  const templateLabel=document.createElement('label');templateLabel.className='field';
+  const templateTitle=document.createElement('span');templateTitle.textContent='Template for this face';
+  templateLabel.append(templateTitle,templateSelect);
+  $('#fit-x',host).closest('details').append(templateLabel);
+  const rulesPicker=document.createElement('button');rulesPicker.type='button';rulesPicker.id='select-rules-text';rulesPicker.className='button small';rulesPicker.textContent='Choose official rules text';
+  $('#rules-override',host).before(rulesPicker);
+  const flavorPicker=document.createElement('button');flavorPicker.type='button';flavorPicker.id='select-flavor-text';flavorPicker.className='button small';flavorPicker.textContent='Choose official flavor text';
+  $('#flavor-override',host).before(flavorPicker);
+  const creditControls=bindCreditFields(host,d,c,f,()=>artOverride,()=>f);
   $('#face-template').value=f.templateOverride||'';
   const syncCurrent=updated=>{d=updated;c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed.');f=c.faces.find(x=>x.id===f.id)||c.faces[index]||c.faces[0];};
+  const renderWarning=()=>{
+    let panel=$('#inspector-warning',host);
+    if(!panel){panel=document.createElement('div');panel.id='inspector-warning';panel.className='notice';panel.style.cssText='border:2px solid #ef8b29;margin-bottom:16px';$('.modal-body',host).prepend(panel);}
+    panel.replaceChildren();
+    const current=f.compiled||{};
+    const crop=Boolean(current.crop?.warning),layout=Boolean(current.flags?.length);
+    if(!current.render||(!crop&&!layout)||f.acceptedWarningKey===current.renderKey){panel.remove();return;}
+    const title=document.createElement('strong');title.textContent=crop?'Part of this artwork is outside the frame and will not appear on the printed card. Does the art still look okay?':'This card layout needs a visual check. Does it look okay?';
+    const actions=document.createElement('div');actions.className='actions';actions.style.marginTop='10px';
+    const accept=document.createElement('button');accept.type='button';accept.className='button primary small';accept.textContent='It Looks Fine';
+    accept.onclick=()=>attempt(async()=>{
+      syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,renderKey:current.renderKey,acceptWarning:true}));
+      refreshInspector();await showDeck(d.id,'cards');toast('This rendered face is accepted for printing.');
+    });
+    const fix=document.createElement('button');fix.type='button';fix.className='button small';fix.textContent='Fix Art';
+    fix.onclick=()=>{
+      const details=$('#fit-x',host).closest('details');details.open=true;
+      $('#face-art',host).scrollIntoView({block:'center'});$('#face-art',host).focus();
+    };
+    actions.append(accept,fix);panel.append(title,actions);
+  };
   const refreshInspector=()=>{
-    const img=$('#inspector-image');const src=preview(c,f);if(img&&src)img.src=src;
+    setSide(selectedSide);
     if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.';
     if($('#inspector-notices'))$('#inspector-notices').innerHTML=renderNotice();
+    renderWarning();
   };
+  renderWarning();
+  const largeImage=$('#inspector-image',host);
+  if(largeImage){largeImage.style.cursor='zoom-in';largeImage.onclick=()=>{
+    const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:10001;background:#0b0c0ef5;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;touch-action:pan-x pan-y pinch-zoom';
+    const image=document.createElement('img');image.src=largeImage.src;image.alt=largeImage.alt;image.style.cssText='max-width:100%;max-height:100%;object-fit:contain;touch-action:pan-x pan-y pinch-zoom';
+    const close=document.createElement('button');close.type='button';close.className='button quiet icon';close.textContent='×';close.setAttribute('aria-label','Close enlarged card');close.style.cssText='position:fixed;right:18px;top:18px;z-index:1';close.onclick=()=>overlay.remove();
+    overlay.onclick=event=>{if(event.target===overlay)overlay.remove();};overlay.append(image,close);document.body.append(overlay);
+  };}
   const setBusy=busy=>['cancel-card','download-review-image','generate-card','save-card'].forEach(id=>{const el=$('#'+id);if(el)el.disabled=busy;});
   const cardRenderMatchesCache=card=>{
     const faces=card?.faces||[];
@@ -321,23 +411,89 @@ async function inspect(deck,card,index=0){
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
-    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
+    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review.png');else location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
-  $('#choose-printing').onclick=()=>attempt(()=>printings(d,c));
+  $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{
+    syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,selectedArtPrintingId:id,artOverride:null}));
+    artOverride=null;fit={};$('#face-art-state',host).textContent='Scryfall artwork selected; generate this card to update the render.';
+    creditControls.refresh();refreshInspector();await showDeck(d.id,'cards');
+  }));
+  $('#select-rules-text').onclick=()=>attempt(()=>chooseOfficialText(d,c,f,'rules',async selection=>{
+    syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,officialRulesSelection:selection}));
+    refreshInspector();await showDeck(d.id,'cards');
+  }));
+  $('#select-flavor-text').onclick=()=>attempt(()=>chooseOfficialText(d,c,f,'flavor',async selection=>{
+    syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,officialFlavorSelection:selection}));
+    refreshInspector();await showDeck(d.id,'cards');
+  }));
   $('#remove-card').onclick=()=>attempt(async()=>{closeModal();if(!await confirmAction('Remove '+c.name+'?',`Remove all ${c.quantity} copies from this deck? Other decks are not changed.`,'Remove card',true))return;await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,remove:true});await showDeck(d.id);});
   $('#copy-token').onclick=()=>copyToken(d,c);
 }
 
-async function printings(d,c){
-  const host=modal('Choose a printing · '+c.name,loading(),{size:'large'});let next=null;
-  async function load(append=false){
-    const result=await api('/api/printings',{name:c.name,refresh:d.settings.refreshData,nextPage:append?next:null});next=result.next_page;
-    let grid=$('.printing-grid',host);
-    if(!append){$('.modal-body',host).innerHTML='<p class="muted" style="margin-bottom:18px">This changes the selected paper printing and its default artwork. Individual custom-art overrides are kept.</p><div class="printing-grid"></div><button class="button quiet section-gap" id="more-printings">More printings</button>';grid=$('.printing-grid',host);}
-    for(const sf of result.data){const b=document.createElement('button');b.className='printing-option';const url=sf.image_uris?.normal||sf.card_faces?.[0]?.image_uris?.normal;b.innerHTML=`${url?`<img src="${esc(url)}" loading="lazy" alt="${esc(sf.name)}">`:esc(sf.name)}<small>${esc((sf.set||'').toUpperCase())} · ${esc(sf.collector_number)}<br>${esc(sf.artist||sf.card_faces?.[0]?.artist||'')}</small>`;b.onclick=()=>attempt(async()=>{b.disabled=true;await api('/api/decks/'+d.id+'/cards/'+c.id+'/printing',{revision:d.revision,source:sf.id});closeModal();await showDeck(d.id);toast('Printing changed. Generate images to use its artwork.');});grid.append(b);}
-    $('#more-printings').classList.toggle('hidden',!next);$('#more-printings').onclick=()=>attempt(()=>load(true));
-  }
-  try{await load();}catch(e){errorBox($('.modal-body',host),e.message);}
+function choiceOverlay(title,description){
+  const overlay=document.createElement('div');overlay.className='modal-backdrop';overlay.style.zIndex='10002';
+  overlay.innerHTML=`<section class="modal large" role="dialog" aria-modal="true"><header class="modal-header"><h2>${esc(title)}</h2><button class="button quiet icon" aria-label="Close picker">×</button></header><div class="modal-body"><p class="muted">${esc(description)}</p><div class="choice-content"></div></div></section>`;
+  overlay.querySelector('button').onclick=()=>overlay.remove();overlay.onclick=event=>{if(event.target===overlay)overlay.remove();};
+  document.body.append(overlay);return {overlay,content:overlay.querySelector('.choice-content')};
+}
+async function printingChoices(deck,card,face,content,draw){
+  let next=null;const seen=new Set();
+  const more=document.createElement('button');more.type='button';more.className='button quiet section-gap';more.textContent='More printings';
+  const list=document.createElement('div');list.className='printing-grid';content.append(list,more);
+  const load=async()=>{
+    more.disabled=true;more.textContent='Loading printings…';
+    try{
+      const result=await api('/api/printings',{name:card.name,refresh:deck.settings.refreshData,nextPage:next});next=result.next_page;
+      for(const sf of result.data||[]){
+        const candidate=sf.card_faces?.[face.index]||sf;
+        if(card.scryfall.oracle_id&&sf.oracle_id&&card.scryfall.oracle_id!==sf.oracle_id)continue;
+        if(candidate.name&&face.name&&candidate.name!==face.name&&!sf.name?.includes(face.name))continue;
+        if(seen.has(sf.id))continue;seen.add(sf.id);draw(list,sf,candidate);
+      }
+      more.classList.toggle('hidden',!next);
+    }finally{more.disabled=false;more.textContent='More printings';}
+  };
+  more.onclick=()=>attempt(load);
+  await load();
+  while(next)await load();
+}
+async function chooseArt(deck,card,face,apply){
+  const {overlay,content}=choiceOverlay('Select Art · '+face.name,'Choose artwork from an official Scryfall printing. This changes only the image and its artist credit; the card’s imported printing and rarity stay the same.');
+  let selected=face.selectedArtPrintingId||card.scryfall.id;
+  const footer=document.createElement('footer');footer.className='modal-footer';
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='button quiet';cancel.textContent='Cancel';cancel.onclick=()=>overlay.remove();
+  const confirm=document.createElement('button');confirm.type='button';confirm.className='button primary';confirm.textContent='OK';
+  confirm.onclick=()=>attempt(async()=>{confirm.disabled=true;try{await apply(selected);overlay.remove();toast('Artwork selected. Generate this card to update the render.');}finally{confirm.disabled=false;}});
+  footer.append(cancel,confirm);overlay.querySelector('.modal').append(footer);
+  try{
+    await printingChoices(deck,card,face,content,(grid,sf,candidate)=>{
+      const url=candidate.image_uris?.art_crop||sf.image_uris?.art_crop||candidate.image_uris?.normal||sf.image_uris?.normal;
+      if(!url)return;
+      const b=document.createElement('button');b.type='button';b.className='printing-option';
+      b.innerHTML=`<img src="${esc(url)}" loading="lazy" alt="Artwork from ${esc(sf.set_name||sf.set||'Scryfall')}"><small>${esc((sf.set||'').toUpperCase())} · ${esc(sf.collector_number||'')}<br>${esc(candidate.artist||sf.artist||'')}</small>`;
+      b.dataset.printingId=sf.id;b.setAttribute('aria-pressed',selected===sf.id?'true':'false');if(selected===sf.id)b.style.borderColor='#f28b32';
+      b.onclick=()=>{selected=sf.id;for(const option of grid.querySelectorAll('[data-printing-id]')){const active=option.dataset.printingId===selected;option.setAttribute('aria-pressed',active?'true':'false');option.style.borderColor=active?'#f28b32':'';}};
+      grid.append(b);
+    });
+  }catch(e){errorBox(content,e.message);}
+}
+async function chooseOfficialText(deck,card,face,kind,apply){
+  const rules=kind==='rules',label=rules?'rules':'flavor';
+  const {overlay,content}=choiceOverlay('Choose official '+label+' text · '+face.name,'Current Oracle text is suggested. A typed override remains separate and takes priority until you clear it.');
+  const suggested=document.createElement('button');suggested.type='button';suggested.className='button primary section-gap';suggested.textContent='Use current '+(rules?'Oracle':'printing flavor')+' text (suggested)';
+  suggested.onclick=()=>attempt(async()=>{await apply(null);overlay.remove();});content.append(suggested);
+  const seen=new Set();
+  try{
+    await printingChoices(deck,card,face,content,(grid,sf,candidate)=>{
+      for(const field of (rules?['oracle_text','printed_text']:['flavor_text'])){
+        const value=String(candidate[field]||sf[field]||'').trim();if(!value||seen.has(field+'\n'+value))continue;seen.add(field+'\n'+value);
+        const b=document.createElement('button');b.type='button';b.className='printing-option';b.style.textAlign='left';
+        b.innerHTML=`<strong>${esc(field==='printed_text'?'Printed wording':field==='oracle_text'?'Oracle wording':'Flavor text')}</strong><small>${esc((sf.set||'').toUpperCase())} · ${esc(sf.collector_number||'')}</small><p style="white-space:pre-wrap">${esc(value)}</p>`;
+        b.onclick=()=>attempt(async()=>{b.disabled=true;try{await apply({printingId:sf.id,field});overlay.remove();toast('Official '+label+' text selected.');}finally{b.disabled=false;}});
+        grid.append(b);
+      }
+    });
+  }catch(e){errorBox(content,e.message);}
 }
 function copyToken(d,c){
   const host=modal('Copy token · '+c.name,`<p class="muted" style="margin-bottom:18px">Uses the preserved Card Tools token layout. Prepare the source card before creating a token.</p><label class="check-line"><input id="token-nonlegendary" type="checkbox" checked><span>Make it nonlegendary</span></label><label class="field"><span>Creature subtype override <small>optional</small></span><input id="token-subtypes" placeholder="e.g. Illusion"></label><label class="field"><span>Power / toughness <small>optional</small></span><input id="token-pt" placeholder="e.g. 0/1"></label><label class="field"><span>Frame color</span><select id="token-color"><option value="">Use source color</option>${['W','U','B','R','G','M','A','L'].map(x=>`<option>${x}</option>`).join('')}</select></label>`,{size:'small',footer:'<button class="button primary" id="make-token">Add copy token</button>'});

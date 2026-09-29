@@ -24,7 +24,7 @@ from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION, validate_template, stable_hash
 from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
 from .jobs import Jobs
-from .github_setup import import_github_setup, import_card_data_url, parse_card_data_json, validate_card_data_for_deck
+from .github_setup import import_github_setup, import_card_data_url, import_symbol_folder, parse_card_data_json, validate_card_data_for_deck
 from .orders import Orders
 from .transfer_batches import TransferBatches, MAX_CHUNK_BYTES
 from .runtime import Runtime
@@ -170,8 +170,8 @@ class App:
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION,
                 'deckName': plan.get('deckName'), 'cardName': plan.get('cardName')}
 
-    def start_template_preview_session(self, deck_id, group, settings, card_data=None):
-        plan=self.ws.template_preview_targets(deck_id,group,settings,card_data)
+    def start_template_preview_session(self, deck_id, group, settings, card_data=None, choices=None):
+        plan=self.ws.template_preview_targets(deck_id,group,settings,card_data,choices)
         ident=uid();now=time.time()
         targets={t['key']:t for t in plan['targets']}
         with self.lock:
@@ -434,10 +434,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/export', p):
-            template=self.app.store.get('templates',m[1])
-            if not template:raise FileNotFoundError('Template not found.')
-            if template.get('schemaVersion')!=2:raise ValidationError('Open and save this legacy template in the new editor before exporting it.')
-            value={k:template[k] for k in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+            value=self.app.ws.export_template_file(m[1])
             return self.send_bytes(json.dumps(value,ensure_ascii=False,indent=2).encode(),'application/json',filename='BulkProxyForge_Template.json')
         if p == '/api/style-presets': return self.respond(self.app.ws.style_presets())
         if m := re.fullmatch(r'/api/style-presets/([-a-f0-9]{36})/export', p):
@@ -552,6 +549,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(self.app.jobs.start('Restore workspace backup', restore))
         d = self.data()
         if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
+        if p == '/api/setup/custom-art-previews':
+            return self.respond(self.app.ws.custom_art_previews(d['deckId'],d['settings']))
         if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
@@ -571,6 +570,8 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/symbols/generate': return self.respond(rarity_variants(self.app.store, d['assetId']))
         if p == '/api/setup/github-import':
             return self.respond(self.app.jobs.start('Import GitHub setup', lambda u, c: import_github_setup(self.app.ws, d, u, c)))
+        if p == '/api/setup/symbols/github':
+            return self.respond(self.app.jobs.start('Import GitHub set symbols', lambda u, c: import_symbol_folder(self.app.ws, d, u, c)))
         if p == '/api/setup/card-data/github':
             return self.respond({'cardData': import_card_data_url(self.app.ws, d)})
         if p == '/api/svg/validate':
@@ -579,7 +580,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/render-sessions': return self.respond(self.app.start_render_session(d.get('deckIds', []), force=d.get('force') is True))
         if p == '/api/render-sessions/card': return self.respond(self.app.start_card_render_session(d['deckId'], d['cardId'], force=d.get('force') is True))
         if p == '/api/render-sessions/template-previews':
-            return self.respond(self.app.start_template_preview_session(d['deckId'],d['group'],d['settings'],d.get('cardData')))
+            return self.respond(self.app.start_template_preview_session(d['deckId'],d['group'],d['settings'],d.get('cardData'),d.get('choices')))
         if p == '/api/render-sessions/template-source':
             return self.respond(self.app.start_template_source_session(d.get('entries')))
         if p == '/api/render-sessions/template-model':

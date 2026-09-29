@@ -1,13 +1,13 @@
 /* Final ZIP transport only. CardConjurer runs in the local workspace, not this extension. */
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const TARGET='https://www.tcgplaytest.com';
 const CHUNK=1024*1024;
-function localOrigin(url){try{const u=new URL(url);if(u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port&&!u.username&&!u.password)return u.origin;}catch{}throw new Error('The order must come from a local Proxy Foundry workspace.');}
+function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&u.hostname.endsWith('.pages.dev'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}
 function validateTransfer(value,sender){
-  const origin=localOrigin(sender.url||sender.tab?.url||'');
+  const origin=workspaceOrigin(sender.url||sender.tab?.url||'');
   if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Open the order from the main Proxy Foundry tab.');
   if(!value||value.origin!==origin||!/^[-a-f0-9]{36}$/.test(value.id)||!/^[-_A-Za-z0-9]{32,100}$/.test(value.secret))throw new Error('Invalid print transfer. Rebuild or reopen the order.');
-  return {origin,id:value.id,secret:value.secret,expires:Date.now()+60*60*1000,sourceTab:sender.tab.id};
+  return {origin,id:value.id,secret:value.secret,browser:value.browser===true,expires:Date.now()+60*60*1000,sourceTab:sender.tab.id};
 }
 async function getTransfer(sender){
   const u=new URL(sender.url||sender.tab?.url||'');
@@ -17,6 +17,11 @@ async function getTransfer(sender){
   t.expires=Date.now()+60*60*1000;await chrome.storage.session.set({[key]:t});return t;
 }
 async function request(t,kind,offset,batch){
+  if(t.browser){
+    const response=await chrome.tabs.sendMessage(t.sourceTab,{type:'PF_BROWSER_TRANSFER',id:t.id,secret:t.secret,kind,offset,batch});
+    if(!response?.ok)throw new Error(response?.error||'The browser workspace could not read its saved order.');
+    return response.data;
+  }
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),30000);
   try{
     const headers={'X-Proxy-Transfer-Token':t.secret};

@@ -26,21 +26,18 @@ export function mountBackPicker(root,initial,onChange,{onBusy=()=>{},allowNone=f
     const info={default:'Bulk Proxy Forge · default',icon:'Your icon on the forge back',custom:'Your complete back',none:'No back selected'}[selected];
     const url=current.backAsset?asset(current.backAsset):'';
     root.innerHTML=`<div class="back-mode-choices" role="group" aria-label="Card-back design">
-      <button type="button" class="back-mode ${selected==='default'?'selected':''}" data-back-action="default" aria-pressed="${selected==='default'}" ${busy?'disabled':''}><b>Default back</b><small>Dragon & anvil · ready to use</small></button>
-      <button type="button" class="back-mode ${isIcon?'selected':''}" data-back-action="icon" aria-pressed="${isIcon}" ${busy?'disabled':''}><b>${isIcon?'Change icon':'Upload icon'}</b><small>Your logo in a protected square</small></button>
-      <button type="button" class="back-mode ${selected==='custom'?'selected':''}" data-back-action="custom" aria-pressed="${selected==='custom'}" ${busy?'disabled':''}><b>Upload full back</b><small>Only fully transparent edge padding is trimmed</small></button>
+      <button type="button" class="back-mode ${selected==='default'?'selected':''}" data-back-action="default" aria-pressed="${selected==='default'}" ${busy?'disabled':''}><b>Default Back</b><small>Bulk Proxy Forge back</small></button>
+      <button type="button" class="back-mode ${isIcon?'selected':''}" data-back-action="icon" aria-pressed="${isIcon}" ${busy?'disabled':''}><b>Upload Icon</b><small>Your icon on our back</small></button>
+      <button type="button" class="back-mode ${selected==='custom'?'selected':''}" data-back-action="custom" aria-pressed="${selected==='custom'}" ${busy?'disabled':''}><b>Upload Full Back</b><small>Your custom back</small></button>
     </div>
     <div class="back-design-preview"><div class="back-preview-canvas" style="aspect-ratio:${isIcon?bw+'/ '+bh:'auto'}">
       ${url?`<img src="${esc(url)}" alt="${esc(info)}" data-back-preview>`:'<div class="back-none-preview">Choose a back</div>'}
       ${isIcon?`<span class="back-icon-guide hidden" style="left:${100*box.x/bw}%;top:${100*box.y/bh}%;width:${100*box.size/bw}%;height:${100*box.size/bh}%" aria-hidden="true"></span>`:''}
-      </div><div class="back-preview-detail"><b>${esc(info)}</b><p>${isIcon?'Fits inside the square without cropping or stretching. Only fully transparent padding is trimmed.':'Only fully transparent edge padding is trimmed. Otherwise the uploaded design is preserved. Deck backs do not replace a real double-faced reverse.'}</p>
+      </div><div class="back-preview-detail"><b>${esc(info)}</b>${selected==='custom'?'<p class="notice">Do not upload the official Magic card back for this proxy-print workflow.</p>':''}
       ${isIcon?`<label class="check-line"><input type="checkbox" data-back-guide><span>Show safe icon area<small>${box.size} × ${box.size} pixels · preview only</small></span></label>`:''}
-      ${url?`<a class="button quiet small" href="${esc(url)}" download="Bulk_Proxy_Forge_Back.png">Save this back PNG</a>`:''}
-      ${allowNone?'<button type="button" class="button quiet small" data-back-action="none">Clear selection</button>':''}
-      <p class="subtitle-line">${busy?'Processing image…':'Changes to a back do not regenerate fronts.'}</p>
+      <p class="subtitle-line">${busy?'Processing image…':''}</p>
       </div></div>
-      ${warnings.map(w=>`<div class="notice">${esc(w)}</div>`).join('')}
-      <p class="subtitle-line">Transparent PNG icons work best. Title, frame and PROXY plaque stay untouched. Preview the final pair before ordering.</p>`;
+      ${warnings.map(w=>`<div class="notice">${esc(w)}</div>`).join('')}`;
     $$('[data-back-action]',root).forEach(button=>button.onclick=()=>{
       const action=button.dataset.backAction;
       if(action==='default'){warnings=[];commit({backAsset:catalog.default.id,backDesign:{mode:'default',template:'forge-default-v1'}});}

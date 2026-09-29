@@ -15,8 +15,8 @@ from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','allCardsTokens','tokenOptions'}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','showFlavorText','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self._default_symbols=None
@@ -105,6 +105,7 @@ class Workspace:
             if ident and not self.store.asset(ident):raise ValidationError('A selected uploaded image is missing.')
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
+        s['showFlavorText']=bool(s.get('showFlavorText',True))
         raw_data_source=s.get('dataJsonSource')
         if raw_data_source in (None,''):
             s['dataJsonSource']=None
@@ -129,6 +130,9 @@ class Workspace:
             return value
         token_power=token_text('power','Token power override',20)
         token_toughness=token_text('toughness','Token toughness override',20)
+        legendary_mode=raw_token_options.get('legendaryMode','nonlegendary' if raw_token_options.get('nonlegendary') else 'original')
+        if legendary_mode not in {'nonlegendary','original','legendary'}:
+            raise ValidationError('Choose a valid token legendary mode.')
         if '/' in token_power or '/' in token_toughness:
             raise ValidationError('Use the separate Power and Toughness boxes; do not include a slash.')
         s['tokenOptions']={
@@ -136,6 +140,7 @@ class Workspace:
             'toughness':token_toughness,
             'subtypes':token_text('subtypes','Token subtype override',200),
             'nonlegendary':bool(raw_token_options.get('nonlegendary',False)),
+            'legendaryMode':legendary_mode,
         }
         s['artist']=credit_text(s.get('artist'))
         for group,choice in s.get('templateRules',{}).items():
@@ -195,7 +200,7 @@ class Workspace:
                                 if template_key.startswith(('auto:','builtin:')) and template_version!=1:d['status']='draft'
                             elif old_key!=template_key or old_version!=template_version:d['status']='draft'
                 if r:ready+=1
-                if (comp.get('crop') or {}).get('warning') or comp.get('flags'):warns+=1
+                if ((comp.get('crop') or {}).get('warning') or comp.get('flags')) and f.get('acceptedWarningKey')!=comp.get('renderKey'):warns+=1
         d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns}
         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
         return d
@@ -308,7 +313,46 @@ class Workspace:
             if patch.get('faceId'):
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
+                if 'acceptWarning' in patch:
+                    comp=f.get('compiled') or {}
+                    if not comp.get('renderKey') or not self.store.render_get(comp['renderKey']):
+                        raise ValidationError('Render this face before accepting its warning.')
+                    if not ((comp.get('crop') or {}).get('warning') or comp.get('flags')):
+                        raise ValidationError('This face has no current crop or layout warning.')
+                    if patch['acceptWarning'] is not True or patch.get('renderKey')!=comp['renderKey']:
+                        raise ValidationError('The card render changed. Review its current image again.')
+                    f['acceptedWarningKey']=comp['renderKey']
                 face_dirty=False
+                if 'selectedArtPrintingId' in patch:
+                    selected=patch['selectedArtPrintingId']
+                    if selected:
+                        printing,art_face=self._matching_printing_face(c,f,selected)
+                        art_url=self.sources.art_url(printing,art_face)
+                        if not art_url:
+                            raise ValidationError('That printing has no artwork for this face.')
+                        artist=str(art_face.get('artist') or printing.get('artist') or '').strip()
+                    else:artist='';art_url=None
+                    if f.get('selectedArtPrintingId')!=selected:
+                        f['selectedArtPrintingId']=selected or None
+                        f['selectedArtArtist']=artist or None
+                        f['selectedArtUrl']=art_url
+                        face_dirty=True
+                for kind,field_name,allowed in (
+                    ('officialRulesSelection','officialRulesText',{'oracle_text','printed_text'}),
+                    ('officialFlavorSelection','officialFlavorText',{'flavor_text'}),
+                ):
+                    if kind not in patch:continue
+                    selected=patch[kind]
+                    if selected is None:text=None;source=None
+                    else:
+                        if not isinstance(selected,dict) or selected.get('field') not in allowed:
+                            raise ValidationError('Choose an official text option.')
+                        printing,text_face=self._matching_printing_face(c,f,selected.get('printingId'))
+                        text=str(text_face.get(selected['field']) or printing.get(selected['field']) or '').strip()
+                        if not text or len(text)>20000:raise ValidationError('That printing has no usable official text.')
+                        source={'printingId':printing['id'],'field':selected['field']}
+                    if f.get(field_name)!=text or f.get(kind)!=source:
+                        f[field_name]=text;f[kind]=source;face_dirty=True
                 for k in ('artistOverride','artistCreditMode','artOverride','templateOverride','fit','semanticOverrides'):
                     if k in patch:
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
@@ -319,6 +363,22 @@ class Workspace:
                 if face_dirty:
                     f.pop('compiled',None);f.pop('error',None);d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,rev)
+    def _matching_printing_face(self,card,face,ident):
+        if not isinstance(ident,str) or not re.fullmatch(r'[0-9a-f-]{36}',ident):
+            raise ValidationError('Choose a Scryfall printing of this card.')
+        printing=self.sources.resolve_card(ident,False)
+        original=card['scryfall']
+        if original.get('oracle_id') and printing.get('oracle_id') and original['oracle_id']!=printing['oracle_id']:
+            raise ValidationError('Choose a printing of the same card.')
+        if not (original.get('oracle_id') and printing.get('oracle_id')) and slug(printing.get('name',''))!=slug(original.get('name','')):
+            raise ValidationError('Choose a printing of the same card.')
+        faces=ingest.face_list(printing)
+        index=int(face.get('index',0))
+        if index>=len(faces):raise ValidationError('That printing has no matching card face.')
+        selected=faces[index]
+        if len(faces)>1 and slug(selected.get('name',''))!=slug(face.get('name','')):
+            raise ValidationError('That printing has no matching card face.')
+        return printing,selected
     def add_cards(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=payload.get('revision')
         if rev!=d['revision']:raise ConflictError('Reload the deck before adding cards.')
@@ -343,13 +403,39 @@ class Workspace:
                 for k in ('artistOverride','artistCreditMode','artOverride','templateOverride'):f[k]=old['faces'][i].get(k)
         d['cards']=[new if c['id']==card_id else c for c in d['cards']];d['status']='draft';d.pop('summary',None)
         return self.store.put('decks',d,revision)
+    def custom_art_previews(self,deck_id,settings):
+        deck=self.deck(deck_id)
+        selected=self.validate_settings(settings)
+        index=self._prepare_sources(selected,lambda *args:None) if selected['source']['mode']=='github' else {}
+        out=[]
+        for card in deck['cards']:
+            faces=ingest.face_list(card['scryfall'])
+            for face in card['faces']:
+                sf_face=faces[min(face.get('index',0),len(faces)-1)]
+                stem=slug(sf_face.get('name',card['name']))
+                local=selected['source'].get('localFiles',{})
+                if face.get('selectedArtPrintingId') and not face.get('artOverride'):continue
+                if not (face.get('artOverride') or selected['source']['mode']=='local' and stem in local
+                        or selected['source']['mode']=='github' and stem in index):continue
+                art_id,_,_=self._art(card['scryfall'],sf_face,face,selected,index)
+                out.append({'cardId':card['id'],'faceId':face['id'],'name':face['name'],
+                            'artist':face.get('artistOverride') or selected.get('artist') or '',
+                            'assetId':art_id})
+        return out
+
     def _art(self,sf,face,opts,settings,index):
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
         name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
         local=settings['source'].get('localFiles',{})
-        if settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
-        if settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
-        if remote_entry is None:
+        if opts.get('selectedArtPrintingId'):
+            alternate,alternate_face=self._matching_printing_face({'scryfall':sf},opts,opts['selectedArtPrintingId'])
+            url=self.sources.art_url(alternate,alternate_face)
+            if not url:raise ValidationError('That printing has no artwork for this face.')
+            opts['selectedArtArtist']=str(alternate_face.get('artist') or alternate.get('artist') or '').strip() or None
+            origin='Scryfall selected printing'
+        elif settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
+        elif settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
+        if remote_entry is None and url is None:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',False):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
             if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
@@ -408,7 +494,9 @@ class Workspace:
         if not settings.get('allCardsTokens'):return None
         options=settings.get('tokenOptions') or {}
         spec={'output_key':str(comp.get('name') or ''),'token_key_suffix':''}
-        if options.get('nonlegendary'):spec['nonlegendary']=True
+        if settings.get('templateRules',{}).get('token')=='godzilla-card':spec['force_nickname_frame']=True
+        if options.get('legendaryMode','nonlegendary' if options.get('nonlegendary') else 'original')=='nonlegendary':spec['nonlegendary']=True
+        if options.get('legendaryMode')=='legendary':spec['force_legendary']=True
         if options.get('subtypes'):spec['replace_creature_subtypes']=options['subtypes']
         power=str(options.get('power') or '')
         toughness=str(options.get('toughness') or '')
@@ -426,16 +514,21 @@ class Workspace:
         if sem:
             sem=dict(sem)
             if spec.get('nonlegendary'):sem['legendary']=False
+            if spec.get('force_legendary'):sem['legendary']=True
         if sem and not spec.get('frame_color'):
             code=frame_treatment_code(sem)
             spec['frame_color']=code if isinstance(code,str) and code in 'WUBRGMAL' else 'A'
+        if spec.pop('force_legendary',False):
+            type_text=comp['data'].setdefault('text',{}).setdefault('type',{})
+            current=str(type_text.get('text') or '')
+            if not current.startswith('Legendary '):type_text['text']='Legendary '+current
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
         fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
-        if sem and (sem.get('nickname') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
+        if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
             apply_nickname_treatment(comp['data'],sem,'token',
-                                     force=str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
+                                     force=bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
                                      full_frame=True)
             comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
             if comp.get('symbolId'):
@@ -465,11 +558,17 @@ class Workspace:
                 art_id,origin,url=self._art(sf,face,f,s,index)
                 options=copy.deepcopy(f)
                 flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
-                options.setdefault('semanticOverrides',{}).setdefault('flavor_text',str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or ''))
+                overrides=options.setdefault('semanticOverrides',{})
+                if f.get('officialRulesText') is not None:
+                    overrides.setdefault('oracle_text',f['officialRulesText'])
+                official_flavor=f.get('officialFlavorText')
+                flavor=str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or '') if official_flavor is None else official_flavor
+                overrides.setdefault('flavor_text',flavor)
+                if not s.get('showFlavorText',True):overrides['flavor_text']=''
                 if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
                     nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
                     secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
-                    options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
+                    options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '') if s.get('showFlavorText',True) else ''}
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                 if c.get('tokenSpec'):
                     token_sem=semantic(sf,face,f.get('index',0))
@@ -529,7 +628,7 @@ class Workspace:
         new['faces'][0].update(id=uid(),name=new['name']);new['faces'][0].pop('compiled',None)
         d['cards'].append(new);d['status']='draft';d.pop('summary',None);return self.store.put('decks',d,revision)
     def templates(self):return BUILTINS+self.store.list('templates')
-    def template_preview_targets(self,deck_id,group,settings,card_data=None):
+    def template_preview_targets(self,deck_id,group,settings,card_data=None,choices=None):
         if group not in GROUP_LABELS:raise ValidationError('Unknown template group.')
         d=self.deck(deck_id)
         staged={entry['name']:entry for entry in self._validated_card_data(card_data)}
@@ -554,13 +653,17 @@ class Workspace:
         art_id,origin,_=self._art(sf,face,face_options,s,index)
         options=copy.deepcopy(face_options)
         options['semanticOverrides']=dict(options.get('semanticOverrides') or {})
+        if face_options.get('officialRulesText') is not None:
+            options['semanticOverrides'].setdefault('oracle_text',face_options['officialRulesText'])
         options['semanticOverrides'].setdefault('flavor_text',str(ingest.face_value(face,sf,'flavor_text','') or ''))
+        if not s.get('showFlavorText',True):options['semanticOverrides']['flavor_text']=''
         for key in ('nickname','flavor_text'):
             if key in staged.get(face.get('name',''),{}):
                 options['semanticOverrides'][key]=staged[face['name']][key]
         targets=[];errors={};seen_previews={}
         legendary=is_legendary(face)
         for template in self.templates():
+            if choices is not None and template['id'] not in choices:continue
             supported=template.get('groups')
             if template['id']!='auto' and not (supported=='ordinary' and group in ORDINARY_GROUPS or isinstance(supported,list) and group in supported):
                 continue
@@ -621,8 +724,33 @@ class Workspace:
         return self.store.purge('templates',ident,revision)
     def convert_template_source(self,value):
         return convert_cardconjurer(value.get('source'),value.get('name'),value.get('group','standard'))
+    def export_template_file(self,ident):
+        template=self.store.get('templates',ident)
+        if not template:raise ValidationError('Template not found.')
+        if template.get('schemaVersion')!=2:raise ValidationError('Convert this legacy template before exporting it.')
+        from .backup import referenced_assets
+        model={key:template[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+        assets={}
+        for asset_id in referenced_assets(model):
+            image=self.store.asset(asset_id)
+            if not image:raise ValidationError('Template frame image is missing: '+asset_id)
+            assets[asset_id]={'mime':image['mime'],'base64':base64.b64encode(self.store.asset_path(asset_id).read_bytes()).decode('ascii')}
+        model['assets']=assets
+        return model
     def import_template_file(self,value):
         model=validate_model(value)
+        from .backup import referenced_assets
+        assets=model.pop('assets',{})
+        if not isinstance(assets,dict) or len(assets)>200:raise ValidationError('Template assets are invalid.')
+        for asset_id in referenced_assets(model):
+            if self.store.asset(asset_id):continue
+            image=assets.get(asset_id)
+            if not isinstance(image,dict):raise ValidationError('Template frame image is missing: '+asset_id)
+            raw=base64.b64decode(image.get('base64',''),validate=True)
+            if len(raw)>64*1024**2 or hashlib.sha256(raw).hexdigest()!=asset_id:
+                raise ValidationError('Template frame image failed its integrity check.')
+            decoded=decode_image(raw)
+            self.store.add_asset(raw,str(image.get('mime') or 'image/png'),decoded.width,decoded.height)
         model.pop('id',None);model.pop('revision',None)
         return self.save_template(model)
     def preview_template_model(self,value):

@@ -21,7 +21,7 @@ def printing_artist(card,face):
     return ''
 
 def resolve_credit(card,face,options,settings,art_origin):
-    original=printing_artist(card,face)
+    original=(credit_text(options.get('selectedArtArtist')) if art_origin==SCRYFALL_ART else '') or printing_artist(card,face)
     mode=options.get('artistCreditMode') or 'inherit'
     if mode not in {'inherit','printing'}:raise ValidationError('Choose the printing artist or your custom-art credit.')
     source_is_scryfall=art_origin==SCRYFALL_ART

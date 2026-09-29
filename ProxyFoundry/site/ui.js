@@ -11,7 +11,7 @@ export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export async function api(path,data,method='POST'){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
   const r=await fetch(path,opt);const text=await r.text();let result;
-  try{result=JSON.parse(text)}catch{throw new Error('The local app returned an unreadable response. Check that its launcher is still running.');}
+  try{result=JSON.parse(text)}catch{throw new Error('The workspace returned an unreadable response. Reload the page and try again.');}
   if(!r.ok)throw new Error(result.error||'Request failed.');return result;
 }
 export async function blobRequest(path,body,mime='application/octet-stream',headers={}){
@@ -23,6 +23,32 @@ export async function downloadPost(path,data,filename){
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+export async function saveApiFile(path,name){
+  let handle=null;
+  if(state.bootstrap?.browser&&typeof window.showSaveFilePicker==='function'){
+    try{handle=await window.showSaveFilePicker({suggestedName:name});}
+    catch(error){if(error.name==='AbortError')return;throw error;}
+  }
+  if(handle){
+    const writer=await handle.createWritable();
+    try{
+      let offset=0,total=null;
+      while(total===null||offset<total){
+        const response=await fetch(path,{headers:{Range:`bytes=${offset}-${offset+4*1024*1024-1}`}});
+        if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Download failed.');
+        const match=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('Content-Range')||'');
+        if(response.status!==206||!match||Number(match[1])!==offset)throw new Error('The saved file did not return a valid download range.');
+        const chunk=await response.arrayBuffer();
+        if(chunk.byteLength!==Number(match[2])-offset+1)throw new Error('The download was incomplete.');
+        await writer.write(chunk);offset+=chunk.byteLength;total=Number(match[3]);
+      }
+      await writer.close();return;
+    }catch(error){await writer.abort().catch(()=>{});throw error;}
+  }
+  const response=await fetch(path);
+  if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'Download failed.');}
+  downloadBlob(await response.blob(),name);
+}
 export function toast(message,error=false){
   const el=document.createElement('div');el.className='toast'+(error?' error':'');el.setAttribute('role',error?'alert':'status');el.innerHTML=`<span>${esc(message)}</span><button aria-label="Dismiss notification">×</button>`;$('#toast-host').append(el);$('button',el).onclick=()=>el.remove();setTimeout(()=>el.remove(),error?14000:6500);
 }

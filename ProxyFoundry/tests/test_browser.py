@@ -50,13 +50,10 @@ def browser_app(tmp_path,request):
 
 def test_browser_import_setup_edit_template_and_mobile(browser_app):
     app,server,page,errors=browser_app
-    page.click('#import-deck');page.fill('#import-name','Browser deck');page.fill('#import-source','2 A Test Creature');page.click('#do-import')
-    assert page.locator('#modal-host .modal').count()==0
-    page.locator('#deck-name,.form-error,#retry-page').first.wait_for()
-    assert page.locator('#deck-name').count(),page.locator('body').inner_text()
-    assert page.input_value('#deck-name')=='Browser deck'
-    with page.expect_file_chooser() as chooser:page.click('#generate-symbols')
-    chooser.value.set_files({'name':'symbol.png','mimeType':'image/png','buffer':png((160,160))})
+    d=app.ws.create({'name':'Browser deck','source':'2 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup')
+    page.locator('#save-setup').wait_for()
+    assert page.locator('.page-head h1').inner_text()=='Browser deck'
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'back.png','mimeType':'image/png','buffer':png((300,420))})
@@ -64,12 +61,39 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     page.fill('#deck-artist','Deck Artist');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     page.click('[data-tab=cards]');page.locator('[data-card]').first.click();page.fill('#card-qty','3');page.click('#save-card')
     expect(page.locator('.quantity-pill')).to_have_text('3×')
-    page.locator('a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
+    page.locator('.topbar a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
     page.get_by_text('Browser frame',exact=True).wait_for()
-    page.locator('a[data-nav=settings]').click();page.locator('#global-refresh').check();page.wait_for_timeout(300)
+    page.locator('.topbar a[data-nav=settings]').click();page.locator('#global-refresh').check();page.wait_for_timeout(300)
     assert app.ws.global_settings()['refreshData'] is True
-    page.set_viewport_size({'width':390,'height':844});page.locator('a[data-nav=decks]').click();page.locator('#import-deck').wait_for()
+    page.set_viewport_size({'width':390,'height':844});page.locator('.topbar a[data-nav=decks]').click();page.locator('#import-deck').wait_for()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    assert not errors,errors
+
+
+def test_browser_card_inspector_art_and_text_controls(browser_app):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Inspector choices','source':'1 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/cards')
+    page.locator('[data-card]').first.click()
+    expect(page.get_by_role('button',name='Show front side')).to_have_count(1)
+    expect(page.get_by_role('button',name='Show back side')).to_have_count(1)
+    page.get_by_role('button',name='Show back side').click()
+    expect(page.locator('#inspector-image')).to_have_attribute('alt','A Test Creature back')
+    page.get_by_role('button',name='Increase quantity').click()
+    expect(page.locator('#card-qty')).to_have_value('2')
+    page.click('#choose-printing')
+    expect(page.get_by_role('dialog').last).to_contain_text('This changes only the image')
+    page.locator('.choice-content .printing-option').first.click()
+    page.get_by_role('dialog').last.get_by_role('button',name='OK').click()
+    page.locator('.modal-body summary').click()
+    page.click('#select-rules-text')
+    expect(page.get_by_role('dialog').last).to_contain_text('suggested')
+    page.get_by_role('dialog').last.get_by_role('button',name='Use current Oracle text').click()
+    page.click('#save-card')
+    saved=app.ws.deck(deck['id'])
+    assert saved['cards'][0]['scryfall']['rarity']=='rare'
+    assert saved['cards'][0]['faces'][0]['selectedArtPrintingId']==saved['cards'][0]['scryfall']['id']
+    assert saved['cards'][0]['quantity']==2
     assert not errors,errors
 
 def test_browser_symbol_folder_upload(browser_app,tmp_path):
@@ -272,10 +296,9 @@ def test_browser_artist_credit_and_custom_upload(browser_app):
 def test_browser_deck_artist_previews(browser_app):
     app,server,page,errors=browser_app
     d=app.ws.create({'name':'Deck credit defaults','source':[{'id':sf()['id']}]})
-    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#deck-name').wait_for()
+    page.goto(server.origin+'/#deck/'+d['id']+'/setup');page.locator('#deck-artist').wait_for()
     page.fill('#deck-artist','My Custom Artist')
-    expect(page.locator('#scryfall-credit-preview')).to_have_text('Original Artist (Scryfall) • Art © respective rights holders')
-    expect(page.locator('#custom-credit-preview')).to_have_text('My Custom Artist')
+    assert page.locator('#scryfall-credit-preview,#custom-credit-preview').count()==0
     assert page.locator('#deck-modification').count()==0
     assert page.locator('#use-land-library').count()==0
     page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
@@ -328,14 +351,14 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     page.fill('#token-power','7')
     page.fill('#token-toughness','8')
     page.fill('#token-subtypes','Illusion')
-    page.check('#token-nonlegendary')
+    page.select_option('#token-legendary-mode','nonlegendary')
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
 
     saved=app.ws.deck(d['id'])['settings']
     assert saved['allCardsTokens'] is True
     assert saved['tokenOptions']=={
-        'power':'7','toughness':'8','subtypes':'Illusion','nonlegendary':True,
+        'power':'7','toughness':'8','subtypes':'Illusion','nonlegendary':True,'legendaryMode':'nonlegendary',
     }
     assert not errors,errors
 
@@ -344,7 +367,7 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     app,server,page,errors=browser_app
     d=app.ws.create({'name':'Data JSON section','source':sf()['id']})
     page.goto(server.origin+'/#deck/'+d['id']+'/setup')
-    page.locator('#data-json-file').wait_for()
+    page.locator('#open-card-data').wait_for()
     expect(page.get_by_text('06 / DATA.JSON',exact=True)).to_be_visible()
     payload={'version':1,'cards':[{'name':'A Test Creature','nickname':'Test Nickname','flavor_text':'Test flavor text.'}]}
     page.locator('#data-json-file').set_input_files({'name':'data.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})

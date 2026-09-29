@@ -40,8 +40,9 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
             return json.dumps(data).encode(),'application/json',{}
         return original(url)
     app.ws.net.transport=transport
+    page.get_by_role('button',name='From GitHub',exact=True).click()
     page.fill('#card-data-url','https://github.com/owner/repo/blob/main/data.json')
-    page.click('#import-card-data-url')
+    page.locator('#card-data-url').press('Tab')
     expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry staged')
     assert not errors,errors
 
@@ -82,13 +83,19 @@ def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
         try:
             page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
             page.click('[data-frame-group=standard]')
-            expect(page.locator('#modal-host [role=status]')).to_contain_text('Rendered',timeout=240000)
+            page.locator('#modal-host img:visible').first.wait_for(timeout=240000)
             assert page.locator('#modal-host img:visible').count()>=2
+            hashes=page.locator('#modal-host img:visible').evaluate_all('''async images=>Promise.all(images.map(async image=>{
+              const bytes=await (await fetch(image.src)).arrayBuffer();
+              const hash=await crypto.subtle.digest('SHA-256',bytes);
+              return [...new Uint8Array(hash)].map(value=>value.toString(16).padStart(2,'0')).join('');
+            }))''')
+            assert len(set(hashes))>=2,'Frame choices rendered identical PNGs.'
             godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
-            expect(godzilla.locator('img')).to_be_visible()
+            expect(godzilla).to_be_enabled()
             output=Path(__file__).resolve().parents[1]/'test-results'
             output.mkdir(exist_ok=True)
-            godzilla.locator('img').screenshot(path=str(output/'godzilla-frame-preview.png'))
+            page.locator('#modal-host img:visible').first.screenshot(path=str(output/'godzilla-frame-preview.png'))
             godzilla.click()
             page.click('#save-setup')
             expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')

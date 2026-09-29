@@ -112,6 +112,53 @@ def import_card_data_url(workspace, payload):
     return validate_card_data_for_deck(workspace, payload['deckId'], entries)
 
 
+def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
+    """Import four rarity images from a public GitHub folder."""
+    url=payload.get('url')
+    if not isinstance(url,str) or not url.strip() or len(url)>4096:
+        raise ValidationError('Paste a public GitHub set-symbol folder link.')
+    loc=github_location(url)
+    if loc['default_ref']:
+        repo=workspace.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0)
+        if not isinstance(repo,dict) or not isinstance(repo.get('default_branch'),str):
+            raise ValidationError('GitHub did not return the repository default branch.')
+        loc=github_location(url,repo['default_branch'])
+    if not loc['folder']:
+        raise ValidationError('Choose the folder containing four rarity images.')
+    ref=quote(loc['ref'],safe='')
+    api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+ref
+    rows=workspace.net.json(api,ttl=0)
+    if not isinstance(rows,list) or len(rows)>=1000:
+        raise ValidationError('That GitHub link must be a small image folder.')
+    found={}
+    for row in rows:
+        if not isinstance(row,dict) or not isinstance(row.get('name'),str):
+            raise ValidationError('GitHub returned an invalid file listing.')
+        name=row['name'];path=loc['folder'].rstrip('/')+'/'+name
+        if not name or '/' in name or '\\' in name or row.get('path')!=path:
+            raise ValidationError('GitHub returned an unexpected file path.')
+        suffix=PurePosixPath(name.lower()).suffix
+        if suffix not in IMAGE_EXTENSIONS:continue
+        stem=PurePosixPath(name.lower()).stem
+        if stem not in RARITIES or stem in found:
+            raise ValidationError('Use exactly one image each named common, uncommon, rare, and mythic.')
+        if suffix not in RASTER_EXTENSIONS or row.get('type')!='file' or row.get('submodule_git_url') or row.get('target'):
+            raise ValidationError(name+': use a regular PNG, JPG, or WebP image.')
+        found[stem]=row
+    missing=[rarity for rarity in RARITIES if rarity not in found]
+    if missing:raise ValidationError('The set-symbol folder is missing: '+', '.join(missing)+'.')
+    result={}
+    for index,rarity in enumerate(RARITIES):
+        if cancel():raise ValidationError('Set-symbol import cancelled.')
+        progress(index,4,'Importing '+rarity+' symbol')
+        path=found[rarity]['path']
+        raw_url='https://raw.githubusercontent.com/'+loc['repo']+'/'+ref+'/'+quote(path,safe='/')
+        raw,_,_=workspace.net.fetch(raw_url,refresh=True,ttl=0)
+        result[rarity]=ingest_image(workspace.store,raw,trim_transparent_padding=True)['id']
+    progress(4,4,'Four rarity symbols imported')
+    return {'symbols':result}
+
+
 def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Return a complete source/symbol/back settings patch, never a saved deck.
 

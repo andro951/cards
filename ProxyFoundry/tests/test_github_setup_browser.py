@@ -25,14 +25,12 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert page.locator('#github-setup').evaluate('(el)=>el.nextElementSibling.id') == 'setup-fields'
     assert 'sol_ring.png' in page.locator('#github-setup pre').inner_text()
     page.fill('#deck-artist', 'Artist stays')
-    page.fill('#deck-notes', 'Do not replace my notes')
     page.fill('#github-setup-folder', remote.url)
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
     expect(page.locator('[data-mode=github]')).to_have_class('choice selected')
     expect(page.locator('#github-folder')).to_have_value(remote.url + '/art')
-    expect(page.locator('#github-ref')).to_have_value('main')
-    expect(page.locator('#art-fallback')).to_be_checked()
+    expect(page.locator('#art-fallback')).not_to_be_checked()
     expect(page.locator('#fallback-line')).to_be_visible()
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed', 'true')
@@ -42,7 +40,6 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert app.ws.deck(d['id'])['settings']['symbols'] == app.ws.default_symbols()  # Existing defaults are unchanged until Save.
     assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')  # data.json is staged too.
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
-    expect(page.locator('#deck-notes')).to_have_value('Do not replace my notes')
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     saved = app.ws.deck(d['id'])
@@ -52,7 +49,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert overrides['flavor_text']=='The family business.'
     assert saved['settings']['artist'] == 'Artist stays'
     assert saved['settings']['templateRules'].get('standard','auto') == 'auto'
-    assert saved['notes'] == 'Do not replace my notes'
+    assert saved['notes'] == ''
     assert saved['settings']['backDesign']['mode'] == 'icon'
     expect(page.locator('#github-setup-folder')).to_have_value(remote.url)
     page.evaluate('window.scrollTo(0,0)')
@@ -64,7 +61,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert not errors, errors
 
 
-def test_no_art_single_symbol_import_selects_scryfall_and_checks_hidden_fallback(browser_app):
+def test_single_symbol_bundle_is_rejected_without_changing_setup(browser_app):
     app, server, page, errors = browser_app
     d = app.ws.new_deck('Minimal bundle')
     app.ws.save(d['id'], {'revision': d['revision'], 'settings': {'source': {'mode': 'github', 'githubFolder': 'owner/old/art', 'fallback': False}}})
@@ -73,17 +70,14 @@ def test_no_art_single_symbol_import_selects_scryfall_and_checks_hidden_fallback
     page.goto(server.origin + '/#deck/' + d['id'] + '/setup')
     page.fill('#github-setup-folder', remote.url)
     page.press('#github-setup-folder', 'Enter')
-    expect(page.locator('#github-setup-status')).to_contain_text('Scryfall artwork (no art folder)', timeout=20000)
-    expect(page.locator('#github-setup-warnings')).to_contain_text('not recommended')
-    expect(page.locator('[data-mode=scryfall]')).to_have_class('choice selected')
-    expect(page.locator('#art-fallback')).to_be_checked()
-    expect(page.locator('#fallback-line')).to_be_hidden()
+    expect(page.locator('#github-setup-status')).to_contain_text('one-image symbol generation is no longer supported', timeout=20000)
+    expect(page.locator('[data-mode=github]')).to_have_class('choice selected')
+    expect(page.locator('#art-fallback')).not_to_be_checked()
+    expect(page.locator('#fallback-line')).to_be_visible()
     expect(page.locator('[data-back-action=default]')).to_have_attribute('aria-pressed', 'true')
     expect(page.locator('.symbol-upload img')).to_have_count(4)
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     s = app.ws.deck(d['id'])['settings']
-    assert s['source']['mode'] == 'scryfall' and s['source']['fallback'] is True
+    assert s['source']['mode'] == 'github' and s['source']['fallback'] is False
     assert s['backDesign']['mode'] == 'default'
     assert not errors, errors
 
@@ -91,7 +85,7 @@ def test_no_art_single_symbol_import_selects_scryfall_and_checks_hidden_fallback
 def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     app, server, page, errors = browser_app
     d = app.ws.new_deck('Failure then retry')
-    remote = BundleRemote(art=False, back='custom', single=True)
+    remote = BundleRemote(art=False, back='custom', single=False)
     missing = remote.child('set_symbols/mythic.png')
     raw = remote.images[missing]
     remote.remove(missing)

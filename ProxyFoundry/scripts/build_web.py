@@ -12,7 +12,7 @@ dist.mkdir(exist_ok=True)
 for path in (root / 'site').iterdir():
     if path.is_file():
         shutil.copy2(path, dist / 'site' / path.name)
-for name in ('bootstrap.js', 'engine-worker.js', 'storage-choice.js', 'settings-browser.js', 'templates-browser.js'):
+for name in ('bootstrap.js', 'engine-worker.js', 'storage-choice.js', 'settings-browser.js', 'templates-browser.js', 'review-browser.js'):
     shutil.copy2(root / 'web' / name, dist / 'web' / name)
 shutil.copy2(root / 'web' / 'service-worker.js', dist / 'sw.js')
 

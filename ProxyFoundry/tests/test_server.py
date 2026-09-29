@@ -230,7 +230,7 @@ def test_trash_ui_and_missing_generation_contracts():
     for token in ['permanent-delete','global-refresh','data-trash-inspect','data-trash-delete','empty-trash','/api/trash/empty',"$('#permanent-delete').onchange","$('#global-refresh').onchange",'persistToggle','Object.assign(settings,out)','Saved immediately.']:
         assert token in settings
     assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
-    assert 'deletePermanently' in deck
+    assert 'Delete deck permanently' in deck
     assert 'before.upgradeRequired' in render
     assert 'download-diagnostics' in settings and '/api/diagnostics.zip' in settings and 'downloadBlob' in settings
 
@@ -472,7 +472,7 @@ def test_review_images_action_is_in_deck_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download review Images' in source
     assert '/review-images' in source
-    handler=source[source.index("$('#download-review-images')"):source.index("$('#use-as-defaults')")]
+    handler=source[source.index("$('#download-review-images').onclick"):source.index("$('#trash-deck').onclick")]
     assert 'needsGeneration' in handler
     assert "await generate(current)" in handler
     assert handler.index("await generate(current)") < handler.index("/review-images")

@@ -18,9 +18,12 @@ def test_template_edit_and_delete_invalidates_only_its_decks(tmp_path):
     revision=d['revision'];other_revision=other['revision'];t=w.save_template({**t,'name':'Renamed'})
     assert w.deck(d['id'])['status']=='draft' and w.deck(d['id'])['revision']==revision+1
     assert w.deck(other['id'])['revision']==other_revision
-    d=w.store.get('decks',d['id']);w.store.put('decks',{**d,'status':'prepared'},d['revision'])
+    with pytest.raises(ValidationError,match='used by: Uses template'):
+        w.delete_template(t['id'],t['revision'])
+    d=w.store.get('decks',d['id']);w.store.put('decks',{**d,'status':'prepared',
+        'settings':{**d['settings'],'templateRules':{}}},d['revision'])
     w.delete_template(t['id'],t['revision'])
-    assert w.deck(d['id'])['status']=='draft'
+    assert w.deck(d['id'])['status']=='prepared'
     assert w.store.get('templates',t['id']) is None
 
 def test_land_seed_is_not_a_basic_land_recipe(tmp_path):

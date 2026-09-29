@@ -1,7 +1,7 @@
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,date,badge,empty,loading,nav} from './ui.js';
 import {renderDecks} from './render.js';
 export function setupHelper(){
-  const host=modal('Connect the print helper',`<span class="eyebrow">ONE-TIME BROWSER SETUP</span><p class="muted">The app handles importing, templates, rendering and ZIP downloads by itself. The small helper is only needed to fill TCGPlaytest’s editor automatically.</p><div class="well"><h3>1 · Download and extract the helper</h3><p>Keep the extracted <code>extension</code> folder somewhere permanent.</p><a class="button primary" href="/api/helper/download" download>Download print helper</a></div><div class="well section-gap"><h3>2 · Load the extension in Edge or Chrome</h3><p>Open <code>edge://extensions</code> or <code>chrome://extensions</code>, enable <b>Developer mode</b>, click <b>Load unpacked</b>, and select the extracted <code>extension</code> folder.</p><p>Remove the old test helper first. This version does not need “Allow access to file URLs.”</p></div><div class="well section-gap"><h3>3 · Reload this page</h3><p>The top-right status will say <b>connected</b>. Build an order and choose <b>Open in TCGPlaytest</b>. Proxy Foundry stays open.</p></div><div class="notice info">The helper never places an order, enters payment details or checks out. You review the printer’s preview and complete checkout yourself. Downloading the paired ZIP is always available without the helper.</div>`,{footer:'<button class="button" id="recheck-helper">Check connection</button><button class="button primary" id="close-helper">Done</button>'});
+  const host=modal('Connect the print helper',`<p class="muted">Set up automatic handoff once for future orders.</p><div class="well"><h3>1 · Download and extract</h3><a class="button primary" href="/api/helper/download" download>Download print helper</a></div><div class="well section-gap"><h3>2 · Load in Edge or Chrome</h3><p>Open <code>edge://extensions</code> or <code>chrome://extensions</code>, enable <b>Developer mode</b>, choose <b>Load unpacked</b>, and select the extracted <code>extension</code> folder.</p></div><div class="well section-gap"><h3>3 · Reload Bulk Proxy Forge</h3><p>Future Print Cards clicks will open your order in TCGPlaytest automatically.</p></div><div class="notice info">The helper never checks out or enters payment details. You review the printer preview and complete checkout yourself.</div>`,{footer:'<button class="button" id="recheck-helper">Check connection</button><button class="button primary" id="close-helper">Done</button>'});
   $('#close-helper').onclick=closeModal;
   $('#recheck-helper').onclick=()=>{window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);setTimeout(()=>toast(state.helper?'Print helper is connected.':'Not connected yet. Load the extension, then reload this page.',!state.helper),700);};
 }
@@ -15,17 +15,21 @@ export async function showOrders(){
 export async function chooseOrder(preselected=[]){
   if(state.dirty)throw new Error('Save your current deck setup before building an order.');
   const decks=await api('/api/decks');const selected=new Set(preselected.filter(id=>decks.some(d=>d.id===id)));
-  const host=modal('Choose decks for this order',`<p class="muted">Select one deck or combine several. Quantities are preserved; double-faced cards use their actual reverse.</p>${decks.length?`<div class="order-decks">${decks.map(d=>`<label class="order-deck-row"><input type="checkbox" data-order-deck="${d.id}" ${selected.has(d.id)?'checked':''}><div class="order-deck-info"><b>${esc(d.name)}</b><small>${d.summary.cards} cards · ${d.summary.rendered}/${d.summary.faces} faces rendered</small></div>${badge(d.status)}</label>`).join('')}</div>`:empty('No decks yet','Import a deck and generate its images before creating a print order.')}<div id="order-selection-message" class="notice info"></div>`,{size:'large',footer:'<span class="footer-hint" id="order-count"></span><button class="button" id="order-generate">Generate selected images</button><button class="button primary" id="order-plan">Review paired order →</button>'});
+  const host=modal('Choose decks for this order',`<p class="muted">Select one deck or combine several. Quantities are preserved; double-faced cards use their actual reverse.</p>${decks.length?`<div class="order-decks">${decks.map(d=>`<label class="order-deck-row"><input type="checkbox" data-order-deck="${d.id}" ${selected.has(d.id)?'checked':''}><div class="order-deck-info"><b>${esc(d.name)}</b><small>${d.summary.cards} cards · ${d.summary.rendered}/${d.summary.faces} faces rendered</small></div>${badge(d.status)}</label>`).join('')}</div>`:empty('No decks yet','Import a deck and generate its images before creating a print order.')}<div id="order-selection-message" class="notice info"></div>`,{size:'large',footer:`<span class="footer-hint" id="order-count"></span>${state.bootstrap?.browser?'':'<button class="button" id="order-generate">Generate selected images</button>'}<button class="button primary" id="order-plan">Review</button>`});
   function update(){
     const chosen=decks.filter(d=>selected.has(d.id)),count=chosen.reduce((n,d)=>n+d.summary.cards,0),needs=chosen.filter(d=>d.status!=='ready');
-    $('#order-count').textContent=`${chosen.length} decks · ${count} physical cards`;$('#order-plan').disabled=!chosen.length||!!needs.length;$('#order-generate').disabled=!chosen.length||state.busy;
-    $('#order-selection-message').textContent=needs.length?`${needs.length} selected deck${needs.length===1?' needs':'s need'} generation or review. Generate images first, then fix any per-card errors.`:chosen.length?'All selected images are rendered. Next, review both sides and any crop warnings.':'Choose the decks you’d like to print.';
+    $('#order-count').textContent=`${chosen.length} decks · ${count} physical cards`;$('#order-plan').disabled=!chosen.length||!!needs.length;if($('#order-generate'))$('#order-generate').disabled=!chosen.length||state.busy;
+    $('#order-selection-message').textContent=needs.length?`${needs.length} selected deck${needs.length===1?' needs':'s need'} images. Open the deck and generate images first.`:chosen.length?'Review both sides and resolve any crop warnings before printing.':'Choose the decks you’d like to print.';
   }
   $$('[data-order-deck]',host).forEach(el=>el.onchange=()=>{el.checked?selected.add(el.dataset.orderDeck):selected.delete(el.dataset.orderDeck);update();});update();
-  $('#order-generate').onclick=()=>attempt(async()=>{const ids=[...selected];closeModal();await renderDecks(ids);await chooseOrder(ids);});
+  if($('#order-generate'))$('#order-generate').onclick=()=>attempt(async()=>{const ids=[...selected];closeModal();await renderDecks(ids);await chooseOrder(ids);});
   $('#order-plan').onclick=async()=>{try{$('#order-plan').disabled=true;const ids=[...selected];const plan=await api('/api/orders/plan',{deckIds:ids});closeModal();reviewPlan(plan,ids);}catch(e){errorBox($('.modal-body',host),e.message);update();}};
 }
 function reviewPlan(plan,ids,saved=false){
+  if(state.bootstrap?.browser){
+    import('/web/review-browser.js').then(module=>module.showReview(plan,ids,saved,orderReady,openOrder)).catch(error=>toast(error.message,true));
+    return;
+  }
   // Collapse repeated quantities for preview only. The ZIP still contains every copy.
   const unique=new Map();for(const c of plan.cards){const key=[c.deckId,c.cardId,c.frontAsset,c.backAsset].join(':');if(!unique.has(key))unique.set(key,{...c,quantity:0});unique.get(key).quantity++;}
   const cards=[...unique.values()];let query='',page=0;const pageSize=36;
@@ -53,19 +57,35 @@ function reviewPlan(plan,ids,saved=false){
   };
 }
 function orderReady(order){
+  if(state.bootstrap?.browser){
+    const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards ready to print</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><button class="button primary" id="print-cards">Print Cards <small style="display:block;font-weight:500">Open in TCGPlaytest</small></button></div>`,{footer:'<button class="button quiet" id="save-order-later">Save for Later</button>'});
+    $('#print-cards',host).onclick=()=>attempt(()=>state.helper?openOrder(order.id):choosePrintPath(order));
+    $('#save-order-later',host).onclick=()=>{closeModal();toast('Your print package is saved in this browser.');};
+    return;
+  }
   const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">The helper will send this order as multiple ZIP batches, each at most 1 GB, into the same TCGPlaytest design. Original image quality is unchanged.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
   $('#send-order').onclick=()=>attempt(()=>openOrder(order.id));
   $('#view-orders').onclick=()=>{closeModal();nav('orders');};
 }
+function choosePrintPath(order){
+  const host=modal('Print Cards',`<div class="well"><h3>Print once · no setup</h3><p>Download your card ZIP, then upload it on TCGPlaytest.</p><a class="button primary" id="manual-zip" href="${esc(order.download)}" download>1 · Download card ZIP</a><button class="button" id="manual-printer">2 · Open TCGPlaytest ↗</button><p class="muted">On the printer page, choose <b>Upload Deck ZIP</b> and select the ZIP you downloaded.</p><img src="/site/tcg-upload-guide.png" alt="TCGPlaytest design page showing the Upload Deck ZIP control" style="width:min(100%,330px);border-radius:9px;border:1px solid #59677a"></div><div class="well section-gap"><h3>Printing again later?</h3><p>Install the optional helper once to send future orders automatically.</p><button class="button" id="install-print-helper">Set up one-click printing</button></div>`,{size:'large'});
+  $('#manual-printer',host).onclick=()=>window.open('https://www.tcgplaytest.com/?view=design','_blank','noopener');
+  $('#install-print-helper',host).onclick=setupHelper;
+}
 async function openOrder(id){
-  if(!state.helper){setupHelper();return;}
+  if(!state.helper){
+    const order=await api('/api/orders/'+id);
+    if(state.bootstrap?.browser){choosePrintPath(order);return;}
+    setupHelper();return;
+  }
   const order=await api('/api/orders/'+id);
   if(order.zipBytes>1024**3&&!state.helperCapabilities?.includes('paired-zip-batches'))throw new Error('Large orders need Print Helper 1.1.0. Reload the updated extension in edge://extensions or chrome://extensions, then reload this page. No uninstall is needed.');
   const transfer=await api('/api/orders/'+id+'/transfer',{});
+  if(state.bootstrap?.browser)transfer.browser=true;
   await new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{window.removeEventListener('message',listener);reject(new Error('The helper did not respond. Reconnect the helper and reopen the saved order.'));},40000);
     function listener(e){if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;if(!['PF_WORKSPACE_OPENED','PF_WORKSPACE_ERROR'].includes(e.data.type))return;clearTimeout(timer);window.removeEventListener('message',listener);e.data.type==='PF_WORKSPACE_OPENED'?resolve():reject(new Error(e.data.error));}
     window.addEventListener('message',listener);window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_OPEN',transfer},location.origin);
   });
-  toast('TCGPlaytest opened in a new tab. Keep the local launcher running until the upload finishes.');
+  toast('TCGPlaytest opened in a new tab. Keep this page open until the upload finishes.');
 }

@@ -1,4 +1,11 @@
 const dynamic=/^\/(api|runtime|js|img|fonts|css|creator)\//;
+const owners=new Map();
+
+self.addEventListener('message',event=>{
+  if(event.data?.type==='owner'&&event.source?.id&&typeof event.data.owner==='string'){
+    owners.set(event.data.owner,event.source.id);
+  }
+});
 
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -16,8 +23,12 @@ async function handle(event){
 
 async function handleRequest(event){
   const url=new URL(event.request.url);
+  const source=event.clientId?await self.clients.get(event.clientId):null;
+  const nestedOwner=source?.frameType==='nested'?new URL(source.url).searchParams.get('owner'):null;
+  const owned=nestedOwner&&owners.get(nestedOwner)?await self.clients.get(owners.get(nestedOwner)):null;
   const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-  const client=windows.find(item=>item.frameType==='top-level'&&new URL(item.url).pathname==='/')
+  const client=source?.frameType==='top-level'?source:owned
+    ||windows.find(item=>item.frameType==='top-level'&&new URL(item.url).pathname==='/')
     ||windows.find(item=>item.frameType==='top-level');
   if(!client)return new Response(JSON.stringify({error:'Open Bulk Proxy Forge in its browser tab.'}),{status:503,headers:{'Content-Type':'application/json'}});
 

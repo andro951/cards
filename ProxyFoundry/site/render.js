@@ -40,7 +40,7 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
     };
     window.addEventListener('message',listener);
     activeFrame=document.createElement('iframe');activeFrame.className='render-frame';activeFrame.title='Isolated native CardConjurer renderer';activeFrame.setAttribute('sandbox','allow-scripts allow-same-origin');
-    activeFrame.src=origin+'/runtime/host?parent='+encodeURIComponent(location.origin);document.body.append(activeFrame);
+    activeFrame.src=origin+'/runtime/host?parent='+encodeURIComponent(location.origin)+'&owner='+encodeURIComponent(window.__pfOwner||'');document.body.append(activeFrame);
     ping=setInterval(()=>activeFrame?.contentWindow.postMessage({source:'pf-app',type:'ping'},origin),800);
     await withTimeout(readyPromise,65000,'The native renderer did not start. Check Diagnostics in Settings.');clearInterval(ping);
     for(let i=0;i<plan.targets.length;i++){
@@ -77,8 +77,8 @@ export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false
   return runRenderPlan(plan,{label:'Render card',onUpdate,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
 }
 
-export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage,onPlan=()=>{},signal=null){
-  const plan=await api('/api/render-sessions/template-previews',{deckId,group,settings,cardData});
+export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage,onPlan=()=>{},signal=null,choices=null){
+  const plan=await api('/api/render-sessions/template-previews',{deckId,group,settings,cardData,choices});
   if(signal?.aborted)return;
   if(!plan.targets.length)throw new Error(Object.values(plan.previewErrors||{}).join('\n')||'No compatible frame could be previewed.');
   onPlan(plan);

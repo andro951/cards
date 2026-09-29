@@ -6,11 +6,12 @@ class Orders:
     def __init__(self,workspace):self.ws=workspace;self.store=workspace.store
     def plan(self,deck_ids,acknowledge=False):
         if not deck_ids or len(set(deck_ids))!=len(deck_ids):raise ValidationError('Select one or more different decks.')
-        physical=[];decks=[];warnings=[]
+        physical=[];decks=[];warnings=[];issues=[]
         for ident in deck_ids:
             d=self.ws.deck(ident)
             if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before exporting.')
-            decks.append({'id':d['id'],'name':d['name'],'revision':d['revision']})
+            decks.append({'id':d['id'],'name':d['name'],'revision':d['revision'],
+                          'backAsset':d['settings'].get('backAsset')})
             for c in d['cards']:
                 faces=c['faces'];front=self._render(faces[0],d['name'])
                 if c.get('backOverride'):back=c['backOverride']
@@ -21,16 +22,22 @@ class Orders:
                 if not back or not self.store.asset(back):raise ValidationError(d['name']+': choose a back for '+c['name'])
                 for f in faces:
                     comp=f.get('compiled') or {}
-                    if (comp.get('crop') or {}).get('warning') and not d['settings'].get('acceptCropWarnings'):
-                        warnings.append(d['name']+' / '+f['name']+': more than 20% of artwork is cropped.')
-                    if comp.get('flags') and not d['settings'].get('acceptLayoutWarnings'):
-                        warnings.append(d['name']+' / '+f['name']+': Card Tools requests layout review.')
+                    if f.get('acceptedWarningKey')!=comp.get('renderKey'):
+                        reasons=[]
+                        if (comp.get('crop') or {}).get('warning'):reasons.append('Part of the artwork is outside the frame.')
+                        if comp.get('flags'):reasons.append('Card layout needs review.')
+                        if reasons:
+                            warning=d['name']+' / '+f['name']+': '+' '.join(reasons)
+                            warnings.append(warning)
+                            issues.append({'deckId':d['id'],'cardId':c['id'],'faceId':f['id'],
+                                           'name':f['name'],'deckName':d['name'],'renderKey':comp['renderKey'],
+                                           'frontAsset':self._render(f,d['name']),'warning':warning})
                 for copy in range(c['quantity']):
                     physical.append({'deckId':d['id'],'deckName':d['name'],'cardId':c['id'],'name':c['name'],
                         'printingId':(c.get('scryfall') or {}).get('id'),'copy':copy+1,'frontAsset':front,'backAsset':back})
         if not physical:raise ValidationError('Selected decks contain no cards.')
         if len(physical)>10000:raise ValidationError('Split orders larger than 10,000 physical cards.')
-        return {'cards':physical,'decks':decks,'warnings':list(dict.fromkeys(warnings)),
+        return {'cards':physical,'decks':decks,'warnings':list(dict.fromkeys(warnings)),'issues':issues,
                 'count':len(physical),'bytes':sum(self.store.asset(c['frontAsset'])['size']+self.store.asset(c['backAsset'])['size'] for c in physical)}
     def _render(self,face,deck_name):
         if face.get('error'):raise ValidationError(deck_name+' / '+face['name']+': '+face['error'])
@@ -39,7 +46,7 @@ class Orders:
         return r['asset_id']
     def build(self,deck_ids,acknowledge=False,progress=lambda *a:None,cancel=lambda:False):
         plan=self.plan(deck_ids)
-        if plan['warnings'] and not acknowledge:raise ValidationError('Review and acknowledge crop/layout warnings before packaging this order.')
+        if plan['issues']:raise ValidationError('Review each crop/layout warning before packaging this order.')
         ident=uid();dest=self.store.home/'orders'/(ident+'.zip');tmp=dest.with_suffix('.partial')
         try:
             with zipfile.ZipFile(tmp,'w',zipfile.ZIP_STORED,allowZip64=True) as archive:

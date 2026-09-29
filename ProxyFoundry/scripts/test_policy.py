@@ -12,6 +12,7 @@ EXTENDED_MODULES={
     'test_order_dialog.py',
     'test_print_bridge.py',
     'test_station_native.py',
+    'test_website.py',
 }
 EXTENDED_TESTS={
     'tests/test_github_setup.py::test_live_existing_eggs_fall_folder',

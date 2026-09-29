@@ -3,7 +3,7 @@ import {$,esc,state,job,toast} from './ui.js';
 
 export function githubSetupSection(folder=''){
   return `<section class="panel github-setup" id="github-setup" aria-labelledby="github-setup-title">
-    <div class="panel-head"><div><span class="eyebrow">QUICK START / OPTIONAL</span><h2 id="github-setup-title">1-click GitHub import</h2><p>Bring your artwork, set symbols and card back into this setup from one public GitHub folder.</p></div></div>
+    <div class="panel-head"><div><h2 id="github-setup-title">1-click GitHub import</h2><p>Set up one GitHub project folder, then reuse its art, symbols, back and card data in future decks.</p></div></div>
     <div class="github-setup-action"><label class="field"><span>GitHub project folder</span><input type="url" id="github-setup-folder" value="${esc(folder)}" placeholder="https://github.com/you/cards/tree/main/my_deck" aria-describedby="github-setup-help"><small id="github-setup-help">Link the parent folder shown below, not its art subfolder. No local repository needed.</small></label><button type="button" class="button primary" id="github-setup-button">1-click import</button></div>
     <div class="github-setup-guide"><pre aria-label="GitHub setup folder structure"><code>folder/
 ├── art/
@@ -15,19 +15,11 @@ export function githubSetupSection(folder=''){
 │   ├── uncommon.png
 │   ├── rare.png
 │   └── mythic.png
-├── set_symbol.png
 ├── data.json
 ├── back.png
 └── back_icon.png</code></pre>
-      <div class="github-setup-notes">
-        <p><b>Set symbols are optional.</b><br><code>set_symbols/</code> with all four rarity images is <strong>recommended</strong>. Alternatively, <code>set_symbol.png</code> is color-shifted into four variants (<strong>not recommended</strong>). If neither exists, or the symbol folder is empty, Bulk Proxy Forge uses its bundled default common/uncommon/rare/mythic symbols. A partially filled folder still fails so missing files are not silently ignored.</p>
-        <p><b>Artwork is optional.</b><br><code>art/</code> becomes the live GitHub artwork source. Without it, Scryfall printing is selected. “Use Scryfall artwork when a custom image is missing” is enabled on import; individual art overrides are kept.</p>
-        <p><b>Card data is optional.</b><br><code>data.json</code> can supply nicknames and flavor text by exact card-face name. Missing or empty values do nothing. The file is staged with the rest of the import and applied only when you save.</p>
-        <p><b>Both back options are optional.</b><br><code>back.png</code> uses your complete back. <code>back_icon.png</code> centers your icon on the Bulk Proxy Forge back. A complete back takes priority over an icon. With neither file, the default forge back is used. Real reverse faces are kept.</p>
-      </div>
+      <div class="github-setup-notes"><p>Imports artwork, four rarity symbols, a back or back icon, and <code>data.json</code> artist credits, nicknames and flavor text. Template selections and other deck options stay separate.</p></div>
     </div>
-    <p class="subtitle-line">PNG examples shown; JPEG, WebP and GIF also work. Symbols and backs are copied on import; GitHub art is fetched when generating. Import again to update symbols or a back.</p>
-    <p class="subtitle-line">This replaces the artwork source, symbols and deck back in the setup below. If <code>data.json</code> exists, its nonempty nickname/flavor entries are staged too. Your card list, printing choices, credits and templates stay unchanged. Review, then Save changes or Save &amp; generate images.</p>
     <div id="github-setup-status" class="notice hidden" role="status" aria-live="polite"></div><div id="github-setup-warnings"></div>
   </section>`;
 }

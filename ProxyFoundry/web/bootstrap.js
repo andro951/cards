@@ -6,6 +6,10 @@ if(!navigator.serviceWorker.controller){
   location.reload();
 }
 else{
+  const owner=sessionStorage.getItem('pf-tab-owner')||crypto.randomUUID();
+  sessionStorage.setItem('pf-tab-owner',owner);
+  window.__pfOwner=owner;
+  navigator.serviceWorker.controller.postMessage({type:'owner',owner});
   const worker=new Worker('/web/engine-worker.js',{type:'module'});
   const {savedFolder}=await import('/web/storage-choice.js');
   const folder=await savedFolder();
@@ -37,6 +41,34 @@ else{
       worker.postMessage(data,data.body?[data.body]:[]);
     }
     catch(error){port.postMessage({type:'error',id:data.id,message:String(error)});}
+  });
+
+  window.addEventListener('message',async event=>{
+    const data=event.data;
+    if(event.source!==window||event.origin!==location.origin||data?.source!=='proxy-foundry-helper'||data.type!=='PF_TRANSFER_REQUEST')return;
+    const reply={source:'proxy-foundry-workspace',type:'PF_TRANSFER_REPLY',requestId:data.requestId};
+    try{
+      if(!/^[-a-f0-9]{36}$/.test(data.id)||!/^[-_A-Za-z0-9]{32,100}$/.test(data.secret)||!['metadata','zip'].includes(data.kind))throw new Error('Invalid print transfer.');
+      const suffix=Number.isSafeInteger(data.batch)?'?batch='+data.batch:'';
+      const headers={'X-Proxy-Transfer-Token':data.secret};
+      if(data.kind==='zip'){
+        if(!Number.isSafeInteger(data.offset)||data.offset<0)throw new Error('Invalid order chunk.');
+        headers.Range=`bytes=${data.offset}-${data.offset+1024*1024-1}`;
+      }
+      const response=await fetch('/api/transfer/'+data.id+'/'+data.kind+suffix,{headers,cache:'no-store'});
+      if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Saved order could not be read.');
+      if(data.kind==='metadata')reply.data=await response.json();
+      else{
+        if(response.status!==206)throw new Error('Expected a bounded order download range.');
+        const bytes=new Uint8Array(await response.arrayBuffer());
+        const range=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('Content-Range')||'');
+        if(!range||Number(range[1])!==data.offset||Number(range[2])-data.offset+1!==bytes.length||bytes.length>1024*1024||!bytes.length)throw new Error('Order range did not match requested chunk.');
+        let content='';for(let i=0;i<bytes.length;i+=32768)content+=String.fromCharCode(...bytes.subarray(i,i+32768));
+        reply.data={base64:btoa(content),offset:data.offset,length:bytes.length,total:Number(range[3])};
+      }
+      reply.ok=true;
+    }catch(error){reply.ok=false;reply.error=error.message||String(error);}
+    window.postMessage(reply,location.origin);
   });
 
   try{

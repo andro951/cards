@@ -9,7 +9,7 @@ import pytest
 from PIL import Image
 
 from foundry.domain import RARITIES, ValidationError
-from foundry.github_setup import import_github_setup
+from foundry.github_setup import import_github_setup, import_symbol_folder
 from foundry.images import decode_image, ingest_image, rarity_variants
 from foundry.network import Network
 from foundry.storage import Store
@@ -104,7 +104,7 @@ def test_four_symbols_live_art_and_icon_are_staged(tmp_path):
     before = copy.deepcopy(ws.store.get('decks', deck['id']))
     result = import_github_setup(ws, {'url': remote.url})
     s = result['settings']
-    assert s['source'] == {'mode': 'github', 'githubFolder': remote.url + '/art', 'ref': 'main', 'fallback': True, 'localFiles': {}}
+    assert s['source'] == {'mode': 'github', 'githubFolder': remote.url + '/art', 'ref': 'main', 'fallback': False, 'localFiles': {}}
     assert set(s['symbols']) == set(RARITIES) and len(set(s['symbols'].values())) == 4
     assert result['summary'] == {'art': 'github', 'symbols': 'folder', 'back': 'icon'}
     assert s['backAsset'] == ws.backs.icon(s['backDesign']['iconAsset'])['id']
@@ -114,26 +114,32 @@ def test_four_symbols_live_art_and_icon_are_staged(tmp_path):
     assert s['githubSetupFolder'] == remote.url
 
 
+def test_direct_github_symbol_folder_import(tmp_path):
+    remote=BundleRemote(art=False)
+    ws=workspace(tmp_path,remote)
+    symbols=import_symbol_folder(ws,{'url':remote.url+'/set_symbols'})['symbols']
+    assert set(symbols)==set(RARITIES)
+    assert len(set(symbols.values()))==4
+    remote.remove(remote.child('set_symbols/mythic.png'))
+    with pytest.raises(ValidationError,match='missing: mythic'):
+        import_symbol_folder(ws,{'url':remote.url+'/set_symbols'})
+
+
 @pytest.mark.parametrize('folder', ['set_symbols', 'set_symbol'])
 def test_symbol_folder_alias_no_art_enables_scryfall_and_default_back(tmp_path, folder):
     remote = BundleRemote(art=False, folder=folder)
     ws = workspace(tmp_path, remote)
     result = import_github_setup(ws, {'url': remote.url})
-    assert result['settings']['source'] == {'mode': 'scryfall', 'githubFolder': '', 'ref': '', 'fallback': True, 'localFiles': {}}
+    assert result['settings']['source'] == {'mode': 'scryfall', 'githubFolder': '', 'ref': '', 'fallback': False, 'localFiles': {}}
     assert result['settings']['backAsset'] == ws.backs.builtin('default')['id']
     assert result['summary']['symbols'] == 'folder'
 
 
-def test_single_symbol_uses_existing_color_generator(tmp_path):
+def test_single_symbol_is_rejected(tmp_path):
     remote = BundleRemote(art=False, folder=None, single=True)
     ws = workspace(tmp_path, remote)
-    result = import_github_setup(ws, {'url': remote.url})
-    original = ingest_image(ws.store, remote.images[remote.child('set_symbol.png')])
-    assert result['settings']['symbols'] == rarity_variants(ws.store, original['id'])
-    assert result['summary']['symbols'] == 'generated'
-    assert 'not recommended' in result['warnings'][0]
-    for asset in result['settings']['symbols'].values():
-        assert decode_image(ws.store.asset_path(asset).read_bytes()).getchannel('A').getextrema() == (180, 180)
+    with pytest.raises(ValidationError,match='one-image symbol generation is no longer supported'):
+        import_github_setup(ws, {'url': remote.url})
 
 
 def test_github_symbols_and_custom_back_trim_fully_transparent_padding(tmp_path):
@@ -147,7 +153,7 @@ def test_github_symbols_and_custom_back_trim_fully_transparent_padding(tmp_path)
 
 
 def test_precedence_four_images_over_single_and_complete_back_over_icon(tmp_path):
-    remote = BundleRemote(single=True, back='both')
+    remote = BundleRemote(back='both')
     ws = workspace(tmp_path, remote)
     result = import_github_setup(ws, {'url': remote.url})
     assert result['summary']['back'] == 'custom'
@@ -175,7 +181,7 @@ def test_plural_symbol_folder_takes_priority_over_legacy_alias(tmp_path):
     ('unsafe-path', 'unsafe or unexpected'),
 ])
 def test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck(tmp_path, problem, match):
-    remote = BundleRemote(single=True)
+    remote = BundleRemote()
     folder = remote.child('set_symbols')
     if problem == 'missing':
         remote.remove(folder + '/mythic.png')
@@ -414,10 +420,9 @@ def test_empty_symbol_folder_uses_bundled_defaults(tmp_path,folder):
     assert result['settings']['symbols']==ws.default_symbols()
 
 
-def test_empty_symbol_folder_can_fall_through_to_single_symbol_override(tmp_path):
+def test_empty_symbol_folder_does_not_enable_single_symbol_override(tmp_path):
     remote=BundleRemote(art=False,folder=None,single=True)
     remote.directory(remote.child('set_symbols'))
     ws=workspace(tmp_path,remote)
-    result=import_github_setup(ws,{'url':remote.url})
-    assert result['summary']['symbols']=='generated'
-    assert result['settings']['symbols']!=ws.default_symbols()
+    with pytest.raises(ValidationError,match='one-image symbol generation is no longer supported'):
+        import_github_setup(ws,{'url':remote.url})
