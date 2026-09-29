@@ -59,6 +59,14 @@ def job_done(server,path,data):
         time.sleep(.02)
     raise AssertionError('job stalled')
 
+def test_site_png_assets_are_served(running):
+    _,server=running
+    for name in ('logo.png','discord.png','command_tower.png','command_tower_custom.png'):
+        status,body,headers=request(server,'/site/'+name,raw=True)
+        assert status==200
+        assert body.startswith(b'\x89PNG\r\n\x1a\n')
+        assert headers['Content-Type']=='image/png'
+
 
 def test_csrf_and_runtime_isolation(running):
     app,s=running

@@ -78,7 +78,7 @@ function mountNavigation(){
     decks:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 3h8v8H2zM14 3h8v8h-8zM2 14h8v8H2zM14 14h8v8h-8z"/><path d="M4 1h8v8M16 1h8v8M4 12h8v8M16 12h8v8"/></svg>',
     templates:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="1.5" width="14" height="21" rx="1.7"/><path d="M7 5h10M7 16h10M7 19h10"/></svg>',
     settings:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.5 2.2 1.7.7 1.9-1.2 2.8 2.8-1.2 1.9.7 1.7L22 10v4l-2.2.5-.7 1.7 1.2 1.9-2.8 2.8-1.9-1.2-1.7.7L14 22h-4l-.5-2.2-1.7-.7-1.9 1.2-2.8-2.8 1.2-1.9-.7-1.7L2 14v-4l2.2-.5.7-1.7-1.2-1.9 2.8-2.8 1.9 1.2 1.7-.7z"/></svg>',
-    discord:'<img src="/site/discord.svg" alt="" width="22" height="22" style="filter:invert(1)">'
+    discord:'<img src="/site/discord.png" alt="" width="22" height="22">'
   };
   const items=[['decks','Deck Library','#decks'],['templates','Templates','#templates'],
                ['settings','Settings','#settings'],['discord','Discord','https://discord.com/']];

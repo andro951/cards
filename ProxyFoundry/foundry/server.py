@@ -425,7 +425,7 @@ class Handler(BaseHTTPRequestHandler):
                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cards.scryfall.io; connect-src 'self'; frame-src " + self.app.runtime_origin + "; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"})
         if p.startswith('/site/'):
             name = p[6:]
-            if not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:css|js|svg|json)', name): raise FileNotFoundError('UI file not found.')
+            if not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:css|js|svg|json|png)', name): raise FileNotFoundError('UI file not found.')
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
             return self.respond({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,

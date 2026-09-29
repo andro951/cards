@@ -39,8 +39,8 @@ def test_static_website_import_frame_review_and_zip(tmp_path):
                 page.click('#import-deck')
                 page.locator('.modal-body summary').click()
                 page.locator('.modal-body textarea').fill('1 Syr Gwyn, Hero of Ashvale')
-                page.locator('input[name=import-look][value=custom]').check()
                 page.click('#do-import')
+                page.get_by_role('button',name='Customize Look').click(timeout=90000)
                 page.locator('#save-setup').wait_for(timeout=90000)
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
                                             'nickname':'Test Commander Nickname'}]}

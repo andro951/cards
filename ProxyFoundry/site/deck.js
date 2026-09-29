@@ -40,36 +40,51 @@ async function prepareDeckSource(source){
   }
   return text;
 }
+function chooseLook(deck){
+  let chosen=false,choosing=false;
+  const host=modal('Choose Look','',{size:'large',onClose:()=>{if(!chosen)nav('deck/'+deck.id+'/cards');return true;}});
+  const body=$('.modal-body',host);
+  const intro=document.createElement('p');intro.className='muted';intro.textContent='How would you like to prepare this deck?';body.append(intro);
+  const choices=document.createElement('div');choices.style.display='grid';choices.style.gridTemplateColumns='repeat(auto-fit,minmax(220px,1fr))';choices.style.gap='16px';choices.style.marginTop='20px';body.append(choices);
+  const looks=[
+    ['normal','Normal Look','Use the card’s normal MTG artwork and frames.','/site/command_tower.png'],
+    ['custom','Customize Look','Choose artwork, frames, set symbols, card backs, and more.','/site/command_tower_custom.png']
+  ];
+  for(const [value,title,description,imageUrl] of looks){
+    const option=document.createElement('button');option.type='button';option.className='choice';option.setAttribute('aria-label',title);
+    option.style.alignItems='center';option.style.textAlign='center';option.style.whiteSpace='normal';option.style.padding='20px';
+    const image=document.createElement('img');image.src=imageUrl;image.alt=`Command Tower example for ${title}`;image.style.width='min(100%, 220px)';image.style.aspectRatio='5 / 7';image.style.objectFit='contain';
+    const heading=document.createElement('b');heading.textContent=title;heading.style.fontSize='16px';
+    const detail=document.createElement('span');detail.textContent=description;detail.style.fontSize='12px';
+    option.append(image,heading,detail);choices.append(option);
+    option.onclick=async()=>{
+      if(choosing)return;
+      choosing=true;
+      if(value==='normal'){
+        const templateRules={...deck.settings.templateRules};
+        for(const group of ['standard','legendary','land','legendary-land','basic-land'])templateRules[group]='normal';
+        try{await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{templateRules}});}
+        catch(error){choosing=false;errorBox(body,error.message);return;}
+      }
+      chosen=true;closeModal();
+      nav('deck/'+deck.id+(value==='custom'?'/setup':'/cards'));
+      if(value==='normal')await attempt(()=>renderDecks([deck.id],{onUpdate:async()=>{if(state.route==='deck')await showDeck(deck.id,'cards');}}));
+    };
+  }
+}
 function addNewDeck(){
   if(state.busy)throw new Error('Wait for the current task to finish.');
-  const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import">Add deck →</button>'});
-  const body=$('.modal-body',host);
-  const intro=document.createElement('p');intro.className='muted';intro.textContent='Paste a public Scryfall deck link. Archidekt and MTGGoldfish links work with the optional browser helper; their downloaded deck exports work without it.';body.append(intro);
-  const helperButton=document.createElement('button');helperButton.type='button';helperButton.className='button small';helperButton.textContent='Set up browser helper';
-  helperButton.onclick=()=>{closeModal();setupHelper();};body.append(helperButton);
+  const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import" disabled>Add deck</button>'});
+  const body=$('.modal-body',host),addButton=$('#do-import');
+  const intro=document.createElement('p');intro.className='muted';intro.textContent="Give us your deck link from a website like Scryfall, MTGGoldfish, or Archidekt, and we'll get the full deck for you.";body.append(intro);
   const linkLabel=document.createElement('label');linkLabel.className='field';
   const linkTitle=document.createElement('span');linkTitle.textContent='Deck link';
-  const link=document.createElement('input');link.type='url';link.placeholder='https://…';link.autocomplete='url';link.required=true;
+  const link=document.createElement('input');link.type='url';link.placeholder='https://scryfall.com/@you/decks/…';link.autocomplete='url';
   linkLabel.append(linkTitle,link);body.append(linkLabel);
-
-  const outsideLabel=document.createElement('label');outsideLabel.className='check-line';
-  const outside=document.createElement('input');outside.type='checkbox';outside.checked=true;
-  const outsideText=document.createElement('span');outsideText.textContent='Include Outside-the-Game cards';
-  outsideLabel.append(outside,outsideText);body.append(outsideLabel);
-
-  const lookTitle=document.createElement('h3');lookTitle.textContent='Choose Look';lookTitle.style.margin='22px 0 10px';body.append(lookTitle);
-  const lookChoices=document.createElement('div');lookChoices.className='source-choices';
-  const looks=[['default','Default Look','Use your selected card art, automatic frames, and the built-in symbols and back.'],
-               ['custom','Custom','Open Art & Setup to choose artwork, frames, symbols, credits, and backs.']];
-  for(const [value,title,description] of looks){
-    const label=document.createElement('label');label.className='choice';label.style.cursor='pointer';
-    const radio=document.createElement('input');radio.type='radio';radio.name='import-look';radio.value=value;radio.checked=value==='default';
-    const copy=document.createElement('span');const strong=document.createElement('b');strong.textContent=title;
-    const small=document.createElement('small');small.textContent=description;small.style.display='block';small.style.marginTop='5px';
-    copy.append(strong,small);label.append(radio,copy);lookChoices.append(label);
-  }
-  body.append(lookChoices);
-
+  const helperNotice=document.createElement('div');helperNotice.className='notice info hidden';
+  const helperText=document.createElement('p');helperText.textContent='This deck site needs the browser helper to import its link on your computer.';
+  const helperButton=document.createElement('button');helperButton.type='button';helperButton.className='button small';helperButton.textContent='Set up browser helper';helperButton.style.marginTop='10px';
+  helperButton.onclick=()=>setupHelper();helperNotice.append(helperText,helperButton);body.append(helperNotice);
   const advanced=document.createElement('details');advanced.style.marginTop='22px';
   const summary=document.createElement('summary');summary.textContent='Other import methods';advanced.append(summary);
   const textLabel=document.createElement('label');textLabel.className='field';
@@ -80,28 +95,27 @@ function addNewDeck(){
   const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
   const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
   fileLabel.append(fileTitle,file);advanced.append(fileLabel);body.append(advanced);
-  file.onchange=async()=>{if(file.files[0])sourceText.value=await file.files[0].text();};
-
-  $('#do-import').onclick=async()=>{
-    let source=sourceText.value.trim()||link.value.trim();
-    if(!source){errorBox(body,'Paste a deck link or choose an import file.');return;}
-    if(!sourceText.value.trim()&&!/^https:\/\/(?:www\.)?(?:scryfall\.com\/@[^/]+\/decks\/|archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)){
+  const updateButton=()=>{addButton.disabled=!(link.value.trim()||sourceText.value.trim());addButton.style.filter=addButton.disabled?'grayscale(1)':'';helperNotice.classList.add('hidden');};
+  link.oninput=()=>{sourceText.value='';file.value='';updateButton();};
+  sourceText.oninput=()=>{link.value='';file.value='';updateButton();};
+  file.onchange=()=>attempt(async()=>{if(!file.files[0])return;if(file.files[0].size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');sourceText.value=await file.files[0].text();link.value='';updateButton();});
+  addButton.onclick=async()=>{
+    let source=link.value.trim()||sourceText.value.trim();
+    if(link.value.trim()&&!/^https:\/\/(?:www\.)?(?:scryfall\.com\/@[^/]+\/decks\/|archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)){
       errorBox(body,'Use a public Scryfall, Archidekt, or MTGGoldfish deck link.');return;
     }
-    const look=body.querySelector('input[name="import-look"]:checked').value;
-    $('#do-import').disabled=true;
+    if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)&&!state.helperCapabilities?.includes('deck-import')){
+      helperNotice.classList.remove('hidden');return;
+    }
+    addButton.disabled=true;addButton.style.filter='grayscale(1)';
     try{
       source=await prepareDeckSource(source);
-      closeModal();
-      const deck=await job('/api/decks/import',{source,includeOutside:outside.checked},{label:'Import deck'});
-      if(look==='custom')nav('deck/'+deck.id+'/setup');
-      else{
-        nav('deck/'+deck.id+'/cards');
-        await renderDecks([deck.id],{onUpdate:async()=>{if(state.route==='deck')await showDeck(deck.id,'cards');}});
-      }
+      const deck=await job('/api/decks/import',{source,includeOutside:true},{label:'Import deck'});
+      closeModal();chooseLook(deck);
     }
-    catch(error){if($('#do-import')){$('#do-import').disabled=false;errorBox(body,error.message);}else toast(error.message,true);}
+    catch(error){updateButton();errorBox(body,error.message);}
   };
+  updateButton();
 }
 export async function importDeck(existing=null){
   if(!existing)return addNewDeck();

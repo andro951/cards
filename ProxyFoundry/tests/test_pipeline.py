@@ -40,6 +40,17 @@ def test_nonlegendary_choices(workspace,choice):
 def test_legendary_no_invalid_land(workspace):
     s,a,settings=workspace;c=sf()
     with pytest.raises(ValidationError):Compiler(s).compile_face(c,c,0,{'templateOverride':'land'},settings,a)
+@pytest.mark.parametrize(('type_line','group','recipe'),[
+    ('Land','land','card_noncreature'),
+    ('Legendary Land','legendary-land','card_legendary'),
+    ('Basic Land — Forest','basic-land','card_noncreature'),
+])
+def test_normal_look_land_rules_use_classic_card_frame(workspace,type_line,group,recipe):
+    s,a,settings=workspace;c=sf(type_line,[])
+    result=Compiler(s).compile_face(c,c,0,{},dict(settings,templateRules={group:'normal'}),a)
+    assert result['group']==group
+    assert result['recipe']==recipe
+    assert result['data']['version']=='m15Regular'
 def test_artist_and_back_hash(workspace):
     s,a,settings=workspace;c=sf();comp=Compiler(s)
     x=comp.compile_face(c,c,0,{},settings,a)

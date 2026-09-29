@@ -104,6 +104,42 @@ def test_browser_saved_orders_are_reachable_from_library(browser_app):
     expect(page.locator('.topbar [data-nav=orders]')).to_have_count(0)
     assert not errors,errors
 
+def test_new_deck_import_stays_simple_and_chooses_look_afterward(browser_app):
+    app,server,page,errors=browser_app
+    page.click('#import-deck')
+    expect(page.locator('.modal-body')).to_contain_text("Give us your deck link from a website like Scryfall, MTGGoldfish, or Archidekt")
+    expect(page.locator('#do-import')).to_be_disabled()
+    expect(page.get_by_role('button',name='Set up browser helper')).to_have_count(0)
+    expect(page.get_by_role('button',name='Customize Look')).to_have_count(0)
+    page.locator('.modal-body input[type=url]').fill('https://archidekt.com/decks/123')
+    expect(page.locator('#do-import')).to_be_enabled()
+    page.click('#do-import')
+    expect(page.get_by_role('button',name='Set up browser helper')).to_be_visible()
+    page.locator('.modal-body summary').click()
+    page.locator('.modal-body textarea').fill('1 A Test Creature')
+    expect(page.get_by_role('button',name='Set up browser helper')).to_be_hidden()
+    page.click('#do-import')
+    expect(page.get_by_role('button',name='Normal Look')).to_be_visible(timeout=30000)
+    expect(page.get_by_role('button',name='Customize Look')).to_be_visible()
+    page.get_by_role('button',name='Customize Look').click()
+    page.locator('#save-setup').wait_for(timeout=30000)
+    assert not errors,errors
+
+def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
+    app,server,page,errors=browser_app
+    page.click('#import-deck')
+    page.locator('.modal-body summary').click()
+    page.locator('.modal-body textarea').fill('1 A Test Creature')
+    page.click('#do-import')
+    page.get_by_role('button',name='Normal Look').wait_for(timeout=30000)
+    page.route('**/api/decks/*/prepare',lambda route:route.fulfill(status=503,content_type='application/json',body='{"error":"Render stopped after settings check"}'))
+    page.get_by_role('button',name='Normal Look').click()
+    page.locator('.modal').wait_for(state='hidden',timeout=30000)
+    decks=app.store.list('decks')
+    assert len(decks)==1
+    assert all(decks[0]['settings']['templateRules'][group]=='normal' for group in ('standard','legendary','land','legendary-land','basic-land'))
+    assert not errors,errors
+
 def test_browser_symbol_folder_upload(browser_app,tmp_path):
     app,server,page,errors=browser_app
     d=app.ws.new_deck('Folder symbols')
