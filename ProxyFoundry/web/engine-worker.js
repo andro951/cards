@@ -13,8 +13,11 @@ const ready = (async()=>{
   python.unpackArchive(await archive.arrayBuffer(),'zip',{extractDir:'/app/ProxyFoundry'});
 
   self.syncFetch=url=>{
+    const host=new URL(url).hostname;
+    const target=['archidekt.com','www.archidekt.com','mtggoldfish.com','www.mtggoldfish.com'].includes(host)
+      ?`/gateway/deck?url=${encodeURIComponent(url)}`:url;
     const xhr=new XMLHttpRequest();
-    xhr.open('GET',url,false);
+    xhr.open('GET',target,false);
     xhr.responseType='arraybuffer';
     xhr.setRequestHeader('Accept','application/json;q=0.9,image/*;q=0.8,*/*;q=0.7');
     xhr.send();
@@ -26,12 +29,12 @@ const ready = (async()=>{
   python.runPython(`
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
-from js import syncFetch
+from js import syncFetch, location
 from foundry.browser import create_app, request
 def transport(url):
     result = syncFetch(url)
     return bytes(result.bytes.to_py()), str(result.mime), {}
-app = create_app('/workspace', transport)
+app = create_app('/workspace', transport, str(location.origin))
 def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))
@@ -40,7 +43,10 @@ def browser_request(method, url, body, headers):
   self.postMessage({type:'ready'});
 })();
 
-self.onmessage=async event=>{
+let sequence=Promise.resolve();
+self.onmessage=event=>{sequence=sequence.then(()=>handle(event));};
+
+async function handle(event){
   const {id,method,url,body,headers}=event.data;
   if(!id)return;
   try{
@@ -57,6 +63,6 @@ self.onmessage=async event=>{
     self.postMessage({type:'response',id,...metadata,body:bytes},[bytes.buffer]);
   }
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
-};
+}
 
 ready.catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));

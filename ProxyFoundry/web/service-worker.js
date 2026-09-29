@@ -16,7 +16,9 @@ async function handle(event){
 
 async function handleRequest(event){
   const url=new URL(event.request.url);
-  const client=await self.clients.get(event.clientId);
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  const client=windows.find(item=>item.frameType==='top-level'&&new URL(item.url).pathname==='/')
+    ||windows.find(item=>item.frameType==='top-level');
   if(!client)return new Response(JSON.stringify({error:'Open Bulk Proxy Forge in its browser tab.'}),{status:503,headers:{'Content-Type':'application/json'}});
 
   const channel=new MessageChannel();

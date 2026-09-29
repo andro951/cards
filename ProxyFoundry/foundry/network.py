@@ -16,7 +16,8 @@ from .storage import Store
 
 MAX_REMOTE_BYTES = 64 * 1024 * 1024
 ALLOWED_HOSTS = {'api.scryfall.com', 'scryfall.com', 'raw.githubusercontent.com', 'api.github.com',
-                 'cards.scryfall.io', 'c1.scryfall.com', 'c2.scryfall.com', 'c3.scryfall.com', 'c4.scryfall.com'}
+                 'cards.scryfall.io', 'c1.scryfall.com', 'c2.scryfall.com', 'c3.scryfall.com', 'c4.scryfall.com',
+                 'archidekt.com', 'www.archidekt.com', 'mtggoldfish.com', 'www.mtggoldfish.com'}
 
 
 def validate_remote_url(url: str) -> str:

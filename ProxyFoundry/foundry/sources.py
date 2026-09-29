@@ -47,6 +47,8 @@ class Sources:
                 # Always fetch it live so re-importing the same Scryfall URL sees
                 # additions/removals immediately instead of the year/week cache.
                 source=self.net.json(deck_parser.deck_export_url(deck_parser.extract_deck_uuid(text)),ttl=0)
+            elif re.match(r'^https://(?:www\.)?(?:archidekt\.com/decks/\d+|mtggoldfish\.com/deck/\d+)(?:[/?#]|$)',text):
+                source=self.net.json(text,ttl=0)
         title='New deck';digests={}
         if isinstance(source,dict) and 'entries' in source:
             try:_,rows=deck_parser.extract_card_sources(source,include_outside_the_game=include_outside)
@@ -57,6 +59,14 @@ class Sources:
                     if not isinstance(row,dict):continue
                     d=row.get('card_digest') or {};digests[d.get('id')]=d
             manifest=[{'source':r['scryfall_id'],'quantity':quantity(r['count']),'section':r['section']} for r in rows]
+        elif isinstance(source,dict) and isinstance(source.get('rows'),list):
+            title=source.get('name') or title
+            manifest=[]
+            for row in source['rows']:
+                if not isinstance(row,dict):raise ValidationError('Deck source returned an invalid card row.')
+                section=str(row.get('section') or 'mainboard')
+                if not include_outside and section not in {'mainboard','commanders'}:continue
+                manifest.append({'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
         elif isinstance(source,list):
             manifest=[]
             for r in source:

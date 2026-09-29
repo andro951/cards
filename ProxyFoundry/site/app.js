@@ -34,14 +34,51 @@ function showLibrary(){
   $$('[data-filter]').forEach(el=>el.onclick=()=>{filter=el.dataset.filter;showLibrary()});
   $('#deck-search').oninput=e=>{query=e.target.value;const pos=e.target.selectionStart;showLibrary();$('#deck-search').focus();try{$('#deck-search').setSelectionRange(pos,pos)}catch{}};
   $$('[data-select]').forEach(el=>el.onchange=()=>{el.checked?state.selected.add(el.dataset.select):state.selected.delete(el.dataset.select);el.closest('.deck-tile').classList.toggle('selected',el.checked);selectTray();});
+  $('#new-empty').remove();
+  $('.hero-strip')?.remove();
+  $('.page-head .eyebrow')?.remove();
+  $('.page-head p')?.remove();
+  $('.subtitle-line')?.remove();
+  $('.add-tile')?.remove();
+  $('#empty-import')?.remove();
+  const emptyText=$('.empty-state p');if(emptyText)emptyText.textContent='Add a public deck link to get started.';
+  const action=$('#import-deck');if(action)action.textContent='＋ Add New Deck';
+  const all=$('[data-filter="all"]');if(all)all.textContent='All Decks';
+  const work=$('[data-filter="work"]');if(work)work.textContent='Needs Preparation';
+  for(const tile of $$('.deck-tile')){
+    $('.tile-open',tile)?.remove();
+    tile.style.cursor='pointer';
+    tile.onclick=event=>{if(event.target.closest('.deck-select'))return;const ident=tile.dataset.deck;nav('deck/'+ident);};
+  }
   selectTray();
+}
+function mountNavigation(){
+  $('.sidebar').hidden=true;$('.sidebar').style.display='none';
+  const shell=$('.workspace-shell');shell.style.marginLeft='0';shell.style.width='100%';
+  const tray=$('#selection-tray');tray.style.left='50%';tray.style.maxWidth='calc(100vw - 24px)';
+  const bar=$('.topbar');bar.replaceChildren();
+  const brand=document.createElement('a');brand.href='#decks';brand.setAttribute('aria-label','Bulk Proxy Forge home');
+  brand.style.display='flex';brand.style.alignItems='center';brand.style.gap='10px';brand.style.fontWeight='750';
+  const mark=document.createElement('span');mark.className='brand-mark';mark.textContent='BPF';mark.style.width='35px';mark.style.height='40px';
+  const name=document.createElement('span');name.textContent='Bulk Proxy Forge';brand.append(mark,name);bar.append(brand);
+  const links=document.createElement('nav');links.setAttribute('aria-label','Main navigation');
+  links.style.display='flex';links.style.gap='8px';links.style.marginLeft='auto';
+  const items=[['decks','▦','Deck Library','#decks'],['templates','▤','Templates','#templates'],
+               ['settings','⚙','Settings','#settings'],['discord','◉','Discord','https://discord.com/']];
+  for(const [key,icon,title,href] of items){
+    const link=document.createElement('a');link.href=href;link.title=title;link.setAttribute('aria-label',title);
+    link.textContent=icon;link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
+    if(key==='discord'){link.target='_blank';link.rel='noopener noreferrer';}
+    links.append(link);
+  }
+  bar.append(links);
 }
 let routeCounter=0,lastHash=location.hash||'#decks';
 export async function route(){
   if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
   state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
   $('#selection-tray').classList.add('hidden');$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===(name==='deck'?'decks':name)));
-  $('#breadcrumb').innerHTML=`Workspace <span>/</span> ${esc({decks:'Deck library',deck:'Deck studio',templates:'Templates',orders:'Print orders',settings:'Settings & backup',help:'Quick start & tools'}[name]||'Deck library')}`;
+  document.title=`${{decks:'Deck Library',deck:'Deck',templates:'Templates',orders:'Print Orders',settings:'Settings'}[name]||'Bulk Proxy Forge'} · Bulk Proxy Forge`;
   $('#main').innerHTML=loading();
   try{
     await refreshLibrary();if(current!==routeCounter)return;
@@ -56,18 +93,17 @@ export async function route(){
 async function boot(){
   try{
     const data=await api('/api/bootstrap');state.csrf=data.csrf;state.bootstrap=data;
-    $('#global-import').onclick=()=>attempt(()=>importDeck());
-    $('#helper-state').onclick=setupHelper;
+    mountNavigation();
     window.addEventListener('hashchange',route);
     window.addEventListener('message',e=>{
       if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;
       if(e.data.type==='PF_WORKSPACE_PONG'){
-        state.helperCapabilities=Array.isArray(e.data.capabilities)?e.data.capabilities:[];state.helper=true;$('#helper-state').classList.add('connected');$('#helper-state b').textContent='connected';
+        state.helperCapabilities=Array.isArray(e.data.capabilities)?e.data.capabilities:[];state.helper=true;
       }
       if(e.data.type==='PF_WORKSPACE_ERROR')toast(e.data.error||'The print helper could not open the order.',true);
     });
     const ping=()=>window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);
-    ping();setTimeout(ping,1000);setTimeout(()=>{if(!state.helper)$('#helper-state b').textContent='setup';},2200);
+    ping();setTimeout(ping,1000);
     document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a&&state.dirty){e.preventDefault();nav(a.getAttribute('href').slice(1));}});
     await route();
   }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nKeep the launcher window open, then reload this page.</div>`;}

@@ -86,14 +86,21 @@ class BrowserHandler(server.Handler):
         self.send_bytes(path.read_bytes(), mime or mimetypes.guess_type(path.name)[0]
                         or 'application/octet-stream', filename=filename)
 
+    def post(self, path, query):
+        match = re.fullmatch(r'/api/decks/([-a-f0-9]{36})/delete', path)
+        if match:
+            data = self.data()
+            return self.respond(self.app.store.purge('decks', match[1], data.get('revision')))
+        return super().post(path, query)
 
-def create_app(home, transport):
+
+def create_app(home, transport, origin):
     server.Jobs = BrowserJobs
     store = Store(Path(home))
     app = server.App(store, Network(store, transport=transport))
-    app.origin = '/'
-    app.runtime_origin = '/'
-    app.runtime.parent_origin = ''
+    app.origin = origin
+    app.runtime_origin = origin
+    app.runtime.parent_origin = origin
     return app
 
 

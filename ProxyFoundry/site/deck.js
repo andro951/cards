@@ -5,7 +5,67 @@ import {renderDecks,renderCard} from './render.js';
 import {chooseOrder} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
+function addNewDeck(){
+  if(state.busy)throw new Error('Wait for the current task to finish.');
+  const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import">Add deck →</button>'});
+  const body=$('.modal-body',host);
+  const intro=document.createElement('p');intro.className='muted';intro.textContent='Paste a public deck link from Scryfall, Archidekt, or MTGGoldfish.';body.append(intro);
+  const linkLabel=document.createElement('label');linkLabel.className='field';
+  const linkTitle=document.createElement('span');linkTitle.textContent='Deck link';
+  const link=document.createElement('input');link.type='url';link.placeholder='https://…';link.autocomplete='url';link.required=true;
+  linkLabel.append(linkTitle,link);body.append(linkLabel);
+
+  const outsideLabel=document.createElement('label');outsideLabel.className='check-line';
+  const outside=document.createElement('input');outside.type='checkbox';outside.checked=true;
+  const outsideText=document.createElement('span');outsideText.textContent='Include Outside-the-Game cards';
+  outsideLabel.append(outside,outsideText);body.append(outsideLabel);
+
+  const lookTitle=document.createElement('h3');lookTitle.textContent='Choose Look';lookTitle.style.margin='22px 0 10px';body.append(lookTitle);
+  const lookChoices=document.createElement('div');lookChoices.className='source-choices';
+  const looks=[['default','Default Look','Use your selected card art, automatic frames, and the built-in symbols and back.'],
+               ['custom','Custom','Open Art & Setup to choose artwork, frames, symbols, credits, and backs.']];
+  for(const [value,title,description] of looks){
+    const label=document.createElement('label');label.className='choice';label.style.cursor='pointer';
+    const radio=document.createElement('input');radio.type='radio';radio.name='import-look';radio.value=value;radio.checked=value==='default';
+    const copy=document.createElement('span');const strong=document.createElement('b');strong.textContent=title;
+    const small=document.createElement('small');small.textContent=description;small.style.display='block';small.style.marginTop='5px';
+    copy.append(strong,small);label.append(radio,copy);lookChoices.append(label);
+  }
+  body.append(lookChoices);
+
+  const advanced=document.createElement('details');advanced.style.marginTop='22px';
+  const summary=document.createElement('summary');summary.textContent='Other import methods';advanced.append(summary);
+  const textLabel=document.createElement('label');textLabel.className='field';
+  const textTitle=document.createElement('span');textTitle.textContent='Card list or JSON export';
+  const sourceText=document.createElement('textarea');sourceText.rows=5;sourceText.placeholder='1 Sol Ring\n12 Forest';
+  textLabel.append(textTitle,sourceText);advanced.append(textLabel);
+  const fileLabel=document.createElement('label');fileLabel.className='field';
+  const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
+  const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
+  fileLabel.append(fileTitle,file);advanced.append(fileLabel);body.append(advanced);
+  file.onchange=async()=>{if(file.files[0])sourceText.value=await file.files[0].text();};
+
+  $('#do-import').onclick=async()=>{
+    const source=sourceText.value.trim()||link.value.trim();
+    if(!source){errorBox(body,'Paste a deck link or choose an import file.');return;}
+    if(!sourceText.value.trim()&&!/^https:\/\/(?:www\.)?(?:scryfall\.com\/@[^/]+\/decks\/|archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)){
+      errorBox(body,'Use a public Scryfall, Archidekt, or MTGGoldfish deck link.');return;
+    }
+    const look=body.querySelector('input[name="import-look"]:checked').value;
+    $('#do-import').disabled=true;closeModal();
+    try{
+      const deck=await job('/api/decks/import',{source,includeOutside:outside.checked},{label:'Import deck'});
+      if(look==='custom')nav('deck/'+deck.id+'/setup');
+      else{
+        nav('deck/'+deck.id+'/cards');
+        await renderDecks([deck.id],{onUpdate:async()=>{if(state.route==='deck')await showDeck(deck.id,'cards');}});
+      }
+    }
+    catch(error){toast(error.message,true);}
+  };
+}
 export async function importDeck(existing=null){
+  if(!existing)return addNewDeck();
   if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
   const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
@@ -35,6 +95,7 @@ const hasPhysicalReverse=c=>c.faces.length===2||Boolean(c.meldBackAsset||c.scryf
 const physicalReverseName=c=>c.faces.length===2?c.faces[1].name:(c.scryfall?._meld_result?.name||'Meld reverse');
 
 export async function showDeck(id,tab='cards'){
+  if(tab==='review')tab='cards';
   const oldScroll=$('.card-grid')?.scrollTop||0;
   const d=await api('/api/decks/'+id);state.activeDeck=d;
   let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}
@@ -42,7 +103,12 @@ export async function showDeck(id,tab='cards'){
   $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.status)}<span class="count-label">${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
     <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
-  $('#add-cards').onclick=()=>attempt(()=>importDeck(d));
+  $('.back-to-library')?.remove();
+  $('.page-head .eyebrow')?.remove();
+  $('#add-cards')?.remove();
+  $('[data-tab="review"]')?.remove();
+  const reviewButton=document.createElement('button');reviewButton.className='button';reviewButton.textContent='Review & Print';
+  reviewButton.onclick=()=>attempt(()=>chooseOrder([id]));$('#generate-deck').before(reviewButton);
   $('#generate-deck').onclick=()=>attempt(()=>generate(d));
   $('#deck-menu').onclick=()=>deckMenu(d);
   if(tab==='setup'){
@@ -74,6 +140,12 @@ export async function showDeck(id,tab='cards'){
     $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
     $$('[data-hover-back]').forEach(img=>{const card=img.closest('[data-card]'),front=img.dataset.hoverFront,back=img.dataset.hoverBack;if(!card||!front||!back)return;card.onmouseenter=()=>{img.src=back;};card.onmouseleave=()=>{img.src=front;};});
     $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;cardsGrid();});
+    const attention=$('[data-card-filter="attention"]');
+    if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
+    $('.card-grid')?.style.setProperty('max-height','none');
+    $('.card-grid')?.style.setProperty('overflow','visible');
+    $('#quick-order')?.remove();
+    $('.subtitle-line', $('#deck-body'))?.remove();
     $('#card-search').oninput=e=>{v.query=e.target.value;const start=e.target.selectionStart??v.query.length,end=e.target.selectionEnd??start;cardsGrid();const search=$('#card-search');search.focus();try{search.setSelectionRange(start,end)}catch{}};
     $('#quick-order').onclick=()=>attempt(()=>chooseOrder([id]));if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
   }
@@ -86,8 +158,12 @@ async function generate(d){
   await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
 }
 function deckMenu(d){
-  const permanent=!!state.bootstrap.settings?.deletePermanently;
+  const permanent=true;
   modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Review images place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
+  const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
+  $('.stack',$('#modal-host')).prepend(add);
+  $('#use-as-defaults')?.remove();
+  $('.modal-body p.muted')?.remove();
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
@@ -107,7 +183,6 @@ function deckMenu(d){
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
     location.href=out.download;
   });
-  $('#use-as-defaults').onclick=()=>attempt(async()=>{const defaults={symbols:d.settings.symbols,backAsset:d.settings.backAsset,backDesign:d.settings.backDesign||null,artist:d.settings.artist,templateRules:d.settings.templateRules};await api('/api/settings',{defaults});closeModal();toast('Symbols, back, artist credits and templates saved as defaults for new decks.');});
   $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
 }
 async function inspectMeldReverse(deck,card){

@@ -9,6 +9,7 @@ _work/
 workspace/
 outputs/
 dist/
+.wrangler/
 node_modules/
 *.pem
 *.crx

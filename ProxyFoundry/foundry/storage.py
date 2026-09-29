@@ -418,7 +418,7 @@ class Store:
         temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
         try:
             try:os.link(source,temp)
-            except OSError:shutil.copy2(source,temp)
+            except (OSError, AttributeError):shutil.copy2(source,temp)
             os.replace(temp,output)
         finally:
             temp.unlink(missing_ok=True)
