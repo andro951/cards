@@ -33,7 +33,7 @@ def test_github_art_uses_pinned_immutable_url_and_verifies_blob(tmp_path):
     settings=ws.validate_settings({'source':{'mode':'github','githubFolder':'owner/repo/art'}})
     commit='a'*40
     entry={'url':'https://raw.githubusercontent.com/owner/repo/'+commit+'/art/one_card.png','blobSha':blob_sha(raw)}
-    art_id,origin,url=ws._art(sf,sf,{},settings,{'one_card':entry},{})
+    art_id,origin,url=ws._art(sf,sf,{},settings,{'one_card':entry})
     assert origin=='GitHub folder' and url==entry['url']
     assert ws.store.asset(art_id)
     assert calls[-1]==(entry['url'],{'immutable':True})
@@ -91,10 +91,10 @@ def test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes(tmp_path):
     settings=ws.validate_settings({'source':{'mode':'github','githubFolder':'owner/repo/art'}})
 
     first_index=ws.sources.github_index('owner/repo/art',refresh=True)
-    first_id,_,first_url=ws._art(sf,sf,{},settings,first_index,{})
+    first_id,_,first_url=ws._art(sf,sf,{},settings,first_index)
     state[0]=1
     second_index=ws.sources.github_index('owner/repo/art',refresh=True)
-    second_id,_,second_url=ws._art(sf,sf,{},settings,second_index,{})
+    second_id,_,second_url=ws._art(sf,sf,{},settings,second_index)
 
     assert first_id!=second_id
     assert commits[0] in first_url and commits[1] in second_url
@@ -108,7 +108,7 @@ def test_github_blob_sha_mismatch_is_rejected(tmp_path):
     entry={'url':'https://raw.githubusercontent.com/owner/repo/'+commit+'/art/one_card.png','blobSha':'0'*40}
     assert blob_sha(raw)!='0'*40
     with pytest.raises(ValidationError,match='did not match the folder listing'):
-        ws._art(sf,sf,{},settings,{'one_card':entry},{})
+        ws._art(sf,sf,{},settings,{'one_card':entry})
 
 
 def test_old_refresh_art_setting_is_discarded(tmp_path):
@@ -120,14 +120,14 @@ def test_old_refresh_art_setting_is_discarded(tmp_path):
 def test_scryfall_cache_policy_is_unchanged(tmp_path):
     ws,sf,calls,_=make_workspace(tmp_path)
     settings=ws.validate_settings({'source':{'mode':'scryfall'}})
-    ws._art(sf,sf,{},settings,{},{});assert calls[-1][1]=={'refresh':False,'ttl':None}
+    ws._art(sf,sf,{},settings,{});assert calls[-1][1]=={'refresh':False,'ttl':None}
     settings['refreshData']=True
-    ws._art(sf,sf,{},settings,{},{});assert calls[-1][1]=={'refresh':True,'ttl':None}
+    ws._art(sf,sf,{},settings,{});assert calls[-1][1]=={'refresh':True,'ttl':None}
 
 
 def test_global_scryfall_refresh_applies_to_art(tmp_path):
     ws,sf,calls,_=make_workspace(tmp_path)
     ws.set_global_settings({'refreshData':True})
     settings=ws.validate_settings({})
-    ws._art(sf,sf,{},settings,{},{})
+    ws._art(sf,sf,{},settings,{})
     assert calls[-1][1]=={'refresh':True,'ttl':None}

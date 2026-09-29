@@ -253,7 +253,9 @@ def test_backup_restore_copies_and_omits_runtime_fonts(running):
     backup=app.backups.export()
     path=app.store.home/'backups'/backup['filename']
     with zipfile.ZipFile(path) as z:
-        assert set(z.namelist())=={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}
+        expected={'workspace.json','assets/'+d['settings']['backAsset']+'.png'}
+        expected.update('assets/'+asset_id+'.png' for asset_id in d['settings']['symbols'].values())
+        assert set(z.namelist())==expected
     result=app.backups.restore(path)
     assert result['decks']==1
     assert len(app.ws.list_decks())==2

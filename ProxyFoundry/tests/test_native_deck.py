@@ -77,7 +77,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
             assert '/img/frames/m15/transform/regular/new/backL.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
-            assert '/img/frames/m15/transform/crowns/regular/new/l.png' in app.runtime.requested
+            assert '/img/frames/m15/transform/crowns/regular/new/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/icons/compass.svg' in app.runtime.requested
             assert '/img/frames/m15/transform/icons/land.svg' in app.runtime.requested
             assert '/img/frames/class/w.png' in app.runtime.requested
@@ -147,5 +147,5 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
         finally:
             page.screenshot(path=str(evidence/'native-structural-browser.png'),full_page=True)
             (evidence/'native-structural-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'browserErrors':browser_errors,'activity':page.locator('#activity-log').text_content()},indent=2))
-            (evidence/'native-structural.log').write_text((s.home/'logs/app.log').read_text())
+            (evidence/'native-structural.log').write_text((s.home/'logs/app.log').read_text(encoding='utf-8'))
             browser.close();server.shutdown();server.server_close();app.close()

@@ -71,7 +71,7 @@ def start(page,existing=0,bad_chunk=False):
         throw new Error('Unexpected message '+msg.type);
       }}};
     }''',{'count':existing,'b64':base64.b64encode(data).decode(),'bad':bad_chunk})
-    script=(ROOT/'extension/bridge.js').read_text()
+    script=(ROOT/'extension/bridge.js').read_text(encoding='utf-8')
     assert script.count('new URLSearchParams(location.search)')==1
     script=script.replace('new URLSearchParams(location.search)',"new URLSearchParams('?proxyFoundryOrder=fixture')")
     page.add_script_tag(content=script)

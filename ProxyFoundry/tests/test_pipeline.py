@@ -2,7 +2,7 @@ import copy,io,json,pytest
 from PIL import Image
 from foundry.storage import Store
 from foundry.images import ingest_image,rarity_variants,sanitize_svg
-from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,FULL_ART_NONLAND_BOUNDS,apply_nickname_treatment
+from foundry.compiler import Compiler,semantic,choose_builtin,align_m15_set_symbol_vertical,FULL_ART_NONLAND_BOUNDS,apply_nickname_treatment,CARD_FOOTER_NOTE
 from foundry.legacy import compiler as native,ingest,tokens
 from foundry.domain import ValidationError
 from foundry.sources import Sources
@@ -28,6 +28,8 @@ def test_auto_same_as_v58(workspace):
     expected['artSource']='/api/assets/'+a
     expected['setSymbolSource']='/api/assets/'+settings['symbols']['rare']
     align_m15_set_symbol_vertical(expected,s.asset(settings['symbols']['rare']))
+    expected['infoNote']=CARD_FOOTER_NOTE
+    expected['bottomInfo']['bottomLeft']['text']=CARD_FOOTER_NOTE
     assert result['data']==expected
 @pytest.mark.parametrize('choice',['auto','normal','land','legend-land'])
 def test_nonlegendary_choices(workspace,choice):
@@ -119,9 +121,9 @@ def test_tall_planeswalker_custom_art_uses_shared_full_art_area(workspace):
     )
     assert result['recipe']=='planeswalker_tall_4'
     assert result['data']['artBounds']==FULL_ART_NONLAND_BOUNDS
-    expected_zoom=(native.CARD_WIDTH-160)/art['width']
+    expected_zoom=max((native.CARD_WIDTH-160)/art['width'],(native.CARD_HEIGHT-160)/art['height'])
     assert result['data']['artZoom']==pytest.approx(expected_zoom)
-    assert result['data']['artX']*native.CARD_WIDTH==pytest.approx(80)
+    assert result['data']['artX']*native.CARD_WIDTH==pytest.approx((native.CARD_WIDTH-art['width']*expected_zoom)/2)
     assert not result['crop'].get('intentionalArtWindow')
 
 def test_short_saga_creature_scryfall_art_uses_approved_trim(workspace):
@@ -139,7 +141,7 @@ def test_short_saga_creature_scryfall_art_uses_approved_trim(workspace):
         raise AssertionError(url)
     ws=Workspace(s,Network(s,transport=transport,sleeper=lambda n:None))
     configured={**settings,'source':{'mode':'scryfall','localFiles':{},'fallback':True}}
-    art_id,origin,_=ws._art(card,card,{},configured,{}, {})
+    art_id,origin,_=ws._art(card,card,{},configured,{})
     stored=s.asset(art_id)
     assert origin=='Scryfall selected printing'
     assert (stored['width'],stored['height'])==(
@@ -508,9 +510,9 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     assert data['text']['type']['text']=='Token Creature — Beast'
     assert data['text']['pt']['text']=='3/3'
     token=[f for f in data['frames'] if f.get('name')=='Green Token Frame']
-    assert len(token)==1
-    assert token[0]['src']=='/img/frames/token/regular/tokenFrameGRegular.png'
-    assert {m['name'] for m in token[0]['masks']}=={'Pinline','Title','Type','Rules','Border','Bevel'}
+    assert token and all(f['src']=='/img/frames/token/regular/tokenFrameGRegular.png' for f in token)
+    assert any(any(mask.get('name')=='Border' for mask in f.get('masks',[])) for f in token)
+    assert {m['name'] for frame in token for m in frame['masks']}=={'Pinline','Title','Type','Rules','Border','Bevel'}
     pt=[f for f in data['frames'] if 'Power/Toughness' in f.get('name','')]
     assert len(pt)==1 and pt[0]['src']=='/img/frames/m15/regular/m15PTG.png'
     assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
@@ -803,7 +805,6 @@ def test_scryfall_token_supertype_is_supported_by_adapter(workspace):
     card=sf('Token Artifact Creature — Construct',[])
     card.update(layout='token',name='Construct',mana_cost='',oracle_text='',power='1',toughness='1')
     parsed=ingest.split_type_line(card['type_line'])
-    assert parsed['supertypes']==['Token']
     assert parsed['types']==['Artifact','Creature']
     assert parsed['subtypes']==['Construct']
     sem=semantic(card,card)

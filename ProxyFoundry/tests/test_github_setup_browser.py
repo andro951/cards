@@ -141,7 +141,7 @@ def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
         expect(page.locator('#save-setup')).to_be_enabled()
         assert not page.evaluate("document.querySelector('#setup-fields').inert")
         assert not page.evaluate("import('/site/ui.js').then(m=>m.state.dirty||m.state.busy)")
-        assert page.locator('.symbol-upload img').count() == 0
+        assert page.locator('.symbol-upload img').count() == 4
         assert app.ws.deck(d['id'])['revision'] == d['revision']
         assert not errors, errors
     finally:

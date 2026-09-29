@@ -70,7 +70,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     assert front['group']=='transform-front' and front['recipe']=='m15_transform_front'
     assert back['group']=='transform-back' and back['recipe']=='m15_transform_back'
-    assert front['templateVersion']==11 and back['templateVersion']==11
+    assert front['templateVersion']==12 and back['templateVersion']==12
     assert front['data']['version']=='m15TransformFront'
     assert back['data']['version']=='m15TransformFront'
 
@@ -113,7 +113,7 @@ def test_search_for_azcanta_uses_transform_enchantment_front_and_land_back(tmp_p
     back=compiler.compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
     front_sources=[f.get('src','') for f in front['data']['frames']]
     back_sources=[f.get('src','') for f in back['data']['frames']]
-    assert front['templateVersion']==11 and back['templateVersion']==11
+    assert front['templateVersion']==12 and back['templateVersion']==12
     assert '/img/frames/m15/transform/regular/frontU.png' in front_sources
     assert '/img/frames/m15/transform/regular/new/backL.png' in back_sources
     for piece in ('Title','Type','Rules','Pinline'):
@@ -189,7 +189,7 @@ def test_transform_saga_front_uses_native_saga_structure(tmp_path):
     assert any(str(f.get('src','')).startswith('/img/frames/saga/') for f in data['frames'])
     assert not any('/img/frames/m15/transform/regular/front' in str(f.get('src','')) for f in data['frames'])
     assert '/img/frames/m15/transform/icons/sun.svg' in [f.get('src','') for f in data['frames']]
-    assert data['text']['type']['text']=='Enchantment — Saga'
+    assert data['text']['type']['text']=='Enchantment - Saga'
 
 
 def test_the_great_synthesis_transform_back_uses_native_saga_structure(tmp_path):
@@ -217,4 +217,4 @@ def test_the_great_synthesis_transform_back_uses_native_saga_structure(tmp_path)
     assert any(str(f.get('src','')).startswith('/img/frames/saga/') for f in data['frames'])
     assert not any('/img/frames/m15/transform/regular/new/back' in str(f.get('src','')) for f in data['frames'])
     assert '/img/frames/m15/transform/icons/moon.svg' in [f.get('src','') for f in data['frames']]
-    assert data['text']['type']['text']=='Enchantment — Saga'
+    assert data['text']['type']['text']=='Enchantment - Saga'

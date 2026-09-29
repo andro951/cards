@@ -39,16 +39,17 @@ def env(tmp_path):
 
 def test_vendor_exact_manifest():
     root=Path(__file__).resolve().parents[1]
-    manifest=json.loads((root/'docs/CARD_TOOLS_V58_MANIFEST.json').read_text())
+    manifest=json.loads((root/'docs/CARD_TOOLS_V58_MANIFEST.json').read_text(encoding='utf-8'))
     for name,expected in manifest['files'].items():
-        assert hashlib.sha256((root/'vendor/card_tools'/name).read_bytes()).hexdigest()==expected['sha256'],name
+        raw=(root/'vendor/card_tools'/name).read_bytes().replace(b'\r\n',b'\n')
+        assert hashlib.sha256(raw).hexdigest()==expected['sha256'],name
 
 
 @pytest.mark.parametrize('origin',[SCRYFALL_ART,'GitHub folder','computer folder','uploaded override'])
 def test_source_driven_credit_kept_through_compiler_and_export(env,origin):
     w,c,a,s=env;s={**s}
     r=w.compiler.compile_face(c,c,0,{'artistOverride':'Face Override'},s,a['id'],art_origin=origin)
-    expected=('Actual Artist' if origin==SCRYFALL_ART else 'Face Override')+' · Modified by ChatGPT'
+    expected=('Actual Artist (Scryfall) • Art © respective rights holders' if origin==SCRYFALL_ART else 'Face Override')
     assert r['artist']==r['credit']['display']==r['data']['infoArtist']==expected
     entry=w.sources.entry(c);entry['faces'][0]['compiled']=r
     d=w.store.put('decks',{'name':'Credits','status':'prepared','cards':[entry],'settings':s})
@@ -313,7 +314,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
         'FrameU.png' in src or '/ul.png' in src or 'CrownU' in src
         for src in sources
     )
-    for effect in ('Pinline','Title','Type','Rules'):
+    for effect in ('Pinline','Title','Type'):
         layers=[f for f in comp['data']['frames'] if effect in {
             m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)
         }]
@@ -321,6 +322,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
             'FrameL.png' in str(f.get('src','')) or '/l.png' in str(f.get('src',''))
             for f in layers
         )
+    assert any('Rules Fill' in f.get('name','') for f in comp['data']['frames'])
     assert any('m15CrownL' in src for src in sources)
 
 

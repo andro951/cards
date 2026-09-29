@@ -9,9 +9,9 @@ pytestmark=pytest.mark.skipif(not(os.environ.get('PF_DOM')=='1' or os.environ.ge
 
 def mount(page):
     page.set_content('<html><body><button id="launch">Open</button><div id="modal-host"></div><div id="toast-host"></div></body></html>')
-    for name in ('styles.css','forge-theme.css'):page.add_style_tag(content=(ROOT/'site'/name).read_text())
-    page.add_script_tag(content=(ROOT/'site/ui.js').read_text().replace('export ',''))
-    script='\n'.join(line for line in (ROOT/'site/orders.js').read_text().splitlines() if not line.startswith('import ')).replace('export ','')
+    for name in ('styles.css','forge-theme.css'):page.add_style_tag(content=(ROOT/'site'/name).read_text(encoding='utf-8'))
+    page.add_script_tag(content=(ROOT/'site/ui.js').read_text(encoding='utf-8').replace('export ',''))
+    script='\n'.join(line for line in (ROOT/'site/orders.js').read_text(encoding='utf-8').splitlines() if not line.startswith('import ')).replace('export ','')
     page.add_script_tag(content=script)
     page.evaluate('''()=>{
       window.tc={payload:null,visibleAtJobStart:null};

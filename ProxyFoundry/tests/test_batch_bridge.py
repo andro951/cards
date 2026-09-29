@@ -47,7 +47,7 @@ def start_batches(page,existing=0,fail_batch=None,wrong_count=False,cancel_after
         throw Error('Unexpected message');
       }}};
     }''',{'archives':[base64.b64encode(b).decode() for b in archives],'existing':existing,'failBatch':fail_batch,'wrongCount':wrong_count,'cancelAfterFirst':cancel_after_first})
-    script=(ROOT/'extension/bridge.js').read_text().replace('new URLSearchParams(location.search)',"new URLSearchParams('?proxyFoundryOrder=fixture')")
+    script=(ROOT/'extension/bridge.js').read_text(encoding='utf-8').replace('new URLSearchParams(location.search)',"new URLSearchParams('?proxyFoundryOrder=fixture')")
     page.add_script_tag(content=script)
     return archives
 

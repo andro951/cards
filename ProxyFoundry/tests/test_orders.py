@@ -12,9 +12,10 @@ def make_asset(s,color):
 def test_multideck_pairs_and_quantities(tmp_path):
     s=Store(tmp_path);ws=Workspace(s,Network(s));front=make_asset(s,'red');dfc=make_asset(s,'green');back1=make_asset(s,'blue');back2=make_asset(s,'yellow')
     s.render_put('front',front);s.render_put('dfc',dfc)
+    template_key,template_version,_=ws.compiler.template_identity('standard','auto')
     def deck(name,back,q,second=False):
-        f=[{'id':uid(),'name':'Same name','compiled':{'renderKey':'front','generationVersion':GENERATION_VERSION}}]
-        if second:f.append({'id':uid(),'name':'DFC','compiled':{'renderKey':'dfc','generationVersion':GENERATION_VERSION}})
+        f=[{'id':uid(),'name':'Same name','compiled':{'renderKey':'front','generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version}}]
+        if second:f.append({'id':uid(),'name':'DFC','compiled':{'renderKey':'dfc','generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version}})
         return s.put('decks',{'name':name,'settings':dict(DEFAULT_SETTINGS,backAsset=back['id']),'status':'prepared','cards':[{'id':uid(),'name':'Same name','quantity':q,'faces':f}]})
     a=deck('One',back1,2);b=deck('Two',back2,1);c=deck('Three',back1,1,True)
     order=Orders(ws).build([a['id'],b['id'],c['id']])

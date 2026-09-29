@@ -18,7 +18,7 @@ def test_modal_does_not_steal_focus_or_type_into_quantity():
         page=browser.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         try:
             page.set_content('<!doctype html><body><button id="launch">Open</button><div id="modal-host"></div><div id="toast-host"></div>')
-            text=(ROOT/'site/ui.js').read_text().replace('export ','')
+            text=(ROOT/'site/ui.js').read_text(encoding='utf-8').replace('export ','')
             page.add_script_tag(content=text)
             page.evaluate('''()=>{
               window.heldTimers=[];const nativeTimer=window.setTimeout;

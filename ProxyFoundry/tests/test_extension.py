@@ -1,7 +1,7 @@
 """Real MV3 extension and local ZIP transfer; the merchant page is a fixture.
 No login, real order, checkout or payment is performed by this test.
 """
-import io,json,os,random,threading,hashlib
+import io,json,os,random,threading,hashlib,re
 from pathlib import Path
 import pytest
 from PIL import Image
@@ -48,7 +48,9 @@ def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
             page.goto(server.origin+'/#orders')
             expect(page.locator('#helper-state b')).to_have_text('connected',timeout=15000)
             with ctx.expect_page() as opened:page.locator('[data-open-order]').first.click()
-            merchant=opened.value;merchant.wait_for_url('https://www.tcgplaytest.com/**')
+            merchant=opened.value
+            expect(merchant).to_have_url(re.compile(r'^https://www\.tcgplaytest\.com/'),timeout=15000)
+            expect(merchant.get_by_text('TCG editor fixture')).to_be_visible(timeout=15000)
             expect(merchant.locator('#pph-line')).to_contain_text('Uploaded 2 paired cards',timeout=45000)
             assert merchant.evaluate('tc.sha')==expected
             assert merchant.evaluate('tc.preview===1&&tc.checkout===0')

@@ -11,13 +11,13 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['ui','credits','backs','setup','render','orders','templates','settings','deck','app']:
-        text=(ROOT/'site'/(name+'.js')).read_text()
+    for name in ['ui','credits','backs','github-setup','render','frame-picker','setup','orders','templates','settings','deck','app']:
+        text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let)\s+([$\w]+)',text)
-        text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2]+';',text)
+        text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
         text=text.replace("await import('./ui.js')",'__mod_ui')
         text=re.sub(r'\bexport\s+','',text)
-        out.append('const __mod_'+name+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
+        out.append('const __mod_'+name.replace('-','_')+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
     return '\n'.join(out)
 
 @pytest.fixture
@@ -31,11 +31,11 @@ def dom_page(tmp_path):
     deck={'id':ident,'name':'Test deck','revision':1,'status':'draft','settings':DEFAULT_SETTINGS,'notes':'','summary':{'cards':2,'faces':1,'rendered':0,'warnings':0,'errors':0},
           'cards':[{'id':cid,'name':'Test creature','quantity':2,'section':'mainboard','scryfall':{'name':'Test creature','type_line':'Creature — Elf','set':'tst','collector_number':'1','rarity':'rare','oracle_text':'Vigilance'},'faces':[{'id':fid,'index':0,'group':'standard','name':'Test creature','artistOverride':None,'artOverride':None,'templateOverride':None}]}]}
     state={'deck':deck,'templates':BUILTINS,'groups':GROUP_LABELS,'settings':{'id':'global','revision':1,'refreshData':False,'defaults':{}},'seed':native.LAYOUTS['creature']['data']}
-    html=(ROOT/'site/index.html').read_text();html=re.sub(r'<script[\s\S]*?</script>','',html);html=re.sub(r'<link[^>]*>','',html)
+    html=(ROOT/'site/index.html').read_text(encoding='utf-8');html=re.sub(r'<script[\s\S]*?</script>','',html);html=re.sub(r'<link[^>]*>','',html)
     with sync_playwright() as p:
         exe=os.environ.get('PF_DOM_EXECUTABLE') or shutil.which('chromium')
         b=p.chromium.launch(headless=True,**({'executable_path':exe} if exe else {}));page=b.new_page(viewport={'width':1440,'height':1024});errors=[]
-        page.on('pageerror',lambda e:errors.append(str(e)));page.set_content(html);page.add_style_tag(content=(ROOT/'site/styles.css').read_text())
+        page.on('pageerror',lambda e:errors.append(str(e)));page.set_content(html);page.add_style_tag(content=(ROOT/'site/styles.css').read_text(encoding='utf-8'))
         page.evaluate('window.__fixture='+json.dumps(state))
         page.add_script_tag(content=r'''
         window.postMessage=()=>{};
@@ -57,7 +57,10 @@ def dom_page(tmp_path):
           return {ok:true,status:200,text:async()=>JSON.stringify(value),json:async()=>value};
         };
         ''')
-        page.add_script_tag(content=bundle());page.locator('.deck-tile').wait_for();yield page,errors
+        page.add_script_tag(content=bundle())
+        try:page.locator('.deck-tile').wait_for(timeout=5000)
+        except Exception as exc:raise AssertionError('Offline UI did not mount: '+repr(errors)) from exc
+        yield page,errors
         (ROOT/'test-results').mkdir(exist_ok=True)
         page.screenshot(path=str(ROOT/'test-results/offline-last.png'),full_page=True);b.close()
 
@@ -72,7 +75,8 @@ def test_offline_deck_controls_and_templates(dom_page):
 
 def test_offline_settings_and_mobile(dom_page):
     page,errors=dom_page
-    page.click('[data-nav=settings]');page.check('#global-refresh');page.click('#save-settings');page.wait_for_timeout(100)
+    page.click('[data-nav=settings]');page.check('#global-refresh')
+    page.wait_for_function('window.__fixture.settings.refreshData === true')
     assert page.evaluate('window.__fixture.settings.refreshData') is True
     page.set_viewport_size({'width':390,'height':844});page.click('[data-nav=decks]');page.locator('.deck-tile').wait_for()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')

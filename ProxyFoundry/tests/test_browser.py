@@ -44,7 +44,7 @@ def browser_app(tmp_path,request):
         name=request.node.name
         page.screenshot(path=str(ROOT/'test-results'/(name+'.png')),full_page=True)
         (ROOT/'test-results'/(name+'.json')).write_text(json.dumps({'url':page.url,'body':page.locator('body').inner_text(),'errors':errors,'jobs':app.jobs.jobs},default=str,indent=2))
-        (ROOT/'test-results'/(name+'.log')).write_text((app.store.home/'logs/app.log').read_text())
+        (ROOT/'test-results'/(name+'.log')).write_text((app.store.home/'logs/app.log').read_text(encoding='utf-8'))
         browser.close()
     server.shutdown();server.server_close();app.close()
 

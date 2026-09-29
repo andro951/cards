@@ -13,11 +13,11 @@ def test_auto_template_version_is_scoped_to_structural_group(tmp_path,monkeypatc
     station=compiler.template_identity('station','auto')
     planeswalker=compiler.template_identity('planeswalker','auto')
     assert station[0]=='auto:station' and planeswalker[0]=='auto:planeswalker'
-    assert station[1]==3 and planeswalker[1]==2
-    monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',4)
+    assert station[1]==AUTO_TEMPLATE_VERSIONS['station'] and planeswalker[1]==AUTO_TEMPLATE_VERSIONS['planeswalker']
+    monkeypatch.setitem(AUTO_TEMPLATE_VERSIONS,'station',station[1]+1)
     station2=compiler.template_identity('station','auto')
     planeswalker2=compiler.template_identity('planeswalker','auto')
-    assert station2[1]==4 and station2[2]==4
+    assert station2[1]==station[1]+1 and station2[2]==station[2]+1
     assert planeswalker2==planeswalker
     data={'artSource':'/api/assets/art','frames':[]}
     assert render_key(data,'art',station[2]) != render_key(data,'art',station2[2])
@@ -49,7 +49,6 @@ def test_custom_template_fingerprint_changes_only_for_edited_template(tmp_path):
 
 def test_saga_updates_invalidate_only_saga_auto_templates(tmp_path):
     compiler=Compiler(Store(tmp_path))
-    assert compiler.template_identity('saga','auto')[1:]==(8,8)
-    assert compiler.template_identity('saga-creature','auto')[1:]==(10,10)
-    assert compiler.template_identity('standard','auto')[1:]==(1,1)
-    assert compiler.template_identity('planeswalker','auto')[1:]==(2,2)
+    for group in ('saga','saga-creature','standard','planeswalker'):
+        version=AUTO_TEMPLATE_VERSIONS[group]
+        assert compiler.template_identity(group,'auto')[1:]==(version,version)

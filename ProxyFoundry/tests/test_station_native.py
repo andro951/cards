@@ -96,5 +96,5 @@ def test_native_station_full_compact_two_tier_and_sequence(tmp_path):
         finally:
             page.screenshot(path=str(evidence/'station-browser.png'),full_page=True)
             (evidence/'station-diagnostics.json').write_text(json.dumps({'runtime':app.runtime.diagnostic(),'errors':errors,'activity':page.locator('#activity-log').text_content()},indent=2))
-            (evidence/'station-runtime.log').write_text((s.home/'logs/app.log').read_text())
+            (evidence/'station-runtime.log').write_text((s.home/'logs/app.log').read_text(encoding='utf-8'))
             browser.close();server.shutdown();server.server_close();app.close()

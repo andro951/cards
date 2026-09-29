@@ -57,10 +57,11 @@ def test_default_and_composite_cache(tmp_path):
 
 def rendered_deck(w,name='Deck',dfc=False):
     d=w.new_deck(name);a=ingest_image(w.store,png());b=ingest_image(w.store,png(color='purple'))
+    template_key,template_version,_=w.compiler.template_identity('standard','auto')
     key=uid();w.store.render_put(key,a)
-    faces=[{'id':uid(),'name':'Test','compiled':{'renderKey':key,'generationVersion':GENERATION_VERSION}}]
+    faces=[{'id':uid(),'name':'Test','compiled':{'renderKey':key,'generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version}}]
     if dfc:
-        key=uid();w.store.render_put(key,b);faces.append({'id':uid(),'name':'Reverse','compiled':{'renderKey':key,'generationVersion':GENERATION_VERSION}})
+        key=uid();w.store.render_put(key,b);faces.append({'id':uid(),'name':'Reverse','compiled':{'renderKey':key,'generationVersion':GENERATION_VERSION,'templateKey':template_key,'templateVersion':template_version}})
     c={'id':uid(),'name':'Test','quantity':2,'scryfall':{},'faces':faces}
     return w.store.put('decks',{**d,'status':'prepared','cards':[c]},d['revision']),a,b
 

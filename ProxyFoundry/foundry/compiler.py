@@ -1,6 +1,7 @@
 """Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
 import copy,math,re
+from PIL import Image
 from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
 from .legacy import compiler as native,ingest
 from .images import data_uri
@@ -523,7 +524,7 @@ def is_miracle_card(sem):
     keywords=sem.get('keywords',[]) or []
     if any(str(keyword).strip().lower()=='miracle' for keyword in keywords):
         return True
-    return bool(re.search(r'(?im)^\\s*Miracle\\s+\\{',str(sem.get('oracle_text') or '')))
+    return bool(re.search(r'(?im)^\s*Miracle\s+\{',str(sem.get('oracle_text') or '')))
 
 def apply_miracle_frame(data,sem):
     """Overlay CardConjurer's genuine M15 Miracle frame on automatic cards."""
@@ -666,8 +667,11 @@ def land_frame_colors(types,face,card,oracle_text):
 
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
-    types=ingest.split_type_line(get('type_line'))
+    type_line=get('type_line')
+    types=ingest.split_type_line(type_line)
     d={**types,'name':get('name'),'nickname':str(get('flavor_name','') or '').strip(),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    d['supertypes']=[word for word in str(type_line).replace('—',' - ').replace('–',' - ').partition(' - ')[0].split() if word in {'Basic','Legendary','Snow','World','Token'}]
+    d['printed_type_line']=str(type_line)
     d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
@@ -1236,7 +1240,19 @@ def fit_token_art(data,art_local_path,autofit=True):
         else _TOKEN_ART_BOUNDS
     )
     data['artBounds']=copy.deepcopy(bounds)
-    if autofit:native.auto_fit(data,art_local_path)
+    if autofit:
+        native.auto_fit(data,art_local_path)
+        # Native fit rounds zoom to three decimals. Round upward when that
+        # leaves a fractional-pixel gap at the edge of the token art window.
+        with Image.open(art_local_path) as source:
+            width,height=source.size
+        required=max(bounds['width']*data['width']/width,bounds['height']*data['height']/height)
+        current=float(data['artZoom'])
+        if current+1e-9<required:
+            zoom=math.ceil(required*1000)/1000
+            data['artX']-=width*(zoom-current)/(2*data['width'])
+            data['artY']-=height*(zoom-current)/(2*data['height'])
+            data['artZoom']=zoom
     return True
 
 def _token_frame_code(sem):
@@ -1349,6 +1365,7 @@ def build_token_data(sem,artist,autofit,flags):
         'name':'Type','x':0.0854,'y':0.65,'width':0.8292,'height':0.0543,
         'oneLine':True,'font':'belerenb','size':0.0324,
     })
+    typ['text']=str(sem.get('printed_type_line') or typ.get('text') or '')
     rules.update({
         'name':'Rules Text','x':0.086,'y':0.7143,'width':0.828,
         'height':0.2048,'size':0.0362,
