@@ -1,6 +1,6 @@
 # Test groups and timings
 
-The [per-test timing list](test-timings.csv) records 451 measured tests from the
+The [per-test timing list](test-timings.csv) records 452 measured tests from the
 all-enabled run on 2026-09-29 and later targeted regression runs.
 Each row has a pytest test ID, group, measured seconds, outcome, and measurement
 time. These are observed times on one Windows machine, not limits or guarantees.
@@ -11,7 +11,7 @@ reporting.
 | Group | Tests | Sum of measured test times | When to run |
 | --- | ---: | ---: | --- |
 | Routine | 401 | 2 minutes 26 seconds | Every completed change |
-| Extended | 50 | 22 minutes 8 seconds | Relevant changes or an explicit full sweep |
+| Extended | 51 | 22 minutes 27 seconds | Relevant changes or an explicit full sweep |
 
 The extended group contains browser UI, the installed print extension, real
 CardConjurer rendering, live GitHub/dependency checks, and the 2.3 GiB transfer

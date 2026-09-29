@@ -450,3 +450,4 @@ tests/test_station_source_probe.py::test_station_source_probe,extended,0.582,pas
 tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extended,144.095,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip,extended,160.846,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,12.946,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_website.py::test_static_website_serves_bundled_station_script,extended,14.152,passed,2026-09-29T17:24:05.385745-04:00

@@ -1,12 +1,14 @@
 """On-demand pinned CardConjurer files. Never download or unpack a repository archive."""
 from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading,hashlib
+from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
 from PIL import Image
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
+    STATION_SCRIPT_FILE=Path(__file__).resolve().parents[1]/'vendor/cardconjurer/versionStation.js'
     COLORLESS_SAGA_CREATURE_PATH='/img/frames/saga/creature/c.png'
     COLORLESS_SAGA_CREATURE_REPO='joshbirnholz/cardconjurer'
     COLORLESS_SAGA_CREATURE_COMMIT='d3c6706692898d596ec6a5be0be44f63062c9e12'
@@ -95,12 +97,13 @@ class Runtime:
         return text.encode(),'application/javascript'
 
     def station_script(self):
-        """Use the real native Station module, pinned by content rather than a moving site version.
+        """Use the bundled native Station module, pinned by content.
 
         The verified module is absent from the older GitHub runtime snapshots.
         Only its UI property assignment is made CSP-safe; drawing/layout stays native.
         """
-        raw,mime,meta=self.net.fetch(STATION_SCRIPT_URL,immutable=True)
+        try:raw=self.STATION_SCRIPT_FILE.read_bytes()
+        except OSError as exc:raise ValidationError('The verified Station renderer is missing from this build. Rebuild or reinstall Bulk Proxy Forge.') from exc
         if hashlib.sha256(raw).hexdigest()!=STATION_SCRIPT_SHA256:
             raise ValidationError('The native Station script differs from the verified version. No unverified script was executed. Update Proxy Foundry before rendering Stations.')
         text=raw.decode('utf-8')
@@ -113,7 +116,7 @@ class Runtime:
             for (const part of parts) object = object[part];
             object[key] = value;"""
         text=text.replace(original,replacement)
-        with self.lock:self.requested['/js/frames/versionStation.js']={'url':STATION_SCRIPT_URL,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':STATION_SCRIPT_SHA256,'adapter':'CSP-safe UI property assignment'}
+        with self.lock:self.requested['/js/frames/versionStation.js']={'url':STATION_SCRIPT_URL,'bytes':len(raw),'cache':True,'bundled':True,'sha256':STATION_SCRIPT_SHA256,'adapter':'CSP-safe UI property assignment'}
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)

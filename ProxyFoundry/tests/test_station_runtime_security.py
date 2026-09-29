@@ -1,4 +1,3 @@
-import hashlib
 from unittest.mock import patch
 import pytest
 from foundry.runtime import Runtime
@@ -10,13 +9,18 @@ def test_only_exact_native_script_allowed():
     for url in [STATION_SCRIPT_URL+'?other=1',STATION_SCRIPT_URL.replace('versionStation','evil'),'https://cardconjurer.app/creator/index.html']:
         with pytest.raises(ValidationError):validate_remote_url(url)
 
-def test_station_script_checksum_and_csp_safe_assignment():
-    raw=b'eval(`${target} = value`);'
+def test_station_script_checksum_and_csp_safe_assignment(tmp_path):
     class Net:
-        def fetch(self,url,**kwargs):return raw,'application/javascript',{}
+        def fetch(self,url,**kwargs):raise AssertionError('Station script must be bundled.')
     runtime=Runtime(Net())
-    with pytest.raises(ValidationError,match='verified version'):runtime.station_script()
-    with patch('foundry.runtime.STATION_SCRIPT_SHA256',hashlib.sha256(raw).hexdigest()):
-        result,mime=runtime.station_script()
-        assert b'eval(' not in result and b'object[key] = value' in result
-        assert mime=='application/javascript'
+    result,mime=runtime.station_script()
+    assert b'eval(`${target} = value`);' not in result and b'object[key] = value' in result
+    assert mime=='application/javascript'
+    assert runtime.diagnostic()['files']['/js/frames/versionStation.js']['bundled'] is True
+    bad=tmp_path/'versionStation.js'
+    bad.write_bytes(b'eval(`${target} = value`);')
+    with patch.object(Runtime,'STATION_SCRIPT_FILE',bad):
+        with pytest.raises(ValidationError,match='verified version'):runtime.station_script()
+    bad.unlink()
+    with patch.object(Runtime,'STATION_SCRIPT_FILE',bad):
+        with pytest.raises(ValidationError,match='missing from this build'):runtime.station_script()

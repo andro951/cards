@@ -18,6 +18,38 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def test_static_website_serves_bundled_station_script():
+    from playwright.sync_api import sync_playwright
+
+    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
+                   cwd=ROOT,check=True,capture_output=True)
+    with zipfile.ZipFile(ROOT/'dist'/'web'/'runtime.zip') as archive:
+        assert 'vendor/cardconjurer/versionStation.js' in archive.namelist()
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            context=browser.new_context()
+            page=context.new_page()
+            page.route('https://cardconjurer.app/**',lambda route:route.abort())
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate('''async()=>{
+                  const response=await fetch('/js/frames/versionStation.js');
+                  return {status:response.status,source:await response.text()};
+                }''')
+                assert result['status']==200,result['source'][:300]
+                assert 'object[key] = value' in result['source']
+                assert 'eval(`${target} = value`);' not in result['source']
+            finally:
+                context.close();browser.close()
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_website_prepare_frames_load_from_pinned_fallback():
     from playwright.sync_api import sync_playwright
 
