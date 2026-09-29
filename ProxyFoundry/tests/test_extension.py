@@ -52,8 +52,9 @@ def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
         ctx.route('https://www.tcgplaytest.com/**',merchant_route)
         page=ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
+            page.add_init_script("window.__helperConnected=false;window.addEventListener('message',event=>{if(event.data?.source==='proxy-foundry-helper'&&event.data.type==='PF_WORKSPACE_PONG')window.__helperConnected=true})")
             page.goto(server.origin+'/#orders')
-            expect(page.locator('#helper-state b')).to_have_text('connected',timeout=15000)
+            page.wait_for_function('window.__helperConnected===true',timeout=15000)
             # The click opens a tab whose extension starts a ZIP transfer.
             # Drive the DOM click without Playwright waiting for that new tab's
             # network load; the explicit assertions below own its readiness.
@@ -67,6 +68,9 @@ def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
                 message=page.locator('#toast-host').inner_text()
                 if message and message not in observed:observed.append(message)
                 time.sleep(.1)
+            if not merchant:
+                (ROOT/'test-results').mkdir(exist_ok=True)
+                (ROOT/'test-results'/'extension-debug.json').write_text(json.dumps({'pages':[tab.url for tab in ctx.pages],'toasts':observed,'events':events},indent=2))
             assert merchant,{'pages':[tab.url for tab in ctx.pages],'toasts':observed,'events':events[-20:]}
             expect(merchant.get_by_text('TCG editor fixture')).to_be_visible(timeout=15000)
             expect(merchant.locator('#pph-line')).to_contain_text('Uploaded 2 paired cards',timeout=45000)

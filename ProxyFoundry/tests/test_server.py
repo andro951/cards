@@ -579,7 +579,7 @@ def test_card_inspector_actions_exist_in_source():
     assert 'Generate this card' in source
     assert 'Download review image' in source
     assert '/review-image' in source
-    inspect=source[source.index('async function inspect'):source.index('async function printings')]
+    inspect=source[source.index('async function inspect'):source.index('function choiceOverlay')]
     assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
     assert "job('/api/decks/'+d.id+'/prepare'" not in inspect
     generate=inspect[inspect.index("$('#generate-card')"):inspect.index("$('#download-review-image')")]

@@ -96,6 +96,14 @@ def test_browser_card_inspector_art_and_text_controls(browser_app):
     assert saved['cards'][0]['quantity']==2
     assert not errors,errors
 
+
+def test_browser_saved_orders_are_reachable_from_library(browser_app):
+    app,server,page,errors=browser_app
+    page.get_by_role('button',name='Saved print orders').click()
+    expect(page.locator('.page-head h1')).to_have_text('Print orders')
+    expect(page.locator('.topbar [data-nav=orders]')).to_have_count(0)
+    assert not errors,errors
+
 def test_browser_symbol_folder_upload(browser_app,tmp_path):
     app,server,page,errors=browser_app
     d=app.ws.new_deck('Folder symbols')

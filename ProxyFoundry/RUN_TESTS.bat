@@ -17,6 +17,7 @@ set "PF_DOM="
 set "PF_LIVE_GITHUB_SETUP="
 set "PF_LARGE_TRANSFER="
 set "PF_LIVE_DECK_SITES="
+set "TIMING_PRUNE="
 echo.
 echo 1 = Routine tests and deck-adapter checks
 echo 2 = Extended browser/live/stress tests and live deck sites
@@ -31,6 +32,7 @@ set "PYTEST_SELECTOR=-m extended"
 goto browser_setup
 :full
 set "PYTEST_SELECTOR="
+set "TIMING_PRUNE=--prune"
 :browser_setup
 ".venv\Scripts\python.exe" -m playwright install chromium
 if errorlevel 1 goto failed
@@ -46,7 +48,7 @@ set "PF_LIVE_DECK_SITES=1"
 :run
 ".venv\Scripts\python.exe" -m pytest -q --tb=short %PYTEST_SELECTOR% --junitxml=test-results\local.xml
 set "TEST_EXIT=%ERRORLEVEL%"
-".venv\Scripts\python.exe" scripts\update_test_timings.py test-results\local.xml
+".venv\Scripts\python.exe" scripts\update_test_timings.py test-results\local.xml %TIMING_PRUNE%
 if errorlevel 1 goto failed
 if not "%TEST_EXIT%"=="0" goto failed
 for %%F in (tests_web\*.test.mjs) do (

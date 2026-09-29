@@ -130,7 +130,14 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert lair['faces'][0]['compiled']['group']=='land'
             assert lair['faces'][0]['compiled']['recipe']=='land_five_color'
             assert lair['faces'][0]['compiled']['data']['text']['type']['text']=='Enchantment Land'
-            order=app.orders.build([d['id']],acknowledge=True)
+            for card in list(ready['cards']):
+                for face in card['faces']:
+                    compiled=face['compiled']
+                    if (compiled.get('crop') or {}).get('warning') or compiled.get('flags'):
+                        ready=app.ws.mutate_card(d['id'],card['id'],{
+                            'revision':ready['revision'],'faceId':face['id'],
+                            'acceptWarning':True,'renderKey':compiled['renderKey']})
+            order=app.orders.build([d['id']])
             esika=next(c for c in ready['cards'] if c['name'].startswith('Esika, God of the Tree'))
             expected=s.render_get(esika['faces'][1]['compiled']['renderKey'])['asset_id']
             transform=next(c for c in ready['cards'] if c['name'].startswith('The Everflowing Well'))

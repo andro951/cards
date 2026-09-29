@@ -8,6 +8,12 @@ export function setupHelper(){
 export async function showOrders(){
   const orders=await api('/api/orders');
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">BUILT FOR THE TABLETOP</span><h1>Print orders</h1><p>Combine any number of decks. Each physical card gets an explicit front/back pair.</p></div><button class="button primary" id="new-order">＋ Create print order</button></div><section class="hero-strip"><div><h2>One order. Every back in the right place.</h2><p>Order packages are saved snapshots. Editing a deck later won’t change a ZIP you already built. The printer opens in a new tab when you’re ready.</p></div><div class="order-icon" aria-hidden="true">▱</div></section>${orders.length?`<section class="panel order-list">${orders.map(o=>`<div class="order-row"><div class="order-title"><h3>${o.count} cards · ${o.decks.length} deck${o.decks.length===1?'':'s'}</h3><p>${o.decks.map(d=>esc(d.name)).join(' · ')}</p><small>${date(o.createdAt)} · ${bytes(o.zipBytes)} · paired filenames</small></div><div class="actions"><a class="button small" href="${esc(o.download)}" download>Download ZIP</a><button class="button primary small" data-open-order="${o.id}">Open in TCGPlaytest ↗</button><button class="button quiet small" data-review-order="${o.id}">Review</button></div></div>`).join('')}</section>`:empty('Your first print order is a few clicks away','Generate your deck images, select the decks you want, and check the paired preview before you package them.',`<button class="button primary" id="empty-order">Choose decks</button>`)}`;
+  if(state.bootstrap?.browser){
+    $('.page-head .eyebrow')?.remove();$('.page-head p')?.remove();$('.hero-strip')?.remove();
+    for(const button of $$('[data-open-order]'))button.textContent='Print Cards';
+    const back=document.createElement('a');back.href='#decks';back.className='button quiet';back.textContent='Deck Library';
+    $('.page-head .actions')?.prepend(back);
+  }
   for(const id of ['new-order','empty-order'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>chooseOrder());
   $$('[data-open-order]').forEach(b=>b.onclick=()=>attempt(()=>openOrder(b.dataset.openOrder)));
   $$('[data-review-order]').forEach(b=>b.onclick=()=>attempt(async()=>{const o=await api('/api/orders/'+b.dataset.reviewOrder);reviewPlan(o,o.decks.map(d=>d.id),true);}));
@@ -60,7 +66,7 @@ function orderReady(order){
   if(state.bootstrap?.browser){
     const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards ready to print</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><button class="button primary" id="print-cards">Print Cards <small style="display:block;font-weight:500">Open in TCGPlaytest</small></button></div>`,{footer:'<button class="button quiet" id="save-order-later">Save for Later</button>'});
     $('#print-cards',host).onclick=()=>attempt(()=>state.helper?openOrder(order.id):choosePrintPath(order));
-    $('#save-order-later',host).onclick=()=>{closeModal();toast('Your print package is saved in this browser.');};
+    $('#save-order-later',host).onclick=()=>{closeModal();nav('orders');toast('Your print package is saved in this browser.');};
     return;
   }
   const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">The helper will send this order as multiple ZIP batches, each at most 1 GB, into the same TCGPlaytest design. Original image quality is unchanged.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});

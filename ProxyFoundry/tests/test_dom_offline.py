@@ -66,18 +66,18 @@ def dom_page(tmp_path):
 
 def test_offline_deck_controls_and_templates(dom_page):
     page,errors=dom_page
-    page.locator('.tile-open').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')
     page.wait_for_function("document.querySelector('.quantity-pill')?.textContent==='4×'")
-    page.click('[data-tab=setup]');page.locator('#deck-name').wait_for();page.fill('#deck-name','Edited deck');page.click('#save-setup')
+    page.locator('.page-head h1').click();page.locator('.page-head input').fill('Edited deck');page.locator('.page-head input').press('Enter')
     page.wait_for_function("document.querySelector('h1')?.textContent==='Edited deck'")
-    page.click('[data-nav=templates]');page.click('#new-template');page.fill('#template-name','My frame');page.click('#save-template');page.get_by_text('My frame',exact=True).wait_for()
+    page.click('.topbar [data-nav=templates]');page.click('#new-template');page.fill('#template-name','My frame');page.click('#save-template');page.get_by_text('My frame',exact=True).wait_for()
     assert not errors,errors
 
 def test_offline_settings_and_mobile(dom_page):
     page,errors=dom_page
-    page.click('[data-nav=settings]');page.check('#global-refresh')
+    page.click('.topbar [data-nav=settings]');page.check('#global-refresh')
     page.wait_for_function('window.__fixture.settings.refreshData === true')
     assert page.evaluate('window.__fixture.settings.refreshData') is True
-    page.set_viewport_size({'width':390,'height':844});page.click('[data-nav=decks]');page.locator('.deck-tile').wait_for()
+    page.set_viewport_size({'width':390,'height':844});page.click('.topbar [data-nav=decks]');page.locator('.deck-tile').wait_for()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     assert not errors,errors

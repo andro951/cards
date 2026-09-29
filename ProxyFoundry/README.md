@@ -11,6 +11,8 @@ Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered prox
 5. Choose **Review & Print**. Inspect front images and any unique backs. Crop and layout warnings must be reviewed one card at a time; **It Looks Fine** accepts only that face's current render.
 6. Build the paired ZIP, then choose **Print Cards**. Without the optional helper, download the ZIP, open TCGPlaytest, and choose **Upload Deck ZIP**. The completion screen shows the exact control. The optional Chrome/Edge helper can send repeat orders automatically. The printer checkout remains in the user's hands.
 
+Saved print packages are available from **Saved print orders** on the Deck Library page.
+
 The first load downloads the pinned card engine and renderer assets. Rendering, imported art, templates, decks, and saved orders can use substantial browser storage. **Settings → Workspace storage** lets supported browsers use a chosen `BulkProxyForge` folder; browser storage is the fallback. **Export Backup** and **Import from Backup** move selected objects and source assets between workspaces. A backup can optionally include generated images.
 
 ## Deploy the website

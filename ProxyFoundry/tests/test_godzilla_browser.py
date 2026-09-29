@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import threading
 from pathlib import Path
@@ -40,7 +41,7 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
             return json.dumps(data).encode(),'application/json',{}
         return original(url)
     app.ws.net.transport=transport
-    page.get_by_role('button',name='From GitHub',exact=True).click()
+    page.locator('#data-json-section').get_by_role('button',name='From GitHub',exact=True).click()
     page.fill('#card-data-url','https://github.com/owner/repo/blob/main/data.json')
     page.locator('#card-data-url').press('Tab')
     expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry staged')
@@ -84,15 +85,14 @@ def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
             page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
             page.click('[data-frame-group=standard]')
             page.locator('#modal-host img:visible').first.wait_for(timeout=240000)
+            page.locator('#activity').wait_for(state='hidden',timeout=240000)
             assert page.locator('#modal-host img:visible').count()>=2
-            hashes=page.locator('#modal-host img:visible').evaluate_all('''async images=>Promise.all(images.map(async image=>{
-              const bytes=await (await fetch(image.src)).arrayBuffer();
-              const hash=await crypto.subtle.digest('SHA-256',bytes);
-              return [...new Uint8Array(hash)].map(value=>value.toString(16).padStart(2,'0')).join('');
-            }))''')
+            page.wait_for_function("Array.from(document.querySelectorAll('#modal-host img')).filter(image=>image.offsetWidth>0).filter(image=>image.complete&&image.naturalWidth>0).length>=2",timeout=240000)
+            images=page.locator('#modal-host img:visible')
+            hashes=[hashlib.sha256(images.nth(index).screenshot()).hexdigest() for index in range(images.count())]
             assert len(set(hashes))>=2,'Frame choices rendered identical PNGs.'
             godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
-            expect(godzilla).to_be_enabled()
+            expect(godzilla).to_be_enabled(timeout=240000)
             output=Path(__file__).resolve().parents[1]/'test-results'
             output.mkdir(exist_ok=True)
             page.locator('#modal-host img:visible').first.screenshot(path=str(output/'godzilla-frame-preview.png'))

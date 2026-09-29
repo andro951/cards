@@ -47,10 +47,16 @@ def main():
     parser.add_argument('junit',type=Path,help='pytest --junitxml result')
     parser.add_argument('--output',type=Path,default=Path('test-results/timings.csv'))
     parser.add_argument('--seed',type=Path,default=Path('docs/test-timings.csv'))
+    parser.add_argument('--prune',action='store_true',help='Remove tests absent from a complete all-enabled report')
     args=parser.parse_args()
     rows=read_timings(args.seed)
     rows.update(read_timings(args.output))
     updated=update_timings(rows,args.junit)
+    if args.prune:
+        root=ET.parse(args.junit).getroot()
+        present={'tests/'+case.get('classname','').removeprefix('tests.').replace('.','/')+'.py::'+case.get('name','')
+                 for case in root.findall('.//testcase') if case.get('classname','').startswith('tests.')}
+        rows={nodeid:row for nodeid,row in rows.items() if nodeid in present}
     args.output.parent.mkdir(parents=True,exist_ok=True)
     with args.output.open('w',newline='',encoding='utf-8') as target:
         writer=csv.DictWriter(target,fieldnames=FIELDS,lineterminator='\n')

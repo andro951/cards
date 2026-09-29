@@ -86,7 +86,14 @@ def test_native_station_full_compact_two_tier_and_sequence(tmp_path):
                 comp=c['faces'][0]['compiled'];image=Image.open(s.asset_path(s.render_get(comp['renderKey'])['asset_id']))
                 assert image.size==(2010,2814)
                 image.thumbnail((603,844));image.save(evidence/('station_'+slug(c['name'])+'.png'))
-            order=app.orders.build([d['id']],True)
+            for entry in list(ready['cards']):
+                for face in entry['faces']:
+                    compiled=face['compiled']
+                    if (compiled.get('crop') or {}).get('warning') or compiled.get('flags'):
+                        ready=app.ws.mutate_card(d['id'],entry['id'],{
+                            'revision':ready['revision'],'faceId':face['id'],
+                            'acceptWarning':True,'renderKey':compiled['renderKey']})
+            order=app.orders.build([d['id']])
             with zipfile.ZipFile(s.home/'orders'/(order['id']+'.zip')) as z:
                 assert len(z.namelist())==10
                 assert all(z.read('BACK/'+str(i).zfill(6)+'.png')==s.asset_path(a['id']).read_bytes() for i in range(1,6))

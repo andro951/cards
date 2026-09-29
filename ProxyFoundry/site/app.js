@@ -50,6 +50,8 @@ function showLibrary(){
   selectAll.textContent=allVisible?'Deselect All':'Select All';selectAll.disabled=!decks.length;
   selectAll.onclick=()=>{for(const deck of decks)allVisible?state.selected.delete(deck.id):state.selected.add(deck.id);showLibrary();};
   $('.filter-pills')?.append(selectAll);
+  const savedOrders=document.createElement('button');savedOrders.type='button';savedOrders.className='button quiet small';savedOrders.textContent='Saved print orders';
+  savedOrders.onclick=()=>nav('orders');$('.toolbar')?.append(savedOrders);
   for(const tile of $$('.deck-tile')){
     $('.tile-open',tile)?.remove();
     tile.style.cursor='pointer';
