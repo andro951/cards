@@ -62,6 +62,8 @@ def test_static_website_import_frame_review_and_zip(tmp_path):
                 page.get_by_text('Deck setup saved.').wait_for(timeout=30000)
                 page.click('#generate-deck')
                 page.locator('.badge.ready').wait_for(timeout=180000)
+                page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
+                page.get_by_role('button',name='View deck').click()
                 page.get_by_role('button',name='Review & Print').click()
                 page.click('#order-plan')
                 page.locator('#browser-pair-grid').wait_for(timeout=90000)

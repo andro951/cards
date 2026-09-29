@@ -40,11 +40,26 @@ async function prepareDeckSource(source){
   }
   return text;
 }
-function chooseLook(deck){
-  let chosen=false,choosing=false;
-  const host=modal('Choose Look','',{size:'large',onClose:()=>{if(!chosen)nav('deck/'+deck.id+'/cards');return true;}});
+function preparationStatus(title,message){
+  const main=$('#main');
+  main.replaceChildren();
+  const panel=document.createElement('section');panel.className='empty-state';panel.setAttribute('role','status');
+  const heading=document.createElement('h1');heading.textContent=title;
+  const detail=document.createElement('p');detail.textContent=message;
+  panel.append(heading,detail);main.append(panel);
+  return detail;
+}
+function preparationComplete(deck){
+  const host=modal('Your deck is ready','',{size:'small',footer:'<button class="button primary" id="view-ready-deck">View deck</button>',
+    onClose:()=>{nav('deck/'+deck.id+'/cards');return true;}});
   const body=$('.modal-body',host);
-  const intro=document.createElement('p');intro.className='muted';intro.textContent='How would you like to prepare this deck?';body.append(intro);
+  const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
+  $('#view-ready-deck').onclick=closeModal;
+}
+function chooseLook(source){
+  let choosing=false;
+  const host=modal('Choose Look','',{size:'large'});
+  const body=$('.modal-body',host);
   const choices=document.createElement('div');choices.style.display='grid';choices.style.gridTemplateColumns='repeat(auto-fit,minmax(220px,1fr))';choices.style.gap='16px';choices.style.marginTop='20px';body.append(choices);
   const looks=[
     ['normal','Normal Look','Use the card’s normal MTG artwork and frames.','/site/command_tower.png'],
@@ -60,15 +75,34 @@ function chooseLook(deck){
     option.onclick=async()=>{
       if(choosing)return;
       choosing=true;
-      if(value==='normal'){
+      closeModal();
+      const status=preparationStatus(value==='normal'?'Preparing your deck':'Reading your deck list',
+        value==='normal'?"We're preparing your deck for you. This may take several minutes. We'll tell you when it's ready.":
+          'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+      let deck=null;
+      try{
+        const prepared=await prepareDeckSource(source);
+        deck=await job('/api/decks/import',{source:prepared,includeOutside:true},{label:'Import deck'});
+        if(value==='custom'){nav('deck/'+deck.id+'/setup');return;}
         const templateRules={...deck.settings.templateRules};
         for(const group of ['standard','legendary','land','legendary-land','basic-land'])templateRules[group]='normal';
-        try{await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{templateRules}});}
-        catch(error){choosing=false;errorBox(body,error.message);return;}
+        await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{templateRules}});
+        const minutes=Math.max(1,Math.ceil((deck.summary?.faces||deck.summary?.cards||60)*0.3));
+        status.textContent=`We're preparing your deck for you. This will take approximately ${minutes} ${minutes===1?'minute':'minutes'}. We'll tell you when it's ready.`;
+        await renderDecks([deck.id]);
+        const finished=await api('/api/decks/'+deck.id);
+        if(finished.status!=='ready')throw new Error('Some cards still need attention. Open the deck to review the activity log.');
+        status.textContent='All card images are finished.';
+        preparationComplete(finished);
+      }catch(error){
+        $('#activity')?.classList.add('hidden');
+        status.textContent='We could not finish preparing this deck.';
+        const notice=document.createElement('div');notice.className='notice error';notice.setAttribute('role','alert');notice.textContent=error.message;status.after(notice);
+        const next=document.createElement('button');next.type='button';next.className='button primary';
+        next.textContent=deck?'Open deck':'Try another deck';
+        next.onclick=()=>deck?nav('deck/'+deck.id+'/cards'):addNewDeck();
+        notice.after(next);
       }
-      chosen=true;closeModal();
-      nav('deck/'+deck.id+(value==='custom'?'/setup':'/cards'));
-      if(value==='normal')await attempt(()=>renderDecks([deck.id],{onUpdate:async()=>{if(state.route==='deck')await showDeck(deck.id,'cards');}}));
     };
   }
 }
@@ -77,10 +111,9 @@ function addNewDeck(){
   const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import" disabled>Add deck</button>'});
   const body=$('.modal-body',host),addButton=$('#do-import');
   const intro=document.createElement('p');intro.className='muted';intro.textContent="Give us your deck link from a website like Scryfall, MTGGoldfish, or Archidekt, and we'll get the full deck for you.";body.append(intro);
-  const linkLabel=document.createElement('label');linkLabel.className='field';
-  const linkTitle=document.createElement('span');linkTitle.textContent='Deck link';
-  const link=document.createElement('input');link.type='url';link.placeholder='https://scryfall.com/@you/decks/…';link.autocomplete='url';
-  linkLabel.append(linkTitle,link);body.append(linkLabel);
+  const linkField=document.createElement('div');linkField.className='field';
+  const link=document.createElement('input');link.type='url';link.placeholder='https://scryfall.com/@you/decks/…';link.autocomplete='url';link.setAttribute('aria-label','Deck link');
+  linkField.append(link);body.append(linkField);
   const helperNotice=document.createElement('div');helperNotice.className='notice info hidden';
   const helperText=document.createElement('p');helperText.textContent='This deck site needs the browser helper to import its link on your computer.';
   const helperButton=document.createElement('button');helperButton.type='button';helperButton.className='button small';helperButton.textContent='Set up browser helper';helperButton.style.marginTop='10px';
@@ -107,13 +140,10 @@ function addNewDeck(){
     if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)&&!state.helperCapabilities?.includes('deck-import')){
       helperNotice.classList.remove('hidden');return;
     }
-    addButton.disabled=true;addButton.style.filter='grayscale(1)';
-    try{
-      source=await prepareDeckSource(source);
-      const deck=await job('/api/decks/import',{source,includeOutside:true},{label:'Import deck'});
-      closeModal();chooseLook(deck);
+    if(source.startsWith('{')){
+      try{JSON.parse(source);}catch{errorBox(body,'The JSON export is not valid.');return;}
     }
-    catch(error){updateButton();errorBox(body,error.message);}
+    closeModal();chooseLook(source);
   };
   updateButton();
 }
@@ -227,6 +257,8 @@ async function generate(d){
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
   await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
+  const finished=await api('/api/decks/'+d.id);
+  if(finished.status==='ready')preparationComplete(finished);
 }
 function deckMenu(d){
   const permanent=true;

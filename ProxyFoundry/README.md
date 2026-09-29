@@ -5,9 +5,9 @@ Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered prox
 ## Use the website
 
 1. Open the deployed website in a current Chrome or Edge browser.
-2. Choose **Add New Deck** and paste a public Scryfall deck link, a card list, or a deck export. The optional browser helper can also import public Archidekt and MTGGoldfish links directly on your computer. Without it, download a text or JSON deck export from those sites and upload it. Outside-the-Game cards are included by default and can be excluded before import. Exact printing details are preserved when the deck source supplies them; otherwise Scryfall chooses its ordinary default result.
-3. Choose **Default Look** for automatic art, frames, symbols, and back, or **Custom** for artwork folders, frames, credits, symbols, backs, and `data.json`.
-4. Generate images. Select a frame by inspecting actual rendered previews for a card from the deck. Godzilla land and non-land frames are separate choices. A nickname appears above the real card name.
+2. Choose **Add New Deck** and paste a public Scryfall deck link, a card list, or a deck export. The optional browser helper can also import public Archidekt and MTGGoldfish links directly on your computer. Without it, download a text or JSON deck export from those sites and upload it. Exact printing details are preserved when the deck source supplies them; otherwise Scryfall chooses its ordinary default result.
+3. Choose **Normal Look** to import and generate the deck with its normal MTG art and frames, or **Customize Look** to choose artwork folders, frames, credits, symbols, backs, and `data.json`. Normal Look shows preparation progress and tells you when all images are ready. Customize Look loads the card list for Art & Setup before generating images.
+4. For a customized deck, save your choices and generate images. Select a frame by inspecting actual rendered previews for a card from the deck. Godzilla land and non-land frames are separate choices. A nickname appears above the real card name.
 5. Choose **Review & Print**. Inspect front images and any unique backs. Crop and layout warnings must be reviewed one card at a time; **It Looks Fine** accepts only that face's current render.
 6. Build the paired ZIP, then choose **Print Cards**. Without the optional helper, download the ZIP, open TCGPlaytest, and choose **Upload Deck ZIP**. The completion screen shows the exact control. The optional Chrome/Edge helper can send repeat orders automatically. The printer checkout remains in the user's hands.
 

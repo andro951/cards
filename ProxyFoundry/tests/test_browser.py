@@ -111,6 +111,7 @@ def test_new_deck_import_stays_simple_and_chooses_look_afterward(browser_app):
     expect(page.locator('#do-import')).to_be_disabled()
     expect(page.get_by_role('button',name='Set up browser helper')).to_have_count(0)
     expect(page.get_by_role('button',name='Customize Look')).to_have_count(0)
+    expect(page.locator('.modal-body')).not_to_contain_text('Deck link')
     page.locator('.modal-body input[type=url]').fill('https://archidekt.com/decks/123')
     expect(page.locator('#do-import')).to_be_enabled()
     page.click('#do-import')
@@ -119,9 +120,12 @@ def test_new_deck_import_stays_simple_and_chooses_look_afterward(browser_app):
     page.locator('.modal-body textarea').fill('1 A Test Creature')
     expect(page.get_by_role('button',name='Set up browser helper')).to_be_hidden()
     page.click('#do-import')
-    expect(page.get_by_role('button',name='Normal Look')).to_be_visible(timeout=30000)
+    expect(page.get_by_role('button',name='Normal Look')).to_be_visible(timeout=5000)
     expect(page.get_by_role('button',name='Customize Look')).to_be_visible()
+    expect(page.locator('.modal-body')).not_to_contain_text('How would you like to prepare this deck?')
+    assert not app.store.list('decks'),'Add deck must not start the import before a look is chosen.'
     page.get_by_role('button',name='Customize Look').click()
+    expect(page.get_by_role('status')).to_contain_text('Images will be generated after you finish your choices.')
     page.locator('#save-setup').wait_for(timeout=30000)
     assert not errors,errors
 
@@ -131,10 +135,12 @@ def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
     page.locator('.modal-body summary').click()
     page.locator('.modal-body textarea').fill('1 A Test Creature')
     page.click('#do-import')
-    page.get_by_role('button',name='Normal Look').wait_for(timeout=30000)
+    page.get_by_role('button',name='Normal Look').wait_for(timeout=5000)
     page.route('**/api/decks/*/prepare',lambda route:route.fulfill(status=503,content_type='application/json',body='{"error":"Render stopped after settings check"}'))
     page.get_by_role('button',name='Normal Look').click()
     page.locator('.modal').wait_for(state='hidden',timeout=30000)
+    expect(page.locator('#main [role=status]')).to_contain_text('Preparing your deck',timeout=30000)
+    expect(page.locator('#main [role=alert]')).to_contain_text('Render stopped after settings check',timeout=30000)
     decks=app.store.list('decks')
     assert len(decks)==1
     assert all(decks[0]['settings']['templateRules'][group]=='normal' for group in ('standard','legendary','land','legendary-land','basic-land'))

@@ -51,13 +51,14 @@ def request(server,path,data=None,headers=None,raw=False,origin=None):
 
 def job_done(server,path,data):
     status,j,_=request(server,path,data);assert status==200,j
-    for _ in range(100):
+    deadline=time.monotonic()+20
+    while time.monotonic()<deadline:
         _,job,_=request(server,'/api/jobs/'+j['id'])
         if job['state'] in {'done','failed','cancelled'}:
             assert job['state']=='done',job
             return job['result']
         time.sleep(.02)
-    raise AssertionError('job stalled')
+    raise AssertionError('job stalled after 20 seconds')
 
 def test_site_png_assets_are_served(running):
     _,server=running
