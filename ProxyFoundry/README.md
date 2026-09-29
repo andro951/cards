@@ -100,12 +100,15 @@ Set `BULK_PROXY_FORGE_HOME` to override the saved location explicitly; the old `
 
 Original-printing PNG download and copy-token utilities are available under **Quick start & Card Tools**. The complete original interface and command-line tools remain under `vendor/card_tools`. Double-click **START_LEGACY_CARD_TOOLS.bat** for advanced original workflows using the same private Python environment.
 
-Double-click **RUN_TESTS.bat** for core tests or optional full Chromium/native-render tests. Development setup:
+Double-click **RUN_TESTS.bat** and choose routine, extended, or full sweep.
+The [per-test timing list](docs/test-timings.csv) and [test group guide](docs/TESTING.md)
+show exactly what runs in each group and how long each test took in the last
+all-enabled measurement. Development setup:
 
 ```
 python -m pip install -r requirements-dev.txt
 python scripts/verify_vendor.py
-python -m pytest -q
+python -m pytest -q -m routine
 python -m playwright install chromium
 ```
 

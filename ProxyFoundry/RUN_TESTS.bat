@@ -14,18 +14,39 @@ if errorlevel 1 goto failed
 set "PF_BROWSER="
 set "PF_LIVE_CC="
 set "PF_DOM="
+set "PF_LIVE_GITHUB_SETUP="
+set "PF_LARGE_TRANSFER="
 echo.
-echo 1 = Core unit and local API tests (no Chromium download)
-echo 2 = Full browser and genuine CardConjurer tests (requires network)
-choice /c 12 /n /m "Choose 1 or 2: "
-if errorlevel 2 (
-  ".venv\Scripts\python.exe" -m playwright install chromium
-  if errorlevel 1 goto failed
-  set "PF_BROWSER=1"
-  set "PF_LIVE_CC=1"
-)
-".venv\Scripts\python.exe" -m pytest -q --tb=short --junitxml=test-results\local.xml
+echo 1 = Routine tests only (383 local tests; about 2-3 minutes)
+echo 2 = Extended tests only (45 browser/live/stress tests; about 21 minutes)
+echo 3 = Full sweep (both groups; about 23 minutes)
+choice /c 123 /n /m "Choose 1, 2 or 3: "
+if errorlevel 3 goto full
+if errorlevel 2 goto extended
+set "PYTEST_SELECTOR=-m routine"
+goto run
+:extended
+set "PYTEST_SELECTOR=-m extended"
+goto browser_setup
+:full
+set "PYTEST_SELECTOR="
+:browser_setup
+".venv\Scripts\python.exe" -m playwright install chromium
 if errorlevel 1 goto failed
+for /f "delims=" %%I in ('.venv\Scripts\python.exe -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()"') do set "PF_BROWSER_EXECUTABLE=%%I"
+if not defined PF_BROWSER_EXECUTABLE goto failed
+set "PF_DOM_EXECUTABLE=%PF_BROWSER_EXECUTABLE%"
+set "PF_BROWSER=1"
+set "PF_LIVE_CC=1"
+set "PF_DOM=1"
+set "PF_LIVE_GITHUB_SETUP=1"
+set "PF_LARGE_TRANSFER=1"
+:run
+".venv\Scripts\python.exe" -m pytest -q --tb=short %PYTEST_SELECTOR% --junitxml=test-results\local.xml
+set "TEST_EXIT=%ERRORLEVEL%"
+".venv\Scripts\python.exe" scripts\update_test_timings.py test-results\local.xml
+if errorlevel 1 goto failed
+if not "%TEST_EXIT%"=="0" goto failed
 echo.
 echo All selected tests passed.
 pause

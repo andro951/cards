@@ -8,6 +8,13 @@ supplied-icon proofs are checked separately against the complete release.
 import hashlib,json,os
 from pathlib import Path
 import pytest
+from scripts.test_policy import group_for_nodeid
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item.add_marker(group_for_nodeid(item.nodeid))
+
 
 @pytest.fixture(autouse=True)
 def code_only_back_fixture(tmp_path,monkeypatch):
