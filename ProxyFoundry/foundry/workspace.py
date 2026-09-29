@@ -8,7 +8,7 @@ from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
-from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement
+from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
@@ -399,6 +399,8 @@ class Workspace:
                                      force=str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
                                      full_frame=True)
             comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
+            if comp.get('symbolId'):
+                fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
         apply_full_art_text(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])

@@ -715,7 +715,7 @@ def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay(
         assert data['text']['title']['text']=='Underlying'
 
 
-def test_colorless_token_nickname_keeps_token_frame_but_forces_white_text():
+def test_colorless_token_nickname_uses_complete_neutral_frame():
     data={
         'width':2010,'height':2814,'version':'tokenRegular',
         'frames':[{'name':'Colorless Token Frame','src':'/img/frames/token/regular/frameC.png','masks':[]}],
@@ -728,9 +728,10 @@ def test_colorless_token_nickname_keeps_token_frame_but_forces_white_text():
     }
     sem={'name':'Spirit','nickname':'Test Spirit','colors':[],'types':['Creature'],'subtypes':['Spirit'],'legendary':False}
     assert apply_nickname_treatment(data,sem,'token')
-    assert data['version']=='tokenRegular'
-    assert data['frames'][0]['src']=='/img/frames/token/regular/frameC.png'
-    assert any(f.get('src','').endswith('addons/m15NicknameTitleC.png') for f in data['frames'])
+    assert data['version']=='m15Nickname'
+    assert data['frames'][0]['src'].endswith('m15NicknameFrameA.png')
+    assert any(f.get('src','').endswith('m15NicknameTitleA.png') for f in data['frames'])
+    assert all(f.get('masks')==[] for f in data['frames'])
     for key in ('nickname','title','type','rules','pt'):
         assert data['text'][key]['color']=='white'
 
@@ -760,11 +761,12 @@ def test_nickname_semantic_override_beats_scryfall_flavor_name(workspace):
     assert result['data']['text']['nickname']['text']=='Custom Reskin'
 
 
-def test_nickname_colorless_uses_colorless_addon_without_crashing():
+def test_nickname_colorless_uses_complete_neutral_frame_without_crashing():
     data={'width':2010,'height':2814,'frames':[],'text':{'title':{'text':'Underlying'}}}
     sem={'name':'Underlying','nickname':'Reskin','colors':[],'types':['Creature'],'subtypes':[],'legendary':False}
     assert apply_nickname_treatment(data,sem,'standard')
-    assert any(f.get('src','').endswith('m15NicknameTitleC.png') for f in data['frames'])
+    assert any(f.get('src','').endswith('m15NicknameFrameA.png') for f in data['frames'])
+    assert any(f.get('src','').endswith('m15NicknameTitleA.png') for f in data['frames'])
 
 
 def test_planeswalker_nickname_uses_native_planeswalker_nickname_pack():

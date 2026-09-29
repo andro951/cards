@@ -351,6 +351,7 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     expect(page.locator('#data-json-status')).to_have_text('data.json')
     assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')
     page.click('#save-setup')
+    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     saved=app.ws.deck(d['id']);overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides['nickname']=='Test Nickname'
     assert overrides['flavor_text']=='Test flavor text.'

@@ -139,7 +139,7 @@ def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_pat
             for card_entry in current['cards']:
                 compiled=card_entry['faces'][0]['compiled']
                 frames=compiled['data']['frames']
-                assert any(frame['name']=='Nickname Frame' for frame in frames)
+                assert any('m15NicknameFrame' in frame['src'] for frame in frames)
                 assert all(frame.get('masks')==[] for frame in frames)
                 render=store.render_get(compiled['renderKey'])
                 assert render

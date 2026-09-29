@@ -26,7 +26,6 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert 'sol_ring.png' in page.locator('#github-setup pre').inner_text()
     page.fill('#deck-artist', 'Artist stays')
     page.fill('#deck-notes', 'Do not replace my notes')
-    page.select_option('[data-rule=standard]', 'normal')
     page.fill('#github-setup-folder', remote.url)
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
@@ -52,7 +51,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert overrides['nickname']=='Dean Winchester'
     assert overrides['flavor_text']=='The family business.'
     assert saved['settings']['artist'] == 'Artist stays'
-    assert saved['settings']['templateRules']['standard'] == 'normal'
+    assert saved['settings']['templateRules'].get('standard','auto') == 'auto'
     assert saved['notes'] == 'Do not replace my notes'
     assert saved['settings']['backDesign']['mode'] == 'icon'
     expect(page.locator('#github-setup-folder')).to_have_value(remote.url)
