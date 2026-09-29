@@ -414,6 +414,7 @@ tests/test_browser.py::test_real_cardconjurer_roundtrip,extended,31.735,passed,2
 tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,2.467,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_dom_offline.py::test_offline_settings_and_mobile,extended,1.824,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_extension.py::test_installed_extension_transfers_exact_zip_to_new_tab,extended,14.829,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_extension.py::test_installed_helper_fetches_public_decks_without_a_server_function,extended,3.025,passed,2026-09-29T12:52:07.030690-04:00
 tests/test_github_setup.py::test_live_existing_eggs_fall_folder,extended,3.398,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_github_setup_browser.py::test_failed_import_preserves_existing_draft_and_allows_retry,extended,5.646,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves,extended,13.844,passed,2026-09-29T06:38:32.298111-04:00

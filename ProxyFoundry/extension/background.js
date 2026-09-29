@@ -1,8 +1,40 @@
-/* Final ZIP transport only. CardConjurer runs in the local workspace, not this extension. */
-const VERSION='1.2.0';
+/* Public deck imports and paired ZIP transport run in this browser extension. */
+const VERSION='1.3.0';
 const TARGET='https://www.tcgplaytest.com';
 const CHUNK=1024*1024;
-function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&u.hostname.endsWith('.pages.dev'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}
+function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&(u.hostname.endsWith('.pages.dev')||u.hostname==='andro951.github.io'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}
+function deckEndpoint(value){
+  const url=new URL(value);
+  if(url.protocol!=='https:'||url.username||url.password||url.port)throw new Error('Use a public HTTPS deck link.');
+  const archidekt=url.hostname==='archidekt.com'||url.hostname==='www.archidekt.com';
+  const goldfish=url.hostname==='mtggoldfish.com'||url.hostname==='www.mtggoldfish.com';
+  const id=archidekt?url.pathname.match(/^\/decks\/(\d+)(?:\/[^?#]*)?$/)?.[1]:goldfish?url.pathname.match(/^\/deck\/(\d+)(?:\/[^?#]*)?$/)?.[1]:null;
+  if(!id)throw new Error('Use a public Archidekt or MTGGoldfish deck link.');
+  return archidekt?{site:'archidekt',id,url:`https://archidekt.com/api/decks/${id}/`}:{site:'mtggoldfish',id,url:`https://www.mtggoldfish.com/deck/download/${id}`};
+}
+async function deckText(url){
+  const response=await fetch(url,{credentials:'omit',redirect:'error',signal:AbortSignal.timeout(30000)});
+  if(!response.ok)throw new Error(`Deck site returned HTTP ${response.status}. Check that the deck is public.`);
+  if(Number(response.headers.get('Content-Length')||0)>5*1024*1024)throw new Error('The deck export is too large.');
+  const body=await response.text();
+  if(body.length>5*1024*1024)throw new Error('The deck export is too large.');
+  return body;
+}
+async function fetchDeck(value,sender){
+  workspaceOrigin(sender.url||sender.tab?.url||'');
+  if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Import from the main Proxy Foundry tab.');
+  const endpoint=deckEndpoint(value);
+  const body=await deckText(endpoint.url);
+  let title=`MTGGoldfish deck ${endpoint.id}`;
+  if(endpoint.site==='mtggoldfish'){
+    const page=await deckText(`https://www.mtggoldfish.com/deck/${endpoint.id}`).catch(()=>null);
+    if(page){
+      const match=page.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i)||page.match(/<title>([^<]+)<\/title>/i);
+      if(match)title=match[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
+    }
+  }
+  return {site:endpoint.site,id:endpoint.id,body,title};
+}
 function validateTransfer(value,sender){
   const origin=workspaceOrigin(sender.url||sender.tab?.url||'');
   if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Open the order from the main Proxy Foundry tab.');
@@ -38,9 +70,10 @@ async function request(t,kind,offset,batch){
   }catch(e){if(e.name==='AbortError')throw new Error('Local order transfer timed out. Keep the Proxy Foundry launcher running.');throw e;}finally{clearTimeout(timer);}
 }
 chrome.runtime.onMessage.addListener((message,sender,respond)=>{
-  if(!['PF_WORKSPACE_OPEN_ORDER','PF_ORDER_METADATA','PF_ORDER_CHUNK','PF_ORDER_FINISHED'].includes(message?.type))return;
+  if(!['PF_WORKSPACE_OPEN_ORDER','PF_ORDER_METADATA','PF_ORDER_CHUNK','PF_ORDER_FINISHED','PF_DECK_FETCH'].includes(message?.type))return;
   (async()=>{
     try{
+      if(message.type==='PF_DECK_FETCH'){respond({ok:true,deck:await fetchDeck(message.url,sender)});return;}
       if(message.type==='PF_WORKSPACE_OPEN_ORDER'){
         const t=validateTransfer(message.transfer,sender);const meta=await request(t,'metadata');
         if(!Number.isSafeInteger(meta.count)||meta.count<1||!Number.isSafeInteger(meta.zipBytes)||meta.zipBytes<22)throw new Error('Invalid paired-order package.');

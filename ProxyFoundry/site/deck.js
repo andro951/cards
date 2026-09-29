@@ -5,11 +5,46 @@ import {renderDecks,renderCard} from './render.js';
 import {chooseOrder} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
+async function prepareDeckSource(source){
+  const text=source.trim();
+  if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(text)){
+    const adapters=await import('./deck-adapters.mjs');
+    const expected=adapters.identifyDeck(text);
+    if(!state.helperCapabilities?.includes('deck-import'))
+      throw new Error('Automatic Archidekt and MTGGoldfish imports need the optional browser helper. You can also download the deck export from that site and upload it here.');
+    const requestId=crypto.randomUUID();
+    const reply=await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>{window.removeEventListener('message',receive);reject(new Error('The browser helper did not respond. Reload the helper and this page, or upload the deck export.'));},45000);
+      function receive(event){
+        if(event.source!==window||event.origin!==location.origin||event.data?.source!=='proxy-foundry-helper'||event.data.type!=='PF_DECK_IMPORT_REPLY'||event.data.requestId!==requestId)return;
+        clearTimeout(timer);window.removeEventListener('message',receive);resolve(event.data);
+      }
+      window.addEventListener('message',receive);
+      window.postMessage({source:'proxy-foundry-workspace',type:'PF_DECK_IMPORT_REQUEST',requestId,url:text},location.origin);
+    });
+    if(!reply.ok)throw new Error(reply.error||'The browser helper could not fetch this deck.');
+    if(reply.deck?.site!==expected.site||reply.deck?.id!==expected.id)throw new Error('The browser helper returned a different deck.');
+    const deck=expected.site==='archidekt'?adapters.parseArchidekt(JSON.parse(reply.deck.body)):adapters.parseGoldfish(reply.deck.body,reply.deck.title);
+    return JSON.stringify(deck);
+  }
+  if(text.startsWith('{')){
+    const data=JSON.parse(text);
+    if(Array.isArray(data.cards)&&Array.isArray(data.categories)){
+      const adapters=await import('./deck-adapters.mjs');
+      return JSON.stringify(adapters.parseArchidekt(data));
+    }
+  }
+  if(/^Sideboard\s*:?$/im.test(text)&&!/^Deck\s*:?$/im.test(text)){
+    const adapters=await import('./deck-adapters.mjs');
+    return JSON.stringify(adapters.parseGoldfish(text));
+  }
+  return text;
+}
 function addNewDeck(){
   if(state.busy)throw new Error('Wait for the current task to finish.');
   const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import">Add deck →</button>'});
   const body=$('.modal-body',host);
-  const intro=document.createElement('p');intro.className='muted';intro.textContent='Paste a public deck link from Scryfall, Archidekt, or MTGGoldfish.';body.append(intro);
+  const intro=document.createElement('p');intro.className='muted';intro.textContent='Paste a public Scryfall deck link. Archidekt and MTGGoldfish links work with the optional browser helper; their downloaded deck exports work without it.';body.append(intro);
   const linkLabel=document.createElement('label');linkLabel.className='field';
   const linkTitle=document.createElement('span');linkTitle.textContent='Deck link';
   const link=document.createElement('input');link.type='url';link.placeholder='https://…';link.autocomplete='url';link.required=true;
@@ -46,14 +81,16 @@ function addNewDeck(){
   file.onchange=async()=>{if(file.files[0])sourceText.value=await file.files[0].text();};
 
   $('#do-import').onclick=async()=>{
-    const source=sourceText.value.trim()||link.value.trim();
+    let source=sourceText.value.trim()||link.value.trim();
     if(!source){errorBox(body,'Paste a deck link or choose an import file.');return;}
     if(!sourceText.value.trim()&&!/^https:\/\/(?:www\.)?(?:scryfall\.com\/@[^/]+\/decks\/|archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(source)){
       errorBox(body,'Use a public Scryfall, Archidekt, or MTGGoldfish deck link.');return;
     }
     const look=body.querySelector('input[name="import-look"]:checked').value;
-    $('#do-import').disabled=true;closeModal();
+    $('#do-import').disabled=true;
     try{
+      source=await prepareDeckSource(source);
+      closeModal();
       const deck=await job('/api/decks/import',{source,includeOutside:outside.checked},{label:'Import deck'});
       if(look==='custom')nav('deck/'+deck.id+'/setup');
       else{
@@ -61,7 +98,7 @@ function addNewDeck(){
         await renderDecks([deck.id],{onUpdate:async()=>{if(state.route==='deck')await showDeck(deck.id,'cards');}});
       }
     }
-    catch(error){toast(error.message,true);}
+    catch(error){if($('#do-import')){$('#do-import').disabled=false;errorBox(body,error.message);}else toast(error.message,true);}
   };
 }
 export async function importDeck(existing=null){
@@ -70,16 +107,17 @@ export async function importDeck(existing=null){
   const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
   $('#do-import').onclick=async()=>{
-    const source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
+    let source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
     $('#do-import').disabled=true;
-    const payload={source,includeOutside:$('#import-outside').checked,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
-    closeModal();
     try{
+      source=await prepareDeckSource(source);
+      const payload={source,includeOutside:$('#import-outside').checked,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
+      closeModal();
       const d=await job(existing?'/api/decks/'+existing.id+'/add':'/api/decks/import',payload,{label:existing?'Add cards':'Import deck'});
       state.dirty=false;
       if(existing){await showDeck(d.id,'cards');toast('Cards added. Generate images to prepare the new entries.');}
       else nav('deck/'+d.id+'/setup');
-    }catch(e){toast(e.message,true);}
+    }catch(e){if($('#do-import')){$('#do-import').disabled=false;errorBox($('.modal-body',host),e.message);}else toast(e.message,true);}
   };
 }
 function preview(c,f){

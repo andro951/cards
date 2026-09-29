@@ -14,11 +14,8 @@ async function start(folder){
   python.unpackArchive(await archive.arrayBuffer(),'zip',{extractDir:'/app/ProxyFoundry'});
 
   self.syncFetch=url=>{
-    const host=new URL(url).hostname;
-    const target=['archidekt.com','www.archidekt.com','mtggoldfish.com','www.mtggoldfish.com'].includes(host)
-      ?`/gateway/deck?url=${encodeURIComponent(url)}`:url;
     const xhr=new XMLHttpRequest();
-    xhr.open('GET',target,false);
+    xhr.open('GET',url,false);
     xhr.responseType='arraybuffer';
     xhr.setRequestHeader('Accept','application/json;q=0.9,image/*;q=0.8,*/*;q=0.7');
     xhr.send();

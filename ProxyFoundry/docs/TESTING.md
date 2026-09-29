@@ -1,16 +1,17 @@
 # Test groups and timings
 
-The [per-test timing list](test-timings.csv) records all 440 tests from the
-all-enabled run on 2026-09-29. Each row has a pytest test ID, group, measured
-seconds, outcome, and measurement time. These are observed times on one Windows
-machine, not limits or guarantees. The complete run took 23 minutes 54 seconds;
-the sum of individual test times is slightly less because pytest also spends
-time on collection and reporting.
+The [per-test timing list](test-timings.csv) records 440 tests from the
+all-enabled run on 2026-09-29 plus the new installed-helper deck import test.
+Each row has a pytest test ID, group, measured seconds, outcome, and measurement
+time. These are observed times on one Windows machine, not limits or guarantees.
+The 440-test complete run took 23 minutes 54 seconds; the sum of individual
+test times is slightly less because pytest also spends time on collection and
+reporting.
 
 | Group | Tests | Sum of measured test times | When to run |
 | --- | ---: | ---: | --- |
 | Routine | 392 | 2 minutes 0 seconds | Every completed change |
-| Extended | 48 | 21 minutes 52 seconds | Relevant changes or an explicit full sweep |
+| Extended | 49 | 21 minutes 55 seconds | Relevant changes or an explicit full sweep |
 
 The extended group contains browser UI, the installed print extension, real
 CardConjurer rendering, live GitHub/dependency checks, and the 2.3 GiB transfer
@@ -58,7 +59,7 @@ The updater merges new measurements with the previous list, so a routine run
 does not erase timings for extended tests. Skipped tests retain their last
 measured duration; use `--prune` only with a complete all-enabled report.
 
-The five Node deck-adapter tests run after pytest in `RUN_TESTS.bat`. With
-`PF_LIVE_DECK_SITES=1`, they include real Archidekt and MTGGoldfish fetches;
-the last run passed all five in 1.13 seconds. These are routine checks except
-for the two live fetches, which run in the extended and full modes.
+The Node deck-adapter and browser-helper tests run after pytest in
+`RUN_TESTS.bat`. With `PF_LIVE_DECK_SITES=1`, they also fetch real public
+Archidekt and MTGGoldfish decks through the helper's bounded endpoint logic.
+These live fetches run in the extended and full modes.

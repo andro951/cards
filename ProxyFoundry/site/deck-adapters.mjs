@@ -8,7 +8,7 @@ export function identifyDeck(raw){
   if(url.protocol!=='https:'||url.username||url.password||url.port)
     throw new Error('Use a public HTTPS deck link.');
   const site=deckSites.find(item=>item.host.test(url.hostname)&&item.path.test(url.pathname));
-  if(!site)throw new Error('Supported deck links: Scryfall, Archidekt, and MTGGoldfish.');
+  if(!site)throw new Error('Use a public Archidekt or MTGGoldfish deck link.');
   const id=url.pathname.match(site.path)[1];
   return {site:site===deckSites[0]?'archidekt':'mtggoldfish',id};
 }
@@ -46,10 +46,4 @@ export function parseGoldfish(text,title='MTGGoldfish deck'){
   }
   if(!rows.length)throw new Error('The MTGGoldfish deck has no importable cards.');
   return {name:title,rows};
-}
-
-export function goldfishTitle(html,fallback){
-  const match=html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i)
-    ||html.match(/<title>([^<]+)<\/title>/i);
-  return (match?.[1]||fallback).replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
 }

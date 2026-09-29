@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {identifyDeck,parseArchidekt,parseGoldfish} from '../web/deck-adapters.mjs';
-import {onRequestGet} from '../functions/gateway/deck.js';
+import {identifyDeck,parseArchidekt,parseGoldfish} from '../site/deck-adapters.mjs';
 
 test('only supported public deck URLs are accepted',()=>{
   assert.deepEqual(identifyDeck('https://archidekt.com/decks/21700272/example'),{site:'archidekt',id:'21700272'});
@@ -25,18 +24,3 @@ test('MTGGoldfish parses main and sideboard cards',()=>{
     {source:'Island',quantity:2,section:'mainboard'},
     {source:'Negate',quantity:1,section:'outside'}]);
 });
-
-if(process.env.PF_LIVE_DECK_SITES==='1'){
-  for(const [site,url] of [
-    ['Archidekt','https://archidekt.com/decks/21700272/cycle_of_the_five_dragon_stars'],
-    ['MTGGoldfish','https://www.mtggoldfish.com/deck/4492960']]){
-    test(`${site} live public deck import`,async()=>{
-      const response=await onRequestGet({request:new Request('https://foundry.example/gateway/deck?url='+encodeURIComponent(url))});
-      assert.equal(response.status,200);
-      const deck=await response.json();
-      assert.ok(deck.name);
-      assert.ok(deck.rows.length>50);
-      assert.ok(deck.rows.every(row=>row.source&&row.quantity>0));
-    });
-  }
-}

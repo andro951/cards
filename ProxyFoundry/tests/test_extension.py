@@ -1,7 +1,7 @@
 """Real MV3 extension and local ZIP transfer; the merchant page is a fixture.
 No login, real order, checkout or payment is performed by this test.
 """
-import io,json,os,random,threading,hashlib,re,time
+import io,json,os,random,threading,hashlib,re,time,http.server
 from pathlib import Path
 import pytest
 from PIL import Image
@@ -26,6 +26,53 @@ document.querySelector('#next-back').onclick=()=>document.querySelector('#next-p
 document.querySelector('#next-preview').onclick=()=>tc.preview++;
 document.querySelector('#checkout').onclick=()=>tc.checkout++;
 </script></body></html>'''
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_DECK_SITES')!='1',reason='Opt-in live public deck sites')
+def test_installed_helper_fetches_public_decks_without_a_server_function(tmp_path):
+    from playwright.sync_api import sync_playwright
+
+    class Page(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            body=b'<!doctype html><meta name="proxy-foundry" content="workspace-v1"><title>Helper fixture</title>'
+            self.send_response(200)
+            self.send_header('Content-Type','text/html; charset=utf-8')
+            self.send_header('Content-Length',str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        def log_message(self,*args):pass
+
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Page)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as p:
+            ext=str(ROOT/'extension')
+            ctx=p.chromium.launch_persistent_context(str(tmp_path/'browser'),channel='chromium',headless=True,args=[f'--disable-extensions-except={ext}',f'--load-extension={ext}'])
+            try:
+                page=ctx.pages[0] if ctx.pages else ctx.new_page()
+                page.add_init_script("window.__helperConnected=false;window.addEventListener('message',event=>{if(event.data?.source==='proxy-foundry-helper'&&event.data.type==='PF_WORKSPACE_PONG')window.__helperConnected=true})")
+                page.goto(f'http://127.0.0.1:{server.server_port}/')
+                page.wait_for_function('window.__helperConnected===true',timeout=15000)
+                for url,site in [('https://archidekt.com/decks/21700272/cycle_of_the_five_dragon_stars','archidekt'),
+                                 ('https://www.mtggoldfish.com/deck/4492960','mtggoldfish')]:
+                    response=page.evaluate('''url=>new Promise((resolve,reject)=>{
+                      const requestId=crypto.randomUUID();
+                      const timer=setTimeout(()=>reject(new Error('Deck helper timed out')),45000);
+                      const receive=event=>{
+                        if(event.data?.source!=='proxy-foundry-helper'||event.data.type!=='PF_DECK_IMPORT_REPLY'||event.data.requestId!==requestId)return;
+                        clearTimeout(timer);window.removeEventListener('message',receive);resolve(event.data);
+                      };
+                      window.addEventListener('message',receive);
+                      window.postMessage({source:'proxy-foundry-workspace',type:'PF_DECK_IMPORT_REQUEST',requestId,url},location.origin);
+                    })''',url)
+                    assert response['ok'],response.get('error')
+                    assert response['deck']['site']==site
+                    assert len(response['deck']['body'])>1000
+                    if site=='archidekt':assert len(json.loads(response['deck']['body'])['cards'])>50
+                    else:assert 'Sideboard' in response['deck']['body'] or len(response['deck']['body'].splitlines())>50
+            finally:ctx.close()
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+
 def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
     from playwright.sync_api import sync_playwright,expect
     s=Store(tmp_path/'workspace')

@@ -5,7 +5,7 @@ Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered prox
 ## Use the website
 
 1. Open the deployed website in a current Chrome or Edge browser.
-2. Choose **Add New Deck** and paste a public Scryfall, Archidekt, or MTGGoldfish deck link. Outside-the-Game cards are included by default and can be excluded before import. Exact printing details are preserved when the deck source supplies them; otherwise Scryfall chooses its ordinary default result.
+2. Choose **Add New Deck** and paste a public Scryfall deck link, a card list, or a deck export. The optional browser helper can also import public Archidekt and MTGGoldfish links directly on your computer. Without it, download a text or JSON deck export from those sites and upload it. Outside-the-Game cards are included by default and can be excluded before import. Exact printing details are preserved when the deck source supplies them; otherwise Scryfall chooses its ordinary default result.
 3. Choose **Default Look** for automatic art, frames, symbols, and back, or **Custom** for artwork folders, frames, credits, symbols, backs, and `data.json`.
 4. Generate images. Select a frame by inspecting actual rendered previews for a card from the deck. Godzilla land and non-land frames are separate choices. A nickname appears above the real card name.
 5. Choose **Review & Print**. Inspect front images and any unique backs. Crop and layout warnings must be reviewed one card at a time; **It Looks Fine** accepts only that face's current render.
@@ -15,19 +15,18 @@ Saved print packages are available from **Saved print orders** on the Deck Libra
 
 The first load downloads the pinned card engine and renderer assets. Rendering, imported art, templates, decks, and saved orders can use substantial browser storage. **Settings → Workspace storage** lets supported browsers use a chosen `BulkProxyForge` folder; browser storage is the fallback. **Export Backup** and **Import from Backup** move selected objects and source assets between workspaces. A backup can optionally include generated images.
 
-## Deploy the website
+## Host the website
 
-The static site uses Cloudflare Pages. Its only server function is a stateless deck-site gateway for public Archidekt and MTGGoldfish pages whose browser CORS behavior prevents direct import. It stores no deck, image, or workspace data. Scryfall and GitHub data are fetched by the browser.
+The production app is static. There is no server function or account database. Card rendering and saved decks run in the browser. Scryfall and GitHub data are fetched directly by the browser. Archidekt and MTGGoldfish block direct cross-origin browser reads, so their link imports use the optional Chrome/Edge helper installed on each user's machine. File exports work without the helper.
 
 ```powershell
 cd ProxyFoundry
 python scripts/build_web.py
-npx wrangler pages deploy dist --project-name bulk-proxy-forge
 ```
 
-Configure Cloudflare Pages to serve the `dist` directory. The build includes `functions/gateway/deck.js` as the stateless gateway; deploy from the repository root if the Pages tool requires the `functions` directory beside `dist`. For local development and browser testing only, `npx wrangler pages dev dist --port 8767` serves the same website. No local server is part of the delivered product.
+Publish the generated `dist` directory on a static host. The current build assumes the website is served from the host's root path; a GitHub Pages project path such as `/cards/` needs a base-path build before publication. A local HTTP server is useful for development tests only. No local server is part of the delivered product.
 
-The optional print helper currently recognizes Cloudflare `*.pages.dev` sites and localhost development builds. Its permission list can be extended when a custom domain is assigned. The helper is not needed to download a print ZIP.
+The optional browser helper recognizes `andro951.github.io`, Cloudflare `*.pages.dev` sites, and localhost development builds. Its permissions also cover the two deck sites and TCGPlaytest. Its permission list must be updated for a custom domain. The helper is not needed to download a print ZIP or upload deck exports.
 
 ## Artwork and templates
 
