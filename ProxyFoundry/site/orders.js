@@ -1,7 +1,27 @@
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,date,badge,empty,loading,nav} from './ui.js';
 import {renderDecks} from './render.js';
 export function setupHelper(){
-  const host=modal('Connect the print helper',`<p class="muted">Set up automatic handoff once for future orders.</p><div class="well"><h3>1 · Download and extract</h3><a class="button primary" href="/api/helper/download" download>Download print helper</a></div><div class="well section-gap"><h3>2 · Load in Edge or Chrome</h3><p>Open <code>edge://extensions</code> or <code>chrome://extensions</code>, enable <b>Developer mode</b>, choose <b>Load unpacked</b>, and select the extracted <code>extension</code> folder.</p></div><div class="well section-gap"><h3>3 · Reload Bulk Proxy Forge</h3><p>Future Print Cards clicks will open your order in TCGPlaytest automatically.</p></div><div class="notice info">The helper never checks out or enters payment details. You review the printer preview and complete checkout yourself.</div>`,{footer:'<button class="button" id="recheck-helper">Check connection</button><button class="button primary" id="close-helper">Done</button>'});
+  const host=modal('Connect the browser helper','');
+  const body=$('.modal-body',host);
+  const add=(parent,tag,value,className='')=>{
+    const element=document.createElement(tag);element.textContent=value;
+    if(className)element.className=className;
+    parent.append(element);return element;
+  };
+  add(body,'p','Set up automatic deck-site imports and print handoff once.','muted');
+  const download=add(body,'div','','well');
+  add(download,'h3','1 · Download and extract');
+  const link=add(download,'a','Download browser helper','button primary');link.href='/api/helper/download';link.download='';
+  const install=add(body,'div','','well section-gap');
+  add(install,'h3','2 · Load in Edge or Chrome');
+  add(install,'p','Open edge://extensions or chrome://extensions, enable Developer mode, choose Load unpacked, and select the extracted extension folder.');
+  const reload=add(body,'div','','well section-gap');
+  add(reload,'h3','3 · Reload Bulk Proxy Forge');
+  add(reload,'p','Archidekt and MTGGoldfish links can then import on your computer, and Print Cards can open your order in TCGPlaytest.');
+  add(body,'div','The helper never checks out or enters payment details. You review the printer preview and complete checkout yourself.','notice info');
+  const footer=add(host,'footer','','modal-footer');
+  const recheck=add(footer,'button','Check connection','button');recheck.id='recheck-helper';recheck.type='button';
+  const done=add(footer,'button','Done','button primary');done.id='close-helper';done.type='button';
   $('#close-helper').onclick=closeModal;
   $('#recheck-helper').onclick=()=>{window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);setTimeout(()=>toast(state.helper?'Print helper is connected.':'Not connected yet. Load the extension, then reload this page.',!state.helper),700);};
 }

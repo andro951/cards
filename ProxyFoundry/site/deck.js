@@ -2,7 +2,7 @@ import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities,cancelSetupPreviews} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
-import {chooseOrder} from './orders.js';
+import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
 async function prepareDeckSource(source){
@@ -45,6 +45,8 @@ function addNewDeck(){
   const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import">Add deck →</button>'});
   const body=$('.modal-body',host);
   const intro=document.createElement('p');intro.className='muted';intro.textContent='Paste a public Scryfall deck link. Archidekt and MTGGoldfish links work with the optional browser helper; their downloaded deck exports work without it.';body.append(intro);
+  const helperButton=document.createElement('button');helperButton.type='button';helperButton.className='button small';helperButton.textContent='Set up browser helper';
+  helperButton.onclick=()=>{closeModal();setupHelper();};body.append(helperButton);
   const linkLabel=document.createElement('label');linkLabel.className='field';
   const linkTitle=document.createElement('span');linkTitle.textContent='Deck link';
   const link=document.createElement('input');link.type='url';link.placeholder='https://…';link.autocomplete='url';link.required=true;
