@@ -5,7 +5,7 @@ import json
 import zipfile
 ROOT=Path(__file__).resolve().parents[1]
 EXCLUDED={'.git','.venv','__pycache__','.pytest_cache','workspace','_work','.cache','node_modules','checkpoints','test-results'}
-EXTENSIONS={'.py','.js','.html','.css','.md','.txt','.json','.ini','.bat','.svg'}
+EXTENSIONS={'.py','.pyw','.js','.html','.css','.md','.txt','.json','.ini','.bat','.svg'}
 
 BACK_FILES={'assets/backs/forge_default.png','assets/backs/forge_blank.png'}
 SYMBOL_FILES={f'assets/symbols/{rarity}.png' for rarity in ('common','uncommon','rare','mythic')}

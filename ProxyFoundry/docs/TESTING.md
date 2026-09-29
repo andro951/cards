@@ -1,7 +1,8 @@
 # Test groups and timings
 
 The [per-test timing list](test-timings.csv) records 440 tests from the
-all-enabled run on 2026-09-29 plus the new installed-helper deck import test.
+all-enabled run on 2026-09-29 plus the installed-helper deck import and two
+local-preview launcher tests.
 Each row has a pytest test ID, group, measured seconds, outcome, and measurement
 time. These are observed times on one Windows machine, not limits or guarantees.
 The 440-test complete run took 23 minutes 54 seconds; the sum of individual
@@ -10,7 +11,7 @@ reporting.
 
 | Group | Tests | Sum of measured test times | When to run |
 | --- | ---: | ---: | --- |
-| Routine | 392 | 2 minutes 0 seconds | Every completed change |
+| Routine | 394 | 2 minutes 26 seconds | Every completed change |
 | Extended | 49 | 21 minutes 55 seconds | Relevant changes or an explicit full sweep |
 
 The extended group contains browser UI, the installed print extension, real

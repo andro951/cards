@@ -1,6 +1,6 @@
 # Bulk Proxy Forge
 
-Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered proxy cards and an explicitly paired front/back ZIP for printing. The production app is a static website: the card engine runs in a browser worker, and the workspace stays on the user's device. Users do not start a local server.
+Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered proxy cards and an explicitly paired front/back ZIP for printing. The production app is a static website: the card engine runs in a browser worker, and the workspace stays on the user's device. The published website needs no local server.
 
 ## Use the website
 
@@ -15,6 +15,12 @@ Saved print packages are available from **Saved print orders** on the Deck Libra
 
 The first load downloads the pinned card engine and renderer assets. Rendering, imported art, templates, decks, and saved orders can use substantial browser storage. **Settings → Workspace storage** lets supported browsers use a chosen `BulkProxyForge` folder; browser storage is the fallback. **Export Backup** and **Import from Backup** move selected objects and source assets between workspaces. A backup can optionally include generated images.
 
+## Preview the checked-out website on Windows
+
+Double-click `START_PROXY_FOUNDRY.bat` in the `ProxyFoundry` folder. It builds the static site, opens `http://127.0.0.1:8767/` in your browser, and shows a small **Local Preview** window. Keep that window open while using the site; choose **Stop preview** when finished. You do not need to type commands or install Node.js. Python 3.10 or newer is required to start this local preview. You can also double-click `START_PROXY_FOUNDRY.pyw` directly.
+
+This temporary local HTTP server serves only the site's files to your own computer. The card engine, saved decks, and images still run and live in your browser. The fixed address keeps browser storage tied to the same origin between preview sessions. The published website will not require this launcher.
+
 ## Host the website
 
 The production app is static. There is no server function or account database. Card rendering and saved decks run in the browser. Scryfall and GitHub data are fetched directly by the browser. Archidekt and MTGGoldfish block direct cross-origin browser reads, so their link imports use the optional Chrome/Edge helper installed on each user's machine. File exports work without the helper.
@@ -24,7 +30,7 @@ cd ProxyFoundry
 python scripts/build_web.py
 ```
 
-Publish the generated `dist` directory on a static host. The current build assumes the website is served from the host's root path; a GitHub Pages project path such as `/cards/` needs a base-path build before publication. A local HTTP server is useful for development tests only. No local server is part of the delivered product.
+Publish the generated `dist` directory on a static host. The current build assumes the website is served from the host's root path; a GitHub Pages project path such as `/cards/` needs a base-path build before publication. The double-click launcher uses a local HTTP server for previews, and tests can use one too. No local server is part of the published website.
 
 The optional browser helper recognizes `andro951.github.io`, Cloudflare `*.pages.dev` sites, and localhost development builds. Its permissions also cover the two deck sites and TCGPlaytest. Its permission list must be updated for a custom domain. The helper is not needed to download a print ZIP or upload deck exports.
 
@@ -52,4 +58,4 @@ node --test tests_web/*.test.mjs
 
 `RUN_TESTS.bat` runs routine, extended, or complete groups. The extended group includes native rendering, browser website smoke, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
 
-The old Python launcher and `vendor/card_tools` remain in the repository for development and legacy workflows. The website does not ask users to run either.
+The legacy Python app remains available through `run.py` for development and older workflows. The website does not ask users to run it.
