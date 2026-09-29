@@ -13,6 +13,7 @@ def test_visible_branding_and_theme_are_bulk_proxy_forge():
     manifest=(ROOT/'extension/manifest.json').read_text(encoding='utf-8')
     assert 'Bulk Proxy Forge Print Helper' in manifest
     assert (ROOT/'site/forge-theme.css').is_file()
+    assert (ROOT/'site/logo.png').is_file()
 
 def test_launcher_and_console_use_current_product_name():
     assert 'title Bulk Proxy Forge' in (ROOT/'START_PROXY_FOUNDRY.bat').read_text(errors='ignore')

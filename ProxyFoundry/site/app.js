@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,empty,badge,date,nav,confirmAction,saveApiFile} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,date,nav,confirmAction,saveApiFile} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
@@ -27,9 +27,9 @@ function showLibrary(){
   <div class="toolbar"><div class="filter-pills"><button data-filter="all" class="${filter==='all'?'active':''}">All decks · ${state.decks.length}</button><button data-filter="ready" class="${filter==='ready'?'active':''}">Ready to print</button><button data-filter="work" class="${filter==='work'?'active':''}">In progress</button></div><label class="search"><input id="deck-search" type="search" aria-label="Search decks" placeholder="Find a deck…" value="${esc(query)}"></label></div>
   ${decks.length?`<div class="deck-grid">${decks.map(d=>{
     const cover=d.cover||'';return `<article class="deck-tile ${state.selected.has(d.id)?'selected':''}" data-deck="${d.id}"><div class="deck-cover"><a href="#deck/${d.id}" aria-label="Open ${esc(d.name)}">${cover?`<img src="${esc(cover)}" alt="" loading="lazy">`:`<span class="deck-monogram">${esc(d.name[0]?.toUpperCase()||'D')}</span>`}</a><label class="deck-select"><input type="checkbox" data-select="${d.id}" aria-label="Select ${esc(d.name)} for a print order" ${state.selected.has(d.id)?'checked':''}></label>${d.settings?.backAsset?`<img class="deck-back-thumb" src="/api/assets/${esc(d.settings.backAsset)}" alt="Deck back">`:''}</div><div class="deck-content"><a href="#deck/${d.id}"><h3 title="${esc(d.name)}">${esc(d.name)}</h3></a><div class="deck-meta"><span>${d.summary?.cards||0} cards</span><span>${d.summary?.rendered||0}/${d.summary?.faces||0} images</span><span>${date(d.updatedAt)}</span></div><div class="deck-footer">${badge(d.status)}<a class="tile-open" href="#deck/${d.id}">Open deck ↗</a></div></div></article>`;
-  }).join('')}<button class="add-tile" id="add-tile"><span>＋</span>Start another deck<small>Paste a Scryfall link or decklist</small></button></div>`:empty(state.decks.length?'No decks match your search':'Your first deck belongs here',state.decks.length?'Try a different name or status filter.':'Import a Scryfall deck or paste a card list. Your selected printing, quantities, and double-faced cards stay together.',`<button class="button primary" id="empty-import">Import your first deck →</button>`)}
+  }).join('')}<button class="add-tile" id="add-tile"><span>＋</span>Start another deck<small>Paste a Scryfall link or decklist</small></button></div>`:'<div class="empty-state"></div>'}
   <div class="subtitle-line section-gap">Select multiple decks to combine them into one explicitly paired print order. Nothing is purchased automatically.</div>`;
-  for(const id of ['import-deck','add-tile','empty-import'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>importDeck());
+  for(const id of ['import-deck','add-tile'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>importDeck());
   $('#new-empty').onclick=()=>attempt(async()=>{const d=await api('/api/decks/new',{});nav('deck/'+d.id+'/setup');});
   $$('[data-filter]').forEach(el=>el.onclick=()=>{filter=el.dataset.filter;showLibrary()});
   $('#deck-search').oninput=e=>{query=e.target.value;const pos=e.target.selectionStart;showLibrary();$('#deck-search').focus();try{$('#deck-search').setSelectionRange(pos,pos)}catch{}};
@@ -40,8 +40,8 @@ function showLibrary(){
   $('.page-head p')?.remove();
   $('.subtitle-line')?.remove();
   $('.add-tile')?.remove();
-  $('#empty-import')?.remove();
-  const emptyText=$('.empty-state p');if(emptyText)emptyText.textContent='Add a public deck link to get started.';
+  const emptyState=$('.empty-state');
+  if(emptyState){const message=document.createElement('p');message.textContent=state.decks.length?'No decks match your search.':'No decks yet. Add a deck to get started.';message.style.margin='0 auto';emptyState.style.padding='42px 20px';emptyState.replaceChildren(message);}
   const action=$('#import-deck');if(action)action.textContent='＋ Add New Deck';
   const all=$('[data-filter="all"]');if(all)all.textContent='All Decks';
   const work=$('[data-filter="work"]');if(work)work.textContent='Needs Preparation';
@@ -49,9 +49,13 @@ function showLibrary(){
   const allVisible=decks.length>0&&decks.every(deck=>state.selected.has(deck.id));
   selectAll.textContent=allVisible?'Deselect All':'Select All';selectAll.disabled=!decks.length;
   selectAll.onclick=()=>{for(const deck of decks)allVisible?state.selected.delete(deck.id):state.selected.add(deck.id);showLibrary();};
-  $('.filter-pills')?.append(selectAll);
+  $('#deck-search').style.paddingLeft='40px';
+  const deckActions=document.createElement('div');deckActions.setAttribute('role','group');deckActions.setAttribute('aria-label','Deck library actions');
+  deckActions.style.display='flex';deckActions.style.alignItems='center';deckActions.style.justifyContent='flex-end';deckActions.style.flexWrap='wrap';deckActions.style.gap='10px';deckActions.style.flex='1 1 520px';
+  const search=$('.search');search.style.flex='1 1 220px';search.style.minWidth='180px';
+  deckActions.append(search,selectAll);$('.toolbar')?.append(deckActions);
   const savedOrders=document.createElement('button');savedOrders.type='button';savedOrders.className='button quiet small';savedOrders.textContent='Saved print orders';
-  savedOrders.onclick=()=>nav('orders');$('.toolbar')?.append(savedOrders);
+  savedOrders.onclick=()=>nav('orders');deckActions.append(savedOrders);
   for(const tile of $$('.deck-tile')){
     $('.tile-open',tile)?.remove();
     tile.style.cursor='pointer';
@@ -66,8 +70,8 @@ function mountNavigation(){
   const bar=$('.topbar');bar.replaceChildren();
   const brand=document.createElement('a');brand.href='#decks';brand.setAttribute('aria-label','Bulk Proxy Forge home');
   brand.style.display='flex';brand.style.alignItems='center';brand.style.gap='10px';brand.style.fontWeight='750';
-  const mark=document.createElement('span');mark.className='brand-mark';mark.textContent='BPF';mark.style.width='35px';mark.style.height='40px';
-  const name=document.createElement('span');name.textContent='Bulk Proxy Forge';brand.append(mark,name);bar.append(brand);
+  const logo=document.createElement('img');logo.src='/site/logo.png';logo.alt='Bulk Proxy Forge';logo.style.width='clamp(120px, 15vw, 180px)';logo.style.height='auto';
+  brand.append(logo);bar.append(brand);
   const links=document.createElement('nav');links.setAttribute('aria-label','Main navigation');
   links.style.display='flex';links.style.gap='8px';links.style.marginLeft='auto';
   const icons={

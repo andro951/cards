@@ -9,7 +9,7 @@ EXTENSIONS={'.py','.pyw','.js','.html','.css','.md','.txt','.json','.ini','.bat'
 
 BACK_FILES={'assets/backs/forge_default.png','assets/backs/forge_blank.png'}
 SYMBOL_FILES={f'assets/symbols/{rarity}.png' for rarity in ('common','uncommon','rare','mythic')}
-BUNDLED_IMAGE_FILES=BACK_FILES|SYMBOL_FILES
+BUNDLED_IMAGE_FILES=BACK_FILES|SYMBOL_FILES|{'site/logo.png'}
 
 def build(destination):
     files=[]
