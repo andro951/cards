@@ -87,4 +87,18 @@ export async function renderTemplatePreviews(deckId,group,settings,cardData,onIm
   return plan;
 }
 
+export async function renderTemplateSource(entries,onImage){
+  const plan=await api('/api/render-sessions/template-source',{entries});
+  await runRenderPlan(plan,{label:'Preview Card Conjurer save',onImage,
+    successMessage:'Source previews ready',successToast:'Choose the card to turn into a reusable template.'});
+  return plan;
+}
+
+export async function renderTemplateModel(model,onImage){
+  const plan=await api('/api/render-sessions/template-model',{model});
+  await runRenderPlan(plan,{label:'Validate template',onImage,
+    successMessage:'Template preview ready',successToast:'Inspect the text and region outlines before saving.'});
+  return plan;
+}
+
 function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}

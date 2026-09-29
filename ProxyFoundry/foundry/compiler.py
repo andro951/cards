@@ -6,6 +6,7 @@ from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop
 from .legacy import compiler as native,ingest
 from .images import data_uri
 from .credits import resolve_credit
+from .template_model import apply_regions
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -1987,12 +1988,21 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
 
 def custom_data(template,sem,other_faces=None):
     d=copy.deepcopy(template['data'])
+    if template.get('schemaVersion')==2:
+        try:
+            reference=native.build_one(copy.deepcopy(choose_builtin(sem,'auto')),
+                                       {'artist':sem.get('artist','')},False)['data']
+        except native.BuildError as exc:
+            raise ValidationError('This card needs a structural template with its own dynamic regions.') from exc
+        apply_regions(d,reference,template['regions'])
     values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
       'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
       'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
       'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
     for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
-    for slot,field in (template.get('mapping') or {k:k for k in values}).items():
+    mapping=({slot:region['field'] for slot,region in template['regions'].items()}
+             if template.get('schemaVersion')==2 else (template.get('mapping') or {k:k for k in values}))
+    for slot,field in mapping.items():
         if slot not in d['text']:continue
         if field in values:d['text'][slot]['text']=str(values[field])
         elif field.startswith('face2.') and other_faces:
@@ -2012,7 +2022,9 @@ class Compiler:
         # Custom template data is already embedded in compiled CardConjurer data,
         # so its fingerprint is for stale-template detection; render-key salting
         # stays at baseline v1 to avoid redundant cache invalidation.
-        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+        fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'regions':t.get('regions',{}),
+                                 'schemaVersion':t.get('schemaVersion',1),'baseGroup':t.get('baseGroup'),
+                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
         return 'custom:'+choice,fingerprint,1
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
@@ -2103,6 +2115,7 @@ class Compiler:
             if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
             if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
             data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if t.get('schemaVersion')==2:fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'custom')
             if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
             recipe='custom:'+choice
         source_aware_placement=None

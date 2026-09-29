@@ -35,7 +35,7 @@ class Sources:
         meld_result={k:card.get(k) for k in ('id','name','artist','set','collector_number','rarity') if card.get(k) is not None}
         meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
         return {**d,'_meld_proxy':True,'_meld_result':meld_result}
-    def import_deck(self,source,include_outside=False,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+    def import_deck(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
             text=source.strip()

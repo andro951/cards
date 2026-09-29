@@ -1,6 +1,6 @@
 """Deck orchestration. Source changes invalidate front renders; backs/quantities do not."""
 from __future__ import annotations
-import base64,copy,io,json,math,re,time,zipfile
+import base64,copy,hashlib,io,json,math,re,time,zipfile
 from pathlib import Path,PurePosixPath
 from PIL import Image
 from .domain import *
@@ -12,9 +12,10 @@ from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,ap
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
+from .template_model import convert_cardconjurer, validate_model
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':True},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
@@ -46,18 +47,54 @@ class Workspace:
         return values
     def new_deck(self, name='Untitled deck'):
         return self.store.put('decks', {'name':str(name).strip()[:200] or 'Untitled deck',
-            'cards':[], 'settings':self.validate_settings(self.global_settings().get('defaults',{})),
+            'cards':[], 'settings':self.validate_settings(self.import_defaults()),
             'status':'draft', 'notes':'', 'importedSource':''})
     def global_settings(self):
-        s=self.store.get('settings','global') or {'id':'global','refreshData':False,'deletePermanently':False,'defaults':{}}
+        s=self.store.get('settings','global') or {'id':'global','refreshData':False,'deletePermanently':False,'defaults':{},'defaultStylePresetId':None}
         s.setdefault('deletePermanently',False)
+        s.setdefault('defaultStylePresetId',None)
         return s
     def set_global_settings(self,values):
-        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','deletePermanently','defaults'}}
+        old=self.global_settings();old.pop('landLibrary',None);safe={k:v for k,v in values.items() if k in {'refreshData','deletePermanently','defaults','defaultStylePresetId'}}
+        if 'defaultStylePresetId' in safe and safe['defaultStylePresetId'] and not self.store.get('style-presets',safe['defaultStylePresetId']):
+            raise ValidationError('That saved style no longer exists.')
         if 'deletePermanently' in safe:safe['deletePermanently']=bool(safe['deletePermanently'])
         if 'defaults' in safe and safe['defaults']:
             safe['defaults']=self.validate_settings(safe['defaults'])
         return self.store.put('settings',{**old,**safe},values.get('revision'))
+    def style_presets(self):
+        return self.store.list('style-presets')
+    def save_style_preset(self,deck_id,name):
+        deck=self.deck(deck_id)
+        title=str(name or '').strip()[:200]
+        if not title:raise ValidationError('Name this saved style.')
+        settings=copy.deepcopy(deck['settings'])
+        settings['dataJsonSource']=None
+        return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
+    def import_style_preset(self,data):
+        if not isinstance(data,dict) or data.get('format')!='bulk-proxy-forge-style' or data.get('schema')!=1:
+            raise ValidationError('Choose a Bulk Proxy Forge style JSON file.')
+        title=str(data.get('name') or '').strip()[:200]
+        if not title:raise ValidationError('The style needs a name.')
+        assets=data.get('assets') or {}
+        if not isinstance(assets,dict) or len(assets)>5000:raise ValidationError('Invalid style assets.')
+        for ident,entry in assets.items():
+            if not re.fullmatch(r'[0-9a-f]{64}',str(ident)) or not isinstance(entry,dict):raise ValidationError('Invalid style asset.')
+            raw=base64.b64decode(entry.get('base64',''),validate=True)
+            if len(raw)>64*1024**2 or hashlib.sha256(raw).hexdigest()!=ident:raise ValidationError('Style image failed its integrity check.')
+            image=decode_image(raw)
+            self.store.add_asset(raw,str(entry.get('mime') or 'image/png'),image.width,image.height)
+        settings=self.validate_settings(data.get('settings') or {})
+        settings['dataJsonSource']=None
+        return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
+    def delete_style_preset(self,ident,revision=None):
+        if self.global_settings().get('defaultStylePresetId')==ident:
+            self.set_global_settings({'defaultStylePresetId':None})
+        return self.store.purge('style-presets',ident,revision)
+    def import_defaults(self):
+        global_settings=self.global_settings()
+        preset=self.store.get('style-presets',global_settings.get('defaultStylePresetId')) if global_settings.get('defaultStylePresetId') else None
+        return copy.deepcopy(preset['settings'] if preset else global_settings.get('defaults',{}))
     def validate_settings(self,settings):
         settings=self._with_default_symbols(settings)
         settings.pop('modificationCredit',None);settings.pop('useLandLibrary',None);settings.pop('landLibrary',None)
@@ -111,10 +148,10 @@ class Workspace:
         return s
     def create(self,payload,progress=lambda *a:None,cancel=lambda:False):
         refresh=bool(payload.get('settings',{}).get('refreshData',self.global_settings().get('refreshData',False)))
-        result=self.sources.import_deck(payload.get('source',''),payload.get('includeOutside',False),refresh,progress,cancel)
+        result=self.sources.import_deck(payload.get('source',''),payload.get('includeOutside',True),refresh,progress,cancel)
         if cancel():raise ValidationError('Import cancelled.')
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
-        settings=self.validate_settings({**self.global_settings().get('defaults',{}),**payload.get('settings',{})})
+        settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
         return self.store.put('decks',{**result,'name':name,'settings':settings,'status':'draft','notes':''})
     def deck(self,ident):
         d=self.store.get('decks',ident)
@@ -180,14 +217,14 @@ class Workspace:
         result=[];seen=set()
         for index,item in enumerate(value,1):
             if not isinstance(item,dict):raise ValidationError(f'Imported card data entry {index} must be an object.')
-            unknown=set(item)-{'name','nickname','flavor_text'}
+            unknown=set(item)-{'name','nickname','flavor_text','artist'}
             if unknown:raise ValidationError(f'Imported card data entry {index} has unsupported fields.')
             name=item.get('name')
             if not isinstance(name,str) or not name.strip() or len(name.strip())>300:
                 raise ValidationError(f'Imported card data entry {index} has an invalid name.')
             name=name.strip()
             values={}
-            for key,maximum in (('nickname',300),('flavor_text',20000)):
+            for key,maximum in (('nickname',300),('flavor_text',20000),('artist',300)):
                 raw=item.get(key,'')
                 if raw is None:raw=''
                 if not isinstance(raw,str):raise ValidationError(f'Imported {key} for {name} must be text.')
@@ -222,6 +259,8 @@ class Workspace:
                 for key in ('nickname','flavor_text'):
                     if key in entry and overrides.get(key)!=entry[key]:
                         overrides[key]=entry[key];changed=True
+                if 'artist' in entry and face.get('artistOverride')!=entry['artist']:
+                    face['artistOverride']=entry['artist'];changed=True
                 if changed:
                     face['semanticOverrides']=overrides
                     face.pop('compiled',None);face.pop('error',None)
@@ -311,7 +350,7 @@ class Workspace:
         if settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
         if settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
         if remote_entry is None:
-            if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',True):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
+            if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',False):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
             if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
         refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
@@ -543,6 +582,14 @@ class Workspace:
                 errors[choice]=str(exc)
         return {'targets':targets,'errors':errors,'sample':face.get('name',card['name'])}
     def save_template(self,value):
+        if value.get('schemaVersion')==2:
+            model=validate_model(value)
+            if value.get('id') and value.get('revision') is None:
+                raise ValidationError('Reload the template before saving; its revision is required.')
+            saved={key:model[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+            result=self.store.put('templates',{'id':value.get('id'),**saved},value.get('revision'))
+            self.invalidate_template(result['id'])
+            return result
         d=validate_template(value.get('data',{}));groups=value.get('groups',[])
         if not groups or any(g not in GROUP_LABELS for g in groups):raise ValidationError('Choose the structural groups this template supports.')
         mapping=value.get('mapping') or {}
@@ -565,9 +612,41 @@ class Workspace:
                     db.execute("UPDATE documents SET body=?,rev=rev+1,updated=? WHERE kind='decks' AND id=?",(json.dumps(d,ensure_ascii=False),time.time(),row['id']))
     def delete_template(self,ident,revision):
         if revision is None:raise ValidationError('Reload the template before deleting it.')
-        result=self.store.trash('templates',ident,revision)
-        self.invalidate_template(ident)
-        return result
+        users=[]
+        for deck in self.store.list('decks'):
+            if ident in deck.get('settings',{}).get('templateRules',{}).values() or any(
+                face.get('templateOverride')==ident for card in deck.get('cards',[]) for face in card.get('faces',[])):
+                users.append(deck['name'])
+        if users:raise ValidationError('This template is used by: '+', '.join(users[:20])+'. Change those decks before deleting it.')
+        return self.store.purge('templates',ident,revision)
+    def convert_template_source(self,value):
+        return convert_cardconjurer(value.get('source'),value.get('name'),value.get('group','standard'))
+    def import_template_file(self,value):
+        model=validate_model(value)
+        model.pop('id',None);model.pop('revision',None)
+        return self.save_template(model)
+    def preview_template_model(self,value):
+        model=validate_model(value)
+        sample_names={'standard':'Seasoned Pyromancer','legendary':'Alesha, Who Smiles at Death',
+                      'land':'Field of the Dead','legendary-land':'Boseiju, Who Endures','basic-land':'Forest'}
+        name=sample_names[model['baseGroup']]
+        sf=self.sources.resolve_card(name)
+        face=ingest.face_list(sf)[0]
+        url=self.sources.art_url(sf,face)
+        raw,_,_=self.net.fetch(url)
+        art=ingest_image(self.store,raw)['id']
+        temp=uid()
+        self.store.put('templates',{'id':temp,**{key:model[key] for key in
+            ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}})
+        try:
+            overrides={'oracle_text':'Whenever this creature attacks, draw a card, then discard a card.\n'
+                         'When you discard a nonland card this way, create two 1/1 colorless artifact creature tokens.\n'
+                         'At the beginning of your end step, if you control seven or more permanents, gain 3 life.'}
+            compiled=self.compiler.compile_face(sf,face,0,{'templateOverride':temp,'semanticOverrides':overrides},
+                                               self.validate_settings({}),art,art_origin='Scryfall selected printing')
+            return {'data':compiled['data'],'sample':name}
+        finally:
+            self.store.purge('templates',temp)
     def template_seed(self,kind='normal'):
         if kind in {'land','legend-land'}:
             sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':kind=='legend-land','basic':False,'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}

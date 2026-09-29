@@ -87,11 +87,52 @@ class BrowserHandler(server.Handler):
                         or 'application/octet-stream', filename=filename)
 
     def post(self, path, query):
+        if path == '/api/backups/inspect':
+            if len(self._body)>2*1024**3:raise ValidationError('Backup upload limit is 2 GB.')
+            token=uid()
+            saved=self.app.store.home/'tmp'/('backup-'+token+'.zip')
+            saved.write_bytes(self._body)
+            try:
+                catalog=self.app.backups.catalog(saved)
+            except Exception:
+                saved.unlink(missing_ok=True)
+                raise
+            return self.respond({'token':token,'objects':catalog['objects'],
+                                 'includesRenders':catalog['includesRenders'],'createdAt':catalog['createdAt']})
+        if path == '/api/backups/import-selected':
+            data=self.data()
+            token=str(data.get('token') or '')
+            if not re.fullmatch(r'[-a-f0-9]{36}',token):raise ValidationError('Choose a backup first.')
+            saved=self.app.store.home/'tmp'/('backup-'+token+'.zip')
+            if not saved.is_file():raise FileNotFoundError('That staged backup is missing.')
+            def run(update,cancel):
+                try:return self.app.backups.import_selected(saved,data.get('selected'),data.get('replace'),update,cancel)
+                finally:saved.unlink(missing_ok=True)
+            return self.respond(self.app.jobs.start('Import from Backup',run))
+        if path == '/api/backups/export':
+            data=self.data()
+            include=data.get('includeRenders') is True
+            return self.respond(self.app.jobs.start('Export workspace backup',
+                lambda update,cancel:self.app.backups.export(update,cancel,include_renders=include)))
         match = re.fullmatch(r'/api/decks/([-a-f0-9]{36})/delete', path)
         if match:
             data = self.data()
             return self.respond(self.app.store.purge('decks', match[1], data.get('revision')))
         return super().post(path, query)
+
+    def get(self, path, query):
+        if path == '/api/backups/estimate':
+            stats=self.app.store.stats()
+            base=max(0,stats['assetBytes']-stats['renderBytes'])
+            return self.respond({'withoutRenders':base+1024*1024,
+                                 'withRenders':stats['assetBytes']+1024*1024})
+        if path == '/api/bootstrap':
+            self.respond({'version':'2.0.0','browser':True,'pipelineVersion':server.PIPELINE_VERSION,
+                          'csrf':self.app.csrf,'runtimeOrigin':self.app.runtime_origin,
+                          'groups':server.GROUP_LABELS,'settings':self.app.ws.global_settings(),
+                          'stats':self.app.store.stats(),'backs':self.app.ws.backs.catalog()})
+            return
+        return super().get(path, query)
 
 
 def create_app(home, transport, origin):

@@ -83,9 +83,9 @@ export async function route(){
   try{
     await refreshLibrary();if(current!==routeCounter)return;
     if(name==='deck'&&id)await showDeck(id,tab||'cards');
-    else if(name==='templates')await showTemplates();
+    else if(name==='templates')await (state.bootstrap?.browser?(await import('/web/templates-browser.js')).showTemplates():showTemplates());
     else if(name==='orders')await showOrders();
-    else if(name==='settings')await showSettings();
+    else if(name==='settings')await (state.bootstrap?.browser?(await import('/web/settings-browser.js')).showSettings():showSettings());
     else if(name==='help')await showHelp();
     else{state.route='decks';showLibrary();}
   }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}</div><button class="button" id="retry-page">Retry</button>`;$('#retry-page').onclick=()=>route();}

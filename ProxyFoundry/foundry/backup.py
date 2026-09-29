@@ -10,7 +10,7 @@ import time
 import zipfile
 from pathlib import Path
 
-from .domain import ValidationError, uid, validate_template
+from .domain import ConflictError, ValidationError, uid, validate_template, quantity
 from .images import decode_image
 
 MAX_BACKUP_BYTES = 2 * 1024 ** 3
@@ -36,17 +36,23 @@ class Backups:
         self.ws = workspace
         self.store = workspace.store
 
-    def export(self, progress=lambda *a: None, cancel=lambda: False):
+    def export(self, progress=lambda *a: None, cancel=lambda: False, include_renders=True):
         docs = {kind: self.store.list(kind) + self.store.list(kind, deleted=True)
-                for kind in ('decks', 'templates')}
+                for kind in ('decks', 'templates', 'style-presets')}
         docs['settings'] = [self.ws.global_settings()]
+        if not include_renders:
+            docs = copy.deepcopy(docs)
+            for deck in docs['decks']:
+                for card in deck.get('cards', []):
+                    for face in card.get('faces', []):
+                        (face.get('compiled') or {}).pop('render', None)
         render_keys = set()
         for d in docs['decks']:
             for c in d.get('cards', []):
                 for f in c.get('faces', []):
                     k = (f.get('compiled') or {}).get('renderKey')
                     if k: render_keys.add(k)
-        renders = [r for k in render_keys if (r := self.store.render_get(k))]
+        renders = [r for k in render_keys if (r := self.store.render_get(k))] if include_renders else []
         ids = referenced_assets([docs, renders])
         assets = []
         for ident in sorted(ids):
@@ -55,6 +61,7 @@ class Backups:
                 assets.append(a)
         manifest = {'format': 'proxy-foundry-backup', 'schema': 1,
                     'createdAt': time.time(), 'documents': docs, 'renders': renders,
+                    'includesRenders': bool(include_renders),
                     'assets': [{k: a.get(k) for k in ('id', 'mime', 'width', 'height', 'size')} for a in assets]}
         name = 'ProxyFoundry_Backup_' + time.strftime('%Y%m%d_%H%M%S') + '_' + uid()[:8] + '.zip'
         dest = self.store.home / 'backups' / name
@@ -72,6 +79,104 @@ class Backups:
         except Exception:
             partial.unlink(missing_ok=True)
             raise
+
+    def catalog(self, path: Path):
+        try:
+            with zipfile.ZipFile(path) as archive:
+                members=archive.infolist()
+                names=[member.filename for member in members]
+                if len(members)>MAX_MEMBERS or len(names)!=len(set(names)) or sum(m.file_size for m in members)>MAX_BACKUP_BYTES:
+                    raise ValidationError('Backup is too large or contains duplicate files.')
+                if 'workspace.json' not in names or archive.getinfo('workspace.json').file_size>100*1024**2:
+                    raise ValidationError('Backup workspace manifest is missing or too large.')
+                if any(not re.fullmatch(r'(workspace\.json|assets/[0-9a-f]{64}\.png)',name) for name in names):
+                    raise ValidationError('Backup contains an unexpected file path.')
+                manifest=json.loads(archive.read('workspace.json'))
+        except (OSError, zipfile.BadZipFile, ValueError) as exc:
+            raise ValidationError('Choose a valid Bulk Proxy Forge backup ZIP.') from exc
+        if manifest.get('format')!='proxy-foundry-backup' or manifest.get('schema')!=1:
+            raise ValidationError('This is not a supported Bulk Proxy Forge backup.')
+        documents=manifest.get('documents') or {}
+        if any(not isinstance(documents.get(kind),list) for kind in ('decks','templates')):
+            raise ValidationError('Backup document list is invalid.')
+        documents.setdefault('style-presets',[])
+        if not isinstance(documents['style-presets'],list):raise ValidationError('Backup style list is invalid.')
+        catalog={}
+        for kind in ('decks','templates','style-presets'):
+            if len(documents[kind])>1000:raise ValidationError('Backup contains too many objects.')
+            catalog[kind]=[]
+            for entry in documents[kind]:
+                ident=entry.get('id') if isinstance(entry,dict) else None
+                if not isinstance(ident,str) or not re.fullmatch(r'[-a-f0-9]{36}',ident):
+                    raise ValidationError('Backup contains an invalid object identifier.')
+                if entry.get('deleted'):continue
+                catalog[kind].append({'id':ident,'name':str(entry.get('name') or 'Untitled'),
+                                      'collision':bool(self.store.get(kind,ident,include_deleted=True))})
+        return {'objects':catalog,'includesRenders':bool(manifest.get('includesRenders',bool(manifest.get('renders')))),
+                'createdAt':manifest.get('createdAt'),'manifest':manifest}
+
+    def import_selected(self, path: Path, selected, replace=(), progress=lambda *a:None, cancel=lambda:False):
+        catalog=self.catalog(path)
+        manifest=catalog['manifest']
+        documents=manifest['documents']
+        if not isinstance(selected,dict):raise ValidationError('Choose backup objects to import.')
+        picked={kind:set(selected.get(kind) or []) for kind in ('decks','templates','style-presets')}
+        confirmed=set(replace or [])
+        objects={}
+        for kind in picked:
+            choices={item['id'] for item in catalog['objects'][kind]}
+            if not picked[kind]<=choices:raise ValidationError('Backup selection includes an unknown object.')
+            objects[kind]=[copy.deepcopy(item) for item in documents[kind] if item['id'] in picked[kind]]
+            for item in objects[kind]:
+                if self.store.get(kind,item['id'],include_deleted=True) and item['id'] not in confirmed:
+                    raise ConflictError('You already have '+str(item.get('name') or 'this item')+'. Confirm replacement before importing.')
+        for item in objects['templates']:validate_template(item.get('data',{}))
+        for item in objects['style-presets']:
+            if not isinstance(item.get('settings'),dict):raise ValidationError('Backup contains an invalid style.')
+        for deck in objects['decks']:
+            if not isinstance(deck.get('cards'),list) or len(deck['cards'])>10000:
+                raise ValidationError('Backup contains an invalid deck.')
+            for card in deck['cards']:
+                quantity(card.get('quantity'))
+                if not isinstance(card.get('scryfall'),dict) or not isinstance(card.get('faces'),list):
+                    raise ValidationError('Backup contains an invalid card.')
+                for face in card['faces']:
+                    if face.get('compiled'):validate_template(face['compiled']['data'])
+        renders=[item for item in manifest.get('renders',[]) if item.get('deck_id') in picked['decks']]
+        listed={asset.get('id'):asset for asset in manifest.get('assets',[]) if isinstance(asset,dict)}
+        needed=(referenced_assets(objects)&set(listed))|{item.get('asset_id') for item in renders if item.get('asset_id')}
+        with zipfile.ZipFile(path) as archive:
+            for index,ident in enumerate(sorted(needed)):
+                if cancel():raise ValidationError('Backup import cancelled.')
+                if self.store.asset(ident):continue
+                entry=listed.get(ident)
+                filename='assets/'+ident+'.png'
+                if not entry or filename not in archive.namelist() or archive.getinfo(filename).file_size>64*1024**2:
+                    raise ValidationError('A required backup image is missing.')
+                raw=archive.read(filename)
+                if hashlib.sha256(raw).hexdigest()!=ident:raise ValidationError('A backup image failed its integrity check.')
+                image=decode_image(raw)
+                self.store.add_asset(raw,str(entry.get('mime') or 'image/png'),image.width,image.height)
+                progress(index+1,len(needed),'Importing backup image '+str(index+1))
+        counts={kind:0 for kind in objects}
+        for kind in ('templates','style-presets','decks'):
+            for item in objects[kind]:
+                old=self.store.get(kind,item['id'],include_deleted=True)
+                if old:self.store.purge(kind,item['id'])
+                item.pop('deleted',None)
+                self.store.put(kind,item)
+                counts[kind]+=1
+        deck_map={item['id']:item for item in objects['decks']}
+        for render in renders:
+            deck=deck_map.get(render.get('deck_id'))
+            asset=self.store.asset(render.get('asset_id',''))
+            if not deck or not asset:continue
+            for card in deck.get('cards',[]):
+                for face in card.get('faces',[]):
+                    if face.get('id')==render.get('face_id'):
+                        self.store.render_put(render['render_key'],asset,deck_id=deck['id'],card_id=card['id'],
+                                              face_id=face['id'],deck_name=deck['name'],face_name=face['name'])
+        return counts
 
     def restore(self, path: Path, apply_defaults=False, progress=lambda *a: None, cancel=lambda: False):
         # Validate before mutating the workspace. Existing decks are never replaced.

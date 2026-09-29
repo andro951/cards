@@ -7,6 +7,8 @@ if(!navigator.serviceWorker.controller){
 }
 else{
   const worker=new Worker('/web/engine-worker.js',{type:'module'});
+  const {savedFolder}=await import('/web/storage-choice.js');
+  const folder=await savedFolder();
   const pending=new Map();
   let readyResolve;
   let readyReject;
@@ -23,6 +25,7 @@ else{
       if(port)port.postMessage(data,data.body?[data.body.buffer]:[]);
     }
   };
+  worker.postMessage({type:'start',folder});
 
   navigator.serviceWorker.addEventListener('message',async event=>{
     const data=event.data;

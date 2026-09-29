@@ -21,7 +21,7 @@ from pathlib import Path
 
 from .backup import Backups
 from .compiler import BUILTINS
-from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION
+from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION, validate_template, stable_hash
 from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
 from .jobs import Jobs
 from .github_setup import import_github_setup, import_card_data_url, parse_card_data_json, validate_card_data_for_deck
@@ -184,6 +184,29 @@ class App:
                                       'choices':t['choices']} for t in targets.values()],
                 'cached':0,'errors':[],'previewErrors':plan['errors'],'sample':plan['sample'],
                 'pipelineVersion':PIPELINE_VERSION}
+
+    def start_template_source_session(self, entries):
+        if not isinstance(entries,list) or not 1<=len(entries)<=40:
+            raise ValidationError('Choose a Card Conjurer save with 1–40 faces for visual conversion.')
+        targets={}
+        for index,entry in enumerate(entries):
+            data=validate_template(entry)
+            key=stable_hash({'sourcePreview':index,'data':data})
+            targets[key]={'key':key,'name':str(entry.get('key') or entry.get('name') or f'Face {index+1}'),
+                          'data':data,'preview':True}
+        ident=uid()
+        with self.lock:self.render_sessions[ident]={'targets':targets,'created':time.time()}
+        return {'id':ident,'targets':[{'key':key,'name':item['name']} for key,item in targets.items()],
+                'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
+
+    def start_template_model_session(self, model):
+        preview=self.ws.preview_template_model(model)
+        key=stable_hash({'templateModelPreview':preview['data']})
+        ident=uid()
+        with self.lock:self.render_sessions[ident]={'targets':{key:{'key':key,'name':preview['sample'],
+            'data':preview['data'],'preview':True}},'created':time.time()}
+        return {'id':ident,'targets':[{'key':key,'name':preview['sample']}],
+                'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
 
     def target(self, session, key):
         with self.lock:
@@ -410,6 +433,23 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
+        if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/export', p):
+            template=self.app.store.get('templates',m[1])
+            if not template:raise FileNotFoundError('Template not found.')
+            if template.get('schemaVersion')!=2:raise ValidationError('Open and save this legacy template in the new editor before exporting it.')
+            value={k:template[k] for k in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+            return self.send_bytes(json.dumps(value,ensure_ascii=False,indent=2).encode(),'application/json',filename='BulkProxyForge_Template.json')
+        if p == '/api/style-presets': return self.respond(self.app.ws.style_presets())
+        if m := re.fullmatch(r'/api/style-presets/([-a-f0-9]{36})/export', p):
+            preset=self.app.store.get('style-presets',m[1])
+            if not preset:raise FileNotFoundError('Saved style not found.')
+            from .backup import referenced_assets
+            assets={}
+            for ident in referenced_assets(preset['settings']):
+                image=self.app.store.asset(ident)
+                if image:assets[ident]={'mime':image['mime'],'base64':base64.b64encode(self.app.store.asset_path(ident).read_bytes()).decode('ascii')}
+            data={'format':'bulk-proxy-forge-style','schema':1,'name':preset['name'],'settings':preset['settings'],'assets':assets}
+            return self.send_bytes(json.dumps(data,ensure_ascii=False,indent=2).encode(),'application/json',filename='BulkProxyForge_Style.json')
         if p == '/api/templates/seed': return self.respond(self.app.ws.template_seed(q.get('kind', ['normal'])[0]))
         if p == '/api/settings': return self.respond(self.app.ws.global_settings())
         if p == '/api/stats': return self.respond(self.app.store.stats())
@@ -522,6 +562,12 @@ class Handler(BaseHTTPRequestHandler):
             if not old or not old.get('deleted'):raise ValidationError('That deck is not in Trash.')
             return self.respond(self.app.store.purge('decks',m[1],d.get('revision')))
         if p == '/api/templates': return self.respond(self.app.ws.save_template(d))
+        if p == '/api/templates/import': return self.respond(self.app.ws.import_template_file(d))
+        if p == '/api/templates/convert-cardconjurer': return self.respond(self.app.ws.convert_template_source(d))
+        if p == '/api/style-presets/from-deck': return self.respond(self.app.ws.save_style_preset(d['deckId'],d['name']))
+        if p == '/api/style-presets/import': return self.respond(self.app.ws.import_style_preset(d))
+        if m := re.fullmatch(r'/api/style-presets/([-a-f0-9]{36})/delete', p):
+            return self.respond(self.app.ws.delete_style_preset(m[1],d.get('revision')))
         if p == '/api/symbols/generate': return self.respond(rarity_variants(self.app.store, d['assetId']))
         if p == '/api/setup/github-import':
             return self.respond(self.app.jobs.start('Import GitHub setup', lambda u, c: import_github_setup(self.app.ws, d, u, c)))
@@ -534,6 +580,10 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/render-sessions/card': return self.respond(self.app.start_card_render_session(d['deckId'], d['cardId'], force=d.get('force') is True))
         if p == '/api/render-sessions/template-previews':
             return self.respond(self.app.start_template_preview_session(d['deckId'],d['group'],d['settings'],d.get('cardData')))
+        if p == '/api/render-sessions/template-source':
+            return self.respond(self.app.start_template_source_session(d.get('entries')))
+        if p == '/api/render-sessions/template-model':
+            return self.respond(self.app.start_template_model_session(d.get('model')))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))

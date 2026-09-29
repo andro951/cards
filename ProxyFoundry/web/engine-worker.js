@@ -2,11 +2,12 @@ import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodid
 
 let python;
 let mount;
-const ready = (async()=>{
+let ready;
+async function start(folder){
   self.postMessage({type:'status',message:'Loading card engine…'});
   python=await loadPyodide();
   await python.loadPackage('pillow');
-  mount=await python.mountNativeFS('/workspace',await navigator.storage.getDirectory());
+  mount=await python.mountNativeFS('/workspace',folder||await navigator.storage.getDirectory());
   const archive=await fetch('/web/runtime.zip');
   if(!archive.ok)
     throw new Error(`Card engine bundle could not be loaded (${archive.status}).`);
@@ -41,10 +42,16 @@ def browser_request(method, url, body, headers):
     return {k:v for k,v in last_response.items() if k != 'body'}
 `);
   self.postMessage({type:'ready'});
-})();
+}
 
 let sequence=Promise.resolve();
-self.onmessage=event=>{sequence=sequence.then(()=>handle(event));};
+self.onmessage=event=>{
+  if(event.data.type==='start'){
+    ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
+    return;
+  }
+  sequence=sequence.then(()=>handle(event));
+};
 
 async function handle(event){
   const {id,method,url,body,headers}=event.data;
@@ -65,4 +72,3 @@ async function handle(event){
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
 }
 
-ready.catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));

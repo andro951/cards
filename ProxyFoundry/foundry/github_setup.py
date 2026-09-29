@@ -11,7 +11,7 @@ from pathlib import PurePosixPath
 from urllib.parse import quote
 
 from .domain import RARITIES, ValidationError, github_location
-from .images import ingest_image, rarity_variants
+from .images import ingest_image
 
 RASTER_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
 IMAGE_EXTENSIONS = RASTER_EXTENSIONS | {'.svg'}
@@ -58,7 +58,7 @@ def parse_card_data_json(raw):
 
     result = []
     seen = set()
-    allowed_keys = {'name', 'nickname', 'flavor_text'}
+    allowed_keys = {'name', 'nickname', 'flavor_text', 'artist'}
     for index, item in enumerate(cards, 1):
         if not isinstance(item, dict):
             raise ValidationError(f'data.json card entry {index} must be an object.')
@@ -70,7 +70,8 @@ def parse_card_data_json(raw):
         name = clean(item, 'name', f'data.json card entry {index} name', 300, required=True)
         nickname = clean(item, 'nickname', f'data.json nickname for {name}', 300)
         flavor = clean(item, 'flavor_text', f'data.json flavor_text for {name}', 20000, multiline=True)
-        if not nickname and not flavor:
+        artist = clean(item, 'artist', f'data.json artist for {name}', 300)
+        if not nickname and not flavor and not artist:
             continue
         if name in seen:
             raise ValidationError('data.json contains more than one nonempty entry for ' + name + '.')
@@ -80,6 +81,8 @@ def parse_card_data_json(raw):
             entry['nickname'] = nickname
         if flavor:
             entry['flavor_text'] = flavor
+        if artist:
+            entry['artist'] = artist
         result.append(entry)
     return result
 
@@ -227,16 +230,15 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         symbol_rows = candidate_rows
         break
 
-    single = None if symbol_rows else named_image(rows, 'set_symbol')
-    symbol_mode = 'folder' if symbol_rows else 'generated' if single else 'default'
-    if single:
-        warnings.append('Generated four color-shifted symbols from set_symbol.png. This is not recommended; separate rarity images give better control. Review all four previews below.')
+    if named_image(rows, 'set_symbol'):
+        raise ValidationError('Use four rarity images in set_symbols/; one-image symbol generation is no longer supported.')
+    symbol_mode = 'folder' if symbol_rows else 'default'
 
     back = named_image(rows, 'back')
     icon = None if back else named_image(rows, 'back_icon')
     if back and any(PurePosixPath(name).stem == 'back_icon' and PurePosixPath(name).suffix in IMAGE_EXTENSIONS for name in rows):
         warnings.append('Both back.png and back_icon.png are present. The complete back.png takes priority; the icon was not used.')
-    total = (4 if symbol_rows else 1 if single else 0) + bool(back or icon) + bool(data_row)
+    total = (4 if symbol_rows else 0) + bool(back or icon) + bool(data_row)
     done = 0
 
     def download(row, *, trim_transparent_padding=False):
@@ -270,8 +272,6 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
 
     if symbol_rows:
         symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()}
-    elif single:
-        symbols = rarity_variants(store, download(single, trim_transparent_padding=True)['id'])
     else:
         symbols = workspace.default_symbols()
     if back:
@@ -285,7 +285,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
     check_cancel()
     source = {'mode': 'github' if art_folder else 'scryfall',
               'githubFolder': base + '/' + quote(art_folder, safe='/') if art_folder else '',
-              'ref': loc['ref'] if art_folder else '', 'fallback': True, 'localFiles': {}}
+              'ref': loc['ref'] if art_folder else '', 'fallback': False, 'localFiles': {}}
     progress(done, total, 'GitHub setup ready to review')
     summary = {'art': 'github' if art_folder else 'scryfall',
                'symbols': symbol_mode,

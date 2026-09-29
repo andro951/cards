@@ -162,7 +162,18 @@ function deckMenu(d){
   modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Review images place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
-  $('#use-as-defaults')?.remove();
+  const saveStyle=$('#use-as-defaults');saveStyle.textContent='Save Style for Later';
+  saveStyle.onclick=()=>{
+    const host=modal('Save Style for Later','',{footer:'<button class="button primary" id="save-style-preset">Save style</button>'});
+    const label=document.createElement('label');label.className='field';
+    const title=document.createElement('span');title.textContent='Style name';
+    const input=document.createElement('input');input.maxLength=200;input.placeholder='My deck style';
+    label.append(title,input);$('.modal-body',host).append(label);input.focus();
+    $('#save-style-preset').onclick=()=>attempt(async()=>{
+      const name=input.value.trim();if(!name){errorBox($('.modal-body',host),'Name this style first.');return;}
+      await api('/api/style-presets/from-deck',{deckId:d.id,name});closeModal();toast('Style saved. Manage it in Settings.');
+    });
+  };
   $('.modal-body p.muted')?.remove();
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
