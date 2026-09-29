@@ -18,13 +18,13 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def test_static_website_serves_bundled_station_script():
+def test_static_website_fetches_pinned_station_script():
     from playwright.sync_api import sync_playwright
 
     subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
                    cwd=ROOT,check=True,capture_output=True)
     with zipfile.ZipFile(ROOT/'dist'/'web'/'runtime.zip') as archive:
-        assert 'vendor/cardconjurer/versionStation.js' in archive.namelist()
+        assert 'vendor/cardconjurer/versionStation.js' not in archive.namelist()
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()

@@ -13,7 +13,7 @@ CC_REPO='Investigamer/cardconjurer'
 COMPAT_COMMIT='47087b3fc21e2cef61c58b9ebf180968ee991658'
 COMPAT_REPO='d1rtyskittl3z/Card-Cipherist'
 SCHEMA_VERSION=2
-STATION_SCRIPT_URL='https://cardconjurer.app/js/frames/versionStation.js'
+STATION_SCRIPT_URL='https://raw.githubusercontent.com/joshbirnholz/cardconjurer/d3c6706692898d596ec6a5be0be44f63062c9e12/js/frames/versionStation.js'
 STATION_SCRIPT_SHA256='481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21'
 # Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.
 PIPELINE_VERSION='card-tools-v58/credits-v2/pipeline-v28'
