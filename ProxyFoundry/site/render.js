@@ -1,17 +1,30 @@
 import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast} from './ui.js';
 let activeFrame=null;
 
-async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onImage=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.'}={}){
+async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onImage=null,signal=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.'}={}){
   if(state.busy)throw new Error('Another task is running. Wait for it or cancel first.');
-  state.busy=true;let cancelled=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
+  state.busy=true;let cancelled=false,preparing=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
   const origin=state.bootstrap.runtimeOrigin;
   const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.remove();activeFrame=null;};
+  const cancel=()=>{
+    if(cancelled)return;
+    cancelled=true;
+    if(preparing&&$('#activity-cancel').textContent==='Cancel')$('#activity-cancel').click();
+    const error=new Error('Rendering cancelled. Completed images are saved.');
+    rejectPending?.(error);readyReject?.(error);cleanup();
+  };
+  signal?.addEventListener('abort',cancel,{once:true});
   try{
+    if(signal?.aborted)cancel();
+    if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
     activity(label,'Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
     if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));endActivity(idleMessage);toast(idleToast);return;}
     if(plan.force)activity(label,'Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
+    preparing=true;
     await job('/api/runtime/prepare',{}, {label:'Load CardConjurer'});
-    $('#activity-cancel').textContent='Cancel';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>{cancelled=true;rejectPending?.(new Error('Rendering cancelled. Completed images are saved.'));readyReject?.(new Error('Rendering cancelled.'));cleanup();};
+    preparing=false;
+    if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
+    $('#activity-cancel').textContent='Cancel';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=cancel;
     activity(label,'Starting native renderer','Loading the pinned CardConjurer runtime…',0,plan.targets.length);
     const readyPromise=new Promise((r,j)=>{readyResolve=r;readyReject=j;});
     listener=event=>{
@@ -46,7 +59,11 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
     }
     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true);throw new Error(plan.errors.join('\n'));}
     endActivity(successMessage);toast(successToast);
-  }catch(e){api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true);throw e;}finally{cleanup();state.busy=false;await onUpdate();}
+  }catch(e){
+    if(cancelled)$('#activity').classList.add('hidden');
+    else{api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true);}
+    throw e;
+  }finally{signal?.removeEventListener('abort',cancel);cleanup();state.busy=false;await onUpdate();}
 }
 
 export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false}={}){
@@ -60,10 +77,12 @@ export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false
   return runRenderPlan(plan,{label:'Render card',onUpdate,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
 }
 
-export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage){
+export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage,onPlan=()=>{},signal=null){
   const plan=await api('/api/render-sessions/template-previews',{deckId,group,settings,cardData});
+  if(signal?.aborted)return;
   if(!plan.targets.length)throw new Error(Object.values(plan.previewErrors||{}).join('\n')||'No compatible frame could be previewed.');
-  await runRenderPlan(plan,{label:'Preview frames',onImage,idleMessage:'No frames to preview',
+  onPlan(plan);
+  await runRenderPlan(plan,{label:'Preview frames',onImage,signal,idleMessage:'No frames to preview',
     successMessage:'Frame previews ready',successToast:'Frame previews are ready.'});
   return plan;
 }

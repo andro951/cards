@@ -120,3 +120,27 @@ def test_preview_targets_use_a_card_from_requested_layout(tmp_path):
     assert len({t['key'] for t in plan['targets']})==len(plan['targets'])
     godzilla=next(t for t in plan['targets'] if t['choice']=='godzilla-card')
     assert godzilla['data']['text']['nickname']['text']=='Staged preview name'
+
+
+def test_commander_picker_keeps_distinct_frames_and_groups_matching_choices(tmp_path):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    deck=ws.new_deck('Commander preview')
+    source=card('Syr Gwyn, Hero of Ashvale','Legendary Creature — Human Knight',['W','B','R'])
+    source['mana_cost']='{3}{R}{W}{B}'
+    entry={'id':'card-id','name':source['name'],'quantity':1,'scryfall':source,
+           'faces':[{'id':'face-id','name':source['name'],'index':0}]}
+    ws.store.put('decks',{**deck,'cards':[entry]},deck['revision'])
+    settings=ws.validate_settings({'source':{'mode':'local','localFiles':{'syr_gwyn_hero_of_ashvale':art}}})
+    plan=ws.template_preview_targets(deck['id'],'legendary',settings,
+        [{'name':source['name'],'nickname':'Test Commander Nickname'}])
+    assert len(plan['targets'])==3
+    by_choice={target['choice']:target for target in plan['targets']}
+    assert by_choice['auto']['choices']==['auto','normal']
+    assert by_choice['auto']['data']['version']=='m15Regular'
+    assert by_choice['legend-land']['data']['version']=='genericShowcase'
+    assert by_choice['legend-land']['data']['text']['rules']['outlineColor']=='black'
+    assert by_choice['godzilla-card']['data']['version']=='m15Nickname'
+    assert all(target['data']['text']['nickname']['text']=='Test Commander Nickname'
+               for target in plan['targets'])
+    assert all(target['data']['text']['nickname']['x']+target['data']['text']['nickname']['width']<0.70
+               for target in plan['targets'])

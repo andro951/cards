@@ -39,8 +39,8 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':5,'legendary':5,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1,'godzilla-card':1,'godzilla-land':1}
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -1929,6 +1929,17 @@ def apply_full_art_text(data):
             field['outlineWidth']=.0035
 
 
+def reserve_nickname_mana_space(data,sem):
+    """Keep the alternate title out of the right-aligned mana symbols."""
+    symbols=len(re.findall(r'\{[^{}]+\}',str(sem.get('mana_cost') or '')))
+    if not symbols:return
+    nickname=(data.get('text') or {}).get('nickname')
+    if not isinstance(nickname,dict):return
+    left=float(nickname.get('x',0.0854))
+    right=min(left+float(nickname.get('width',0.8292)),0.93-(0.034+0.052*symbols))
+    nickname['width']=max(0.25,right-left)
+
+
 def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame=False):
     """Apply complete nickname frames where supported, preserving special layouts."""
     nickname=str(sem.get('nickname') or '').strip()
@@ -1936,7 +1947,11 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     effective_sem=sem
     if force and not nickname:
         effective_sem={**sem,'nickname':str(sem.get('name') or '')}
-    if group in ORDINARY_GROUPS or group=='token':
+    # A nickname alone adds the two-name treatment to the chosen ordinary
+    # frame. Only the explicit Godzilla choice replaces that frame outright.
+    # Tokens retain their complete nickname pack because their native frame
+    # needs the matching full title/body assets.
+    if full_frame or group=='token':
         if _apply_full_m15_nickname_pack(data,effective_sem,refit):
             if force and not nickname:(data.get('text') or {}).get('title',{})['text']=''
             return True
@@ -2125,7 +2140,10 @@ class Compiler:
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
             )
+            if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token':apply_full_art_text(data)
+        if nickname_applied and group in ORDINARY_GROUPS:
+            reserve_nickname_mana_space(data,sem)
         if nickname_applied and data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')

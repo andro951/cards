@@ -180,7 +180,8 @@ class App:
             from .backup import referenced_assets
             for target in targets.values():
                 self.runtime_assets.update(referenced_assets(target['data']))
-        return {'id':ident,'targets':[{'key':t['key'],'name':t['name'],'choice':t['choice']} for t in targets.values()],
+        return {'id':ident,'targets':[{'key':t['key'],'name':t['name'],'choice':t['choice'],
+                                      'choices':t['choices']} for t in targets.values()],
                 'cached':0,'errors':[],'previewErrors':plan['errors'],'sample':plan['sample'],
                 'pipelineVersion':PIPELINE_VERSION}
 

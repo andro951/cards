@@ -28,9 +28,11 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
   gallery.style.gap='16px';
   body.append(gallery);
 
+  const controller=new AbortController();
   const rows=new Map();
   const urls=[];
-  for(const choice of choices){
+  const byId=new Map(choices.map(choice=>[choice.id,choice]));
+  function choiceButton(choice){
     const button=document.createElement('button');
     button.type='button';
     button.className='button';
@@ -41,27 +43,18 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
     button.style.alignItems='center';
     button.style.gap='8px';
     button.setAttribute('aria-label','Select '+choice.name);
-
-    const image=document.createElement('img');
-    image.alt='Preview of '+choice.name;
-    image.style.width='170px';
-    image.style.maxWidth='100%';
-    image.hidden=true;
-    button.append(image);
-
     const label=document.createElement('strong');
     label.textContent=choice.name+(choice.id===selected?' · selected':'');
     button.append(label);
-
+    button.onclick=()=>{onSelect(choice.id);closeModal();};
+    return button;
+  }
+  for(const choice of choices){
+    const button=choiceButton(choice);
     const detail=document.createElement('small');
-    detail.textContent='Rendering…';
+    detail.textContent='Preparing preview…';
     button.append(detail);
-    button.onclick=()=>{
-      onSelect(choice.id);
-      closeModal();
-    };
     gallery.append(button);
-    rows.set(choice.id,{button,image,detail});
   }
 
   renderTemplatePreviews(deck.id,group,settings,cardData,(target,blob)=>{
@@ -75,15 +68,44 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
     if(!row)return;
     row.image.src=url;
     row.image.hidden=false;
-    row.detail.textContent='Native preview ready';
-    row.button.disabled=false;
-  }).then(plan=>{
-    if(!dialog.isConnected)return;
-    status.textContent='Rendered '+plan.targets.length+' frame previews using '+plan.sample+'.';
-    for(const [choice,message] of Object.entries(plan.previewErrors||{})){
-      const row=rows.get(choice);
-      if(row)row.detail.textContent=message;
+    row.detail.textContent=row.buttons.length>1?'Same frame for this card · choose below':'Native preview ready';
+    for(const button of row.buttons)button.disabled=false;
+  },plan=>{
+    gallery.replaceChildren();
+    for(const target of plan.targets){
+      const represented=(target.choices||[target.choice]).map(id=>byId.get(id)).filter(Boolean);
+      if(!represented.length)continue;
+      const tile=document.createElement('div');
+      tile.style.display='flex';
+      tile.style.flexDirection='column';
+      tile.style.gap='6px';
+      const buttons=represented.map(choice=>choiceButton(choice));
+      const image=document.createElement('img');
+      image.alt='Preview of '+represented.map(choice=>choice.name).join(' or ');
+      image.style.width='170px';
+      image.style.maxWidth='100%';
+      image.hidden=true;
+      buttons[0].prepend(image);
+      const detail=document.createElement('small');
+      detail.textContent='Rendering…';
+      buttons[0].append(detail);
+      tile.append(...buttons);
+      gallery.append(tile);
+      rows.set(target.choice,{buttons,image,detail});
     }
+    for(const [id,message] of Object.entries(plan.previewErrors||{})){
+      const choice=byId.get(id);
+      if(!choice)continue;
+      const button=choiceButton(choice);
+      const detail=document.createElement('small');
+      detail.textContent=message;
+      button.append(detail);
+      gallery.append(button);
+    }
+  },controller.signal).then(plan=>{
+    if(!plan)return;
+    if(!dialog.isConnected)return;
+    status.textContent='Rendered '+plan.targets.length+' distinct frame previews using '+plan.sample+'.';
   }).catch(error=>{
     if(dialog.isConnected)status.textContent='Could not build previews: '+error.message;
   });
@@ -91,6 +113,7 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
   const observer=new MutationObserver(()=>{
     if(dialog.isConnected)return;
     observer.disconnect();
+    controller.abort();
     for(const url of urls)URL.revokeObjectURL(url);
   });
   observer.observe(document.body,{childList:true,subtree:true});

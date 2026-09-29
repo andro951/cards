@@ -519,7 +519,7 @@ class Workspace:
         for key in ('nickname','flavor_text'):
             if key in staged.get(face.get('name',''),{}):
                 options['semanticOverrides'][key]=staged[face['name']][key]
-        targets=[];errors={}
+        targets=[];errors={};seen_previews={}
         legendary=is_legendary(face)
         for template in self.templates():
             supported=template.get('groups')
@@ -530,9 +530,15 @@ class Workspace:
             try:
                 compiled=self.compiler.compile_face(sf,face,face_options.get('index',0),
                     {**options,'templateOverride':choice},s,art_id,art_origin=origin)
-                targets.append({'key':stable_hash({'preview':choice,'compiled':compiled['renderKey']}),
-                                'name':template['name'],'choice':choice,
-                                'data':compiled['data'],'preview':True})
+                visual_key=stable_hash(compiled['data'])
+                if visual_key in seen_previews:
+                    seen_previews[visual_key]['choices'].append(choice)
+                    continue
+                target={'key':stable_hash({'preview':choice,'compiled':compiled['renderKey']}),
+                        'name':template['name'],'choice':choice,'choices':[choice],
+                        'data':compiled['data'],'preview':True}
+                seen_previews[visual_key]=target
+                targets.append(target)
             except (ValidationError,native.BuildError,ValueError,OSError) as exc:
                 errors[choice]=str(exc)
         return {'targets':targets,'errors':errors,'sample':face.get('name',card['name'])}

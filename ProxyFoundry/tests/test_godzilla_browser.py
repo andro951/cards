@@ -49,6 +49,7 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     expect(page.locator('#modal-host')).to_contain_text('Godzilla full art · non-land')
     expect(page.locator('#modal-host')).to_contain_text('Classic card')
     page.click('#modal-close')
+    expect(page.locator('#activity')).to_be_hidden(timeout=60000)
 
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
@@ -82,6 +83,7 @@ def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
             page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
             page.click('[data-frame-group=standard]')
             expect(page.locator('#modal-host [role=status]')).to_contain_text('Rendered',timeout=240000)
+            assert page.locator('#modal-host img:visible').count()>=2
             godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
             expect(godzilla.locator('img')).to_be_visible()
             output=Path(__file__).resolve().parents[1]/'test-results'

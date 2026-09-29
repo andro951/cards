@@ -1,7 +1,7 @@
 """Real MV3 extension and local ZIP transfer; the merchant page is a fixture.
 No login, real order, checkout or payment is performed by this test.
 """
-import io,json,os,random,threading,hashlib,re
+import io,json,os,random,threading,hashlib,re,time
 from pathlib import Path
 import pytest
 from PIL import Image
@@ -42,14 +42,32 @@ def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
     with sync_playwright() as p:
         ext=str(ROOT/'extension')
         ctx=p.chromium.launch_persistent_context(str(tmp_path/'browser'),channel='chromium',headless=True,args=[f'--disable-extensions-except={ext}',f'--load-extension={ext}'])
-        ctx.route('https://www.tcgplaytest.com/**',lambda route:route.fulfill(status=200,content_type='text/html',body=MERCHANT))
+        events=[]
+        ctx.on('request',lambda request:events.append(('request',request.url)))
+        ctx.on('requestfailed',lambda request:events.append(('failed',request.url,request.failure)))
+        ctx.on('page',lambda tab:events.append(('page',tab.url)))
+        def merchant_route(route):
+            events.append(('route',route.request.url))
+            route.fulfill(status=200,content_type='text/html',body=MERCHANT)
+        ctx.route('https://www.tcgplaytest.com/**',merchant_route)
         page=ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
             page.goto(server.origin+'/#orders')
             expect(page.locator('#helper-state b')).to_have_text('connected',timeout=15000)
-            with ctx.expect_page() as opened:page.locator('[data-open-order]').first.click()
-            merchant=opened.value
-            expect(merchant).to_have_url(re.compile(r'^https://www\.tcgplaytest\.com/'),timeout=15000)
+            # The click opens a tab whose extension starts a ZIP transfer.
+            # Drive the DOM click without Playwright waiting for that new tab's
+            # network load; the explicit assertions below own its readiness.
+            page.locator('[data-open-order]').first.evaluate('(button)=>button.click()')
+            deadline=time.monotonic()+45
+            merchant=None
+            observed=[]
+            while time.monotonic()<deadline:
+                merchant=next((tab for tab in ctx.pages if re.match(r'^https://www\.tcgplaytest\.com/',tab.url)),None)
+                if merchant:break
+                message=page.locator('#toast-host').inner_text()
+                if message and message not in observed:observed.append(message)
+                time.sleep(.1)
+            assert merchant,{'pages':[tab.url for tab in ctx.pages],'toasts':observed,'events':events[-20:]}
             expect(merchant.get_by_text('TCG editor fixture')).to_be_visible(timeout=15000)
             expect(merchant.locator('#pph-line')).to_contain_text('Uploaded 2 paired cards',timeout=45000)
             assert merchant.evaluate('tc.sha')==expected
@@ -60,4 +78,6 @@ def test_installed_extension_transfers_exact_zip_to_new_tab(tmp_path):
             expect(unauthorized.locator('#pph-line')).to_contain_text('FAILED',timeout=15000)
             assert unauthorized.evaluate('tc.sha===null&&tc.checkout===0')
             (ROOT/'test-results').mkdir(exist_ok=True);merchant.screenshot(path=str(ROOT/'test-results/extension-paired-transfer.png'))
-        finally:ctx.close();server.shutdown();server.server_close();app.close()
+        finally:
+            ctx.close()
+            server.shutdown();server.server_close();app.close()
