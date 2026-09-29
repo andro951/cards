@@ -243,10 +243,17 @@ tests/test_render_storage.py::test_delete_all_images_keeps_nonrender_assets,rout
 tests/test_render_storage.py::test_one_current_render_per_face_and_human_readable_path,routine,0.153,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_render_storage.py::test_render_storage_is_fresh_schema_without_migration_code,routine,0.005,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_runtime.py::test_absolute_native_host_alias_is_resolved_to_pinned_path,routine,0.006,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_runtime.py::test_browser_transport_non_404_does_not_try_another_frame_source,routine,0.005,passed,2026-09-29T16:49:21.968831-04:00
 tests/test_runtime.py::test_colorless_saga_creature_frame_uses_exact_pinned_gap_source,routine,0.005,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_runtime.py::test_creator_script_patches_inline_mana_cluster_wrapping,routine,0.004,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_runtime.py::test_modern_saga_asset_source_is_not_a_global_fallback,routine,0.004,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_runtime.py::test_pinned_asset_requests_not_live_cardconjurer_site,routine,0.007,passed,2026-09-29T13:35:26.945698-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/b.png],routine,0.006,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/frame.png],routine,0.006,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/pinline.png],routine,0.005,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/prepare.png],routine,0.005,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/preparePinline.png],routine,0.005,passed,2026-09-29T16:49:21.968831-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/rules.png],routine,0.006,passed,2026-09-29T16:49:21.968831-04:00
 tests/test_scryfall_deck_refresh.py::test_live_deck_export_does_not_disable_card_metadata_cache,routine,0.114,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_scryfall_deck_refresh.py::test_same_scryfall_deck_url_is_fetched_live_on_every_import,routine,0.143,passed,2026-09-29T13:35:26.945698-04:00
 tests/test_server.py::test_back_catalog_and_composition_endpoint,routine,1.208,passed,2026-09-29T13:35:26.945698-04:00
@@ -442,3 +449,4 @@ tests/test_station_native.py::test_native_station_full_compact_two_tier_and_sequ
 tests/test_station_source_probe.py::test_station_source_probe,extended,0.582,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extended,144.095,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip,extended,160.846,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,12.946,passed,2026-09-29T16:49:21.968831-04:00

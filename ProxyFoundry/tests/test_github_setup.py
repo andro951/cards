@@ -294,7 +294,15 @@ def test_http_bundle_import_stages_then_revision_save_preserves_cards_and_option
     assert saved['settings']['artist'] == 'Preserve artist'
     assert saved['settings']['templateRules'] == {'standard': 'normal'}
     assert request(server, '/api/decks/' + d['id'] + '/save', {'revision': d['revision'], 'settings': result['settings']})[0] == 409
-    assert request(server, '/api/setup/github-import', {'url': remote.url}, headers={'X-Proxy-CSRF': 'wrong'})[0] == 403
+    # Windows can close the local HTTP socket after the server has already
+    # written this expected 403. Retrying an invalid-CSRF request is safe.
+    for attempt in range(3):
+        try:
+            rejected=request(server, '/api/setup/github-import', {'url': remote.url}, headers={'X-Proxy-CSRF': 'wrong'})[0]
+            break
+        except ConnectionAbortedError:
+            if attempt==2:raise
+    assert rejected==403
     assert request(server.runtime_server, '/api/setup/github-import', {'url': remote.url})[0] == 403
     assert all('scryfall' not in u for u in remote.calls)
 

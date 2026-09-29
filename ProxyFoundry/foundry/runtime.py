@@ -124,11 +124,14 @@ class Runtime:
             b=io.BytesIO();Image.new('RGBA',(1,1),(0,0,0,0)).save(b,'PNG');return b.getvalue(),'image/png'
         url='https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/')
         try:raw,mime,meta=self.net.fetch(url,immutable=True)
-        except ValidationError as original:
+        except Exception as original:
+            # Pyodide's browser transport raises JsException for HTTP failures,
+            # while the local transport raises ValidationError. Both can report
+            # the same pinned-image 404 that the compatibility snapshot fills.
             if not path.startswith('/img/') or 'HTTP 404' not in str(original):raise
             url='https://raw.githubusercontent.com/'+COMPAT_REPO+'/'+COMPAT_COMMIT+'/public'+quote(path,safe='/')
             try:raw,mime,meta=self.net.fetch(url,immutable=True)
-            except ValidationError as compat_error:
+            except Exception as compat_error:
                 if path!=self.COLORLESS_SAGA_CREATURE_PATH or 'HTTP 404' not in str(compat_error):raise
                 # CardConjurer's valid colorless Saga-creature layer is absent from
                 # both older pinned snapshots. Fill only this known asset gap from
