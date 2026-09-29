@@ -1,0 +1,8 @@
+# Issues and risks
+
+- **Template chooser is text-only.** `site/setup.js:renderSetup` presents group select menus. `site/templates.js` uses CSS placeholder illustrations; it has no representative native card previews. A preview picker will need asynchronous sample selection and render/caching behavior.
+- **Automatic nickname treatment and selectable Godzilla frame are coupled today.** A nonempty nickname triggers `apply_nickname_treatment` even when the user selected another built-in template. Separating nickname metadata from frame choice requires a defined default/migration rule so existing decks do not change unexpectedly.
+- **Colorless Godzilla body asset gap.** `_nickname_frame_src('C')` returns `None`; only a colorless title/crown addon is available. Any full-frame colorless option needs an approved asset or a deliberate design choice, checked in the native runtime.
+- **Structural frames differ.** Saga, Station, DFC, Battle, token, land and planeswalker groups use distinct geometry. A Godzilla selector should expose only compatible treatments and retain structural rules/P/T/loyalty strips.
+- **Vendor verifier fails on the current committed snapshot.** `scripts/verify_vendor.py` expects Git blob `0bc9c2a...` for `pipeline/card_data_to_cardconjurer.py`, while the local committed file is `53786dcc...`. The repository was clean before this audit. Resolve whether the manifest/guard is stale or the file changed intentionally before treating vendor verification as a release gate.
+- **Existing tests are mostly structural.** Nickname tests assert compiled paths and masks; the black/colorless token visual outcome and outlined text require real native rendering. Local Python environments lack `pytest`, so the suite was not run in this review.

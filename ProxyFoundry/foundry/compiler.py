@@ -17,6 +17,10 @@ BUILTINS=[
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
+BUILTINS.extend([
+ {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token']},
+ {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
+])
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
 APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
@@ -35,7 +39,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':5,'legendary':5,'land':2,'legendary-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1}
+BUILTIN_TEMPLATE_VERSIONS={'normal':1,'land':1,'legend-land':1,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -1712,25 +1716,31 @@ def _nickname_code(sem):
     if code and code in 'WUBRGMAL':return code
     return 'C'
 
-def _nickname_title_src(code):
-    if code=='C':return '/img/frames/m15/nickname/addons/m15NicknameTitleC.png'
+def _nickname_title_src(code,complete=False):
+    if code=='C':
+        return ('/img/frames/m15/nickname/m15NicknameTitleA.png' if complete
+                else '/img/frames/m15/nickname/addons/m15NicknameTitleC.png')
     return f'/img/frames/m15/nickname/m15NicknameTitle{code}.png'
 
-def _nickname_crown_src(code):
-    if code=='C':return '/img/frames/m15/nickname/smooth/c.png'
+def _nickname_crown_src(code,complete=False):
+    if code=='C':
+        return ('/img/frames/m15/nickname/m15NicknameCrownA.png' if complete
+                else '/img/frames/m15/nickname/smooth/c.png')
     return f'/img/frames/m15/nickname/m15NicknameCrown{code}.png'
 
 def _nickname_frame_src(code):
-    if code not in 'WUBRGMAL':return None
-    return f'/img/frames/m15/nickname/m15NicknameFrame{code}.png'
+    # The pinned pack has no C body image. Its complete neutral A body pairs
+    # with the genuine colorless title and P/T addon.
+    return f'/img/frames/m15/nickname/m15NicknameFrame{code if code in "WUBRGMAL" else "A"}.png'
 
 def _nickname_pt_src(code):
     return f'/img/frames/m15/nickname/m15NicknamePT{code if code in "WUBRGMAC" else "C"}.png'
 
-def _nickname_text(data,sem,group):
+def _nickname_text(data,sem,group,force=False):
     text=data.setdefault('text',{})
     true_name=str(sem.get('name') or '')
     nickname=str(sem.get('nickname') or '').strip()
+    if force and not nickname:nickname=true_name
     if not nickname:return False
 
     if group=='battle':
@@ -1767,7 +1777,7 @@ def _nickname_text(data,sem,group):
         'shadowX':.0014,'shadowY':.001,
     }
     text['title']={
-        'name':'Title','text':true_name,'x':.14,'y':title_y,'width':.72,'height':.0243,
+        'name':'Title','text':true_name if nickname!=true_name else '', 'x':.14,'y':title_y,'width':.72,'height':.0243,
         'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
         'shadowX':.0014,'shadowY':.001,'align':'center',
     }
@@ -1777,7 +1787,8 @@ def _nickname_text(data,sem,group):
 def _apply_full_m15_nickname_pack(data,sem,refit=False):
     """Replace the current structural frame with CardConjurer's M15Nickname pack.
 
-    The pack has complete W/U/B/R/G/M/A/L frames but no complete C frame.
+    The pack has complete W/U/B/R/G/M/A/L frames. Colorless uses its
+    neutral A body and title because the pinned pack has no C body.
     It is deliberately mask-free here: one full Frame plus Title/Crown and P/T.
     """
     code=_nickname_code(sem)
@@ -1793,12 +1804,12 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
     ]
     if legendary:
         frames.append({
-            'name':f'{color_name} Crown','src':_nickname_crown_src(code),
+            'name':f'{color_name} Crown','src':_nickname_crown_src(code,True),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS),
         })
     else:
         frames.append({
-            'name':f'{color_name} Title','src':_nickname_title_src(code),
+            'name':f'{color_name} Title','src':_nickname_title_src(code,True),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
         })
     if pt_text:
@@ -1891,24 +1902,28 @@ def _apply_modal_nickname_frame(data):
     return changed
 
 
-def apply_nickname_treatment(data,sem,group,refit=False):
-    """Apply a real CardConjurer nickname pack, not a title-only imitation."""
+def apply_full_art_text(data):
+    """Use the native text renderer's white fill and black stroke on art."""
+    for key in ('title','nickname','type','rules','flavor','pt'):
+        field=(data.get('text') or {}).get(key)
+        if isinstance(field,dict):
+            field['color']='white'
+            field['outlineColor']='black'
+            field['outlineWidth']=.0035
+
+
+def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame=False):
+    """Apply complete nickname frames where supported, preserving special layouts."""
     nickname=str(sem.get('nickname') or '').strip()
-    if not nickname:return False
-
-    # Ordinary cards and normal Scryfall tokens use the complete M15Nickname
-    # pack whenever CardConjurer actually provides a complete frame for the
-    # semantic color. This replaces the old structural frame rather than
-    # stacking a title over it.
+    if not nickname and not force:return False
+    effective_sem=sem
+    if force and not nickname:
+        effective_sem={**sem,'nickname':str(sem.get('name') or '')}
     if group in ORDINARY_GROUPS or group=='token':
-        if _apply_full_m15_nickname_pack(data,sem,refit):
+        if _apply_full_m15_nickname_pack(data,effective_sem,refit):
+            if force and not nickname:(data.get('text') or {}).get('title',{})['text']=''
             return True
-
-    # CardConjurer has no complete colorless (C) M15Nickname frame. Keep the
-    # genuine colorless token structure and use the C nickname title addon.
-    # Make every visible token text field white so the dark token boxes remain
-    # readable.
-    if not _nickname_text(data,sem,group):return False
+    if not _nickname_text(data,effective_sem,group):return False
     if group=='token':_force_token_text_white(data)
 
     # Battle has no rotatable nickname frame asset in CardConjurer. Its native
@@ -1990,7 +2005,15 @@ class Compiler:
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
         template_key,template_version,template_cache_version=self.template_identity(group,choice)
         if choice in {x['id'] for x in BUILTINS}:
-            if group not in ORDINARY_GROUPS and choice!='auto':raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            builtin=next(x for x in BUILTINS if x['id']==choice)
+            if choice!='auto' and builtin['groups']!='ordinary' and group not in builtin['groups']:
+                raise ValidationError('This template does not support '+group+'.')
+            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card'}:
+                raise ValidationError('Choose automatic or a custom template for '+group+'.')
+            if choice=='godzilla-card' and group!='token' and 'Land' in sem.get('types',[]):
+                raise ValidationError('Choose the Godzilla land template for lands.')
+            if choice=='godzilla-land' and 'Land' not in sem.get('types',[]):
+                raise ValidationError('Choose the Godzilla non-land template for this card.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
             if group in {'modal-front','modal-back'}:
                 pair=tuple(x.get('name') for x in sf.get('card_faces',[]))
@@ -2016,7 +2039,7 @@ class Compiler:
                 d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
-                d0=choose_builtin(sem,choice)
+                d0=choose_builtin(sem,'auto' if choice.startswith('godzilla-') else choice)
                 # Saga is the highest-priority structural card treatment. Do not
                 # let another type on the same line (notably Land on Urza's Saga)
                 # win inside the preserved native recipe classifier.
@@ -2074,14 +2097,20 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
-        nickname_applied=apply_nickname_treatment(
-            data,sem,group,
-            refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
-        )
+        if choice.startswith('godzilla-'):
+            nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
+            data.update(full_art_nonland_placement(art))
+            for key in ('artX','artY','artZoom','artRotate'):
+                if key in options.get('fit',{}):data[key]=float(options['fit'][key])
+            apply_full_art_text(data)
+        else:
+            nickname_applied=apply_nickname_treatment(
+                data,sem,group,
+                refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
+            )
+            if group=='token':apply_full_art_text(data)
         if nickname_applied and data.get('version')=='m15Nickname':
-            # Full M15Nickname changes the type-bar/set-symbol geometry. Re-run
-            # the same native-style symbol fit after the frame conversion so
-            # token sources do not retain their old lower token-bar position.
+            # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
         data['infoArtist']=str(artist)
         data['infoNote']=CARD_FOOTER_NOTE

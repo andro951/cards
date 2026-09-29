@@ -11,9 +11,12 @@ EXPECTED = {
 def verify():
     for name, expected in EXPECTED.items():
         raw = (ROOT / name).read_bytes()
-        actual = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
+        # Git checks out text as CRLF on Windows; the approved manifest records
+        # Git's canonical LF blob. Normalize only that checkout translation.
+        canonical = raw.replace(b'\r\n', b'\n')
+        actual = hashlib.sha1(b'blob ' + str(len(canonical)).encode() + b'\0' + canonical).hexdigest()
         if actual != expected:
             raise RuntimeError(f'Approved Card Tools source was modified: {name} ({actual})')
     return len(EXPECTED)
 if __name__ == '__main__':
-    print(f'{verify()} approved Card Tools files verified byte-for-byte.')
+    print(f'{verify()} approved Card Tools files match their canonical Git blobs.')

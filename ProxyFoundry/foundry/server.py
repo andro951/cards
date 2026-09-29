@@ -24,7 +24,7 @@ from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION
 from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
 from .jobs import Jobs
-from .github_setup import import_github_setup
+from .github_setup import import_github_setup, import_card_data_url, parse_card_data_json, validate_card_data_for_deck
 from .orders import Orders
 from .transfer_batches import TransferBatches, MAX_CHUNK_BYTES
 from .runtime import Runtime
@@ -169,6 +169,20 @@ class App:
         return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION,
                 'deckName': plan.get('deckName'), 'cardName': plan.get('cardName')}
+
+    def start_template_preview_session(self, deck_id, group, settings, card_data=None):
+        plan=self.ws.template_preview_targets(deck_id,group,settings,card_data)
+        ident=uid();now=time.time()
+        targets={t['key']:t for t in plan['targets']}
+        with self.lock:
+            self.render_sessions={k:v for k,v in self.render_sessions.items() if now-v['created']<7200}
+            self.render_sessions[ident]={'targets':targets,'created':now}
+            from .backup import referenced_assets
+            for target in targets.values():
+                self.runtime_assets.update(referenced_assets(target['data']))
+        return {'id':ident,'targets':[{'key':t['key'],'name':t['name'],'choice':t['choice']} for t in targets.values()],
+                'cached':0,'errors':[],'previewErrors':plan['errors'],'sample':plan['sample'],
+                'pipelineVersion':PIPELINE_VERSION}
 
     def target(self, session, key):
         with self.lock:
@@ -456,6 +470,11 @@ class Handler(BaseHTTPRequestHandler):
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):
+        if p == '/api/setup/card-data/file':
+            deck_ids = q.get('deckId', [])
+            if len(deck_ids) != 1: raise ValidationError('Choose a deck before importing data.json.')
+            entries = parse_card_data_json(self.body(2 * 1024 * 1024))
+            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries)})
         if p == '/api/uploads':
             raw = self.body()
             kinds = q.get('kind', [])
@@ -466,6 +485,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(a)
         if m := re.fullmatch(r'/api/render-sessions/([-a-f0-9]{36})/([a-f0-9]{64})', p):
             t = self.app.target(m[1], m[2]); d = t['data']
+            if t.get('preview'): raise ValidationError('Template previews cannot be saved as deck renders.')
             size = [round(d['width'] * (1 + 2 * d.get('marginX', 0))), round(d['height'] * (1 + 2 * d.get('marginY', 0)))]
             saved=self.app.ws.save_render(t, self.body(), size)
             self.app.log.info('RENDER_SAVE session=%s key=%s asset=%s size=%sx%s pipeline=%s ccVersion=%s zoom=%s x=%s y=%s',
@@ -504,11 +524,15 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/symbols/generate': return self.respond(rarity_variants(self.app.store, d['assetId']))
         if p == '/api/setup/github-import':
             return self.respond(self.app.jobs.start('Import GitHub setup', lambda u, c: import_github_setup(self.app.ws, d, u, c)))
+        if p == '/api/setup/card-data/github':
+            return self.respond({'cardData': import_card_data_url(self.app.ws, d)})
         if p == '/api/svg/validate':
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})
         if p == '/api/render-sessions': return self.respond(self.app.start_render_session(d.get('deckIds', []), force=d.get('force') is True))
         if p == '/api/render-sessions/card': return self.respond(self.app.start_card_render_session(d['deckId'], d['cardId'], force=d.get('force') is True))
+        if p == '/api/render-sessions/template-previews':
+            return self.respond(self.app.start_template_preview_session(d['deckId'],d['group'],d['settings'],d.get('cardData')))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))

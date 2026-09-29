@@ -84,6 +84,31 @@ def parse_card_data_json(raw):
     return result
 
 
+def validate_card_data_for_deck(workspace, deck_id, entries):
+    deck = workspace.deck(str(deck_id))
+    names = {str(face.get('name') or '') for card in deck.get('cards', []) for face in card.get('faces', [])}
+    missing = [entry['name'] for entry in entries if entry['name'] not in names]
+    if missing:
+        preview = ', '.join(missing[:8]) + ('…' if len(missing) > 8 else '')
+        raise ValidationError('data.json card name(s) were not found in this deck: ' + preview + '. Names must exactly match a card face.')
+    return entries
+
+
+def import_card_data_url(workspace, payload):
+    url = str(payload.get('url') or '').strip()
+    if len(url) > 4096:
+        raise ValidationError('The GitHub data.json link is too long.')
+    if not url.startswith(('https://github.com/', 'https://www.github.com/', 'https://raw.githubusercontent.com/')):
+        raise ValidationError('Use a public GitHub data.json file link.')
+    loc = github_location(url)
+    if not loc['folder'].lower().endswith('/data.json') and loc['folder'].lower() != 'data.json':
+        raise ValidationError('Choose a GitHub file named data.json.')
+    raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + quote(loc['ref'], safe='') + '/' + quote(loc['folder'], safe='/')
+    raw, _, _ = workspace.net.fetch(raw_url, refresh=True, ttl=0)
+    entries = parse_card_data_json(raw)
+    return validate_card_data_for_deck(workspace, payload['deckId'], entries)
+
+
 def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Return a complete source/symbol/back settings patch, never a saved deck.
 
@@ -239,12 +264,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         card_data = parse_card_data_json(raw)
         deck_id = payload.get('deckId')
         if deck_id and card_data:
-            deck = workspace.deck(str(deck_id))
-            face_names = {str(face.get('name') or '') for card in deck.get('cards', []) for face in card.get('faces', [])}
-            missing = [entry['name'] for entry in card_data if entry['name'] not in face_names]
-            if missing:
-                preview = ', '.join(missing[:8]) + ('…' if len(missing) > 8 else '')
-                raise ValidationError('data.json card name(s) were not found in this deck: ' + preview + '. Names must exactly match a card face.')
+            validate_card_data_for_deck(workspace, deck_id, card_data)
         done += 1
         progress(done, total, 'Imported data.json')
 

@@ -1,7 +1,8 @@
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
-import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest} from './ui.js';
 import {originalArtist,composeCredit} from './credits.js';
+import {frameChoices,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
 const symbolImage=/\.(png|jpe?g|webp|gif|svg)$/i;
 export function symbolFolderFiles(files){
@@ -37,7 +38,7 @@ export function renderSetup(root,deck,onSaved){
     </section>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">02 / TEMPLATES</span><h2>One deck. Your choice of frames.</h2><p>Choose by meaningful layout—not by arbitrary card type.</p></div><button class="button quiet small" id="open-templates">Create / upload ↗</button></div>
       <div class="notice info">Automatic uses your approved Card Tools recipes unchanged. Classic and Crowned full art support legendary cards. Full-art land does not have a compatible crown.</div>
-      ${Object.keys(groups).length?`<table class="rules-table"><thead><tr><th>Card layout</th><th>Template</th></tr></thead><tbody>${Object.entries(groups).map(([g,n])=>`<tr><td>${esc(state.bootstrap.groups[g]||g)} <span class="rule-count">${n}</span></td><td><select data-rule="${g}" aria-label="Template for ${esc(state.bootstrap.groups[g]||g)}">${templateOptions(g,['legendary','legendary-land'].includes(g),s.templateRules[g]||'auto')}</select></td></tr>`).join('')}</tbody></table>`:`<p class="muted">Add cards first. Their layout groups will appear here.</p>`}
+      <div id="frame-choices"></div>
       <details><summary>Template safety & advanced options</summary><p class="muted">Special layouts are recognized separately. When the approved recipes do not cover one, choose a compatible custom template; the app will never substitute an incorrect ordinary frame.</p><label class="check-line"><input type="checkbox" id="disable-autofit" ${s.disableAutofit?'checked':''}><span>Keep template art positioning instead of automatic fitting<small>Leave off for the normal cover/center crop behavior.</small></span></label></details>
     </section>
   </div><div>
@@ -62,7 +63,98 @@ export function renderSetup(root,deck,onSaved){
       </div>
     </section>
   </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div></fieldset>`;
+  const localDataButton=document.createElement('button');
+  localDataButton.type='button';
+  localDataButton.id='open-card-data';
+  localDataButton.className='button small';
+  localDataButton.textContent='Open data.json file';
+  $('#data-json-section',root).append(localDataButton);
+  const urlLabel=document.createElement('label');
+  urlLabel.className='field';
+  const urlText=document.createElement('span');
+  urlText.textContent='GitHub data.json file link';
+  const dataUrl=document.createElement('input');
+  dataUrl.type='url';
+  dataUrl.id='card-data-url';
+  dataUrl.placeholder='https://github.com/you/cards/blob/main/project/data.json';
+  urlLabel.append(urlText,dataUrl);
+  $('#data-json-section',root).append(urlLabel);
+  const linkDataButton=document.createElement('button');
+  linkDataButton.type='button';
+  linkDataButton.id='import-card-data-url';
+  linkDataButton.className='button small';
+  linkDataButton.textContent='Import linked data.json';
+  $('#data-json-section',root).append(linkDataButton);
+  const dataStatus=document.createElement('p');
+  dataStatus.id='card-data-status';
+  dataStatus.setAttribute('role','status');
+  dataStatus.textContent='No card data staged.';
+  $('#data-json-section',root).append(dataStatus);
   const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
+  const stageCardData=(entries,source)=>{
+    stagedCardData=structuredClone(entries);
+    s.dataJsonSource=source;
+    dataJsonImportNote='';
+    dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' staged. Save changes to apply.';
+    redrawDataJsonStatus();
+    mark();
+  };
+  localDataButton.onclick=()=>$('#data-json-file',root).click();
+  linkDataButton.onclick=()=>attempt(async()=>{
+    if(!dataUrl.value.trim())throw new Error('Paste a GitHub data.json file link.');
+    linkDataButton.disabled=true;
+    try{
+      const result=await api('/api/setup/card-data/github',{deckId:deck.id,url:dataUrl.value.trim()});
+      stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()});
+    }finally{linkDataButton.disabled=false;}
+  });
+  const redrawFrames=()=>{
+    const host=$('#frame-choices',root);
+    host.replaceChildren();
+    if(!Object.keys(groups).length){
+      const empty=document.createElement('p');
+      empty.textContent='Add cards first. Their layout groups will appear here.';
+      host.append(empty);
+      return;
+    }
+    const table=document.createElement('table');
+    table.className='rules-table';
+    const head=document.createElement('thead');
+    const header=document.createElement('tr');
+    for(const label of ['Card layout','Frame']){
+      const cell=document.createElement('th');
+      cell.textContent=label;
+      header.append(cell);
+    }
+    head.append(header);
+    const body=document.createElement('tbody');
+    for(const [group,count] of Object.entries(groups)){
+      const row=document.createElement('tr');
+      const layout=document.createElement('td');
+      layout.textContent=(state.bootstrap.groups[group]||group)+' ('+count+')';
+      const choiceCell=document.createElement('td');
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='button small';
+      button.dataset.frameGroup=group;
+      const selected=s.templateRules[group]||'auto';
+      button.textContent=(frameChoices(group,['legendary','legendary-land'].includes(group)).find(item=>item.id===selected)?.name||selected)+' · Select frames';
+      button.onclick=()=>{
+        readSettings();
+        openFramePicker(deck,group,s,stagedCardData,selected,choice=>{
+          s.templateRules[group]=choice;
+          redrawFrames();
+          mark();
+        });
+      };
+      choiceCell.append(button);
+      row.append(layout,choiceCell);
+      body.append(row);
+    }
+    table.append(head,body);
+    host.append(table);
+  };
+  redrawFrames();
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
     s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;mark();
@@ -82,7 +174,7 @@ export function renderSetup(root,deck,onSaved){
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
   const redrawDataJsonStatus=()=>{const status=$('#data-json-status',root);if(!status)return;if(s.dataJsonSource?.value)status.textContent=s.dataJsonSource.value;else if(dataJsonImportNote)status.textContent=dataJsonImportNote;else status.textContent='No data.json selected.';};
   redrawDataJsonStatus();
-  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{let parsed;try{parsed=JSON.parse(await file.text());}catch{throw new Error('data.json is not valid JSON.');}if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||parsed.version!==1||!Array.isArray(parsed.cards))throw new Error('data.json must contain {"version":1,"cards":[...]}.');stagedCardData=structuredClone(parsed.cards);s.dataJsonSource={kind:'local',value:file.name||'data.json'};dataJsonImportNote='';redrawDataJsonStatus();mark();}finally{input.value='';}});
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
@@ -96,7 +188,16 @@ export function renderSetup(root,deck,onSaved){
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
     onImport:(patch,cardData,hasDataJson)=>{
-      stagedCardData=structuredClone(cardData||[]);s.dataJsonSource=patch.dataJsonSource||null;dataJsonImportNote=hasDataJson?'':'No data.json found in the GitHub project root.';redrawDataJsonStatus();
+      if(hasDataJson){
+        stagedCardData=structuredClone(cardData||[]);
+        s.dataJsonSource=patch.dataJsonSource||null;
+        dataJsonImportNote='';
+        dataStatus.textContent='1-click GitHub data.json: '+stagedCardData.length+' nonempty card entries staged. Save changes to apply.';
+      }else if(!stagedCardData.length){
+        s.dataJsonSource=null;
+        dataJsonImportNote='No data.json found in the GitHub project root.';
+      }
+      redrawDataJsonStatus();
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;$('#github-ref',root).value=s.source.ref;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
@@ -122,10 +223,8 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
 });
   $('#generate-symbols',root).onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;const button=$('#generate-symbols',root);button.disabled=true;try{const a=await uploadImage(f,{symbol:true});s.symbols=await api('/api/symbols/generate',{assetId:a.id});redrawSymbols();mark();}finally{button.disabled=false;}});
   $('#open-templates',root).onclick=()=>nav('templates');
-  $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','templateRules','allCardsTokens','tokenOptions'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:key==='allCardsTokens'?false:key==='tokenOptions'?{power:'',toughness:'',subtypes:'',nonlegendary:false}:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#all-cards-tokens',root).checked=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};$('#token-power',root).value=s.tokenOptions.power;$('#token-toughness',root).value=s.tokenOptions.toughness;$('#token-subtypes',root).value=s.tokenOptions.subtypes;$('#token-nonlegendary',root).checked=Boolean(s.tokenOptions.nonlegendary);redrawTokenOptions();creditPreview();$$('[data-rule]',root).forEach(el=>el.innerHTML=templateOptions(el.dataset.rule,['legendary','legendary-land'].includes(el.dataset.rule),s.templateRules[el.dataset.rule]||'auto'));mark();});
-  async function save(generate){
-    if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
-    if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
+  $('#reuse-style',root).onchange=async e=>attempt(async()=>{const id=e.target.value;if(!id)return;const other=await api('/api/decks/'+id);for(const key of ['symbols','backAsset','backDesign','artist','templateRules','allCardsTokens','tokenOptions'])s[key]=structuredClone(other.settings[key]?? (key==='symbols'||key==='templateRules'?{}:key==='backDesign'?null:key==='allCardsTokens'?false:key==='tokenOptions'?{power:'',toughness:'',subtypes:'',nonlegendary:false}:''));redrawSymbols();redrawBack();$('#deck-artist',root).value=s.artist;$('#all-cards-tokens',root).checked=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};$('#token-power',root).value=s.tokenOptions.power;$('#token-toughness',root).value=s.tokenOptions.toughness;$('#token-subtypes',root).value=s.tokenOptions.subtypes;$('#token-nonlegendary',root).checked=Boolean(s.tokenOptions.nonlegendary);redrawTokenOptions();creditPreview();redrawFrames();mark();});
+  function readSettings(){
     s.source.githubFolder=$('#github-folder',root).value.trim();s.source.ref=$('#github-ref',root).value.trim();s.source.fallback=$('#art-fallback',root).checked;
     s.artist=$('#deck-artist',root).value;
     s.allCardsTokens=$('#all-cards-tokens',root).checked;
@@ -136,7 +235,11 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       nonlegendary:$('#token-nonlegendary',root).checked
     };
     s.disableAutofit=$('#disable-autofit',root).checked;s.refreshData=$('#refresh-data',root).checked;s.flavorPolicy=$('#flavor-policy',root).value;
-    $$('[data-rule]',root).forEach(el=>s.templateRules[el.dataset.rule]=el.value);
+  }
+  async function save(generate){
+    if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
+    if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
+    readSettings();
     if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
     try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,name:$('#deck-name',root).value,notes:$('#deck-notes',root).value,settings:s,cardData:stagedCardData});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}

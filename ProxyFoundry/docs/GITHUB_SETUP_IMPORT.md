@@ -49,4 +49,6 @@ The 1-click importer checks the project root for `data.json`. If the file is abs
 
 `name` is required and must exactly match a card face in the current deck. `nickname` and `flavor_text` are optional. Missing values and empty strings are ignored, so an empty field never clears an existing override. A nonempty nickname activates the automatic nickname/Godzilla treatment. A nonempty flavor string overrides that face's resolved Scryfall flavor text.
 
+The same schema can also be selected directly in **Art & setup** with **Open data.json file**, or imported from a direct public `github.com/.../blob/.../data.json` or `raw.githubusercontent.com/.../data.json` link. These inputs stage metadata independently of the artwork, symbols, and back. A later metadata import replaces the earlier staged entries; saved face overrides are merged when setup is saved.
+
 Like the art/symbol/back setup, `data.json` is **staged** by 1-click import. The saved deck is not changed until **Save changes** or **Save & generate images** is clicked. Invalid JSON, duplicate nonempty entries, unsupported fields, or nonempty names that are not in the deck fail the import without partially applying the bundle.

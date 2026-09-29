@@ -1,0 +1,151 @@
+import json
+import os
+import threading
+from pathlib import Path
+
+import pytest
+from playwright.sync_api import expect
+from playwright.sync_api import sync_playwright
+
+from test_browser import browser_app,png,sf
+from foundry.server import App,LocalServer
+from foundry.storage import Store
+from foundry.network import Network
+from foundry.images import ingest_image
+from PIL import Image
+
+
+pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Opt-in real Chromium tests')
+
+
+def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_app):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Data imports','source':'1 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.locator('#open-card-data').wait_for()
+
+    local={'version':1,'cards':[{'name':'A Test Creature','nickname':'Local name'}]}
+    with page.expect_file_chooser() as chooser:
+        page.click('#open-card-data')
+    chooser.value.set_files({'name':'data.json','mimeType':'application/json',
+                            'buffer':json.dumps(local).encode()})
+    expect(page.locator('#card-data-status')).to_contain_text('1 nonempty card entry staged')
+    assert not app.ws.deck(deck['id'])['cards'][0]['faces'][0].get('semanticOverrides')
+
+    original=app.ws.net.transport
+    def transport(url):
+        if url=='https://raw.githubusercontent.com/owner/repo/main/data.json':
+            data={'version':1,'cards':[{'name':'A Test Creature','nickname':'GitHub name',
+                                       'flavor_text':'Linked flavor'}]}
+            return json.dumps(data).encode(),'application/json',{}
+        return original(url)
+    app.ws.net.transport=transport
+    page.fill('#card-data-url','https://github.com/owner/repo/blob/main/data.json')
+    page.click('#import-card-data-url')
+    expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry staged')
+    assert not errors,errors
+
+    page.click('[data-frame-group=standard]')
+    expect(page.locator('#modal-host')).to_contain_text('Godzilla full art · non-land')
+    expect(page.locator('#modal-host')).to_contain_text('Classic card')
+    page.click('#modal-close')
+
+    page.click('#save-setup')
+    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    values=app.ws.deck(deck['id'])['cards'][0]['faces'][0]['semanticOverrides']
+    assert values['nickname']=='GitHub name'
+    assert values['flavor_text']=='Linked flavor'
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
+def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
+    store=Store(tmp_path/'native-picker')
+    network=Network(store)
+    remote=network._transport
+    def transport(url):
+        if 'api.scryfall.com' in url:
+            return json.dumps(sf()).encode(),'application/json',{}
+        if 'cards.scryfall.io' in url:
+            return png(),'image/png',{}
+        return remote(url)
+    network.transport=transport
+    app=App(store,network)
+    server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    deck=app.ws.create({'name':'Native picker','source':'1 A Test Creature'})
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True)
+        page=browser.new_page(viewport={'width':1440,'height':1000})
+        errors=[]
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+            page.click('[data-frame-group=standard]')
+            expect(page.locator('#modal-host [role=status]')).to_contain_text('Rendered',timeout=240000)
+            godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
+            expect(godzilla.locator('img')).to_be_visible()
+            output=Path(__file__).resolve().parents[1]/'test-results'
+            output.mkdir(exist_ok=True)
+            godzilla.locator('img').screenshot(path=str(output/'godzilla-frame-preview.png'))
+            godzilla.click()
+            page.click('#save-setup')
+            expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+            assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
+            assert not errors,errors
+        finally:
+            browser.close()
+            server.shutdown();server.server_close();app.close()
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
+def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_path):
+    store=Store(tmp_path/'native-tokens')
+    network=Network(store)
+    app=App(store,network)
+    server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id']
+    deck=app.ws.new_deck('Nickname tokens')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{
+        'black_creature':art,'colorless_creature':art}},'artist':'Fixture Artist',
+        'allCardsTokens':True})
+    cards=[]
+    for index,(name,colors,nickname) in enumerate([
+        ('Black Creature',['B'],'Black Reskin'),
+        ('Colorless Creature',[],'Colorless Reskin'),
+    ]):
+        source={'name':name,'layout':'normal','type_line':'Creature — Beast',
+                'mana_cost':'{2}{B}' if colors else '{3}','oracle_text':'Vigilance',
+                'flavor_text':'Flavor text.','colors':colors,'rarity':'rare',
+                'power':'3','toughness':'3','flavor_name':nickname,'artist':'Fixture Artist'}
+        cards.append({'id':f'00000000-0000-4000-8000-{index+1:012d}','name':name,
+                      'quantity':1,'scryfall':source,
+                      'faces':[{'id':f'11111111-1111-4111-8111-{index+1:012d}',
+                                'name':name,'index':0}]})
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True)
+        page=browser.new_page(viewport={'width':1440,'height':1000})
+        errors=[]
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id'])
+            page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=240000)
+            current=app.ws.deck(deck['id'])
+            assert current['status']=='ready',page.locator('#activity-log').text_content()
+            output=Path(__file__).resolve().parents[1]/'test-results'
+            output.mkdir(exist_ok=True)
+            for card_entry in current['cards']:
+                compiled=card_entry['faces'][0]['compiled']
+                frames=compiled['data']['frames']
+                assert any(frame['name']=='Nickname Frame' for frame in frames)
+                assert all(frame.get('masks')==[] for frame in frames)
+                render=store.render_get(compiled['renderKey'])
+                assert render
+                picture=Image.open(store.asset_path(render['asset_id']))
+                picture.save(output/(card_entry['name'].replace(' ','_')+'.png'))
+            assert not errors,errors
+        finally:
+            browser.close()
+            server.shutdown();server.server_close();app.close()

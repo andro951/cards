@@ -1,7 +1,7 @@
 import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast} from './ui.js';
 let activeFrame=null;
 
-async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.'}={}){
+async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onImage=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.'}={}){
   if(state.busy)throw new Error('Another task is running. Wait for it or cancel first.');
   state.busy=true;let cancelled=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
   const origin=state.bootstrap.runtimeOrigin;
@@ -39,8 +39,9 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},idle
       activeFrame.contentWindow.postMessage({source:'pf-app',type:'render',key:t.key,data:detail.data},origin);
       const output=await withTimeout(promise,150000,t.name+': native render timed out. Retry will keep completed images.');
       pending=null;rejectPending=null;
-      await blobRequest('/api/render-sessions/'+plan.id+'/'+t.key,output.blob,'image/png');
-      activity(label,t.name,'PNG saved · '+output.width+' × '+output.height,i+1,plan.targets.length);
+      if(onImage)await onImage(t,output.blob);
+      else await blobRequest('/api/render-sessions/'+plan.id+'/'+t.key,output.blob,'image/png');
+      activity(label,t.name,(onImage?'Preview ready · ':'PNG saved · ')+output.width+' × '+output.height,i+1,plan.targets.length);
       await onUpdate();
     }
     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true);throw new Error(plan.errors.join('\n'));}
@@ -57,6 +58,14 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
 export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false}={}){
   const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
   return runRenderPlan(plan,{label:'Render card',onUpdate,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
+}
+
+export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage){
+  const plan=await api('/api/render-sessions/template-previews',{deckId,group,settings,cardData});
+  if(!plan.targets.length)throw new Error(Object.values(plan.previewErrors||{}).join('\n')||'No compatible frame could be previewed.');
+  await runRenderPlan(plan,{label:'Preview frames',onImage,idleMessage:'No frames to preview',
+    successMessage:'Frame previews ready',successToast:'Frame previews are ready.'});
+  return plan;
 }
 
 function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}

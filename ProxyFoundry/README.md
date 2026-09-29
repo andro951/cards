@@ -5,7 +5,7 @@ A local-first workspace for turning multiple MTG decks into one explicitly paire
 ## Start here
 
 1. Extract the complete ZIP into a permanent folder.
-2. Double-click **START_BULK_PROXY_FORGE.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
+2. Double-click **START_PROXY_FOUNDRY.bat**. Python 3.10 or newer is required. The launcher creates a private `.venv` and installs Pillow when needed.
 3. The workspace opens automatically in your browser. Keep the launcher window open.
 4. Click **Import deck** and paste a public Scryfall deck URL, JSON export, or card list.
 5. In **Art & setup**, choose original printing art, a GitHub folder, or a computer folder. Select templates, supply four rarity symbols (or generate four treatments from one), and choose a deck back.
@@ -37,6 +37,8 @@ Artwork source choices are deliberately separate:
 - **GitHub folder** accepts an explicit public folder URL, without a local repository path.
 - **Computer folder** copies chosen images into the local workspace; it does not upload them to GitHub.
 
+Card nickname and flavor metadata can be staged from a local `data.json` file, a direct public GitHub `data.json` file link, or the optional root `data.json` discovered by **1-click GitHub import**. All three use the same version-1 schema described in `docs/GITHUB_SETUP_IMPORT.md` and apply only when setup is saved.
+
 Name matching normalizes to lowercase underscores, removes apostrophes and strips accents. Duplicate normalized filenames are reported rather than selected arbitrarily. Missing custom art can fall back to the original printing when that option is enabled.
 
 
@@ -60,7 +62,9 @@ The previous v48-to-v54 comparison remains in `docs/CARD_TOOLS_V54_REVIEW.md`. T
 
 **Automatic** delegates to the original v58 recipe builder. Its source, frame geometry, masking and typography are not rewritten. The original source files are guarded by `scripts/verify_vendor.py`.
 
-For ordinary layouts, **Classic card** and **Crowned full art** support legendary/nonlegendary cards; **Full-art land** supports nonlegendary cards only because its frame has no compatible crown. Creature overrides retain a power/toughness box.
+For ordinary layouts, **Classic card** and **Crowned full art** support legendary/nonlegendary cards; **Full-art land** supports nonlegendary cards only because its frame has no compatible crown. Creature overrides retain a power/toughness box. **Godzilla full art · land** and **Godzilla full art · non-land** are separate choices, and the non-land option also supports tokens. A nickname supplies the large alternate name above the true card name; without one, the true name occupies the top line. Click a layout's **Select frames** button to render a card from the deck in each compatible style before choosing.
+
+Token full-art text uses native CardConjurer white fill with a black outline. Nickname token treatments use complete frame images, including after deck-wide or copy-token conversion.
 
 Special structural layouts are identified separately. A layout without an approved recipe requires an explicitly compatible custom template instead of an incorrect ordinary frame. Approved built-in modal-DFC pairs include **Esika / The Prismatic Bridge** and **Bruce Banner / The Incredible Hulk**. Their modal frame colors, P/T treatment, and opposite-face reminder strip are derived from the actual faces rather than reusing Esika-specific values. Other modal or transform pairs, split/Adventure/Room cards and unsupported structures require suitable custom templates. Kamigawa Flip cards now use the native v58 single-card recipe with a rotated lower face and ordinary deck back; they are not DFC reverses.
 

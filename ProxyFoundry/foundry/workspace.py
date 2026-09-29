@@ -8,7 +8,7 @@ from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
-from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art
+from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
@@ -104,6 +104,9 @@ class Workspace:
         for group,choice in s.get('templateRules',{}).items():
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
             if choice not in {t['id'] for t in BUILTINS} and not self.store.get('templates',choice):raise ValidationError('A selected custom template is missing.')
+            builtin=next((t for t in BUILTINS if t['id']==choice),None)
+            if builtin and builtin['groups']!='all' and builtin['groups']!='ordinary' and group not in builtin['groups']:
+                raise ValidationError('The selected template does not support '+group+'.')
             if choice=='land' and group in {'legendary','legendary-land'}:raise ValidationError('Full-art land has no compatible crown.')
         return s
     def create(self,payload,progress=lambda *a:None,cancel=lambda:False):
@@ -379,11 +382,24 @@ class Workspace:
             spec['power_toughness']=(power or current_power)+'/'+(toughness or current_toughness)
         return spec
 
-    def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True):
+    def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None):
+        spec=dict(spec)
+        if sem:
+            sem=dict(sem)
+            if spec.get('nonlegendary'):sem['legendary']=False
+        if sem and not spec.get('frame_color'):
+            code=frame_treatment_code(sem)
+            spec['frame_color']=code if isinstance(code,str) and code in 'WUBRGMAL' else 'A'
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
         fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
+        if sem and (sem.get('nickname') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
+            apply_nickname_treatment(comp['data'],sem,'token',
+                                     force=str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
+                                     full_frame=True)
+            comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
+        apply_full_art_text(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
@@ -415,10 +431,14 @@ class Workspace:
                     options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '')}
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                 if c.get('tokenSpec'):
-                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False))
+                    token_sem=semantic(sf,face,f.get('index',0))
+                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text'}})
+                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem)
                 deck_token_spec=self._deck_token_spec(s,comp)
                 if deck_token_spec:
-                    comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False))
+                    token_sem=semantic(sf,face,f.get('index',0))
+                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text'}})
+                    comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False),token_sem)
                 content_key=comp['renderKey']
                 comp['contentRenderKey']=content_key
                 comp['renderKey']=stable_hash({'content':content_key,'deck':d['id'],'face':f['id']})
@@ -468,6 +488,52 @@ class Workspace:
         new['faces'][0].update(id=uid(),name=new['name']);new['faces'][0].pop('compiled',None)
         d['cards'].append(new);d['status']='draft';d.pop('summary',None);return self.store.put('decks',d,revision)
     def templates(self):return BUILTINS+self.store.list('templates')
+    def template_preview_targets(self,deck_id,group,settings,card_data=None):
+        if group not in GROUP_LABELS:raise ValidationError('Unknown template group.')
+        d=self.deck(deck_id)
+        staged={entry['name']:entry for entry in self._validated_card_data(card_data)}
+        candidates=[]
+        for card in d.get('cards',[]):
+            faces=ingest.face_list(card['scryfall'])
+            for face_options in card.get('faces',[]):
+                number=min(face_options.get('index',0),len(faces)-1)
+                if type_group(faces[number],card['scryfall'],number)==group:
+                    candidates.append((card,face_options,faces[number]))
+        if not candidates:raise ValidationError('Add a card in this layout before previewing its frames.')
+        sample=next((item for item in candidates if
+                     (staged.get(item[2].get('name','')) or {}).get('nickname')
+                     or (item[1].get('semanticOverrides') or {}).get('nickname')
+                     or item[2].get('flavor_name')),candidates[0])
+        s=self.validate_settings(settings)
+        index=self._prepare_sources(s,lambda *args:None)
+        card,face_options,_=sample
+        sf=card['scryfall']
+        faces=ingest.face_list(sf)
+        face=faces[min(face_options.get('index',0),len(faces)-1)]
+        art_id,origin,_=self._art(sf,face,face_options,s,index)
+        options=copy.deepcopy(face_options)
+        options['semanticOverrides']=dict(options.get('semanticOverrides') or {})
+        options['semanticOverrides'].setdefault('flavor_text',str(ingest.face_value(face,sf,'flavor_text','') or ''))
+        for key in ('nickname','flavor_text'):
+            if key in staged.get(face.get('name',''),{}):
+                options['semanticOverrides'][key]=staged[face['name']][key]
+        targets=[];errors={}
+        legendary=is_legendary(face)
+        for template in self.templates():
+            supported=template.get('groups')
+            if template['id']!='auto' and not (supported=='ordinary' and group in ORDINARY_GROUPS or isinstance(supported,list) and group in supported):
+                continue
+            if legendary and not template.get('legendary',False):continue
+            choice=template['id']
+            try:
+                compiled=self.compiler.compile_face(sf,face,face_options.get('index',0),
+                    {**options,'templateOverride':choice},s,art_id,art_origin=origin)
+                targets.append({'key':stable_hash({'preview':choice,'compiled':compiled['renderKey']}),
+                                'name':template['name'],'choice':choice,
+                                'data':compiled['data'],'preview':True})
+            except (ValidationError,native.BuildError,ValueError,OSError) as exc:
+                errors[choice]=str(exc)
+        return {'targets':targets,'errors':errors,'sample':face.get('name',card['name'])}
     def save_template(self,value):
         d=validate_template(value.get('data',{}));groups=value.get('groups',[])
         if not groups or any(g not in GROUP_LABELS for g in groups):raise ValidationError('Choose the structural groups this template supports.')
