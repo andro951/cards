@@ -8,6 +8,7 @@ test-results/
 _work/
 workspace/
 outputs/
+dist/
 node_modules/
 *.pem
 *.crx
