@@ -65,6 +65,7 @@ function showLibrary(){
 }
 function mountNavigation(){
   $('.sidebar').hidden=true;$('.sidebar').style.display='none';
+  $('.skip').style.left='10px';
   const shell=$('.workspace-shell');shell.style.marginLeft='0';shell.style.width='100%';
   const tray=$('#selection-tray');tray.style.left='50%';tray.style.maxWidth='calc(100vw - 24px)';
   const bar=$('.topbar');bar.replaceChildren();
@@ -73,19 +74,23 @@ function mountNavigation(){
   const logo=document.createElement('img');logo.src='/site/logo.png';logo.alt='Bulk Proxy Forge';logo.style.width='clamp(120px, 15vw, 180px)';logo.style.height='auto';
   brand.append(logo);bar.append(brand);
   const links=document.createElement('nav');links.setAttribute('aria-label','Main navigation');
-  links.style.display='flex';links.style.gap='8px';links.style.marginLeft='auto';
+  links.style.display='flex';links.style.gap='clamp(3px, .55vw, 8px)';links.style.marginLeft='auto';
   const icons={
     decks:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 3h8v8H2zM14 3h8v8h-8zM2 14h8v8H2zM14 14h8v8h-8z"/><path d="M4 1h8v8M16 1h8v8M4 12h8v8M16 12h8v8"/></svg>',
     templates:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="1.5" width="14" height="21" rx="1.7"/><path d="M7 5h10M7 16h10M7 19h10"/></svg>',
     settings:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.5 2.2 1.7.7 1.9-1.2 2.8 2.8-1.2 1.9.7 1.7L22 10v4l-2.2.5-.7 1.7 1.2 1.9-2.8 2.8-1.9-1.2-1.7.7L14 22h-4l-.5-2.2-1.7-.7-1.9 1.2-2.8-2.8 1.2-1.9-.7-1.7L2 14v-4l2.2-.5.7-1.7-1.2-1.9 2.8-2.8 1.9 1.2 1.7-.7z"/></svg>',
-    discord:'<img src="/site/discord.png" alt="" width="22" height="22">'
   };
   const items=[['decks','Deck Library','#decks'],['templates','Templates','#templates'],
                ['settings','Settings','#settings'],['discord','Discord','https://discord.com/']];
   for(const [key,title,href] of items){
     const link=document.createElement('a');link.href=href;link.title=title;link.setAttribute('aria-label',title);
-    link.innerHTML=icons[key];link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
-    if(key==='discord'){link.target='_blank';link.rel='noopener noreferrer';}
+    link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
+    const iconSize='clamp(34px, 2.8vw, 40px)';link.style.width=iconSize;link.style.height=iconSize;link.style.minWidth='0';link.style.minHeight='0';link.style.padding='0';link.style.flex='none';
+    if(key==='discord'){
+      const image=document.createElement('img');image.src='/site/discord.png';image.alt='';image.style.width='22px';image.style.height='22px';image.style.objectFit='contain';image.style.display='block';
+      link.append(image);link.target='_blank';link.rel='noopener noreferrer';
+    }
+    else link.innerHTML=icons[key];
     links.append(link);
   }
   bar.append(links);
