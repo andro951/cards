@@ -40,7 +40,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2,'emblem':1,'prepare':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1392,6 +1392,8 @@ def build_token_data(sem,artist,autofit,flags):
         'name':'Rules Text','x':0.086,'y':0.7143,'width':0.828,
         'height':0.2048,'size':0.0362,
     })
+    # Noncreature donors omit PT; every native text box still needs a string.
+    pt.setdefault('text','')
     pt.update({
         'name':'Power/Toughness','x':0.7928,'y':0.902,'width':0.1367,
         'height':0.0372,'size':0.0372,'font':'belerenbsc',

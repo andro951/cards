@@ -515,7 +515,7 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_regular'
-    assert result['templateVersion']==2
+    assert result['templateVersion']==3
     assert data['version']=='tokenRegular'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
@@ -556,6 +556,8 @@ def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(worksp
     result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token' and result['recipe']=='token_regular'
+    assert data['text']['pt']['text']==''
+    assert all(isinstance(field['text'],str) for field in data['text'].values())
     assert data['text']['rules']['text']=='{T}, Sacrifice this artifact: Add one mana of any color.'
     assert any(f.get('src')=='/img/frames/token/regular/tokenFrameARegular.png' for f in data['frames'])
     assert not any('Power/Toughness' in f.get('name','') for f in data['frames'])
