@@ -28,7 +28,7 @@ APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
     ('Bruce Banner','The Incredible Hulk'),
 }
-NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','planar','scheme','vanguard','case','special-land','dungeon','conspiracy'}
 CARD_FOOTER_NOTE='BulkProxyForge • Unofficial Proxy'
 _MODAL_MANA_TOKEN_RE=re.compile(r'\{[^{}]+\}')
 
@@ -1437,6 +1437,30 @@ def build_emblem_data(sem,artist,autofit,flags):
     return sem,data,'emblem'
 
 
+def build_art_series_data(sem,artist,flags):
+    """Render a Scryfall Art Series face as its complete selected-printing scan."""
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Enchantment'],subtypes=[],legendary=False,
+                 colors=['W'],layout='card_noncreature')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Keep a supported CardConjurer version and valid transparent symbol asset
+    # for the renderer, but remove visible generated layers: the art asset
+    # already contains the whole printed card.
+    for field in data.get('text',{}).values():
+        if isinstance(field,dict):field['text']=''
+    for field in data.get('bottomInfo',{}).values():
+        if isinstance(field,dict):field['text']=''
+    data.update(frames=[],artBounds={'x':0,'y':0,'width':1,'height':1},
+                setSymbolSource='/img/blank.png',setSymbolZoom=0,
+                watermarkSource='/img/blank.png',watermarkOpacity=0,
+                bottomInfoZoom=0,margins=False)
+    native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'art_series_scan'
+
+
 def build_battle_data(sem,card,artist,autofit,flags):
     """Build CardConjurer's genuine landscape M15 Battle — Siege frame."""
     if 'Battle' not in set(sem.get('types',[])):
@@ -2132,6 +2156,8 @@ class Compiler:
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='art-series':
+                d0,data,recipe=build_art_series_data(sem,artist,flags)
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
@@ -2203,13 +2229,14 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
+        nickname_applied=False
         if choice.startswith('godzilla-'):
             nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
             data.update(full_art_nonland_placement(art))
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
-        else:
+        elif recipe!='art_series_scan':
             nickname_applied=apply_nickname_treatment(
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
@@ -2221,11 +2248,16 @@ class Compiler:
         if nickname_applied and data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
-        data['infoArtist']=str(artist)
-        data['infoNote']=CARD_FOOTER_NOTE
-        bottom_info=data.get('bottomInfo') or {}
-        if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
-        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        if recipe=='art_series_scan':
+            data['infoArtist']=''
+            data['infoNote']=''
+        else:
+            data['infoArtist']=str(artist)
+            data['infoNote']=CARD_FOOTER_NOTE
+            bottom_info=data.get('bottomInfo') or {}
+            if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
+        data['artSource']='/api/assets/'+art_id
+        data['setSymbolSource']='/img/blank.png' if recipe=='art_series_scan' else '/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

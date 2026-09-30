@@ -42,6 +42,8 @@ ingest=load('pf_v58_ingest','pipeline/scryfall_to_card_data.py',_token_supertype
 # Scryfall uses Emblem as the card type for emblem objects. Extend the loaded
 # semantic schema without changing the preserved Card Tools source.
 ingest.MAIN_TYPES.add('Emblem')
+# Art Series printings use the literal type line "Card" on each image face.
+ingest.MAIN_TYPES.add('Card')
 deck_parser=load('pf_v58_deck','pipeline/scryfall_deck_to_cardconjurer.py')
 tokens=load('pf_v58_tokens','tools/make_copy_tokens.py',_token_supertype_source)
 image_tools=load('pf_v58_images','tools/download_scryfall_deck_images_zip.py')

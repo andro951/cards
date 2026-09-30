@@ -851,6 +851,34 @@ def test_scryfall_emblem_uses_native_emblem_frame(workspace,type_line,subtypes):
     assert data['text']['type']['text']==type_line
     assert data['text']['rules']['text']==card['oracle_text']
 
+
+def test_scryfall_art_series_uses_each_full_printing_image(workspace):
+    card=sf('Card // Card',[])
+    card.update(layout='art_series',name='Art Card // Art Card',rarity='common',
+                card_faces=[
+                    {'name':'Art Card','type_line':'Card','image_uris':{
+                        'png':'https://cards.scryfall.io/png/front/art-series.png',
+                        'art_crop':'https://cards.scryfall.io/art_crop/front/art-series.jpg'}},
+                    {'name':'Art Card','type_line':'Card','image_uris':{
+                        'png':'https://cards.scryfall.io/png/back/art-series.png',
+                        'art_crop':'https://cards.scryfall.io/art_crop/back/art-series.jpg'}},
+                ])
+    assert ingest.split_type_line('Card')['types']==['Card']
+    sources=Sources(None)
+    assert sources.art_url(card,card['card_faces'][0]).endswith('/png/front/art-series.png')
+    assert sources.art_url(card,card['card_faces'][1]).endswith('/png/back/art-series.png')
+    for index,face in enumerate(card['card_faces']):
+        result=Compiler(workspace[0]).compile_face(
+            card,face,index,{},workspace[2],workspace[1])
+        data=result['data']
+        assert result['group']=='art-series'
+        assert result['recipe']=='art_series_scan'
+        assert data['frames']==[]
+        assert all(not field.get('text') for field in data['text'].values() if isinstance(field,dict))
+        assert all(not field.get('text') for field in data['bottomInfo'].values() if isinstance(field,dict))
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
+
 def test_copy_token_type_parser_preserves_token_supertype():
     parsed=tokens.split_type_line('Token Artifact Creature — Construct')
     assert parsed['supertypes']==['Token']
