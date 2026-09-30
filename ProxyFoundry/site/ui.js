@@ -23,9 +23,11 @@ export async function downloadPost(path,data,filename){
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-export async function saveApiFile(path,name){
+export async function saveApiFile(path,name,size=null){
   let handle=null;
-  if(state.bootstrap?.browser&&typeof window.showSaveFilePicker==='function'){
+  //Small exports use the browser download folder; large files stream to disk.
+  const smallFile=Number.isFinite(size)&&size>=0&&size<=50*1024*1024;
+  if(!smallFile&&state.bootstrap?.browser&&typeof window.showSaveFilePicker==='function'){
     try{handle=await window.showSaveFilePicker({suggestedName:name});}
     catch(error){if(error.name==='AbortError')return;throw error;}
   }

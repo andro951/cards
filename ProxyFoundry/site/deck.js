@@ -281,8 +281,8 @@ function deckMenu(d){
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
-  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Originals.zip');else location.href=out.download;});
-  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Cropped_Art.zip');else location.href=out.download;});
+  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Originals.zip',out.bytes);else location.href=out.download;});
+  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Cropped_Art.zip',out.bytes);else location.href=out.download;});
   $('#download-review-images').onclick=()=>attempt(async()=>{
     closeModal();
     let current=await api('/api/decks/'+d.id);
@@ -295,7 +295,7 @@ function deckMenu(d){
       }
     }
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
-    if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip');else location.href=out.download;
+    if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip',out.bytes);else location.href=out.download;
   });
   $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
 }
@@ -497,7 +497,7 @@ async function inspect(deck,card,index=0){
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
-    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review.png');else location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
+    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review.png',out.bytes);else location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
   $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{
     syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,selectedArtPrintingId:id,artOverride:null}));
