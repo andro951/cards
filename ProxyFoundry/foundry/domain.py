@@ -13,7 +13,7 @@ CC_REPO='Investigamer/cardconjurer'
 COMPAT_COMMIT='47087b3fc21e2cef61c58b9ebf180968ee991658'
 COMPAT_REPO='d1rtyskittl3z/Card-Cipherist'
 SCHEMA_VERSION=2
-STATION_SCRIPT_URL='https://cardconjurer.app/js/frames/versionStation.js'
+STATION_SCRIPT_URL='https://raw.githubusercontent.com/joshbirnholz/cardconjurer/d3c6706692898d596ec6a5be0be44f63062c9e12/js/frames/versionStation.js'
 STATION_SCRIPT_SHA256='481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21'
 # Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.
 PIPELINE_VERSION='card-tools-v58/credits-v2/pipeline-v28'
@@ -83,7 +83,7 @@ def parse_deck_text(text,include_outside=False):
     if sum(x['quantity'] for x in rows)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
     return rows
 
-GROUP_LABELS={'standard':'Nonlegendary cards','legendary':'Legendary cards','land':'Nonlegendary lands','legendary-land':'Legendary lands','basic-land':'Basic lands','modal-front':'Modal DFC · front','modal-back':'Modal DFC · back','transform-front':'Transform · front','transform-back':'Transform · back','saga':'Sagas','saga-creature':'Saga creatures','planeswalker':'Planeswalkers','prepare':'Prepare cards','battle':'Battles','class':'Classes','case':'Cases','room':'Rooms','special-land':'Special lands','split':'Split / aftermath','flip':'Flip cards','adventure':'Adventure cards','meld':'Meld cards','token':'Tokens','emblem':'Emblems','planar':'Planes / phenomena','scheme':'Schemes','vanguard':'Vanguards','art-series':'Art series','prototype':'Prototype cards','dungeon':'Dungeons','conspiracy':'Conspiracies','station':'Stations / Spacecraft'}
+GROUP_LABELS={'standard':'Nonlegendary cards','legendary':'Legendary cards','land':'Nonlegendary lands','legendary-land':'Legendary lands','basic-land':'Basic lands','modal-front':'Modal DFC · front','modal-back':'Modal DFC · back','transform-front':'Transform · front','transform-back':'Transform · back','saga':'Sagas','saga-creature':'Saga creatures','planeswalker':'Planeswalkers','prepare':'Prepare cards','battle':'Battles','class':'Classes','case':'Cases','room':'Rooms','special-land':'Special lands','split':'Split / aftermath','flip':'Flip cards','adventure':'Adventure cards','meld':'Meld cards','token':'Tokens','emblem':'Emblems','planar':'Planes / phenomena','scheme':'Schemes','vanguard':'Vanguards','art-series':'Art series','helper':'Helper / tracker cards','prototype':'Prototype cards','dungeon':'Dungeons','conspiracy':'Conspiracies','station':'Stations / Spacecraft'}
 ORDINARY_GROUPS={'standard','legendary','land','legendary-land','basic-land'}
 def type_group(face,parent=None,index=0):
     parent=parent or face
@@ -94,6 +94,7 @@ def type_group(face,parent=None,index=0):
         if face.get('legendary'):tl='legendary '+tl
         if face.get('basic'):tl='basic '+tl
     types,_,subtypes=tl.replace(' - ',' — ').partition(' — ')
+    if types.strip()=='card' and layout!='art_series':return 'helper'
     if layout=='modal_dfc':return 'modal-back' if index else 'modal-front'
     if layout in {'transform','double_faced_token','reversible_card'}:
         if not index and 'battle' in types.split():return 'battle'

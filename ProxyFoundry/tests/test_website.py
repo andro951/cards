@@ -18,6 +18,86 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def test_static_website_fetches_pinned_station_script():
+    from playwright.sync_api import sync_playwright
+
+    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
+                   cwd=ROOT,check=True,capture_output=True)
+    with zipfile.ZipFile(ROOT/'dist'/'web'/'runtime.zip') as archive:
+        assert 'vendor/cardconjurer/versionStation.js' not in archive.namelist()
+        assert "ingest.MAIN_TYPES.add('Emblem')" in archive.read('foundry/legacy.py').decode()
+        assert "ingest.MAIN_TYPES.add('Card')" in archive.read('foundry/legacy.py').decode()
+        assert 'def build_emblem_data(' in archive.read('foundry/compiler.py').decode()
+        assert 'def build_art_series_data(' in archive.read('foundry/compiler.py').decode()
+        assert "pt.setdefault('text','')" in archive.read('foundry/compiler.py').decode()
+        assert 'def build_station_land_data(' in archive.read('foundry/compiler.py').decode()
+        assert "'helper_scan' if group=='helper'" in archive.read('foundry/compiler.py').decode()
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            context=browser.new_context()
+            page=context.new_page()
+            page.route('https://cardconjurer.app/**',lambda route:route.abort())
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate('''async()=>{
+                  const response=await fetch('/js/frames/versionStation.js');
+                  return {status:response.status,source:await response.text()};
+                }''')
+                assert result['status']==200,result['source'][:300]
+                assert 'object[key] = value' in result['source']
+                assert 'eval(`${target} = value`);' not in result['source']
+            finally:
+                context.close();browser.close()
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+def test_static_website_prepare_frames_load_from_pinned_fallback():
+    from playwright.sync_api import sync_playwright
+
+    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
+                   cwd=ROOT,check=True,capture_output=True)
+    assert '<body hidden>' in (ROOT/'dist'/'index.html').read_text(encoding='utf-8')
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            context=browser.new_context(viewport={'width':1280,'height':800})
+            page=context.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#browser-startup').wait_for(timeout=15000)
+                assert page.locator('.app-shell').is_hidden()
+                assert page.locator('.sidebar').is_hidden()
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'website-startup.png'))
+                page.locator('#import-deck').wait_for(timeout=90000)
+                assert page.locator('#browser-startup').count()==0
+                assert page.locator('.sidebar').is_hidden()
+                paths=['b.png','u.png','m.png','a.png','pinline.png','prepare.png','preparePinline.png','rules.png','frame.png']
+                results=page.evaluate('''async names=>{
+                  const output=[];
+                  for(const name of names){
+                    const response=await fetch('/img/frames/prepare/regular/'+name);
+                    const bytes=new Uint8Array(await response.arrayBuffer());
+                    output.push({name,status:response.status,signature:[...bytes.slice(0,8)]});
+                  }
+                  return output;
+                }''',paths)
+                assert all(row['status']==200 and row['signature']==[137,80,78,71,13,10,26,10] for row in results),results
+            finally:
+                context.close();browser.close()
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_website_import_frame_review_and_zip(tmp_path):
     from playwright.sync_api import sync_playwright
 

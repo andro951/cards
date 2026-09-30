@@ -48,6 +48,37 @@ def test_modern_saga_asset_source_is_not_a_global_fallback():
     assert len(calls)==2
     assert Runtime.COLORLESS_SAGA_CREATURE_REPO not in calls[-1]
 
+@pytest.mark.parametrize('path',[
+    '/img/frames/prepare/regular/b.png',
+    '/img/frames/prepare/regular/pinline.png',
+    '/img/frames/prepare/regular/prepare.png',
+    '/img/frames/prepare/regular/preparePinline.png',
+    '/img/frames/prepare/regular/rules.png',
+    '/img/frames/prepare/regular/frame.png',
+])
+def test_prepare_frames_fall_back_after_browser_transport_404(path):
+    calls=[]
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            calls.append(url)
+            if len(calls)==1:raise RuntimeError('Error: HTTP 404 '+url)
+            return b'\x89PNG\r\n\x1a\nfixture','image/png',{'cache':False}
+    runtime=Runtime(FakeNet())
+    raw,mime=runtime.fetch(path)
+    assert raw.startswith(b'\x89PNG\r\n\x1a\n') and mime=='image/png'
+    assert len(calls)==2 and CC_COMMIT in calls[0]
+    assert calls[1].endswith('/public'+path) and COMPAT_COMMIT in calls[1]
+    assert runtime.diagnostic()['files'][path]['url']==calls[1]
+
+def test_browser_transport_non_404_does_not_try_another_frame_source():
+    calls=[]
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            calls.append(url);raise RuntimeError('Error: HTTP 500 '+url)
+    with pytest.raises(RuntimeError,match='HTTP 500'):
+        Runtime(FakeNet()).fetch('/img/frames/prepare/regular/b.png')
+    assert len(calls)==1
+
 def test_creator_script_patches_inline_mana_cluster_wrapping():
     source='''function writeText(textObject, targetContext) {
 		//Begin looping through words/codes

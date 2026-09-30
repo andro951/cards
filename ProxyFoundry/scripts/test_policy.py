@@ -1,9 +1,13 @@
 """One source of truth for the routine and extended pytest groups."""
 
 EXTENDED_MODULES={
+    'test_art_series_native.py',
     'test_batch_bridge.py',
     'test_browser.py',
     'test_dom_offline.py',
+    'test_downloads_browser.py',
+    'test_emblem_native.py',
+    'test_helper_native.py',
     'test_extension.py',
     'test_github_setup_browser.py',
     'test_godzilla_browser.py',
@@ -11,7 +15,10 @@ EXTENDED_MODULES={
     'test_native_deck.py',
     'test_order_dialog.py',
     'test_print_bridge.py',
+    'test_prepare_native.py',
     'test_station_native.py',
+    'test_station_lands_native.py',
+    'test_token_native.py',
     'test_website.py',
 }
 EXTENDED_TESTS={

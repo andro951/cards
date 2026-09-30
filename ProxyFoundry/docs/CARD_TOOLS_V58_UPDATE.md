@@ -30,7 +30,7 @@ Landscape Station images retain the supplied 156/2010 horizontal position, 320/2
 
 ## Native renderer integration
 
-The existing pinned GitHub CardConjurer core predates Station support. Stations additionally load the actual `versionStation.js` module from `https://cardconjurer.app/js/frames/versionStation.js`, individually and on demand. Its verified SHA-256 is `481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21`. A changed module is rejected rather than executed silently. Only this exact site URL is allowed; Station image files use the existing pinned GitHub asset source.
+The existing pinned GitHub CardConjurer core predates Station support. Stations additionally load the actual `versionStation.js` module from `joshbirnholz/cardconjurer` commit `d3c6706692898d596ec6a5be0be44f63062c9e12`, individually and on demand. Its verified SHA-256 is `481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21`. This is byte-for-byte identical to the module on `cardconjurer.app`. A changed module is rejected rather than executed silently. Station image files use the existing pinned GitHub asset source.
 
 The adapter replaces the native module's one UI eval-based property assignment with a checked equivalent and composes the two native Station canvases at the required point in the older core's draw order. It does not redraw badges, P/T, frames, or Station text itself. Stale Station callbacks are cleared when moving to another card. The full repository and font files are not bundled in the release.
 

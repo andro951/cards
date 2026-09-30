@@ -1,0 +1,22 @@
+{
+  "id": "aefb8c0d-2bc6-4bec-851e-0137b4abfb22",
+  "name": "Susur Secundi, Void Altar",
+  "layout": "normal",
+  "type_line": "Land — Planet",
+  "mana_cost": "",
+  "oracle_text": "This land enters tapped.\n{T}: Add {B}.\nStation (Tap another creature you control: Put charge counters equal to its power on this Planet. Station only as a sorcery.)\n12+ | {1}{B}, {T}, Pay 2 life, Sacrifice a creature: Draw cards equal to the sacrificed creature's power. Activate only as a sorcery.",
+  "colors": [],
+  "keywords": [
+    "Station"
+  ],
+  "produced_mana": [
+    "B"
+  ],
+  "rarity": "mythic",
+  "artist": "Adam Paquette",
+  "set": "eoe",
+  "collector_number": "259",
+  "image_uris": {
+    "art_crop": "https://cards.scryfall.io/art_crop/front/a/e/aefb8c0d-2bc6-4bec-851e-0137b4abfb22.jpg?1783905914"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "dc26e13b-7a0f-4e7f-8593-4f22234f4517",
+  "name": "Day // Night",
+  "layout": "double_faced_token",
+  "type_line": "Card // Card",
+  "rarity": "common",
+  "artist": "Johan Grenier",
+  "set": "tvow",
+  "collector_number": "21",
+  "card_faces": [
+    {
+      "object": "card_face",
+      "name": "Day",
+      "mana_cost": "",
+      "type_line": "Card",
+      "oracle_text": "(If it becomes day or night or if a daybound permanent enters the battlefield, track day/night for the rest of the game.)\nAs it becomes day, transform all nightbound permanents.\nIf a player casts no spells during their own turn, it becomes night next turn.",
+      "colors": [],
+      "artist": "Johan Grenier",
+      "image_uris": {
+        "png": "https://cards.scryfall.io/png/front/d/c/dc26e13b-7a0f-4e7f-8593-4f22234f4517.png?1783924696",
+        "art_crop": "https://cards.scryfall.io/art_crop/front/d/c/dc26e13b-7a0f-4e7f-8593-4f22234f4517.jpg?1783924696"
+      }
+    },
+    {
+      "object": "card_face",
+      "name": "Night",
+      "mana_cost": "",
+      "type_line": "Card",
+      "oracle_text": "As it becomes night, transform all daybound permanents.\nPermanents enter the battlefield nightbound.\nIf a player casts at least two spells during their own turn, it becomes day next turn.",
+      "colors": [],
+      "artist": "Johan Grenier",
+      "image_uris": {
+        "png": "https://cards.scryfall.io/png/back/d/c/dc26e13b-7a0f-4e7f-8593-4f22234f4517.png?1783924696",
+        "art_crop": "https://cards.scryfall.io/art_crop/back/d/c/dc26e13b-7a0f-4e7f-8593-4f22234f4517.jpg?1783924696"
+      }
+    }
+  ]
+}

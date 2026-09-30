@@ -515,7 +515,7 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_regular'
-    assert result['templateVersion']==2
+    assert result['templateVersion']==3
     assert data['version']=='tokenRegular'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
@@ -556,6 +556,8 @@ def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(worksp
     result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token' and result['recipe']=='token_regular'
+    assert data['text']['pt']['text']==''
+    assert all(isinstance(field['text'],str) for field in data['text'].values())
     assert data['text']['rules']['text']=='{T}, Sacrifice this artifact: Add one mana of any color.'
     assert any(f.get('src')=='/img/frames/token/regular/tokenFrameARegular.png' for f in data['frames'])
     assert not any('Power/Toughness' in f.get('name','') for f in data['frames'])
@@ -826,6 +828,59 @@ def test_scryfall_token_supertype_is_supported_by_adapter(workspace):
     result=Compiler(workspace[0]).compile_face(card,card,0,{},workspace[2],workspace[1])
     assert result['group']=='token'
 
+
+@pytest.mark.parametrize('type_line,subtypes',[
+    ('Emblem',[]),
+    ('Emblem — Ajani',['Ajani']),
+])
+def test_scryfall_emblem_uses_native_emblem_frame(workspace,type_line,subtypes):
+    card=sf(type_line,[])
+    card.update(layout='emblem',name='Ajani Emblem',mana_cost='',
+                oracle_text='Create three 1/1 white Cat creature tokens.',
+                flavor_text='',rarity='common')
+    parsed=ingest.split_type_line(type_line)
+    assert parsed['types']==['Emblem']
+    assert parsed['subtypes']==subtypes
+    result=Compiler(workspace[0]).compile_face(
+        card,card,0,{},workspace[2],workspace[1])
+    data=result['data']
+    assert result['group']=='emblem'
+    assert result['recipe']=='emblem'
+    assert data['version']=='emblem'
+    assert data['frames']==[{'name':'Emblem Frame',
+                             'src':'/img/frames/token/emblem/frame.png','masks':[]}]
+    assert data['text']['title']['text']=='Ajani Emblem'
+    assert data['text']['type']['text']==type_line
+    assert data['text']['rules']['text']==card['oracle_text']
+
+
+def test_scryfall_art_series_uses_each_full_printing_image(workspace):
+    card=sf('Card // Card',[])
+    card.update(layout='art_series',name='Art Card // Art Card',rarity='common',
+                card_faces=[
+                    {'name':'Art Card','type_line':'Card','image_uris':{
+                        'png':'https://cards.scryfall.io/png/front/art-series.png',
+                        'art_crop':'https://cards.scryfall.io/art_crop/front/art-series.jpg'}},
+                    {'name':'Art Card','type_line':'Card','image_uris':{
+                        'png':'https://cards.scryfall.io/png/back/art-series.png',
+                        'art_crop':'https://cards.scryfall.io/art_crop/back/art-series.jpg'}},
+                ])
+    assert ingest.split_type_line('Card')['types']==['Card']
+    sources=Sources(None)
+    assert sources.art_url(card,card['card_faces'][0]).endswith('/png/front/art-series.png')
+    assert sources.art_url(card,card['card_faces'][1]).endswith('/png/back/art-series.png')
+    for index,face in enumerate(card['card_faces']):
+        result=Compiler(workspace[0]).compile_face(
+            card,face,index,{},workspace[2],workspace[1])
+        data=result['data']
+        assert result['group']=='art-series'
+        assert result['recipe']=='art_series_scan'
+        assert data['frames']==[]
+        assert all(not field.get('text') for field in data['text'].values() if isinstance(field,dict))
+        assert all(not field.get('text') for field in data['bottomInfo'].values() if isinstance(field,dict))
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
+
 def test_copy_token_type_parser_preserves_token_supertype():
     parsed=tokens.split_type_line('Token Artifact Creature — Construct')
     assert parsed['supertypes']==['Token']
@@ -897,3 +952,24 @@ def test_token_nickname_refits_set_symbol_to_m15nickname_type_bar(workspace):
     assert data['setSymbolBounds']['y']==pytest.approx(0.59142)
     assert data['setSymbolY'] < 0.65
     assert data['text']['type']['width'] < 0.8292
+
+
+@pytest.mark.parametrize('name',['experience','poison-counter','day'])
+def test_scryfall_helper_cards_use_complete_printing_images(workspace,name):
+    from pathlib import Path
+    from foundry.sources import Sources
+    from foundry.domain import type_group
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(name+'.json')).read_text(encoding='utf-8'))
+    sources=Sources(None)
+    for index,face in enumerate(card.get('card_faces') or [card]):
+        assert type_group(face,card,index)=='helper'
+        assert sources.art_url(card,face)==face['image_uris']['png']
+        result=Compiler(store).compile_face(card,face,index,{},settings,art)
+        assert result['group']=='helper' and result['recipe']=='helper_scan'
+        data=result['data']
+        assert data['frames']==[]
+        assert all(field['text']=='' for field in data['text'].values())
+        assert all(field['text']=='' for field in data['bottomInfo'].values())
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert data['infoArtist']=='' and data['infoNote']==''

@@ -1,0 +1,17 @@
+{
+  "id": "1374bfa2-9714-486d-90aa-7a9b8d8ef3a8",
+  "name": "Experience",
+  "layout": "normal",
+  "type_line": "Card",
+  "mana_cost": "",
+  "oracle_text": "(Place your experience counters here.)",
+  "colors": [],
+  "rarity": "common",
+  "artist": "",
+  "set": "tcm2",
+  "collector_number": "19",
+  "image_uris": {
+    "png": "https://cards.scryfall.io/png/front/1/3/1374bfa2-9714-486d-90aa-7a9b8d8ef3a8.png?1783934655",
+    "art_crop": "https://cards.scryfall.io/art_crop/front/1/3/1374bfa2-9714-486d-90aa-7a9b8d8ef3a8.jpg?1783934655"
+  }
+}

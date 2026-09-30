@@ -1,6 +1,7 @@
 """On-demand pinned CardConjurer files. Never download or unpack a repository archive."""
 from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading,hashlib
+from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
 from PIL import Image
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
@@ -95,12 +96,11 @@ class Runtime:
         return text.encode(),'application/javascript'
 
     def station_script(self):
-        """Use the real native Station module, pinned by content rather than a moving site version.
+        """Fetch the native Station module from a pinned upstream commit.
 
-        The verified module is absent from the older GitHub runtime snapshots.
         Only its UI property assignment is made CSP-safe; drawing/layout stays native.
         """
-        raw,mime,meta=self.net.fetch(STATION_SCRIPT_URL,immutable=True)
+        raw,_,meta=self.net.fetch(STATION_SCRIPT_URL,immutable=True)
         if hashlib.sha256(raw).hexdigest()!=STATION_SCRIPT_SHA256:
             raise ValidationError('The native Station script differs from the verified version. No unverified script was executed. Update Proxy Foundry before rendering Stations.')
         text=raw.decode('utf-8')
@@ -124,11 +124,14 @@ class Runtime:
             b=io.BytesIO();Image.new('RGBA',(1,1),(0,0,0,0)).save(b,'PNG');return b.getvalue(),'image/png'
         url='https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/')
         try:raw,mime,meta=self.net.fetch(url,immutable=True)
-        except ValidationError as original:
+        except Exception as original:
+            # Pyodide's browser transport raises JsException for HTTP failures,
+            # while the local transport raises ValidationError. Both can report
+            # the same pinned-image 404 that the compatibility snapshot fills.
             if not path.startswith('/img/') or 'HTTP 404' not in str(original):raise
             url='https://raw.githubusercontent.com/'+COMPAT_REPO+'/'+COMPAT_COMMIT+'/public'+quote(path,safe='/')
             try:raw,mime,meta=self.net.fetch(url,immutable=True)
-            except ValidationError as compat_error:
+            except Exception as compat_error:
                 if path!=self.COLORLESS_SAGA_CREATURE_PATH or 'HTTP 404' not in str(compat_error):raise
                 # CardConjurer's valid colorless Saga-creature layer is absent from
                 # both older pinned snapshots. Fill only this known asset gap from

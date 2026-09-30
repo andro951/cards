@@ -28,7 +28,7 @@ APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
     ('Bruce Banner','The Incredible Hulk'),
 }
-NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','emblem','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','planar','scheme','vanguard','case','special-land','dungeon','conspiracy'}
 CARD_FOOTER_NOTE='BulkProxyForge • Unofficial Proxy'
 _MODAL_MANA_TOKEN_RE=re.compile(r'\{[^{}]+\}')
 
@@ -40,7 +40,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -173,12 +173,11 @@ def _station_frame_component(frame):
     )
 
 def apply_station_underframe_policy(data,sem,art_origin):
-    """Use an artifact underframe for Scryfall Stations; expose custom full art.
+    """Use the matching underframe for Scryfall Stations; expose custom full art.
 
     Custom Station art is full-bleed, so the ordinary M15 Frame component must
     not sit behind the transparent portion of the Station overlay. Scryfall art
-    keeps a complete underframe, but Stations always use the neutral artifact
-    shell there regardless of the card's colors.
+    keeps a complete underframe: land for Planets, artifact for Spacecraft.
     """
     frames=data.get('frames',[])
     components=[frame for frame in frames if _station_frame_component(frame)]
@@ -187,8 +186,46 @@ def apply_station_underframe_policy(data,sem,art_origin):
         data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
         return True
     for frame in components:
-        frame['src']='/img/frames/m15/regular/m15FrameA.png'
-        frame['name']='Artifact Frame'
+        land='Land' in sem.get('types',[])
+        frame['src']='/img/frames/m15/regular/m15Frame'+('L' if land else 'A')+'.png'
+        frame['name']='Land Frame' if land else 'Artifact Frame'
+    return True
+
+
+def build_station_land_data(sem,artist,autofit,flags,art_origin):
+    """Reuse native Station geometry with its land overlay and land accents."""
+    donor=copy.deepcopy(sem)
+    # The preserved Spacecraft recipe requires donor PT, cleared below for lands.
+    donor.update(types=['Artifact'],subtypes=['Spacecraft'],layout='station',
+                 power='0',toughness='0',colors=sem.get('land_colors',[]))
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data['text']['type']['text']=sem['printed_type_line']
+    data['text']['pt']['text']=''
+    for frame in data['frames']:
+        if native._is_station_base_overlay(frame):
+            frame.update(src='/img/frames/station/L.png',name='Station Land Frame')
+    apply_station_underframe_policy(data,sem,art_origin)
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'station'
+
+
+def apply_prepare_frame_color(data,sem):
+    """Color the approved Prepare geometry using the host card's frame color."""
+    if data.get('version')!='prepare':return False
+    color=frame_treatment_code(sem)
+    body='A' if 'Artifact' in sem.get('types',[]) else (color if color and color in 'WUBRGM' else 'A')
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        src=str(frame.get('src',''))
+        if src=='/img/frames/m15/regular/m15PTB.png':
+            frame['src']=f'/img/frames/m15/regular/m15PT{body}.png'
+            frame['name']=f'{native.COLOR_NAMES[body]} Power/Toughness'
+        elif src=='/img/frames/prepare/regular/b.png':
+            frame['src']=f'/img/frames/prepare/regular/{body.lower()}.png'
+            frame['name']=f'{native.COLOR_NAMES[body]} Prepare Frame'
     return True
 
 _FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)'}
@@ -216,6 +253,11 @@ def frame_treatment_code(sem):
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
+
+    # Prepare uses one native color image with different masks for its bars,
+    # rules, and body. The body remains owned by the structural recipe.
+    if re.fullmatch(r'/img/frames/prepare/regular/[wubrgma]\.png',src):
+        return f'/img/frames/prepare/regular/{code.lower()}.png' if code in 'WUBRGMA' else src
 
     # Ordinary M15 families.
     if re.fullmatch(r'/img/frames/m15/regular/m15Frame[WUBRGMALCV]\.png',src):
@@ -1371,6 +1413,8 @@ def build_token_data(sem,artist,autofit,flags):
         'name':'Rules Text','x':0.086,'y':0.7143,'width':0.828,
         'height':0.2048,'size':0.0362,
     })
+    # Noncreature donors omit PT; every native text box still needs a string.
+    pt.setdefault('text','')
     pt.update({
         'name':'Power/Toughness','x':0.7928,'y':0.902,'width':0.1367,
         'height':0.0372,'size':0.0372,'font':'belerenbsc',
@@ -1379,6 +1423,65 @@ def build_token_data(sem,artist,autofit,flags):
 
     fit_token_art(data,sem['art_local_path'],autofit)
     return base,data,'token_regular'
+
+
+def build_emblem_data(sem,artist,autofit,flags):
+    """Build an emblem using CardConjurer's complete native Emblem frame."""
+    # The preserved compiler has no Emblem recipe. Use an ordinary card only
+    # for its shared metadata/text structures, then replace the whole frame and
+    # every layout field that differs in CardConjurer's Emblem pack.
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Enchantment'],subtypes=[],legendary=False,
+                 colors=['W'],layout='card_noncreature')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data.update(version='emblem',
+                frames=[{'name':'Emblem Frame','src':'/img/frames/token/emblem/frame.png','masks':[]}],
+                artBounds={'x':0.142,'y':0.0496,'width':0.716,'height':0.8548},
+                setSymbolBounds={'x':0.9213,'y':0.7043,'width':0.12,'height':0.041,
+                                 'vertical':'center','horizontal':'right'},
+                watermarkBounds={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472})
+    fields=data.setdefault('text',{})
+    fields['mana'].update(text='',y=0.0613,width=0.9292,height=71/2100,
+                          oneLine=True,size=71/1638,align='right',
+                          shadowX=-0.001,shadowY=0.0029,manaCost=True,manaSpacing=0)
+    fields['title'].update(text=sem['name'],x=0.0854,y=0.0522,width=0.8292,
+                            height=0.0543,oneLine=True,font='belerenbsc',
+                            size=0.0381,color='white',align='center')
+    fields['type'].update(text=str(sem.get('printed_type_line') or 'Emblem'),
+                           x=0.0854,y=0.68,width=0.8292,height=0.0543,
+                           oneLine=True,font='belerenb',size=0.0324)
+    fields['rules'].update(x=0.086,y=0.7443,width=0.828,height=0.1748,size=0.0362)
+    fields.setdefault('pt',{}).update(text='',x=0.7928,y=0.902,width=0.1367,height=0.0372,
+                         size=0.0372,font='belerenbsc',oneLine=True,align='center')
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'emblem'
+
+
+def build_art_series_data(sem,artist,flags,recipe='art_series_scan'):
+    """Render an Art Series or helper face as its complete selected-printing scan."""
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Enchantment'],subtypes=[],legendary=False,
+                 colors=['W'],layout='card_noncreature')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    # Keep a supported CardConjurer version and valid transparent symbol asset
+    # for the renderer, but remove visible generated layers: the art asset
+    # already contains the whole printed card.
+    for field in data.get('text',{}).values():
+        if isinstance(field,dict):field['text']=''
+    for field in data.get('bottomInfo',{}).values():
+        if isinstance(field,dict):field['text']=''
+    data.update(frames=[],artBounds={'x':0,'y':0,'width':1,'height':1},
+                setSymbolSource='/img/blank.png',setSymbolZoom=0,
+                watermarkSource='/img/blank.png',watermarkOpacity=0,
+                bottomInfoZoom=0,margins=False)
+    native.auto_fit(data,sem['art_local_path'])
+    return sem,data,recipe
 
 
 def build_battle_data(sem,card,artist,autofit,flags):
@@ -2070,9 +2173,17 @@ class Compiler:
             elif group=='battle':
                 d0,data,recipe=build_battle_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='station' and 'Land' in sem.get('types',[]):
+                d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
                 d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='emblem':
+                d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group in {'art-series','helper'}:
+                d0,data,recipe=build_art_series_data(sem,artist,flags,'helper_scan' if group=='helper' else 'art_series_scan')
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
@@ -2106,6 +2217,8 @@ class Compiler:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':
                         apply_station_underframe_policy(data,sem,art_origin)
+                    if choice=='auto' and group=='prepare':
+                        apply_prepare_frame_color(data,sem)
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
                 except native.BuildError as e:raise ValidationError(str(e)) from e
         else:
@@ -2142,13 +2255,14 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
+        nickname_applied=False
         if choice.startswith('godzilla-'):
             nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
             data.update(full_art_nonland_placement(art))
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
-        else:
+        elif recipe not in {'art_series_scan','helper_scan'}:
             nickname_applied=apply_nickname_treatment(
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
@@ -2160,11 +2274,16 @@ class Compiler:
         if nickname_applied and data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
-        data['infoArtist']=str(artist)
-        data['infoNote']=CARD_FOOTER_NOTE
-        bottom_info=data.get('bottomInfo') or {}
-        if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
-        data['artSource']='/api/assets/'+art_id;data['setSymbolSource']='/api/assets/'+symbol_id
+        if recipe in {'art_series_scan','helper_scan'}:
+            data['infoArtist']=''
+            data['infoNote']=''
+        else:
+            data['infoArtist']=str(artist)
+            data['infoNote']=CARD_FOOTER_NOTE
+            bottom_info=data.get('bottomInfo') or {}
+            if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
+        data['artSource']='/api/assets/'+art_id
+        data['setSymbolSource']='/img/blank.png' if recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

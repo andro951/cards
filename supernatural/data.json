@@ -1,0 +1,623 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Syr Gwyn, Hero of Ashvale",
+      "nickname": "Dean Winchester, Righteous Man",
+      "flavor_text": "Saving the world was never the point. Saving the people in it was.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Imperial Recruiter",
+      "nickname": "Sam Winchester, Learned Hunter",
+      "flavor_text": "Every monster leaves a pattern. Sam only needs enough time to find it.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Avacyn, Angel of Horror",
+      "nickname": "Castiel, Angel of the Lord",
+      "flavor_text": "He fell from Heaven more than once, but never from his purpose.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Vilis, Broker of Blood",
+      "nickname": "Crowley, King of Hell",
+      "flavor_text": "Every soul has a price. Crowley simply knows the exchange rate.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Witch of the Moors",
+      "nickname": "Rowena, Queen of Hell",
+      "flavor_text": "Death was never the end of a spell—only another ingredient.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Archangel of Thune",
+      "nickname": "Jack Kline, Nephilim",
+      "flavor_text": "Born with the power to end worlds, he chose to save them.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Puresteel Paladin",
+      "nickname": "Bobby Singer, Veteran Hunter",
+      "flavor_text": "Salt, iron, lore, and stubbornness kept more hunters alive than miracles ever did.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Stoneforge Mystic",
+      "nickname": "Charlie Bradbury, Queen of Moondoor",
+      "flavor_text": "Give her a locked door, a dead language, or a dragon. She’ll find a way in.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Nahiri, Forged in Fury",
+      "nickname": "Charlie, Rebel of Apocalypse World",
+      "flavor_text": "In her world, surviving long enough to laugh was its own rebellion.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Captain America, Liberator",
+      "nickname": "Bobby Singer, Resistance Leader",
+      "flavor_text": "When the world ended, Bobby kept building places worth defending.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Vona, Butcher of Magan",
+      "nickname": "Billie, the New Death",
+      "flavor_text": "Death doesn’t make exceptions. Billie makes appointments.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Kaya the Inexorable",
+      "nickname": "Death, the Pale Horseman",
+      "flavor_text": "Kings, angels, gods—eventually, they all become his business.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Ob Nixilis, the Ascended",
+      "nickname": "Lucifer, Fallen Archangel",
+      "flavor_text": "He never needed a throne to believe Heaven belonged to him.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Lyra Dawnbringer",
+      "nickname": "Gabriel, the Trickster",
+      "flavor_text": "The joke was always funniest just before reality changed.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Brutal Cathar",
+      "nickname": "Garth, Monster Hunter",
+      "flavor_text": "He hunted monsters without forgetting that some of them were still people.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Moonrage Brute",
+      "nickname": "Garth, Friendly Werewolf",
+      "flavor_text": "The moon changed what he was, not who he chose to be.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Bloodthirsty Conqueror",
+      "nickname": "Benny Lafitte, Purgatory Survivor",
+      "flavor_text": "Purgatory taught him survival. Dean reminded him what survival was for.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Riders of the Mark",
+      "nickname": "Jody Mills, Wayward Matriarch",
+      "flavor_text": "Anyone could become family. Anyone who threatened them became her problem.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Rohirrim Chargers",
+      "nickname": "Donna Hanscum, Wayward Sheriff",
+      "flavor_text": "She met the impossible with a smile, a shotgun, and an ‘okey-dokey.’",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Aerith Gainsborough",
+      "nickname": "Jo Harvelle, Defiant Hunter",
+      "flavor_text": "She stopped waiting for permission to become the hunter she already was.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Kelsien, the Plague",
+      "nickname": "Rufus Turner, Grizzled Hunter",
+      "flavor_text": "Experience is what you get when the thing trying to kill you misses.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Archivist of Oghma",
+      "nickname": "Kevin Tran, Prophet of the Lord",
+      "flavor_text": "Prophecy never asked whether he had time for homework.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Astor, Bearer of Blades",
+      "nickname": "Balthazar, Thief of Heaven",
+      "flavor_text": "Heaven had rules. Balthazar preferred souvenirs.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Knight Exemplar",
+      "nickname": "Ellen Harvelle, Roadhouse Matriarch",
+      "flavor_text": "The Roadhouse had one rule: hunters came home if she could help it.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Éowyn, Fearless Knight",
+      "nickname": "Claire Novak, Wayward Hunter",
+      "flavor_text": "She stopped waiting for angels to save her.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Danitha Capashen, Paragon",
+      "nickname": "Eileen Leahy, Men of Letters Legacy",
+      "flavor_text": "She listened with her eyes and hunted with absolute precision.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Cecil, Dark Knight",
+      "nickname": "Cain, First Knight of Hell",
+      "flavor_text": "He taught Hell what a knight could become.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Cecil, Redeemed Paladin",
+      "nickname": "Cain, the Penitent",
+      "flavor_text": "The hardest blade to master was the one he chose not to draw.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Thalia's Lancers",
+      "nickname": "Missouri Moseley, Spirit Medium",
+      "flavor_text": "People lied. Spirits lied. Missouri had little patience for either.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Cloud, Midgar Mercenary",
+      "nickname": "Arthur Ketch, Men of Letters Operative",
+      "flavor_text": "Efficiency came naturally. Conscience took longer.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Loran of the Third Path",
+      "nickname": "Donatello Redfield, Atheist Prophet",
+      "flavor_text": "Faith was optional. The evidence was not.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sephiroth, Fabled SOLDIER",
+      "nickname": "Castiel, Heaven's Rebel",
+      "flavor_text": "Heaven demanded obedience. Castiel chose responsibility.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sephiroth, One-Winged Angel",
+      "nickname": "Godstiel, the New God",
+      "flavor_text": "He swallowed Purgatory and mistook the weight for a crown.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Ria Ivor, Bane of Bladehold",
+      "nickname": "Pestilence, Bringer of Disease",
+      "flavor_text": "He didn’t bring disease. He simply reminded the world how easily it spreads.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Danitha, Benalia's Hope",
+      "nickname": "Linda Tran, Prophet's Protector",
+      "flavor_text": "Prophets speak for Heaven. Mothers speak louder.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Isshin, Two Heavens as One",
+      "nickname": "Mick Davies, Defier of the Code",
+      "flavor_text": "He learned the Code by heart, then learned when to break it.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Stonehewer Giant",
+      "nickname": "Giant of the Bad Place",
+      "flavor_text": "In the Bad Place, even the horizon could stand up and hunt you.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Armored Skyhunter",
+      "nickname": "Apalo of the Skies",
+      "flavor_text": "Who needs boots when you have wings?",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "The Mind Stone",
+      "nickname": "Bottled Grace",
+      "flavor_text": "Even Heaven can be reduced to something small enough to steal.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Mox Amber",
+      "nickname": "Dean's Amulet",
+      "flavor_text": "Some things become sacred because of who refuses to let them go.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Talisman of Conviction",
+      "nickname": "Ring of War",
+      "flavor_text": "Slip it on, and every disagreement remembers how to become a war.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Thran Dynamo",
+      "nickname": "Souls of Purgatory",
+      "flavor_text": "A million restless souls can power miracles—or monsters.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Arcane Signet",
+      "nickname": "Men of Letters Key",
+      "flavor_text": "One turn of the key, and a century of secrets opened.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Excalibur, Sword of Eden",
+      "nickname": "Michael's Lance",
+      "flavor_text": "Made for archangels. Fatal to nearly everything else.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Meteor Sword",
+      "nickname": "Rod of Aaron",
+      "flavor_text": "Divine power rarely arrives with instructions.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Mox Opal",
+      "nickname": "Angel Tablet",
+      "flavor_text": "The Word of God was never meant to be easy reading.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Smothering Tithe",
+      "nickname": "Crossroads Contract",
+      "flavor_text": "The ink dries long before the regret does.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sol Ring",
+      "nickname": "Ring of Death",
+      "flavor_text": "The oldest promise is the simplest: everything ends.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sword of Light and Shadow",
+      "nickname": "Book of the Damned",
+      "flavor_text": "Every forbidden answer leaves another stain on the page.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Talisman of Hierarchy",
+      "nickname": "Ring of Pestilence",
+      "flavor_text": "Where Pestilence passed, even the air learned to sicken.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Talisman of Indulgence",
+      "nickname": "Ring of Famine",
+      "flavor_text": "Hunger is easiest to command once it has already claimed you.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Thornbite Staff",
+      "nickname": "The First Blade",
+      "flavor_text": "It never asked Cain to kill. It only made killing easier.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "The Regalia",
+      "nickname": "Baby, the Impala",
+      "flavor_text": "Home was four wheels, black paint, and whatever road came next.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Demonic Tutor",
+      "nickname": "Book of Fate",
+      "flavor_text": "Every ending is written somewhere. Finding yours is the dangerous part.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Resurrection Orb",
+      "nickname": "Resurrection Charm",
+      "flavor_text": "Some protections only prove themselves after your heart stops.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Black Market Connections",
+      "nickname": "Hell's Ledger",
+      "flavor_text": "Hell remembers every favor, every debt, and every unpaid soul.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Aettir and Priwen",
+      "nickname": "Tiamat Talisman",
+      "flavor_text": "Wish carefully. The talisman has a sense of humor.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Adaptive Omnitool",
+      "nickname": "John's Journal",
+      "flavor_text": "When the boys didn’t know what they were hunting, John usually did.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "The Reaver Cleaver",
+      "nickname": "Mjölnir",
+      "flavor_text": "When the hammer falls, arguments about worthiness end quickly.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Helm of the Host",
+      "nickname": "Loki's Hat",
+      "flavor_text": "The best disguise is the one reality agrees to believe.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Fighter Class",
+      "nickname": "Hunter's Manual",
+      "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Kaldra Compleat",
+      "nickname": "Death's Scythe",
+      "flavor_text": "It does not kill. It decides that killing is complete.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Embercleave",
+      "nickname": "Archangel Blade",
+      "flavor_text": "Even celestial blood answers to sharpened grace.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Maskwood Nexus",
+      "nickname": "Monster-Making Formula",
+      "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Argentum Armor",
+      "nickname": "Lucifer's Spear",
+      "flavor_text": "Built to wound beings who had forgotten what pain felt like.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Vorpal Sword",
+      "nickname": "Angel Blade",
+      "flavor_text": "Small enough to hide. Sharp enough to kill Heaven.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Heartseeker",
+      "nickname": "The Colt",
+      "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Shadowspear",
+      "nickname": "Kaia's Spear",
+      "flavor_text": "Forged beyond this world, it knew where impossible things could bleed.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Viridian Longbow",
+      "nickname": "Rock-Salt Shotgun",
+      "flavor_text": "It won’t kill a ghost. It will make one reconsider the room.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "High Market",
+      "nickname": "Occult Black Market",
+      "flavor_text": "Everything forbidden has a buyer. Everything cursed has a seller.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Marsh Flats",
+      "nickname": "Stull Cemetery",
+      "flavor_text": "Some graves hold bodies. Others hold doors.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Bloodstained Mire",
+      "nickname": "Devil's Gate",
+      "flavor_text": "Hell had a lock. Humanity had the bad luck to find the keyhole.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Orzhov Basilica",
+      "nickname": "St. Mary's Convent",
+      "flavor_text": "The prayers stopped. The echoes didn’t.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Arid Mesa",
+      "nickname": "Kansas Backroads",
+      "flavor_text": "Every hunt began somewhere between one town and the next.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Urza's Saga",
+      "nickname": "Men of Letters Archive",
+      "flavor_text": "Centuries of monsters, catalogued one impossible case at a time.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Rakdos Carnarium",
+      "nickname": "Throne of Hell",
+      "flavor_text": "The crown changes hands. Hell never does.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Boros Garrison",
+      "nickname": "Apocalypse Resistance Camp",
+      "flavor_text": "They lost the world. They did not surrender the people in it.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Temple of Silence",
+      "nickname": "Bobby's Panic Room",
+      "flavor_text": "When anything can wear a familiar face, iron walls feel comforting.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Blood Crypt",
+      "nickname": "Lucifer's Cage",
+      "flavor_text": "Built to hold an archangel. Barely.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Godless Shrine",
+      "nickname": "Desecrated Holy Ground",
+      "flavor_text": "Sanctity is easier to break than to restore.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sacred Foundry",
+      "nickname": "British Men of Letters Armory",
+      "flavor_text": "Knowledge became policy. Policy became a weapon.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Temple of Malice",
+      "nickname": "Gates of Hell",
+      "flavor_text": "Some doors are sealed for the sake of both sides.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Temple of Triumph",
+      "nickname": "Heaven's Garden",
+      "flavor_text": "Every soul remembers peace differently. Heaven makes room for all of them.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Windbrisk Heights",
+      "nickname": "Kingdom of Heaven",
+      "flavor_text": "Paradise was vast, beautiful, and divided into private rooms.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Spinerock Knoll",
+      "nickname": "The Bad Place",
+      "flavor_text": "Nothing there evolved to welcome visitors.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Clive's Hideaway",
+      "nickname": "Mystery Spot",
+      "flavor_text": "Tuesday again.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Horizon of Progress",
+      "nickname": "The Road So Far",
+      "flavor_text": "The miles changed. The mission didn’t.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Susur Secundi, Void Altar",
+      "nickname": "The Empty",
+      "flavor_text": "Even angels whisper when they dream here.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Abandoned Air Temple",
+      "nickname": "Harvelle's Roadhouse",
+      "flavor_text": "Hunters came for answers, whiskey, and the chance not to drink alone.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Secluded Starforge",
+      "nickname": "Styne Laboratory",
+      "flavor_text": "The family business was medicine stripped of mercy.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Adagia, Windswept Bastion",
+      "nickname": "French Mistake Soundstage",
+      "flavor_text": "Somewhere, their lives were only a television show. That was the weird part.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Swamp",
+      "nickname": "Purgatory Wilds",
+      "flavor_text": "Every path led deeper. Every shadow was hungry.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Vault of the Archangel",
+      "nickname": "Heaven's Armory",
+      "flavor_text": "Heaven preached peace and kept excellent weapons.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Mountain",
+      "nickname": "Hell",
+      "flavor_text": "Hell had no shortage of rooms, only mercy.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Takenuma, Abandoned Mire",
+      "nickname": "The Veil",
+      "flavor_text": "The dead passed through. The living only glimpsed the doorway.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Sokenzan, Crucible of Defiance",
+      "nickname": "Pamela's Séance Room",
+      "flavor_text": "The candles were cheap. The consequences weren’t.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Plains",
+      "nickname": "Lawrence, Kansas",
+      "flavor_text": "Before angels, demons, and prophecies, there was home.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Glittering Massif",
+      "nickname": "Elysian Fields Hotel",
+      "flavor_text": "The gods checked in under false names and never truly checked out.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Canyon Slough",
+      "nickname": "Croatoan Wasteland",
+      "flavor_text": "The infection spread faster than the warning signs could go up.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Umbral Expanse",
+      "nickname": "Primordial Darkness",
+      "flavor_text": "Before creation, there was only silence without an edge.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Shattered Landscape",
+      "nickname": "Apocalypse World",
+      "flavor_text": "When Heaven won, almost everyone else lost.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Command Tower",
+      "nickname": "Men of Letters War Room",
+      "flavor_text": "Every apocalypse looks smaller once you put it on a map.",
+      "artist": "ChatGPT"
+    },
+    {
+      "name": "Savai Triome",
+      "nickname": "The Cosmic Crossroads",
+      "flavor_text": "Every world meets somewhere. Few travelers survive the intersection.",
+      "artist": "ChatGPT"
+    }
+  ]
+}
