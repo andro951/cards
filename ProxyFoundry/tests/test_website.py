@@ -30,6 +30,7 @@ def test_static_website_fetches_pinned_station_script():
         assert 'def build_emblem_data(' in archive.read('foundry/compiler.py').decode()
         assert 'def build_art_series_data(' in archive.read('foundry/compiler.py').decode()
         assert "pt.setdefault('text','')" in archive.read('foundry/compiler.py').decode()
+        assert 'def build_station_land_data(' in archive.read('foundry/compiler.py').decode()
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()

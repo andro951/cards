@@ -15,6 +15,7 @@ EXTENDED_MODULES={
     'test_print_bridge.py',
     'test_prepare_native.py',
     'test_station_native.py',
+    'test_station_lands_native.py',
     'test_token_native.py',
     'test_website.py',
 }

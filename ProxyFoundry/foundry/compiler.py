@@ -40,7 +40,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -173,12 +173,11 @@ def _station_frame_component(frame):
     )
 
 def apply_station_underframe_policy(data,sem,art_origin):
-    """Use an artifact underframe for Scryfall Stations; expose custom full art.
+    """Use the matching underframe for Scryfall Stations; expose custom full art.
 
     Custom Station art is full-bleed, so the ordinary M15 Frame component must
     not sit behind the transparent portion of the Station overlay. Scryfall art
-    keeps a complete underframe, but Stations always use the neutral artifact
-    shell there regardless of the card's colors.
+    keeps a complete underframe: land for Planets, artifact for Spacecraft.
     """
     frames=data.get('frames',[])
     components=[frame for frame in frames if _station_frame_component(frame)]
@@ -187,9 +186,31 @@ def apply_station_underframe_policy(data,sem,art_origin):
         data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
         return True
     for frame in components:
-        frame['src']='/img/frames/m15/regular/m15FrameA.png'
-        frame['name']='Artifact Frame'
+        land='Land' in sem.get('types',[])
+        frame['src']='/img/frames/m15/regular/m15Frame'+('L' if land else 'A')+'.png'
+        frame['name']='Land Frame' if land else 'Artifact Frame'
     return True
+
+
+def build_station_land_data(sem,artist,autofit,flags,art_origin):
+    """Reuse native Station geometry with its land overlay and land accents."""
+    donor=copy.deepcopy(sem)
+    # The preserved Spacecraft recipe requires donor PT, cleared below for lands.
+    donor.update(types=['Artifact'],subtypes=['Spacecraft'],layout='station',
+                 power='0',toughness='0',colors=sem.get('land_colors',[]))
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data['text']['type']['text']=sem['printed_type_line']
+    data['text']['pt']['text']=''
+    for frame in data['frames']:
+        if native._is_station_base_overlay(frame):
+            frame.update(src='/img/frames/station/L.png',name='Station Land Frame')
+    apply_station_underframe_policy(data,sem,art_origin)
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'station'
+
 
 def apply_prepare_frame_color(data,sem):
     """Color the approved Prepare geometry using the host card's frame color."""
@@ -2151,6 +2172,9 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='battle':
                 d0,data,recipe=build_battle_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='station' and 'Land' in sem.get('types',[]):
+                d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
                 d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
