@@ -1,4 +1,30 @@
-const message=document.querySelector('#main');
+const shell=document.querySelector('.app-shell');
+shell.style.display='none';
+const startup=document.createElement('main');
+startup.id='browser-startup';
+startup.setAttribute('role','status');
+startup.setAttribute('aria-live','polite');
+startup.style.display='flex';
+startup.style.minHeight='100dvh';
+startup.style.flexDirection='column';
+startup.style.alignItems='center';
+startup.style.justifyContent='center';
+startup.style.gap='24px';
+startup.style.padding='24px';
+startup.style.textAlign='center';
+const logo=document.createElement('img');
+logo.src='/site/logo.png';
+logo.alt='Bulk Proxy Forge';
+logo.style.width='min(65vw, 300px)';
+logo.style.height='auto';
+const message=document.createElement('p');
+message.textContent='Opening Bulk Proxy Forge…';
+message.style.fontSize='15px';
+startup.append(logo,message);
+document.body.append(startup);
+document.body.hidden=false;
+
+try{
 const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
 await navigator.serviceWorker.ready;
 if(!navigator.serviceWorker.controller){
@@ -73,7 +99,15 @@ else{
 
   try{
     await ready;
-    await import('/site/app.js');
+    const appReady=new Promise((resolve,reject)=>{
+      window.addEventListener('pf-ui-ready',resolve,{once:true});
+      window.addEventListener('pf-ui-error',event=>reject(new Error(event.detail)),{once:true});
+    });
+    await Promise.all([import('/site/app.js'),appReady]);
+    shell.style.display='';
+    startup.remove();
   }
   catch(error){message.textContent=`Could not open the browser workspace: ${error.message}`;}
 }
+}
+catch(error){message.textContent=`Could not open the browser workspace: ${error.message}`;}

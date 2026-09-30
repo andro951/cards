@@ -137,7 +137,8 @@ async function boot(){
     });
     document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a&&state.dirty){e.preventDefault();nav(a.getAttribute('href').slice(1));}});
     await route();
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nReload this page to reopen your workspace.</div>`;}
+    window.dispatchEvent(new Event('pf-ui-ready'));
+  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nReload this page to reopen your workspace.</div>`;window.dispatchEvent(new CustomEvent('pf-ui-error',{detail:e.message}));}
 }
 window.addEventListener('error',e=>{if(state.csrf)api('/api/client-error',{error:e.message+'\n'+(e.error?.stack||'')}).catch(()=>{});});
 boot();

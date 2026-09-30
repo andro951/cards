@@ -55,6 +55,7 @@ def test_static_website_prepare_frames_load_from_pinned_fallback():
 
     subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
                    cwd=ROOT,check=True,capture_output=True)
+    assert '<body hidden>' in (ROOT/'dist'/'index.html').read_text(encoding='utf-8')
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
@@ -65,7 +66,14 @@ def test_static_website_prepare_frames_load_from_pinned_fallback():
             page=context.new_page()
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#browser-startup').wait_for(timeout=15000)
+                assert page.locator('.app-shell').is_hidden()
+                assert page.locator('.sidebar').is_hidden()
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'website-startup.png'))
                 page.locator('#import-deck').wait_for(timeout=90000)
+                assert page.locator('#browser-startup').count()==0
+                assert page.locator('.sidebar').is_hidden()
                 paths=['b.png','u.png','m.png','a.png','pinline.png','prepare.png','preparePinline.png','rules.png','frame.png']
                 results=page.evaluate('''async names=>{
                   const output=[];

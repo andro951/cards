@@ -11,7 +11,7 @@ reporting.
 | Group | Tests | Sum of measured test times | When to run |
 | --- | ---: | ---: | --- |
 | Routine | 413 | 2 minutes 29 seconds | Every completed change |
-| Extended | 54 | 23 minutes 36 seconds | Relevant changes or an explicit full sweep |
+| Extended | 54 | 23 minutes 44 seconds | Relevant changes or an explicit full sweep |
 
 The extended group contains browser UI, the installed print extension, real
 CardConjurer rendering, live GitHub/dependency checks, and the 2.3 GiB transfer
