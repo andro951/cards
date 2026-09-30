@@ -1,0 +1,17 @@
+{
+  "id": "8a9cb417-8709-4336-be36-2fb0cea31fe1",
+  "name": "Poison Counter",
+  "layout": "normal",
+  "type_line": "Card",
+  "mana_cost": "",
+  "oracle_text": "(A player with ten or more poison counters loses the game.)",
+  "colors": [],
+  "rarity": "common",
+  "artist": "",
+  "set": "tecc",
+  "collector_number": "13",
+  "image_uris": {
+    "png": "https://cards.scryfall.io/png/front/8/a/8a9cb417-8709-4336-be36-2fb0cea31fe1.png?1783904328",
+    "art_crop": "https://cards.scryfall.io/art_crop/front/8/a/8a9cb417-8709-4336-be36-2fb0cea31fe1.jpg?1783904328"
+  }
+}

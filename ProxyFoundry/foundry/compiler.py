@@ -1460,8 +1460,8 @@ def build_emblem_data(sem,artist,autofit,flags):
     return sem,data,'emblem'
 
 
-def build_art_series_data(sem,artist,flags):
-    """Render a Scryfall Art Series face as its complete selected-printing scan."""
+def build_art_series_data(sem,artist,flags,recipe='art_series_scan'):
+    """Render an Art Series or helper face as its complete selected-printing scan."""
     donor=copy.deepcopy(sem)
     donor.update(types=['Enchantment'],subtypes=[],legendary=False,
                  colors=['W'],layout='card_noncreature')
@@ -1481,7 +1481,7 @@ def build_art_series_data(sem,artist,flags):
                 watermarkSource='/img/blank.png',watermarkOpacity=0,
                 bottomInfoZoom=0,margins=False)
     native.auto_fit(data,sem['art_local_path'])
-    return sem,data,'art_series_scan'
+    return sem,data,recipe
 
 
 def build_battle_data(sem,card,artist,autofit,flags):
@@ -2182,8 +2182,8 @@ class Compiler:
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
-            elif group=='art-series':
-                d0,data,recipe=build_art_series_data(sem,artist,flags)
+            elif group in {'art-series','helper'}:
+                d0,data,recipe=build_art_series_data(sem,artist,flags,'helper_scan' if group=='helper' else 'art_series_scan')
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
@@ -2262,7 +2262,7 @@ class Compiler:
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
-        elif recipe!='art_series_scan':
+        elif recipe not in {'art_series_scan','helper_scan'}:
             nickname_applied=apply_nickname_treatment(
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
@@ -2274,7 +2274,7 @@ class Compiler:
         if nickname_applied and data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
-        if recipe=='art_series_scan':
+        if recipe in {'art_series_scan','helper_scan'}:
             data['infoArtist']=''
             data['infoNote']=''
         else:
@@ -2283,7 +2283,7 @@ class Compiler:
             bottom_info=data.get('bottomInfo') or {}
             if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id
-        data['setSymbolSource']='/img/blank.png' if recipe=='art_series_scan' else '/api/assets/'+symbol_id
+        data['setSymbolSource']='/img/blank.png' if recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

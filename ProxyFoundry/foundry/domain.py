@@ -83,7 +83,7 @@ def parse_deck_text(text,include_outside=False):
     if sum(x['quantity'] for x in rows)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
     return rows
 
-GROUP_LABELS={'standard':'Nonlegendary cards','legendary':'Legendary cards','land':'Nonlegendary lands','legendary-land':'Legendary lands','basic-land':'Basic lands','modal-front':'Modal DFC · front','modal-back':'Modal DFC · back','transform-front':'Transform · front','transform-back':'Transform · back','saga':'Sagas','saga-creature':'Saga creatures','planeswalker':'Planeswalkers','prepare':'Prepare cards','battle':'Battles','class':'Classes','case':'Cases','room':'Rooms','special-land':'Special lands','split':'Split / aftermath','flip':'Flip cards','adventure':'Adventure cards','meld':'Meld cards','token':'Tokens','emblem':'Emblems','planar':'Planes / phenomena','scheme':'Schemes','vanguard':'Vanguards','art-series':'Art series','prototype':'Prototype cards','dungeon':'Dungeons','conspiracy':'Conspiracies','station':'Stations / Spacecraft'}
+GROUP_LABELS={'standard':'Nonlegendary cards','legendary':'Legendary cards','land':'Nonlegendary lands','legendary-land':'Legendary lands','basic-land':'Basic lands','modal-front':'Modal DFC · front','modal-back':'Modal DFC · back','transform-front':'Transform · front','transform-back':'Transform · back','saga':'Sagas','saga-creature':'Saga creatures','planeswalker':'Planeswalkers','prepare':'Prepare cards','battle':'Battles','class':'Classes','case':'Cases','room':'Rooms','special-land':'Special lands','split':'Split / aftermath','flip':'Flip cards','adventure':'Adventure cards','meld':'Meld cards','token':'Tokens','emblem':'Emblems','planar':'Planes / phenomena','scheme':'Schemes','vanguard':'Vanguards','art-series':'Art series','helper':'Helper / tracker cards','prototype':'Prototype cards','dungeon':'Dungeons','conspiracy':'Conspiracies','station':'Stations / Spacecraft'}
 ORDINARY_GROUPS={'standard','legendary','land','legendary-land','basic-land'}
 def type_group(face,parent=None,index=0):
     parent=parent or face
@@ -94,6 +94,7 @@ def type_group(face,parent=None,index=0):
         if face.get('legendary'):tl='legendary '+tl
         if face.get('basic'):tl='basic '+tl
     types,_,subtypes=tl.replace(' - ',' — ').partition(' — ')
+    if types.strip()=='card' and layout!='art_series':return 'helper'
     if layout=='modal_dfc':return 'modal-back' if index else 'modal-front'
     if layout in {'transform','double_faced_token','reversible_card'}:
         if not index and 'battle' in types.split():return 'battle'

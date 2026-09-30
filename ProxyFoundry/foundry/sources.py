@@ -2,7 +2,7 @@
 from __future__ import annotations
 import hashlib,json,re
 from urllib.parse import quote,urlsplit
-from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug
+from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group
 from .legacy import deck_parser,ingest
 class Sources:
     def __init__(self,network):self.net=network
@@ -96,9 +96,9 @@ class Sources:
         for i,f in enumerate(faces):entry['faces'].append({'id':uid(),'name':f.get('name',sf['name']),'index':i,'artistOverride':None,'artOverride':None,'templateOverride':None})
         return entry
     def art_url(self,sf,face):
-        if sf.get('layout')=='art_series':
-            # Art Series has no rules/frame to reconstruct. Its selected
-            # printing's full PNG is the image users expect on each face.
+        if sf.get('layout')=='art_series' or type_group(face,sf)=='helper':
+            # Art Series and helper trackers use the complete printing image,
+            # including special tracker layouts and both Day/Night faces.
             return (face.get('image_uris') or {}).get('png') or (sf.get('image_uris') or {}).get('png') or ''
         return ingest.scryfall_art_crop_url(sf,face)
     @staticmethod

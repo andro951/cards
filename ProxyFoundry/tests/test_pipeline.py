@@ -952,3 +952,24 @@ def test_token_nickname_refits_set_symbol_to_m15nickname_type_bar(workspace):
     assert data['setSymbolBounds']['y']==pytest.approx(0.59142)
     assert data['setSymbolY'] < 0.65
     assert data['text']['type']['width'] < 0.8292
+
+
+@pytest.mark.parametrize('name',['experience','poison-counter','day'])
+def test_scryfall_helper_cards_use_complete_printing_images(workspace,name):
+    from pathlib import Path
+    from foundry.sources import Sources
+    from foundry.domain import type_group
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(name+'.json')).read_text(encoding='utf-8'))
+    sources=Sources(None)
+    for index,face in enumerate(card.get('card_faces') or [card]):
+        assert type_group(face,card,index)=='helper'
+        assert sources.art_url(card,face)==face['image_uris']['png']
+        result=Compiler(store).compile_face(card,face,index,{},settings,art)
+        assert result['group']=='helper' and result['recipe']=='helper_scan'
+        data=result['data']
+        assert data['frames']==[]
+        assert all(field['text']=='' for field in data['text'].values())
+        assert all(field['text']=='' for field in data['bottomInfo'].values())
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert data['infoArtist']=='' and data['infoNote']==''
