@@ -826,6 +826,31 @@ def test_scryfall_token_supertype_is_supported_by_adapter(workspace):
     result=Compiler(workspace[0]).compile_face(card,card,0,{},workspace[2],workspace[1])
     assert result['group']=='token'
 
+
+@pytest.mark.parametrize('type_line,subtypes',[
+    ('Emblem',[]),
+    ('Emblem — Ajani',['Ajani']),
+])
+def test_scryfall_emblem_uses_native_emblem_frame(workspace,type_line,subtypes):
+    card=sf(type_line,[])
+    card.update(layout='emblem',name='Ajani Emblem',mana_cost='',
+                oracle_text='Create three 1/1 white Cat creature tokens.',
+                flavor_text='',rarity='common')
+    parsed=ingest.split_type_line(type_line)
+    assert parsed['types']==['Emblem']
+    assert parsed['subtypes']==subtypes
+    result=Compiler(workspace[0]).compile_face(
+        card,card,0,{},workspace[2],workspace[1])
+    data=result['data']
+    assert result['group']=='emblem'
+    assert result['recipe']=='emblem'
+    assert data['version']=='emblem'
+    assert data['frames']==[{'name':'Emblem Frame',
+                             'src':'/img/frames/token/emblem/frame.png','masks':[]}]
+    assert data['text']['title']['text']=='Ajani Emblem'
+    assert data['text']['type']['text']==type_line
+    assert data['text']['rules']['text']==card['oracle_text']
+
 def test_copy_token_type_parser_preserves_token_supertype():
     parsed=tokens.split_type_line('Token Artifact Creature — Construct')
     assert parsed['supertypes']==['Token']

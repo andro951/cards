@@ -4,6 +4,7 @@ EXTENDED_MODULES={
     'test_batch_bridge.py',
     'test_browser.py',
     'test_dom_offline.py',
+    'test_emblem_native.py',
     'test_extension.py',
     'test_github_setup_browser.py',
     'test_godzilla_browser.py',

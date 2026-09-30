@@ -28,7 +28,7 @@ APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
     ('Bruce Banner','The Incredible Hulk'),
 }
-NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','emblem','case','special-land','dungeon','conspiracy'}
+NEEDS_CUSTOM={'split','adventure','room','art-series','planar','scheme','vanguard','case','special-land','dungeon','conspiracy'}
 CARD_FOOTER_NOTE='BulkProxyForge • Unofficial Proxy'
 _MODAL_MANA_TOKEN_RE=re.compile(r'\{[^{}]+\}')
 
@@ -40,7 +40,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # Saga rendering uses a persistent native overlay canvas. Version 2 refreshes
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
-AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2,'prepare':2})
+AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':4,'planeswalker':7,'meld':4,'battle':3,'token':2,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1402,6 +1402,41 @@ def build_token_data(sem,artist,autofit,flags):
     return base,data,'token_regular'
 
 
+def build_emblem_data(sem,artist,autofit,flags):
+    """Build an emblem using CardConjurer's complete native Emblem frame."""
+    # The preserved compiler has no Emblem recipe. Use an ordinary card only
+    # for its shared metadata/text structures, then replace the whole frame and
+    # every layout field that differs in CardConjurer's Emblem pack.
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Enchantment'],subtypes=[],legendary=False,
+                 colors=['W'],layout='card_noncreature')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data.update(version='emblem',
+                frames=[{'name':'Emblem Frame','src':'/img/frames/token/emblem/frame.png','masks':[]}],
+                artBounds={'x':0.142,'y':0.0496,'width':0.716,'height':0.8548},
+                setSymbolBounds={'x':0.9213,'y':0.7043,'width':0.12,'height':0.041,
+                                 'vertical':'center','horizontal':'right'},
+                watermarkBounds={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472})
+    fields=data.setdefault('text',{})
+    fields['mana'].update(text='',y=0.0613,width=0.9292,height=71/2100,
+                          oneLine=True,size=71/1638,align='right',
+                          shadowX=-0.001,shadowY=0.0029,manaCost=True,manaSpacing=0)
+    fields['title'].update(text=sem['name'],x=0.0854,y=0.0522,width=0.8292,
+                            height=0.0543,oneLine=True,font='belerenbsc',
+                            size=0.0381,color='white',align='center')
+    fields['type'].update(text=str(sem.get('printed_type_line') or 'Emblem'),
+                           x=0.0854,y=0.68,width=0.8292,height=0.0543,
+                           oneLine=True,font='belerenb',size=0.0324)
+    fields['rules'].update(x=0.086,y=0.7443,width=0.828,height=0.1748,size=0.0362)
+    fields.setdefault('pt',{}).update(text='',x=0.7928,y=0.902,width=0.1367,height=0.0372,
+                         size=0.0372,font='belerenbsc',oneLine=True,align='center')
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'emblem'
+
+
 def build_battle_data(sem,card,artist,autofit,flags):
     """Build CardConjurer's genuine landscape M15 Battle — Siege frame."""
     if 'Battle' not in set(sem.get('types',[])):
@@ -2093,6 +2128,9 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
                 d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='emblem':
+                d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='meld':
                 d0,data,recipe=build_meld_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
