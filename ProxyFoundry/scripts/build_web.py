@@ -24,9 +24,12 @@ html = html.replace('BULK PROXY FORGE 1.3 <span>LOCAL</span>',
                     'BULK PROXY FORGE 2.0 <span>WEB</span>')
 (dist / 'index.html').write_text(html, encoding='utf-8')
 
-with zipfile.ZipFile(dist / 'web' / 'runtime.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+runtime=dist / 'web' / 'runtime.zip'
+pending=dist / 'web' / 'runtime.zip.tmp'
+with zipfile.ZipFile(pending, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
     for directory in ('foundry', 'vendor/card_tools', 'assets', 'extension'):
         for path in (root / directory).rglob('*'):
             if path.is_file() and '__pycache__' not in path.parts and path.suffix in {'.py', '.png', '.json', '.js', '.md', '.txt'}:
                 archive.write(path, path.relative_to(root))
+pending.replace(runtime)
 print(dist)

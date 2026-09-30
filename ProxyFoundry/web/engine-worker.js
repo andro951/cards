@@ -8,7 +8,7 @@ async function start(folder){
   python=await loadPyodide();
   await python.loadPackage('pillow');
   mount=await python.mountNativeFS('/workspace',folder||await navigator.storage.getDirectory());
-  const archive=await fetch('/web/runtime.zip');
+  const archive=await fetch('/web/runtime.zip',{cache:'no-store'});
   if(!archive.ok)
     throw new Error(`Card engine bundle could not be loaded (${archive.status}).`);
   python.unpackArchive(await archive.arrayBuffer(),'zip',{extractDir:'/app/ProxyFoundry'});

@@ -4,7 +4,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 import subprocess
 import sys
 import webbrowser
@@ -27,7 +27,12 @@ def address(port=PORT):
 def is_foundry_preview(port=PORT):
     try:
         with urlopen(address(port), timeout=1) as response:
-            return response.status == 200 and SITE_MARKER in response.read(4096)
+            if response.status != 200 or SITE_MARKER not in response.read(4096):
+                return False
+        # The original Python app serves the same HTML marker. Only the new
+        # static preview exposes the browser engine bundle at this path.
+        with urlopen(Request(address(port)+'web/runtime.zip',method='HEAD'), timeout=1) as response:
+            return response.status == 200
     except OSError:
         return False
 
@@ -44,10 +49,6 @@ def build_and_start(events):
         events.put(('error', 'Python 3.10 or newer is required for the local preview.'))
         return
 
-    if is_foundry_preview():
-        events.put(('existing', address()))
-        return
-
     events.put(('status', 'Building the website…'))
     try:
         build = subprocess.run(
@@ -62,6 +63,10 @@ def build_and_start(events):
     if build.returncode:
         detail = (build.stderr or build.stdout).strip()[-2500:]
         events.put(('error', f'The website build failed.\n\n{detail}'))
+        return
+
+    if is_foundry_preview():
+        events.put(('existing', address()))
         return
 
     events.put(('status', 'Opening the local preview…'))
@@ -125,7 +130,7 @@ def main():
                     open_site()
                 elif kind == 'existing':
                     webbrowser.open(value, new=1)
-                    messagebox.showinfo('Bulk Proxy Forge', 'The local website is already running. Close its preview window before restarting to load new code.')
+                    messagebox.showinfo('Bulk Proxy Forge', 'The website was updated. Reload any tabs that were already open to use the new code.')
                     root.destroy()
                     return
                 elif kind == 'error':
