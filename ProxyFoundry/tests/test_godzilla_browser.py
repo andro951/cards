@@ -81,7 +81,8 @@ def test_frame_can_be_selected_before_the_preview_plan_arrives(browser_app):
     assert not errors,errors
 
 
-def test_frame_selection_cancels_an_active_preview_renderer(browser_app):
+@pytest.mark.parametrize('selection',['label','preview'])
+def test_frame_selection_cancels_an_active_preview_renderer(browser_app,selection):
     app,server,page,errors=browser_app
     deck=app.ws.create({'name':'Cancel active frame preview','source':'1 A Test Creature'})
     page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
@@ -98,7 +99,15 @@ def test_frame_selection_cancels_an_active_preview_renderer(browser_app):
     page.click('[data-frame-group=standard]')
     expect(page.locator('iframe.render-frame')).to_have_count(1)
     page.wait_for_function('()=>window.__previewStarted',timeout=15000)
-    page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True).click()
+    expect(page.locator('#modal-host [role=status]')).to_contain_text('You can choose a frame now.')
+    choice=page.get_by_role('button',name=('Select Godzilla full art · non-land' if selection=='label' else 'Choose Godzilla full art · non-land from preview'),exact=True)
+    expect(choice).to_be_enabled()
+    if selection=='preview':
+        expect(choice).to_contain_text('Rendering…')
+        output=Path(__file__).resolve().parents[1]/'test-results'
+        output.mkdir(exist_ok=True)
+        page.locator('#modal-host .modal').screenshot(path=str(output/'frame-picker-select-while-rendering.png'))
+    choice.click()
     expect(page.locator('iframe.render-frame')).to_have_count(0)
     expect(page.locator('#activity')).to_be_hidden()
     page.click('#save-setup')

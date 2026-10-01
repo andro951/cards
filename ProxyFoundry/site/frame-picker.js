@@ -15,7 +15,7 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
   const body=$('.modal-body',dialog);
   const status=document.createElement('p');
   status.setAttribute('role','status');
-  status.textContent='Building frame previews…';
+  status.textContent='Building frame previews… You can choose a frame now.';
   body.append(status);
 
   const gallery=document.createElement('div');
@@ -29,6 +29,11 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
   const previewBlobs=new Map();
   const urls=[];
   const byId=new Map(choices.map(choice=>[choice.id,choice]));
+  function selectChoice(choice){
+    controller.abort();
+    onSelect(choice.id,previewBlobs.get(choice.id));
+    closeModal();
+  }
   function choiceButton(choice){
     const button=document.createElement('button');
     button.type='button';
@@ -42,7 +47,7 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
     const label=document.createElement('strong');
     label.textContent=choice.name+(choice.id===selected?' · selected':'');
     button.append(label);
-    button.onclick=()=>{controller.abort();onSelect(choice.id,previewBlobs.get(choice.id));closeModal();};
+    button.onclick=()=>selectChoice(choice);
     return button;
   }
   for(const choice of choices){
@@ -84,12 +89,21 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
       image.style.width='170px';
       image.style.maxWidth='100%';
       image.hidden=true;
+      const choice=represented.find(choice=>choice.id===selected)||represented[0];
+      const preview=document.createElement('button');
+      preview.type='button';preview.className='button quiet';
+      preview.setAttribute('aria-label','Choose '+choice.name+' from preview');
+      preview.style.width='170px';
+      preview.style.minHeight='238px';
+      preview.style.padding='0';
+      preview.onclick=()=>selectChoice(choice);
+      const loading=document.createElement('span');loading.textContent='Rendering…';loading.className='muted';
+      preview.append(image,loading);
       const inspect=document.createElement('button');
       inspect.type='button';inspect.className='button quiet';inspect.title='Enlarge preview';
-      inspect.disabled=true;inspect.append(image);
+      inspect.textContent='Enlarge preview';inspect.disabled=true;
       inspect.onclick=()=>{zoomImage.src=image.src;document.body.append(zoom);};
-      const loading=document.createElement('span');loading.textContent='Rendering…';loading.className='muted';
-      tile.append(inspect,loading,...buttons);
+      tile.append(preview,...buttons,inspect);
       gallery.append(tile);
       rows.set(target.choice,{buttons,image,loading});
       const row=rows.get(target.choice);
