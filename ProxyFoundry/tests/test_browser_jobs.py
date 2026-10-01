@@ -48,3 +48,17 @@ def test_completed_jobs_release_memory_and_keep_durable_results(tmp_path):
         ident=ident or result;jobs.run_pending()
     assert len(jobs.jobs)==20
     assert ident not in jobs.jobs and jobs.get(ident)['result']=={'saved':'result'}
+
+
+
+def test_quota_failure_has_recovery_guidance_and_durable_job_result(tmp_path):
+    from foundry.browser import browser_error
+    assert 'Completed images are saved' in browser_error(OSError(51,'Full'))
+    assert browser_error(OSError(5,'Other')).endswith('Other')
+    store=Store(tmp_path/'workspace');jobs=BrowserJobs(store)
+    def fail(update,cancel):raise OSError(51,'Full')
+    ident=jobs.start('Quota recovery',fail)['id'];jobs.run_pending()
+    saved=jobs.get(ident)
+    assert saved['state']=='failed' and 'Workspace storage is full' in saved['error']
+    assert 'workspace folder' in saved['message']
+    assert BrowserJobs(store).get(ident)['error']==saved['error']

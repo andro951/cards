@@ -15,6 +15,6 @@ See [browser operation and recovery](BROWSER_WEBSITE.md), [template model](TEMPL
 
 ## Verification
 
-The latest routine run passed 502 tests with no skips in the selected group. Six Node adapter/helper tests and JavaScript syntax checks passed. Real static Chromium tests cover import/setup/generation/review/export/reload under `/cards/`, explicit template validation, job cancellation, version mismatch handling, and storage permission/quota/recovery scenarios. The separate 100-image stress test is recorded in the final verification report when it finishes.
+The latest routine run passed 503 tests with no skips in the selected group. Six Node adapter/helper tests and JavaScript syntax checks passed. Real static Chromium tests cover import/setup/generation/review/export/reload under `/cards/`, explicit template validation, job cancellation, version mismatch handling, and storage permission/quota/recovery scenarios. The separate 100-image stress test is recorded in the final verification report when it finishes.
 
 Historical v58 integration evidence is in `CARD_TOOLS_V58_UPDATE.md`. The pinned Card Tools vendor verifier still passes; vendor code was not duplicated or modified for these repairs.

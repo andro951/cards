@@ -4,7 +4,7 @@ Updated 2026-10-01. This replaces the obsolete early integration checkpoint.
 
 The final product is a static website with the engine running in the browser. The local preview launcher serves static files for development and offline-style local use; there is no hosted application server.
 
-- Routine pytest gate: 502 passed, 0 failed, 0 skipped in the selected group (287.41 seconds).
+- Routine pytest gate: 503 passed, 0 failed, 0 skipped in the selected group (188.42 seconds).
 - JavaScript syntax and six Node adapter/helper checks passed.
 - Actual static Chromium workflow and template validation checks passed.
 - Seven browser storage checks passed, including selected-folder reconnection, tab ownership, binary ZIP persistence, interrupted generation, quota recovery, file rename/log rotation, and cached file metadata invalidation.

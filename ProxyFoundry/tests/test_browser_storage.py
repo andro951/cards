@@ -167,12 +167,13 @@ def test_storage_quota_error_is_readable_diagnosed_and_upload_can_retry(static_b
       const retry=await ui.blobRequest('/api/uploads',new Uint8Array(bytes),'image/png');
       const image=await fetch('/api/assets/'+retry.id);return {failed,retry:{width:retry.width,height:retry.height},bytes:(await image.arrayBuffer()).byteLength};
     }""",list(buffer.getvalue()))
-    assert result['failed']['status']==500 and result['failed']['body']['error']
+    assert result['failed']['status']==507 and 'Workspace storage is full' in result['failed']['body']['error']
     assert result['retry']=={'width':120,'height':160} and result['bytes']>0
     page.get_by_role('link',name='Settings',exact=True).click()
     page.get_by_role('button',name='Download Diagnostics',exact=True).wait_for(timeout=30000)
     entries=page.evaluate("async()=>{const diagnostics=await import('/site/diagnostics.js');return JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'));}")
-    assert any('QuotaExceededError' in row['detail'] for row in entries['entries'])
+    assert any('QuotaExceededError' in row['detail'] and 'quota' in row['detail'] for row in entries['entries'])
+    assert not any('NotFoundError' in row['detail'] for row in entries['entries'])
 
 
 

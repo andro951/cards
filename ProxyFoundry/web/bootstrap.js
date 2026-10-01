@@ -134,7 +134,10 @@ else{
           port.postMessage({type:'response',id:data.id,...result},result.body?.buffer?[result.body.buffer]:[]);
         }
         catch(error){
-          recordDiagnostic('workspace storage',`${error.name}: ${error.message}`);
+          if(error.name!=='NotFoundError'){
+            const estimate=error.name==='QuotaExceededError'?await navigator.storage.estimate().catch(()=>null):null;
+            recordDiagnostic('workspace storage',`${error.name}: ${error.message} · ${data.url}${estimate?' · '+JSON.stringify(estimate):''}`);
+          }
           const status=error.name==='NotFoundError'?404:error.name==='NotAllowedError'?403:error.name==='InvalidModificationError'?409:error.name==='QuotaExceededError'?507:500;
           const body=new TextEncoder().encode(JSON.stringify({error:error.message}));
           port.postMessage({type:'response',id:data.id,status,mime:'application/json',body},[body.buffer]);

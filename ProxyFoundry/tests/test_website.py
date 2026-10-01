@@ -436,7 +436,7 @@ def request(app, method, url, body, headers):
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
-            browser=playwright.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000})
+            context=playwright.chromium.launch_persistent_context(str(tmp_path/'profile'),headless=True,viewport={'width':1440,'height':1000});page=context.pages[0]
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
@@ -458,18 +458,18 @@ def request(app, method, url, body, headers):
                 data=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 failure=page.locator('.toast.error').all_text_contents()
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
-                (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
+                (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()'),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
                 assert data['status']=='ready',{'toasts':failure,'saved':len(saved),'faces':[(card['name'],face.get('error')) for card in data['cards'] for face in card['faces'] if face.get('error')]}
                 assert data['summary']['faces']>=100 and data['summary']['rendered']==data['summary']['faces']
                 page.get_by_role('button',name='View deck',exact=True).click()
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 page.screenshot(path=str(evidence/'full-deck-browser-grid.png'),full_page=True)
-                report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved)}
+                report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()')}
                 (evidence/'full-deck-browser-summary.json').write_text(json.dumps(report,indent=2))
                 page.reload(wait_until='domcontentloaded');page.locator('.badge.ready').wait_for(timeout=90000)
                 previous=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 assert previous['summary']['rendered']==data['summary']['rendered']
-            finally:browser.close()
+            finally:context.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 

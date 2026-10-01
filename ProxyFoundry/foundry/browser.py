@@ -20,6 +20,12 @@ from .storage import Store
 from . import server
 
 
+def browser_error(exc):
+    if isinstance(exc,OSError) and exc.errno==51:
+        return 'Workspace storage is full. Completed images are saved. Free space or remove unused decks, or export a backup and move to a workspace folder, then retry.'
+    return str(exc)
+
+
 class BrowserHeaders(dict):
     """Fetch Headers are lowercase; the HTTP handler uses canonical names."""
 
@@ -91,7 +97,7 @@ class BrowserJobs:
                 job.update(state='done',result=result,message='Complete')
             except Exception as exc:
                 job.update(state='cancelled' if job['cancelled'] else 'failed',
-                           error=str(exc),message=str(exc),trace=traceback.format_exc())
+                           error=browser_error(exc),message=browser_error(exc),trace=traceback.format_exc())
             finally:
                 job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
                 completed=[key for key,row in self.jobs.items() if row['state'] in {'done','failed','cancelled'}]
@@ -242,6 +248,8 @@ def request(app, method, url, body=b'', headers=None):
         handler.respond({'error': str(exc)}, 400)
     except FileNotFoundError as exc:
         handler.respond({'error': str(exc)}, 404)
+    except OSError as exc:
+        handler.respond({'error': browser_error(exc)}, 507 if exc.errno==51 else 500)
     except Exception as exc:
         app.log.exception('Browser request failed: %s', path)
         handler.respond({'error': str(exc)}, 500)
