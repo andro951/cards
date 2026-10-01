@@ -14,7 +14,7 @@ export async function api(path,data,method='POST'){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
   const r=await fetch(path,opt);const text=await r.text();let result;
   try{result=JSON.parse(text)}catch(error){
-    recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.slice(0,300)}`);
+    recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.length} characters; ${error.message}; start=${text.slice(0,300)}; end=${text.slice(-300)}`);
     throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
   }
   if(!r.ok)throw new Error(result.error||'Request failed.');return result;

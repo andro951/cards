@@ -47,11 +47,15 @@ class TrackedResponse(dict):
         live_responses -= 1
 original_request = request
 def request(app, method, url, body, headers):
+    if str(url)=='/api/__test__/large-json':return {'status':200,'mime':'application/json','body':json.dumps({'value':'é🔥'*250000}).encode(),'headers':{}}
+    if str(url)=='/api/__test__/malformed-json':return {'status':200,'mime':'application/json','body':b'broken{','headers':{}}
     if str(url).startswith('/api/__test__/image'):
         return {'status':200,'mime':'image/png','body':bytes([int(str(url).split('=')[1])])*1024*1024,'headers':{}}
     return original_request(app, method, url, body, headers)
 '''
     source=source.replace('def browser_request(method, url, body, headers):',tracking+'\ndef browser_request(method, url, body, headers):')
+    source=source.replace("let responseBody=bytes;","let responseBody=bytes;if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');")
+    source=source.replace("if(method==='POST')await mount.syncfs();","metadata.headers['X-Test-Body-Type']=typeof responseBody;if(method==='POST')await mount.syncfs();")
     source=source.replace('last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))',
                           "last_response = TrackedResponse(request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")
     source=source.replace('self.onmessage=event=>{',"self.onmessage=event=>{\n  if(event.data.url==='/api/__test__/crash')throw new Error('Injected engine crash');")
@@ -85,6 +89,17 @@ def request(app, method, url, body, headers):
                   }
                   return rows;
                 }''')
+                large=page.evaluate('''async()=>{
+                  const rows=[];
+                  for(let i=0;i<8;i++){
+                    const response=await fetch('/api/__test__/large-json',{method:i%2?'POST':'GET'});
+                    const data=await response.json();rows.push({type:response.headers.get('X-Test-Body-Type'),length:data.value.length,start:data.value.slice(0,3)});
+                  }
+                  const broken=await fetch('/api/__test__/malformed-json');
+                  return {rows,broken:{status:broken.status,error:(await broken.json()).error}};
+                }''')
+                assert large['rows']==[{'type':'string','length':750000,'start':'é🔥'}]*8
+                assert large['broken']['status']==500 and 'Invalid engine JSON' in large['broken']['error']
                 assert len(result)==120
                 for i,row in enumerate(result):
                     assert row=={'live':'1','status':200,'length':1024*1024,'first':i,'last':i},row
@@ -447,6 +462,16 @@ def request(app, method, url, body, headers):
                 assert original['cards'] and any(card['name']=='Syr Gwyn, Hero of Ashvale' for card in original['cards'])
                 page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/__test__/expand-deck/'+ui.state.activeDeck.id,{});}")
                 page.reload(wait_until='domcontentloaded');page.locator('#generate-deck').wait_for(timeout=90000)
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.on('console',lambda message:print('Browser console: '+message.text,flush=True) if message.type=='error' else None)
+                def capture(response):
+                    if '/api/decks/' not in response.url or response.request.method!='GET':return
+                    raw=b''
+                    try:
+                        raw=response.body();json.loads(raw)
+                    except Exception as error:
+                        (evidence/'full-deck-invalid-response.json').write_text(json.dumps({'url':response.url,'status':response.status,'error':str(error),'length':len(raw),'raw':raw.decode('utf-8',errors='replace')},indent=2),encoding='utf-8')
+                page.on('response',capture)
                 saved=[]
                 def progress(response):
                     if response.request.method=='POST' and '/api/render-sessions/' in response.url and response.status==200:
@@ -455,14 +480,17 @@ def request(app, method, url, body, headers):
                 page.on('response',progress)
                 page.click('#generate-deck')
                 page.wait_for_function("() => document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=3600000)
-                data=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 failure=page.locator('.toast.error').all_text_contents()
+                (evidence/'full-deck-browser-terminal.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
+                data=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()'),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
                 assert data['status']=='ready',{'toasts':failure,'saved':len(saved),'faces':[(card['name'],face.get('error')) for card in data['cards'] for face in card['faces'] if face.get('error')]}
                 assert data['summary']['faces']>=100 and data['summary']['rendered']==data['summary']['faces']
                 page.get_by_role('button',name='View deck',exact=True).click()
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.locator('.card-grid img').first.wait_for(timeout=90000)
+                page.wait_for_function("()=>[...document.querySelectorAll('.card-grid img')].slice(0,4).every(image=>image.complete&&image.naturalWidth>0)",timeout=90000)
                 page.screenshot(path=str(evidence/'full-deck-browser-grid.png'),full_page=True)
                 report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()')}
                 (evidence/'full-deck-browser-summary.json').write_text(json.dumps(report,indent=2))

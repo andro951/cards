@@ -96,8 +96,14 @@ async function handle(event){
     saved=python.globals.get('last_response');
     content=saved.get('body');
     const bytes=content.toJs();
+    let responseBody=bytes;
+    //JSON crosses both message channels as immutable text, never a transferred buffer.
+    if(metadata.mime==='application/json'&&!metadata.file){
+      responseBody=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+      try{JSON.parse(responseBody);}catch(error){throw new Error(`Invalid engine JSON (${url}, ${bytes.length} bytes): ${error.message}`);}
+    }
     if(method==='POST')await mount.syncfs();
-    self.postMessage({type:'response',id,...metadata,body:bytes},[bytes.buffer]);
+    self.postMessage({type:'response',id,...metadata,body:responseBody},responseBody.buffer?[responseBody.buffer]:[]);
   }
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
   finally{
