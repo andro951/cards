@@ -18,11 +18,13 @@ the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
 requires `PF_DECK_STRESS=1`; ordinary browser runs leave it out. The grouping lives
 in [`scripts/test_policy.py`](../scripts/test_policy.py).
 
-CI runs the routine group plus two focused actual static Chromium production
+CI runs the routine group plus three focused actual static Chromium production
 checks on every relevant push. The remaining extended group runs only when
 **Run workflow → full_sweep** is selected, or when selected locally because a
 change affects it. Production paths are verified in the browser, not solely
-through the old local application's backend.
+through the old local application's backend. The focused gate includes response
+integrity and response lifetime checks, while the long 100-image run remains
+opt-in.
 
 Run routine tests with:
 
