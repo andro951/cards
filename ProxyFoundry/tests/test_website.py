@@ -299,3 +299,55 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look):
                 context.close();browser.close()
     finally:
         server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+def test_static_browser_job_progress_cancellation_and_reload(tmp_path):
+    from playwright.sync_api import sync_playwright
+    import shutil
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
+    shutil.copytree(ROOT/'dist',tmp_path/'site')
+    worker=tmp_path/'site/web/engine-worker.js'
+    source=worker.read_text()
+    injected="""
+original_request = request
+def request(app, method, url, body, headers):
+    if str(url) == '/api/__test__/slow-job':
+        import time
+        def operation(update, cancel):
+            for i in range(40):
+                if cancel():raise ValueError('Cancelled at checkpoint')
+                time.sleep(.1)
+                update(i+1,40,'Saved item '+str(i+1))
+            return {'saved':40}
+        result=app.jobs.start('Slow browser test',operation)
+        return {'status':200,'mime':'application/json','body':json.dumps(result).encode(),'headers':{}}
+    return original_request(app, method, url, body, headers)
+"""
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'))
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate("""async()=>{
+                  const ui=await import('/site/ui.js');
+                  const {id}=await ui.api('/api/__test__/slow-job',{});
+                  const rows=[];
+                  for(let i=0;i<100;i++){
+                    const job=await ui.api('/api/jobs/'+id);rows.push({state:job.state,done:job.done});
+                    if(job.state==='running'&&job.done>=2)await ui.api('/api/jobs/'+id+'/cancel',{});
+                    if(['done','cancelled','failed'].includes(job.state))return {id,job,rows};
+                    await new Promise(resolve=>setTimeout(resolve,50));
+                  }
+                  throw new Error('Browser job never finished');
+                }""")
+                assert any(row['state']=='running' and 0<row['done']<40 for row in result['rows'])
+                assert result['job']['state']=='cancelled' and result['job']['done']<40
+                page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+                previous=page.evaluate("async id=>(await fetch('/api/jobs/'+id)).json()",result['id'])
+                assert previous['state']=='cancelled' and previous['done']==result['job']['done']
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)

@@ -7,6 +7,8 @@ from __future__ import annotations
 import json
 import mimetypes
 import re
+import sqlite3
+from contextlib import contextmanager
 import time
 import traceback
 import urllib.parse
@@ -28,43 +30,91 @@ class BrowserHeaders(dict):
         return super().get(str(key).lower(), default)
 
 
-class BrowserJobs:
-    def __init__(self, store):
-        self.store = store
-        self.jobs = {}
+class BrowserStore(Store):
+    """Persist a complete SQLite snapshot after each mutation, never after reads."""
+    def __init__(self,home,persist=lambda path:None):
+        self.persist=persist
+        super().__init__(home)
 
-    def start(self, kind, operation):
-        ident = uid()
-        job = {'id': ident, 'kind': kind, 'state': 'running', 'done': 0,
-               'total': 0, 'message': 'Starting', 'events': [], 'cancelled': False}
-        self.jobs[ident] = job
+    @contextmanager
+    def connect(self):
+        changed=False
+        with super().connect() as db:
+            yield db
+            changed=db.total_changes>0
+        if changed:self.checkpoint()
 
-        def update(done, total, message):
-            job.update(done=done, total=total, message=str(message))
-            job['events'].append({'at': time.time(), 'done': done, 'total': total,
-                                  'message': str(message)})
-
+    def checkpoint(self):
+        snapshot=self.home/'.checkpoint.sqlite3'
         try:
-            job['result'] = operation(update, lambda: job['cancelled'])
-            job.update(state='done', message='Complete')
-        except Exception as exc:
-            job.update(state='failed', message=str(exc), error=str(exc),
-                       trace=traceback.format_exc())
-        job['finishedAt'] = time.time()
-        return {'id': ident}
+            with sqlite3.connect(self.db_path) as source, sqlite3.connect(snapshot) as destination:
+                source.backup(destination)
+            self.persist(str(snapshot))
+        finally:snapshot.unlink(missing_ok=True)
 
-    def get(self, ident):
+
+class BrowserJobs:
+    """Queue Python work; the browser's separate control plane stays responsive."""
+    def __init__(self, store, publish=lambda job:None, cancelled=lambda ident:False):
+        self.store=store;self.jobs={};self.pending={}
+        self.publish=publish;self.cancelled=cancelled
+
+    def _publish(self,job):
+        (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
+            json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
+        self.publish(dict(job))
+
+    def start(self,kind,operation):
+        ident=uid()
+        job={'id':ident,'kind':kind,'state':'queued','done':0,'total':0,
+             'message':'Queued','events':[],'cancelled':False,'startedAt':time.time()}
+        self.jobs[ident]=job;self.pending[ident]=operation
+        self._publish(job)
+        return {'id':ident}
+
+    def run_pending(self):
+        for ident in list(self.pending):
+            operation=self.pending.pop(ident);job=self.jobs[ident]
+            def cancel():
+                job['cancelled']=job['cancelled'] or self.cancelled(ident)
+                return job['cancelled']
+            def update(done,total,message):
+                job.update(done=done,total=total,message=str(message))
+                job['events'].append({'at':time.time(),'done':done,'total':total,'message':str(message)})
+                job['events']=job['events'][-200:]
+                self._publish(job)
+            try:
+                if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+                job.update(state='running',message='Starting');self._publish(job)
+                result=operation(update,cancel)
+                if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+                job.update(state='done',result=result,message='Complete')
+            except Exception as exc:
+                job.update(state='cancelled' if job['cancelled'] else 'failed',
+                           error=str(exc),message=str(exc),trace=traceback.format_exc())
+            finally:
+                job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
+
+    def get(self,ident):
         if ident not in self.jobs:
-            raise ValidationError('This job belongs to an earlier browser session.')
-        return dict(self.jobs[ident])
+            saved=self.store.home/'logs'/('job-'+ident+'.json')
+            if not saved.is_file():raise ValidationError('This task belongs to an earlier browser session. Completed images are saved.')
+            job=json.loads(saved.read_text(encoding='utf-8'))
+            if job['state'] in {'running','queued'}:
+                job.update(state='failed',message='Task interrupted by browser reload. Completed work is saved.',error='Task interrupted by browser reload. Completed work is saved.')
+            return job
+        job=self.jobs[ident]
+        if job['state']=='done' and 'result' not in job:
+            return json.loads((self.store.home/'logs'/('job-'+ident+'.json')).read_text(encoding='utf-8'))
+        return dict(job)
 
-    def cancel(self, ident):
-        if ident in self.jobs:
-            self.jobs[ident]['cancelled'] = True
-        return {'ok': True}
+    def cancel(self,ident):
+        if ident in self.jobs:self.jobs[ident]['cancelled']=True
+        return {'ok':True}
 
     def close(self):
-        pass
+        for job in self.jobs.values():
+            if job['state'] in {'running','queued'}:job['cancelled']=True
 
 
 class BrowserHandler(server.Handler):
@@ -106,7 +156,10 @@ class BrowserHandler(server.Handler):
                 content=source.read(count)
             return self.send_bytes(content,kind,206,filename=filename,headers={
                 'Accept-Ranges':'bytes','Content-Range':f'bytes {start}-{start+len(content)-1}/{size}'})
-        self.send_bytes(path.read_bytes(),kind,filename=filename)
+        if self.app.store.home in path.parents:
+            self.send_bytes(b'',kind,filename=filename)
+            self.response['file']=path.relative_to(self.app.store.home).as_posix()
+        else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
         if path == '/api/backups/inspect':
@@ -157,10 +210,10 @@ class BrowserHandler(server.Handler):
         return super().get(path, query)
 
 
-def create_app(home, transport, origin):
-    server.Jobs = BrowserJobs
-    store = Store(Path(home))
-    app = server.App(store, Network(store, transport=transport))
+def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None):
+    store = BrowserStore(Path(home),persist)
+    app = server.App(store, Network(store, transport=transport),
+                     jobs_factory=lambda store:BrowserJobs(store,publish,cancelled))
     app.origin = origin
     app.runtime_origin = origin
     app.runtime.parent_origin = origin

@@ -1,3 +1,4 @@
+import {WorkspaceFiles} from './workspace-files.js';
 import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
@@ -38,11 +39,42 @@ else{
   const owner=sessionStorage.getItem('pf-tab-owner')||crypto.randomUUID();
   sessionStorage.setItem('pf-tab-owner',owner);
   window.__pfOwner=owner;
-  navigator.serviceWorker.controller.postMessage({type:'owner',owner});
+  const announceOwner=()=>navigator.serviceWorker.controller?.postMessage({type:'owner',owner});
+  announceOwner();navigator.serviceWorker.addEventListener('controllerchange',announceOwner);
   const worker=new Worker('/web/engine-worker.js',{type:'module'});
   const {savedFolder}=await import('/web/storage-choice.js');
   const folder=await savedFolder();
+  if(folder&&await folder.queryPermission({mode:'readwrite'})!=='granted'){
+    message.textContent='Reconnect your workspace folder to open your saved decks.';
+    await new Promise(resolve=>{
+      const reconnect=document.createElement('button');reconnect.className='button primary';reconnect.textContent='Reconnect workspace folder';
+      reconnect.onclick=async()=>{
+        const permission=await folder.requestPermission({mode:'readwrite'});
+        if(permission==='granted'){reconnect.remove();alternative.remove();resolve();}
+        else message.textContent='Folder access was not granted. Reconnect to keep using this workspace.';
+      };
+      const alternative=document.createElement('button');alternative.className='button';alternative.textContent='Open separate browser workspace';
+      alternative.onclick=async()=>{
+        if(!window.confirm('Open the separate browser workspace? Your folder workspace will stay in its current location.'))return;
+        const {useBrowserStorage}=await import('/web/storage-choice.js');await useBrowserStorage();location.reload();
+      };
+      startup.append(reconnect,alternative);
+    });
+  }
+  if(!navigator.locks)throw new Error('This browser cannot safely lock your workspace. Open the site in a current browser.');
+  await new Promise(resolve=>{
+    navigator.locks.request('bulk-proxy-forge-workspace',{ifAvailable:true},async lock=>{
+      if(!lock){
+        message.textContent='This workspace is already open in another tab. Close that tab, then retry.';
+        const retry=document.createElement('button');retry.className='button';retry.textContent='Retry opening workspace';retry.onclick=()=>location.reload();startup.append(retry);return;
+      }
+      resolve();
+      await new Promise(()=>{});
+    }).catch(error=>{message.textContent=`Could not lock the workspace: ${error.message}`;});
+  });
+  const files=new WorkspaceFiles(folder||await navigator.storage.getDirectory());
   const pending=new Map();
+  const jobs=new Map();
   let engineFailure=null;
   let readyResolve;
   let readyReject;
@@ -59,8 +91,9 @@ else{
   worker.onerror=event=>failEngine(event.message||'The card engine stopped. Reload the page to continue; completed images are saved.');
   worker.onmessageerror=()=>failEngine('The card engine response could not be read. Reload the page to continue; completed images are saved.');
 
-  worker.onmessage=event=>{
+  worker.onmessage=async event=>{
     const data=event.data;
+    if(data.type==='job'){jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
     if(data.type==='status'){message.textContent=data.message;setEngineStatus(data.message);}
     if(data.type==='ready'){setEngineStatus('Ready');readyResolve();}
     if(data.type==='fatal')failEngine(data.message);
@@ -68,18 +101,46 @@ else{
       const port=pending.get(data.id);
       pending.delete(data.id);
       if(data.type==='error')recordDiagnostic('engine request failed',data.message);
-      if(port){port.postMessage(data,data.body?[data.body.buffer]:[]);port.close();}
+      if(port){
+        if(data.file){
+          try{data.body=await files.file(data.file);}
+          catch(error){data.type='error';data.message=`Saved workspace file could not be read: ${error.message}`;}
+        }
+        port.postMessage(data,data.body?.buffer?[data.body.buffer]:[]);port.close();
+      }
     }
   };
-  worker.postMessage({type:'start',folder});
+  worker.postMessage({type:'start',folder,owner});
 
   navigator.serviceWorker.addEventListener('message',async event=>{
     const data=event.data;
+    if(data.type==='owner-probe'){event.ports[0]?.postMessage({owner});event.ports[0]?.close();return;}
     if(data.type!=='request')return;
     const port=event.ports[0];
     try{
-      await ready;
       if(engineFailure)throw new Error(engineFailure);
+      if(data.url.startsWith('/workspace-io?')){
+        try{
+          const result=await files.respond(data);
+          port.postMessage({type:'response',id:data.id,...result},result.body?.buffer?[result.body.buffer]:[]);
+        }
+        catch(error){
+          recordDiagnostic('workspace storage',`${error.name}: ${error.message}`);
+          const status=error.name==='NotFoundError'?404:error.name==='NotAllowedError'?403:error.name==='InvalidModificationError'?409:error.name==='QuotaExceededError'?507:500;
+          const body=new TextEncoder().encode(JSON.stringify({error:error.message}));
+          port.postMessage({type:'response',id:data.id,status,mime:'application/json',body},[body.buffer]);
+        }
+        port.close();return;
+      }
+      await ready;
+      const match=/^\/api\/jobs\/([-a-f0-9]{36})(\/cancel|\/control)?(?:\?.*)?$/.exec(data.url);
+      if(match&&jobs.has(match[1])){
+        const job=jobs.get(match[1]);
+        if(match[2]==='/cancel')job.cancelled=true;
+        const result=match[2]==='/cancel'?{ok:true}:match[2]==='/control'?{cancelled:job.cancelled}:job;
+        const body=new TextEncoder().encode(JSON.stringify(result));
+        port.postMessage({type:'response',id:data.id,status:200,mime:'application/json',body},[body.buffer]);port.close();return;
+      }
       pending.set(data.id,port);
       worker.postMessage(data,data.body?[data.body]:[]);
     }

@@ -37,10 +37,10 @@ MAX_BODY = 64 * 1024 ** 2
 
 
 class App:
-    def __init__(self, store=None, network=None):
+    def __init__(self, store=None, network=None, *, jobs_factory=Jobs):
         self.store = store or Store()
         self.ws = Workspace(self.store, network)
-        self.jobs = Jobs(self.store)
+        self.jobs = jobs_factory(self.store)
         self.orders = Orders(self.ws)
         self.tools = CardTools(self.ws)
         self.runtime = Runtime(self.ws.net)

@@ -240,7 +240,7 @@ def test_trash_ui_and_missing_generation_contracts():
         assert token in settings
     assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
     assert 'Delete deck permanently' in deck
-    assert 'before.upgradeRequired' in render
+    assert 'force=force||' not in render
     assert 'download-diagnostics' in settings and '/api/diagnostics.zip' in settings and 'downloadBlob' in settings
 
 
@@ -483,9 +483,8 @@ def test_review_images_action_is_in_deck_menu():
     assert '/review-images' in source
     handler=source[source.index("$('#download-review-images').onclick"):source.index("$('#trash-deck').onclick")]
     assert 'needsGeneration' in handler
-    assert "await generate(current)" in handler
-    assert handler.index("await generate(current)") < handler.index("/review-images")
-    assert 'Some card images could not be generated.' in handler
+    assert 'await generate(current)' not in handler
+    assert 'Generate images before downloading review images.' in handler
 
 
 def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
