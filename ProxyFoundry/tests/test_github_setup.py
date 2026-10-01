@@ -114,6 +114,19 @@ def test_four_symbols_live_art_and_icon_are_staged(tmp_path):
     assert s['githubSetupFolder'] == remote.url
 
 
+def test_art_subfolder_link_imports_parent_symbols_back_and_card_data(tmp_path):
+    remote=BundleRemote(back='icon',data={'version':1,'cards':[{'name':'Sol Ring','nickname':'The Colt'}]})
+    ws=workspace(tmp_path,remote)
+    result=import_github_setup(ws,{'url':remote.url+'/art'})
+    assert result['settings']['githubSetupFolder']==remote.url
+    assert result['settings']['source']['githubFolder']==remote.url+'/art'
+    assert result['summary']=={'art':'github','symbols':'folder','back':'icon','data':1}
+    assert result['cardData']==[{'name':'Sol Ring','nickname':'The Colt'}]
+    assert len(set(result['settings']['symbols'].values()))==4
+    assert result['warnings'] and 'parent project folder' in result['warnings'][0]
+    assert not any('raw.githubusercontent.com' in url and '/art/' in url for url in remote.calls)
+
+
 def test_direct_github_symbol_folder_import(tmp_path):
     remote=BundleRemote(art=False)
     ws=workspace(tmp_path,remote)

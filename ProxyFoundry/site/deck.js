@@ -1,6 +1,6 @@
 import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
-import {renderSetup,templateOptions,pickFile,rarities,cancelSetupPreviews} from './setup.js';
+import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
@@ -252,7 +252,6 @@ export async function showDeck(id,tab='cards'){
   cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
 }
 async function generate(d){
-  await cancelSetupPreviews();
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;

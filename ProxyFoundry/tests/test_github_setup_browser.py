@@ -12,7 +12,8 @@ from test_github_setup import BundleRemote
 pytestmark = pytest.mark.skipif(os.environ.get('PF_BROWSER') != '1', reason='Opt-in real Chromium tests')
 
 
-def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(browser_app):
+@pytest.mark.parametrize('suffix',['','/art'],ids=['project','art-subfolder'])
+def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(browser_app,suffix):
     app, server, page, errors = browser_app
     d = app.ws.create({'name': 'Bundle import', 'source': sf()['id']})
     original_card = app.ws.deck(d['id'])['cards'][0]
@@ -20,12 +21,13 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
         {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'The family business.'}
     ]})
     app.ws.net.transport = remote.transport
+    page.evaluate("import('/site/ui.js').then(m=>{m.state.bootstrap.browser=true})")
     page.goto(server.origin + '/#deck/' + d['id'] + '/setup')
     page.locator('#github-setup-button').wait_for()
     assert page.locator('#github-setup').evaluate('(el)=>el.nextElementSibling.id') == 'setup-fields'
     assert 'sol_ring.png' in page.locator('#github-setup pre').inner_text()
     page.fill('#deck-artist', 'Artist stays')
-    page.fill('#github-setup-folder', remote.url)
+    page.fill('#github-setup-folder', remote.url+suffix)
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
     expect(page.locator('[data-mode=github]')).to_have_class('choice selected')

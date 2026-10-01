@@ -2,11 +2,8 @@ import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
 import {originalArtist,composeCredit} from './credits.js';
-import {frameChoices,openFramePicker} from './frame-picker.js';
-import {renderTemplatePreviews} from './render.js';
+import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
-let activeSetupPreview=null;
-export async function cancelSetupPreviews(){if(activeSetupPreview)await activeSetupPreview();}
 const symbolImage=/\.(png|jpe?g|webp|gif|svg)$/i;
 export function symbolFolderFiles(files){
   const found={},unexpected=[];
@@ -213,15 +210,6 @@ export function renderSetup(root,deck,onSaved){
       stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()});
     }finally{linkDataButton.disabled=false;}
   });
-  let previewQueue=Promise.resolve(),previewCancelled=false;
-  const previewController=new AbortController();
-  const cancelPreviews=async()=>{
-    previewCancelled=true;previewController.abort();
-    await previewQueue.catch(()=>{});
-    if(activeSetupPreview===cancelPreviews)activeSetupPreview=null;
-  };
-  activeSetupPreview=cancelPreviews;
-  const previewCache=new Map();
   const redrawFrames=()=>{
     const host=$('#frame-choices',root);
     host.replaceChildren();
@@ -241,21 +229,8 @@ export function renderSetup(root,deck,onSaved){
       const picture=document.createElement('img');
       picture.alt='Current '+(state.bootstrap.groups[group]||group)+' frame preview';
       picture.style.cssText='height:220px;max-width:100%;object-fit:contain;display:block;margin:12px auto';
-      const current=deck.cards.flatMap(card=>card.faces).find(face=>face.group===group&&face.compiled?.render?.url);
-      if(current && selected==='auto')picture.src=current.compiled.render.url;
-      else if(state.bootstrap.browser){
-        const loading=document.createElement('p');loading.textContent='Building preview…';loading.className='muted';
-        row.append(loading);
-        const key=group+':'+selected;
-        if(previewCache.has(key)){picture.src=previewCache.get(key);loading.remove();}
-        else previewQueue=previewQueue.then(async()=>{
-          if(!row.isConnected||previewCancelled||state.busy)return;
-          await renderTemplatePreviews(deck.id,group,s,stagedCardData,(target,blob)=>{
-            const url=URL.createObjectURL(blob);previewCache.set(key,url);
-            if(row.isConnected){picture.src=url;loading.remove();}
-          },()=>{},previewController.signal,[selected]);
-        }).catch(error=>{if(row.isConnected)loading.textContent=error.message;});
-      }else picture.alt='Render this deck to see the selected frame.';
+      picture.src=framePlaceholder(s);
+      picture.alt='Card back placeholder for '+(state.bootstrap.groups[group]||group);
       const button=document.createElement('button');
       button.type='button';
       button.className='button small';
@@ -263,10 +238,8 @@ export function renderSetup(root,deck,onSaved){
       button.textContent='Change Frame';
       button.onclick=()=>attempt(async()=>{
         readSettings();
-        await cancelPreviews();
-        openFramePicker(deck,group,s,stagedCardData,selected,(choice,blob)=>{
+        openFramePicker(deck,group,s,stagedCardData,selected,choice=>{
           s.templateRules[group]=choice;
-          if(blob)previewCache.set(group+':'+choice,URL.createObjectURL(blob));
           redrawFrames();
           mark();
         });
@@ -279,7 +252,7 @@ export function renderSetup(root,deck,onSaved){
   redrawFrames();
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
-    s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;mark();
+    s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;redrawFrames();mark();
   },{onBusy:busy=>{
     for(const id of ['save-setup','save-generate'])$('#'+id,root).disabled=busy;
   },allowNone:true});
@@ -323,7 +296,7 @@ export function renderSetup(root,deck,onSaved){
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
-      redrawSource();redrawSymbols();redrawBack();mark();
+      redrawSource();redrawSymbols();redrawBack();redrawFrames();mark();
     }
   });
   $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
@@ -366,7 +339,6 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     s.templateRules.token=$('#token-frame',root).value;
   }
   async function save(generate){
-    await cancelPreviews();
     if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
     if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
     readSettings();

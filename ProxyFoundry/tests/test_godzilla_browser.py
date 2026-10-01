@@ -1,5 +1,4 @@
 import json
-import hashlib
 import os
 import threading
 from pathlib import Path
@@ -60,64 +59,34 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     assert values['flavor_text']=='Linked flavor'
 
 
-def test_frame_can_be_selected_before_the_preview_plan_arrives(browser_app):
-    app,server,page,errors=browser_app
-    deck=app.ws.create({'name':'Immediate frame choice','source':'1 A Test Creature'})
-    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
-    requests=[];runtime=[]
-    page.route('**/api/render-sessions/template-previews',lambda route:requests.append(route))
-    page.on('request',lambda request:runtime.append(request.url) if '/api/runtime/prepare' in request.url else None)
-    page.click('[data-frame-group=standard]')
-    choice=page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True)
-    expect(choice).to_be_enabled()
-    choice.click()
-    expect(page.locator('#modal-host')).to_be_empty()
-    for route in requests:
-        route.fulfill(json={'targets':[{'choice':'godzilla-card'}],'previewErrors':{}})
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
-    assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
-    assert not runtime and not page.locator('iframe.render-frame').count()
-    assert not errors,errors
-
-
 @pytest.mark.parametrize('group,style,title',[('standard','godzilla-card','Godzilla full art · non-land'),('land','godzilla-land','Godzilla full art · land'),('basic-land','godzilla-land','Godzilla full art · land')],ids=['nonland','land','basic-land'])
-@pytest.mark.parametrize('selection',['label','preview'])
-def test_frame_selection_cancels_an_active_preview_renderer(browser_app,selection,group,style,title):
+def test_setup_and_frame_picker_use_static_backs_without_generating(browser_app,group,style,title):
     app,server,page,errors=browser_app
-    deck=app.ws.create({'name':'Cancel active frame preview','source':'1 A Test Creature'})
+    deck=app.ws.create({'name':'Static frame choice','source':'1 A Test Creature'})
     if group in {'land','basic-land'}:
-        card=deck['cards'][0]
-        card['scryfall'].update(type_line='Basic Land — Mountain' if group=='basic-land' else 'Land',colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
+        deck['cards'][0]['scryfall'].update(type_line='Basic Land — Mountain' if group=='basic-land' else 'Land',colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
         app.ws.store.put('decks',deck,deck['revision'])
+    requests=[]
+    page.on('request',lambda request:requests.append(request.url) if any(path in request.url for path in ['/api/render-sessions','/api/runtime/prepare','/runtime/host']) else None)
+    page.evaluate("import('/site/ui.js').then(m=>{m.state.bootstrap.browser=true})")
     page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
-    page.route('**/api/runtime/prepare',lambda route:route.fulfill(json={'id':'fake-runtime-job'}))
-    page.route('**/api/jobs/fake-runtime-job',lambda route:route.fulfill(json={'state':'done','kind':'runtime','message':'Complete','done':1,'total':1,'result':{}}))
-    page.route('**/runtime/host**',lambda route:route.fulfill(content_type='text/html',headers={'Content-Security-Policy':"script-src 'unsafe-inline'"},body='''<script>
-      const parentOrigin=new URL(location.href).searchParams.get('parent');
-      parent.postMessage({source:'pf-native-runtime',type:'ready'},parentOrigin);
-      addEventListener('message',event=>{
-        if(event.data.type==='render')parent.postMessage({source:'picker-test',type:'started'},parentOrigin);
-      });
-    </script>'''))
-    page.evaluate("window.__previewStarted=false; addEventListener('message',event=>{if(event.data?.source==='picker-test')window.__previewStarted=true;})")
+    back=app.ws.deck(deck['id'])['settings']['backAsset']
+    expect(page.locator('#frame-choices img')).to_have_attribute('src','/api/assets/'+back)
     page.click('[data-frame-group='+group+']')
-    expect(page.locator('iframe.render-frame')).to_have_count(1)
-    page.wait_for_function('()=>window.__previewStarted',timeout=15000)
-    expect(page.locator('#modal-host [role=status]')).to_contain_text('You can choose a frame now.')
-    choice=page.get_by_role('button',name=('Select '+title if selection=='label' else 'Choose '+title+' from preview'),exact=True)
+    images=page.locator('#modal-host img')
+    assert images.count()>1
+    assert all(src=='/api/assets/'+back for src in images.evaluate_all('(images)=>images.map(image=>image.getAttribute("src"))'))
+    choice=page.get_by_role('button',name='Select '+title,exact=True)
     expect(choice).to_be_enabled()
-    if selection=='preview':
-        expect(choice).to_contain_text('Rendering…')
-        output=Path(__file__).resolve().parents[1]/'test-results'
-        output.mkdir(exist_ok=True)
-        page.locator('#modal-host .modal').screenshot(path=str(output/('frame-picker-select-while-rendering-'+group+'.png')))
-    choice.click()
-    expect(page.locator('iframe.render-frame')).to_have_count(0)
-    expect(page.locator('#activity')).to_be_hidden()
+    output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+    page.locator('#modal-host .modal').screenshot(path=str(output/('static-frame-picker-'+group+'.png')))
+    choice.locator('img').click()
+    expect(page.locator('#modal-host')).to_be_empty()
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     assert app.ws.deck(deck['id'])['settings']['templateRules'][group]==style
+    assert not requests and not page.locator('iframe.render-frame').count()
+    assert not page.evaluate("import('/site/ui.js').then(m=>m.state.busy)")
     assert not errors,errors
 
 
@@ -150,52 +119,6 @@ def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path
                 picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
                 picture.save(output/(entry['name'].replace(' ','_')+'_godzilla.png'))
         finally:browser.close();server.shutdown();server.server_close();app.close()
-
-
-@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
-    store=Store(tmp_path/'native-picker')
-    network=Network(store)
-    remote=network._transport
-    def transport(url):
-        if 'api.scryfall.com' in url:
-            return json.dumps(sf()).encode(),'application/json',{}
-        if 'cards.scryfall.io' in url:
-            return png(),'image/png',{}
-        return remote(url)
-    network.transport=transport
-    app=App(store,network)
-    server=LocalServer(app)
-    threading.Thread(target=server.serve_forever,daemon=True).start()
-    deck=app.ws.create({'name':'Native picker','source':'1 A Test Creature'})
-    with sync_playwright() as playwright:
-        browser=playwright.chromium.launch(headless=True)
-        page=browser.new_page(viewport={'width':1440,'height':1000})
-        errors=[]
-        page.on('pageerror',lambda error:errors.append(str(error)))
-        try:
-            page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
-            page.click('[data-frame-group=standard]')
-            page.locator('#modal-host img:visible').first.wait_for(timeout=240000)
-            page.locator('#activity').wait_for(state='hidden',timeout=240000)
-            assert page.locator('#modal-host img:visible').count()>=2
-            page.wait_for_function("Array.from(document.querySelectorAll('#modal-host img')).filter(image=>image.offsetWidth>0).filter(image=>image.complete&&image.naturalWidth>0).length>=2",timeout=240000)
-            images=page.locator('#modal-host img:visible')
-            hashes=[hashlib.sha256(images.nth(index).screenshot()).hexdigest() for index in range(images.count())]
-            assert len(set(hashes))>=2,'Frame choices rendered identical PNGs.'
-            godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
-            expect(godzilla).to_be_enabled(timeout=240000)
-            output=Path(__file__).resolve().parents[1]/'test-results'
-            output.mkdir(exist_ok=True)
-            page.locator('#modal-host img:visible').first.screenshot(path=str(output/'godzilla-frame-preview.png'))
-            godzilla.click()
-            page.click('#save-setup')
-            expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
-            assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
-            assert not errors,errors
-        finally:
-            browser.close()
-            server.shutdown();server.server_close();app.close()
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')

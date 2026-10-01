@@ -249,6 +249,15 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         return row
 
     rows = folder_rows(loc['folder'])
+    if PurePosixPath(loc['folder']).name.lower()=='art' and not named_folder(rows,'art'):
+        parent=str(PurePosixPath(loc['folder']).parent)
+        if parent=='.':parent=''
+        parent_rows=folder_rows(parent)
+        if named_folder(parent_rows,'art')==loc['folder']:
+            loc={**loc,'folder':parent}
+            rows=parent_rows
+            root_url=base+('/'+quote(parent,safe='/') if parent else '')
+            warnings.append('The link points to the art folder. Imported setup from its parent project folder: '+root_url)
     data_row = named_file(rows, 'data.json')
     art_folder = named_folder(rows, 'art')
     # Do not fetch every art image here; the normal generation path stays live.
