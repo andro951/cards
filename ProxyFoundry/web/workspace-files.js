@@ -131,8 +131,19 @@ export class WorkspaceFiles {
             await this.close(destination);
             const file=await this.file(path);
             const target=await this.parent(destination);
-            const writer=await (await target.directory.getFileHandle(target.name,{create:true})).createWritable();
-            await file.stream().pipeTo(writer);
+            let existed=false;
+            try{await target.directory.getFileHandle(target.name);existed=true;}
+            catch(error){if(error.name!==`NotFoundError`)throw error;}
+            let writer;
+            try{
+                writer=await (await target.directory.getFileHandle(target.name,{create:true})).createWritable();
+                await file.stream().pipeTo(writer);
+            }
+            catch(error){
+                await writer?.abort().catch(()=>{});
+                if(!existed)await target.directory.removeEntry(target.name).catch(()=>{});
+                throw error;
+            }
             await directory.removeEntry(name);
             return {ok:true};
         }

@@ -8,10 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 503 | Every completed change |
-| Extended | 84 | Relevant changes or an explicit full sweep |
+| Routine | 505 | Every completed change |
+| Extended | 87 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 503 selected tests in 188.42 seconds. The
+The latest routine run passed all 505 selected tests in 225.18 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -43,7 +43,9 @@ $env:PF_BROWSER='1'
 Use `PF_DOM=1` for offline DOM tests, `PF_LIVE_CC=1` for real CardConjurer
 rendering, `PF_LIVE_GITHUB_SETUP=1` for the live GitHub smoke test, and
 `PF_LARGE_TRANSFER=1` for the multi-gigabyte archive, and `PF_DECK_STRESS=1`
-for the 100-image browser-session check. The Chromium tests also
+for the 100-image browser-session check. Use `PF_HEAP_BOUNDARY=1` for the
+2.2 GiB allocation check that verifies high-address binary, upload, filesystem
+job events and ASCII JSON integrity; it needs enough memory and remains in the extended group. The Chromium tests also
 need Playwright's Chromium installed; on Windows, set
 `PF_BROWSER_EXECUTABLE` and `PF_DOM_EXECUTABLE` to its executable path for the
 component tests.

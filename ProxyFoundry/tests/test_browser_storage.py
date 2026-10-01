@@ -177,6 +177,45 @@ def test_storage_quota_error_is_readable_diagnosed_and_upload_can_retry(static_b
 
 
 
+@pytest.mark.parametrize('existing_destination',[False,True])
+def test_failed_rename_preserves_source_and_destination_and_retries(static_browser,existing_destination):
+    directory,context,origin=static_browser
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
+    page.locator('#import-deck').wait_for(timeout=90000)
+    result=page.evaluate("""async existing=>{
+      const {WorkspaceFiles}=await import('/web/workspace-files.js');
+      const root=await (await navigator.storage.getDirectory()).getDirectoryHandle('rename-quota-test',{create:true});
+      const assets=await root.getDirectoryHandle('assets',{create:true}),files=new WorkspaceFiles(root);
+      const parameters=new URLSearchParams({offset:'0'});
+      await files.execute('write','assets/source.bin',parameters,new Uint8Array([4,5,6]));await files.close('assets/source.bin');
+      if(existing){await files.execute('write','assets/target.bin',parameters,new Uint8Array([1,2,3]));await files.close('assets/target.bin');}
+      const getDirectory=root.getDirectoryHandle.bind(root),getFile=assets.getFileHandle.bind(assets);
+      root.getDirectoryHandle=async(name,options)=>name==='assets'?assets:getDirectory(name,options);
+      let fail=true;
+      assets.getFileHandle=async(name,options)=>{
+        const handle=await getFile(name,options);
+        if(name==='target.bin'&&fail){
+          const create=handle.createWritable.bind(handle);
+          handle.createWritable=async options=>{
+            const saved=await create(options);
+            return new WritableStream({write:async()=>{await saved.abort();throw new DOMException('Injected rename quota','QuotaExceededError');}});
+          };
+        }
+        return handle;
+      };
+      const rename=new URLSearchParams({destination:'assets/target.bin'});
+      let error;try{await files.execute('rename','assets/source.bin',rename);}catch(failure){error=failure.name;}
+      const read=async name=>[...new Uint8Array(await (await files.file('assets/'+name)).arrayBuffer())];
+      const source=await read('source.bin');let destination=null;
+      try{destination=await read('target.bin');}catch(failure){if(failure.name!=='NotFoundError')throw failure;}
+      fail=false;await files.execute('rename','assets/source.bin',rename);
+      let sourceRemoved=false;try{await files.file('assets/source.bin');}catch(failure){sourceRemoved=failure.name==='NotFoundError';}
+      return {error,source,destination,retried:await read('target.bin'),sourceRemoved};
+    }""",existing_destination)
+    assert result=={'error':'QuotaExceededError','source':[4,5,6],
+        'destination':[1,2,3] if existing_destination else None,'retried':[4,5,6],'sourceRemoved':True}
+
+
 def test_open_file_reads_and_log_rotation_use_the_renamed_paths(static_browser):
     directory,context,origin=static_browser
     worker=directory/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')

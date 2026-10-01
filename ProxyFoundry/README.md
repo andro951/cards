@@ -60,6 +60,6 @@ python -m pytest -q -m routine
 node --test tests_web/*.test.mjs
 ```
 
-`RUN_TESTS.bat` runs routine, extended, or complete groups. CI runs the routine group plus a focused static-browser production flow and progress/cancellation check. The extended group includes native rendering, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
+`RUN_TESTS.bat` runs routine, extended, or complete groups. CI runs the routine group plus focused static-browser production, progress/cancellation, and response-integrity checks. The extended group includes native rendering, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
 
 The original Python app remains available through `START_PROXY_FOUNDRY.bat` and `run.py`.

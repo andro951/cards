@@ -1,6 +1,7 @@
-import io
+import io,hashlib
 from pathlib import Path
 from PIL import Image
+import pytest
 
 from foundry.domain import SCHEMA_VERSION
 from foundry.images import ingest_image
@@ -9,6 +10,18 @@ from foundry.storage import Store
 
 def png(color):
     out=io.BytesIO();Image.new('RGB',(100,140),color).save(out,'PNG');return out.getvalue()
+
+
+@pytest.mark.parametrize('record_exists',[False,True])
+def test_asset_retry_repairs_an_incomplete_file(tmp_path,record_exists):
+    store=Store(tmp_path);raw=png('#123456');ident=hashlib.sha256(raw).hexdigest()
+    if record_exists:store.add_asset(raw,'image/png',100,140)
+    target=store.asset_path(ident);target.parent.mkdir(parents=True,exist_ok=True)
+    target.write_bytes(raw[:32])
+    recovered=store.add_asset(raw,'image/png',100,140)
+    assert recovered['id']==ident and recovered['size']==len(raw)
+    assert [recovered['width'],recovered['height']]==[100,140]
+    assert target.read_bytes()==raw
 
 
 def test_one_current_render_per_face_and_human_readable_path(tmp_path):

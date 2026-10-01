@@ -83,6 +83,7 @@ jobs:
           PF_LIVE_GITHUB_SETUP: '1'
           PF_LARGE_TRANSFER: '1'
           PF_DECK_STRESS: '1'
+          PF_HEAP_BOUNDARY: '1'
           PF_LIVE_DECK_SITES: '1'
         run: |
           browser=$(python -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()")

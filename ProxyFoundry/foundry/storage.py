@@ -310,7 +310,7 @@ class Store:
             raise ValidationError('The uploaded file is empty.')
         ident = hashlib.sha256(content).hexdigest()
         target = self.asset_path(ident)
-        if not target.is_file():
+        if not target.is_file() or target.stat().st_size!=len(content):
             target.parent.mkdir(parents=True, exist_ok=True)
             fd, temp = tempfile.mkstemp(dir=target.parent, prefix='.upload-')
             try:

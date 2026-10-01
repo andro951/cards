@@ -7,8 +7,10 @@ Updated 2026-10-01. The preceding audit files describe main at `e237b64` and rem
 | Production test gate | Static placeholder selection and actual website import → setup → generate → review → export → reload; routine CI plus focused static browser gate | `tests/test_website.py`, workflow CI |
 | Browser job responsiveness | Immediate IDs, queued execution, progress/cancel channels independent of worker operation, bounded job history | Browser job and static Chromium cancellation tests |
 | Recovery and diagnostics | Durable metadata snapshots, per-card preparation checkpoints, saved completed PNGs, previous-session browser diagnostics | Mid-generation reload and quota/retry tests |
-| Storage ownership | Direct binary file storage, explicit folder reconnection, one writer tab, service-worker owner recovery | Seven actual browser storage tests |
+| Storage ownership | Direct binary file storage, explicit folder reconnection, one writer tab, service-worker owner recovery | Nine actual browser storage tests |
 | Large-session filesystem bug | Flush pending writers before reads/rename; update Emscripten node parent/name after rename; clean failed writers | Before-fix rename probe failed; committed regression checks pass, including log rotation |
+| High-memory browser transport | Avoid signed Pyodide byte/ASCII offsets above 2 GiB using marked Unicode replies/events, Base64 inline binary and direct file input; unsigned filesystem offsets | Reproduced corrupted bytes and signed-offset exception; high-address binary/upload/file/ASCII/job regression passes |
+| Failed-upload recovery | Remove newly created rename destination after failure, preserve existing destination, repair incomplete hashed asset on retry | Browser quota failure reproduced before fix; both destination cases and unit retry checks pass |
 | Unnecessary rendering | Preserve stale previous images; draft compilation is not a pipeline upgrade; render only changed keys; grid uses bounded thumbnails | Cache/invalidation API tests and static workflow |
 | Normal/Custom workflow | Both gather input before Generate Images; Normal ignores custom global frame/art defaults | Dirty-default static website test |
 | Outside-the-game control | Default inclusion with explicit opt-out in import/add-card UI | Workflow and deck importer tests |

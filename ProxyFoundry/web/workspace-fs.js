@@ -83,10 +83,11 @@ export function mountWorkspaceFiles(FS,owner) {
         read(stream,buffer,offset,length,position) {
             flushNode(stream.node);
             const bytes=call(`read`,pathOf(stream.node),{offset:position,length});
-            buffer.set(bytes,offset);
+            buffer.set(bytes,offset>>>0);
             return bytes.length;
         },
         write(stream,buffer,offset,length,position) {
+            offset=offset>>>0;
             if(!writers.has(stream.node))writers.set(stream.node,new Set());
             writers.get(stream.node).add(stream);
             //Batch tiny ZIP writes without retaining the archive in Python's filesystem.

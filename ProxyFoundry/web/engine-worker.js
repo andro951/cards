@@ -9,7 +9,7 @@ let owner;
 let initialized=false;
 let completedJobs=[];
 self.publishJob=encoded=>{
-  const job=JSON.parse(encoded);
+  const job=JSON.parse(responseText(encoded));
   if(['done','failed','cancelled'].includes(job.state))completedJobs.push(job);
   else self.postMessage({type:'job',job});
 };
@@ -57,24 +57,53 @@ async function start(folder){
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
 from js import syncFetch, location, publishJob, jobCancelled, checkpointMetadata
-import json
+import base64, json, uuid
+from pathlib import Path
 from foundry.browser import create_app, request
+def buffer_bytes(buffer):
+    if not buffer.byteLength:
+        return b''
+    path=Path('/workspace/tmp')/('.http-'+str(uuid.uuid4()))
+    try:
+        with path.open('wb') as saved:
+            buffer.to_file(saved)
+        return path.read_bytes()
+    finally:
+        path.unlink(missing_ok=True)
+
 def transport(url):
     result = syncFetch(url)
-    return bytes(result.bytes.to_py()), str(result.mime), {}
+    return buffer_bytes(result.bytes), str(result.mime), {}
 app = create_app('/workspace', transport, str(location.origin),
-    lambda job:publishJob(json.dumps(job,ensure_ascii=False,default=str)),
+    lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
     lambda ident:bool(jobCancelled(ident)), checkpointMetadata)
 def browser_request(method, url, body, headers):
     global last_response
-    last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))
+    last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
     metadata={k:v for k,v in last_response.items() if k != 'body'}
-    if metadata['mime']=='application/json' and not metadata.get('file'):
-        metadata['jsonBody']=last_response['body'].decode('utf-8')
+    if not metadata.get('file'):
+        if metadata['mime']=='application/json':
+            metadata['jsonBody']='\u0100'+last_response['body'].decode('utf-8')
+        else:
+            metadata['binaryBody']='\u0100'+base64.b64encode(last_response['body']).decode('ascii')
     return metadata
 `);
   initialized=true;
   self.postMessage({type:'ready',buildId});
+}
+
+//The marker avoids Pyodide's signed ASCII/buffer offsets above 2 GiB.
+//Large saved files travel as file descriptors; only inline replies use this codec.
+function responseText(value){
+  if(typeof value!=='string'||value.charCodeAt(0)!==0x100)throw new Error('The card engine response text could not be read.');
+  return value.slice(1);
+}
+function responseBytes(value){
+  const encoded=responseText(value);
+  if(Uint8Array.fromBase64)return Uint8Array.fromBase64(encoded);
+  const decoded=atob(encoded),bytes=new Uint8Array(decoded.length);
+  for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+  return bytes;
 }
 
 let sequence=Promise.resolve();
@@ -90,20 +119,19 @@ self.onmessage=event=>{
 async function handle(event){
   const {id,method,url,body,headers}=event.data;
   if(!id)return;
-  let invoke,response,saved,content;
+  let invoke,response;
   try{
     await ready;
     invoke=python.globals.get('browser_request');
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const metadata=response.toJs({dict_converter:Object.fromEntries});
-    let responseBody=metadata.jsonBody;
+    let responseBody;
+    if(metadata.jsonBody!==undefined)responseBody=responseText(metadata.jsonBody);
+    else responseBody=metadata.file?new Uint8Array():responseBytes(metadata.binaryBody);
     delete metadata.jsonBody;
-    //Decode in Python so large JSON never goes through the binary-buffer conversion.
-    if(responseBody!==undefined){
+    delete metadata.binaryBody;
+    if(typeof responseBody==='string'){
       try{JSON.parse(responseBody);}catch(error){throw new Error(`Invalid engine JSON (${url}, ${responseBody.length} characters): ${error.message}`);}
-    }
-    else{
-      saved=python.globals.get('last_response');content=saved.get('body');responseBody=content.toJs();
     }
     if(method==='POST')await mount.syncfs();
     self.postMessage({type:'response',id,...metadata,body:responseBody},responseBody.buffer?[responseBody.buffer]:[]);
@@ -111,8 +139,6 @@ async function handle(event){
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
   finally{
     //Every PyProxy owns a Python reference; leaked responses retain whole PNGs.
-    content?.destroy();
-    saved?.destroy();
     response?.destroy();
     invoke?.destroy();
     if(python?.globals.has('last_response'))

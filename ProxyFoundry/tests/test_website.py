@@ -56,8 +56,9 @@ def request(app, method, url, body, headers):
     source=source.replace('def browser_request(method, url, body, headers):',tracking+'\ndef browser_request(method, url, body, headers):')
     source=source.replace("const metadata=response.toJs({dict_converter:Object.fromEntries});","if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');const metadata=response.toJs({dict_converter:Object.fromEntries});")
     source=source.replace("if(method==='POST')await mount.syncfs();","metadata.headers['X-Test-Body-Type']=typeof responseBody;if(method==='POST')await mount.syncfs();")
-    source=source.replace('last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))',
-                          "last_response = TrackedResponse(request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")
+    source=source.replace('if(Uint8Array.fromBase64)return','if(false&&Uint8Array.fromBase64)return')
+    source=source.replace('last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))',
+                          "last_response = TrackedResponse(request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")
     source=source.replace('self.onmessage=event=>{',"self.onmessage=event=>{\n  if(event.data.url==='/api/__test__/crash')throw new Error('Injected engine crash');")
     source=source.replace('global last_response',"global last_response\n    if str(url) == '/api/__test__/early-fail':\n        raise ValueError('Injected early failure')")
     worker.write_text(source,encoding='utf-8')
@@ -132,6 +133,81 @@ def request(app, method, url, body, headers):
                 assert 'Injected engine crash' in crash['error']
                 assert 'Injected engine crash' in crash['afterError']
             finally:context.close();browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+@pytest.mark.skipif(os.environ.get('PF_HEAP_BOUNDARY')!='1',reason='Opt-in browser heap above 2 GiB')
+def test_static_engine_high_address_binary_uploads_files_and_ascii_json(tmp_path):
+    """Cross the signed-pointer boundary with real Pyodide and browser files."""
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path);site=copy_site(tmp_path)
+    worker=site/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    injected="""
+original_request = request
+def request(app, method, url, body, headers):
+    if not str(url).startswith('/api/__test__/boundary/'):
+        return original_request(app,method,url,body,headers)
+    import hashlib
+    global boundary_blocks, boundary_parent
+    if 'boundary_blocks' not in globals():
+        boundary_blocks=[bytearray(20*1024*1024) for index in range(110)]
+        boundary_parent=bytes(range(256))*(20*4096)
+    kind=str(url).rsplit('/',1)[-1]
+    if kind=='binary':
+        raw=memoryview(boundary_parent)[-1024*1024:]
+        return {'status':200,'mime':'application/octet-stream','body':raw,
+            'headers':{'X-Expected':hashlib.sha256(raw).hexdigest(),'X-Test-Address':str(id(boundary_parent))}}
+    if kind=='files':
+        original=app.store.home/'tmp'/'boundary.bin';saved=original.with_suffix('.renamed')
+        original.write_bytes(boundary_parent);original.replace(saved)
+        result={'expected':hashlib.sha256(boundary_parent).hexdigest(),
+            'actual':hashlib.sha256(saved.read_bytes()).hexdigest(),'bytes':saved.stat().st_size}
+        saved.unlink()
+    elif kind=='input':
+        result={'bytes':len(body),'hash':hashlib.sha256(body).hexdigest()}
+    elif kind=='job':
+        text='x'*(20*1024*1024)
+        publishJob('\u0100'+json.dumps({'id':'11111111-1111-4111-8111-111111111111','kind':'test','state':'running','message':'High-address event','done':0,'total':1,'probe':text}))
+        result={'address':id(text)}
+    elif kind=='ascii':
+        text='x'*(20*1024*1024)
+        return {'status':200,'mime':'application/json','body':json.dumps({'value':text}).encode(),
+            'headers':{'X-Test-Address':str(id(text))}}
+    else:raise ValueError('Unknown boundary probe')
+    return {'status':200,'mime':'application/json','body':json.dumps(result).encode(),'headers':{}}
+"""
+    source=source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):')
+    worker.write_text(source,encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate("""async()=>{
+                  const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
+                  const binary=await fetch('/api/__test__/boundary/binary');
+                  const bytes=await binary.arrayBuffer();
+                  const files=await (await fetch('/api/__test__/boundary/files')).json();
+                  const payload=new Uint8Array(20*1024*1024);
+                  for(let i=0;i<payload.length;i++)payload[i]=i%256;
+                  const ui=await import('/site/ui.js');
+                  const input=await ui.blobRequest('/api/__test__/boundary/input',payload,'application/octet-stream');
+                  const event=await (await fetch('/api/__test__/boundary/job')).json();
+                  const job=await (await fetch('/api/jobs/11111111-1111-4111-8111-111111111111')).json();
+                  const ascii=await fetch('/api/__test__/boundary/ascii'),data=await ascii.json();
+                  return {binary:{status:binary.status,address:Number(binary.headers.get('X-Test-Address')),bytes:bytes.byteLength,expected:binary.headers.get('X-Expected'),actual:await hash(bytes)},
+                    files,input:{...input,expected:await hash(payload)},event:{address:event.address,matches:job.probe==='x'.repeat(20*1024*1024)},ascii:{address:Number(ascii.headers.get('X-Test-Address')),matches:data.value==='x'.repeat(20*1024*1024)}};
+                }""")
+                assert result['binary']['status']==200 and result['binary']['address']>2**31,result
+                assert result['binary']['bytes']==1024*1024 and result['binary']['actual']==result['binary']['expected'],result
+                assert result['files']['bytes']==20*1024*1024 and result['files']['actual']==result['files']['expected'],result
+                assert result['input']['bytes']==20*1024*1024 and result['input']['hash']==result['input']['expected'],result
+                assert result['event']['address']>2**31 and result['event']['matches'],result
+                assert result['ascii']['address']>2**31 and result['ascii']['matches'],result
+            finally:browser.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 
