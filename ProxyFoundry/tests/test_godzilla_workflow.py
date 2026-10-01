@@ -105,16 +105,20 @@ def test_native_token_text_gets_white_black_outline(tmp_path):
         assert data['text'][key]['outlineColor']=='black'
 
 
-@pytest.mark.parametrize('type_line,style',[('Artifact — Equipment','godzilla-card'),('Land','godzilla-land')])
+@pytest.mark.parametrize('type_line,style',[('Artifact — Equipment','godzilla-card'),('Land','godzilla-land'),('Basic Land — Mountain','godzilla-land')])
 def test_noncreature_godzilla_frame_has_an_empty_pt_text_box(tmp_path,type_line,style):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
     source=card(type_line=type_line);source.pop('power');source.pop('toughness')
-    if type_line=='Land':source.update(colors=[],mana_cost='',oracle_text='{T}: Add {B}.')
+    if 'Land' in type_line:source.update(colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
     data=Compiler(store).compile_face(source,source,0,{'templateOverride':style},settings,art)['data']
     assert data['version']=='m15Nickname'
     assert data['text']['pt']['text']==''
     assert all(isinstance(field['text'],str) for field in data['text'].values())
     assert not any('Power/Toughness' in frame['name'] for frame in data['frames'])
+    if 'Basic' in type_line:
+        assert data['text']['mana']['text']==''
+        assert data['text']['type']['text']=='Basic Land - Mountain'
+        assert '{R}' in data['text']['rules']['text']
 
 
 def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct(tmp_path):

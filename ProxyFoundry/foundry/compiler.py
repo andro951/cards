@@ -44,7 +44,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':2,'godzilla-land':2,'token-classic':1,'token-full-art':1,'token-borderless':1}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':3,'godzilla-land':3,'token-classic':1,'token-full-art':1,'token-borderless':1}
 AUTO_TEMPLATE_VERSIONS['token']=4
 AUTO_TEMPLATE_VERSIONS['station']=6
 
@@ -2004,9 +2004,14 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
     typ=text.setdefault('type',{})
     rules=text.setdefault('rules',{})
     pt=text.setdefault('pt',{})
+    if 'text' not in typ:
+        typ['text']=native.get_type_info(sem)['normalized']
+    if 'text' not in rules:
+        rules['text']=native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else '')
+    rules.setdefault('font','mplantin')
 
     mana.update({
-        'name':'Mana Cost','y':.0613,'width':.9292,'height':71/2100,
+        'name':'Mana Cost','text':str(sem.get('mana_cost') or ''),'y':.0613,'width':.9292,'height':71/2100,
         'oneLine':True,'size':71/1638,'align':'right','shadowX':-.001,
         'shadowY':.0029,'manaCost':True,'manaSpacing':0,
     })

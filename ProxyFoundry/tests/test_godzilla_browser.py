@@ -81,10 +81,15 @@ def test_frame_can_be_selected_before_the_preview_plan_arrives(browser_app):
     assert not errors,errors
 
 
+@pytest.mark.parametrize('group,style,title',[('standard','godzilla-card','Godzilla full art · non-land'),('land','godzilla-land','Godzilla full art · land'),('basic-land','godzilla-land','Godzilla full art · land')],ids=['nonland','land','basic-land'])
 @pytest.mark.parametrize('selection',['label','preview'])
-def test_frame_selection_cancels_an_active_preview_renderer(browser_app,selection):
+def test_frame_selection_cancels_an_active_preview_renderer(browser_app,selection,group,style,title):
     app,server,page,errors=browser_app
     deck=app.ws.create({'name':'Cancel active frame preview','source':'1 A Test Creature'})
+    if group in {'land','basic-land'}:
+        card=deck['cards'][0]
+        card['scryfall'].update(type_line='Basic Land — Mountain' if group=='basic-land' else 'Land',colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
+        app.ws.store.put('decks',deck,deck['revision'])
     page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
     page.route('**/api/runtime/prepare',lambda route:route.fulfill(json={'id':'fake-runtime-job'}))
     page.route('**/api/jobs/fake-runtime-job',lambda route:route.fulfill(json={'state':'done','kind':'runtime','message':'Complete','done':1,'total':1,'result':{}}))
@@ -96,23 +101,23 @@ def test_frame_selection_cancels_an_active_preview_renderer(browser_app,selectio
       });
     </script>'''))
     page.evaluate("window.__previewStarted=false; addEventListener('message',event=>{if(event.data?.source==='picker-test')window.__previewStarted=true;})")
-    page.click('[data-frame-group=standard]')
+    page.click('[data-frame-group='+group+']')
     expect(page.locator('iframe.render-frame')).to_have_count(1)
     page.wait_for_function('()=>window.__previewStarted',timeout=15000)
     expect(page.locator('#modal-host [role=status]')).to_contain_text('You can choose a frame now.')
-    choice=page.get_by_role('button',name=('Select Godzilla full art · non-land' if selection=='label' else 'Choose Godzilla full art · non-land from preview'),exact=True)
+    choice=page.get_by_role('button',name=('Select '+title if selection=='label' else 'Choose '+title+' from preview'),exact=True)
     expect(choice).to_be_enabled()
     if selection=='preview':
         expect(choice).to_contain_text('Rendering…')
         output=Path(__file__).resolve().parents[1]/'test-results'
         output.mkdir(exist_ok=True)
-        page.locator('#modal-host .modal').screenshot(path=str(output/'frame-picker-select-while-rendering.png'))
+        page.locator('#modal-host .modal').screenshot(path=str(output/('frame-picker-select-while-rendering-'+group+'.png')))
     choice.click()
     expect(page.locator('iframe.render-frame')).to_have_count(0)
     expect(page.locator('#activity')).to_be_hidden()
     page.click('#save-setup')
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
-    assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
+    assert app.ws.deck(deck['id'])['settings']['templateRules'][group]==style
     assert not errors,errors
 
 
@@ -121,11 +126,11 @@ def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path
     store=Store(tmp_path/'noncreature-nickname');app=App(store,Network(store));server=LocalServer(app)
     threading.Thread(target=server.serve_forever,daemon=True).start()
     art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Noncreature Godzilla')
-    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'test_artifact':art,'test_land':art}},'artist':'Fixture Artist'})
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'test_artifact':art,'test_land':art,'test_mountain':art}},'artist':'Fixture Artist'})
     cards=[]
-    for i,(name,types,style) in enumerate([('Test Artifact','Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land')]):
+    for i,(name,types,style) in enumerate([('Test Artifact','Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land'),('Test Mountain','Basic Land — Mountain','godzilla-land')]):
         source={'name':name,'layout':'normal','type_line':types,'colors':['B'] if i==0 else [],
-                'mana_cost':'{B}' if i==0 else '', 'oracle_text':'Equipped creature gets +1/+1.\nEquip {1}' if i==0 else '{T}: Add {B}.',
+                'mana_cost':'{B}' if i==0 else '', 'oracle_text':'Equipped creature gets +1/+1.\nEquip {1}' if i==0 else ('{T}: Add {R}.' if i==2 else '{T}: Add {B}.'),
                 'rarity':'common','artist':'Fixture Artist'}
         cards.append({'id':'card-'+str(i),'name':name,'quantity':1,'scryfall':source,
                       'faces':[{'id':'face-'+str(i),'name':name,'index':0,'templateOverride':style}]})
@@ -140,6 +145,7 @@ def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path
             output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
             for entry in current['cards']:
                 compiled=entry['faces'][0]['compiled'];assert compiled['data']['text']['pt']['text']==''
+                assert all(isinstance(field['text'],str) for field in compiled['data']['text'].values())
                 render=store.render_get(compiled['renderKey']);assert render
                 picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
                 picture.save(output/(entry['name'].replace(' ','_')+'_godzilla.png'))
