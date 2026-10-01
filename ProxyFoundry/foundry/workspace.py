@@ -8,7 +8,7 @@ from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,data_uri,decode_image,rarity_variants
 from .sources import Sources
-from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds
+from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds,build_token_data,configure_token_style,token_has_short_text
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
@@ -494,6 +494,8 @@ class Workspace:
         if not settings.get('allCardsTokens'):return None
         options=settings.get('tokenOptions') or {}
         spec={'output_key':str(comp.get('name') or ''),'token_key_suffix':''}
+        style=settings.get('templateRules',{}).get('token')
+        if style in {'token-classic','token-full-art','token-borderless'}:spec['token_frame_style']=style
         if settings.get('templateRules',{}).get('token')=='godzilla-card':spec['force_nickname_frame']=True
         if options.get('legendaryMode','nonlegendary' if options.get('nonlegendary') else 'original')=='nonlegendary':spec['nonlegendary']=True
         if options.get('legendaryMode')=='legendary':spec['force_legendary']=True
@@ -511,6 +513,7 @@ class Workspace:
 
     def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None):
         spec=dict(spec)
+        style=spec.pop('token_frame_style',None)
         if sem:
             sem=dict(sem)
             if spec.get('nonlegendary'):sem['legendary']=False
@@ -525,6 +528,10 @@ class Workspace:
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
+        if style:
+            short=token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
+            configure_token_style(comp['data'],spec.get('frame_color','A'),style,short)
+            if comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
         fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
         if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
             apply_nickname_treatment(comp['data'],sem,'token',
@@ -533,7 +540,7 @@ class Workspace:
             comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
             if comp.get('symbolId'):
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
-        apply_full_art_text(comp['data'])
+        if comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
@@ -776,6 +783,12 @@ class Workspace:
         finally:
             self.store.purge('templates',temp)
     def template_seed(self,kind='normal'):
+        if kind in {'token-classic','token-full-art','token-borderless'}:
+            sem={'name':'My token template','types':['Creature'],'subtypes':['Beast'],'legendary':False,
+                 'colors':['G'],'layout':'creature','oracle_text':'Flying','flavor_text':'','mana_cost':'','rarity':'common',
+                 'set_symbol_source':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==',
+                 'power':'3','toughness':'3','art':'/img/black.png','art_local_path':'','printed_type_line':'Token Creature — Beast'}
+            return build_token_data(sem,'',False,[],kind)[1]
         if kind in {'land','legend-land'}:
             sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':kind=='legend-land','basic':False,'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}
             key='land_full_single' if kind=='land' else 'land_full_legendary'

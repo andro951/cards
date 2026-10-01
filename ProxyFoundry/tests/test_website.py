@@ -18,6 +18,43 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def test_static_token_styles_and_upstream_assets():
+    from playwright.sync_api import sync_playwright
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist')))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            page=browser.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate('''async()=>{
+                  const styles=['token-classic','token-full-art','token-borderless'];
+                  const templates=await (await fetch('/api/templates')).json();
+                  const seeds=[];
+                  for(const style of styles){
+                    const seed=await (await fetch('/api/templates/seed?kind='+style)).json();
+                    const paths=[...new Set(seed.frames.flatMap(frame=>[frame.src,...(frame.masks||[]).map(mask=>mask.src)]))];
+                    const assets=[];
+                    for(const path of paths){
+                      const response=await fetch(path);const bytes=await response.arrayBuffer();
+                      assets.push({path,status:response.status,size:bytes.byteLength});
+                    }
+                    seeds.push({style,version:seed.version,text:seed.text.rules.text,assets});
+                  }
+                  return {templates,seeds};
+                }''')
+                assert {row['id'] for row in result['templates']} >= {'token-classic','token-full-art','token-borderless'}
+                assert [row['version'] for row in result['seeds']]==['tokenTextlessM15','tokenTextless','tokenTextlessBorderless']
+                for seed in result['seeds']:
+                    assert seed['text']=='Flying'
+                    assert all(asset['status']==200 and asset['size']>0 for asset in seed['assets']),seed
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_website_fetches_pinned_station_script():
     from playwright.sync_api import sync_playwright
 

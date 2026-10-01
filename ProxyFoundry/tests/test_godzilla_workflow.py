@@ -99,10 +99,28 @@ def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_lay
 def test_native_token_text_gets_white_black_outline(tmp_path):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
     source=card(type_line='Creature — Zombie',layout='token')
-    data=Compiler(store).compile_face(source,source,0,{},settings,art)['data']
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'token-full-art'},settings,art)['data']
     for key in ('type','rules'):
         assert data['text'][key]['color']=='white'
         assert data['text'][key]['outlineColor']=='black'
+
+
+def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct(tmp_path):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store);deck=ws.new_deck('Token previews')
+    source=card(type_line='Token Creature — Bird',layout='token');source['oracle_text']='Flying'
+    source['flavor_text']=''
+    source['colors']=['U']
+    entry={'id':'card-id','name':source['name'],'quantity':1,'scryfall':source,
+           'faces':[{'id':'face-id','name':source['name'],'index':0}]}
+    ws.store.put('decks',{**deck,'cards':[entry]},deck['revision'])
+    settings=ws.validate_settings({'source':{'mode':'local','localFiles':{'test_card':art}}})
+    plan=ws.template_preview_targets(deck['id'],'token',settings,[])
+    assert not plan['errors']
+    by_choice={target['choice']:target for target in plan['targets']}
+    assert by_choice['auto']['choices']==['auto','token-classic']
+    assert by_choice['auto']['data']['version']=='tokenTextlessM15'
+    assert by_choice['token-full-art']['data']['version']=='tokenTextless'
+    assert by_choice['token-borderless']['data']['version']=='tokenTextlessBorderless'
 
 
 def test_preview_targets_use_a_card_from_requested_layout(tmp_path):

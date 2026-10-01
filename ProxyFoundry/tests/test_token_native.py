@@ -48,7 +48,7 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
-            assert '/img/frames/token/regular/tokenFrameARegular.png' in app.runtime.requested
+            assert '/img/frames/token/m15/regular/a.png' in app.runtime.requested
             compiled=ready['cards'][0]['faces'][0]['compiled']
             assert compiled['data']['text']['pt']['text']==''
             rendered=store.render_get(compiled['renderKey'])
@@ -57,5 +57,67 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
             evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
             output.thumbnail((603,844));output.save(evidence/'token_treasure.png')
             assert not errors,errors
+        finally:
+            browser.close();server.shutdown();server.server_close();app.close()
+
+
+def test_token_style_gallery_renders_native_assets(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from PIL import ImageDraw
+    image=Image.new('RGB',(1200,1600),'#2c6475');draw=ImageDraw.Draw(image)
+    for y in range(0,1600,80):draw.rectangle((0,y,1200,y+35),fill=(50+y//20,100,130))
+    draw.ellipse((280,250,920,1000),fill='#d6ad68')
+    buffer=io.BytesIO();image.save(buffer,'PNG');art=buffer.getvalue()
+    cards={};specs=[]
+    for style in ('token-classic','token-full-art','token-borderless'):
+        for short in (True,False):
+            ident=f'90000000-0000-4000-8000-{len(cards)+20:012d}'
+            card={'object':'card','id':ident,'name':'Bird' if short else 'Treasure',
+                  'layout':'token','type_line':'Token Creature — Bird' if short else 'Token Artifact — Treasure',
+                  'rarity':'common','colors':['U'] if short else [],'mana_cost':'','artist':'Token fixture',
+                  'oracle_text':'Flying' if short else '{T}, Sacrifice this token: Add one mana of any color.',
+                  'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/1/c/token-gallery.jpg'}}
+            if short:card.update(power='1',toughness='1')
+            cards[ident]=card;specs.append((style,short,ident))
+    store=Store(tmp_path/'workspace');net=Network(store);original=net._transport
+    def remote(url):
+        if 'api.scryfall.com/cards/' in url:
+            ident=url.rsplit('/',1)[-1].split('?')[0]
+            return json.dumps(cards[ident]).encode(),'application/json',{}
+        if 'cards.scryfall.io' in url:return art,'image/png',{}
+        return original(url)
+    net.transport=remote;app=App(store,net);server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    asset=ingest_image(store,art);symbols=rarity_variants(store,asset['id'])
+    decks=[]
+    for style,short,ident in specs:
+        deck=app.ws.create({'name':style+(' short' if short else ' rules'),'source':[{'id':ident}],
+            'settings':{'symbols':symbols,'backAsset':asset['id'],'templateRules':{'token':style}}})
+        deck=app.ws.prepare(deck['id'])
+        assert not [f['error'] for c in deck['cards'] for f in c['faces'] if f.get('error')]
+        decks.append((style,short,deck))
+    outputs=[]
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True)
+        page=browser.new_page(viewport={'width':1200,'height':900});errors=[]
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        try:
+            for style,short,deck in decks:
+                page.goto(server.origin+'/#deck/'+deck['id'])
+                page.locator('#generate-deck').wait_for();page.click('#generate-deck')
+                page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+                ready=app.ws.deck(deck['id'])
+                assert ready['status']=='ready',page.locator('#activity-log').text_content()
+                compiled=ready['cards'][0]['faces'][0]['compiled']
+                rendered=store.render_get(compiled['renderKey'])
+                output=Image.open(store.asset_path(rendered['asset_id'])).convert('RGB')
+                assert output.size==(2010,2814)
+                output.thumbnail((402,563));outputs.append(output.copy())
+                if page.locator('#modal-close').count():page.locator('#modal-close').click()
+            assert not errors,errors
+            gallery=Image.new('RGB',(402*3,563*2))
+            for i,output in enumerate(outputs):gallery.paste(output,((i//2)*402,(i%2)*563))
+            evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+            gallery.save(evidence/'token_styles_gallery.jpg')
         finally:
             browser.close();server.shutdown();server.server_close();app.close()

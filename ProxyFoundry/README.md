@@ -42,6 +42,8 @@ The four bundled rarity symbols and Bulk Proxy Forge back are selected automatic
 
 Templates are reusable, versioned objects with semantic text regions. The Templates area creates them from built-ins or converts a CardConjurer save, validates compatibility, and imports/exports portable template JSON. Uploaded frame images travel with a template export. A template in use by a saved deck cannot be deleted until the dependency is removed.
 
+Token frame choices include **Classic arched**, **Modern full-art**, and **Modern borderless**. Automatic tokens use the classic arched frame. Classic and modern full-art styles use a larger art window for empty text or a short plain keyword, and a rules box for longer abilities or flavor text. Borderless tokens place outlined text over the art. These choices also work with deck-wide token conversion. The complete upstream frame images are used; only dual-color pinline accents use a separate mask.
+
 The renderer uses the pinned Card Tools v58 source and native CardConjurer runtime. Special layouts are routed to their appropriate renderer. Unsupported structures fail with a clear preparation error instead of receiving an ordinary frame. Finished PNGs are cached by render inputs; saved print orders are immutable snapshots with matching `FRONT/000001.png` and `BACK/000001.png` names for each physical card.
 
 ## Development and tests

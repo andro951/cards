@@ -514,19 +514,18 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     result=Compiler(s).compile_face(beast,beast,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token'
-    assert result['recipe']=='token_regular'
-    assert result['templateVersion']==3
-    assert data['version']=='tokenRegular'
+    assert result['recipe']=='token_classic_short'
+    assert result['templateVersion']==4
+    assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
     assert data['text']['pt']['text']=='3/3'
     token=[f for f in data['frames'] if f.get('name')=='Green Token Frame']
-    assert token and all(f['src']=='/img/frames/token/regular/tokenFrameGRegular.png' for f in token)
-    assert any(any(mask.get('name')=='Border' for mask in f.get('masks',[])) for f in token)
-    assert {m['name'] for frame in token for m in frame['masks']}=={'Pinline','Title','Type','Rules','Border','Bevel'}
+    assert token and all(f['src']=='/img/frames/token/m15/textless/g.png' for f in token)
+    assert all(not f['masks'] for f in token), 'The complete native token frame must remain intact.'
     pt=[f for f in data['frames'] if 'Power/Toughness' in f.get('name','')]
     assert len(pt)==1 and pt[0]['src']=='/img/frames/m15/regular/m15PTG.png'
-    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+    assert data['artBounds']=={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.6843}
 
 
 
@@ -540,8 +539,8 @@ def test_native_token_regular_keeps_its_own_broad_art_bounds(workspace):
         'power':'3','toughness':'3','set':'ttst','collector_number':'9',
         'artist':'Token Artist',
     }
-    data=Compiler(s).compile_face(beast,beast,0,{},settings,a)['data']
-    assert data['version']=='tokenRegular'
+    data=Compiler(s).compile_face(beast,beast,0,{'templateOverride':'token-full-art'},settings,a)['data']
+    assert data['version']=='tokenTextless'
     assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 
 def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
@@ -555,11 +554,11 @@ def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(worksp
     }
     result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
-    assert result['group']=='token' and result['recipe']=='token_regular'
+    assert result['group']=='token' and result['recipe']=='token_classic_rules'
     assert data['text']['pt']['text']==''
     assert all(isinstance(field['text'],str) for field in data['text'].values())
     assert data['text']['rules']['text']=='{T}, Sacrifice this artifact: Add one mana of any color.'
-    assert any(f.get('src')=='/img/frames/token/regular/tokenFrameARegular.png' for f in data['frames'])
+    assert any(f.get('src')=='/img/frames/token/m15/regular/a.png' for f in data['frames'])
     assert not any('Power/Toughness' in f.get('name','') for f in data['frames'])
 
 
@@ -580,6 +579,48 @@ def test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline(w
     crowns=[f for f in data['frames'] if 'Legend Crown' in f.get('name','') and 'Outline' not in f.get('name','') and 'Border' not in f.get('name','') and 'Cutout' not in f.get('name','')]
     assert len(crowns)==2
     assert crowns[0]['masks'][0]['name']=='Right Blend'
+
+
+@pytest.mark.parametrize('style',['token-classic','token-full-art','token-borderless'])
+@pytest.mark.parametrize('rules,flavor,short',[
+    ('','',True),('Flying','',True),
+    ('Flying, vigilance, lifelink','',False),
+    ('{T}, Sacrifice this token: Add one mana of any color.','',False),
+    ('Flying','A bird in the hand.',False),('Flying\nVigilance','',False),
+])
+def test_token_styles_preserve_text_and_choose_matching_geometry(workspace,style,rules,flavor,short):
+    s,a,settings=workspace
+    card={**sf('Token Creature — Bird',['U']),'layout':'token','oracle_text':rules,'flavor_text':flavor}
+    result=Compiler(s).compile_face(card,card,0,{'templateOverride':style},settings,a)
+    data=result['data'];text=data['text']
+    assert rules in text['rules']['text']
+    assert flavor in text['rules']['text']
+    assert text['pt']['text']=='2/3'
+    assert text['type']['y']==(0.8196 if short or style=='token-borderless' else 0.65)
+    assert data['setSymbolBounds']['y']==(0.8439 if short or style=='token-borderless' else 0.6743)
+    sources=[f['src'] for f in data['frames']]
+    assert any('/img/frames/token/' in f['src'] and not f['masks'] for f in data['frames'])
+    if style=='token-classic':
+        assert f'/img/frames/token/m15/{"textless" if short else "regular"}/u.png' in sources
+        assert text['title']['color']=='#fde367'
+        assert text['rules']['color']=='black' and text['rules']['outlineWidth']==0
+    else:
+        assert text['rules']['color']=='white' and text['rules']['outlineWidth']>0
+    if style=='token-borderless':
+        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
+        assert '/img/frames/token/textless-borderless/tokenFrameUTextless.png' in sources
+        assert text['rules']['oneLine']==short
+
+
+@pytest.mark.parametrize('style',['token-classic','token-full-art','token-borderless'])
+def test_token_styles_only_support_tokens_and_offer_matching_seeds(workspace,style):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace
+    with pytest.raises(ValidationError,match='does not support'):
+        Compiler(s).compile_face(sf(),sf(),0,{'templateOverride':style},settings,a)
+    seed=Workspace(s).template_seed(style)
+    assert seed['version'].startswith('token')
+    assert seed['text']['rules']['text']=='Flying'
 
 
 def test_deck_wide_token_options_apply_independent_overrides(workspace):
@@ -626,6 +667,21 @@ def test_deck_wide_token_power_and_toughness_are_independent(workspace):
 
     no_pt_override=ws.validate_settings({**settings,'allCardsTokens':True,'tokenOptions':{}})
     assert 'power_toughness' not in ws._deck_token_spec(no_pt_override,comp)
+
+
+@pytest.mark.parametrize('style,version',[
+    ('token-classic','tokenTextlessM15'),('token-full-art','tokenTextless'),('token-borderless','tokenTextlessBorderless'),
+])
+def test_deck_wide_token_conversion_uses_selected_family(workspace,style,version):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace;ws=Workspace(s);card=sf('Creature — Bird',['U'])
+    card['oracle_text']='Flying'
+    comp=Compiler(s).compile_face(card,card,0,{},settings,a)
+    configured={**settings,'allCardsTokens':True,'templateRules':{'token':style}}
+    token=ws._apply_token_spec(comp,ws._deck_token_spec(configured,comp),a,'Deck-wide token',sem=semantic(card,card))
+    assert token['data']['version']==version
+    assert token['data']['text']['rules']['text']=='Flying'
+    assert token['data']['text']['pt']['text']=='2/3'
 
 
 def test_deck_wide_token_setting_is_front_affecting(workspace):

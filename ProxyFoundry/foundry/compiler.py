@@ -20,6 +20,9 @@ BUILTINS=[
  {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 BUILTINS.extend([
+ {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
+ {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
+ {'id':'token-borderless','name':'Modern borderless token','description':'Edge-to-edge artwork with outlined rules text and the modern token bars.','legendary':True,'groups':['token']},
  {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token']},
  {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
 ])
@@ -41,7 +44,8 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1,'token-classic':1,'token-full-art':1,'token-borderless':1}
+AUTO_TEMPLATE_VERSIONS['token']=4
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -253,6 +257,13 @@ def frame_treatment_code(sem):
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
+    match=re.fullmatch(r'/img/frames/token/m15/(regular|textless)/[wubrgmal]\.png',src)
+    if match:return f'/img/frames/token/m15/{match.group(1)}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
+    match=re.fullmatch(r'/img/frames/token/(regular|textless|textless-borderless)/(?:tokenFrame[WUBRGMAL](?:Regular|Textless)|frameC)\.png',src)
+    if match:
+        family=match.group(1)
+        filename='frameC.png' if code=='C' else f'tokenFrame{code}{"Regular" if family=="regular" else "Textless"}.png'
+        return f'/img/frames/token/{family}/{filename}'
 
     # Prepare uses one native color image with different masks for its bars,
     # rules, and body. The body remains owned by the structural recipe.
@@ -1261,14 +1272,6 @@ def _battle_frame_code(sem):
     return 'C'
 
 
-_TOKEN_REGULAR_MASKS=[
-    {'src':'/img/frames/token/tokenMaskRegularPinline.png','name':'Pinline'},
-    {'src':'/img/frames/m15/regular/m15MaskTitle.png','name':'Title'},
-    {'src':'/img/frames/token/tokenMaskRegularType.png','name':'Type'},
-    {'src':'/img/frames/token/tokenMaskRegularRules.png','name':'Rules'},
-    {'src':'/img/frames/m15/regular/m15MaskBorder.png','name':'Border'},
-    {'src':'/img/frames/token/regular/bevel.svg','name':'Bevel'},
-]
 _TOKEN_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
 _TOKEN_ART_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 _TOKEN_M15_ART_WINDOW_BOUNDS={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.5143}
@@ -1277,10 +1280,12 @@ _TOKEN_WATERMARK_BOUNDS={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472}
 
 def fit_token_art(data,art_local_path,autofit=True):
     """Fit token artwork to the visible art window for the active token frame."""
+    version=str(data.get('version') or '')
     bounds=(
-        _TOKEN_M15_ART_WINDOW_BOUNDS
-        if str(data.get('version') or '')=='tokenRegularM15'
-        else _TOKEN_ART_BOUNDS
+        _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
+        {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
+        {'x':0,'y':0,'width':1,'height':1} if version=='tokenTextlessBorderless' else
+        _TOKEN_ART_BOUNDS
     )
     data['artBounds']=copy.deepcopy(bounds)
     if autofit:
@@ -1316,8 +1321,8 @@ def _token_frame_src(code):
 def _token_pt_src(code):
     return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
 
-def build_token_data(sem,artist,autofit,flags):
-    """Build normal Scryfall tokens with CardConjurer's genuine Token Regular pack."""
+def build_token_data(sem,artist,autofit,flags,style='token-classic'):
+    """Build tokens using the selected genuine CardConjurer token family."""
     types=set(sem.get('types',[]))
     creature='Creature' in types
     base=copy.deepcopy(sem)
@@ -1380,7 +1385,7 @@ def build_token_data(sem,artist,autofit,flags):
     frames.append({
         'name':f'{cname} Token Frame',
         'src':_token_frame_src(code),
-        'masks':copy.deepcopy(_TOKEN_REGULAR_MASKS),
+        'masks':[],
     })
     data['frames']=frames
     data['version']='tokenRegular'
@@ -1421,8 +1426,58 @@ def build_token_data(sem,artist,autofit,flags):
         'oneLine':True,'align':'center',
     })
 
+    short=token_has_short_text(sem)
+    configure_token_style(data,code,style,short)
     fit_token_art(data,sem['art_local_path'],autofit)
-    return base,data,'token_regular'
+    return base,data,('token_regular' if style=='token-full-art' and not short else style.replace('-','_')+('_short' if short else '_rules'))
+
+
+def token_has_short_text(sem):
+    # Only compact plain keywords qualify. Activated abilities, reminder text,
+    # multiple lines and flavor always retain the larger rules area.
+    rules=str(sem.get('oracle_text') or '').strip()
+    return not sem.get('flavor_text') and len(rules)<=24 and not any(c in rules for c in '\n{}():')
+
+
+def configure_token_style(data,code,style,short):
+    classic=style=='token-classic'
+    borderless=style=='token-borderless'
+    large_art=short or borderless
+    family='textless' if large_art else 'regular'
+    frame=next(f for f in reversed(data['frames']) if str(f.get('src','')).startswith('/img/frames/token/'))
+    if not classic and not large_art:frame['src']=_token_frame_src(code)
+    pinline='/img/frames/token/tokenMaskRegularPinline.png'
+    if classic:
+        frame['src']=f'/img/frames/token/m15/{family}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
+        pinline=f'/img/frames/token/m15/{family}/pinline.svg'
+    elif large_art:
+        folder='textless-borderless' if borderless else 'textless'
+        frame['src']=f'/img/frames/token/{folder}/'+('frameC.png' if code=='C' else f'tokenFrame{code}Textless.png')
+        pinline='/img/frames/token/tokenMaskTextlessPinline.png'
+    # These packs contain complete textured frames. Combining their editor
+    # masks cuts out much of that texture; keep the whole image as the base.
+    # Only multicolor tokens need a separate pinline layer for the shared dual
+    # gradient treatment. It sits above the complete native multicolor frame.
+    frame['masks']=[]
+    if code=='M':
+        data['frames'].insert(data['frames'].index(frame),{
+            'name':'Token Pinline','src':frame['src'],
+            'masks':[{'src':pinline,'name':'Pinline'}],
+        })
+    data['version']=('tokenTextlessM15' if large_art else 'tokenRegularM15') if classic else ('tokenTextlessBorderless' if borderless else 'tokenTextless' if large_art else 'tokenRegular')
+    text=data['text']
+    if large_art:
+        text['type']['y']=0.8196
+        data['setSymbolBounds']['y']=0.8439
+        data['watermarkBounds']={'x':-1,'y':-1,'width':0.0007,'height':0.0005}
+        text['rules'].update(x=0.086,y=0.875,width=0.65,height=0.043,size=0.026,oneLine=True,align='center')
+        if borderless and not short:
+            text['rules'].update(y=0.62,width=0.828,height=0.18,size=0.0324,oneLine=False,align='left')
+    if classic:
+        for field in text.values():
+            field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
+        text['title']['color']='#fde367'
+    else:apply_full_art_text(data)
 
 
 def build_emblem_data(sem,artist,autofit,flags):
@@ -2155,7 +2210,7 @@ class Compiler:
             builtin=next(x for x in BUILTINS if x['id']==choice)
             if choice!='auto' and builtin['groups']!='ordinary' and group not in builtin['groups']:
                 raise ValidationError('This template does not support '+group+'.')
-            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card'}:
+            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card','token-classic','token-full-art','token-borderless'}:
                 raise ValidationError('Choose automatic or a custom template for '+group+'.')
             if choice=='godzilla-card' and group!='token' and 'Land' in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla land template for lands.')
@@ -2177,7 +2232,7 @@ class Compiler:
                 d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
-                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-classic')
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
@@ -2268,7 +2323,7 @@ class Compiler:
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
-            if group=='token':apply_full_art_text(data)
+            if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:apply_full_art_text(data)
         if nickname_applied and group in ORDINARY_GROUPS:
             reserve_nickname_mana_space(data,sem)
         if nickname_applied and data.get('version')=='m15Nickname':

@@ -68,7 +68,7 @@ async function createTemplate(){
 async function createFromSeed(kind){
   const seed=await api('/api/templates/seed?kind='+encodeURIComponent(kind==='blank'?'normal':kind));
   if(kind==='blank')seed.frames=[];
-  const group=kind==='land'?'land':kind==='legend-land'?'legendary':'standard';
+  const group=kind.startsWith('token-')?'token':kind==='land'?'land':kind==='legend-land'?'legendary':'standard';
   const model=await api('/api/templates/convert-cardconjurer',{source:seed,name:'My template',group});
   editTemplate(model);
 }
