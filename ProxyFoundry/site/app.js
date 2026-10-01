@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,date,nav,confirmAction,saveApiFile} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,date,nav,confirmAction,saveApiFile,showWorkspaceError} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
@@ -110,7 +110,7 @@ export async function route(){
     else if(name==='settings')await (state.bootstrap?.browser?(await import('/web/settings-browser.js')).showSettings():showSettings());
     else if(name==='help')await showHelp();
     else{state.route='decks';showLibrary();}
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}</div><button class="button" id="retry-page">Retry</button>`;$('#retry-page').onclick=()=>route();}
+  }catch(e){showWorkspaceError(e,()=>route());}
 }
 async function boot(){
   try{
@@ -138,7 +138,7 @@ async function boot(){
     document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a&&state.dirty){e.preventDefault();nav(a.getAttribute('href').slice(1));}});
     await route();
     window.dispatchEvent(new Event('pf-ui-ready'));
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nReload this page to reopen your workspace.</div>`;window.dispatchEvent(new CustomEvent('pf-ui-error',{detail:e.message}));}
+  }catch(e){showWorkspaceError(e,()=>location.reload());window.dispatchEvent(new CustomEvent('pf-ui-error',{detail:e.message}));}
 }
 window.addEventListener('error',e=>{if(state.csrf)api('/api/client-error',{error:e.message+'\n'+(e.error?.stack||'')}).catch(()=>{});});
 boot();

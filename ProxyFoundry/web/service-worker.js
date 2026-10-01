@@ -36,7 +36,7 @@ async function handleRequest(event){
   const body=event.request.method==='POST'?await event.request.arrayBuffer():null;
   const id=crypto.randomUUID();
   const result=new Promise(resolve=>{
-    channel.port1.onmessage=e=>resolve(e.data);
+    channel.port1.onmessage=e=>{channel.port1.close();resolve(e.data);};
   });
   client.postMessage({type:'request',id,method:event.request.method,url:new URL(event.request.url).pathname+url.search,
                       headers:Object.fromEntries(event.request.headers),body},[channel.port2,...(body?[body]:[])]);

@@ -18,6 +18,100 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def test_static_engine_releases_image_responses_and_error_diagnostics(tmp_path):
+    """Exercise real Pyodide proxy lifetimes without rendering a whole deck."""
+    from playwright.sync_api import sync_playwright
+    import shutil
+
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
+    shutil.copytree(ROOT/'dist',tmp_path/'site')
+    worker=tmp_path/'site/web/engine-worker.js'
+    source=worker.read_text(encoding='utf-8')
+    tracking='''
+live_responses = 0
+class TrackedResponse(dict):
+    def __init__(self, value):
+        global live_responses
+        super().__init__(value)
+        live_responses += 1
+    def __del__(self):
+        global live_responses
+        live_responses -= 1
+original_request = request
+def request(app, method, url, body, headers):
+    if str(url).startswith('/api/__test__/image'):
+        return {'status':200,'mime':'image/png','body':bytes([int(str(url).split('=')[1])])*1024*1024,'headers':{}}
+    return original_request(app, method, url, body, headers)
+'''
+    source=source.replace('def browser_request(method, url, body, headers):',tracking+'\ndef browser_request(method, url, body, headers):')
+    source=source.replace('last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))',
+                          "last_response = TrackedResponse(request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")
+    source=source.replace('self.onmessage=event=>{',"self.onmessage=event=>{\n  if(event.data.url==='/api/__test__/crash')throw new Error('Injected engine crash');")
+    source=source.replace('global last_response',"global last_response\n    if str(url) == '/api/__test__/early-fail':\n        raise ValueError('Injected early failure')")
+    worker.write_text(source,encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            context=browser.new_context(accept_downloads=True)
+            page=context.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                result=page.evaluate('''async()=>{
+                  const rows=[];
+                  const early=await fetch('/api/__test__/early-fail');
+                  if(early.status!==500||(await early.json()).error.indexOf('Injected early failure')<0)
+                    throw new Error('Expected a readable early failure');
+                  for(let i=0;i<120;i++){
+                    const response=await fetch('/api/__test__/image?value='+i);
+                    const bytes=new Uint8Array(await response.arrayBuffer());
+                    rows.push({live:response.headers.get('X-Test-Live'),status:response.status,
+                      length:bytes.length,first:bytes[0],last:bytes[bytes.length-1]});
+                    if(i===80){
+                      const failed=await fetch('/api/__test__/fail');
+                      if(failed.status!==500||(await failed.json()).error.indexOf('Injected request failure')<0)
+                        throw new Error('Expected a readable engine error');
+                    }
+                  }
+                  return rows;
+                }''')
+                assert len(result)==120
+                for i,row in enumerate(result):
+                    assert row=={'live':'1','status':200,'length':1024*1024,'first':i,'last':i},row
+                page.get_by_role('link',name='Settings',exact=True).click()
+                page.get_by_role('button',name='Download Diagnostics',exact=True).wait_for(timeout=30000)
+                #Simulate the unreadable HTTP response after generation, with no API available.
+                page.evaluate('''async()=>{
+                  const ui=await import('/site/ui.js');
+                  window.testOriginalFetch=window.fetch;
+                  window.fetch=async()=>new Response('<html>Unavailable</html>',{status:503,headers:{'Content-Type':'text/html'}});
+                  try{await ui.api('/api/settings');}
+                  catch(error){ui.showWorkspaceError(error);}
+                }''')
+                assert page.get_by_text('HTTP 503',exact=False).is_visible()
+                with page.expect_download() as download:
+                    page.get_by_role('button',name='Download browser diagnostics',exact=True).click()
+                report=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+                assert report['engineStatus']=='Ready'
+                assert any('/api/settings: HTTP 503' in row['detail'] for row in report['entries'])
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'workspace-error-diagnostics.png'))
+                crash=page.evaluate('''async()=>{
+                  window.fetch=window.testOriginalFetch;
+                  const crashed=await fetch('/api/__test__/crash');
+                  const after=await fetch('/api/settings');
+                  return {status:crashed.status,error:(await crashed.json()).error,
+                    afterStatus:after.status,afterError:(await after.json()).error};
+                }''')
+                assert crash['status']==crash['afterStatus']==500
+                assert 'Injected engine crash' in crash['error']
+                assert 'Injected engine crash' in crash['afterError']
+            finally:context.close();browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_token_styles_and_upstream_assets():
     from playwright.sync_api import sync_playwright
     subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)

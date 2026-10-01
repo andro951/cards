@@ -53,19 +53,27 @@ self.onmessage=event=>{
 async function handle(event){
   const {id,method,url,body,headers}=event.data;
   if(!id)return;
+  let invoke,response,saved,content;
   try{
     await ready;
-    const invoke=python.globals.get('browser_request');
-    const response=invoke(method,url,new Uint8Array(body||[]),headers||{});
+    invoke=python.globals.get('browser_request');
+    response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const metadata=response.toJs({dict_converter:Object.fromEntries});
-    response.destroy();
-    invoke.destroy();
-    const content=python.globals.get('last_response').get('body');
+    saved=python.globals.get('last_response');
+    content=saved.get('body');
     const bytes=content.toJs();
-    content.destroy();
     if(method==='POST')await mount.syncfs();
     self.postMessage({type:'response',id,...metadata,body:bytes},[bytes.buffer]);
   }
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
+  finally{
+    //Every PyProxy owns a Python reference; leaked responses retain whole PNGs.
+    content?.destroy();
+    saved?.destroy();
+    response?.destroy();
+    invoke?.destroy();
+    if(python?.globals.has('last_response'))
+      python.globals.delete('last_response');
+  }
 }
 

@@ -1,3 +1,4 @@
+import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
 const startup=document.createElement('main');
@@ -23,6 +24,8 @@ message.style.fontSize='15px';
 startup.append(logo,message);
 document.body.append(startup);
 document.body.hidden=false;
+const diagnosticButton=document.createElement('button');diagnosticButton.className='button';diagnosticButton.textContent='Download browser diagnostics';
+diagnosticButton.onclick=downloadBrowserDiagnostics;startup.append(diagnosticButton);
 
 try{
 const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
@@ -40,19 +43,32 @@ else{
   const {savedFolder}=await import('/web/storage-choice.js');
   const folder=await savedFolder();
   const pending=new Map();
+  let engineFailure=null;
   let readyResolve;
   let readyReject;
   const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
+  const failEngine=error=>{
+    engineFailure=String(error);
+    setEngineStatus('Failed: '+engineFailure);
+    readyReject(new Error(engineFailure));
+    for(const [id,port] of pending){
+      port.postMessage({type:'error',id,message:engineFailure});port.close();
+    }
+    pending.clear();
+  };
+  worker.onerror=event=>failEngine(event.message||'The card engine stopped. Reload the page to continue; completed images are saved.');
+  worker.onmessageerror=()=>failEngine('The card engine response could not be read. Reload the page to continue; completed images are saved.');
 
   worker.onmessage=event=>{
     const data=event.data;
-    if(data.type==='status')message.textContent=data.message;
-    if(data.type==='ready')readyResolve();
-    if(data.type==='fatal')readyReject(new Error(data.message));
+    if(data.type==='status'){message.textContent=data.message;setEngineStatus(data.message);}
+    if(data.type==='ready'){setEngineStatus('Ready');readyResolve();}
+    if(data.type==='fatal')failEngine(data.message);
     if(data.type==='response'||data.type==='error'){
       const port=pending.get(data.id);
       pending.delete(data.id);
-      if(port)port.postMessage(data,data.body?[data.body.buffer]:[]);
+      if(data.type==='error')recordDiagnostic('engine request failed',data.message);
+      if(port){port.postMessage(data,data.body?[data.body.buffer]:[]);port.close();}
     }
   };
   worker.postMessage({type:'start',folder});
@@ -63,10 +79,11 @@ else{
     const port=event.ports[0];
     try{
       await ready;
+      if(engineFailure)throw new Error(engineFailure);
       pending.set(data.id,port);
       worker.postMessage(data,data.body?[data.body]:[]);
     }
-    catch(error){port.postMessage({type:'error',id:data.id,message:String(error)});}
+    catch(error){port.postMessage({type:'error',id:data.id,message:String(error)});port.close();}
   });
 
   window.addEventListener('message',async event=>{

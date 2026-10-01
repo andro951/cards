@@ -1,3 +1,4 @@
+import {recordDiagnostic,downloadBrowserDiagnostics} from './diagnostics.js';
 export const $=(s,root=document)=>root.querySelector(s);
 export const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11,8 +12,22 @@ export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export async function api(path,data,method='POST'){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
   const r=await fetch(path,opt);const text=await r.text();let result;
-  try{result=JSON.parse(text)}catch{throw new Error('The workspace returned an unreadable response. Reload the page and try again.');}
+  try{result=JSON.parse(text)}catch(error){
+    recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.slice(0,300)}`);
+    throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
+  }
   if(!r.ok)throw new Error(result.error||'Request failed.');return result;
+}
+export function showWorkspaceError(error,retry=null){
+  recordDiagnostic('workspace error',error.stack||error.message);
+  const notice=document.createElement('div');notice.className='notice error';notice.textContent=error.message;
+  const diagnostics=document.createElement('button');diagnostics.className='button';diagnostics.textContent='Download browser diagnostics';
+  diagnostics.onclick=downloadBrowserDiagnostics;
+  $('#main').replaceChildren(notice,diagnostics);
+  if(retry){
+    const button=document.createElement('button');button.className='button';button.textContent='Retry';button.onclick=retry;
+    $('#main').append(button);
+  }
 }
 export async function blobRequest(path,body,mime='application/octet-stream',headers={}){
   const r=await fetch(path,{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':mime,...headers},body});

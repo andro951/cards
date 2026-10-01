@@ -1,475 +1,475 @@
 nodeid,group,seconds,outcome,measured_at_utc
-tests/test_app_rules.py::test_assets,routine,0.055,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_bundled_set_symbols_are_defaults_and_uploads_replace_them,routine,0.866,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_cache_boundaries[31535999-False-True],routine,0.010,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_cache_boundaries[31536000-False-False],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_cache_boundaries[604799-True-True],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_cache_boundaries[604800-True-False],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_crop_actual_placement,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_crop_boundaries,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_folders,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_hash,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_invalid_github_source[C:\\cards\\art],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_invalid_github_source[file:///C:/cards],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_invalid_github_source[http://github.com/a/b],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_invalid_github_source[https://evil.test/a/b],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_invalid_github_source[https://github.com/a/b/tree/main/../x],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_lists,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_revisions,routine,0.167,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Artifact Creature \u2014 Myr-normal-0-standard],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Artifact Land-normal-0-land],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Artifact \u2014 Spacecraft-normal-0-station],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Basic Snow Land \u2014 Forest-normal-0-basic-land],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Creature-transform-0-transform-front],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Enchantment Creature \u2014 Saga-saga-0-saga-creature],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Enchantment \u2014 Room-split-0-room],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Land-modal_dfc-1-modal-back],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Legendary Artifact \u2014 Equipment-normal-0-legendary],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Legendary Land-normal-0-legendary-land],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_app_rules.py::test_type_groups[Legendary Planeswalker \u2014 Jace-normal-0-planeswalker],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_ambiguous_art_does_not_silently_fall_back_to_scryfall,routine,0.803,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes,routine,0.848,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_github_art_uses_pinned_immutable_url_and_verifies_blob,routine,0.848,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_github_blob_sha_mismatch_is_rejected,routine,0.811,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_github_folder_index_resolves_current_commit_and_keeps_blob_sha,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_global_scryfall_refresh_applies_to_art,routine,0.956,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_numbered_github_art_keeps_the_original_pinned_url,routine,2.442,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_numbered_local_art_is_used_for_generation_and_custom_art_previews,routine,0.890,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_old_refresh_art_setting_is_discarded,routine,0.773,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_cache.py::test_scryfall_cache_policy_is_unchanged,routine,0.857,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_source_visibility.py::test_github_refresh_toggle_is_removed,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_art_source_visibility.py::test_scryfall_source_hides_custom_art_fallback_control,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size0],routine,0.093,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size1],routine,0.064,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size2],routine,0.062,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size3],routine,0.065,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size4],routine,0.050,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_contain_exact_outside_pixels[size5],routine,0.063,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_default_and_composite_cache,routine,0.582,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_design_and_source_icon_survive_defaults_duplicate_backup,routine,5.660,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_invalid_and_opaque_warning,routine,0.026,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_multideck_dfc_and_no_front_regeneration,routine,3.131,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_only_transparent_padding_trimmed,routine,0.037,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_per_card_icon_override_and_real_reverse_restore,routine,1.494,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_backs.py::test_transparency_preserved,routine,0.019,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_battle.py::test_invasion_of_ikoria_uses_native_battle_front_and_transform_back,routine,0.274,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_battle.py::test_transform_battle_front_classifies_as_battle_and_back_as_transform,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_battle.py::test_two_color_battle_uses_complete_multicolor_frame_without_component_masks,routine,0.250,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_branding.py::test_internal_protocol_identifiers_remain_compatible,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_branding.py::test_launcher_and_console_use_current_product_name,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_branding.py::test_storage_new_name_and_legacy_compatibility,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_branding.py::test_visible_branding_and_theme_are_bulk_proxy_forge,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_browser_backup.py::test_selective_backup_import_replaces_only_confirmed_objects,routine,1.331,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_browser_backup.py::test_style_presets_are_portable_with_bundled_assets,routine,2.360,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_card_choices.py::test_art_and_official_text_choices_do_not_replace_printing,routine,1.869,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_card_grid_ui.py::test_card_grid_uses_hover_back_without_flip_button,routine,0.014,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_class_and_enchantment_land.py::test_cleric_class_uses_native_cardconjurer_class_frame,routine,0.275,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_class_and_enchantment_land.py::test_valgavoths_lair_is_land_family_with_five_color_mana_identity,routine,0.304,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_credit_rejects_formatting_commands_and_controls[bad\nartist],routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_credit_rejects_formatting_commands_and_controls[{fontbelerenbsc} Artist],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_custom_art_can_explicitly_keep_printing_artist_without_scryfall_source_label,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_custom_art_deck_then_card_override,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_face_artist_preferred,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_missing_scryfall_artist_keeps_source_and_rights_notice,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[None],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[Wrong Artist],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_custom_artist_prompt_contract.py::test_custom_artist_prompt_and_no_printing_fallback_contract,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_digital_printings.py::test_exact_digital_printing_is_valid_proxy_source,routine,0.058,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_digital_printings.py::test_name_lookup_may_also_return_digital_without_being_rejected,routine,0.068,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_digital_printings.py::test_scryfall_deck_export_preserves_exact_digital_printing,routine,0.058,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_ambiguous_numbered_files_require_explicit_choice,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_exact_name_wins_over_numbered_alternatives,routine,0.016,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[001_command_tower_custom],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[123command_tower],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[command_towers],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[command_towr],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[1996 World Champion-001_1996_world_champion],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-0009 Command Tower],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-001_command_tower],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-23-command-tower],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-commandtower],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Urza\u2019s Saga-045_urzas_saga],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[\xc6ther Spellbomb-002_aether_spellbomb],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_cache_boundaries,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_cache_read_through,routine,0.083,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_crop_threshold,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_deck_text,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_github_folders,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Artifact Creature \u2014 Myr-normal-0-standard],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Artifact Land-normal-0-land],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Basic Snow Land \u2014 Forest-normal-0-basic-land],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Battle \u2014 Siege-normal-0-battle],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Creature Land-normal-0-special-land],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Creature-transform-0-transform-front],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment Creature \u2014 Saga-normal-0-saga-creature],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment Land \u2014 Urza's Saga-normal-0-saga],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment Land \u2014 Urza's Saga-saga-0-saga],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment Land-normal-0-land],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment \u2014 Room-split-0-room],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Enchantment \u2014 Saga-saga-0-saga],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Land-modal_dfc-1-modal-back],routine,0.010,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Legendary Artifact \u2014 Equipment-normal-0-legendary],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Legendary Land-normal-0-legendary-land],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_groups[Legendary Planeswalker \u2014 Jace-normal-0-planeswalker],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_invalid_github_source[C:\\cards\\art],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_invalid_github_source[file:///C:/cards],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_invalid_github_source[http://github.com/a/b],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_invalid_github_source[https://evil.test/a/b],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_invalid_github_source[https://github.com/a/b/tree/main/../secret],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_network_rejects_nonpublic_sources[file:///etc/passwd],routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_network_rejects_nonpublic_sources[https://127.0.0.1/],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_network_rejects_nonpublic_sources[https://evil.com/],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_network_rejects_nonpublic_sources[https://raw.githubusercontent.com/a/../b],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_network_rejects_nonpublic_sources[https://user:pass@api.scryfall.com/a],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_render_hash_quantity_independent,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_store_revisions_and_trash,routine,0.086,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_domain.py::test_urzas_saga_structural_priority_beats_land,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_art_subfolder_link_imports_parent_symbols_back_and_card_data,routine,0.835,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data1-version must be 1],routine,0.924,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data2-cards must be an array],routine,0.883,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data3-nickname.*must be text],routine,2.578,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data4-more than one nonempty entry],routine,0.899,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[{bad json-valid UTF-8 JSON],routine,0.988,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[corrupt-rare.png: Could not decode],routine,1.281,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[duplicate-Duplicate rare],routine,0.870,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[missing-missing: mythic.png],routine,0.870,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[svg-export SVG to PNG],routine,2.290,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[symlink-symlink],routine,0.954,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unexpected-Unexpected: extra.png],routine,0.872,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unsafe-path-unsafe or unexpected],routine,1.014,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[5],routine,0.028,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[C:\\cards\\deck],routine,0.041,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[None],routine,0.032,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[],routine,0.030,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[file:///deck],routine,0.032,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[https://evil.example/setup],routine,0.033,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[download],routine,1.079,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[start],routine,2.240,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_data_json_merges_fields_without_clearing_existing_overrides,routine,1.173,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_data_json_nonempty_unknown_card_name_fails_atomically,routine,0.935,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_data_json_only_invalidates_faces_it_changes,routine,0.934,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_direct_github_symbol_folder_import,routine,0.234,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_does_not_enable_single_symbol_override,routine,0.082,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbol],routine,0.972,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbols],routine,0.913,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_four_symbols_live_art_and_icon_are_staged,routine,1.643,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_github_symbols_and_custom_back_trim_fully_transparent_padding,routine,0.290,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_http_bundle_import_stages_then_revision_save_preserves_cards_and_options,routine,2.888,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[art-file-art must be a regular],routine,0.074,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[back-corrupt-back.png: Could not decode],routine,0.323,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[file-url-file, not a project folder]",routine,0.054,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[invisible-icon-fully transparent],routine,0.474,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[listing-limit-too many entries],routine,0.061,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_missing_symbol_sources_use_bundled_defaults,routine,2.386,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_optional_data_json_is_staged_then_applied_on_save,routine,4.616,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_plural_symbol_folder_takes_priority_over_legacy_alias,routine,0.428,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_precedence_four_images_over_single_and_complete_back_over_icon,routine,0.287,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_reimport_fetches_changed_images_and_listing_without_stale_cache,routine,0.474,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[1234567abc],routine,2.124,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[art/v2],routine,0.394,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[main],routine,0.354,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_single_symbol_is_rejected,routine,0.060,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbol],routine,0.339,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbols],routine,0.331,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_commander_picker_keeps_distinct_frames_and_groups_matching_choices,routine,1.090,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_direct_data_json_uses_existing_schema_and_checks_deck_names,routine,0.908,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Creature \u2014 Human-colors0-godzilla-card-m15NicknameFrameB.png],routine,0.917,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Creature \u2014 Human-colors2-godzilla-card-m15NicknameFrameA.png],routine,0.863,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Land-colors1-godzilla-land-m15NicknameFrameL.png],routine,0.887,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Legendary Creature \u2014 Human-colors3-godzilla-card-m15NicknameFrameB.png],routine,0.872,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_native_token_text_gets_white_black_outline,routine,0.890,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Artifact \u2014 Equipment-godzilla-card],routine,0.900,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Basic Land \u2014 Mountain-godzilla-land],routine,0.868,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Land-godzilla-land],routine,0.951,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_preview_targets_use_a_card_from_requested_layout,routine,1.127,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_layers,routine,0.895,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_godzilla_workflow.py::test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct,routine,1.098,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_grid_card_ui_source.py::test_grid_cards_keep_name_on_card_and_no_metadata_below,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_hosted_land_library.py::test_hosted_land_library_feature_is_removed,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_images.py::test_transparent_edge_crop_does_not_erase_low_alpha_inside_crop,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_images.py::test_transparent_edge_crop_ignores_alpha_two_strays,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_images.py::test_transparent_edge_crop_keeps_alpha_three_boundary,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_academy_ruins_is_colorless_despite_blue_nonmana_activation_cost,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_activation_cost_colors_do_not_color_the_land_frame,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_basic_land_subtype_and_direct_extra_outputs_are_combined,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_conditional_choose_a_color_effect_does_not_turn_nykthos_gold,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_direct_any_color_mana_ability_is_five_color,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_fetch_land_infers_colors_from_basic_land_types_it_searches_for,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_nonbasic_land_subtypes_do_not_crash_color_inference,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_typed_fetch_does_not_become_five_color_just_because_it_is_a_fetch_land,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_unrestricted_basic_land_fetch_is_five_color_gold,routine,0.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_land_color_inference.py::test_world_tree_uses_its_printed_green_mana_ability_not_conditional_wubrg_access,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_local_preview.py::test_launcher_builds_before_reopening_an_existing_preview,routine,0.012,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_local_preview.py::test_old_app_marker_alone_is_not_treated_as_static_preview,routine,0.519,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_local_preview.py::test_preview_serves_site_files_only_on_loopback,routine,0.661,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_local_preview.py::test_windows_launcher_targets_browser_preview,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_modal_rounding.py::test_modal_clips_header_and_footer_to_rounded_outline,routine,0.017,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_orders.py::test_crop_warning_acceptance_is_tied_to_render,routine,1.028,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_orders.py::test_draft_never_ordered,routine,0.888,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_orders.py::test_multideck_pairs_and_quantities,routine,2.409,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_active_svg_rejected[<svg xmlns=""http://www.w3.org/2000/svg"" onload=""alert(1)""/>]",routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_active_svg_rejected[<svg xmlns=""http://www.w3.org/2000/svg""><script>alert(1)</script></svg>]",routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_artist_and_back_hash,routine,0.269,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_auto_same_as_v58,routine,0.230,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_colored_or_artifact_token_nickname_uses_full_godzilla_pack[Token Artifact Creature \u2014 Construct-Construct-colors0-A],routine,0.205,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_colored_or_artifact_token_nickname_uses_full_godzilla_pack[Token Creature \u2014 Spirit-Spirit-colors1-B],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_colorless_token_nickname_uses_complete_neutral_frame,routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_copy_token_conversion_refits_art_to_token_bounds,routine,0.256,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_copy_token_type_parser_preserves_token_supertype,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_custom_colorless_clara_covers_full_art_nonland_area_and_centers_overflow,routine,0.304,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-borderless-tokenTextlessBorderless],routine,0.262,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-classic-tokenTextlessM15],routine,0.278,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-full-art-tokenTextless],routine,0.264,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_options_apply_independent_overrides,routine,2.799,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_power_and_toughness_are_independent,routine,1.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_deck_wide_token_setting_is_front_affecting,routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_doctor_who_saga_chapter_groupings_and_ability_boxes,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_dual_color_sagas_use_standard_eased_gradient_pinline[Enchantment Creature \u2014 Saga Dragon-colors1-/img/frames/saga/creature/masks/sagaMaskPinline.png],routine,0.251,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_dual_color_sagas_use_standard_eased_gradient_pinline[Enchantment \u2014 Saga-colors0-/img/frames/saga/sagaMaskPinline.png],routine,0.266,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_exact_printing,routine,0.222,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_full_art_nonland_centers_only_the_axis_that_overflows,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_generated_pinline_red_uses_sampled_mtg_reference_color,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_legendary_no_invalid_land,routine,0.199,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_meld_import_uses_real_urza_pair_text_and_physical_half_backs,routine,3.429,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_modal_nickname_uses_native_modal_nickname_pack,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_morophon_no_longer_forces_wubrg_onto_a_new_line,routine,0.254,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_native_token_regular_keeps_its_own_broad_art_bounds,routine,0.660,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_battle_preserves_battle_frame_and_uses_landscape_text_only,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_colorless_keeps_chosen_frame_without_crashing,routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_legendary_keeps_automatic_frame,routine,0.231,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_ordinary_keeps_automatic_frame,routine,0.232,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_semantic_override_beats_scryfall_flavor_name,routine,0.218,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nonlegendary_choices[auto],routine,0.216,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nonlegendary_choices[land],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nonlegendary_choices[legend-land],routine,0.211,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_nonlegendary_choices[normal],routine,0.204,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Basic Land \u2014 Forest-basic-land-card_noncreature],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Land-land-card_noncreature],routine,0.211,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Legendary Land-legendary-land-card_legendary],routine,0.209,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_normal_scryfall_creature_token_uses_real_token_frame,routine,0.230,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame,routine,1.717,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_planeswalker_landscape_art_window_crop_does_not_warn,routine,0.370,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_planeswalker_nickname_uses_native_planeswalker_nickname_pack,routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_saga_creature_cover_fit_uses_width_when_source_is_tall,routine,0.299,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_saga_creature_short_frame_regex_matches_real_asset_paths,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_art_series_uses_each_full_printing_image,routine,0.405,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_emblem_uses_native_emblem_frame[Emblem \u2014 Ajani-subtypes1],routine,0.213,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_emblem_uses_native_emblem_frame[Emblem-subtypes0],routine,0.203,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[day],routine,0.227,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[experience],routine,0.240,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[poison-counter],routine,0.228,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_scryfall_token_supertype_is_supported_by_adapter,routine,0.231,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_semantic_uses_scryfall_flavor_name_as_nickname,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_short_saga_creature_scryfall_art_uses_approved_trim,routine,0.270,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_short_saga_scryfall_uses_centered_cover_fit_and_skips_review_warning,routine,0.277,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_summon_leviathan_signature_uses_short_creature_saga_frame,routine,0.256,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_tall_planeswalker_custom_art_uses_shared_full_art_area,routine,0.265,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_tall_planeswalker_scryfall_keeps_native_art_window_fit,routine,0.243,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Archivist of Oghma-Creature \u2014 Halfling Cleric-colors0-Test Archivist Nickname-W-False],routine,0.319,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Construct-Token Artifact Creature \u2014 Construct-colors2-Test Construct Nickname-A-False],routine,0.221,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Spirit-Token Creature \u2014 Spirit-colors3-Test Spirit Nickname-B-False],routine,0.235,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Syr Gwyn, Hero of Ashvale-Legendary Creature \u2014 Human Knight-colors1-Test Commander Nickname-M-True]",routine,0.214,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_nickname_refits_set_symbol_to_m15nickname_type_bar,routine,0.223,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-borderless],routine,0.219,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-classic],routine,0.200,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-full-art],routine,0.197,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-borderless],routine,0.192,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-classic],routine,0.536,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-full-art],routine,0.199,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-borderless]",routine,2.008,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-classic]",routine,0.201,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-full-art]",routine,0.211,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-borderless],routine,0.209,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-classic],routine,0.207,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-full-art],routine,0.205,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-borderless],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-classic],routine,0.204,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-full-art],routine,0.212,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-borderless],routine,0.207,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-classic],routine,0.212,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-full-art],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-borderless]",routine,0.209,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-classic]",routine,0.217,passed,2026-09-30T22:39:53.200047-04:00
-"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-full-art]",routine,0.205,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline,routine,1.424,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_pipeline.py::test_urzas_saga_uses_saga_recipe_instead_of_enchantment_land_recipe,routine,0.252,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_release.py::test_complete_release_contains_no_runtime_cache_or_fonts,routine,2.971,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_render_storage.py::test_delete_all_images_keeps_nonrender_assets,routine,0.116,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_render_storage.py::test_one_current_render_per_face_and_human_readable_path,routine,0.243,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_render_storage.py::test_render_storage_is_fresh_schema_without_migration_code,routine,0.012,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_absolute_native_host_alias_is_resolved_to_pinned_path,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_browser_transport_non_404_does_not_try_another_frame_source,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_colorless_saga_creature_frame_uses_exact_pinned_gap_source,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_creator_script_patches_inline_mana_cluster_wrapping,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_modern_saga_asset_source_is_not_a_global_fallback,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_pinned_asset_requests_not_live_cardconjurer_site,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/b.png],routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/frame.png],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/pinline.png],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/prepare.png],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/preparePinline.png],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/rules.png],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_scryfall_deck_refresh.py::test_live_deck_export_does_not_disable_card_metadata_cache,routine,0.110,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_scryfall_deck_refresh.py::test_same_scryfall_deck_url_is_fetched_live_on_every_import,routine,0.152,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_back_catalog_and_composition_endpoint,routine,3.529,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_backup_restore_copies_and_omits_runtime_fonts,routine,2.153,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_bad_backup_is_rejected_before_deck_mutation,routine,1.058,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_card_inspector_actions_exist_in_source,routine,0.010,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged,routine,0.054,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_csrf_and_runtime_isolation,routine,1.317,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_diagnostics_download_routes_return_real_files,routine,1.057,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_download_cropped_art_is_in_deck_actions_menu,routine,0.009,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_import_prepare_render_order_roundtrip,routine,2.588,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_prepare_error_becomes_attention_and_render_plan_reports_the_real_error,routine,2.047,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_render_diagnostics_log_pipeline_cache_and_symbol_geometry,routine,2.073,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_render_targets_for_card_only_returns_the_requested_card_even_while_deck_is_draft,routine,0.036,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_review_images_action_is_in_deck_menu,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_review_images_export_is_single_worker_and_reaches_complete_progress,routine,1.027,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_review_images_export_pairs_scryfall_printing_with_rendered_faces,routine,1.003,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_review_images_export_uses_one_background_job_and_transient_fetches,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_runtime_symbol_diagnostic_endpoint,routine,1.056,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_runtime_symbol_source_instrumentation,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_single_card_prepare_endpoint_never_calls_full_deck_prepare,routine,2.073,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_single_card_prepare_keeps_deck_draft_when_another_face_is_pending,routine,4.126,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_single_review_image_export_can_download_a_specific_face_png,routine,2.381,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_site_png_assets_are_served,routine,1.045,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_symbol_and_back_uploads_trim_only_fully_transparent_edges,routine,1.048,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_template_validation_and_seed,routine,1.065,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_trash_controls_and_permanent_delete_setting,routine,2.060,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_trash_ui_and_missing_generation_contracts,routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_server.py::test_uploaded_file_name_never_becomes_a_local_path,routine,0.556,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_land_family_offsets_are_scoped_without_disabling_global_fit,routine,0.010,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[card_noncreature-data0-1606],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_basic-data3-2401],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_dual-data1-1601],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_legendary-data2-1728],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[original_dual_land_textless-data4-2402],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_station_runtime_security.py::test_station_script_checksum_and_csp_safe_assignment,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_station_runtime_security.py::test_station_script_uses_allowed_pinned_host,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_storage_selection.py::test_first_run_storage_prompt_contract_is_present,routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_storage_selection.py::test_saved_storage_location_is_persistent,routine,0.015,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_model_v2.py::test_cardconjurer_conversion_discards_card_specific_media,routine,0.031,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_model_v2.py::test_dynamic_regions_follow_native_geometry_with_small_offsets,routine,0.032,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_model_v2.py::test_template_in_use_cannot_be_deleted,routine,2.325,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_model_v2.py::test_template_json_carries_uploaded_frame_images,routine,0.172,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics,routine,0.222,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_colorless_eldrazi_without_devoid_keeps_normal_frame_family,routine,2.335,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_esika_approved_modal_pair_unchanged,routine,0.271,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_land_seed_is_not_a_basic_land_recipe,routine,0.168,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_sowing_mycospawn_custom_art_uses_shared_full_art_area,routine,0.228,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_sowing_mycospawn_uses_green_devoid_frame,routine,0.254,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_template_edit_and_delete_invalidates_only_its_decks,routine,1.037,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_safety.py::test_unapproved_modal_dfc_fails_closed,routine,0.193,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_versions.py::test_auto_template_version_is_scoped_to_structural_group,routine,0.048,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_versions.py::test_custom_template_fingerprint_changes_only_for_edited_template,routine,0.100,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_versions.py::test_named_builtin_template_versions_are_independent,routine,0.046,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_versions.py::test_pipeline_version_keeps_generation_compatibility_name,routine,0.010,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_template_versions.py::test_saga_updates_invalidate_only_saga_auto_templates,routine,0.050,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_authenticated_batch_api_and_legacy_archive,routine,1.157,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_exact_limit_includes_zip_headers_and_never_splits_a_pair,routine,0.024,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[-1-0-1],routine,0.011,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0--1-1],routine,0.008,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-0-0],routine,0.009,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-0-1048577],routine,0.009,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-10000000000-1],routine,0.011,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[9-0-1],routine,0.012,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[True-0-1],routine,0.009,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_multiple_zips_preserve_all_copies_pairs_and_source_bytes,routine,0.024,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_reject_missing_duplicate_or_unexpected_pairs,routine,0.034,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_single_batch_is_the_original_archive_byte_for_byte,routine,0.032,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transfer_batches.py::test_source_modified_after_planning_cannot_be_transferred,routine,0.009,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_colorless_transform_land_keeps_land_crown,routine,0.256,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_everflowing_well_pair_uses_real_cardconjurer_transform_assets,routine,0.314,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_multicolor_transform_artifact_keeps_gold_accents_and_gradient_pinline,routine,0.275,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_search_for_azcanta_uses_transform_enchantment_front_and_land_back,routine,0.287,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_the_great_synthesis_transform_back_uses_native_saga_structure,routine,0.269,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_transform_dfc.py::test_transform_saga_front_uses_native_saga_structure,routine,0.265,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_colorless_land_uses_neutral_effects_without_recoloring_structure,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_compiler_source_is_single_complete_module,routine,0.053,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_crown_family_color_variant_detection_is_filename_agnostic,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_dual_color_universal_pass_splits_structure_and_colors_all_five_effects,routine,0.008,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_existing_old_dual_crown_stack_is_preserved_byte_for_byte,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/nickname/m15NicknameCrownA.png-/img/frames/m15/nickname/m15NicknameCrownR.png-/img/frames/m15/nickname/m15NicknameCrownU.png],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/oilslick/aCrown.png-/img/frames/m15/oilslick/rCrown.png-/img/frames/m15/oilslick/uCrown.png],routine,0.006,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/praetors/aCrown.png-/img/frames/m15/praetors/rCrown.png-/img/frames/m15/praetors/uCrown.png],routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/zendikarRising/m15ZendikarRisingCrownA.png-/img/frames/m15/zendikarRising/m15ZendikarRisingCrownR.png-/img/frames/m15/zendikarRising/m15ZendikarRisingCrownU.png],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_inner_crown_monocolor_is_universal_too,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_modal_crown_family_uses_native_layered_dual_blend,routine,0.011,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_outer_dual_crown_does_not_suppress_inner_crown_coloring,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_showcase_ucrown_filename_family_is_also_detected,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_single_regular_crown_fallback_restores_old_two_native_png_blend,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_ub_floating_crown_family_uses_same_native_layered_dual_blend,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_universal_frame_colors.py::test_universal_pass_uses_same_semantics_across_frame_families,routine,0.007,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_academy_ruins_uses_neutral_legendary_land_treatment,routine,0.892,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors0-A],routine,0.125,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors1-U],routine,0.125,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors2-W],routine,0.123,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors3-M],routine,0.135,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors4-M],routine,0.126,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_artist_credit_mode_survives_style_defaults_duplicate_and_backup,routine,0.918,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_back_quantity_do_not_change_front_hash,routine,0.162,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_colored_artifact_creature_keeps_metallic_pt_box,routine,0.135,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_dfc_artist_is_per_face_and_does_not_follow_other_side,routine,0.156,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_flip_ingestion_matches_supplied_nested_semantics,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_flip_is_single_output_not_reverse,routine,0.806,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_iron_man_normal_artifact_recipe,routine,0.138,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_local_custom_and_scryfall_art_in_same_deck_have_separate_credits,routine,1.698,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic,routine,0.159,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_miracle_keyword_uses_cardconjurer_miracle_overlay,routine,0.126,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_miracle_oracle_fallback_is_strict_and_classic_override_can_skip_it,routine,0.172,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_missing_generation_metadata_forces_once_then_reuses,routine,1.281,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_modified_custom_template_keeps_geometry,routine,0.144,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[False],routine,0.130,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[True],routine,0.126,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_old_generation_cannot_be_ordered_as_current,routine,2.176,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_colored_artifact_keeps_metal_body_and_blue_bars,routine,0.132,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors0-w],routine,0.123,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors1-u],routine,0.141,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors2-b],routine,0.130,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors3-r],routine,0.130,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors4-g],routine,0.138,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors5-m],routine,0.140,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors6-a],routine,0.130,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_scryfall_fallback_ignores_custom_deck_artist,routine,0.956,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_scryfall_inline_flavor_italics_render_without_literal_asterisks,routine,0.118,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[futureFrame],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[genericShowcase],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[m15Regular],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[modalRegular],routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[stationRegular],routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_set_symbol_fit_respects_nonstandard_frame_anchor,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[GitHub folder],routine,0.945,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[Scryfall selected printing],routine,0.808,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[computer folder],routine,0.780,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[uploaded override],routine,0.775,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Artifact-Artifact-normal],routine,0.131,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Creature-Creature \u2014 Elf-normal],routine,0.126,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Land-Land-normal],routine,0.141,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Legendary Land-Legendary Land-normal],routine,1.768,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_two_color_legendary_crown_and_pinline_share_universal_gradient,routine,0.129,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v54_integration.py::test_vendor_exact_manifest,routine,0.039,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_compact_one_threshold_and_two_tiers,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_compiler_parity_untouched_station_state,routine,0.184,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_flip_medallion_reserves_two_percent,routine,0.162,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors0],routine,0.208,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors1],routine,0.191,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors2],routine,0.182,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors3],routine,0.167,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors0],routine,0.162,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors1],routine,0.394,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors2],routine,0.172,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors3],routine,0.173,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_no_homemade_station_badge_functions,routine,0.004,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement,routine,0.249,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_invalid_structures_fail,routine,0.254,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[GitHub folder-adagia-W],routine,0.167,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[GitHub folder-susur-B],routine,0.165,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[Scryfall selected printing-adagia-W],routine,0.172,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[Scryfall selected printing-susur-B],routine,0.159,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_station_underframe_policy_depends_on_art_source_not_card_color,routine,0.364,passed,2026-09-30T22:39:53.200047-04:00
-tests/test_v58_station.py::test_threshold_continuation_and_seriema_shape,routine,0.005,passed,2026-09-30T22:39:53.200047-04:00
+tests/test_app_rules.py::test_assets,routine,0.044,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_bundled_set_symbols_are_defaults_and_uploads_replace_them,routine,0.872,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_cache_boundaries[31535999-False-True],routine,0.010,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_cache_boundaries[31536000-False-False],routine,0.007,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_cache_boundaries[604799-True-True],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_cache_boundaries[604800-True-False],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_crop_actual_placement,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_crop_boundaries,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_folders,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_hash,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_invalid_github_source[C:\\cards\\art],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_invalid_github_source[file:///C:/cards],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_invalid_github_source[http://github.com/a/b],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_invalid_github_source[https://evil.test/a/b],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_invalid_github_source[https://github.com/a/b/tree/main/../x],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_lists,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_revisions,routine,0.179,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Artifact Creature \u2014 Myr-normal-0-standard],routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Artifact Land-normal-0-land],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Artifact \u2014 Spacecraft-normal-0-station],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Basic Snow Land \u2014 Forest-normal-0-basic-land],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Creature-transform-0-transform-front],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Enchantment Creature \u2014 Saga-saga-0-saga-creature],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Enchantment \u2014 Room-split-0-room],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Land-modal_dfc-1-modal-back],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Legendary Artifact \u2014 Equipment-normal-0-legendary],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Legendary Land-normal-0-legendary-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_app_rules.py::test_type_groups[Legendary Planeswalker \u2014 Jace-normal-0-planeswalker],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_ambiguous_art_does_not_silently_fall_back_to_scryfall,routine,0.815,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes,routine,0.864,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_github_art_uses_pinned_immutable_url_and_verifies_blob,routine,0.791,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_github_blob_sha_mismatch_is_rejected,routine,0.818,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_github_folder_index_resolves_current_commit_and_keeps_blob_sha,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_global_scryfall_refresh_applies_to_art,routine,0.886,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_numbered_github_art_keeps_the_original_pinned_url,routine,0.846,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_numbered_local_art_is_used_for_generation_and_custom_art_previews,routine,3.325,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_old_refresh_art_setting_is_discarded,routine,0.818,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_cache.py::test_scryfall_cache_policy_is_unchanged,routine,0.866,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_source_visibility.py::test_github_refresh_toggle_is_removed,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_art_source_visibility.py::test_scryfall_source_hides_custom_art_fallback_control,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size0],routine,0.095,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size1],routine,0.064,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size2],routine,0.060,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size3],routine,0.045,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size4],routine,0.052,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_contain_exact_outside_pixels[size5],routine,0.088,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_default_and_composite_cache,routine,0.582,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_design_and_source_icon_survive_defaults_duplicate_backup,routine,1.807,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_invalid_and_opaque_warning,routine,0.027,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_multideck_dfc_and_no_front_regeneration,routine,1.670,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_only_transparent_padding_trimmed,routine,0.048,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_per_card_icon_override_and_real_reverse_restore,routine,1.411,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_backs.py::test_transparency_preserved,routine,0.018,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_battle.py::test_invasion_of_ikoria_uses_native_battle_front_and_transform_back,routine,0.293,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_battle.py::test_transform_battle_front_classifies_as_battle_and_back_as_transform,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_battle.py::test_two_color_battle_uses_complete_multicolor_frame_without_component_masks,routine,0.262,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_branding.py::test_internal_protocol_identifiers_remain_compatible,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_branding.py::test_launcher_and_console_use_current_product_name,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_branding.py::test_storage_new_name_and_legacy_compatibility,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_branding.py::test_visible_branding_and_theme_are_bulk_proxy_forge,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_browser_backup.py::test_selective_backup_import_replaces_only_confirmed_objects,routine,1.424,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_browser_backup.py::test_style_presets_are_portable_with_bundled_assets,routine,2.614,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_card_choices.py::test_art_and_official_text_choices_do_not_replace_printing,routine,1.923,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_card_grid_ui.py::test_card_grid_uses_hover_back_without_flip_button,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_class_and_enchantment_land.py::test_cleric_class_uses_native_cardconjurer_class_frame,routine,0.391,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_class_and_enchantment_land.py::test_valgavoths_lair_is_land_family_with_five_color_mana_identity,routine,0.277,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_credit_rejects_formatting_commands_and_controls[bad\nartist],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_credit_rejects_formatting_commands_and_controls[{fontbelerenbsc} Artist],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_custom_art_can_explicitly_keep_printing_artist_without_scryfall_source_label,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_custom_art_deck_then_card_override,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_face_artist_preferred,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_missing_scryfall_artist_keeps_source_and_rights_notice,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[None],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[Wrong Artist],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_credits.py::test_scryfall_original_cannot_be_overwritten_or_blanked[],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_custom_artist_prompt_contract.py::test_custom_artist_prompt_and_no_printing_fallback_contract,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_digital_printings.py::test_exact_digital_printing_is_valid_proxy_source,routine,0.057,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_digital_printings.py::test_name_lookup_may_also_return_digital_without_being_rejected,routine,0.069,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_digital_printings.py::test_scryfall_deck_export_preserves_exact_digital_printing,routine,0.054,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_ambiguous_numbered_files_require_explicit_choice,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_exact_name_wins_over_numbered_alternatives,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[001_command_tower_custom],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[123command_tower],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[command_towers],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_matching_does_not_guess_suffixes_or_typos[command_towr],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[1996 World Champion-001_1996_world_champion],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-0009 Command Tower],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-001_command_tower],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-23-command-tower],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Command Tower-commandtower],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[Urza\u2019s Saga-045_urzas_saga],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_artwork_name_matches_numbered_and_separator_variations[\xc6ther Spellbomb-002_aether_spellbomb],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_cache_boundaries,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_cache_read_through,routine,0.074,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_crop_threshold,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_deck_text,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_github_folders,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Artifact Creature \u2014 Myr-normal-0-standard],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Artifact Land-normal-0-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Basic Snow Land \u2014 Forest-normal-0-basic-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Battle \u2014 Siege-normal-0-battle],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Creature Land-normal-0-special-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Creature-transform-0-transform-front],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment Creature \u2014 Saga-normal-0-saga-creature],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment Land \u2014 Urza's Saga-normal-0-saga],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment Land \u2014 Urza's Saga-saga-0-saga],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment Land-normal-0-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment \u2014 Room-split-0-room],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Enchantment \u2014 Saga-saga-0-saga],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Land-modal_dfc-1-modal-back],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Legendary Artifact \u2014 Equipment-normal-0-legendary],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Legendary Land-normal-0-legendary-land],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_groups[Legendary Planeswalker \u2014 Jace-normal-0-planeswalker],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_invalid_github_source[C:\\cards\\art],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_invalid_github_source[file:///C:/cards],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_invalid_github_source[http://github.com/a/b],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_invalid_github_source[https://evil.test/a/b],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_invalid_github_source[https://github.com/a/b/tree/main/../secret],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_network_rejects_nonpublic_sources[file:///etc/passwd],routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_network_rejects_nonpublic_sources[https://127.0.0.1/],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_network_rejects_nonpublic_sources[https://evil.com/],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_network_rejects_nonpublic_sources[https://raw.githubusercontent.com/a/../b],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_network_rejects_nonpublic_sources[https://user:pass@api.scryfall.com/a],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_render_hash_quantity_independent,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_store_revisions_and_trash,routine,0.082,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_domain.py::test_urzas_saga_structural_priority_beats_land,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_art_subfolder_link_imports_parent_symbols_back_and_card_data,routine,0.833,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data1-version must be 1],routine,0.921,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data2-cards must be an array],routine,1.290,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data3-nickname.*must be text],routine,0.869,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data4-more than one nonempty entry],routine,0.884,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[{bad json-valid UTF-8 JSON],routine,0.884,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[corrupt-rare.png: Could not decode],routine,1.092,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[duplicate-Duplicate rare],routine,0.858,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[missing-missing: mythic.png],routine,1.169,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[svg-export SVG to PNG],routine,0.834,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[symlink-symlink],routine,0.893,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unexpected-Unexpected: extra.png],routine,0.849,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unsafe-path-unsafe or unexpected],routine,0.827,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[5],routine,0.035,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[C:\\cards\\deck],routine,0.032,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[None],routine,0.029,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[],routine,0.028,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[file:///deck],routine,0.035,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[https://evil.example/setup],routine,0.030,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[download],routine,1.144,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[start],routine,0.849,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_data_json_merges_fields_without_clearing_existing_overrides,routine,1.071,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_data_json_nonempty_unknown_card_name_fails_atomically,routine,0.896,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_data_json_only_invalidates_faces_it_changes,routine,0.869,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_direct_github_symbol_folder_import,routine,0.241,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_does_not_enable_single_symbol_override,routine,0.081,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbol],routine,0.867,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbols],routine,0.828,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_four_symbols_live_art_and_icon_are_staged,routine,1.655,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_github_symbols_and_custom_back_trim_fully_transparent_padding,routine,0.293,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_http_bundle_import_stages_then_revision_save_preserves_cards_and_options,routine,2.880,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[art-file-art must be a regular],routine,0.057,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[back-corrupt-back.png: Could not decode],routine,0.265,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[file-url-file, not a project folder]",routine,0.058,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[invisible-icon-fully transparent],routine,0.443,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[listing-limit-too many entries],routine,0.058,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_missing_symbol_sources_use_bundled_defaults,routine,0.820,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_optional_data_json_is_staged_then_applied_on_save,routine,1.087,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_plural_symbol_folder_takes_priority_over_legacy_alias,routine,0.366,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_precedence_four_images_over_single_and_complete_back_over_icon,routine,0.306,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_reimport_fetches_changed_images_and_listing_without_stale_cache,routine,0.473,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[1234567abc],routine,0.357,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[art/v2],routine,0.373,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[main],routine,0.379,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_single_symbol_is_rejected,routine,0.058,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbol],routine,0.355,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbols],routine,0.380,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_commander_picker_keeps_distinct_frames_and_groups_matching_choices,routine,1.082,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_direct_data_json_uses_existing_schema_and_checks_deck_names,routine,0.936,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Creature \u2014 Human-colors0-godzilla-card-m15NicknameFrameB.png],routine,0.991,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Creature \u2014 Human-colors2-godzilla-card-m15NicknameFrameA.png],routine,0.956,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Land-colors1-godzilla-land-m15NicknameFrameL.png],routine,1.013,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Legendary Creature \u2014 Human-colors3-godzilla-card-m15NicknameFrameB.png],routine,0.948,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_native_token_text_gets_white_black_outline,routine,0.918,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Artifact \u2014 Equipment-godzilla-card],routine,0.881,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Basic Land \u2014 Mountain-godzilla-land],routine,0.888,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_noncreature_godzilla_frame_has_an_empty_pt_text_box[Land-godzilla-land],routine,0.891,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_preview_targets_use_a_card_from_requested_layout,routine,1.146,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_layers,routine,0.961,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_godzilla_workflow.py::test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct,routine,1.116,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_grid_card_ui_source.py::test_grid_cards_keep_name_on_card_and_no_metadata_below,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_hosted_land_library.py::test_hosted_land_library_feature_is_removed,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_images.py::test_transparent_edge_crop_does_not_erase_low_alpha_inside_crop,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_images.py::test_transparent_edge_crop_ignores_alpha_two_strays,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_images.py::test_transparent_edge_crop_keeps_alpha_three_boundary,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_academy_ruins_is_colorless_despite_blue_nonmana_activation_cost,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_activation_cost_colors_do_not_color_the_land_frame,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_basic_land_subtype_and_direct_extra_outputs_are_combined,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_conditional_choose_a_color_effect_does_not_turn_nykthos_gold,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_direct_any_color_mana_ability_is_five_color,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_fetch_land_infers_colors_from_basic_land_types_it_searches_for,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_nonbasic_land_subtypes_do_not_crash_color_inference,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_typed_fetch_does_not_become_five_color_just_because_it_is_a_fetch_land,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_unrestricted_basic_land_fetch_is_five_color_gold,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_land_color_inference.py::test_world_tree_uses_its_printed_green_mana_ability_not_conditional_wubrg_access,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_local_preview.py::test_launcher_builds_before_reopening_an_existing_preview,routine,0.007,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_local_preview.py::test_old_app_marker_alone_is_not_treated_as_static_preview,routine,0.537,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_local_preview.py::test_preview_serves_site_files_only_on_loopback,routine,0.700,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_local_preview.py::test_windows_launcher_targets_browser_preview,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_modal_rounding.py::test_modal_clips_header_and_footer_to_rounded_outline,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_orders.py::test_crop_warning_acceptance_is_tied_to_render,routine,0.958,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_orders.py::test_draft_never_ordered,routine,2.620,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_orders.py::test_multideck_pairs_and_quantities,routine,0.919,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_active_svg_rejected[<svg xmlns=""http://www.w3.org/2000/svg"" onload=""alert(1)""/>]",routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_active_svg_rejected[<svg xmlns=""http://www.w3.org/2000/svg""><script>alert(1)</script></svg>]",routine,0.009,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_artist_and_back_hash,routine,0.294,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_auto_same_as_v58,routine,0.216,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_colored_or_artifact_token_nickname_uses_full_godzilla_pack[Token Artifact Creature \u2014 Construct-Construct-colors0-A],routine,0.223,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_colored_or_artifact_token_nickname_uses_full_godzilla_pack[Token Creature \u2014 Spirit-Spirit-colors1-B],routine,0.244,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_colorless_token_nickname_uses_complete_neutral_frame,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_copy_token_conversion_refits_art_to_token_bounds,routine,0.285,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_copy_token_type_parser_preserves_token_supertype,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_custom_colorless_clara_covers_full_art_nonland_area_and_centers_overflow,routine,0.289,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-borderless-tokenTextlessBorderless],routine,1.456,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-classic-tokenTextlessM15],routine,0.232,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_conversion_uses_selected_family[token-full-art-tokenTextless],routine,0.251,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_options_apply_independent_overrides,routine,1.025,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_power_and_toughness_are_independent,routine,1.010,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_deck_wide_token_setting_is_front_affecting,routine,0.191,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_doctor_who_saga_chapter_groupings_and_ability_boxes,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_dual_color_sagas_use_standard_eased_gradient_pinline[Enchantment Creature \u2014 Saga Dragon-colors1-/img/frames/saga/creature/masks/sagaMaskPinline.png],routine,0.409,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_dual_color_sagas_use_standard_eased_gradient_pinline[Enchantment \u2014 Saga-colors0-/img/frames/saga/sagaMaskPinline.png],routine,0.194,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_exact_printing,routine,0.209,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_full_art_nonland_centers_only_the_axis_that_overflows,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_generated_pinline_red_uses_sampled_mtg_reference_color,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_legendary_no_invalid_land,routine,0.227,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_meld_import_uses_real_urza_pair_text_and_physical_half_backs,routine,2.963,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_modal_nickname_uses_native_modal_nickname_pack,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_morophon_no_longer_forces_wubrg_onto_a_new_line,routine,0.204,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_native_token_regular_keeps_its_own_broad_art_bounds,routine,0.244,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_battle_preserves_battle_frame_and_uses_landscape_text_only,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_colorless_keeps_chosen_frame_without_crashing,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_legendary_keeps_automatic_frame,routine,0.230,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_ordinary_keeps_automatic_frame,routine,0.193,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_semantic_override_beats_scryfall_flavor_name,routine,0.216,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nonlegendary_choices[auto],routine,0.240,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nonlegendary_choices[land],routine,0.239,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nonlegendary_choices[legend-land],routine,0.248,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_nonlegendary_choices[normal],routine,0.215,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Basic Land \u2014 Forest-basic-land-card_noncreature],routine,0.218,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Land-land-card_noncreature],routine,0.221,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_normal_look_land_rules_use_classic_card_frame[Legendary Land-legendary-land-card_legendary],routine,0.209,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_normal_scryfall_creature_token_uses_real_token_frame,routine,0.206,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame,routine,0.241,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_planeswalker_landscape_art_window_crop_does_not_warn,routine,0.393,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_planeswalker_nickname_uses_native_planeswalker_nickname_pack,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_saga_creature_cover_fit_uses_width_when_source_is_tall,routine,0.233,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_saga_creature_short_frame_regex_matches_real_asset_paths,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_art_series_uses_each_full_printing_image,routine,0.264,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_emblem_uses_native_emblem_frame[Emblem \u2014 Ajani-subtypes1],routine,0.259,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_emblem_uses_native_emblem_frame[Emblem-subtypes0],routine,0.215,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[day],routine,0.681,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[experience],routine,0.199,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_helper_cards_use_complete_printing_images[poison-counter],routine,0.194,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_scryfall_token_supertype_is_supported_by_adapter,routine,0.216,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_semantic_uses_scryfall_flavor_name_as_nickname,routine,0.003,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_short_saga_creature_scryfall_art_uses_approved_trim,routine,0.297,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_short_saga_scryfall_uses_centered_cover_fit_and_skips_review_warning,routine,0.240,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_summon_leviathan_signature_uses_short_creature_saga_frame,routine,0.203,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_tall_planeswalker_custom_art_uses_shared_full_art_area,routine,0.300,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_tall_planeswalker_scryfall_keeps_native_art_window_fit,routine,0.426,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Archivist of Oghma-Creature \u2014 Halfling Cleric-colors0-Test Archivist Nickname-W-False],routine,0.247,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Construct-Token Artifact Creature \u2014 Construct-colors2-Test Construct Nickname-A-False],routine,0.214,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Spirit-Token Creature \u2014 Spirit-colors3-Test Spirit Nickname-B-False],routine,0.210,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_test_deck_nickname_cases_use_expected_godzilla_frames[Syr Gwyn, Hero of Ashvale-Legendary Creature \u2014 Human Knight-colors1-Test Commander Nickname-M-True]",routine,0.234,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_nickname_refits_set_symbol_to_m15nickname_type_bar,routine,0.212,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-borderless],routine,0.195,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-classic],routine,0.218,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_only_support_tokens_and_offer_matching_seeds[token-full-art],routine,0.187,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-borderless],routine,0.225,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-classic],routine,0.246,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[--True-token-full-art],routine,0.220,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-borderless]",routine,0.214,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-classic]",routine,0.221,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying, vigilance, lifelink--False-token-full-art]",routine,0.204,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-borderless],routine,0.205,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-classic],routine,0.228,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying--True-token-full-art],routine,0.222,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-borderless],routine,0.256,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-classic],routine,0.243,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying-A bird in the hand.-False-token-full-art],routine,0.244,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-borderless],routine,0.214,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-classic],routine,2.024,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[Flying\nVigilance--False-token-full-art],routine,0.236,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-borderless]",routine,0.229,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-classic]",routine,0.227,passed,2026-09-30T22:58:06.846385-04:00
+"tests/test_pipeline.py::test_token_styles_preserve_text_and_choose_matching_geometry[{T}, Sacrifice this token: Add one mana of any color.--False-token-full-art]",routine,0.225,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline,routine,0.313,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_pipeline.py::test_urzas_saga_uses_saga_recipe_instead_of_enchantment_land_recipe,routine,0.202,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_release.py::test_complete_release_contains_no_runtime_cache_or_fonts,routine,3.455,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_render_storage.py::test_delete_all_images_keeps_nonrender_assets,routine,0.113,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_render_storage.py::test_one_current_render_per_face_and_human_readable_path,routine,0.158,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_render_storage.py::test_render_storage_is_fresh_schema_without_migration_code,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_absolute_native_host_alias_is_resolved_to_pinned_path,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_browser_transport_non_404_does_not_try_another_frame_source,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_colorless_saga_creature_frame_uses_exact_pinned_gap_source,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_creator_script_patches_inline_mana_cluster_wrapping,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_modern_saga_asset_source_is_not_a_global_fallback,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_pinned_asset_requests_not_live_cardconjurer_site,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/b.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/frame.png],routine,0.008,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/pinline.png],routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/prepare.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/preparePinline.png],routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_runtime.py::test_prepare_frames_fall_back_after_browser_transport_404[/img/frames/prepare/regular/rules.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_scryfall_deck_refresh.py::test_live_deck_export_does_not_disable_card_metadata_cache,routine,0.103,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_scryfall_deck_refresh.py::test_same_scryfall_deck_url_is_fetched_live_on_every_import,routine,0.140,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_back_catalog_and_composition_endpoint,routine,1.158,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_backup_restore_copies_and_omits_runtime_fonts,routine,2.589,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_bad_backup_is_rejected_before_deck_mutation,routine,1.023,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_card_inspector_actions_exist_in_source,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged,routine,0.051,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_csrf_and_runtime_isolation,routine,1.331,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_diagnostics_download_routes_return_real_files,routine,1.057,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_download_cropped_art_is_in_deck_actions_menu,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_import_prepare_render_order_roundtrip,routine,2.596,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_prepare_error_becomes_attention_and_render_plan_reports_the_real_error,routine,2.071,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_render_diagnostics_log_pipeline_cache_and_symbol_geometry,routine,2.072,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_render_targets_for_card_only_returns_the_requested_card_even_while_deck_is_draft,routine,0.034,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_review_images_action_is_in_deck_menu,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_review_images_export_is_single_worker_and_reaches_complete_progress,routine,0.956,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_review_images_export_pairs_scryfall_printing_with_rendered_faces,routine,0.986,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_review_images_export_uses_one_background_job_and_transient_fetches,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_runtime_symbol_diagnostic_endpoint,routine,1.042,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_runtime_symbol_source_instrumentation,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_single_card_prepare_endpoint_never_calls_full_deck_prepare,routine,2.051,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_single_card_prepare_keeps_deck_draft_when_another_face_is_pending,routine,2.572,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_single_review_image_export_can_download_a_specific_face_png,routine,0.800,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_site_png_assets_are_served,routine,1.044,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_symbol_and_back_uploads_trim_only_fully_transparent_edges,routine,1.045,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_template_validation_and_seed,routine,1.050,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_trash_controls_and_permanent_delete_setting,routine,5.605,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_trash_ui_and_missing_generation_contracts,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_server.py::test_uploaded_file_name_never_becomes_a_local_path,routine,1.049,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_land_family_offsets_are_scoped_without_disabling_global_fit,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[card_noncreature-data0-1606],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_basic-data3-2401],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_dual-data1-1601],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_legendary-data2-1728],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[original_dual_land_textless-data4-2402],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_station_runtime_security.py::test_station_script_checksum_and_csp_safe_assignment,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_station_runtime_security.py::test_station_script_uses_allowed_pinned_host,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_storage_selection.py::test_first_run_storage_prompt_contract_is_present,routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_storage_selection.py::test_saved_storage_location_is_persistent,routine,0.016,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_model_v2.py::test_cardconjurer_conversion_discards_card_specific_media,routine,0.033,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_model_v2.py::test_dynamic_regions_follow_native_geometry_with_small_offsets,routine,0.031,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_model_v2.py::test_template_in_use_cannot_be_deleted,routine,0.879,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_model_v2.py::test_template_json_carries_uploaded_frame_images,routine,0.163,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics,routine,0.223,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_colorless_eldrazi_without_devoid_keeps_normal_frame_family,routine,1.762,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_esika_approved_modal_pair_unchanged,routine,0.243,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_land_seed_is_not_a_basic_land_recipe,routine,0.203,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_sowing_mycospawn_custom_art_uses_shared_full_art_area,routine,0.184,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_sowing_mycospawn_uses_green_devoid_frame,routine,0.207,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_template_edit_and_delete_invalidates_only_its_decks,routine,1.226,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_safety.py::test_unapproved_modal_dfc_fails_closed,routine,0.216,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_versions.py::test_auto_template_version_is_scoped_to_structural_group,routine,0.033,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_versions.py::test_custom_template_fingerprint_changes_only_for_edited_template,routine,0.074,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_versions.py::test_named_builtin_template_versions_are_independent,routine,0.026,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_versions.py::test_pipeline_version_keeps_generation_compatibility_name,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_template_versions.py::test_saga_updates_invalidate_only_saga_auto_templates,routine,0.028,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_authenticated_batch_api_and_legacy_archive,routine,1.036,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_exact_limit_includes_zip_headers_and_never_splits_a_pair,routine,0.018,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[-1-0-1],routine,0.009,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0--1-1],routine,0.009,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-0-0],routine,0.008,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-0-1048577],routine,0.008,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[0-10000000000-1],routine,0.008,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[9-0-1],routine,0.009,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_invalid_ranges_are_rejected[True-0-1],routine,0.010,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_multiple_zips_preserve_all_copies_pairs_and_source_bytes,routine,0.024,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_reject_missing_duplicate_or_unexpected_pairs,routine,0.029,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_single_batch_is_the_original_archive_byte_for_byte,routine,0.030,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transfer_batches.py::test_source_modified_after_planning_cannot_be_transferred,routine,0.009,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_colorless_transform_land_keeps_land_crown,routine,0.304,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_everflowing_well_pair_uses_real_cardconjurer_transform_assets,routine,0.289,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_multicolor_transform_artifact_keeps_gold_accents_and_gradient_pinline,routine,0.270,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_search_for_azcanta_uses_transform_enchantment_front_and_land_back,routine,0.298,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_the_great_synthesis_transform_back_uses_native_saga_structure,routine,0.269,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_transform_dfc.py::test_transform_saga_front_uses_native_saga_structure,routine,0.261,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_colorless_land_uses_neutral_effects_without_recoloring_structure,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_compiler_source_is_single_complete_module,routine,0.044,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_crown_family_color_variant_detection_is_filename_agnostic,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_dual_color_universal_pass_splits_structure_and_colors_all_five_effects,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_existing_old_dual_crown_stack_is_preserved_byte_for_byte,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/nickname/m15NicknameCrownA.png-/img/frames/m15/nickname/m15NicknameCrownR.png-/img/frames/m15/nickname/m15NicknameCrownU.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/oilslick/aCrown.png-/img/frames/m15/oilslick/rCrown.png-/img/frames/m15/oilslick/uCrown.png],routine,0.006,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/praetors/aCrown.png-/img/frames/m15/praetors/rCrown.png-/img/frames/m15/praetors/uCrown.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_filename_crown_families_receive_native_dual_layers[/img/frames/m15/zendikarRising/m15ZendikarRisingCrownA.png-/img/frames/m15/zendikarRising/m15ZendikarRisingCrownR.png-/img/frames/m15/zendikarRising/m15ZendikarRisingCrownU.png],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_inner_crown_monocolor_is_universal_too,routine,0.008,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_modal_crown_family_uses_native_layered_dual_blend,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_outer_dual_crown_does_not_suppress_inner_crown_coloring,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_showcase_ucrown_filename_family_is_also_detected,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_single_regular_crown_fallback_restores_old_two_native_png_blend,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_ub_floating_crown_family_uses_same_native_layered_dual_blend,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_universal_frame_colors.py::test_universal_pass_uses_same_semantics_across_frame_families,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_academy_ruins_uses_neutral_legendary_land_treatment,routine,0.127,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors0-A],routine,0.134,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors1-U],routine,0.127,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors2-W],routine,0.130,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors3-M],routine,0.127,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artifact_muted_title_type_and_rules_follow_card_color_but_body_stays_metallic[colors4-M],routine,0.121,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_artist_credit_mode_survives_style_defaults_duplicate_and_backup,routine,0.970,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_back_quantity_do_not_change_front_hash,routine,0.150,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_colored_artifact_creature_keeps_metallic_pt_box,routine,0.119,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_dfc_artist_is_per_face_and_does_not_follow_other_side,routine,0.153,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_flip_ingestion_matches_supplied_nested_semantics,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_flip_is_single_output_not_reverse,routine,0.849,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_iron_man_normal_artifact_recipe,routine,0.127,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_local_custom_and_scryfall_art_in_same_deck_have_separate_credits,routine,2.523,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_m15_symbol_fit_matches_cardconjurer_reset_for_cropped_mythic,routine,0.169,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_miracle_keyword_uses_cardconjurer_miracle_overlay,routine,0.121,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_miracle_oracle_fallback_is_strict_and_classic_override_can_skip_it,routine,0.186,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_missing_generation_metadata_forces_once_then_reuses,routine,1.516,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_modified_custom_template_keeps_geometry,routine,0.310,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[False],routine,0.125,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_multicolor_vehicle_bars_are_gold_body_stays_vehicle[True],routine,0.128,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_old_generation_cannot_be_ordered_as_current,routine,0.865,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_colored_artifact_keeps_metal_body_and_blue_bars,routine,0.155,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors0-w],routine,0.131,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors1-u],routine,0.295,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors2-b],routine,0.125,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors3-r],routine,0.150,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors4-g],routine,0.147,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors5-m],routine,0.162,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_prepare_host_frame_uses_its_color[colors6-a],routine,0.164,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_scryfall_fallback_ignores_custom_deck_artist,routine,0.951,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_scryfall_inline_flavor_italics_render_without_literal_asterisks,routine,0.121,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[futureFrame],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[genericShowcase],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[m15Regular],routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[modalRegular],routine,0.010,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_is_version_independent[stationRegular],routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_set_symbol_fit_respects_nonstandard_frame_anchor,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[GitHub folder],routine,2.257,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[Scryfall selected printing],routine,0.858,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[computer folder],routine,0.898,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_source_driven_credit_kept_through_compiler_and_export[uploaded override],routine,0.896,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Artifact-Artifact-normal],routine,0.134,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Creature-Creature \u2014 Elf-normal],routine,0.132,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Land-Land-normal],routine,0.136,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_symbol_fit_uses_each_frame_bounds[Legendary Land-Legendary Land-normal],routine,0.134,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_two_color_legendary_crown_and_pinline_share_universal_gradient,routine,0.123,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v54_integration.py::test_vendor_exact_manifest,routine,0.032,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_compact_one_threshold_and_two_tiers,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_compiler_parity_untouched_station_state,routine,0.177,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_flip_medallion_reserves_two_percent,routine,0.167,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors0],routine,0.162,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors1],routine,0.156,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors2],routine,0.161,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[False-colors3],routine,0.159,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors0],routine,0.155,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors1],routine,0.167,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors2],routine,0.156,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_native_station_structure_and_layering[True-colors3],routine,0.164,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_no_homemade_station_badge_functions,routine,0.005,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement,routine,0.240,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_invalid_structures_fail,routine,0.219,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[GitHub folder-adagia-W],routine,0.158,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[GitHub folder-susur-B],routine,0.176,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[Scryfall selected printing-adagia-W],routine,0.167,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[Scryfall selected printing-susur-B],routine,0.172,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_station_underframe_policy_depends_on_art_source_not_card_color,routine,0.362,passed,2026-09-30T22:58:06.846385-04:00
+tests/test_v58_station.py::test_threshold_continuation_and_seriema_shape,routine,0.004,passed,2026-09-30T22:58:06.846385-04:00
 tests/test_art_series_native.py::test_art_series_native_renders_both_full_scans,extended,24.055,passed,2026-09-30T18:53:37.538665-04:00
 tests/test_batch_bridge.py::test_batches_append_in_sequence_and_choose_once[0-None-3-0],extended,26.065,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_batch_bridge.py::test_batches_append_in_sequence_and_choose_once[2-add-5-0],extended,25.097,passed,2026-09-29T06:38:32.298111-04:00
@@ -535,6 +535,7 @@ tests/test_station_source_probe.py::test_station_source_probe,extended,0.582,pas
 tests/test_token_native.py::test_noncreature_token_renders_with_empty_power_toughness,extended,27.653,passed,2026-09-30T20:16:02.795267-04:00
 tests/test_token_native.py::test_token_style_gallery_renders_native_assets,extended,83.613,passed,2026-09-30T20:16:02.795267-04:00
 tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extended,144.095,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_website.py::test_static_engine_releases_image_responses_and_error_diagnostics,extended,14.491,passed,2026-09-30T23:01:26.553236-04:00
 tests/test_website.py::test_static_token_styles_and_upstream_assets,extended,10.445,passed,2026-09-30T20:19:53.500119-04:00
 tests/test_website.py::test_static_website_fetches_pinned_station_script,extended,9.315,passed,2026-09-30T18:53:37.538665-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip,extended,160.846,passed,2026-09-29T06:38:32.298111-04:00
