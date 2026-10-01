@@ -4,6 +4,8 @@ Updated 2026-10-01. The current application is the static browser website. Doubl
 
 ## Current behavior
 
+- Full-art artwork uses centered cover fitting across the entire card canvas, including Godzilla and the original full-art land families. Frame and text overlays retain their native positions. Pipeline v29 invalidates earlier placement results. See [full-art verification](FULL_ART_VERIFICATION.md).
+
 - Deck deletion immediately removes the tile and opens Deck Library after confirmation, with durable background cleanup and failure recovery. Saved print orders block deletion and link to a filtered order list; orders can be reviewed and deleted. Pending requests are scoped to the workspace.
 
 - Normal Look and Customize Look gather setup before Generate Images. Normal Look resets custom defaults and uses ordinary frames for lands as well as other ordinary cards.
@@ -17,6 +19,6 @@ See [browser operation and recovery](BROWSER_WEBSITE.md), [template model](TEMPL
 
 ## Verification
 
-The latest routine run passed 511 tests with no skips in the selected group. Six Node adapter/helper tests and JavaScript syntax checks passed. Real static Chromium tests cover import/setup/generation/review/export/reload under `/cards/`, explicit template validation, job cancellation, version mismatch handling, and storage permission/quota/recovery scenarios. The 100-image stress run saved all 100 with zero errors and retained them after reload. The final build also passes a real native render with memory forced above 2 GiB. See the [verification report](BROWSER_REPAIR_VERIFICATION.md).
+The latest routine run passed 519 tests with no skips in the selected group. Six Node adapter/helper tests and JavaScript syntax checks passed. Real static Chromium tests cover import/setup/generation/review/export/reload under `/cards/`, explicit template validation, job cancellation, version mismatch handling, and storage permission/quota/recovery scenarios. The 100-image stress run saved all 100 with zero errors and retained them after reload. The final build also passes a real native render with memory forced above 2 GiB. See the [verification report](BROWSER_REPAIR_VERIFICATION.md).
 
 Historical v58 integration evidence is in `CARD_TOOLS_V58_UPDATE.md`. The pinned Card Tools vendor verifier still passes; vendor code was not duplicated or modified for these repairs.

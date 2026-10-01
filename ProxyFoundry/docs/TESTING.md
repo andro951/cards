@@ -8,10 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 511 | Every completed change |
-| Extended | 88 | Relevant changes or an explicit full sweep |
+| Routine | 519 | Every completed change |
+| Extended | 89 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 511 selected tests in 189.15 seconds. The
+The latest routine run passed all 519 selected tests in 280.52 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -71,3 +71,7 @@ The Node deck-adapter and browser-helper tests run after pytest in
 `RUN_TESTS.bat`. With `PF_LIVE_DECK_SITES=1`, they also fetch real public
 Archidekt and MTGGoldfish decks through the helper's bounded endpoint logic.
 These live fetches run in the extended and full modes.
+The affected five-card Supernatural full-art browser test passed in 338.24 seconds.
+It downloads the actual review ZIP and checks rendered art pixels against full-card
+source coordinates. Run `tests/test_full_art_examples.py` with `PF_BROWSER=1`
+and `PF_LIVE_CC=1`; see [full-art verification](FULL_ART_VERIFICATION.md).

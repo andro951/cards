@@ -154,18 +154,9 @@ def fit_set_symbol_to_bounds(data,symbol,recipe=None):
 # Compatibility name for older tests/importers; behavior is now frame-agnostic.
 align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 
-# Full-art non-land cards use an inset card opening, not the land/full-canvas
-# center-crop geometry. The treatment is intentionally pixel-defined so the
-# result is stable across frame families: 80 px in from the top/left/right,
-# width-fit the source art, and top-align it. Any excess height falls below the
-# card and is naturally clipped by the canvas/frame.
-FULL_ART_NONLAND_INSET_PX=80
-FULL_ART_NONLAND_BOUNDS={
-    'x':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
-    'y':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
-    'width':(native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_WIDTH,
-    'height':(native.CARD_HEIGHT-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_HEIGHT,
-}
+# Full-card artwork is composed before frame/text overlays. Bounds describe
+# the card canvas, never the shorter fitting window supplied by a frame pack.
+FULL_ART_NONLAND_BOUNDS={'x':0,'y':0,'width':1,'height':1}
 
 def _is_custom_art_origin(art_origin):
     return str(art_origin or '')!='Scryfall selected printing'
@@ -601,25 +592,12 @@ def apply_miracle_frame(data,sem):
     return True
 
 def full_art_nonland_placement(art):
-    """Cover the 80px-inset full-art area and center only overflowing axes."""
-    iw=float(art.get('width') or 0)
-    ih=float(art.get('height') or 0)
-    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
-    inset=FULL_ART_NONLAND_INSET_PX
-    inner_w=native.CARD_WIDTH-2*inset
-    inner_h=native.CARD_HEIGHT-2*inset
-    zoom=max(inner_w/iw,inner_h/ih)
-    scaled_w=iw*zoom
-    scaled_h=ih*zoom
-    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
-    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
-    return {
-        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
-        'artX':x/native.CARD_WIDTH,
-        'artY':y/native.CARD_HEIGHT,
-        'artZoom':zoom,
-        'artRotate':'0',
-    }
+    """Cover the full card and center only overflowing source axes."""
+    data={'width':native.CARD_WIDTH,'height':native.CARD_HEIGHT,
+          'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS)}
+    cover_art_window(data,art)
+    return {key:data[key] for key in ('artBounds','artX','artY','artZoom','artRotate')}
+
 
 _SOURCE_AWARE_FULL_ART_RECIPES={'colorless_creature','colorless_creature_legendary'}
 
@@ -638,7 +616,7 @@ def apply_source_aware_art_placement(data,art,sem,recipe,group,art_origin,autofi
     its native CardConjurer placement for every supported family, including
     tall-textbox Planeswalkers.
 
-    Custom artwork uses the common 80px-inset full-art region and the same
+    Custom artwork uses the full card canvas and the same
     centered-overflow placement math across all supported frame families.
     """
     if raw_card or not source_aware_art_family(sem,recipe,group):return None
@@ -1880,7 +1858,7 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
 _NICKNAME_TITLE_BOUNDS={'x':0.0494,'y':0.0405,'width':0.9014,'height':0.1053}
 _NICKNAME_CROWN_BOUNDS={'x':0.024,'y':0.0172,'width':0.952,'height':0.1286}
 _NICKNAME_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
-_NICKNAME_ART_BOUNDS={'x':0,'y':0,'width':1,'height':0.9224}
+_NICKNAME_ART_BOUNDS=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
 _NICKNAME_SYMBOL_BOUNDS={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
 _NICKNAME_WATERMARK_BOUNDS={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
 
@@ -2337,7 +2315,6 @@ class Compiler:
         nickname_applied=False
         if choice.startswith('godzilla-'):
             nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
-            data.update(full_art_nonland_placement(art))
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
@@ -2348,6 +2325,17 @@ class Compiler:
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:apply_full_art_text(data)
+        full_card_art=(
+            choice.startswith('godzilla-') or choice in {'land','legend-land'}
+            or (choice=='auto' and (recipe.startswith('land_') or recipe=='original_dual_land_textless'))
+            or data.get('version')=='m15Nickname'
+            or (source_aware_placement or {}).get('mode')=='full-art'
+        )
+        if full_card_art and not options.get('rawCard'):
+            data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+            if not settings.get('disableAutofit',False):cover_art_window(data,art)
+            for key in ('artX','artY','artZoom','artRotate'):
+                if key in options.get('fit',{}):data[key]=float(options['fit'][key])
         if nickname_applied and group in ORDINARY_GROUPS:
             reserve_nickname_mana_space(data,sem)
         if nickname_applied and data.get('version')=='m15Nickname':

@@ -88,11 +88,11 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
 
     for art in (landscape,portrait):
         custom=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder');data=custom['data']
-        inner_w=data['width']-160;inner_h=data['height']-160
+        inner_w=data['width'];inner_h=data['height']
         expected_zoom=max(inner_w/art['width'],inner_h/art['height'])
         scaled_w=art['width']*expected_zoom;scaled_h=art['height']*expected_zoom
-        expected_x=80 if scaled_w<=inner_w+1e-9 else (data['width']-scaled_w)/2
-        expected_y=80 if scaled_h<=inner_h+1e-9 else (data['height']-scaled_h)/2
+        expected_x=0 if scaled_w<=inner_w+1e-9 else (data['width']-scaled_w)/2
+        expected_y=0 if scaled_h<=inner_h+1e-9 else (data['height']-scaled_h)/2
         assert data['artX']*data['width']==pytest.approx(expected_x)
         assert data['artY']*data['height']==pytest.approx(expected_y)
         assert data['artZoom']==pytest.approx(expected_zoom)
@@ -100,8 +100,8 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in data['frames'])
 
     manual=comp.compile_face(c,c,0,{'fit':{'artX':.1,'artY':.2,'artZoom':1.2,'artRotate':0}},settings,landscape['id'],art_origin='uploaded override')
-    assert manual['data']['artBounds']['x']*manual['data']['width']==pytest.approx(80)
-    assert manual['data']['artBounds']['height']*manual['data']['height']==pytest.approx(manual['data']['height']-160)
+    assert manual['data']['artBounds']['x']*manual['data']['width']==pytest.approx(0)
+    assert manual['data']['artBounds']['height']*manual['data']['height']==pytest.approx(manual['data']['height'])
     assert (manual['data']['artX'],manual['data']['artY'],manual['data']['artZoom'])==(.1,.2,1.2)
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
 

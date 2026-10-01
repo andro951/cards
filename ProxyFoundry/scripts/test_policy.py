@@ -1,6 +1,7 @@
 """One source of truth for the routine and extended pytest groups."""
 
 EXTENDED_MODULES={
+    'test_full_art_examples.py',
     'test_art_series_native.py',
     'test_batch_bridge.py',
     'test_browser.py',
