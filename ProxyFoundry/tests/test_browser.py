@@ -136,11 +136,11 @@ def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
     page.locator('.modal-body textarea').fill('1 A Test Creature')
     page.click('#do-import')
     page.get_by_role('button',name='Normal Look').wait_for(timeout=5000)
-    page.route('**/api/decks/*/prepare',lambda route:route.fulfill(status=503,content_type='application/json',body='{"error":"Render stopped after settings check"}'))
+    generation=[]
+    page.on('request',lambda request:generation.append(request.url) if '/prepare' in request.url or '/render-sessions' in request.url else None)
     page.get_by_role('button',name='Normal Look').click()
-    page.locator('.modal').wait_for(state='hidden',timeout=30000)
-    expect(page.locator('#main [role=status]')).to_contain_text('Preparing your deck',timeout=30000)
-    expect(page.locator('#main [role=alert]')).to_contain_text('Render stopped after settings check',timeout=30000)
+    page.locator('#save-setup').wait_for(timeout=30000)
+    assert not generation,generation
     decks=app.store.list('decks')
     assert len(decks)==1
     assert all(decks[0]['settings']['templateRules'][group]=='normal' for group in ('standard','legendary','land','legendary-land','basic-land'))

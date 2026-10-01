@@ -34,7 +34,7 @@ export async function showTemplates(){
   for(const item of built){
     const card=element('article','','template-card');card.style.padding='18px';
     card.append(element('h3',item.name));card.append(element('p',item.description,'muted'));
-    if(item.id!=='auto')card.append(button('Use as starting point',()=>createFromSeed(item.id),'button small'));
+    if(item.id!=='auto'&&!item.id.startsWith('token-'))card.append(button('Use as starting point',()=>createFromSeed(item.id),'button small'));
     builtGrid.append(card);
   }
   builtSection.append(builtGrid);main.append(builtSection);
@@ -68,7 +68,7 @@ async function createTemplate(){
 async function createFromSeed(kind){
   const seed=await api('/api/templates/seed?kind='+encodeURIComponent(kind==='blank'?'normal':kind));
   if(kind==='blank')seed.frames=[];
-  const group=kind.startsWith('token-')?'token':kind==='land'?'land':kind==='legend-land'?'legendary':'standard';
+  const group=kind==='land'||kind==='godzilla-land'?'land':kind==='legend-land'?'legendary-land':'standard';
   const model=await api('/api/templates/convert-cardconjurer',{source:seed,name:'My template',group});
   editTemplate(model);
 }

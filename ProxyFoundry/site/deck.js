@@ -56,7 +56,7 @@ function preparationComplete(deck){
   const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
   $('#view-ready-deck').onclick=closeModal;
 }
-function chooseLook(source){
+function chooseLook(source,includeOutside=true){
   let choosing=false;
   const host=modal('Choose Look','',{size:'large'});
   const body=$('.modal-body',host);
@@ -76,24 +76,13 @@ function chooseLook(source){
       if(choosing)return;
       choosing=true;
       closeModal();
-      const status=preparationStatus(value==='normal'?'Preparing your deck':'Reading your deck list',
-        value==='normal'?"We're preparing your deck for you. This may take several minutes. We'll tell you when it's ready.":
-          'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+      const status=preparationStatus('Reading your deck list',
+        'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
       let deck=null;
       try{
         const prepared=await prepareDeckSource(source);
-        deck=await job('/api/decks/import',{source:prepared,includeOutside:true},{label:'Import deck'});
-        if(value==='custom'){nav('deck/'+deck.id+'/setup');return;}
-        const templateRules={...deck.settings.templateRules};
-        for(const group of ['standard','legendary','land','legendary-land','basic-land'])templateRules[group]='normal';
-        await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{templateRules}});
-        const minutes=Math.max(1,Math.ceil((deck.summary?.faces||deck.summary?.cards||60)*0.3));
-        status.textContent=`We're preparing your deck for you. This will take approximately ${minutes} ${minutes===1?'minute':'minutes'}. We'll tell you when it's ready.`;
-        await renderDecks([deck.id]);
-        const finished=await api('/api/decks/'+deck.id);
-        if(finished.status!=='ready')throw new Error('Some cards still need attention. Open the deck to review the activity log.');
-        status.textContent='All card images are finished.';
-        preparationComplete(finished);
+        deck=await job('/api/decks/import',{source:prepared,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
+        nav('deck/'+deck.id+'/setup');
       }catch(error){
         $('#activity')?.classList.add('hidden');
         status.textContent='We could not finish preparing this deck.';
@@ -127,7 +116,11 @@ function addNewDeck(){
   const fileLabel=document.createElement('label');fileLabel.className='field';
   const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
   const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
-  fileLabel.append(fileTitle,file);advanced.append(fileLabel);body.append(advanced);
+  fileLabel.append(fileTitle,file);advanced.append(fileLabel);
+  const outsideLabel=document.createElement('label');outsideLabel.className='check-line';
+  const outside=document.createElement('input');outside.type='checkbox';outside.checked=true;outside.id='import-outside';
+  const outsideText=document.createElement('span');outsideText.textContent='Include Outside the Game cards';
+  outsideLabel.append(outside,outsideText);advanced.append(outsideLabel);body.append(advanced);
   const updateButton=()=>{addButton.disabled=!(link.value.trim()||sourceText.value.trim());addButton.style.filter=addButton.disabled?'grayscale(1)':'';helperNotice.classList.add('hidden');};
   link.oninput=()=>{sourceText.value='';file.value='';updateButton();};
   sourceText.oninput=()=>{link.value='';file.value='';updateButton();};
@@ -143,14 +136,14 @@ function addNewDeck(){
     if(source.startsWith('{')){
       try{JSON.parse(source);}catch{errorBox(body,'The JSON export is not valid.');return;}
     }
-    closeModal();chooseLook(source);
+    const includeOutside=outside.checked;closeModal();chooseLook(source,includeOutside);
   };
   updateButton();
 }
 export async function importDeck(existing=null){
   if(!existing)return addNewDeck();
   if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
-  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
+  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside" checked><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
   $('#do-import').onclick=async()=>{
     let source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
@@ -167,7 +160,7 @@ export async function importDeck(existing=null){
   };
 }
 function preview(c,f){
-  return f.compiled?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
+  return f.compiled?.render?.url||f.lastRender?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
 }
 function backPreview(c,d){
   if(c.backOverride)return asset(c.backOverride);
@@ -255,7 +248,7 @@ async function generate(d){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
-  await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
+  await renderDecks([d.id],{onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
   const finished=await api('/api/decks/'+d.id);
   if(finished.status==='ready')preparationComplete(finished);
 }
@@ -286,13 +279,7 @@ function deckMenu(d){
     closeModal();
     let current=await api('/api/decks/'+d.id);
     const needsGeneration=!!current.upgradeRequired||current.status==='draft'||Number(current.summary?.rendered||0)<Number(current.summary?.faces||0);
-    if(needsGeneration){
-      await generate(current);
-      current=await api('/api/decks/'+d.id);
-      if(Number(current.summary?.rendered||0)<Number(current.summary?.faces||0)){
-        throw new Error('Some card images could not be generated. Fix those cards before downloading review images.');
-      }
-    }
+    if(needsGeneration)throw new Error('Generate images before downloading review images.');
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
     if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip',out.bytes);else location.href=out.download;
   });
@@ -415,7 +402,7 @@ async function inspect(deck,card,index=0){
   };
   const refreshInspector=()=>{
     setSide(selectedSide);
-    if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.';
+    if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':f.lastRender?.render?'Previous render; generate images to apply your changes.':'Artwork preview; generate this card for the full card image.';
     if($('#inspector-notices'))$('#inspector-notices').innerHTML=renderNotice();
     renderWarning();
   };
@@ -480,7 +467,7 @@ async function inspect(deck,card,index=0){
     await prepareCard();
     syncCurrent(await api('/api/decks/'+d.id));
     refreshInspector();
-    let force=!!d.upgradeRequired;
+    let force=false;
     if(!force && cardRenderMatchesCache(c)){
       const ok=await confirmAction(
         'This card already matches the cached render.',
@@ -495,7 +482,7 @@ async function inspect(deck,card,index=0){
     refreshInspector();
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
-  $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
+  $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();if(!f.compiled?.render)throw new Error('Generate images for this card before downloading its review image.');
     const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review.png',out.bytes);else location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
   $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{

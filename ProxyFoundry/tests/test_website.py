@@ -229,7 +229,8 @@ def test_static_website_prepare_frames_load_from_pinned_fallback():
         server.shutdown();server.server_close();thread.join(timeout=5)
 
 
-def test_static_website_import_frame_review_and_zip(tmp_path):
+@pytest.mark.parametrize('look',['Normal Look','Customize Look'])
+def test_static_website_import_frame_review_and_zip(tmp_path,look):
     from playwright.sync_api import sync_playwright
 
     subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
@@ -242,8 +243,9 @@ def test_static_website_import_frame_review_and_zip(tmp_path):
         with sync_playwright() as playwright:
             browser=playwright.chromium.launch(headless=True)
             context=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True)
-            page=context.new_page();errors=[]
+            page=context.new_page();errors=[];generation=[]
             page.on('pageerror',lambda error:errors.append(str(error)))
+            page.on('request',lambda request:generation.append(request.url) if request.method=='POST' and ('/prepare' in request.url or '/render-sessions' in request.url) else None)
             try:
                 page.goto(origin,wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
@@ -251,7 +253,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path):
                 page.locator('.modal-body summary').click()
                 page.locator('.modal-body textarea').fill('1 Syr Gwyn, Hero of Ashvale')
                 page.click('#do-import')
-                page.get_by_role('button',name='Customize Look').click(timeout=90000)
+                page.get_by_role('button',name=look,exact=True).click(timeout=90000)
                 page.locator('#save-setup').wait_for(timeout=90000)
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
                                             'nickname':'Test Commander Nickname'}]}
@@ -262,15 +264,12 @@ def test_static_website_import_frame_review_and_zip(tmp_path):
                 page.click('[data-frame-group=legendary]')
                 page.locator('#modal-host img:visible').first.wait_for(timeout=240000)
                 page.locator('#activity').wait_for(state='hidden',timeout=240000)
-                hashes=page.locator('#modal-host img:visible').evaluate_all('''async images=>Promise.all(images.map(async image=>{
-                  const bytes=await (await fetch(image.src)).arrayBuffer();
-                  const hash=await crypto.subtle.digest('SHA-256',bytes);
-                  return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
-                }))''')
-                assert len(set(hashes))>=3,'The frame picker repeated the same card image.'
+                sources=page.locator('#modal-host img:visible').evaluate_all('(images)=>images.map(image=>image.getAttribute("src"))')
+                assert len(sources)>=3 and len(set(sources))==1,'Picker samples must be static shared card backs.'
                 page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]').click()
                 page.click('#save-setup')
                 page.get_by_text('Deck setup saved.').wait_for(timeout=30000)
+                assert not generation,'Setup must not generate images: '+repr(generation)
                 page.click('#generate-deck')
                 page.locator('.badge.ready').wait_for(timeout=180000)
                 page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)

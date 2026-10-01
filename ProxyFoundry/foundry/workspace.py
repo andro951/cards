@@ -158,8 +158,16 @@ class Workspace:
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
         return self.store.put('decks',{**result,'name':name,'settings':settings,'status':'draft','notes':''})
+    def invalidate_face(self,face):
+        previous=face.get('compiled') or {}
+        if previous.get('renderKey') and self.store.render_get(previous['renderKey']):
+            face['lastRender']={key:copy.deepcopy(previous[key]) for key in ('renderKey','crop','flags') if key in previous}
+            face['lastRender']['render']=self.store.render_get(previous['renderKey'])
+        face.pop('compiled',None);face.pop('error',None)
+
     def deck(self,ident):
         d=self.store.get('decks',ident)
+        if d:d.pop('upgradeRequired',None)
         if not d:raise ValidationError('Deck not found. It may be in Trash.')
         # Legacy decks created before bundled defaults existed gain them on read;
         # uploaded/custom rarity IDs continue to override the matching defaults.
@@ -181,7 +189,9 @@ class Workspace:
                     # preparation error instead of the vague "prepare changes"
                     # message. Truly missing compilation data is still draft.
                     if not f.get('error'):
-                        d['status']='draft';d['upgradeRequired']=True
+                        d['status']='draft'
+                if f.get('lastRender'):
+                    f['lastRender']['render']=self.store.render_get(f['lastRender']['renderKey'])
                 if comp:
                     comp['render']=r
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
@@ -268,7 +278,7 @@ class Workspace:
                     face['artistOverride']=entry['artist'];changed=True
                 if changed:
                     face['semanticOverrides']=overrides
-                    face.pop('compiled',None);face.pop('error',None)
+                    self.invalidate_face(face)
                     dirty=True
         if dirty:d['status']='draft'
         return dirty
@@ -292,7 +302,7 @@ class Workspace:
             if front_settings_dirty:
                 for card in d.get('cards',[]):
                     for face in card.get('faces',[]):
-                        face.pop('compiled',None);face.pop('error',None)
+                        self.invalidate_face(face)
         d.pop('summary',None);return self.store.put('decks',d,expected)
     def mutate_card(self,deck_id,card_id,patch):
         d=self.deck(deck_id);c=next((c for c in d['cards'] if c['id']==card_id),None)
@@ -361,7 +371,7 @@ class Workspace:
                         if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
                         if f.get(k)!=patch[k]:f[k]=patch[k];face_dirty=True
                 if face_dirty:
-                    f.pop('compiled',None);f.pop('error',None);d['status']='draft'
+                    self.invalidate_face(f);d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,rev)
     def _matching_printing_face(self,card,face,ident):
         if not isinstance(ident,str) or not re.fullmatch(r'[0-9a-f-]{36}',ident):
@@ -596,7 +606,7 @@ class Workspace:
                 comp['render']=self.store.render_get(comp['renderKey'])
                 comp['artOrigin']=origin;comp['exportArtUrl']=url;f['compiled']=comp
             except (ValidationError,native.BuildError,ValueError,OSError) as e:
-                f['error']=str(e);f.pop('compiled',None)
+                self.invalidate_face(f);f['error']=str(e)
             done+=1;progress(done,total,'Prepared '+f['name'])
         return done
     def _prepare_sources(self,s,progress):

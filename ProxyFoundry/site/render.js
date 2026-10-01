@@ -69,7 +69,11 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
 }
 
 export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false}={}){
-  if(prepare)for(const id of ids){const before=await api('/api/decks/'+id);force=force||!!before.upgradeRequired;await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);}
+  if(prepare){
+    for(const id of ids){
+      await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck'});await onUpdate(id);
+    }
+  }
   const plan=await api('/api/render-sessions',{deckIds:ids,force});
   return runRenderPlan(plan,{label:'Render deck',onUpdate,successMessage:'All card images saved',successToast:'Rendering complete. Your decks are ready for order review.'});
 }
