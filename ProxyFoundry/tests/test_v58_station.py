@@ -150,7 +150,7 @@ def test_no_homemade_station_badge_functions():
 
 @pytest.mark.parametrize('name,color',[('adagia','W'),('susur','B')])
 @pytest.mark.parametrize('origin',['Scryfall selected printing','GitHub folder'])
-def test_station_planet_uses_land_overlay_and_native_tiers(env,name,color,origin):
+def test_station_planet_uses_normal_station_overlay_and_native_tiers(env,name,color,origin):
     _,comp,art,_,settings=env
     c=json.loads((Path(__file__).parent/'fixtures/station_lands'/(name+'.json')).read_text(encoding='utf-8'))
     result=comp.compile_face(c,c,0,{},settings,art['id'],art_origin=origin)
@@ -162,11 +162,11 @@ def test_station_planet_uses_land_overlay_and_native_tiers(env,name,color,origin
     assert 'rules' not in data['text']
     assert data['station']['badgeValues']==['','','12+']
     assert data['text']['ability2']['text'] in c['oracle_text']
-    assert any(f['src']=='/img/frames/station/L.png' and not f['masks'] for f in data['frames'])
-    assert not any(f['src']=='/img/frames/station/a.png' and not f['masks'] for f in data['frames'])
+    assert any(f['src']=='/img/frames/station/a.png' and not f['masks'] for f in data['frames'])
+    assert not any(f['src']=='/img/frames/station/L.png' for f in data['frames'])
     assert any(f['src']==f'/img/frames/station/{color.lower()}.png' for f in data['frames'])
     underframes=[f for f in data['frames'] if any(m['name']=='Frame' for m in f['masks'])]
     if origin=='Scryfall selected printing':
-        assert len(underframes)==1 and underframes[0]['src']=='/img/frames/m15/regular/m15FrameL.png'
+        assert len(underframes)==1 and underframes[0]['src']=='/img/frames/m15/regular/m15FrameA.png'
     else:
         assert not underframes

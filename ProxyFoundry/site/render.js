@@ -47,11 +47,13 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
       if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
       const t=plan.targets[i];activity(label,t.name,'Loading saved face…',i,plan.targets.length);
       const detail=await api('/api/render-sessions/'+plan.id+'/'+t.key);
+      if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
       activity(label,t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);
       const promise=new Promise((resolve,reject)=>{pending={...t,index:i,resolve,reject};rejectPending=reject;});
       activeFrame.contentWindow.postMessage({source:'pf-app',type:'render',key:t.key,data:detail.data},origin);
       const output=await withTimeout(promise,150000,t.name+': native render timed out. Retry will keep completed images.');
       pending=null;rejectPending=null;
+      if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
       if(onImage)await onImage(t,output.blob);
       else await blobRequest('/api/render-sessions/'+plan.id+'/'+t.key,output.blob,'image/png');
       activity(label,t.name,(onImage?'Preview ready · ':'PNG saved · ')+output.width+' × '+output.height,i+1,plan.targets.length);

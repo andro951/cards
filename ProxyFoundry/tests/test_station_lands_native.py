@@ -15,7 +15,7 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 @pytest.mark.parametrize('name',['adagia','susur'])
-def test_station_land_renders_with_native_land_frame(tmp_path,name):
+def test_station_land_renders_with_normal_station_frame(tmp_path,name):
     from playwright.sync_api import sync_playwright
     card=json.loads((ROOT/'tests/fixtures/station_lands'/(name+'.json')).read_text(encoding='utf-8'))
     image=Image.new('RGB',(1200,1600),'#9d784f')
@@ -41,7 +41,8 @@ def test_station_land_renders_with_native_land_frame(tmp_path,name):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
-            assert '/img/frames/station/L.png' in app.runtime.requested
+            assert '/img/frames/station/a.png' in app.runtime.requested
+            assert '/img/frames/station/L.png' not in app.runtime.requested
             compiled=ready['cards'][0]['faces'][0]['compiled']
             assert compiled['data']['text']['pt']['text']==''
             rendered=store.render_get(compiled['renderKey'])

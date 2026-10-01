@@ -44,8 +44,9 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1,'token-classic':1,'token-full-art':1,'token-borderless':1}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':2,'godzilla-land':2,'token-classic':1,'token-full-art':1,'token-borderless':1}
 AUTO_TEMPLATE_VERSIONS['token']=4
+AUTO_TEMPLATE_VERSIONS['station']=6
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -181,7 +182,7 @@ def apply_station_underframe_policy(data,sem,art_origin):
 
     Custom Station art is full-bleed, so the ordinary M15 Frame component must
     not sit behind the transparent portion of the Station overlay. Scryfall art
-    keeps a complete underframe: land for Planets, artifact for Spacecraft.
+    keeps the complete artifact underframe used by the native Station recipe.
     """
     frames=data.get('frames',[])
     components=[frame for frame in frames if _station_frame_component(frame)]
@@ -190,14 +191,13 @@ def apply_station_underframe_policy(data,sem,art_origin):
         data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
         return True
     for frame in components:
-        land='Land' in sem.get('types',[])
-        frame['src']='/img/frames/m15/regular/m15Frame'+('L' if land else 'A')+'.png'
-        frame['name']='Land Frame' if land else 'Artifact Frame'
+        frame['src']='/img/frames/m15/regular/m15FrameA.png'
+        frame['name']='Artifact Frame'
     return True
 
 
 def build_station_land_data(sem,artist,autofit,flags,art_origin):
-    """Reuse native Station geometry with its land overlay and land accents."""
+    """Reuse the normal native Station frame and geometry for Station lands."""
     donor=copy.deepcopy(sem)
     # The preserved Spacecraft recipe requires donor PT, cleared below for lands.
     donor.update(types=['Artifact'],subtypes=['Spacecraft'],layout='station',
@@ -208,9 +208,6 @@ def build_station_land_data(sem,artist,autofit,flags,art_origin):
         raise ValidationError(str(exc)) from exc
     data['text']['type']['text']=sem['printed_type_line']
     data['text']['pt']['text']=''
-    for frame in data['frames']:
-        if native._is_station_base_overlay(frame):
-            frame.update(src='/img/frames/station/L.png',name='Station Land Frame')
     apply_station_underframe_policy(data,sem,art_origin)
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return sem,data,'station'
@@ -2035,7 +2032,7 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
         'size':.0362,'color':'white','shadowX':.0014,'shadowY':.001,
     })
     pt.update({
-        'name':'Power/Toughness','x':.7928,'y':.902,'width':.1367,
+        'name':'Power/Toughness','text':pt_text,'x':.7928,'y':.902,'width':.1367,
         'height':.0372,'size':.0372,'font':'belerenbsc',
         'oneLine':True,'align':'center','color':'white',
     })

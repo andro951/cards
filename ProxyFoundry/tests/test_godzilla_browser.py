@@ -60,6 +60,83 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     assert values['flavor_text']=='Linked flavor'
 
 
+def test_frame_can_be_selected_before_the_preview_plan_arrives(browser_app):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Immediate frame choice','source':'1 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    requests=[];runtime=[]
+    page.route('**/api/render-sessions/template-previews',lambda route:requests.append(route))
+    page.on('request',lambda request:runtime.append(request.url) if '/api/runtime/prepare' in request.url else None)
+    page.click('[data-frame-group=standard]')
+    choice=page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True)
+    expect(choice).to_be_enabled()
+    choice.click()
+    expect(page.locator('#modal-host')).to_be_empty()
+    for route in requests:
+        route.fulfill(json={'targets':[{'choice':'godzilla-card'}],'previewErrors':{}})
+    page.click('#save-setup')
+    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
+    assert not runtime and not page.locator('iframe.render-frame').count()
+    assert not errors,errors
+
+
+def test_frame_selection_cancels_an_active_preview_renderer(browser_app):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Cancel active frame preview','source':'1 A Test Creature'})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.route('**/api/runtime/prepare',lambda route:route.fulfill(json={'id':'fake-runtime-job'}))
+    page.route('**/api/jobs/fake-runtime-job',lambda route:route.fulfill(json={'state':'done','kind':'runtime','message':'Complete','done':1,'total':1,'result':{}}))
+    page.route('**/runtime/host**',lambda route:route.fulfill(content_type='text/html',headers={'Content-Security-Policy':"script-src 'unsafe-inline'"},body='''<script>
+      const parentOrigin=new URL(location.href).searchParams.get('parent');
+      parent.postMessage({source:'pf-native-runtime',type:'ready'},parentOrigin);
+      addEventListener('message',event=>{
+        if(event.data.type==='render')parent.postMessage({source:'picker-test',type:'started'},parentOrigin);
+      });
+    </script>'''))
+    page.evaluate("window.__previewStarted=false; addEventListener('message',event=>{if(event.data?.source==='picker-test')window.__previewStarted=true;})")
+    page.click('[data-frame-group=standard]')
+    expect(page.locator('iframe.render-frame')).to_have_count(1)
+    page.wait_for_function('()=>window.__previewStarted',timeout=15000)
+    page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True).click()
+    expect(page.locator('iframe.render-frame')).to_have_count(0)
+    expect(page.locator('#activity')).to_be_hidden()
+    page.click('#save-setup')
+    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
+    assert not errors,errors
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in noncreature Godzilla rendering')
+def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path):
+    store=Store(tmp_path/'noncreature-nickname');app=App(store,Network(store));server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Noncreature Godzilla')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'test_artifact':art,'test_land':art}},'artist':'Fixture Artist'})
+    cards=[]
+    for i,(name,types,style) in enumerate([('Test Artifact','Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land')]):
+        source={'name':name,'layout':'normal','type_line':types,'colors':['B'] if i==0 else [],
+                'mana_cost':'{B}' if i==0 else '', 'oracle_text':'Equipped creature gets +1/+1.\nEquip {1}' if i==0 else '{T}: Add {B}.',
+                'rarity':'common','artist':'Fixture Artist'}
+        cards.append({'id':'card-'+str(i),'name':name,'quantity':1,'scryfall':source,
+                      'faces':[{'id':'face-'+str(i),'name':name,'index':0,'templateOverride':style}]})
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id'])
+            assert current['status']=='ready',page.locator('#activity-log').text_content()
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            for entry in current['cards']:
+                compiled=entry['faces'][0]['compiled'];assert compiled['data']['text']['pt']['text']==''
+                render=store.render_get(compiled['renderKey']);assert render
+                picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
+                picture.save(output/(entry['name'].replace(' ','_')+'_godzilla.png'))
+        finally:browser.close();server.shutdown();server.server_close();app.close()
+
+
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
 def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
     store=Store(tmp_path/'native-picker')

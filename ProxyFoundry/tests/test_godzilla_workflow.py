@@ -105,6 +105,18 @@ def test_native_token_text_gets_white_black_outline(tmp_path):
         assert data['text'][key]['outlineColor']=='black'
 
 
+@pytest.mark.parametrize('type_line,style',[('Artifact — Equipment','godzilla-card'),('Land','godzilla-land')])
+def test_noncreature_godzilla_frame_has_an_empty_pt_text_box(tmp_path,type_line,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
+    source=card(type_line=type_line);source.pop('power');source.pop('toughness')
+    if type_line=='Land':source.update(colors=[],mana_cost='',oracle_text='{T}: Add {B}.')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':style},settings,art)['data']
+    assert data['version']=='m15Nickname'
+    assert data['text']['pt']['text']==''
+    assert all(isinstance(field['text'],str) for field in data['text'].values())
+    assert not any('Power/Toughness' in frame['name'] for frame in data['frames'])
+
+
 def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct(tmp_path):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);deck=ws.new_deck('Token previews')
     source=card(type_line='Token Creature — Bird',layout='token');source['oracle_text']='Flying'

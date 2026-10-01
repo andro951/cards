@@ -33,7 +33,6 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
     const button=document.createElement('button');
     button.type='button';
     button.className='button';
-    button.disabled=true;
     button.style.width='170px';
     button.style.display='flex';
     button.style.flexDirection='column';
@@ -43,8 +42,11 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
     const label=document.createElement('strong');
     label.textContent=choice.name+(choice.id===selected?' · selected':'');
     button.append(label);
-    button.onclick=()=>{onSelect(choice.id,previewBlobs.get(choice.id));closeModal();};
+    button.onclick=()=>{controller.abort();onSelect(choice.id,previewBlobs.get(choice.id));closeModal();};
     return button;
+  }
+  for(const choice of choices){
+    gallery.append(choiceButton(choice));
   }
   const zoom=document.createElement('div');
   zoom.style.cssText='position:fixed;inset:0;z-index:10000;background:#0c0c0cee;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
@@ -97,6 +99,7 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
       const choice=byId.get(id);
       if(!choice)continue;
       const button=choiceButton(choice);
+      button.disabled=true;
       button.title=message;
       button.textContent=choice.name+' · unavailable';
       gallery.append(button);
