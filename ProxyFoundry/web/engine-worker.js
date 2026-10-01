@@ -81,12 +81,13 @@ def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
     metadata={k:v for k,v in last_response.items() if k != 'body'}
+    encoded={'metadata':'\u0100'+json.dumps(metadata,ensure_ascii=False)}
     if not metadata.get('file'):
         if metadata['mime']=='application/json':
-            metadata['jsonBody']='\u0100'+last_response['body'].decode('utf-8')
+            encoded['jsonBody']='\u0100'+last_response['body'].decode('utf-8')
         else:
-            metadata['binaryBody']='\u0100'+base64.b64encode(last_response['body']).decode('ascii')
-    return metadata
+            encoded['binaryBody']='\u0100'+base64.b64encode(last_response['body']).decode('ascii')
+    return encoded
 `);
   initialized=true;
   self.postMessage({type:'ready',buildId});
@@ -124,12 +125,11 @@ async function handle(event){
     await ready;
     invoke=python.globals.get('browser_request');
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
-    const metadata=response.toJs({dict_converter:Object.fromEntries});
+    const encoded=response.toJs({dict_converter:Object.fromEntries});
+    const metadata=JSON.parse(responseText(encoded.metadata));
     let responseBody;
-    if(metadata.jsonBody!==undefined)responseBody=responseText(metadata.jsonBody);
-    else responseBody=metadata.file?new Uint8Array():responseBytes(metadata.binaryBody);
-    delete metadata.jsonBody;
-    delete metadata.binaryBody;
+    if(encoded.jsonBody!==undefined)responseBody=responseText(encoded.jsonBody);
+    else responseBody=metadata.file?new Uint8Array():responseBytes(encoded.binaryBody);
     if(typeof responseBody==='string'){
       try{JSON.parse(responseBody);}catch(error){throw new Error(`Invalid engine JSON (${url}, ${responseBody.length} characters): ${error.message}`);}
     }

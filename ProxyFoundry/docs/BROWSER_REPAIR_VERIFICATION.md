@@ -18,9 +18,10 @@ The user authorized browser-only repairs, no deck image generation before Genera
 | Browser storage | 9 passed in 174.11 seconds: folder reconnection, competing tabs, 100 MiB files/ZIP reload, mid-job durable recovery, quota/retry, rename/log rotation, metadata caching, failed-rename preservation and retry |
 | Job controls | Actual browser progress and checkpoint cancellation/reload passed |
 | Response integrity | 120 binary replies, Unicode JSON, fallback Base64 decoder, malformed payloads, released proxies and downloadable diagnostics passed |
-| High-address regression | Binary hash, 20 MiB upload, filesystem write/rename/read, ASCII JSON and progress event integrity above 2 GiB passed |
+| Search spacing | Deck/card search placeholders clear the icon; actual `/cards/` workflow passed in 66.81 seconds |
+| High-address regression | Binary hash, 20 MiB upload, filesystem write/rename/read, ASCII JSON, response metadata and progress event integrity above 2 GiB passed; real Command Tower import/art/frame/render/readback at that boundary passed in 83.73 seconds |
 | Affected native frames | 9 passed, including Station lands, blue Harmonized Trio Prepare, Godzilla noncreatures and black/colorless nickname tokens |
-| GitHub CI | Previous source commit `52a2370` passed [run 36835843064](https://github.com/andro951/cards/actions/runs/36835843064); the newest source gate is recorded after the push |
+| GitHub CI | Source commit `3f2a0e1` passed [run 36844569844](https://github.com/andro951/cards/actions/runs/36844569844); the final source gate is recorded after the push |
 
 ## Long-session stress check
 
@@ -30,7 +31,7 @@ Three preceding regular-profile runs preserved 94 images and then failed at JSON
 
 The pinned [buffer converter](https://github.com/pyodide/pyodide/blob/314.0.7/src/core/python2js_buffer.js) slices the heap with signed offsets. The [ASCII converter](https://github.com/pyodide/pyodide/blob/314.0.7/src/core/python2js.c) has the same boundary issue. This is a reproduced signed-address conversion problem, not memory aliasing: [the documentation](https://pyodide.org/en/stable/usage/type-conversions.html#using-python-buffer-objects-from-javascript) says `toJs()` copies buffers.
 
-The application bridge uses marked Unicode text to avoid that ASCII path and Base64 for small inline binary replies. Uploaded/network buffers use the supported [`to_file()` API](https://pyodide.org/en/stable/usage/api/python-api/ffi.html#pyodide.ffi.JsBuffer.to_file) through a temporary workspace file; filesystem offsets are unsigned. Saved PNGs and ZIPs still travel as browser file descriptors/Blobs, avoiding Base64 for large stored files. No runtime or CardConjurer vendor source was copied or patched. The current full-deck run uses this bridge and an isolated regular Chromium profile; its final result is pending.
+A high-address ASCII response-header test also failed before the final metadata repair and passes afterward. The application bridge uses marked Unicode text for JSON, response metadata and job events to avoid that ASCII path and Base64 for small inline binary replies. Uploaded/network buffers use the supported [`to_file()` API](https://pyodide.org/en/stable/usage/api/python-api/ffi.html#pyodide.ffi.JsBuffer.to_file) through a temporary workspace file; filesystem offsets are unsigned. Saved PNGs and ZIPs still travel as browser file descriptors/Blobs, avoiding Base64 for large stored files. No runtime or CardConjurer vendor source was copied or patched. The current full-deck run uses the high-address binary/input/filesystem bridge and an isolated regular Chromium profile; its final result is pending. It started before the later metadata, progress-event and failed-rename refinements. The final source separately passed the forced-boundary real native render, normal workflow and nine storage checks.
 
 A preceding private-context run reached 74 saved images before its 2 GiB quota stopped it. A direct comparison measured 2 GiB for that private context versus 10 GiB for a regular profile on this machine. Available browser quotas vary; those measurements are test evidence, not promised capacities.
 
@@ -38,7 +39,7 @@ Quota failure testing also reproduced a new empty destination surviving a failed
 
 ## Visual inspection
 
-Inspected static frame picker, template editor with region outlines, Station-land output, blue Prepare output, and Godzilla creature output. Square fixture symbols and solid-color fixture artwork in native checks are intentional test inputs. Godzilla P/T remains above the frame; Station thresholds use the standard Station structure. The full-deck grid is inspected after completion.
+Inspected static frame picker, template editor with region outlines, Station-land output, blue Prepare output, Godzilla creature output, and the real Command Tower grid after forced high-address generation. Square fixture symbols and solid-color fixture artwork in native checks are intentional test inputs. Godzilla P/T remains above the frame; Station thresholds use the standard Station structure. The full-deck grid is inspected after completion.
 
 ## Practical limits and exclusions
 
@@ -48,4 +49,4 @@ This was a routine-plus-affected repair pass. Unrelated full-sweep/merchant/mult
 
 ## Local artifacts
 
-Ignored `test-results` contains JUnit reports, diagnostics, and visual evidence. Key reports: `routine-complete-final.xml`, `production-final.xml`, `bridge-workflow-final.xml`, `storage-complete-final.xml`, `affected-native-final.xml`, `version-memory-final.xml`, `response-codec-final.xml`, and `full-deck-browser-final.xml`.
+Ignored `test-results` contains JUnit reports, diagnostics, and visual evidence. Key reports: `routine-complete-final.xml`, `production-final.xml`, `bridge-workflow-final.xml`, `storage-complete-final.xml`, `affected-native-final.xml`, `version-memory-final.xml`, `bridge-complete-final.xml`, `high-address-native-final.xml`, and `full-deck-browser-final.xml`.

@@ -54,7 +54,7 @@ def request(app, method, url, body, headers):
     return original_request(app, method, url, body, headers)
 '''
     source=source.replace('def browser_request(method, url, body, headers):',tracking+'\ndef browser_request(method, url, body, headers):')
-    source=source.replace("const metadata=response.toJs({dict_converter:Object.fromEntries});","if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');const metadata=response.toJs({dict_converter:Object.fromEntries});")
+    source=source.replace("const encoded=response.toJs({dict_converter:Object.fromEntries});","if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');const encoded=response.toJs({dict_converter:Object.fromEntries});")
     source=source.replace("if(method==='POST')await mount.syncfs();","metadata.headers['X-Test-Body-Type']=typeof responseBody;if(method==='POST')await mount.syncfs();")
     source=source.replace('if(Uint8Array.fromBase64)return','if(false&&Uint8Array.fromBase64)return')
     source=source.replace('last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))',
@@ -156,7 +156,7 @@ def request(app, method, url, body, headers):
     if kind=='binary':
         raw=memoryview(boundary_parent)[-1024*1024:]
         return {'status':200,'mime':'application/octet-stream','body':raw,
-            'headers':{'X-Expected':hashlib.sha256(raw).hexdigest(),'X-Test-Address':str(id(boundary_parent))}}
+            'headers':{'X-Expected':hashlib.sha256(raw).hexdigest(),'X-Test-Address':str(id(boundary_parent)),'X-Test-Metadata':'x'*(20*1024*1024)}}
     if kind=='files':
         original=app.store.home/'tmp'/'boundary.bin';saved=original.with_suffix('.renamed')
         original.write_bytes(boundary_parent);original.replace(saved)
@@ -198,15 +198,29 @@ def request(app, method, url, body, headers):
                   const event=await (await fetch('/api/__test__/boundary/job')).json();
                   const job=await (await fetch('/api/jobs/11111111-1111-4111-8111-111111111111')).json();
                   const ascii=await fetch('/api/__test__/boundary/ascii'),data=await ascii.json();
-                  return {binary:{status:binary.status,address:Number(binary.headers.get('X-Test-Address')),bytes:bytes.byteLength,expected:binary.headers.get('X-Expected'),actual:await hash(bytes)},
+                  return {binary:{status:binary.status,address:Number(binary.headers.get('X-Test-Address')),bytes:bytes.byteLength,expected:binary.headers.get('X-Expected'),actual:await hash(bytes),metadata:binary.headers.get('X-Test-Metadata')==='x'.repeat(20*1024*1024)},
                     files,input:{...input,expected:await hash(payload)},event:{address:event.address,matches:job.probe==='x'.repeat(20*1024*1024)},ascii:{address:Number(ascii.headers.get('X-Test-Address')),matches:data.value==='x'.repeat(20*1024*1024)}};
                 }""")
                 assert result['binary']['status']==200 and result['binary']['address']>2**31,result
-                assert result['binary']['bytes']==1024*1024 and result['binary']['actual']==result['binary']['expected'],result
+                assert result['binary']['bytes']==1024*1024 and result['binary']['actual']==result['binary']['expected'] and result['binary']['metadata'],result
                 assert result['files']['bytes']==20*1024*1024 and result['files']['actual']==result['files']['expected'],result
                 assert result['input']['bytes']==20*1024*1024 and result['input']['hash']==result['input']['expected'],result
                 assert result['event']['address']>2**31 and result['event']['matches'],result
                 assert result['ascii']['address']>2**31 and result['ascii']['matches'],result
+                #Keep the high-address allocations live through a real metadata/art/frame/render cycle.
+                page.click('#import-deck');page.locator('.modal-body summary').click()
+                page.locator('.modal-body textarea').fill('1 Command Tower')
+                page.click('#do-import');page.get_by_role('button',name='Normal Look',exact=True).click(timeout=90000)
+                page.locator('#save-setup').wait_for(timeout=90000)
+                page.click('#generate-deck')
+                page.wait_for_function("() => document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=180000)
+                failure=page.locator('.toast.error').all_text_contents()
+                data=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
+                assert data['status']=='ready' and data['summary']['rendered']==1,failure
+                page.get_by_role('button',name='View deck',exact=True).click()
+                page.wait_for_function("()=>document.querySelector('.card-grid img')?.naturalWidth>0",timeout=90000)
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'high-address-native-render.png'),full_page=True)
             finally:browser.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
@@ -348,6 +362,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
             try:
                 page.goto(origin,wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
+                assert page.locator('#deck-search').evaluate('(input)=>parseFloat(getComputedStyle(input).paddingLeft)')>=33
                 if look=='Normal Look':
                     page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/settings',{defaults:{artist:'Inherited artist',disableAutofit:true,showFlavorText:false,allCardsTokens:true,tokenOptions:{power:'7',toughness:'7'},templateRules:{standard:'land',land:'land'}}});}")
                 page.click('#import-deck')
@@ -382,6 +397,8 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 page.locator('.badge.ready').wait_for(timeout=180000)
                 page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
                 page.get_by_role('button',name='View deck').click()
+                assert page.locator('#card-search').evaluate('(input)=>parseFloat(getComputedStyle(input).paddingLeft)')>=33
+                page.screenshot(path=str(evidence/'ready-deck-search.png'))
                 page.get_by_role('button',name='Review & Print').click()
                 page.click('#order-plan')
                 page.locator('#browser-pair-grid').wait_for(timeout=90000)
