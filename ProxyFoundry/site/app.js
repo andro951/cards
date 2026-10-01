@@ -82,7 +82,7 @@ function mountNavigation(){
     settings:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.5 2.2 1.7.7 1.9-1.2 2.8 2.8-1.2 1.9.7 1.7L22 10v4l-2.2.5-.7 1.7 1.2 1.9-2.8 2.8-1.9-1.2-1.7.7L14 22h-4l-.5-2.2-1.7-.7-1.9 1.2-2.8-2.8 1.2-1.9-.7-1.7L2 14v-4l2.2-.5.7-1.7-1.2-1.9 2.8-2.8 1.9 1.2 1.7-.7z"/></svg>',
   };
   const items=[['decks','Deck Library','#decks'],['templates','Templates','#templates'],
-               ['settings','Settings','#settings'],['discord','Discord','https://discord.com/']];
+               ['settings','Settings','#settings'],['discord','Discord','https://discord.gg/au2rCSbG2B']];
   for(const [key,title,href] of items){
     const link=document.createElement('a');link.href=href;link.title=title;link.setAttribute('aria-label',title);
     link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
