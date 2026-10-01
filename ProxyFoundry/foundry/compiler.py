@@ -44,8 +44,8 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':3,'godzilla-land':3,'token-classic':1,'token-full-art':1,'token-borderless':1}
-AUTO_TEMPLATE_VERSIONS['token']=4
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':4,'godzilla-land':4,'token-classic':2,'token-full-art':2,'token-borderless':2}
+AUTO_TEMPLATE_VERSIONS['token']=5
 AUTO_TEMPLATE_VERSIONS['station']=6
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
@@ -1986,7 +1986,8 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
         })
     if pt_text:
-        frames.append({
+        # CardConjurer draws the first frame last, above the other frame layers.
+        frames.insert(0,{
             'name':f'{color_name} Power/Toughness','src':_nickname_pt_src(code),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_PT_BOUNDS),
         })

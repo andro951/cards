@@ -515,7 +515,7 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_classic_short'
-    assert result['templateVersion']==4
+    assert result['templateVersion']==5
     assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
@@ -736,11 +736,13 @@ def _assert_full_nickname_pack(data,code,legendary=False):
     assert data['setSymbolBounds']['width']==pytest.approx(.12)
     assert data['setSymbolBounds']['height']==pytest.approx(.041)
     assert data['setSymbolBounds']['vertical']=='center' and data['setSymbolBounds']['horizontal']=='right'
-    assert data['frames'][0]=={'name':color+' Frame','src':f'/img/frames/m15/nickname/m15NicknameFrame{code}.png','masks':[]}
+    offset=1 if data['text']['pt']['text'] else 0
+    if offset:assert 'm15NicknamePT' in data['frames'][0]['src']
+    assert data['frames'][offset]=={'name':color+' Frame','src':f'/img/frames/m15/nickname/m15NicknameFrame{code}.png','masks':[]}
     expected_second=(color+' Crown',f'/img/frames/m15/nickname/m15NicknameCrown{code}.png') if legendary else (color+' Title',f'/img/frames/m15/nickname/m15NicknameTitle{code}.png')
-    assert data['frames'][1]['name']==expected_second[0]
-    assert data['frames'][1]['src']==expected_second[1]
-    assert data['frames'][1]['masks']==[]
+    assert data['frames'][offset+1]['name']==expected_second[0]
+    assert data['frames'][offset+1]['src']==expected_second[1]
+    assert data['frames'][offset+1]['masks']==[]
     assert all('/img/frames/m15/regular/m15Frame' not in str(frame.get('src','')) for frame in data['frames'])
     for key in ('nickname','title','type','rules','pt'):
         assert data['text'][key]['color']=='white'
@@ -803,7 +805,8 @@ def test_colorless_token_nickname_uses_complete_neutral_frame():
     sem={'name':'Spirit','nickname':'Test Spirit','colors':[],'types':['Creature'],'subtypes':['Spirit'],'legendary':False}
     assert apply_nickname_treatment(data,sem,'token')
     assert data['version']=='m15Nickname'
-    assert data['frames'][0]['src'].endswith('m15NicknameFrameA.png')
+    assert data['frames'][0]['src'].endswith('m15NicknamePTC.png')
+    assert data['frames'][1]['src'].endswith('m15NicknameFrameA.png')
     assert any(f.get('src','').endswith('m15NicknameTitleA.png') for f in data['frames'])
     assert all(f.get('masks')==[] for f in data['frames'])
     for key in ('nickname','title','type','rules','pt'):

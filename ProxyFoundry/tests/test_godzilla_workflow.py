@@ -53,6 +53,7 @@ def test_direct_data_json_uses_existing_schema_and_checks_deck_names(tmp_path):
     ('Creature — Human',['B'],'godzilla-card','m15NicknameFrameB.png'),
     ('Land',[],'godzilla-land','m15NicknameFrameL.png'),
     ('Creature — Human',[],'godzilla-card','m15NicknameFrameA.png'),
+    ('Legendary Creature — Human',['B'],'godzilla-card','m15NicknameFrameB.png'),
 ])
 def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_line,colors,choice,frame):
     store=Store(tmp_path);ws=Workspace(store);art=image(store)
@@ -70,6 +71,8 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
     elif not colors:
         assert any(item['src'].endswith('m15NicknameTitleA.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
+    if type_line!='Land':
+        assert 'm15NicknamePT' in data['frames'][0]['src']
     assert data['text']['nickname']['text']=='Alternate Name'
     assert data['text']['title']['text']=='Test Card'
     for key in ('type','rules'):
@@ -90,6 +93,7 @@ def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_lay
     assert any(item['src'].endswith('m15NicknameFrameB.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
     assert data['artBounds']['height']>.9
+    assert 'm15NicknamePT' in data['frames'][0]['src']
     assert data['text']['nickname']['text']=='Alternate Name'
     for key in ('title','type','rules'):
         assert data['text'][key]['color']=='white'
