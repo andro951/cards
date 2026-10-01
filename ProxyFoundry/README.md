@@ -38,6 +38,8 @@ The optional browser helper recognizes `andro951.github.io`, Cloudflare `*.pages
 
 The four bundled rarity symbols and Bulk Proxy Forge back are selected automatically. Custom setup can use a public GitHub art folder or a computer art folder. Missing custom art is an error by default; the user can explicitly enable Scryfall fallback. Set symbols can be replaced individually, from a four-image computer folder, or from a four-image public GitHub folder. The one-click GitHub project import keeps its existing folder format; see [GitHub setup import](docs/GITHUB_SETUP_IMPORT.md).
 
+Artwork filenames can include a numeric export prefix: `001_command_tower.png` matches Command Tower. Matching also tolerates separator differences such as `commandtower.png`. Exact normalized names take priority. If several files match, choose an artwork override or rename one to the exact card name; the app does not guess between them.
+
 `data.json` can be chosen locally, linked directly on GitHub, or discovered in a one-click GitHub project folder. Its version-1 card entries support `nickname`, `flavor_text`, and `artist`. Custom artwork requires a credit for each image, supplied by a deck-wide artist, per-card artist entry, or `data.json`. Selected Scryfall art retains the printing's artist credit.
 
 Templates are reusable, versioned objects with semantic text regions. The Templates area creates them from built-ins or converts a CardConjurer save, validates compatibility, and imports/exports portable template JSON. Uploaded frame images travel with a template export. A template in use by a saved deck cannot be deleted until the dependency is removed.

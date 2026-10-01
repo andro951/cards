@@ -412,11 +412,11 @@ class Workspace:
             faces=ingest.face_list(card['scryfall'])
             for face in card['faces']:
                 sf_face=faces[min(face.get('index',0),len(faces)-1)]
-                stem=slug(sf_face.get('name',card['name']))
+                name=sf_face.get('name',card['name'])
                 local=selected['source'].get('localFiles',{})
                 if face.get('selectedArtPrintingId') and not face.get('artOverride'):continue
-                if not (face.get('artOverride') or selected['source']['mode']=='local' and stem in local
-                        or selected['source']['mode']=='github' and stem in index):continue
+                if not (face.get('artOverride') or selected['source']['mode']=='local' and matching_art_key(local,name) is not None
+                        or selected['source']['mode']=='github' and matching_art_key(index,name) is not None):continue
                 art_id,_,_=self._art(card['scryfall'],sf_face,face,selected,index)
                 out.append({'cardId':card['id'],'faceId':face['id'],'name':face['name'],
                             'artist':face.get('artistOverride') or selected.get('artist') or '',
@@ -433,8 +433,12 @@ class Workspace:
             if not url:raise ValidationError('That printing has no artwork for this face.')
             opts['selectedArtArtist']=str(alternate_face.get('artist') or alternate.get('artist') or '').strip() or None
             origin='Scryfall selected printing'
-        elif settings['source']['mode']=='local' and stem in local:return local[stem],'computer folder',None
-        elif settings['source']['mode']=='github' and stem in index:remote_entry=index[stem];origin='GitHub folder'
+        elif settings['source']['mode']=='local':
+            key=matching_art_key(local,name)
+            if key is not None:return local[key],'computer folder',None
+        elif settings['source']['mode']=='github':
+            key=matching_art_key(index,name)
+            if key is not None:remote_entry=index[key];origin='GitHub folder'
         if remote_entry is None and url is None:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',False):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'

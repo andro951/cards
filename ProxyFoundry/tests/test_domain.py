@@ -6,6 +6,32 @@ from foundry.storage import Store
 from foundry.network import Network, validate_remote_url
 
 
+@pytest.mark.parametrize('name,key',[
+    ('Command Tower','001_command_tower'),('Command Tower','23-command-tower'),
+    ('Command Tower','0009 Command Tower'),('Command Tower','commandtower'),
+    ("Urza’s Saga",'045_urzas_saga'),('Æther Spellbomb','002_aether_spellbomb'),
+    ('1996 World Champion','001_1996_world_champion'),
+])
+def test_artwork_name_matches_numbered_and_separator_variations(name,key):
+    assert matching_art_key({key:'asset'},name)==key
+
+
+def test_artwork_exact_name_wins_over_numbered_alternatives():
+    index={'001_command_tower':'one','002_command_tower':'two','command_tower':'exact'}
+    assert matching_art_key(index,'Command Tower')=='command_tower'
+    assert matching_art_key({'1996_world_champion':'exact','001_1996_world_champion':'other'},'1996 World Champion')=='1996_world_champion'
+
+
+def test_artwork_ambiguous_numbered_files_require_explicit_choice():
+    with pytest.raises(ValidationError,match='Multiple custom artwork files match Command Tower'):
+        matching_art_key({'001_command_tower':'one','002_command_tower':'two'},'Command Tower')
+
+
+@pytest.mark.parametrize('key',['001_command_tower_custom','command_towers','command_towr','123command_tower'])
+def test_artwork_matching_does_not_guess_suffixes_or_typos(key):
+    assert matching_art_key({key:'asset'},'Command Tower') is None
+
+
 def test_cache_boundaries():
     assert cache_is_fresh(0, 365 * DAY - 1)
     assert not cache_is_fresh(0, 365 * DAY)

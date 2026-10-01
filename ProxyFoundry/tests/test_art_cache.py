@@ -39,6 +39,40 @@ def test_github_art_uses_pinned_immutable_url_and_verifies_blob(tmp_path):
     assert calls[-1]==(entry['url'],{'immutable':True})
 
 
+def test_numbered_github_art_keeps_the_original_pinned_url(tmp_path):
+    ws,sf,calls,raw=make_workspace(tmp_path)
+    settings=ws.validate_settings({'source':{'mode':'github','githubFolder':'owner/repo/art'}})
+    entry={'url':'https://raw.githubusercontent.com/owner/repo/'+('a'*40)+'/art/042_One_Card.png','blobSha':blob_sha(raw)}
+    art_id,origin,url=ws._art(sf,sf,{},settings,{'042_one_card':entry})
+    assert origin=='GitHub folder' and url==entry['url'] and ws.store.asset(art_id)
+    assert calls==[(entry['url'],{'immutable':True})]
+
+
+def test_numbered_local_art_is_used_for_generation_and_custom_art_previews(tmp_path):
+    from foundry.images import ingest_image
+    ws,sf,calls,raw=make_workspace(tmp_path);art=ingest_image(ws.store,raw)
+    settings=ws.validate_settings({'source':{'mode':'local','localFiles':{'042_one_card':art['id']}}})
+    assert ws._art(sf,sf,{},settings,{})==(art['id'],'computer folder',None)
+    deck=ws.new_deck('Numbered artwork')
+    sf['layout']='normal'
+    entry={'id':'card-id','name':sf['name'],'quantity':1,'scryfall':sf,
+           'faces':[{'id':'face-id','name':sf['name'],'index':0}]}
+    ws.store.put('decks',{**deck,'cards':[entry]},deck['revision'])
+    previews=ws.custom_art_previews(deck['id'],settings)
+    assert len(previews)==1 and previews[0]['assetId']==art['id']
+    assert not calls
+
+
+def test_ambiguous_art_does_not_silently_fall_back_to_scryfall(tmp_path):
+    from foundry.images import ingest_image
+    ws,sf,calls,raw=make_workspace(tmp_path);art=ingest_image(ws.store,raw)
+    settings=ws.validate_settings({'source':{'mode':'local','fallback':True,
+        'localFiles':{'001_one_card':art['id'],'002_one_card':art['id']}}})
+    with pytest.raises(ValidationError,match='Multiple custom artwork files'):
+        ws._art(sf,sf,{},settings,{})
+    assert not calls
+
+
 
 def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
     commit='c'*40;blob='d'*40

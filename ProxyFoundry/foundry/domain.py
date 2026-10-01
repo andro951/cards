@@ -29,6 +29,24 @@ def slug(text):
     text=unicodedata.normalize('NFKD',str(text))
     text=''.join(c for c in text if not unicodedata.combining(c)).replace('Æ','AE').replace('æ','ae').replace('Œ','OE').replace('œ','oe')
     return re.sub(r'[^A-Za-z0-9]+','_',re.sub(r"['’]",'',text)).strip('_').lower()
+
+def matching_art_key(index,name):
+    """Resolve artwork names without guessing typos or partial card names."""
+    target=slug(name)
+    if target in index:return target
+    compact=target.replace('_','')
+    if not compact:return None
+    matches=[]
+    for key in index:
+        normalized=slug(key)
+        # Numbered exports retain their original keys, so real card names that
+        # start with numbers and explicit exact matches remain authoritative.
+        unnumbered=re.sub(r'^\d+_','',normalized)
+        if compact in {normalized.replace('_',''),unnumbered.replace('_','')}:
+            matches.append(key)
+    if len(matches)>1:
+        raise ValidationError('Multiple custom artwork files match '+str(name)+': '+', '.join(sorted(matches))+'. Rename one to '+target+'.png or select an artwork override.')
+    return matches[0] if matches else None
 def quantity(value):
     try: n=int(value)
     except (ValueError,TypeError,OverflowError) as e: raise ValidationError('Quantity must be a whole number.') from e
