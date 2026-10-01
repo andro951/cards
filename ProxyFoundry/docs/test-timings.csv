@@ -579,6 +579,7 @@ tests/test_token_native.py::test_noncreature_token_renders_with_empty_power_toug
 tests/test_token_native.py::test_token_style_gallery_renders_native_assets,extended,83.613,passed,2026-09-30T20:16:02.795267-04:00
 tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extended,144.095,passed,2026-09-29T06:38:32.298111-04:00
 tests/test_website.py::test_mixed_website_engine_version_stops_with_saved_workspace_guidance,extended,10.232,passed,2026-10-01T02:12:46.050969-04:00
+tests/test_website.py::test_published_deck_100_image_browser_generation_and_reload,extended,2180.693,passed,2026-10-01T05:20:47.858204-04:00
 tests/test_website.py::test_static_browser_job_progress_cancellation_and_reload,extended,16.076,passed,2026-10-01T05:47:14.543988-04:00
 tests/test_website.py::test_static_cardconjurer_source_choices_are_immediate_without_generation,extended,11.298,passed,2026-10-01T01:39:42.027806-04:00
 tests/test_website.py::test_static_engine_high_address_binary_uploads_files_and_ascii_json,extended,83.377,passed,2026-10-01T05:49:02.698249-04:00

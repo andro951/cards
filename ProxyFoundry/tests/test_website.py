@@ -516,7 +516,7 @@ def test_static_template_editor_generates_only_on_request_and_saves_validated_mo
 def test_published_deck_100_image_browser_generation_and_reload(tmp_path):
     from playwright.sync_api import sync_playwright
     build_site(tmp_path)
-    #Repeat actual imported printings with distinct titles to exercise 100 uncached outputs.
+    #Repeat actual imported printings with fresh face identities to exercise 100 uncached outputs.
     #The injection exists only in this isolated test build, never in the distribution.
     import shutil
     site=tmp_path/'site';shutil.copytree(tmp_path/'built',site)
@@ -532,7 +532,6 @@ def request(app, method, url, body, headers):
             card=copy.deepcopy(original[index%len(original)]);card['id']=uid();card['quantity']=1
             for face in card['faces']:
                 face['id']=uid()
-                face['nicknameOverride']='Stability sample '+str(index+1)
                 for key in ('compiled','lastRender','error'):face.pop(key,None)
             cards.append(card)
         deck['cards']=cards;deck['status']='draft';app.store.put('decks',deck,deck['revision'])
@@ -580,6 +579,7 @@ def request(app, method, url, body, headers):
                 (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()'),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
                 assert data['status']=='ready',{'toasts':failure,'saved':len(saved),'faces':[(card['name'],face.get('error')) for card in data['cards'] for face in card['faces'] if face.get('error')]}
                 assert data['summary']['faces']>=100 and data['summary']['rendered']==data['summary']['faces']
+                assert len(saved)==100 and len({face['compiled']['renderKey'] for card in data['cards'] for face in card['faces']})==100
                 page.get_by_role('button',name='View deck',exact=True).click()
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 page.locator('.card-grid img').first.wait_for(timeout=90000)

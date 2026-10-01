@@ -44,7 +44,7 @@ Use `PF_DOM=1` for offline DOM tests, `PF_LIVE_CC=1` for real CardConjurer
 rendering, `PF_LIVE_GITHUB_SETUP=1` for the live GitHub smoke test, and
 `PF_LARGE_TRANSFER=1` for the multi-gigabyte archive, and `PF_DECK_STRESS=1`
 for the 100-image browser-session check. Use `PF_HEAP_BOUNDARY=1` for the
-2.2 GiB allocation check that verifies high-address binary, upload, filesystem
+heap-above-2-GiB check that verifies high-address binary, upload, filesystem
 job events and ASCII JSON integrity; it needs enough memory and remains in the extended group. The Chromium tests also
 need Playwright's Chromium installed; on Windows, set
 `PF_BROWSER_EXECUTABLE` and `PF_DOM_EXECUTABLE` to its executable path for the
