@@ -68,7 +68,10 @@ app = create_app('/workspace', transport, str(location.origin),
 def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))
-    return {k:v for k,v in last_response.items() if k != 'body'}
+    metadata={k:v for k,v in last_response.items() if k != 'body'}
+    if metadata['mime']=='application/json' and not metadata.get('file'):
+        metadata['jsonBody']=last_response['body'].decode('utf-8')
+    return metadata
 `);
   initialized=true;
   self.postMessage({type:'ready',buildId});
@@ -93,14 +96,14 @@ async function handle(event){
     invoke=python.globals.get('browser_request');
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const metadata=response.toJs({dict_converter:Object.fromEntries});
-    saved=python.globals.get('last_response');
-    content=saved.get('body');
-    const bytes=content.toJs();
-    let responseBody=bytes;
-    //JSON crosses both message channels as immutable text, never a transferred buffer.
-    if(metadata.mime==='application/json'&&!metadata.file){
-      responseBody=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
-      try{JSON.parse(responseBody);}catch(error){throw new Error(`Invalid engine JSON (${url}, ${bytes.length} bytes): ${error.message}`);}
+    let responseBody=metadata.jsonBody;
+    delete metadata.jsonBody;
+    //Decode in Python so large JSON never goes through the binary-buffer conversion.
+    if(responseBody!==undefined){
+      try{JSON.parse(responseBody);}catch(error){throw new Error(`Invalid engine JSON (${url}, ${responseBody.length} characters): ${error.message}`);}
+    }
+    else{
+      saved=python.globals.get('last_response');content=saved.get('body');responseBody=content.toJs();
     }
     if(method==='POST')await mount.syncfs();
     self.postMessage({type:'response',id,...metadata,body:responseBody},responseBody.buffer?[responseBody.buffer]:[]);

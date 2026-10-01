@@ -577,11 +577,11 @@ tests/test_transfer_batches.py::test_real_278_card_multi_gigabyte_archive,extend
 tests/test_website.py::test_mixed_website_engine_version_stops_with_saved_workspace_guidance,extended,10.232,passed,2026-10-01T02:12:46.050969-04:00
 tests/test_website.py::test_static_browser_job_progress_cancellation_and_reload,extended,17.110,passed,2026-10-01T01:39:42.027806-04:00
 tests/test_website.py::test_static_cardconjurer_source_choices_are_immediate_without_generation,extended,11.298,passed,2026-10-01T01:39:42.027806-04:00
-tests/test_website.py::test_static_engine_releases_image_responses_and_error_diagnostics,extended,16.249,passed,2026-10-01T02:12:46.050969-04:00
+tests/test_website.py::test_static_engine_releases_image_responses_and_error_diagnostics,extended,13.729,passed,2026-10-01T04:03:29.797059-04:00
 tests/test_website.py::test_static_template_editor_generates_only_on_request_and_saves_validated_model,extended,75.520,passed,2026-10-01T02:01:30.372276-04:00
 tests/test_website.py::test_static_token_styles_and_upstream_assets,extended,10.445,passed,2026-09-30T20:19:53.500119-04:00
 tests/test_website.py::test_static_website_fetches_pinned_station_script,extended,9.315,passed,2026-09-30T18:53:37.538665-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Customize Look-/],extended,65.982,passed,2026-10-01T01:39:42.027806-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/],extended,73.366,passed,2026-10-01T01:39:42.027806-04:00
-tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/],extended,78.988,passed,2026-10-01T02:01:30.372276-04:00
+tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/],extended,60.183,passed,2026-10-01T04:03:29.797059-04:00
 tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,21.910,passed,2026-09-30T00:00:33+00:00

@@ -2,7 +2,7 @@
 
 Updated 2026-10-01. This replaces the obsolete early integration checkpoint.
 
-The final product is a static website with the engine running in the browser. The local preview launcher serves static files for development and offline-style local use; there is no hosted application server.
+The final product is a static website with the engine running in the browser. The local preview launcher serves static files for development and local use; there is no hosted application server.
 
 - Routine pytest gate: 503 passed, 0 failed, 0 skipped in the selected group (188.42 seconds).
 - JavaScript syntax and six Node adapter/helper checks passed.

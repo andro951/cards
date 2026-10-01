@@ -54,7 +54,7 @@ def request(app, method, url, body, headers):
     return original_request(app, method, url, body, headers)
 '''
     source=source.replace('def browser_request(method, url, body, headers):',tracking+'\ndef browser_request(method, url, body, headers):')
-    source=source.replace("let responseBody=bytes;","let responseBody=bytes;if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');")
+    source=source.replace("const metadata=response.toJs({dict_converter:Object.fromEntries});","if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');const metadata=response.toJs({dict_converter:Object.fromEntries});")
     source=source.replace("if(method==='POST')await mount.syncfs();","metadata.headers['X-Test-Body-Type']=typeof responseBody;if(method==='POST')await mount.syncfs();")
     source=source.replace('last_response = request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py()))',
                           "last_response = TrackedResponse(request(app, str(method), str(url), bytes(body.to_py()), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")

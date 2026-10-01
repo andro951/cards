@@ -19,13 +19,17 @@ The user authorized browser-only repairs, no deck image generation before Genera
 | Job controls | Actual browser progress and checkpoint cancellation/reload passed |
 | Mixed versions/diagnostics | Clear boot failure and downloadable diagnostics passed; image responses released |
 | Affected native frames | 9 passed, including Station lands, blue Harmonized Trio Prepare, Godzilla noncreatures and black/colorless nickname tokens |
-| GitHub CI | Source commit `96db386` passed [run 36824974499](https://github.com/andro951/cards/actions/runs/36824974499), including Linux routine and actual static browser production gates |
+| GitHub CI | Source commit `b58109f` passed [run 36829395596](https://github.com/andro951/cards/actions/runs/36829395596), including Linux routine and actual static browser production gates |
 
 ## Long-session stress check
 
-Final outcome is recorded after the isolated 100-image run finishes. This uses the user's public linked Scryfall Test deck. It currently resolves four cards; the isolated test expands those actual printings into 100 distinct faces with different nickname overrides, forcing 100 uncached native outputs. The expansion exists only in the test copy, not the shipped website. This proves long-session rendering/storage behavior, rather than coverage of 100 different card families.
+The final outcome is recorded after the isolated 100-image run finishes. Failed exploratory stress runs are not counted as passed verification. This uses the user's public linked Scryfall Test deck. It currently resolves four cards; the isolated test expands those actual printings into 100 distinct faces with different nickname overrides, forcing 100 uncached native outputs. The expansion exists only in the test copy, not the shipped website. This proves long-session rendering/storage behavior, rather than coverage of 100 different card families.
 
-The final run uses an isolated regular Chromium profile with the direct-storage, repaired-rename, metadata-cache and quota-guidance implementation. A preceding private-context run reached 74 saved images before its 2 GiB quota stopped it. A direct comparison measured 2 GiB for that private context versus 10 GiB for a regular profile on this machine. Available browser quotas vary; those measurements are test evidence, not promised capacities.
+The current run uses an isolated regular Chromium profile with direct storage, repaired rename handling, metadata caching, quota guidance and JSON decoded to Unicode in Python before crossing either message channel. Two preceding regular-profile runs preserved 94 images and then failed reading deck metadata. Strict JavaScript UTF-8 decoding located the latest failure before message delivery, after binary conversion. Reloading read the saved metadata correctly. The revised path avoids binary conversion for JSON entirely. A recovery check using the failed profile completed the remaining six images and verified all 100 after reload; the fresh 100-image run is still pending.
+
+The large-response regression passes with Unicode JSON, forced heap growth, GET/POST checkpoints, and malformed-payload reporting. The heap-growth probe did not reproduce corruption; [the runtime documentation](https://pyodide.org/en/stable/usage/type-conversions.html#using-python-buffer-objects-from-javascript) confirms that `toJs()` copies buffers. The underlying conversion defect is not conclusively attributed, and this is not reported as a proven WASM aliasing defect.
+
+A preceding private-context run reached 74 saved images before its 2 GiB quota stopped it. A direct comparison measured 2 GiB for that private context versus 10 GiB for a regular profile on this machine. Available browser quotas vary; those measurements are test evidence, not promised capacities.
 
 ## Visual inspection
 
