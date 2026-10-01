@@ -25,14 +25,36 @@ export function setupHelper(){
   $('#close-helper').onclick=closeModal;
   $('#recheck-helper').onclick=()=>{window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);setTimeout(()=>toast(state.helper?'Print helper is connected.':'Not connected yet. Load the extension, then reload this page.',!state.helper),700);};
 }
-export async function showOrders(){
-  const orders=await api('/api/orders');
+export async function showOrders(deckId=null){
+  const all=await api('/api/orders');
+  const orders=deckId?all.filter(order=>order.decks.some(deck=>deck.id===deckId)):all;
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">BUILT FOR THE TABLETOP</span><h1>Print orders</h1><p>Combine any number of decks. Each physical card gets an explicit front/back pair.</p></div><button class="button primary" id="new-order">＋ Create print order</button></div><section class="hero-strip"><div><h2>One order. Every back in the right place.</h2><p>Order packages are saved snapshots. Editing a deck later won’t change a ZIP you already built. The printer opens in a new tab when you’re ready.</p></div><div class="order-icon" aria-hidden="true">▱</div></section>${orders.length?`<section class="panel order-list">${orders.map(o=>`<div class="order-row"><div class="order-title"><h3>${o.count} cards · ${o.decks.length} deck${o.decks.length===1?'':'s'}</h3><p>${o.decks.map(d=>esc(d.name)).join(' · ')}</p><small>${date(o.createdAt)} · ${bytes(o.zipBytes)} · paired filenames</small></div><div class="actions"><a class="button small" href="${esc(o.download)}" download>Download ZIP</a><button class="button primary small" data-open-order="${o.id}">Open in TCGPlaytest ↗</button><button class="button quiet small" data-review-order="${o.id}">Review</button></div></div>`).join('')}</section>`:empty('Your first print order is a few clicks away','Generate your deck images, select the decks you want, and check the paired preview before you package them.',`<button class="button primary" id="empty-order">Choose decks</button>`)}`;
   if(state.bootstrap?.browser){
     $('.page-head .eyebrow')?.remove();$('.page-head p')?.remove();$('.hero-strip')?.remove();
     for(const button of $$('[data-open-order]'))button.textContent='Print Cards';
-    const back=document.createElement('a');back.href='#decks';back.className='button quiet';back.textContent='Deck Library';
-    $('.page-head .actions')?.prepend(back);
+  }
+  const heading=$('.page-head');
+  const actions=document.createElement('div');actions.className='actions';
+  const library=document.createElement('a');library.href='#decks';library.className='button quiet';library.textContent='Deck Library';
+  actions.append(library,$('#new-order'));heading.append(actions);
+  if(deckId){
+    const filter=document.createElement('div');filter.className='notice info';
+    const name=all.flatMap(order=>order.decks).find(deck=>deck.id===deckId)?.name||'this deck';
+    const text=document.createElement('span');text.textContent='Print orders using '+name+' · ';
+    const clear=document.createElement('a');clear.href='#orders';clear.className='button quiet small';clear.textContent='Show all print orders';filter.append(text,clear);heading.after(filter);
+    if(!orders.length){$('.empty-state')?.remove();const message=document.createElement('p');message.textContent='No print orders use this deck.';filter.after(message);}
+  }
+  if(state.bootstrap?.browser){
+    for(const row of $$('.order-row')){
+      const id=$('[data-review-order]',row).dataset.reviewOrder;
+      const button=document.createElement('button');button.className='button quiet small';button.textContent='Delete print order';button.dataset.deleteOrder=id;
+      button.onclick=()=>attempt(async()=>{
+        if(!await confirmAction('Delete print order?','Its saved ZIP and preview will be removed. Decks will be kept.','Delete print order',true))return;
+        button.disabled=true;button.textContent='Deleting…';
+        try{await api('/api/orders/'+id+'/delete',{});row.remove();toast('Print order deleted.');await showOrders(deckId);}
+        catch(error){button.disabled=false;button.textContent='Delete print order';throw error;}
+      });$('.actions',row).append(button);
+    }
   }
   for(const id of ['new-order','empty-order'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>chooseOrder());
   $$('[data-open-order]').forEach(b=>b.onclick=()=>attempt(()=>openOrder(b.dataset.openOrder)));

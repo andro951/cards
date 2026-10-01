@@ -18,6 +18,12 @@ Browser storage belongs to the site's origin. Localhost and a published GitHub P
 
 Browser diagnostics remain downloadable if the engine fails, and include the previous session's recorded events. Storage quota and permission failures are reported. Available disk/browser quota still limits workspace size. Use Settings backups for recovery and transfers.
 
+## Deleting decks and saved print orders
+
+Deleting a deck checks saved print orders first. An order referencing the deck blocks deletion and offers **Show print orders**, opening an order list filtered by that deck's ID. **Show all print orders** clears the filter. Each saved order has Review and Delete print order controls. Deleting an order removes its saved ZIP and preview; it keeps the decks.
+
+After confirming an unblocked deck deletion, its tile disappears and the Deck Library opens immediately. The metadata deletion and saved-file cleanup continue in the background. A pending request survives reload and is scoped to the workspace. Failed metadata deletion restores the tile and reports the error. Cleanup runs in small batches, preserves referenced/shared assets, and resumes after reload. A cleanup failure offers Retry cleanup. Wait for active image generation to finish before deleting its deck.
+
 ## GitHub Pages without console commands
 
 1. In the repository's Settings → Pages, choose GitHub Actions as the source.

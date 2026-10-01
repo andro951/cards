@@ -8,21 +8,21 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 505 | Every completed change |
-| Extended | 87 | Relevant changes or an explicit full sweep |
+| Routine | 511 | Every completed change |
+| Extended | 88 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 505 selected tests in 225.18 seconds. The
+The latest routine run passed all 511 selected tests in 189.15 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
 requires `PF_DECK_STRESS=1`; ordinary browser runs leave it out. The grouping lives
 in [`scripts/test_policy.py`](../scripts/test_policy.py).
 
-CI runs the routine group plus three focused actual static Chromium production
+CI runs the routine group plus four focused actual static Chromium production
 checks on every relevant push. The remaining extended group runs only when
 **Run workflow → full_sweep** is selected, or when selected locally because a
 change affects it. Production paths are verified in the browser, not solely
-through the old local application's backend. The focused gate includes response
+through the old local application's backend. The focused gate includes deletion and saved-order dependencies, response
 integrity and response lifetime checks, while the long 100-image run remains
 opt-in.
 

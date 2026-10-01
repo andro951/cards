@@ -1,3 +1,4 @@
+import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
@@ -283,7 +284,7 @@ function deckMenu(d){
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
     if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip',out.bytes);else location.href=out.download;
   });
-  $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
+  $('#trash-deck').onclick=()=>{if(state.bootstrap?.browser)return attempt(()=>deleteDeck(d));return attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});};
 }
 async function inspectMeldReverse(deck,card){
   let d=await api('/api/decks/'+deck.id);let c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed in another tab.');

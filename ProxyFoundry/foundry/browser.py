@@ -170,6 +170,18 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        if path == '/api/cleanup/retry':
+            for queue in self.app.store.list('cleanup'):
+                queue.pop('error',None)
+                self.app.store.put('cleanup',queue,queue['revision'])
+            return self.respond({'ok':True})
+        match=re.fullmatch(r'/api/orders/([-a-f0-9]{36})/delete',path)
+        if match:
+            data=self.data()
+            result=self.app.store.begin_delete('orders',match[1],data.get('revision'))
+            with self.app.lock:
+                self.app.transfers={k:v for k,v in self.app.transfers.items() if v.get('order')!=match[1]}
+            return self.respond(result)
         if path == '/api/backups/inspect':
             if len(self._body)>2*1024**3:raise ValidationError('Backup upload limit is 2 GB.')
             token=uid()
@@ -200,17 +212,24 @@ class BrowserHandler(server.Handler):
         match = re.fullmatch(r'/api/decks/([-a-f0-9]{36})/delete', path)
         if match:
             data = self.data()
-            return self.respond(self.app.store.purge('decks', match[1], data.get('revision')))
+            return self.respond(self.app.store.begin_delete('decks', match[1], data.get('revision')))
         return super().post(path, query)
 
     def get(self, path, query):
+        match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/orders',path)
+        if match:
+            return self.respond(self.app.store.blocking_orders(match[1]))
         if path == '/api/backups/estimate':
             stats=self.app.store.stats()
             base=max(0,stats['assetBytes']-stats['renderBytes'])
             return self.respond({'withoutRenders':base+1024*1024,
                                  'withRenders':stats['assetBytes']+1024*1024})
         if path == '/api/bootstrap':
+            with self.app.store.connect() as db:
+                db.execute("INSERT OR IGNORE INTO meta VALUES ('workspace_id',?)",(uid(),))
+                workspace_id=db.execute("SELECT value FROM meta WHERE key='workspace_id'").fetchone()[0]
             self.respond({'version':'2.0.0','browser':True,'pipelineVersion':server.PIPELINE_VERSION,
+                          'workspaceId':workspace_id,
                           'csrf':self.app.csrf,'runtimeOrigin':self.app.runtime_origin,
                           'groups':server.GROUP_LABELS,'settings':self.app.ws.global_settings(),
                           'stats':self.app.store.stats(),'backs':self.app.ws.backs.catalog()})

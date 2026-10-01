@@ -108,13 +108,30 @@ function responseBytes(value){
 }
 
 let sequence=Promise.resolve();
+let cleanupTimer=null;
+function scheduleCleanup(){
+  if(cleanupTimer!==null)return;
+  cleanupTimer=setTimeout(()=>{
+    cleanupTimer=null;
+    sequence=sequence.then(async()=>{
+      if(!initialized)return;
+      try{
+        const result=JSON.parse(python.runPython('json.dumps(app.store.cleanup_step())'));
+        if(result.processed)await mount.syncfs();
+        if(result.errors.length)self.postMessage({type:'cleanup-warning',message:result.errors[0]});
+        if(result.pending>result.errors.length)scheduleCleanup();
+      }
+      catch(error){self.postMessage({type:'cleanup-warning',message:String(error.message||error)});}
+    });
+  },150);
+}
 self.onmessage=event=>{
   if(event.data.type==='start'){
     owner=event.data.owner;
     ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
     return;
   }
-  sequence=sequence.then(()=>handle(event)).then(runJobs);
+  sequence=sequence.then(()=>handle(event)).then(runJobs).then(scheduleCleanup);
 };
 
 async function handle(event){

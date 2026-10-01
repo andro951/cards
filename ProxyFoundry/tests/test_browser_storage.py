@@ -90,7 +90,7 @@ def request(app, method, url, body, headers):
     return original_request(app, method, url, body, headers)
 '''
     source=source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):')
-    source=source.replace("const metadata=response.toJs({dict_converter:Object.fromEntries});", "const metadata=response.toJs({dict_converter:Object.fromEntries});\n    if(url.startsWith('/api/__test__/storage')){\n      const node=python.FS.lookupPath('/workspace/tmp/storage-stress/80.bin').node;\n      metadata.headers['X-Test-Cached-Bytes']=String(node.contents?.byteLength||node.contents?.length||0);\n    }")
+    source=source.replace("const metadata=JSON.parse(responseText(encoded.metadata));", "const metadata=JSON.parse(responseText(encoded.metadata));\n    if(url.startsWith('/api/__test__/storage')){\n      const node=python.FS.lookupPath('/workspace/tmp/storage-stress/80.bin').node;\n      metadata.headers['X-Test-Cached-Bytes']=String(node.contents?.byteLength||node.contents?.length||0);\n    }")
     worker.write_text(source)
     page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
     page.locator('#import-deck').wait_for(timeout=90000)
@@ -270,3 +270,88 @@ def request(app, method, url, body, headers):
     result=page.evaluate("async()=>{window.testStatCalls=0;const response=await fetch('/api/__test__/metadata-cache');return {status:response.status,data:await response.json(),calls:window.testStatCalls};}")
     assert result['status']==200 and result['data']=={'ok':True}
     assert result['calls']<20,'Repeated file checks must not cross the storage bridge every time.'
+
+
+def test_immediate_deletion_order_guard_filter_and_recovery(static_browser,tmp_path):
+    directory,context,origin=static_browser
+    worker=directory/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    injected="""
+original_request = request
+def request(app, method, url, body, headers):
+    if str(url)=='/api/__test__/seed-deletion':
+        for ident,name in [('11111111-1111-4111-8111-111111111111','Delete me'),('22222222-2222-4222-8222-222222222222','Protected deck')]:
+            app.store.put('decks',{'id':ident,'name':name,'status':'draft','summary':{'cards':0,'faces':0,'rendered':0}})
+        deck='22222222-2222-4222-8222-222222222222'
+        for ident,decks in [('33333333-3333-4333-8333-333333333333',[{'id':deck,'name':'Protected deck'}]),('44444444-4444-4444-8444-444444444444',[{'id':'other','name':'Other deck'}])]:
+            app.store.put('orders',{'id':ident,'decks':decks,'cards':[],'count':0})
+            (app.store.home/'orders'/(ident+'.zip')).write_bytes(b'zip')
+        return {'status':200,'mime':'application/json','body':b'{}','headers':{}}
+    if str(url)=='/api/decks':
+        return {'status':200,'mime':'application/json','body':json.dumps(app.store.list('decks')).encode(),'headers':{}}
+    return original_request(app,method,url,body,headers)
+"""
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    page.evaluate("async()=>{await fetch('/api/__test__/seed-deletion');await (await import('/site/app.js')).route();}")
+    page.evaluate("""async()=>{
+      const ui=await import('/site/ui.js');const deletion=await import('/site/deletion.js');
+      const original=window.fetch;window.testFetch=original;window.journalKey='pf-pending-deck-deletions:'+ui.state.bootstrap.workspaceId;window.releaseDelete=null;
+      window.fetch=async(url,options)=>{
+        if(String(url).endsWith('/delete')){await new Promise(resolve=>window.releaseDelete=resolve);}
+        return original(url,options);
+      };
+      window.deleteTask=deletion.deleteDeck(ui.state.decks.find(deck=>deck.name==='Delete me'));
+    }""")
+    page.get_by_role('button',name='Delete permanently',exact=True).click()
+    page.wait_for_function("location.hash==='#decks'&&window.releaseDelete!==null")
+    page.get_by_role('heading',name='Deck library',exact=True).wait_for()
+    assert not page.get_by_text('Delete me',exact=True).count()
+    assert page.get_by_text('Protected deck',exact=True).count()
+    assert page.evaluate("Object.keys(JSON.parse(localStorage.getItem(window.journalKey))).length")==1
+    page.screenshot(path=str(tmp_path/'immediate-deletion.png'),full_page=True)
+    page.evaluate('window.releaseDelete()')
+    page.wait_for_function("localStorage.getItem(window.journalKey)==='{}'")
+    #A late failure restores the deck to the visible library.
+    page.evaluate("""async()=>{
+      const ui=await import('/site/ui.js'),deletion=await import('/site/deletion.js');
+      const original=window.fetch;window.fetch=async(url,options)=>String(url).endsWith('/delete')?Promise.reject(new Error('Injected deletion failure')):original(url,options);
+      await ui.api('/api/__test__/seed-deletion');await (await import('/site/app.js')).route();
+      window.deleteTask=deletion.deleteDeck(ui.state.decks.find(deck=>deck.name==='Delete me'));
+    }""")
+    page.get_by_role('button',name='Delete permanently',exact=True).click()
+    page.get_by_text('Delete me',exact=True).wait_for()
+    page.get_by_text('Deck could not be deleted: Injected deletion failure',exact=True).wait_for()
+    page.evaluate("""async()=>{
+      const ui=await import('/site/ui.js');window.deleteTask=(await import('/site/deletion.js')).deleteDeck(ui.state.decks.find(deck=>deck.name==='Protected deck'));
+    }""")
+    page.get_by_text('A print order uses this deck. Delete the print order before deleting this deck.',exact=True).wait_for()
+    page.get_by_role('button',name='Show print orders').click()
+    page.get_by_role('heading',name='Print orders',exact=True).wait_for()
+    assert page.locator('.order-row').count()==1
+    assert not page.get_by_text('Other deck',exact=True).count()
+    page.evaluate("document.querySelectorAll('.toast').forEach(item=>item.remove())")
+    page.screenshot(path=str(tmp_path/'filtered-orders.png'),full_page=True)
+    page.get_by_text('Show all print orders',exact=True).click()
+    page.wait_for_function("document.querySelectorAll('.order-row').length===2")
+    page.evaluate("location.hash='orders/22222222-2222-4222-8222-222222222222'")
+    page.wait_for_function("document.querySelectorAll('.order-row').length===1")
+    page.evaluate("window.fetch=window.testFetch")
+    page.get_by_role('button',name='Review',exact=True).click()
+    page.get_by_role('heading',name='Saved order preview',exact=True).wait_for()
+    page.get_by_role('button',name='Close dialog').click()
+    page.get_by_role('button',name='Delete print order',exact=True).click()
+    page.get_by_role('button',name='Delete print order',exact=True).last.click()
+    page.get_by_text('No print orders use this deck.',exact=True).wait_for()
+    assert page.evaluate("async()=>{const ui=await import('/site/ui.js');return (await ui.api('/api/decks/22222222-2222-4222-8222-222222222222/orders')).length}")==0
+    #Pending deletion persists through reload; boot resends it idempotently.
+    page.evaluate("""async()=>{
+      const ui=await import('/site/ui.js');await ui.api('/api/__test__/seed-deletion');
+      const deck=(await ui.api('/api/decks')).find(deck=>deck.name==='Delete me');
+      localStorage.setItem(window.journalKey,JSON.stringify({[deck.id]:{revision:deck.revision}}));
+      location.hash='decks';
+    }""")
+    page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    page.evaluate("async()=>{window.journalKey='pf-pending-deck-deletions:'+(await import('/site/ui.js')).state.bootstrap.workspaceId;}")
+    page.wait_for_function("localStorage.getItem(window.journalKey)==='{}'")
+    assert not page.get_by_text('Delete me',exact=True).count()
+    page.close()

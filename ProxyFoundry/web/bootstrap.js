@@ -96,6 +96,7 @@ else{
 
   worker.onmessage=async event=>{
     const data=event.data;
+    if(data.type==='cleanup-warning')window.dispatchEvent(new CustomEvent('pf-cleanup-warning',{detail:data.message}));
     if(data.type==='job'){
       const completed=[...jobs].filter(([,job])=>['done','failed','cancelled'].includes(job.state));
       for(const [id] of completed.slice(0,Math.max(0,completed.length-19)))jobs.delete(id);

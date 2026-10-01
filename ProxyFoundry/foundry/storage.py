@@ -284,16 +284,84 @@ class Store:
             if not row:raise ValidationError('That item no longer exists.')
             if expected is not None and expected!=row['rev']:
                 raise ConflictError('This deck changed in another tab. Reload before deleting it.')
+            if kind == 'decks' and self._blocking_orders(db, ident):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
             db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))
         if kind == 'decks':
             self.clear_deck_renders(ident)
         return {'id':ident,'permanent':True}
+
+    @staticmethod
+    def _blocking_orders(db, ident):
+        rows=db.execute("SELECT id,body FROM documents WHERE kind='orders' AND deleted=0 AND EXISTS (SELECT 1 FROM json_each(documents.body,'$.decks') WHERE json_extract(value,'$.id')=?)",(ident,)).fetchall()
+        return [{'id':r['id'],'decks':json.loads(r['body']).get('decks',[])} for r in rows]
+
+    def blocking_orders(self, ident):
+        with self.connect() as db:
+            return self._blocking_orders(db,ident)
+
+    def begin_delete(self, kind, ident, expected=None):
+        """Commit logical deletion and a durable file cleanup queue together."""
+        if kind not in {'decks','orders'}:
+            raise ValidationError('Unsupported deletion.')
+        queue_id=kind+'-'+ident
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute('SELECT rev,body FROM documents WHERE kind=? AND id=?',(kind,ident)).fetchone()
+            if not row:
+                return {'id':ident,'permanent':True}
+            if expected is not None and expected!=row['rev']:
+                raise ConflictError('This item changed. Reload before deleting it.')
+            if kind=='decks' and self._blocking_orders(db,ident):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
+            if kind=='decks':
+                renders=db.execute('SELECT file_path,asset_id FROM renders WHERE deck_id=?',(ident,)).fetchall()
+                tasks=[{'file':r['file_path'],'asset':r['asset_id']} for r in renders]
+                db.execute('DELETE FROM renders WHERE deck_id=?',(ident,))
+            else:
+                body=json.loads(row['body'])
+                assets={c.get(key) for c in body.get('cards',[]) for key in ('frontAsset','backAsset')}
+                tasks=[{'file':'orders/'+ident+'.zip'}]+[{'asset':a} for a in assets if a]
+            now=time.time()
+            db.execute('INSERT OR REPLACE INTO documents VALUES (?,?,?,?,?,?,?)',
+                       ('cleanup',queue_id,1,json.dumps({'tasks':tasks}),now,now,0))
+            db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))
+        return {'id':ident,'permanent':True}
+
+    def cleanup_step(self, limit=4):
+        queues=self.list('cleanup')
+        queue=next((q for q in queues if not q.get('error')),None)
+        if not queue:
+            return {'pending':len(queues),'errors':[q['error'] for q in queues if q.get('error')]}
+        tasks=queue['tasks']
+        try:
+            for task in tasks[:limit]:
+                if task.get('file'):
+                    path=(self.home/task['file']).resolve()
+                    if not any(root.resolve() in path.parents for root in (self.home/'renders',self.home/'orders')):
+                        raise ValidationError('Invalid cleanup path.')
+                    path.unlink(missing_ok=True)
+                if task.get('asset'):
+                    self._delete_render_asset_if_unused(task['asset'])
+            queue['tasks']=tasks[limit:]
+            if queue['tasks']:
+                self.put('cleanup',queue,queue['revision'])
+            else:
+                with self.connect() as db:
+                    db.execute("DELETE FROM documents WHERE kind='cleanup' AND id=?",(queue['id'],))
+        except (OSError,ValidationError) as exc:
+            queue['error']=str(exc)
+            self.put('cleanup',queue,queue['revision'])
+        remaining=self.list('cleanup')
+        return {'processed':True,'pending':len(remaining),'errors':[q['error'] for q in remaining if q.get('error')]}
 
     def purge_trash(self, kind: str) -> dict[str, Any]:
         ids=[]
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             ids=[r[0] for r in db.execute('SELECT id FROM documents WHERE kind=? AND deleted=1',(kind,)).fetchall()]
+            if kind=='decks' and any(self._blocking_orders(db,ident) for ident in ids):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
             db.execute('DELETE FROM documents WHERE kind=? AND deleted=1',(kind,))
         if kind == 'decks':
             for ident in ids:
@@ -381,6 +449,8 @@ class Store:
             if db.execute('SELECT 1 FROM renders WHERE asset_id=? LIMIT 1',(ident,)).fetchone():
                 return False
             if db.execute('SELECT 1 FROM http_cache WHERE asset_id=? LIMIT 1',(ident,)).fetchone():
+                return False
+            if db.execute("SELECT 1 FROM documents WHERE kind<>'cleanup' AND instr(body,?)>0 LIMIT 1",(ident,)).fetchone():
                 return False
         return True
 

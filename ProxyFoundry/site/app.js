@@ -4,9 +4,10 @@ import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
 import {showSettings,showHelp} from './settings.js';
 import {renderDecks} from './render.js';
+import {visibleDecks,resumeDeletions} from './deletion.js';
 
 export async function refreshLibrary(){
-  state.decks=await api('/api/decks');state.templates=await api('/api/templates');
+  state.decks=visibleDecks(await api('/api/decks'));state.templates=await api('/api/templates');
   $('#nav-count').textContent=state.decks.length||'';
   for(const id of [...state.selected])if(!state.decks.some(d=>d.id===id))state.selected.delete(id);
 }
@@ -101,12 +102,15 @@ export async function route(){
   state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
   $('#selection-tray').classList.add('hidden');$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===(name==='deck'?'decks':name)));
   document.title=`${{decks:'Deck Library',deck:'Deck',templates:'Templates',orders:'Print Orders',settings:'Settings'}[name]||'Bulk Proxy Forge'} · Bulk Proxy Forge`;
+  if(name==='decks'&&state.immediateLibrary){
+    state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';return;
+  }
   $('#main').innerHTML=loading();
   try{
-    await refreshLibrary();if(current!==routeCounter)return;
+    if(name!=='orders')await refreshLibrary();if(current!==routeCounter)return;
     if(name==='deck'&&id)await showDeck(id,tab||'cards');
     else if(name==='templates')await (state.bootstrap?.browser?(await import('/web/templates-browser.js')).showTemplates():showTemplates());
-    else if(name==='orders')await showOrders();
+    else if(name==='orders')await showOrders(id);
     else if(name==='settings')await (state.bootstrap?.browser?(await import('/web/settings-browser.js')).showSettings():showSettings());
     else if(name==='help')await showHelp();
     else{state.route='decks';showLibrary();}
@@ -116,6 +120,9 @@ async function boot(){
   try{
     const data=await api('/api/bootstrap');state.csrf=data.csrf;state.bootstrap=data;
     mountNavigation();
+    resumeDeletions();
+    window.addEventListener('pf-library-deletion',()=>{state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';});
+    window.addEventListener('pf-deletion-failed',()=>{if(state.route==='decks')void route();});
     window.addEventListener('hashchange',route);
     window.addEventListener('message',e=>{
       if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;

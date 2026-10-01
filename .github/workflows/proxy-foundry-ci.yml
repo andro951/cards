@@ -51,6 +51,7 @@ jobs:
           'tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/]'
           tests/test_website.py::test_static_browser_job_progress_cancellation_and_reload
           tests/test_website.py::test_static_engine_releases_image_responses_and_error_diagnostics
+          tests/test_browser_storage.py::test_immediate_deletion_order_guard_filter_and_recovery
           --junitxml=test-results/production.xml
       - uses: actions/upload-artifact@v4
         if: always()
