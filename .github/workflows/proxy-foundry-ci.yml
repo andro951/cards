@@ -5,6 +5,11 @@ on:
       - 'ProxyFoundry/**'
       - '.github/workflows/proxy-foundry-ci.yml'
   workflow_dispatch:
+    inputs:
+      full_sweep:
+        description: Run extended browser, live and large stress tests
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -18,7 +23,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: ProxyFoundry
-          fetch-depth: 1
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -29,36 +33,64 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Preserve approved Card Tools
         run: python ProxyFoundry/scripts/verify_vendor.py
-      - name: Check browser JavaScript syntax
+      - name: Check browser JavaScript syntax and adapter tests
+        working-directory: ProxyFoundry
         run: |
-          for file in ProxyFoundry/site/*.js; do
-            node --check "$file"
-          done
-      - name: Unit, API, actual browser and actual native renderer tests
+          for file in site/*.js site/*.mjs web/*.js extension/*.js; do node --check "$file"; done
+          node --test tests_web/*.test.mjs
+      - name: Routine unit and API gate
+        working-directory: ProxyFoundry
+        run: python -m pytest -q -m routine --tb=short --junitxml=test-results/routine.xml
+      - name: Actual static browser production gate
         working-directory: ProxyFoundry
         env:
           PF_BROWSER: '1'
           PF_LIVE_CC: '1'
-        run: python -m pytest -q --tb=short --junitxml=test-results/unit.xml
-      - name: Package source and test evidence (no artwork libraries or font caches)
-        if: always()
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import zipfile
-          root = Path('ProxyFoundry')
-          with zipfile.ZipFile('ProxyFoundry-checkpoint.zip', 'w', zipfile.ZIP_DEFLATED) as out:
-              for p in sorted(root.rglob('*')):
-                  if not p.is_file() or any(x in {'.venv', '__pycache__', '.pytest_cache', 'workspace', '_work', '.cache', 'node_modules', 'checkpoints'} for x in p.parts):
-                      continue
-                  if p.suffix.lower() in {'.pyc', '.ttf', '.otf', '.woff', '.woff2', '.pem', '.crx'}:
-                      continue
-                  out.write(p, p)
-          PY
+        run: >-
+          python -m pytest -q --tb=short
+          'tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/]'
+          tests/test_website.py::test_static_browser_job_progress_cancellation_and_reload
+          --junitxml=test-results/production.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ProxyFoundry-checkpoint
-          path: ProxyFoundry-checkpoint.zip
+          name: ProxyFoundry-routine-evidence
+          path: ProxyFoundry/test-results
           retention-days: 7
-          if-no-files-found: error
+  extended:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_sweep
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ProxyFoundry
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install -r ProxyFoundry/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Affected and full sweep group
+        working-directory: ProxyFoundry
+        env:
+          PF_BROWSER: '1'
+          PF_LIVE_CC: '1'
+          PF_DOM: '1'
+          PF_LIVE_GITHUB_SETUP: '1'
+          PF_LARGE_TRANSFER: '1'
+          PF_DECK_STRESS: '1'
+          PF_LIVE_DECK_SITES: '1'
+        run: |
+          browser=$(python -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()")
+          export PF_BROWSER_EXECUTABLE="$browser" PF_DOM_EXECUTABLE="$browser"
+          python -m pytest -q -m extended --tb=short --junitxml=test-results/extended.xml
+          node --test tests_web/*.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ProxyFoundry-extended-evidence
+          path: ProxyFoundry/test-results
+          retention-days: 7

@@ -17,14 +17,22 @@ pytestmark=pytest.mark.skipif(
 )
 ROOT=Path(__file__).resolve().parents[1]
 
+def build_site(tmp_path,base_path='/'):
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py'),'--base-path',base_path,'--output',str(tmp_path/'built')],cwd=ROOT,check=True,capture_output=True)
+
+def copy_site(tmp_path):
+    import shutil
+    site=tmp_path/'site';shutil.copytree(tmp_path/'built',site)
+    return site
+
 
 def test_static_engine_releases_image_responses_and_error_diagnostics(tmp_path):
     """Exercise real Pyodide proxy lifetimes without rendering a whole deck."""
     from playwright.sync_api import sync_playwright
     import shutil
 
-    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
-    shutil.copytree(ROOT/'dist',tmp_path/'site')
+    build_site(tmp_path)
+    shutil.copytree(tmp_path/'built',tmp_path/'site')
     worker=tmp_path/'site/web/engine-worker.js'
     source=worker.read_text(encoding='utf-8')
     tracking='''
@@ -84,7 +92,7 @@ def request(app, method, url, body, headers):
                 page.get_by_role('button',name='Download Diagnostics',exact=True).wait_for(timeout=30000)
                 #Simulate the unreadable HTTP response after generation, with no API available.
                 page.evaluate('''async()=>{
-                  const ui=await import('/site/ui.js');
+                  const ui=await import((window.__pfBasePath||'')+'/site/ui.js');
                   window.testOriginalFetch=window.fetch;
                   window.fetch=async()=>new Response('<html>Unavailable</html>',{status:503,headers:{'Content-Type':'text/html'}});
                   try{await ui.api('/api/settings');}
@@ -112,10 +120,10 @@ def request(app, method, url, body, headers):
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 
-def test_static_token_styles_and_upstream_assets():
+def test_static_token_styles_and_upstream_assets(tmp_path):
     from playwright.sync_api import sync_playwright
-    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist')))
+    build_site(tmp_path)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -149,12 +157,11 @@ def test_static_token_styles_and_upstream_assets():
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 
-def test_static_website_fetches_pinned_station_script():
+def test_static_website_fetches_pinned_station_script(tmp_path):
     from playwright.sync_api import sync_playwright
 
-    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
-                   cwd=ROOT,check=True,capture_output=True)
-    with zipfile.ZipFile(ROOT/'dist'/'web'/'runtime.zip') as archive:
+    build_site(tmp_path)
+    with zipfile.ZipFile(tmp_path/'built'/'web'/'runtime.zip') as archive:
         assert 'vendor/cardconjurer/versionStation.js' not in archive.namelist()
         assert "ingest.MAIN_TYPES.add('Emblem')" in archive.read('foundry/legacy.py').decode()
         assert "ingest.MAIN_TYPES.add('Card')" in archive.read('foundry/legacy.py').decode()
@@ -163,7 +170,7 @@ def test_static_website_fetches_pinned_station_script():
         assert "pt.setdefault('text','')" in archive.read('foundry/compiler.py').decode()
         assert 'def build_station_land_data(' in archive.read('foundry/compiler.py').decode()
         assert "'helper_scan' if group=='helper'" in archive.read('foundry/compiler.py').decode()
-    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path)))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
@@ -188,13 +195,12 @@ def test_static_website_fetches_pinned_station_script():
         server.shutdown();server.server_close();thread.join(timeout=5)
 
 
-def test_static_website_prepare_frames_load_from_pinned_fallback():
+def test_static_website_prepare_frames_load_from_pinned_fallback(tmp_path):
     from playwright.sync_api import sync_playwright
 
-    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
-                   cwd=ROOT,check=True,capture_output=True)
-    assert '<body hidden>' in (ROOT/'dist'/'index.html').read_text(encoding='utf-8')
-    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    build_site(tmp_path)
+    assert '<body hidden>' in (tmp_path/'built'/'index.html').read_text(encoding='utf-8')
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path)))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
@@ -229,16 +235,18 @@ def test_static_website_prepare_frames_load_from_pinned_fallback():
         server.shutdown();server.server_close();thread.join(timeout=5)
 
 
-@pytest.mark.parametrize('look',['Normal Look','Customize Look'])
-def test_static_website_import_frame_review_and_zip(tmp_path,look):
+@pytest.mark.parametrize(('look','base_path'),[('Normal Look','/'),('Customize Look','/'),('Normal Look','/cards/')])
+def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
     from playwright.sync_api import sync_playwright
 
-    subprocess.run([os.environ.get('PYTHON',os.sys.executable),str(ROOT/'scripts'/'build_web.py')],
-                   cwd=ROOT,check=True,capture_output=True)
-    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT/'dist'))
+    build_site(tmp_path,base_path)
+    import shutil
+    deployed=tmp_path/'deployed';deployed.mkdir()
+    shutil.copytree(tmp_path/'built',deployed/base_path.strip('/') if base_path!='/' else deployed,dirs_exist_ok=True)
+    handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(deployed))
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
-    origin=f'http://127.0.0.1:{server.server_port}'
+    origin=f'http://127.0.0.1:{server.server_port}'+base_path
     try:
         with sync_playwright() as playwright:
             browser=playwright.chromium.launch(headless=True)
@@ -249,12 +257,19 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look):
             try:
                 page.goto(origin,wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
+                if look=='Normal Look':
+                    page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/settings',{defaults:{artist:'Inherited artist',disableAutofit:true,showFlavorText:false,allCardsTokens:true,tokenOptions:{power:'7',toughness:'7'},templateRules:{standard:'land',land:'land'}}});}")
                 page.click('#import-deck')
                 page.locator('.modal-body summary').click()
                 page.locator('.modal-body textarea').fill('1 Syr Gwyn, Hero of Ashvale')
                 page.click('#do-import')
                 page.get_by_role('button',name=look,exact=True).click(timeout=90000)
                 page.locator('#save-setup').wait_for(timeout=90000)
+                if look=='Normal Look':
+                    normal=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return (await ui.api('/api/decks/'+ui.state.activeDeck.id)).settings;}")
+                    assert normal['source']['mode']=='scryfall' and normal['artist']==''
+                    assert not normal['disableAutofit'] and not normal['allCardsTokens'] and normal['showFlavorText']
+                    assert normal['templateRules']['land']=='normal' and not normal['tokenOptions']['power']
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
                                             'nickname':'Test Commander Nickname'}]}
                 page.locator('#data-json-file').set_input_files({
@@ -266,6 +281,8 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look):
                 page.locator('#activity').wait_for(state='hidden',timeout=240000)
                 sources=page.locator('#modal-host img:visible').evaluate_all('(images)=>images.map(image=>image.getAttribute("src"))')
                 assert len(sources)>=3 and len(set(sources))==1,'Picker samples must be static shared card backs.'
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'static-frame-picker.png'))
                 page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]').click()
                 page.click('#save-setup')
                 page.get_by_text('Deck setup saved.').wait_for(timeout=30000)
@@ -304,8 +321,8 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look):
 def test_static_browser_job_progress_cancellation_and_reload(tmp_path):
     from playwright.sync_api import sync_playwright
     import shutil
-    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py')],cwd=ROOT,check=True,capture_output=True)
-    shutil.copytree(ROOT/'dist',tmp_path/'site')
+    build_site(tmp_path)
+    shutil.copytree(tmp_path/'built',tmp_path/'site')
     worker=tmp_path/'site/web/engine-worker.js'
     source=worker.read_text()
     injected="""
@@ -333,7 +350,7 @@ def request(app, method, url, body, headers):
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
                 result=page.evaluate("""async()=>{
-                  const ui=await import('/site/ui.js');
+                  const ui=await import((window.__pfBasePath||'')+'/site/ui.js');
                   const {id}=await ui.api('/api/__test__/slow-job',{});
                   const rows=[];
                   for(let i=0;i<100;i++){
@@ -349,5 +366,161 @@ def request(app, method, url, body, headers):
                 page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
                 previous=page.evaluate("async id=>(await fetch('/api/jobs/'+id)).json()",result['id'])
                 assert previous['state']=='cancelled' and previous['done']==result['job']['done']
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+def test_static_template_editor_generates_only_on_request_and_saves_validated_model(tmp_path):
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000})
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                generated=[]
+                page.on('request',lambda request:generated.append(request.url) if request.method=='POST' and '/render-sessions' in request.url else None)
+                page.get_by_role('link',name='Templates',exact=True).click()
+                page.get_by_role('button',name='Use as starting point').first.click()
+                page.get_by_role('dialog',name='Create Template').wait_for(timeout=30000)
+                assert not generated
+                page.get_by_label('Template name',exact=True).fill('Validated browser template')
+                page.get_by_label('Legendary cards',exact=True).check()
+                page.get_by_label('This frame supports legendary cards').check()
+                page.click('#preview-template')
+                page.locator('#save-template:enabled').wait_for(timeout=240000)
+                assert page.get_by_label('Template validation sample').locator('option').count()==2
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.get_by_label('Template validation sample').scroll_into_view_if_needed()
+                page.screenshot(path=str(evidence/'validated-template-editor.png'),full_page=True)
+                page.click('#save-template')
+                page.get_by_text('Validated browser template',exact=True).wait_for(timeout=30000)
+                saved=page.evaluate("async()=>{const templates=await (await fetch('/api/templates')).json();return templates.find(template=>template.name==='Validated browser template');}")
+                assert saved['schemaVersion']==3 and set(saved['groups'])=={'standard','legendary'}
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+@pytest.mark.skipif(os.environ.get('PF_DECK_STRESS')!='1',reason='Affected full-deck browser rendering stress run')
+def test_published_deck_100_image_browser_generation_and_reload(tmp_path):
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path)
+    #Repeat actual imported printings with distinct titles to exercise 100 uncached outputs.
+    #The injection exists only in this isolated test build, never in the distribution.
+    import shutil
+    site=tmp_path/'site';shutil.copytree(tmp_path/'built',site)
+    worker=site/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    injected="""
+original_request = request
+def request(app, method, url, body, headers):
+    if str(url).startswith('/api/__test__/expand-deck/'):
+        import copy
+        from foundry.domain import uid
+        deck=app.ws.deck(str(url).rsplit('/',1)[-1]);original=deck['cards'];cards=[]
+        for index in range(100):
+            card=copy.deepcopy(original[index%len(original)]);card['id']=uid();card['quantity']=1
+            for face in card['faces']:
+                face['id']=uid()
+                face['nicknameOverride']='Stability sample '+str(index+1)
+                for key in ('compiled','lastRender','error'):face.pop(key,None)
+            cards.append(card)
+        deck['cards']=cards;deck['status']='draft';app.store.put('decks',deck,deck['revision'])
+        return {'status':200,'mime':'application/json','body':b'{"ok":true}','headers':{}}
+    return original_request(app, method, url, body, headers)
+"""
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000})
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                page.click('#import-deck');page.get_by_role('textbox',name='Deck link',exact=True).fill('https://scryfall.com/@andro951/decks/e18f48e7-a2b7-479e-8361-de947bc734ff')
+                page.click('#do-import');page.get_by_role('button',name='Normal Look',exact=True).click()
+                page.locator('#save-setup').wait_for(timeout=180000)
+                original=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
+                assert original['cards'] and any(card['name']=='Syr Gwyn, Hero of Ashvale' for card in original['cards'])
+                page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/__test__/expand-deck/'+ui.state.activeDeck.id,{});}")
+                page.reload(wait_until='domcontentloaded');page.locator('#generate-deck').wait_for(timeout=90000)
+                saved=[]
+                def progress(response):
+                    if response.request.method=='POST' and '/api/render-sessions/' in response.url and response.status==200:
+                        saved.append(response.url)
+                        if len(saved)%10==0:print('Full deck: '+str(len(saved))+' rendered images saved',flush=True)
+                page.on('response',progress)
+                page.click('#generate-deck')
+                page.wait_for_function("() => document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=3600000)
+                data=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
+                failure=page.locator('.toast.error').all_text_contents()
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
+                assert data['status']=='ready',{'toasts':failure,'saved':len(saved),'faces':[(card['name'],face.get('error')) for card in data['cards'] for face in card['faces'] if face.get('error')]}
+                assert data['summary']['faces']>=100 and data['summary']['rendered']==data['summary']['faces']
+                page.get_by_role('button',name='View deck',exact=True).click()
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'full-deck-browser-grid.png'),full_page=True)
+                report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved)}
+                (evidence/'full-deck-browser-summary.json').write_text(json.dumps(report,indent=2))
+                page.reload(wait_until='domcontentloaded');page.locator('.badge.ready').wait_for(timeout=90000)
+                previous=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
+                assert previous['summary']['rendered']==data['summary']['rendered']
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+
+def test_static_cardconjurer_source_choices_are_immediate_without_generation(tmp_path):
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000})
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                entries=page.evaluate("async()=>{const cards=[];for(const kind of ['normal','land'])cards.push(await (await fetch('/api/templates/seed?kind='+kind)).json());return cards;}")
+                generated=[];page.on('request',lambda request:generated.append(request.url) if request.method=='POST' and '/render-sessions' in request.url else None)
+                page.get_by_role('link',name='Templates',exact=True).click()
+                with page.expect_file_chooser() as chooser:
+                    page.get_by_role('button',name='Import Card Conjurer File',exact=True).click()
+                chooser.value.set_files({'name':'cards.cardconjurer','mimeType':'application/json','buffer':json.dumps(entries).encode()})
+                page.get_by_role('dialog',name='Choose a source card').wait_for(timeout=30000)
+                assert not generated
+                images=page.locator('.modal-body .printing-option img').evaluate_all('(images)=>images.map(image=>image.src)')
+                assert len(images)==2 and len(set(images))==1
+                page.get_by_label('Card layout',exact=True).select_option('land')
+                page.locator('.modal-body .printing-option').nth(1).click()
+                page.get_by_role('dialog',name='Create Template').wait_for(timeout=30000)
+                assert page.get_by_label('Base layout',exact=True).input_value()=='land'
+                assert not generated
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+
+def test_mixed_website_engine_version_stops_with_saved_workspace_guidance(tmp_path):
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path)
+    site=copy_site(tmp_path);worker=site/'web/engine-worker.js'
+    worker.write_text(worker.read_text(encoding='utf-8').replace("self.postMessage({type:'ready',buildId});","self.postMessage({type:'ready',buildId:'older-build'});"),encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.get_by_text('The website and card engine are different versions.',exact=False).wait_for(timeout=90000)
+                assert not page.locator('#import-deck').is_visible()
+                assert page.get_by_role('button',name='Download browser diagnostics').is_visible()
+                error=page.evaluate("async()=>{const response=await fetch('/api/settings');return {status:response.status,data:await response.json()};}")
+                assert error['status']==500 and 'saved decks stay' in error['data']['error']
             finally:browser.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)

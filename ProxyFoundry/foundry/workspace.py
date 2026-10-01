@@ -622,6 +622,8 @@ class Workspace:
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
+            # Checkpoint preparation so cancellation/reload preserves finished faces.
+            d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
@@ -706,11 +708,11 @@ class Workspace:
                 errors[choice]=str(exc)
         return {'targets':targets,'errors':errors,'sample':face.get('name',card['name'])}
     def save_template(self,value):
-        if value.get('schemaVersion')==2:
+        if value.get('schemaVersion') in {2,3}:
             model=validate_model(value)
             if value.get('id') and value.get('revision') is None:
                 raise ValidationError('Reload the template before saving; its revision is required.')
-            saved={key:model[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+            saved={key:model[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions','variants','layoutMetadata')}
             result=self.store.put('templates',{'id':value.get('id'),**saved},value.get('revision'))
             self.invalidate_template(result['id'])
             return result
@@ -747,10 +749,11 @@ class Workspace:
         return convert_cardconjurer(value.get('source'),value.get('name'),value.get('group','standard'))
     def export_template_file(self,ident):
         template=self.store.get('templates',ident)
+        if template and template.get('schemaVersion') in {2,3}:template=validate_model(template)
         if not template:raise ValidationError('Template not found.')
-        if template.get('schemaVersion')!=2:raise ValidationError('Convert this legacy template before exporting it.')
+        if template.get('schemaVersion') not in {2,3}:raise ValidationError('Convert this legacy template before exporting it.')
         from .backup import referenced_assets
-        model={key:template[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}
+        model={key:template[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions','variants','layoutMetadata')}
         assets={}
         for asset_id in referenced_assets(model):
             image=self.store.asset(asset_id)
@@ -778,24 +781,63 @@ class Workspace:
         model=validate_model(value)
         sample_names={'standard':'Seasoned Pyromancer','legendary':'Alesha, Who Smiles at Death',
                       'land':'Field of the Dead','legendary-land':'Boseiju, Who Endures','basic-land':'Forest'}
-        name=sample_names[model['baseGroup']]
+        sample_names.update({'station':'Seriema','prepare':'Harmonized Trio','planeswalker':'Jace, the Mind Sculptor','saga':'The Eldest Reborn','saga-creature':'The Kami War','token':'tmh2:16'})
+        name=str(value.get('previewSource') or sample_names.get(model['baseGroup']) or '').strip()
+        if not name:raise ValidationError('Enter a sample card for this structural layout before generating template previews.')
         sf=self.sources.resolve_card(name)
-        face=ingest.face_list(sf)[0]
-        url=self.sources.art_url(sf,face)
+        faces=ingest.face_list(sf);index=next((i for i,face in enumerate(faces) if type_group(face,sf,i)==model['baseGroup']),None)
+        if index is None:raise ValidationError('The sample card does not use the selected base layout.')
+        face=faces[index]
+        original_sf=copy.deepcopy(sf)
+        sf=copy.deepcopy(sf);face=(sf.get('card_faces') or [sf])[index]
+        requested=value.get('previewCondition') or {}
+        if 'colors' in requested:face['colors']=requested['colors'];sf['colors']=requested['colors']
+        if 'legendary' in requested:
+            face['type_line']=face['type_line'].removeprefix('Legendary ')
+            if requested['legendary']:face['type_line']='Legendary '+face['type_line']
+        if 'hasPT' in requested:
+            if requested['hasPT']:face['power']=face.get('power') or '3';face['toughness']=face.get('toughness') or '3'
+            else:
+                face.pop('power',None);face.pop('toughness',None)
+                if model['baseGroup'] in ORDINARY_GROUPS:face['type_line']=face['type_line'].replace('Creature','Artifact')
+        url=self.sources.art_url(original_sf,ingest.face_list(original_sf)[index])
         raw,_,_=self.net.fetch(url)
         art=ingest_image(self.store,raw)['id']
         temp=uid()
         self.store.put('templates',{'id':temp,**{key:model[key] for key in
-            ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions')}})
+            ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions','variants','layoutMetadata')}})
         try:
             overrides={'oracle_text':'Whenever this creature attacks, draw a card, then discard a card.\n'
                          'When you discard a nonland card this way, create two 1/1 colorless artifact creature tokens.\n'
                          'At the beginning of your end step, if you control seven or more permanents, gain 3 life.'}
-            compiled=self.compiler.compile_face(sf,face,0,{'templateOverride':temp,'semanticOverrides':overrides},
+            if model['baseGroup'] not in ORDINARY_GROUPS:overrides={}
+            compiled=self.compiler.compile_face(sf,face,index,{'templateOverride':temp,'semanticOverrides':overrides},
                                                self.validate_settings({}),art,art_origin='Scryfall selected printing')
             return {'data':compiled['data'],'sample':name}
         finally:
             self.store.purge('templates',temp)
+    def preview_template_models(self,value,progress=lambda *a:None,cancel=lambda:False):
+        model=validate_model(value);sources=value.get('previewSources') or {}
+        if not isinstance(sources,dict) or any(group not in model['groups'] or not isinstance(source,str) for group,source in sources.items()):
+            raise ValidationError('Preview sources must map supported groups to card names or printing IDs.')
+        cases=[(group,{},group) for group in model['groups']]
+        for index,variant in enumerate(model.get('variants') or []):
+            when=variant.get('when') or {};group=when.get('group',model['baseGroup'])
+            if when.get('legendary') is True and group in {'standard','land'}:
+                candidate='legendary' if group=='standard' else 'legendary-land'
+                if candidate not in model['groups']:raise ValidationError('Legendary variants need a supported legendary group.')
+                group=candidate
+            cases.append((group,when,'Variant '+str(index+1)+' / '+group))
+        previews=[]
+        for index,(group,condition,label) in enumerate(cases):
+            if cancel():raise ValidationError('Template preview cancelled.')
+            progress(index,len(cases),'Checking '+label)
+            options={**value,'baseGroup':group,'previewCondition':condition,
+                     'previewSource':sources.get(group) or (value.get('previewSource') if group==model['baseGroup'] else '')}
+            preview=self.preview_template_model(options);preview['sample']=label+' / '+preview['sample'];previews.append(preview)
+        progress(len(cases),len(cases),'Template layouts checked')
+        return previews
+
     def template_seed(self,kind='normal'):
         if kind in {'token-classic','token-full-art','token-borderless'}:
             sem={'name':'My token template','types':['Creature'],'subtypes':['Beast'],'legendary':False,

@@ -32,8 +32,9 @@ export class WorkspaceFiles {
         if(!writer)
             return;
 
-        await writer.close();
-        this.writers.delete(path);
+        try{await writer.close();}
+        catch(error){await writer.abort().catch(()=>{});throw error;}
+        finally{this.writers.delete(path);}
     }
     writer = async path => {
         if(this.writers.has(path))

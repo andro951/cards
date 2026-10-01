@@ -1,5 +1,8 @@
 import {WorkspaceFiles} from './workspace-files.js';
 import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
+const basePath='';
+const buildId='development';
+window.__pfBasePath=basePath;
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
 const startup=document.createElement('main');
@@ -29,7 +32,7 @@ const diagnosticButton=document.createElement('button');diagnosticButton.classNa
 diagnosticButton.onclick=downloadBrowserDiagnostics;startup.append(diagnosticButton);
 
 try{
-const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
+const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/',updateViaCache:'none'});
 await navigator.serviceWorker.ready;
 if(!navigator.serviceWorker.controller){
   message.textContent='Opening browser workspace…';
@@ -41,7 +44,7 @@ else{
   window.__pfOwner=owner;
   const announceOwner=()=>navigator.serviceWorker.controller?.postMessage({type:'owner',owner});
   announceOwner();navigator.serviceWorker.addEventListener('controllerchange',announceOwner);
-  const worker=new Worker('/web/engine-worker.js',{type:'module'});
+  const worker=new Worker('/web/engine-worker.js?v='+buildId,{type:'module'});
   const {savedFolder}=await import('/web/storage-choice.js');
   const folder=await savedFolder();
   if(folder&&await folder.queryPermission({mode:'readwrite'})!=='granted'){
@@ -93,9 +96,15 @@ else{
 
   worker.onmessage=async event=>{
     const data=event.data;
-    if(data.type==='job'){jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
+    if(data.type==='job'){
+      const completed=[...jobs].filter(([,job])=>['done','failed','cancelled'].includes(job.state));
+      for(const [id] of completed.slice(0,Math.max(0,completed.length-19)))jobs.delete(id);
+      jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
     if(data.type==='status'){message.textContent=data.message;setEngineStatus(data.message);}
-    if(data.type==='ready'){setEngineStatus('Ready');readyResolve();}
+    if(data.type==='ready'){
+      if(data.buildId!==buildId)failEngine('The website and card engine are different versions. Reload the page to finish updating; saved decks stay in your workspace.');
+      else{setEngineStatus('Ready');readyResolve();}
+    }
     if(data.type==='fatal')failEngine(data.message);
     if(data.type==='response'||data.type==='error'){
       const port=pending.get(data.id);

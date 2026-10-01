@@ -408,17 +408,15 @@ def test_artist_credit_mode_survives_style_defaults_duplicate_and_backup(env):
     assert restored['cards'][0]['faces'][0]['artistCreditMode']=='printing'
 
 
-def test_missing_generation_metadata_forces_once_then_reuses(env):
+def test_missing_compilation_prepares_once_then_reuses(env):
     w,c,a,s=env
     d=w.create({'source':[{'id':c['id']}],'settings':s})
     before=w.deck(d['id'])
-    assert before['upgradeRequired']
-    force=bool(before['upgradeRequired'])
+    assert before['status']=='draft' and not before.get('upgradeRequired')
     prepared=w.prepare(d['id'])
     comp=prepared['cards'][0]['faces'][0]['compiled']
     assert comp['generationVersion']==GENERATION_VERSION
-    w.store.render_put(comp['renderKey'],a)
-    first=w.render_targets([d['id']],force=force)
+    first=w.render_targets([d['id']])
     assert first['cached']==0 and len(first['targets'])==1
     dims=(comp['data']['width'],comp['data']['height'])
     w.save_render(comp['renderKey'],png(dims),dims)

@@ -199,13 +199,15 @@ class App:
         return {'id':ident,'targets':[{'key':key,'name':item['name']} for key,item in targets.items()],
                 'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
 
-    def start_template_model_session(self, model):
-        preview=self.ws.preview_template_model(model)
-        key=stable_hash({'templateModelPreview':preview['data']})
+    def start_template_model_session(self, model, progress=lambda *a:None, cancel=lambda:False):
+        previews=self.ws.preview_template_models(model,progress,cancel)
+        targets={}
+        for index,preview in enumerate(previews):
+            key=stable_hash({'templateModelPreview':preview['data'],'case':index})
+            targets[key]={'key':key,'name':preview['sample'],'data':preview['data'],'preview':True}
         ident=uid()
-        with self.lock:self.render_sessions[ident]={'targets':{key:{'key':key,'name':preview['sample'],
-            'data':preview['data'],'preview':True}},'created':time.time()}
-        return {'id':ident,'targets':[{'key':key,'name':preview['sample']}],
+        with self.lock:self.render_sessions[ident]={'targets':targets,'created':time.time()}
+        return {'id':ident,'targets':[{'key':key,'name':target['name']} for key,target in targets.items()],
                 'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
 
     def target(self, session, key):
@@ -471,6 +473,23 @@ class Handler(BaseHTTPRequestHandler):
                               (deck.get('summary') or {}).get('rendered',0), (deck.get('summary') or {}).get('faces',0), ','.join(generations))
             return self.respond(deck)
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})', p): return self.respond(self.app.jobs.get(m[1]))
+        if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})/thumbnail', p):
+            a=self.app.store.asset(m[1])
+            if not a or not a['mime'].startswith('image/'):raise FileNotFoundError('Image not found.')
+            try:width=int(q.get('width',['420'])[0])
+            except ValueError as exc:raise ValidationError('Choose a supported thumbnail size.') from exc
+            if width not in {240,420,840}:raise ValidationError('Choose a supported thumbnail size.')
+            saved=self.app.store.home/'runtime'/'thumbnails'/(m[1]+'-'+str(width)+'.png')
+            if not saved.is_file():
+                from PIL import Image
+                saved.parent.mkdir(parents=True,exist_ok=True)
+                with Image.open(self.app.store.asset_path(m[1])) as image:
+                    image.thumbnail((width,int(width*1.4)),Image.Resampling.LANCZOS)
+                    pending=saved.with_suffix('.tmp')
+                    try:
+                        image.convert('RGBA').save(pending,'PNG');pending.replace(saved)
+                    finally:pending.unlink(missing_ok=True)
+            return self.file(saved,'image/png')
         if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})', p):
             a = self.app.store.asset(m[1])
             if not a or not a['mime'].startswith('image/'): raise FileNotFoundError('Image not found.')
@@ -584,7 +603,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/render-sessions/template-source':
             return self.respond(self.app.start_template_source_session(d.get('entries')))
         if p == '/api/render-sessions/template-model':
-            return self.respond(self.app.start_template_model_session(d.get('model')))
+            return self.respond(self.app.jobs.start('Validate template layouts',lambda update,cancel:self.app.start_template_model_session(d.get('model'),update,cancel)))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))

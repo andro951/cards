@@ -17,3 +17,6 @@ The recent failure around 80/100 cards is not root-caused by the supplied logs. 
 ## Verification
 
 A direct BrowserJobs probe confirmed that the operation finishes before start returns its job ID. One real static-website smoke test failed in 23.30 seconds because it expects distinct generated frame previews; current identical card-back placeholders are explicitly requested. The test stops before its later render/review/ZIP checks. No full suite was run, and the failing assertion was left unchanged.
+
+
+Subsequent authorized implementation is reconciled in [repair status](12_repair_status.md).

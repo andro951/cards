@@ -4,6 +4,7 @@ EXTENDED_MODULES={
     'test_art_series_native.py',
     'test_batch_bridge.py',
     'test_browser.py',
+    'test_browser_storage.py',
     'test_dom_offline.py',
     'test_downloads_browser.py',
     'test_emblem_native.py',

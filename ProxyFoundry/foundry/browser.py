@@ -8,7 +8,7 @@ import json
 import mimetypes
 import re
 import sqlite3
-from contextlib import contextmanager
+from contextlib import contextmanager,closing
 import time
 import traceback
 import urllib.parse
@@ -47,7 +47,7 @@ class BrowserStore(Store):
     def checkpoint(self):
         snapshot=self.home/'.checkpoint.sqlite3'
         try:
-            with sqlite3.connect(self.db_path) as source, sqlite3.connect(snapshot) as destination:
+            with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
                 source.backup(destination)
             self.persist(str(snapshot))
         finally:snapshot.unlink(missing_ok=True)
@@ -94,6 +94,8 @@ class BrowserJobs:
                            error=str(exc),message=str(exc),trace=traceback.format_exc())
             finally:
                 job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
+                completed=[key for key,row in self.jobs.items() if row['state'] in {'done','failed','cancelled'}]
+                for key in completed[:-20]:self.jobs.pop(key)
 
     def get(self,ident):
         if ident not in self.jobs:

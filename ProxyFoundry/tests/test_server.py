@@ -606,3 +606,18 @@ def test_card_inspector_actions_exist_in_source():
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 
+
+
+
+def test_grid_thumbnail_is_bounded_cached_and_preserves_print_image(running):
+    app,server=running
+    original=png((2010,2814),'#224466');asset=ingest_image(app.store,original)
+    path='/api/assets/'+asset['id'];stored=app.store.asset_path(asset['id']).read_bytes()
+    status,body,_=request(server,path+'/thumbnail',raw=True)
+    assert status==200
+    with Image.open(io.BytesIO(body)) as image:assert image.size==(420,588)
+    saved=app.store.home/'runtime'/'thumbnails'/(asset['id']+'-420.png');modified=saved.stat().st_mtime_ns
+    assert request(server,path+'/thumbnail',raw=True)[1]==body and saved.stat().st_mtime_ns==modified
+    assert request(server,path,raw=True)[1]==stored
+    assert request(server,path+'/thumbnail?width=wrong')[0]==400
+    assert request(server,path+'/thumbnail?width=8192')[0]==400

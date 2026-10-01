@@ -6,6 +6,7 @@ export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Se
 export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024**2).toFixed(1)+' MB':Math.ceil(n/1024)+' KB';
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const asset=id=>id?'/api/assets/'+id:'';
+export const thumbnail=url=>/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url;
 export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -97,15 +98,22 @@ export function activity(kind,title,detail,done=0,total=0){
   if(!$('#activity-log').textContent.endsWith(line+'\n'))$('#activity-log').textContent=($('#activity-log').textContent+line+'\n').split('\n').slice(-80).join('\n');
 }
 export function endActivity(message,error=false){$('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if($('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);}
-export async function job(path,data,{label='Working',onProgress=null}={}){
-  const result=await api(path,data);if(!result?.id)throw new Error('The app did not start the task.');const ident=result.id;
-  $('#activity-cancel').disabled=false;$('#activity-cancel').textContent='Cancel';$('#activity-cancel').onclick=()=>attempt(async()=>{await api('/api/jobs/'+ident+'/cancel',{});$('#activity-cancel').disabled=true;});
-  activity(label,'Starting…','Starting task');
-  while(true){
-    await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total);onProgress?.(j);
-    if(j.state==='done'){endActivity('Complete');return j.result;}
-    if(j.state==='failed'||j.state==='cancelled'){endActivity(j.message,true);throw new Error(j.error||j.message);}
-  }
+export async function job(path,data,{label='Working',onProgress=null,signal=null}={}){
+  const previousBusy=state.busy;state.busy=true;let ident=null;
+  const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{}).catch(error=>recordDiagnostic('cancel task',error.message));};
+  signal?.addEventListener('abort',cancel,{once:true});
+  try{
+    if(signal?.aborted)throw new Error('Task cancelled.');
+    const result=await api(path,data);if(!result?.id)throw new Error('The app did not start the task.');ident=result.id;
+    if(signal?.aborted)cancel();
+    $('#activity-cancel').disabled=false;$('#activity-cancel').textContent='Cancel';$('#activity-cancel').onclick=()=>attempt(async()=>{await api('/api/jobs/'+ident+'/cancel',{});$('#activity-cancel').disabled=true;});
+    activity(label,'Starting…','Starting task');
+    while(true){
+      await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total);onProgress?.(j);
+      if(j.state==='done'){endActivity('Complete');return j.result;}
+      if(j.state==='failed'||j.state==='cancelled'){endActivity(j.message,true);throw new Error(j.error||j.message);}
+    }
+  }finally{signal?.removeEventListener('abort',cancel);state.busy=previousBusy;}
 }
 export async function uploadImage(file,{symbol=false,back=false}={}){
   if(!file)throw new Error('Choose an image.');if(file.size>64*1024**2)throw new Error('Choose an image under 64 MB.');

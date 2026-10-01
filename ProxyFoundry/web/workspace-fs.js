@@ -33,21 +33,27 @@ export function mountWorkspaceFiles(FS,owner) {
 
         return [node.workspacePath,...parts].join(`/`);
     };
+    const writers=new Map();
+    const flushNode=node=>{
+        for(const stream of writers.get(node)||[]) {flush(stream);}
+    };
     const flush=stream=>{
         if(!stream.pending)
             return;
 
-        call(`write`,pathOf(stream.node),{offset:stream.pendingOffset},stream.pending);
-        stream.pending=null;
+        try{call(`write`,pathOf(stream.node),{offset:stream.pendingOffset},stream.pending);}
+        finally{stream.node.cachedInfo=null;stream.pending=null;}
     };
     const nodeOperations={
         getattr(node) {
-            const info=call(`stat`,pathOf(node));
+            //One writer owns these nodes; all filesystem mutations invalidate cached attributes.
+            const info=node.cachedInfo||call(`stat`,pathOf(node));node.cachedInfo=info;
             const time=new Date(info.modified);
             return {dev:1,ino:node.id,mode:node.mode,nlink:1,uid:0,gid:0,rdev:0,
                 size:Math.max(info.size,node.pendingSize||0),atime:time,mtime:time,ctime:time,blksize:4096,blocks:Math.ceil(info.size/4096)};
         },
         setattr(node,attributes) {
+            flushNode(node);node.cachedInfo=null;
             if(attributes.mode!==undefined)
                 node.mode=attributes.mode;
             if(attributes.size!==undefined) {
@@ -57,14 +63,16 @@ export function mountWorkspaceFiles(FS,owner) {
         lookup(parent,name) {
             const path=pathOf(parent)+`/`+name;
             const info=call(`stat`,path);
-            return makeNode(parent,name,(info.directory?16384:32768)|511);
+            const node=makeNode(parent,name,(info.directory?16384:32768)|511);node.cachedInfo=info;return node;
         },
         mknod(parent,name,mode) {
             call(FS.isDir(mode)?`mkdir`:`create`,pathOf(parent)+`/`+name);
             return makeNode(parent,name,mode);
         },
         rename(node,parent,name) {
+            flushNode(node);
             call(`rename`,pathOf(node),{destination:pathOf(parent)+`/`+name});
+            node.parent=parent;node.name=name;node.cachedInfo=null;
         },
         unlink(parent,name) {call(`remove`,pathOf(parent)+`/`+name);},
         rmdir(parent,name) {call(`remove`,pathOf(parent)+`/`+name);},
@@ -73,12 +81,14 @@ export function mountWorkspaceFiles(FS,owner) {
     };
     const streamOperations={
         read(stream,buffer,offset,length,position) {
-            flush(stream);
+            flushNode(stream.node);
             const bytes=call(`read`,pathOf(stream.node),{offset:position,length});
             buffer.set(bytes,offset);
             return bytes.length;
         },
         write(stream,buffer,offset,length,position) {
+            if(!writers.has(stream.node))writers.set(stream.node,new Set());
+            writers.get(stream.node).add(stream);
             //Batch tiny ZIP writes without retaining the archive in Python's filesystem.
             if(stream.pending&&stream.pendingOffset+stream.pending.length===position&&stream.pending.length+length<=65536) {
                 const combined=new Uint8Array(stream.pending.length+length);
@@ -105,7 +115,14 @@ export function mountWorkspaceFiles(FS,owner) {
             return offset;
         },
         fsync(stream) {flush(stream);call(`close`,pathOf(stream.node));return 0;},
-        close(stream) {flush(stream);call(`close`,pathOf(stream.node));stream.node.pendingSize=0;}
+        close(stream) {
+            try{flush(stream);call(`close`,pathOf(stream.node));}
+            finally{
+                stream.pending=null;stream.node.pendingSize=0;stream.node.cachedInfo=null;
+                writers.get(stream.node)?.delete(stream);
+                if(!writers.get(stream.node)?.size)writers.delete(stream.node);
+            }
+        }
     };
     const makeNode=(parent,name,mode)=>{
         const node=FS.createNode(parent,name,mode,0);

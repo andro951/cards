@@ -38,3 +38,13 @@ def test_reload_reports_interrupted_job_and_keeps_saved_log(tmp_path):
     ident=jobs.start('Interrupted',lambda update,cancel:None)['id']
     previous=BrowserJobs(store).get(ident)
     assert previous['state']=='failed' and 'interrupted' in previous['error']
+
+
+
+def test_completed_jobs_release_memory_and_keep_durable_results(tmp_path):
+    jobs=BrowserJobs(Store(tmp_path));ident=None
+    for index in range(30):
+        result=jobs.start('Bounded history',lambda update,cancel:{'saved':'result'})['id']
+        ident=ident or result;jobs.run_pending()
+    assert len(jobs.jobs)==20
+    assert ident not in jobs.jobs and jobs.get(ident)['result']=={'saved':'result'}

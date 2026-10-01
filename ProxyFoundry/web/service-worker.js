@@ -1,3 +1,4 @@
+const basePath='';
 const dynamic=/^\/(api|runtime|js|img|fonts|css|creator)\//;
 const owners=new Map();
 
@@ -12,7 +13,10 @@ self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 
 self.addEventListener('fetch',event=>{
   const url=new URL(event.request.url);
-  if(url.origin!==self.location.origin||!dynamic.test(url.pathname)&&url.pathname!=='/workspace-io')return;
+  if(url.origin!==self.location.origin)return;
+  if(basePath&&/^\/(site|web)\//.test(url.pathname)){event.respondWith(fetch(basePath+url.pathname+url.search));return;}
+  const path=basePath&&url.pathname.startsWith(basePath+'/')?url.pathname.slice(basePath.length):url.pathname;
+  if(!dynamic.test(path)&&path!=='/workspace-io')return;
   event.respondWith(handle(event));
 });
 
@@ -51,7 +55,7 @@ async function handleRequest(event){
     channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data);};
     channel.port1.onmessageerror=()=>{clearTimeout(timer);channel.port1.close();resolve({type:'error',message:'The workspace response could not be read.'});};
   });
-  client.postMessage({type:'request',id,method:event.request.method,url:new URL(event.request.url).pathname+url.search,
+  client.postMessage({type:'request',id,method:event.request.method,url:(basePath&&url.pathname.startsWith(basePath+'/')?url.pathname.slice(basePath.length):url.pathname)+url.search,
                       headers:Object.fromEntries(event.request.headers),body},[channel.port2,...(body?[body]:[])]);
   const response=await result;
   if(response.type==='error')return new Response(JSON.stringify({error:response.message}),{status:500,headers:{'Content-Type':'application/json'}});

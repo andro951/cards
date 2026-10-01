@@ -13,6 +13,7 @@ if errorlevel 1 goto failed
 if errorlevel 1 goto failed
 set "PF_BROWSER="
 set "PF_LIVE_CC="
+set "PF_DECK_STRESS="
 set "PF_DOM="
 set "PF_LIVE_GITHUB_SETUP="
 set "PF_LARGE_TRANSFER="
@@ -41,6 +42,7 @@ if not defined PF_BROWSER_EXECUTABLE goto failed
 set "PF_DOM_EXECUTABLE=%PF_BROWSER_EXECUTABLE%"
 set "PF_BROWSER=1"
 set "PF_LIVE_CC=1"
+set "PF_DECK_STRESS=1"
 set "PF_DOM=1"
 set "PF_LIVE_GITHUB_SETUP=1"
 set "PF_LARGE_TRANSFER=1"

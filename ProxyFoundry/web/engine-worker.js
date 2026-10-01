@@ -1,6 +1,7 @@
 import {mountWorkspaceFiles} from './workspace-fs.js';
 import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs';
 
+const buildId='development';
 let python;
 let mount;
 let ready;
@@ -23,7 +24,7 @@ async function start(folder){
   const directory=folder||await navigator.storage.getDirectory();
   python.FS.mkdirTree('/workspace');
   for await(const [name,entry] of directory.entries()){
-    if(entry.kind==='file')python.FS.writeFile('/workspace/'+name,new Uint8Array(await (await entry.getFile()).arrayBuffer()));
+    if(entry.kind==='file'&&['workspace.sqlite3','workspace.sqlite3-wal','workspace.sqlite3-shm'].includes(name))python.FS.writeFile('/workspace/'+name,new Uint8Array(await (await entry.getFile()).arrayBuffer()));
   }
   mountWorkspaceFiles(python.FS,owner);
   self.checkpointMetadata=path=>{
@@ -37,6 +38,9 @@ async function start(folder){
   if(!archive.ok)
     throw new Error(`Card engine bundle could not be loaded (${archive.status}).`);
   python.unpackArchive(await archive.arrayBuffer(),'zip',{extractDir:'/app/ProxyFoundry'});
+
+  const bundleVersion=JSON.parse(new TextDecoder().decode(python.FS.readFile('/app/ProxyFoundry/build.json'))).id;
+  if(bundleVersion!==buildId)throw new Error('The website engine bundle is a different version. Reload the page to finish updating.');
 
   self.syncFetch=url=>{
     const xhr=new XMLHttpRequest();
@@ -67,7 +71,7 @@ def browser_request(method, url, body, headers):
     return {k:v for k,v in last_response.items() if k != 'body'}
 `);
   initialized=true;
-  self.postMessage({type:'ready'});
+  self.postMessage({type:'ready',buildId});
 }
 
 let sequence=Promise.resolve();
@@ -110,9 +114,9 @@ async function handle(event){
 
 async function runJobs(){
   if(!initialized)return;
-  python.runPython('app.jobs.run_pending()');
-  if(!completedJobs.length)return;
   try{
+    python.runPython('app.jobs.run_pending()');
+    if(!completedJobs.length)return;
     await mount.syncfs();
     for(const job of completedJobs){self.postMessage({type:'job',job});}
   }
@@ -120,6 +124,7 @@ async function runJobs(){
     for(const job of completedJobs){
       self.postMessage({type:'job',job:{...job,state:'failed',error:`Workspace save failed: ${error.message}`,message:'Workspace save failed. Download diagnostics before reloading.'}});
     }
+    initialized=false;self.postMessage({type:'fatal',message:`Workspace operation failed: ${error.message}. Download browser diagnostics before reloading.`});
   }
   finally{completedJobs=[];}
 }

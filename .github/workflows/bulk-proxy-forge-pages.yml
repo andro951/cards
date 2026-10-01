@@ -1,0 +1,39 @@
+name: Publish Bulk Proxy Forge website
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: bulk-proxy-forge-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ProxyFoundry
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify pinned sources and build repository-path website
+        run: |
+          python ProxyFoundry/scripts/verify_vendor.py
+          python ProxyFoundry/scripts/build_web.py --github-pages
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ProxyFoundry/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish static files
+        id: deployment
+        uses: actions/deploy-pages@v4

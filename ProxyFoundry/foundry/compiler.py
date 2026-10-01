@@ -6,7 +6,7 @@ from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop
 from .legacy import compiler as native,ingest
 from .images import data_uri
 from .credits import resolve_credit
-from .template_model import apply_regions
+from .template_model import apply_regions, select_variant
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -2148,21 +2148,41 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
 
 
 def custom_data(template,sem,other_faces=None):
+    template=select_variant(template,sem,sem.get('_template_group','standard')) if template.get('schemaVersion') in {2,3} else template
     d=copy.deepcopy(template['data'])
-    if template.get('schemaVersion')==2:
+    if template.get('schemaVersion') in {2,3}:
         try:
-            reference=native.build_one(copy.deepcopy(choose_builtin(sem,'auto')),
-                                       {'artist':sem.get('artist','')},False)['data']
+            if sem.get('_template_group')=='station' and 'Land' in sem.get('types',[]):
+                reference=build_station_land_data(sem,sem.get('artist',''),False,[],'Scryfall selected printing')[1]
+            elif sem.get('_template_group')=='token':
+                reference=build_token_data(sem,sem.get('artist',''),False,[],template.get('layoutMetadata',{}).get('tokenStyle','token-classic'))[1]
+            else:
+                reference=native.build_one(copy.deepcopy(choose_builtin(sem,'auto')),
+                                           {'artist':sem.get('artist','')},False)['data']
         except native.BuildError as exc:
-            raise ValidationError('This card needs a structural template with its own dynamic regions.') from exc
-        apply_regions(d,reference,template['regions'])
-    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+            if any(region['geometry']=='native' for region in template['regions'].values()):
+                raise ValidationError('This card needs fixed geometry or a compatible native structural layout.') from exc
+            reference=copy.deepcopy(d)
+        bindings={region['field'].removeprefix('native:') for region in template['regions'].values()}
+        missing=[slot for slot,box in reference.get('text',{}).items()
+                 if box.get('text') and slot not in bindings and slot not in {'flavor'}]
+        if missing:raise ValidationError('Map these native text regions before using this layout: '+', '.join(missing))
+        apply_regions(d,reference,template['regions'],sem)
+        if isinstance(reference.get('station'),dict):
+            station=d.setdefault('station',{})
+            for key in ('abilityCount','badgeValues','disableFirstAbility'):
+                station[key]=copy.deepcopy(reference['station'][key])
+    try:normalized_type=native.get_type_info(sem)['normalized']
+    except native.BuildError:normalized_type=sem.get('printed_type_line') or ' '.join(sem.get('types') or [])
+    values={'title':sem['name'],'type':normalized_type,'mana':sem.get('mana_cost',''),
       'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
       'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
       'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    if any(region.get('field')=='flavor' for region in template.get('regions',{}).values()):
+        values['rules']=native.italicize_dash_labels(sem.get('oracle_text',''))
     for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
     mapping=({slot:region['field'] for slot,region in template['regions'].items()}
-             if template.get('schemaVersion')==2 else (template.get('mapping') or {k:k for k in values}))
+             if template.get('schemaVersion') in {2,3} else (template.get('mapping') or {k:k for k in values}))
     for slot,field in mapping.items():
         if slot not in d['text']:continue
         if field in values:d['text'][slot]['text']=str(values[field])
@@ -2185,7 +2205,7 @@ class Compiler:
         # stays at baseline v1 to avoid redundant cache invalidation.
         fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'regions':t.get('regions',{}),
                                  'schemaVersion':t.get('schemaVersion',1),'baseGroup':t.get('baseGroup'),
-                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{})})
         return 'custom:'+choice,fingerprint,1
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
@@ -2285,8 +2305,9 @@ class Compiler:
             if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
             if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
             if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
+            sem['_template_group']=group
             data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
-            if t.get('schemaVersion')==2:fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'custom')
+            if t.get('schemaVersion') in {2,3}:fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'custom')
             if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
             recipe='custom:'+choice
         source_aware_placement=None

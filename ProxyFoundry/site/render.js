@@ -40,7 +40,7 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
     };
     window.addEventListener('message',listener);
     activeFrame=document.createElement('iframe');activeFrame.className='render-frame';activeFrame.title='Isolated native CardConjurer renderer';activeFrame.setAttribute('sandbox','allow-scripts allow-same-origin');
-    activeFrame.src=origin+'/runtime/host?parent='+encodeURIComponent(location.origin)+'&owner='+encodeURIComponent(window.__pfOwner||'');document.body.append(activeFrame);
+    activeFrame.src=origin+(window.__pfBasePath||'')+'/runtime/host?parent='+encodeURIComponent(location.origin)+'&owner='+encodeURIComponent(window.__pfOwner||'');document.body.append(activeFrame);
     ping=setInterval(()=>activeFrame?.contentWindow.postMessage({source:'pf-app',type:'ping'},origin),800);
     await withTimeout(readyPromise,65000,'The native renderer did not start. Check Diagnostics in Settings.');clearInterval(ping);
     for(let i=0;i<plan.targets.length;i++){
@@ -93,16 +93,16 @@ export async function renderTemplatePreviews(deckId,group,settings,cardData,onIm
   return plan;
 }
 
-export async function renderTemplateSource(entries,onImage){
+export async function renderTemplateSource(entries,onImage,signal=null){
   const plan=await api('/api/render-sessions/template-source',{entries});
-  await runRenderPlan(plan,{label:'Preview Card Conjurer save',onImage,
+  await runRenderPlan(plan,{label:'Preview Card Conjurer save',onImage,signal,
     successMessage:'Source previews ready',successToast:'Choose the card to turn into a reusable template.'});
   return plan;
 }
 
-export async function renderTemplateModel(model,onImage){
-  const plan=await api('/api/render-sessions/template-model',{model});
-  await runRenderPlan(plan,{label:'Validate template',onImage,
+export async function renderTemplateModel(model,onImage,signal=null){
+  const plan=await job('/api/render-sessions/template-model',{model},{label:'Check template layouts',signal});
+  await runRenderPlan(plan,{label:'Validate template',onImage,signal,
     successMessage:'Template preview ready',successToast:'Inspect the text and region outlines before saving.'});
   return plan;
 }

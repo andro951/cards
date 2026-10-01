@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .domain import ConflictError, ValidationError, uid, validate_template, quantity
 from .images import decode_image
+from .template_model import validate_model
 
 MAX_BACKUP_BYTES = 2 * 1024 ** 3
 MAX_MEMBERS = 25000
@@ -130,7 +131,9 @@ class Backups:
             for item in objects[kind]:
                 if self.store.get(kind,item['id'],include_deleted=True) and item['id'] not in confirmed:
                     raise ConflictError('You already have '+str(item.get('name') or 'this item')+'. Confirm replacement before importing.')
-        for item in objects['templates']:validate_template(item.get('data',{}))
+        for item in objects['templates']:
+            if item.get('schemaVersion') in {2,3}:item.update(validate_model(item))
+            else:validate_template(item.get('data',{}))
         for item in objects['style-presets']:
             if not isinstance(item.get('settings'),dict):raise ValidationError('Backup contains an invalid style.')
         for deck in objects['decks']:
@@ -205,7 +208,9 @@ class Backups:
             if len(docs['decks']) > 1000 or len(docs['templates']) > 1000:
                 raise ValidationError('Backup contains too many decks or templates.')
             templates = docs['templates']
-            for t in templates: validate_template(t.get('data', {}))
+            for t in templates:
+                if t.get('schemaVersion') in {2,3}:t.update(validate_model(t))
+                else:validate_template(t.get('data',{}))
             for d in docs['decks']:
                 if not isinstance(d.get('cards'), list) or len(d['cards']) > 10000:
                     raise ValidationError('Backup card list is invalid.')
