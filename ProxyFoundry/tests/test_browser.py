@@ -436,3 +436,57 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     assert overrides['nickname']=='Test Nickname'
     assert overrides['flavor_text']=='Test flavor text.'
     assert not errors,errors
+
+
+@pytest.mark.parametrize('width,height',[(1440,1050),(390,844)])
+def test_setup_sections_flow_without_gaps_or_hidden_controls(browser_app,width,height):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Setup layout','source':'1 A Test Creature'})
+    page.set_viewport_size({'width':width,'height':height})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.locator('#setup-state').wait_for()
+    geometry=page.evaluate("""() => {
+        const grid=document.querySelector('.setup-columns');
+        const panels=[...grid.children];
+        const rect=element=>{const r=element.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,bottom:r.bottom};};
+        return {grid:rect(grid),panels:panels.map(rect),dataParent:document.querySelector('#data-json-section').parentElement===panels[4]};
+    }""")
+    assert len(geometry['panels'])==6
+    art,frames,symbols,back,details,options=geometry['panels']
+    for panel in [art,frames,details,options]:
+        assert abs(panel['width']-geometry['grid']['width'])<2
+    assert geometry['dataParent']
+    assert 18<=options['y']-details['bottom']<=22
+    if width>800:
+        assert abs(symbols['y']-back['y'])<2
+        assert abs(symbols['width']*2+20-geometry['grid']['width'])<2
+        assert back['x']>symbols['x']+symbols['width']
+        assert 18<=details['y']-max(symbols['bottom'],back['bottom'])<=22
+    else:
+        assert back['y']>symbols['bottom']
+    expect(page.get_by_role('heading',name='Card Details',exact=True)).to_be_visible()
+    help=page.locator('#data-json-section details')
+    assert not help.evaluate('(element)=>element.open')
+    expect(help.locator('code')).to_be_hidden()
+    assert page.locator('#data-json-section .eyebrow').count()==0
+    page.locator('#deck-artist').fill('Layout Artist')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    assert app.ws.deck(deck['id'])['settings']['artist']=='Layout Artist'
+    help.locator('summary').click()
+    expect(help.locator('code')).to_be_visible()
+    help.locator('summary').click()
+    page.locator('#all-cards-tokens').check()
+    page.locator('#token-legendary-mode').scroll_into_view_if_needed()
+    assert page.locator('#token-legendary-mode').evaluate("""element=>{
+        const r=element.getBoundingClientRect();
+        return r.bottom<document.querySelector('.setup-save').getBoundingClientRect().top;
+    }""")
+    page.locator('#all-cards-tokens').uncheck()
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    assert not app.jobs.jobs,'Opening setup and format help must not generate cards.'
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    page.locator('#all-cards-tokens').scroll_into_view_if_needed()
+    page.screenshot(path=str(ROOT/'test-results'/f'setup-layout-details-{width}.png'))
+    page.locator('#symbol-grid').scroll_into_view_if_needed()
+    page.screenshot(path=str(ROOT/'test-results'/f'setup-layout-{width}.png'))
+    assert not errors,errors

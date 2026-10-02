@@ -9,7 +9,9 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 632 | Every completed change |
-| Extended | 143 | Relevant changes or an explicit full sweep |
+| Extended | 145 | Relevant changes or an explicit full sweep |
+
+Art & Setup layout checks cover desktop and mobile section order and widths, adjacent Other Options, collapsed Format help, artist autosaving, reachable expanded token controls above the sticky footer, and no image generation while configuring the deck. Desktop and mobile screenshots are visually inspected.
 
 Modern full-art token text checks cover black body text, white names without outlines or shadows, nickname overlays, short/long rules geometry, and deck-wide token conversion. Pipeline v33 refreshes previously generated images; a genuine native render is visually inspected.
 

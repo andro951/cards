@@ -119,12 +119,28 @@ export function renderSetup(root,deck,onSaved){
   const columns=$('.setup-columns',root);
   const panels=$$('.setup-columns > div > section',root);
   columns.replaceChildren(...panels);
-  columns.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));align-items:start;gap:16px';
-  if(Object.keys(groups).length)$('#frame-choices',root).closest('section').style.gridColumn='1 / -1';
+  Object.assign(columns.style,{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,max(420px,calc((100% - 20px)/2))),1fr))',alignItems:'start',gap:'20px'});
+  for(const panel of panels){
+    panel.style.margin='0';
+    panel.style.minWidth='0';
+    panel.style.scrollMarginBottom='120px';
+  }
+
+  for(const panel of [sourcePanel,$('#frame-choices',root).closest('section'),artistPanel,otherPanel]){
+    panel.style.gridColumn='1 / -1';
+  }
+
+  artistPanel.querySelector('h2').textContent='Card Details';
+  otherPanel.querySelector('.eyebrow').textContent='06 / OTHER OPTIONS';
+  otherPanel.querySelector('.panel-head p').remove();
+  Object.assign($('.setup-save',root).style,{bottom:'0',marginTop:'20px'});
+  $('#setup-fields',root).style.paddingBottom='24px';
   const byCard=document.createElement('button');byCard.type='button';byCard.className='button small';byCard.textContent='Specify artist by card';
   $('#deck-artist',root).closest('label').after(byCard);
   const importedData=$('#data-json-section',root);
   artistPanel.append(importedData);
+  importedData.querySelector('.eyebrow').remove();
+  Object.assign(importedData.style,{background:'none',boxShadow:'none',border:'none',borderTop:'1px solid var(--line)',borderRadius:'0',padding:'20px 0 0',margin:'20px 0 0'});
   const localDataButton=document.createElement('button');
   localDataButton.type='button';
   localDataButton.id='open-card-data';
@@ -156,12 +172,18 @@ export function renderSetup(root,deck,onSaved){
   $('#data-json-section h2',root).textContent='Card data & artwork mappings';
   $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
   $('#data-json-section .well code',root).style.whiteSpace='pre-wrap';
+  const formatHelp=document.createElement('details');
+  const formatTitle=document.createElement('summary');
+  formatTitle.textContent='Format help';
+  formatHelp.append(formatTitle,$('#data-json-section .well',root));
+  formatHelp.style.marginTop='20px';
   $('#data-json-file',root).closest('label').style.display='none';
   linkDataButton.style.display='none';
   const dataModes=document.createElement('div');dataModes.className='source-choices';
   const computerMode=document.createElement('button');computerMode.type='button';computerMode.className='choice selected';computerMode.textContent='From Computer';
   const githubMode=document.createElement('button');githubMode.type='button';githubMode.className='choice';githubMode.textContent='From GitHub';
   dataModes.append(computerMode,githubMode);$('#data-json-section .panel-head',root).after(dataModes);
+  importedData.append(formatHelp);
   urlLabel.style.display='none';
   computerMode.onclick=()=>{computerMode.classList.add('selected');githubMode.classList.remove('selected');localDataButton.style.display='';urlLabel.style.display='none';};
   githubMode.onclick=()=>{githubMode.classList.add('selected');computerMode.classList.remove('selected');localDataButton.style.display='none';urlLabel.style.display='';};
@@ -239,6 +261,7 @@ export function renderSetup(root,deck,onSaved){
     }
     const body=document.createElement('div');
     body.className='pair-grid';
+    Object.assign(body.style,{maxHeight:'none',overflow:'visible',gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,210px),1fr))'});
     for(const [group,count] of Object.entries(groups)){
       const row=document.createElement('article');row.className='well';
       const layout=document.createElement('h3');
