@@ -70,3 +70,22 @@ The folder's remaining work includes native writer close/finalization, emulated 
 Regression checks cover exact cached input reuse (including signed views), rejection of altered/recompressed bytes from that shortcut, release of request buffers, copy failure with new/existing destinations, successful retry, preserving a prior render and metadata after a partial failed copy, reload recovery, and an actual native render with memory above 2 GiB. The first combined browser run had an interrupted-job recovery test fail; its focused rerun passed, and the final combined run is recorded below. The 100-image stress and unrelated extended suites were not run.
 
 Final gates: 13 actual browser storage tests passed in 266.98 sec; forced above-2-GiB binary/input/native-render verification passed in 77.80 sec; all 531 then-collected routine tests passed in 238.10 sec. The newly added partial-copy unit regression also passed separately (six render-storage unit tests in 5.64 sec), bringing the current routine group to 532. JavaScript syntax checks passed. The focused cache-reuse/reload benchmark was rerun after restricting buffer caching to PNG requests and passed.
+
+## Follow-up measurement and candidate changes
+
+A fresh rerun of the shipped save path passed byte integrity and reload checks in both storage modes. New-image requests measured 0.865 sec in browser storage and 2.427 sec in the selected Windows folder. Repeated-image means were 0.647 and 1.315 sec. This confirms the preceding speedup without establishing fixed per-image latency.
+
+For the folder's first save, measured native browser filesystem operations now dominate: the two emulated renames together cost 0.652 sec, two metadata snapshots 0.430 sec, render copying 0.327 sec, and writer closes 0.294 sec. PNG validation cost 0.292 sec. These are individual categories within the complete request, not additional time to add to inclusive Python stages.
+
+The profile harness now supports explicit temporary-build experiments via `PF_SAVE_VARIANT`: `direct-render`, `single-checkpoint`, and `combined`. The direct-render experiment streams into the final render name using the browser writable transaction rather than streaming to a temporary render name and then copying again during emulated rename. The single-checkpoint experiment defers metadata persistence during the image save and persists it at the worker's final POST checkpoint. Both affect only the copied test site's runtime, not product code.
+
+| New-image request | Shipped path, rerun | Both experiments |
+| --- | ---: | ---: |
+| Browser storage | 0.865 sec | 0.754 sec |
+| Selected Windows folder | 2.427 sec | 1.607 sec |
+
+Repeated-image means with both experiments were 0.542 sec and 0.941 sec. A separate direct-render-only folder experiment measured 2.196 sec for its first unique image and 1.080 sec for repeated images. Native file finalization times varied between runs, so differences are indicative rather than guaranteed additive savings.
+
+All experimental workflows preserved exact asset bytes after reload and verified physical asset files in the selected folder. **The experiments are not shipped optimizations.** Before adoption, test failed/aborted writes to an existing render, interrupted saves, checkpoint failures and preservation of prior renders. Consolidating checkpoints should apply to the logical image-save operation, with explicit failure handling. A further candidate is avoiding the asset's emulated rename through a direct atomic write; this was not implemented or timed as a candidate here. PNG validation should remain intact.
+
+Evidence: ignored `save-profile-browser.json`, `save-profile-selected-folder.json`, `save-profile-browser-combined.json`, `save-profile-selected-folder-combined.json` and `save-profile-selected-folder-direct-render.json` under test-results. Only actual profiling workflows and script syntax were verified for this follow-up; no product source changed and unrelated test suites were not rerun.
