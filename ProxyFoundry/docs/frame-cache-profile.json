@@ -1,0 +1,124 @@
+{
+  "browser": {
+    "frame-cache-persistence": [
+      {
+        "batched": false,
+        "repeat": 0,
+        "seconds": 5.426400000000001,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1277952
+      },
+      {
+        "batched": true,
+        "repeat": 0,
+        "seconds": 2.604299999999995,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1286144
+      },
+      {
+        "batched": false,
+        "repeat": 1,
+        "seconds": 5.1875,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1298432
+      },
+      {
+        "batched": true,
+        "repeat": 1,
+        "seconds": 2.7464999999999975,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1306624
+      },
+      {
+        "batched": false,
+        "repeat": 2,
+        "seconds": 5.041700000000006,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1310720
+      },
+      {
+        "batched": true,
+        "repeat": 2,
+        "seconds": 2.719399999999993,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1314816
+      }
+    ]
+  },
+  "selected-folder": {
+    "frame-cache-persistence": [
+      {
+        "batched": false,
+        "repeat": 0,
+        "seconds": 15.022000000000006,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1277952
+      },
+      {
+        "batched": true,
+        "repeat": 0,
+        "seconds": 7.804500000000004,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1286144
+      },
+      {
+        "batched": false,
+        "repeat": 1,
+        "seconds": 14.185600000000008,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1298432
+      },
+      {
+        "batched": true,
+        "repeat": 1,
+        "seconds": 7.8463999999999885,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1306624
+      },
+      {
+        "batched": false,
+        "repeat": 2,
+        "seconds": 14.119299999999996,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1310720
+      },
+      {
+        "batched": true,
+        "repeat": 2,
+        "seconds": 10.278199999999998,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122,
+        "databaseBytes": 1314816
+      }
+    ],
+    "folder-durability": {
+      "folder": "BulkProxyForge-Native-Benchmark-fdfa80c4",
+      "databaseBytes": 1314816,
+      "cacheEntries": 76,
+      "reloadMatches": true
+    }
+  }
+}

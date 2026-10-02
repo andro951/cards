@@ -48,3 +48,27 @@ Batching saved about **9%** here. This is an isolated browser workspace with sma
 Do not promote unconditional script reuse or a replacement renderer based on these tests. Single-pass drawing provided no meaningful measured benefit in this sample.
 
 Raw measured stages and comparison results are saved in [native-render-profile.json](native-render-profile.json). Generated PNGs and local logs are under `test-results/native-profile/` and are not committed.
+
+## Implementation follow-up — 2026-10-02
+
+The tables above describe the original experiments, before these repairs:
+
+- Saga chapter numerals now load their native `plantinsemibold` font before drawing.
+- Planeswalker helper layers are explicitly redrawn after native `loadCard` resizes the canvases. The first render previously lost the ability panel and loyalty shields.
+- Class headers now wait for the native header image and redraw their helper canvas. The larger no-wait comparison exposed this additional first-use race.
+- Image, font and script readiness replaces the fixed 550 ms per-face settling delay. Both native draw passes and structural script initialization are retained.
+- Immutable artwork, frames and masks reuse Blob URLs within the renderer. The cache has a 64 MiB retained-byte limit; a single active face may temporarily exceed it. Release evicts back to the limit, and cancellation/unload aborts outstanding requests and revokes URLs. This limit measures retained compressed assets, not all browser canvas/decoded-image memory.
+- Frame and mask cache writes share one transactional metadata checkpoint when a generation session loads a face. Setup and frame choice do not initiate these downloads or rendering. Failed batches roll back and remain retryable.
+
+A populated 121-card browser workspace (about 1.28 MiB of SQLite metadata) gave **5.219 seconds unbatched versus 2.690 seconds batched**, averaged over three alternating ten-frame trials: about **48% less time** in this isolated persistence step. Each batch contained 11,201,122 bytes. This is not a claim of 48% faster overall generation; internet download time was deliberately held constant.
+
+The corresponding real Windows selected-folder run, without other tests running,
+averaged **14.442 seconds unbatched versus 8.643 seconds batched**, about **40%
+less time**. The selected folder contained the physical 1,314,816-byte SQLite
+checkpoint, and all 76 saved HTTP-cache URL/asset-ID pairs survived an actual app
+reload. An earlier overlapping test run is excluded from this comparison. See
+[populated-workspace cache measurements](frame-cache-profile.json).
+
+`tests/test_native_readiness.py` runs the actual static browser renderer across 22 faces, with two first/repeated passes and a delayed reference. It compares decoded RGBA pixels and fails on any mismatch. Asset lifetime/cancellation and failed-batch rollback/retry checks are routine tests. The renderer pipeline version was bumped so saved images rebuild with these correctness fixes on the next explicit generation.
+
+All 44 no-wait comparisons matched, and the delayed reference's first/repeated outputs also matched. Warm-round render time averaged **1.321 seconds with the old delay versus 0.912 seconds without it** (about 31% lower). This comparison already uses asset retention on both sides, resizes distinct artwork to 1005×1407, and renders 2010×2814 PNGs; it is not directly interchangeable with the earlier seven-layout large-art measurements. See [readiness comparison stages](native-readiness-profile.json).

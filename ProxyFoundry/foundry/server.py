@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .backup import Backups
+from .timing import timed
 from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION, validate_template, stable_hash
 from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
@@ -219,6 +220,23 @@ class App:
             t = s['targets'].get(key)
             if not t: raise ValidationError('This image is not part of the render session.')
             return t
+
+    @timed('render.frame-assets')
+    def frame_assets(self, data):
+        """Checkpoint cold native frame downloads together, only during generation."""
+        if self.store.storage_type not in {'browser','selected-folder'}:return
+        paths=set()
+        for frame in data.get('frames',[]):
+            for layer in [frame,*frame.get('masks',[])]:
+                path=layer.get('src','')
+                if path.startswith('/img/'):
+                    paths.add(self.runtime.path(path))
+        ready=getattr(self,'_frame_assets_ready',set())
+        missing=sorted(paths-ready)
+        if not missing:return
+        with self.store.render_save():
+            for path in missing:self.runtime.fetch(path)
+        self._frame_assets_ready=ready|paths
 
     def transfer(self, order_id):
         d = self.store.get('orders', order_id)
@@ -497,7 +515,9 @@ class Handler(BaseHTTPRequestHandler):
             if not a or not a['mime'].startswith('image/'): raise FileNotFoundError('Image not found.')
             return self.file(self.app.store.asset_path(m[1]), a['mime'])
         if m := re.fullmatch(r'/api/render-sessions/([-a-f0-9]{36})/([a-f0-9]{64})', p):
-            return self.respond(self.app.target(m[1], m[2]))
+            target=self.app.target(m[1], m[2])
+            self.app.frame_assets(target['data'])
+            return self.respond(target)
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
@@ -658,7 +678,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_bytes(self.app.runtime.host(), 'text/html; charset=utf-8', headers={'Content-Security-Policy':
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors " + self.app.origin})
         if p == '/runtime/fonts.css': return self.send_bytes(self.app.runtime.fonts_css(), 'text/css')
-        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js'):
+        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js', '/site/runtime-assets.js'):
             return self.file(ROOT / p.lstrip('/'), 'application/javascript')
         if m := re.fullmatch(r'/api/assets/([a-f0-9]{64})', p):
             if m[1] not in self.app.runtime_assets: raise PermissionError('That image is not part of an active render session.')

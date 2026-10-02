@@ -1,0 +1,5198 @@
+{
+  "baseline": [
+    {
+      "name": "Verdant Test",
+      "round": 0,
+      "seconds": 5.725400000095368,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.4536,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.8853,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3574,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 1.0501,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0175,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3144,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 0,
+      "seconds": 1.5567000000476836,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2362,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.1957,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1024,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0327,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0099,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4213,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 0,
+      "seconds": 2.600300000190735,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.2649,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.2125,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1852,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0228,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0119,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3315,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 0,
+      "seconds": 3.591,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3792,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3651,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0051,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0051,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2587,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 0,
+      "seconds": 4.531200000047684,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.5148,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.9479,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1662,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0339,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0083,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2981,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 0,
+      "seconds": 3.3798999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.2645,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1677,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0026,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0162,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0086,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3589,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 0,
+      "seconds": 3.010399999856949,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.9703,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1688,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0227,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0054,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.273,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 0,
+      "seconds": 2.7075999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.5337,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1933,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0576,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.026,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.331,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 0,
+      "seconds": 2.1619000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4441,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.1878,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.6856,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0192,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0054,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2588,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 0,
+      "seconds": 2.925900000095367,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5722,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.4966,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0175,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0089,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2749,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 0,
+      "seconds": 2.2995,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.2963,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0695,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0239,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3277,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 0,
+      "seconds": 3.7355,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.5339,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3158,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0139,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3077,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 0,
+      "seconds": 1.7727999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5303,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3744,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0194,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0067,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.284,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 0,
+      "seconds": 2.2589000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3711,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3787,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.5181,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0653,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2653,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 0,
+      "seconds": 1.2883999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2218,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1566,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0228,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0087,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3161,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 0,
+      "seconds": 1.3327999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2299,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.219,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0025,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0209,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2994,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 0,
+      "seconds": 1.0519000000953673,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0559,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.098,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0022,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0293,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3052,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 0,
+      "seconds": 2.9967000000476838,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.8096,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3038,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0182,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2967,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 0,
+      "seconds": 2.4265,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.2,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.1629,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2131,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0287,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0074,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2588,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 0,
+      "seconds": 4.581200000047684,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.9307,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 2.4835,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1885,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.1016,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3122,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 0,
+      "seconds": 1.5310999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.6018,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0626,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0228,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0067,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2733,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 0,
+      "seconds": 4.208099999904633,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.5491,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3554,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0054,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0974,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.2842,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3551,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-0-21.png"
+    },
+    {
+      "name": "Verdant Test",
+      "round": 1,
+      "seconds": 1.7608999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5566,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2921,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0016,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0142,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0046,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.328,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 1,
+      "seconds": 1.0700999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0415,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0866,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0373,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3274,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 1,
+      "seconds": 1.19,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1519,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1745,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0215,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0087,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2695,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 1,
+      "seconds": 1.360399999856949,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2113,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3258,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0097,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2514,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 1,
+      "seconds": 1.4667999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3347,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1394,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0221,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0173,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3927,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 1,
+      "seconds": 1.7377000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.6194,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1948,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0194,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0115,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3309,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 1,
+      "seconds": 1.1805999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1755,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0021,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0285,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3126,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 1,
+      "seconds": 1.2073000001907348,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0343,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0395,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0245,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3422,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 1,
+      "seconds": 1.0455,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0892,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1373,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0116,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.241,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 1,
+      "seconds": 1.0422999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0625,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1193,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0169,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0088,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2779,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 1,
+      "seconds": 1.1069000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1426,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0732,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0224,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2964,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 1,
+      "seconds": 1.4937999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2732,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0081,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0087,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3307,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 1,
+      "seconds": 1.3592999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0613,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.348,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0129,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0096,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3611,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 1,
+      "seconds": 1.1570999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0807,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1453,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0867,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0382,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2519,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 1,
+      "seconds": 1.0907000000476836,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0576,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1752,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0023,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0132,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2843,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 1,
+      "seconds": 1.0882000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0378,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1779,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0137,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2845,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 1,
+      "seconds": 1.0427000000476838,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0423,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0843,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0302,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0073,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.308,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 1,
+      "seconds": 1.5085,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.339,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2869,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0138,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0132,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3001,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 1,
+      "seconds": 1.263,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2377,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1881,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0208,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0058,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2503,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 1,
+      "seconds": 2.245,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2525,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.9075,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1618,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0851,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2831,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 1,
+      "seconds": 1.0248999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0834,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0522,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0283,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2889,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 1,
+      "seconds": 1.6307999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3173,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3458,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0805,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0559,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2584,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "baseline-1-21.png"
+    }
+  ],
+  "no-wait": [
+    {
+      "name": "Verdant Test",
+      "round": 0,
+      "seconds": 1.6793999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5683,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0915,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0578,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3692,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0249,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0016,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0061,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5554,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 0,
+      "seconds": 0.6525999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0688,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0201,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1125,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0379,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0089,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3983,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 0,
+      "seconds": 0.9099000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1882,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0192,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1809,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0197,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0035,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4934,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 0,
+      "seconds": 1.3307999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0435,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3118,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0034,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0136,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0051,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5463,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 0,
+      "seconds": 1.1851000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3714,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0455,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1407,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0302,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0082,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5836,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 0,
+      "seconds": 1.3927999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5495,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1698,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0033,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0228,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0117,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6308,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 0,
+      "seconds": 0.981,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2765,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1655,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0184,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0066,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.51,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 0,
+      "seconds": 1.0855,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.277,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2118,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0516,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0169,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5225,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 0,
+      "seconds": 0.5637999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0959,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0345,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.185,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0156,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0065,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2241,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 0,
+      "seconds": 0.7249000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0656,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3262,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0167,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0106,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3031,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 0,
+      "seconds": 0.6161000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1796,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0766,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0259,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0074,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3218,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 0,
+      "seconds": 1.4925,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5646,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3346,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0088,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0126,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5653,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 0,
+      "seconds": 1.1473999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1117,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3406,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0176,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0079,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6658,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 0,
+      "seconds": 0.7835,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0917,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0325,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1775,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.1038,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2702,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 0,
+      "seconds": 0.7375,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0647,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1577,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.022,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0016,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.482,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 0,
+      "seconds": 0.8677999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0549,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2362,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0131,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.544,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 0,
+      "seconds": 0.6609000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.099,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1023,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.04,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0138,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4011,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 0,
+      "seconds": 1.0729000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3717,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3271,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0192,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3402,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 0,
+      "seconds": 0.8099000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.273,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0176,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2021,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0254,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0084,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2796,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 0,
+      "seconds": 1.8884000000953673,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2768,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.0391,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1763,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0986,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2933,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 0,
+      "seconds": 0.6069000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1118,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0549,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0201,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0047,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4103,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 0,
+      "seconds": 1.3892999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4064,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3488,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0983,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0137,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.516,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-0-21.png"
+    },
+    {
+      "name": "Verdant Test",
+      "round": 1,
+      "seconds": 1.11,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3128,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2735,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0066,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5078,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 1,
+      "seconds": 0.5606000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0476,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0951,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0303,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0062,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3766,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 1,
+      "seconds": 0.7850999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1903,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1651,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0164,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0033,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4047,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 1,
+      "seconds": 1.0057999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1789,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3247,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0163,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0042,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4746,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 1,
+      "seconds": 1.131300000190735,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3367,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1464,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.024,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0153,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6041,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 1,
+      "seconds": 1.3775,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5823,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1615,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0107,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0108,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6072,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 1,
+      "seconds": 0.817,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1121,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1816,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0129,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0071,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4985,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 1,
+      "seconds": 0.8113000001907349,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.035,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1937,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0021,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0388,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0751,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4614,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 1,
+      "seconds": 0.5563999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0985,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1339,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0167,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.058,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2438,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 1,
+      "seconds": 0.5016000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0631,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1476,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0148,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.266,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 1,
+      "seconds": 0.6547999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1741,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0695,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0023,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0116,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.375,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 1,
+      "seconds": 1.2167999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2962,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3344,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0119,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0062,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5623,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 1,
+      "seconds": 1.0980999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0605,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3709,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0134,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6414,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 1,
+      "seconds": 0.6426999998092652,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0811,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1279,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0596,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0258,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3442,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 1,
+      "seconds": 0.8269000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0607,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1836,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0152,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0056,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5574,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 1,
+      "seconds": 0.9082000000476838,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0536,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2117,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0115,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0113,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6132,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 1,
+      "seconds": 0.5311000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0522,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0865,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0328,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3492,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 1,
+      "seconds": 1.079100000143051,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4257,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0103,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3247,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 1,
+      "seconds": 0.7795999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2749,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.188,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0164,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0062,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2908,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 1,
+      "seconds": 1.6371000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2346,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.8532,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1029,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.126,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3156,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 1,
+      "seconds": 0.5188999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0952,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0553,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0206,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.339,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 1,
+      "seconds": 1.52,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4418,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.374,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0572,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0169,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6248,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "no-wait-1-21.png"
+    }
+  ]
+}

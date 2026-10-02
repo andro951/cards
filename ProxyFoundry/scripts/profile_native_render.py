@@ -1,9 +1,11 @@
 """Compare isolated native-render experiments in the production static browser.
 
-No product renderer is modified. Every experiment includes its asset acquisition
-time and compares decoded PNG pixels against two unmodified reference passes.
+Temporary site copies include asset acquisition time and compare decoded PNG
+pixels against a delayed two-pass reference. Production asset retention is used
+in every variant; the pre-implementation retention results are historical.
 """
 import base64
+import copy
 import functools
 import http.server
 import io
@@ -11,6 +13,7 @@ import json
 import sys
 import tempfile
 import threading
+import uuid
 from pathlib import Path
 
 from PIL import Image, ImageChops
@@ -20,7 +23,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'tests'))
 from test_website import build_site,copy_site
-from test_native_deck import records
+from test_native_deck import records,artwork as fixture_artwork
 from test_v58_station import card as station_card
 from foundry.server import App
 from foundry.storage import Store
@@ -31,11 +34,15 @@ SEED='''
 import time
 original_request=request
 def request(app,method,url,body,headers):
+    if str(url)=='/api/__test__/cache-state':
+        with app.store.connect() as db:rows=[tuple(row) for row in db.execute('SELECT url,asset_id FROM http_cache ORDER BY url')]
+        return {'status':200,'mime':'application/json','body':json.dumps(rows).encode(),'headers':{}}
     if str(url)=='/api/__test__/seed-render-profile':
         payload=json.loads(body)
         for image in payload['assets']:
             asset=app.store.add_asset(base64.b64decode(image['bytes']),image['mime'])
             app.runtime_assets.add(asset['id'])
+        if payload.get('deck'):app.store.put('decks',payload['deck'])
         return {'status':200,'mime':'application/json','body':b'{}','headers':{}}
     if str(url)=='/api/__test__/frame-cache-profile':
         from contextlib import nullcontext
@@ -62,7 +69,7 @@ def request(app,method,url,body,headers):
                     counter[0]=0;started=time.perf_counter()
                     with app.store.render_save() if batched else nullcontext():
                         for url in replay:app.ws.net.fetch(url,immutable=True)
-                    rows.append({'batched':batched,'repeat':repeat,'seconds':time.perf_counter()-started,'checkpoints':counter[0],'files':len(frames),'bytes':sum(len(value[0]) for value in replay.values())})
+                    rows.append({'batched':batched,'repeat':repeat,'seconds':time.perf_counter()-started,'checkpoints':counter[0],'files':len(frames),'bytes':sum(len(value[0]) for value in replay.values()),'databaseBytes':app.store.db_path.stat().st_size})
         finally:
             app.ws.net.transport=original_transport
             app.store.persist=original_persist
@@ -72,33 +79,6 @@ def request(app,method,url,body,headers):
 
 EXPERIMENT='''
   const experiment=new URL(location.href).searchParams.get(`experiment`)||`baseline`;
-  const retainedAssets=new Map();
-  async function retainAssets(data){
-    const started=performance.now();
-    //Read each card's artwork again so shared fixture art cannot inflate savings.
-    if(retainedAssets.has(data.artSource)){
-      URL.revokeObjectURL(retainedAssets.get(data.artSource));retainedAssets.delete(data.artSource);
-    }
-    const paths=new Set([data.artSource,data.setSymbolSource,data.watermarkSource]);
-    for(const frame of data.frames||[]){
-      paths.add(frame.src);
-      for(const mask of frame.masks||[])paths.add(mask.src);
-    }
-    await Promise.all([...paths].filter(path=>path?.startsWith(`/`)).map(async path=>{
-      if(retainedAssets.has(path))return;
-      const response=await fetch(path);
-      if(!response.ok)throw new Error(`Asset retention failed: ${path}`);
-      retainedAssets.set(path,URL.createObjectURL(await response.blob()));
-    }));
-    for(const name of [`artSource`,`setSymbolSource`,`watermarkSource`]){
-      if(retainedAssets.has(data[name]))data[name]=retainedAssets.get(data[name]);
-    }
-    for(const frame of data.frames||[]){
-      frame.src=retainedAssets.get(frame.src)||frame.src;
-      for(const mask of frame.masks||[])mask.src=retainedAssets.get(mask.src)||mask.src;
-    }
-    post(`diagnostic`,{stage:`timing`,diagnostic:{stage:`experiment.retain-assets`,seconds:(performance.now()-started)/1000}});
-  }
 '''
 
 DRIVE='''async ({data,experiment,rounds})=>{
@@ -155,7 +135,7 @@ DRIVE='''async ({data,experiment,rounds})=>{
 }'''
 
 def fixtures(tmp):
-    selected=[r for r in records() if r['name'] in ['Verdant Test','Triome Test','Chronicle Test','Walker Test']]
+    selected=records() if '--broad' in sys.argv else [r for r in records() if r['name'] in ['Verdant Test','Triome Test','Chronicle Test','Walker Test']]
     station=station_card(colors=['U','R'],pre=True,tiers=2)
     station.update(id='33333333-3333-4333-8333-000000000001',image_uris={'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/profile.jpg'},artist='Fixture Artist',rarity='rare',layout='normal')
     selected.append(station)
@@ -164,7 +144,7 @@ def fixtures(tmp):
         {'name':'Prepare Profile','type_line':'Creature — Merfolk Wizard','mana_cost':'{U}','power':'1','toughness':'1','oracle_text':'{T}: This creature becomes prepared.','image_uris':station['image_uris']},
         {'name':'Brainstorm','type_line':'Instant','mana_cost':'{U}','oracle_text':'Draw three cards, then put two cards from your hand on top of your library in any order.'}]})
     original=ROOT.parent/'supernatural/art/syr_gwyn_hero_of_ashvale.png'
-    with Image.open(original) as picture:art=picture.convert('RGB').resize((2010,2814))
+    with Image.open(original if original.is_file() else io.BytesIO(fixture_artwork())) as picture:art=picture.convert('RGB').resize((1005,1407) if '--broad' in sys.argv else (2010,2814))
     encoded=io.BytesIO();art.save(encoded,'PNG',compress_level=1);raw=encoded.getvalue()
     art_files={}
     for index,record in enumerate(selected):
@@ -173,7 +153,8 @@ def fixtures(tmp):
         buffer=io.BytesIO();image.save(buffer,'PNG',compress_level=1)
         url=f'https://cards.scryfall.io/art_crop/front/a/b/profile-{index}.png'
         art_files[url]=buffer.getvalue();record['image_uris']={'art_crop':url}
-        if record.get('card_faces'):record['card_faces'][0]['image_uris']={'art_crop':url}
+        for face in record.get('card_faces',[]):
+            if face.get('image_uris'):face['image_uris']={'art_crop':url}
     store=Store(tmp/'fixture-workspace');net=Network(store);byid={r['id']:r for r in selected}
     def transport(url):
         if 'api.scryfall.com/cards/' in url:return json.dumps(byid[url.rsplit('/',1)[-1]]).encode(),'application/json',{}
@@ -194,6 +175,13 @@ def fixtures(tmp):
             compiled=face['compiled'];data.append({'name':face['name'],'data':compiled['data']})
             assets.update([compiled['artId'],compiled['symbolId']])
     payload={'assets':[{'mime':store.asset(ident)['mime'],'bytes':base64.b64encode(store.asset_path(ident).read_bytes()).decode()} for ident in assets]}
+    if '--populated' in sys.argv:
+        populated=copy.deepcopy(deck);populated.pop('revision',None);populated['id']=str(uuid.uuid4());populated['name']='Populated benchmark workspace'
+        populated['cards']=[copy.deepcopy(deck['cards'][index%len(deck['cards'])]) for index in range(121)]
+        for entry in populated['cards']:
+            entry['id']=str(uuid.uuid4())
+            for face in entry['faces']:face['id']=str(uuid.uuid4())
+        payload['deck']=populated
     for handler in app.log.handlers:
         handler.close()
     return data,payload
@@ -208,13 +196,16 @@ def main():
         source=source.replace('const pendingScripts=new Set();','const pendingScripts=new Set();\n'+EXPERIMENT)
         source=source.replace('loadedScripts.delete(path);','if(experiment!==`reuse-scripts`)loadedScripts.delete(path);')
         source=source.replace("if(seconds>=.1)post",'if(true)post')
-        source=source.replace("await measureNative('native.assets',request.key,()=>preload(data));","if([`retained-assets`,`combined`].includes(experiment))await retainAssets(data);\n      await measureNative('native.assets',request.key,()=>preload(data));")
-        source=source.replace("()=>sleep(550)","()=>sleep([`no-wait`,`combined`].includes(experiment)?0:550)")
+        source=source.replace("await measureNative('native.readiness'", "if(![`no-wait`,`combined`].includes(experiment))await sleep(550);\n      await measureNative('native.readiness'")
         source=source.replace("await measureNative('native.first-draw',request.key,async()=>{","if(![`single-draw`,`combined`].includes(experiment))await measureNative('native.first-draw',request.key,async()=>{")
         bridge.write_text(source,encoding='utf-8')
         (evidence/'experimental-bridge.js').write_text(source,encoding='utf-8')
         handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site))
-        server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+        folder_mode='--folder' in sys.argv
+        if folder_mode:
+            import re
+            (site/'profile-connect.html').write_text(re.sub(r'<script\b[\s\S]*?</script>','',(site/'index.html').read_text()),encoding='utf-8')
+        server=http.server.ThreadingHTTPServer(('127.0.0.1',8769 if folder_mode else 0),handler)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         report={};references={}
         def capture(experiment,row):
@@ -230,17 +221,44 @@ def main():
             (evidence/'results.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
         try:
             with sync_playwright() as playwright:
-                browser=playwright.chromium.launch(headless='--headless' in sys.argv)
-                page=browser.new_page(viewport={'width':1440,'height':1040});page.set_default_timeout(180000)
+                browser=playwright.chromium.launch_persistent_context(str(ROOT/'test-results/selected-folder-profile'),headless=False,viewport={'width':1440,'height':1040}) if folder_mode else playwright.chromium.launch(headless='--headless' in sys.argv)
+                page=browser.new_page(viewport={'width':1440,'height':1040}) if not folder_mode else browser.new_page();page.set_default_timeout(180000)
+                if folder_mode:
+                    for other in browser.pages:
+                        if other!=page:other.close()
                 page.on('pageerror',lambda error:print('Browser error:',error,flush=True))
                 page.on('console',lambda message:print('Browser console:',message.text,flush=True) if message.type=='error' or message.text.startswith('PROFILE') else None)
                 current=['baseline']
                 page.expose_function('profileRow',lambda row:capture(current[0],row))
-                page.goto(f'http://127.0.0.1:{server.server_port}/')
-                page.locator('#import-deck').wait_for(timeout=90000)
+                origin=f'http://127.0.0.1:{server.server_port}'
+                if folder_mode:
+                    page.goto(origin+'/profile-connect.html')
+                    page.evaluate('''async()=>{
+                        document.body.hidden=false;document.body.replaceChildren();
+                        for(const registration of await navigator.serviceWorker.getRegistrations())await registration.unregister();
+                        for(const key of await caches.keys())await caches.delete(key);
+                        const storage=await import(`/web/storage-choice.js`);let folder=await storage.savedFolder();
+                        const connect=async()=>{const child=await folder.getDirectoryHandle(`BulkProxyForge-Native-Benchmark-${crypto.randomUUID().slice(0,8)}`,{create:true});await storage.useFolder(child);window.connected=true;};
+                        try{if(folder&&await folder.queryPermission({mode:`readwrite`})===`granted`){await connect();return;}}catch(error){folder=null;}
+                        const button=document.createElement(`button`);button.textContent=`Allow benchmark folder access`;
+                        button.onclick=async()=>{
+                            try{if(!folder)folder=await window.showDirectoryPicker({mode:`readwrite`,startIn:`documents`});
+                                if(await folder.requestPermission({mode:`readwrite`})===`granted`)await connect();
+                            }catch(error){folder=null;button.textContent=`Allow benchmark folder access`;}
+                        };document.body.append(button);
+                    }''')
+                    if not page.evaluate('Boolean(window.connected)'):
+                        print('Awaiting existing benchmark folder permission.',flush=True);page.get_by_role('button',name='Allow benchmark folder access').click();page.wait_for_function('window.connected',timeout=900000)
+                page.goto(origin+'/')
+                try:page.locator('#import-deck').wait_for(timeout=90000)
+                except Exception:
+                    print('Startup page:',page.locator('body').inner_text(),flush=True)
+                    browser.close();raise
+                storage_type=page.evaluate('''async()=> (await (await fetch(`/api/bootstrap`)).json()).storageType''')
+                assert storage_type==('selected-folder' if folder_mode else 'browser'),storage_type
                 page.evaluate('''async payload=>{const response=await fetch(`/api/__test__/seed-render-profile`,{method:`POST`,headers:{'Content-Type':`application/json`},body:JSON.stringify(payload)});if(!response.ok)throw new Error(await response.text());}''',payload)
                 page.evaluate('''async()=>{const ui=await import(`/site/ui.js`);await ui.job(`/api/runtime/prepare`,{}, {label:`Profile dependencies`});}''')
-                experiments=[] if '--cache-only' in sys.argv else ['baseline','reuse-scripts'] if '--scripts-only' in sys.argv else ['baseline','retained-assets','no-wait','single-draw','combined','reuse-scripts']
+                experiments=[] if '--cache-only' in sys.argv else ['baseline','no-wait'] if '--readiness-only' in sys.argv else ['baseline','reuse-scripts'] if '--scripts-only' in sys.argv else ['baseline','no-wait','single-draw','combined','reuse-scripts']
                 for experiment in experiments:
                     print('Running',experiment,flush=True)
                     current[0]=experiment
@@ -248,9 +266,22 @@ def main():
                     results=report[experiment]
                     (evidence/'results.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
                     print(experiment,'seconds',round(sum(r['seconds'] for r in results),3),'identical',sum(r['pixelsIdentical'] for r in results),'/',len(results),flush=True)
+                    if '--verify' in sys.argv:
+                        assert all(row['pixelsIdentical'] for row in results),[(row['name'],row['round']) for row in results if not row['pixelsIdentical']]
                 paths=list(dict.fromkeys(frame['src'] for item in data for frame in item['data']['frames']))
                 report['frame-cache-persistence']=page.evaluate('''async paths=>{const response=await fetch(`/api/__test__/frame-cache-profile`,{method:`POST`,headers:{'Content-Type':`application/json`},body:JSON.stringify({paths})});if(!response.ok)throw new Error(await response.text());return response.json();}''',paths)
-                target=evidence/('cache-results.json' if '--cache-only' in sys.argv else 'results.json')
+                if folder_mode:
+                    before=page.evaluate('''async()=> (await (await fetch(`/api/__test__/cache-state`)).json())''')
+                    persisted=page.evaluate('''async()=>{
+                        const {savedFolder}=await import(`/web/storage-choice.js`);const folder=await savedFolder();
+                        const file=await (await folder.getFileHandle(`workspace.sqlite3`)).getFile();
+                        return {folder:folder.name,databaseBytes:file.size};
+                    }''')
+                    page.reload();page.locator('#import-deck').wait_for(timeout=90000)
+                    after=page.evaluate('''async()=> (await (await fetch(`/api/__test__/cache-state`)).json())''')
+                    assert before==after,(before,after)
+                    report['folder-durability']={**persisted,'cacheEntries':len(after),'reloadMatches':True}
+                target=evidence/(f'cache-{storage_type}-populated.json' if '--cache-only' in sys.argv and '--populated' in sys.argv else 'cache-results.json' if '--cache-only' in sys.argv else 'results.json')
                 target.write_text(json.dumps(report,indent=2),encoding='utf-8')
                 print('Cache persistence:',report['frame-cache-persistence'],flush=True)
                 browser.close()

@@ -57,7 +57,8 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
     assert not errors,errors
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     with sync_playwright() as p:
-        browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1050});browser_errors=[];page.on('pageerror',lambda e:browser_errors.append(str(e)))
+        #Headless Chromium delays canvas export on this host; use the actual desktop rendering mode.
+        browser=p.chromium.launch(headless=os.name!='nt');page=browser.new_page(viewport={'width':1440,'height':1050});browser_errors=[];page.on('pageerror',lambda e:browser_errors.append(str(e)))
         try:
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
             page.evaluate("""() => {

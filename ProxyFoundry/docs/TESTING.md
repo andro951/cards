@@ -2,16 +2,16 @@
 
 The [per-test timing list](test-timings.csv) records observed durations from the
 2026-09-29 full sweep and subsequent affected regression runs, refreshed on
-2026-10-01. Each row contains the pytest ID, group, seconds, outcome, and timestamp.
+2026-10-02. Each row contains the pytest ID, group, seconds, outcome, and timestamp.
 Times vary with the machine, disk, browser, and network. Historical extended
 measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 537 | Every completed change |
-| Extended | 94 | Relevant changes or an explicit full sweep |
+| Routine | 539 | Every completed change |
+| Extended | 95 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 531 selected tests in 190.33 seconds. The
+The latest routine run passed all 539 selected tests in 249.55 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -49,6 +49,13 @@ job events and ASCII JSON integrity; it needs enough memory and remains in the e
 need Playwright's Chromium installed; on Windows, set
 `PF_BROWSER_EXECUTABLE` and `PF_DOM_EXECUTABLE` to its executable path for the
 component tests.
+
+For native renderer or asset-readiness changes, also run
+`tests/test_native_readiness.py` with `PF_BROWSER=1` and `PF_LIVE_CC=1`.
+It opens visible Chromium, renders 22 structural faces twice, and checks exact
+pixels against a delayed reference. The latest run took 325.26 seconds. Visible
+Chromium avoids this host's abnormal headless canvas/export delays; these timing
+results should not be mixed with headless measurements.
 
 For a full sweep, use `RUN_TESTS.bat` option 3. Option 1 runs routine tests;
 option 2 runs only extended tests. Options 2 and 3 enable all browser, live

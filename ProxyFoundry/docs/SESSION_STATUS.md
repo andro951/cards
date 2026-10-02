@@ -39,3 +39,24 @@ A fresh profile confirms those results (0.865 sec browser, 2.427 sec folder). Te
 Both methods are now implemented with recovery guards: one checkpoint per native image save, direct browser render output writes, and retention of the previous image until new metadata is durable. Replacement files can have a short generated filename suffix. Final profiles measured 0.653 sec for a new browser-stored image and 1.490 sec for a new folder-stored image; repeated-image means were 0.507 and 0.808 sec. Byte integrity and reload checks passed in both modes. Actual interrupted replacement/reload and accepted-then-failed checkpoint tests passed, together with the affected storage/native-render and routine regressions. The experimental harness modes were removed; it now profiles production behavior.
 
 Native rendering and asset-loading experiments are documented in [native render profiling](NATIVE_RENDER_PROFILE.md), with a reproducible isolated static-site harness and raw measured stages. Normal Chromium generated 84 PNGs across seven layouts. Cached rendering averaged 1.515 sec/card; scoped asset retention averaged 1.361 sec with 14/14 exact pixel matches. A fixed-transport ten-frame cache batch reduced 20 checkpoints to one and saved about 9% in browser storage. Removing waits and retaining structural scripts changed some images and are not suitable for release. The baseline itself has a first-use Saga chapter numeral difference and a substantial first-use Planeswalker ability-panel difference; explicit component readiness and regression coverage should precede delay removal. Product rendering remains unchanged. All 537 routine tests passed in 215.30 sec; the benchmark exercised actual pinned assets and native rendering, without running the long stress sweep.
+
+The subsequent authorized implementation repairs first-use Saga font loading,
+Planeswalker helper-canvas clearing and Class header readiness. It replaces the
+550 ms per-face wait with explicit readiness, retains both native draw passes and
+structural script initialization, and adds a bounded renderer-lifetime asset
+cache with cancellation cleanup. Browser frame-cache writes now checkpoint as a
+batch during generation; the legacy local server keeps its existing path.
+Pipeline v30 invalidates old outputs only on explicit generation. All 44 no-wait
+pixel comparisons passed across 22 faces, as did the delayed first/repeated
+comparison. Warm render averages were 1.321 sec with the delay and 0.912 sec
+without it. All 539 routine tests passed; the three actual static website flows,
+cancellation/reload check, 19-face native deck and 30 focused unit/API checks
+passed. The native deck initially hit the previously observed headless Chromium
+PNG-export timeout, then passed in visible Chromium in 71.92 seconds. See the
+implementation follow-up in [native render profiling](NATIVE_RENDER_PROFILE.md).
+
+The final populated-workspace cache comparison passed in browser and actual
+Windows selected-folder storage. Ten-frame save averages were 5.219→2.690 sec
+(browser) and 14.442→8.643 sec (folder); both replace 20 metadata checkpoints with
+one. The folder's physical SQLite snapshot and all 76 saved cache mappings were
+verified after app reload. These percentages describe cache persistence only.

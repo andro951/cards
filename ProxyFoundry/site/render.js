@@ -22,7 +22,7 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
   if(state.busy)throw new Error('Another task is running. Wait for it or cancel first.');
   state.busy=true;let cancelled=false,preparing=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
   const origin=state.bootstrap.runtimeOrigin;
-  const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.remove();activeFrame=null;};
+  const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.contentWindow?.postMessage({source:'pf-app',type:'dispose'},origin);activeFrame?.remove();activeFrame=null;};
   const cancel=()=>{
     if(cancelled)return;
     cancelled=true;
@@ -62,7 +62,7 @@ async function runRenderPlan(plan,{label='Render deck',onUpdate=async()=>{},onIm
     await measure('runtime.start',()=>withTimeout(readyPromise,65000,'The native renderer did not start. Check Diagnostics in Settings.'));clearInterval(ping);
     for(let i=0;i<plan.targets.length;i++){
       if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-      const t=plan.targets[i];activity(label,t.name,'Loading saved face…',i,plan.targets.length);
+      const t=plan.targets[i];activity(label,t.name,'Loading saved face and frame assets…',i,plan.targets.length);
       const detail=await measure('render.load-face',()=>api('/api/render-sessions/'+plan.id+'/'+t.key),{card:t.name,key:t.key});
       if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
       activity(label,t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);

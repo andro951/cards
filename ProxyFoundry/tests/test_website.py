@@ -421,7 +421,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 import io
                 with zipfile.ZipFile(io.BytesIO(bytes(diagnostic_bytes))) as diagnostics:
                     log=diagnostics.read('app.log').decode('utf-8')
-                    assert 'TIMING ' in log and 'render.native' in log and 'network.fetch' in log and 'native.settle-wait' in log
+                    assert 'TIMING ' in log and 'render.native' in log and 'network.fetch' in log and 'native.png-export' in log
                 page.reload(wait_until='domcontentloaded')
                 page.get_by_text('New deck',exact=True).first.wait_for(timeout=90000)
                 assert not errors,errors

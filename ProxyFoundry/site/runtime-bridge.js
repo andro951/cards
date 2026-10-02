@@ -3,6 +3,9 @@
   'use strict';
   const S=window.__PF_RUNTIME,post=S.post,sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const pendingScripts=new Set();
+  const assetCacheReady=import('/site/runtime-assets.js').then(({RuntimeAssets})=>new RuntimeAssets());
+  const disposeAssets=()=>assetCacheReady.then(cache=>cache.dispose()).catch(error=>post('diagnostic',{stage:'asset-cleanup',diagnostic:{error:error.message}}));
+  window.addEventListener('pagehide',disposeAssets);window.addEventListener('unload',disposeAssets);
   const baseTextEdited=window.textEdited;
   // Instrument the genuine canvas draw call so diagnostics record the exact
   // destination rectangle CardConjurer actually used for the set symbol.
@@ -41,7 +44,7 @@
     // from the newly loaded card, then let the genuine Saga renderer redraw.
     window.fixSagaInputs();
     await readyImages([['Saga chapter',window.sagaChapter],['Saga divider',window.sagaDivider]]);
-    window.fixSagaInputs();window.sagaEdited();await sleep(40);window.sagaEdited();
+    window.fixSagaInputs();window.sagaEdited();
     const expected=(data.saga?.abilities||[]).map(Number);
     const actual=(window.card.saga?.abilities||[]).map(Number);
     if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error('Native Saga changed the saved chapter grouping.');
@@ -50,6 +53,26 @@
       const input=document.querySelector('#saga-chapters-'+i);
       if(!input||Number(input.value)!==Number(expected[i]||0))throw new Error('Native Saga controls did not synchronize chapter '+(i+1)+'.');
     }
+  }
+  async function planeswalkerReady(data){
+    if(!String(data.version).toLowerCase().includes('planeswalker'))return;
+    if(!window.card?.planeswalker||typeof window.planeswalkerEdited!=='function'||typeof window.fixPlaneswalkerInputs!=='function')throw new Error('Native Planeswalker module did not initialize.');
+    const edited=window.planeswalkerEdited;
+    window.planeswalkerEdited=function(...args){if(window.card?.planeswalker&&String(window.card.version).toLowerCase().includes('planeswalker'))return edited.apply(this,args);};
+    //loadCard resizes helper canvases after script initialization, clearing their first draw.
+    window.fixPlaneswalkerInputs();window.resetPlaneswalkerImages();window.invertPlaneswalkerColors(true);window.planeswalkerEdited();
+    await readyImages([['Planeswalker plus',window.plusIcon],['Planeswalker minus',window.minusIcon],['Planeswalker neutral',window.neutralIcon],['Planeswalker light divider',window.lightToDark],['Planeswalker dark divider',window.darkToLight],['Planeswalker text mask',window.planeswalkerTextMask]]);
+    window.fixPlaneswalkerInputs();window.planeswalkerEdited();
+    if(JSON.stringify(window.card.planeswalker.abilities.map(String))!==JSON.stringify(data.planeswalker.abilities.map(String)))throw new Error('Native Planeswalker changed the saved loyalty costs.');
+    if(Number(window.card.planeswalker.count)!==Number(data.planeswalker.count))throw new Error('Native Planeswalker changed the saved ability count.');
+  }
+  async function classReady(data){
+    if(!String(data.version).toLowerCase().includes('class'))return;
+    if(!window.card?.class||typeof window.classEdited!=='function'||typeof window.fixClassInputs!=='function')throw new Error('Native Class module did not initialize.');
+    const edited=window.classEdited;
+    window.classEdited=function(...args){if(window.card?.class&&String(window.card.version).toLowerCase().includes('class'))return edited.apply(this,args);};
+    await readyImages([['Class header',window.classHeader]]);
+    window.fixClassInputs();window.classEdited();
   }
   async function stationReady(data){
     if(!String(data.version).toLowerCase().includes('station'))return;
@@ -127,6 +150,7 @@
   }
   async function fontsReady(data){
     const families=new Set(['belerenb','belerenbsc','mplantin','mplantini','gothammedium']);
+    if(String(data.version).toLowerCase().includes('saga'))families.add('plantinsemibold');
     for(const obj of [...Object.values(data.text||{}),...Object.values(data.bottomInfo||{})]){
       if(obj.font)families.add(obj.font);
       for(const m of String(obj.text||'').matchAll(/\{font([^{}]+)\}/g))if(!/^(size|color)/.test(m[1]))families.add(m[1]);
@@ -148,7 +172,7 @@
     clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
-      await measureNative('native.assets',request.key,()=>preload(data));
+      await measureNative('native.assets',request.key,async()=>{await (await assetCacheReady).acquire(data);await preload(data);});
       await measureNative('native.fonts',request.key,()=>fontsReady(data));
       // Structural scripts run through native loadCard only after it assigns the new card.
       if(window.writingText)clearTimeout(window.writingText);
@@ -158,7 +182,7 @@
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
       await measureNative('native.load-and-scripts',request.key,async()=>{
         await window.loadCard(storageKey);await scriptsSettled();
-        await sagaReady(data);await stationReady(data);
+        await sagaReady(data);await planeswalkerReady(data);await classReady(data);await stationReady(data);
       });
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
       await measureNative('native.loaded-images',request.key,()=>readyImages(imagesFor(window.card,symbols)));
@@ -170,7 +194,7 @@
         await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
       });
       symbolRuntimeSnapshot('after-first-draw',request.key,data);
-      await measureNative('native.settle-wait',request.key,()=>sleep(550));
+      await measureNative('native.readiness',request.key,async()=>{await scriptsSettled();await readyImages(imagesFor(window.card,usedSymbols(window.card)));await fontsReady(window.card);});
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
       await measureNative('native.final-draw',request.key,async()=>{
@@ -184,10 +208,11 @@
       if(!(canvas instanceof HTMLCanvasElement)||canvas.width!==width||canvas.height!==height)throw new Error('Native canvas dimensions do not match the saved template.');
       const blob=await measureNative('native.png-export',request.key,()=>timeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
-    }finally{localStorage.removeItem(storageKey);S.active=false;S.phase='idle';}
+    }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();S.active=false;S.phase='idle';}
   }
   let initialized=false;
   const ready=async()=>{
+    await assetCacheReady;
     await waitFor(()=>typeof window.loadCard==='function'&&window.cardCanvas&&window.availableFrames?.[window.selectedFrameIndex]&&window.card?.text,30000,'Native CardConjurer frame-picker bootstrap');
     await scriptsSettled();await sleep(600);
     if(document.querySelector('#enableCollectorInfo'))document.querySelector('#enableCollectorInfo').checked=true;
@@ -197,6 +222,7 @@
   window.addEventListener('message',e=>{
     if(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)||e.data?.source!=='pf-app')return;
     const msg=e.data;
+    if(msg.type==='dispose'){disposeAssets();return;}
     if(msg.type==='ping'){if(initialized)post('ready');return;}
     if(msg.type==='render'){
       if(!initialized){post('failed',{key:msg.key,error:'Native renderer is not initialized.'});return;}
