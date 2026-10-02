@@ -44,11 +44,72 @@ class BrowserStore(Store):
         self.persist=persist
         self.copy_file=copy_file
         self._checkpoint_digest=None
+        self._render_batch=False
+        self._render_rollback=[]
+        self._render_cleanup=[]
         super().__init__(home)
 
     def copy_render_file(self,source,destination):
         if self.copy_file is None:return super().copy_render_file(source,destination)
         self.copy_file(str(source),str(destination))
+
+    def write_render_file(self,source,output,previous_source=None):
+        if self.copy_file is None:super().write_render_file(source,output,previous_source)
+        else:
+            #The prior file must survive a reload before the new metadata checkpoint.
+            if previous_source:
+                original=output
+                while output.exists():output=original.with_name(original.stem+' ('+uid()[:8]+')'+original.suffix)
+                previous_source=None
+            self.copy_render_file(source,output)
+        if self._render_batch:
+            self._render_rollback.append(lambda:self.copy_render_file(previous_source,output) if previous_source else output.unlink(missing_ok=True))
+        return output
+
+    def remove_render_file(self,path):
+        if self._render_batch:self._render_cleanup.append(path)
+        else:super().remove_render_file(path)
+
+    def asset_written(self,ident,path):
+        if not self._render_batch:return
+        with closing(sqlite3.connect(self.home/'.render-save.sqlite3')) as previous:
+            existed=previous.execute('SELECT 1 FROM assets WHERE id=?',(ident,)).fetchone()
+        if not existed:self._render_rollback.append(lambda:self.remove_render_file(path))
+
+    @contextmanager
+    def render_save(self):
+        if self._render_batch:raise RuntimeError('A render save is already active.')
+        snapshot=self.home/'.render-save.sqlite3'
+        with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
+            source.backup(destination)
+        self._render_batch=True
+        try:
+            yield
+            self._render_batch=False
+            self.checkpoint()
+        except BaseException:
+            self._render_batch=False
+            with closing(sqlite3.connect(snapshot)) as source, closing(sqlite3.connect(self.db_path)) as destination:
+                source.backup(destination)
+            for restore in reversed(self._render_rollback):
+                try:restore()
+                except Exception as error:
+                    if getattr(self,'timing_logger',None):self.timing_logger.warning('Render file rollback failed: %s',error)
+            self._checkpoint_digest=None
+            #Retry the prior metadata state if persistence failed after accepting a write.
+            try:self.checkpoint()
+            except Exception as error:
+                if getattr(self,'timing_logger',None):self.timing_logger.warning('Render rollback checkpoint failed: %s',error)
+            raise
+        else:
+            for path in self._render_cleanup:
+                try:super().remove_render_file(path)
+                except Exception as error:
+                    if getattr(self,'timing_logger',None):self.timing_logger.warning('Obsolete render file cleanup failed: %s',error)
+        finally:
+            self._render_batch=False
+            self._render_rollback.clear();self._render_cleanup.clear()
+            snapshot.unlink(missing_ok=True)
 
     @contextmanager
     def connect(self):
@@ -60,6 +121,7 @@ class BrowserStore(Store):
 
     @timed('storage.checkpoint')
     def checkpoint(self):
+        if self._render_batch:return
         hasher=hashlib.sha256(self.db_path.read_bytes())
         #Committed changes can still be in SQLite's WAL while a connection is open.
         wal=Path(str(self.db_path)+'-wal')

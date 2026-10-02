@@ -79,6 +79,8 @@ For the folder's first save, measured native browser filesystem operations now d
 
 The profile harness now supports explicit temporary-build experiments via `PF_SAVE_VARIANT`: `direct-render`, `single-checkpoint`, and `combined`. The direct-render experiment streams into the final render name using the browser writable transaction rather than streaming to a temporary render name and then copying again during emulated rename. The single-checkpoint experiment defers metadata persistence during the image save and persists it at the worker's final POST checkpoint. Both affect only the copied test site's runtime, not product code.
 
+Those experimental harness modes were subsequently removed when the methods were implemented below. The historical experiment harness remains in commit `ba9849a`; the current harness profiles production behavior.
+
 | New-image request | Shipped path, rerun | Both experiments |
 | --- | ---: | ---: |
 | Browser storage | 0.865 sec | 0.754 sec |
@@ -89,3 +91,20 @@ Repeated-image means with both experiments were 0.542 sec and 0.941 sec. A separ
 All experimental workflows preserved exact asset bytes after reload and verified physical asset files in the selected folder. **The experiments are not shipped optimizations.** Before adoption, test failed/aborted writes to an existing render, interrupted saves, checkpoint failures and preservation of prior renders. Consolidating checkpoints should apply to the logical image-save operation, with explicit failure handling. A further candidate is avoiding the asset's emulated rename through a direct atomic write; this was not implemented or timed as a candidate here. PNG validation should remain intact.
 
 Evidence: ignored `save-profile-browser.json`, `save-profile-selected-folder.json`, `save-profile-browser-combined.json`, `save-profile-selected-folder-combined.json` and `save-profile-selected-folder-direct-render.json` under test-results. Only actual profiling workflows and script syntax were verified for this follow-up; no product source changed and unrelated test suites were not rerun.
+
+## Direct render writes and one save checkpoint — implemented
+
+The browser now streams directly into the render output, avoiding the additional render rename/copy. When replacing an existing image, it chooses a new filename with a short generated suffix. The previous file remains intact until metadata for the new file is durable, then obsolete render/asset files are removed. A reload between copying and checkpointing therefore preserves the previous image. The local application's temporary-file/rename path retains its existing behavior.
+
+Workspace native saves now use a browser render-save scope. It keeps a small temporary metadata snapshot in memory, defers intermediate checkpoints, and persists once after validation, asset registration and render registration succeed. On an exception it restores prior metadata and removes newly written image files, then retries persistence of the prior state. Obsolete files are retained until checkpoint success. Cleanup and rollback errors are logged; a failed save is never acknowledged as complete. An abrupt reload can leave an unreferenced new file, but cannot overwrite the prior committed render. Validation and exact-byte identity remain unchanged.
+
+Final profiles were run after regression tests finished, using the same 9,168,781-byte PNG:
+
+| Pure save request | Browser storage | Selected Windows folder |
+| --- | ---: | ---: |
+| New image | 0.653 sec | 1.490 sec |
+| Repeated image, mean | 0.507 sec | 0.808 sec |
+
+Both profiles verified exact saved bytes after app reload; the folder profile also verified physical files. First-save bridge calls fell to 22, compared with 28 after the preceding optimization. These are small local measurements, not guaranteed timings.
+
+Verification passed: 536 then-collected routine tests in 263.87 sec; 14 actual browser storage checks in 309.95 sec; the above-2-GiB binary/input/native-render regression in 103.48 sec. The final focused browser recovery cases passed in 40.81 sec, testing a checkpoint error after the filesystem accepted the new snapshot, and an actual page reload after replacement-file completion but before checkpointing. The final 17 render-save/render-storage unit cases passed in 3.59 sec, including success with exactly one checkpoint, copy abort, one-time and persistent checkpoint failures, interruption, prior-state preservation, orphan removal on caught failures, and successful retry. One additional permanent-failure parameter brings the current routine group to 537; the reload parameter brings extended tests to 94. Python syntax and diff checks passed. No full-deck stress sweep was run.

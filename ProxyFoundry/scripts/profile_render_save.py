@@ -4,7 +4,6 @@ import hashlib
 import http.server
 import io
 import json
-import os
 import sys
 import tempfile
 import threading
@@ -17,23 +16,6 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tests'))
 from test_website import build_site,copy_site
-
-EXPERIMENT='''
-if profile_variant in ('direct-render','combined'):
-    import inspect,textwrap
-    import foundry.storage as storage_module
-    source=textwrap.dedent(inspect.getsource(storage_module.Store.render_put))
-    source=source.replace("temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')","temp=output")
-    source=source.replace('os.replace(temp,output)','pass')
-    source=source.replace('temp.unlink(missing_ok=True)','pass')
-    exec(source,storage_module.__dict__)
-    storage_module.Store.render_put=storage_module.render_put
-profile_checkpoint=app.store.checkpoint
-profile_hold=False
-def experiment_checkpoint():
-    if not profile_hold:profile_checkpoint()
-app.store.checkpoint=experiment_checkpoint
-'''
 
 PYTHON_PROFILE='''
 import time
@@ -84,8 +66,6 @@ XMLHttpRequest.prototype.send=function(body){
 
 def main():
     folder_mode=len(sys.argv)>1
-    variant=os.environ.get('PF_SAVE_VARIANT','baseline')
-    assert variant in ('baseline','direct-render','single-checkpoint','combined')
     with tempfile.TemporaryDirectory(prefix='bpf-save-profile-') as temporary:
         tmp=Path(temporary);build_site(tmp);site=copy_site(tmp)
         review=ROOT/'test-results/supernatural-full-art/syr_gwyn_hero_of_ashvale_review.png'
@@ -94,11 +74,7 @@ def main():
         (site/'profile.png').write_bytes(png.getvalue())
         worker=site/'web/engine-worker.js'
         source=worker.read_text(encoding='utf-8')
-        injected=PYTHON_PROFILE
-        if variant!='baseline':
-            injected=injected.replace('original_request=request',f'profile_variant={variant!r}\n'+EXPERIMENT+'\noriginal_request=request')
-            injected=injected.replace('result=app.ws.save_render(target,body,[2010,2814])',"global profile_hold\n        profile_hold=profile_variant in ('single-checkpoint','combined')\n        try:result=app.ws.save_render(target,body,[2010,2814])\n        finally:profile_hold=False")
-        source=source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):')
+        source=source.replace('def browser_request(method, url, body, headers):',PYTHON_PROFILE+'\ndef browser_request(method, url, body, headers):')
         source=source.replace('let initialized=false;','let initialized=false;\n'+JS_PROFILE)
         source=source.replace("invoke=python.globals.get('browser_request');", "saveProfileActive=url==='/api/__test__/profile-save';saveFileCalls=[];if(saveProfileActive)python.runPython('save_profile.clear()');\n    invoke=python.globals.get('browser_request');")
         source=source.replace("self.postMessage({type:'response',id,...metadata,body:responseBody}", "if(saveProfileActive){const result=JSON.parse(responseBody);result.profile=JSON.parse(python.runPython('json.dumps(save_profile)'));result.fileCalls=saveFileCalls;responseBody=JSON.stringify(result);saveProfileActive=false;}\n    self.postMessage({type:'response',id,...metadata,body:responseBody}")
@@ -191,9 +167,8 @@ def main():
                     }''',expected)
                     assert restored==expected
                     if disk_folder:assert hashlib.sha256((disk_folder/'assets'/expected[:2]/expected).read_bytes()).hexdigest()==expected
-                    report={'storageType':storage_type,'variant':variant,'bytes':len(png.getvalue()),'runs':runs,'directWriteSeconds':direct_writes,'reloadVerified':True,'folder':str(disk_folder) if disk_folder else None}
-                    suffix='' if variant=='baseline' else '-'+variant
-                    output=ROOT/'test-results'/('save-profile-'+storage_type+suffix+'.json')
+                    report={'storageType':storage_type,'bytes':len(png.getvalue()),'runs':runs,'directWriteSeconds':direct_writes,'reloadVerified':True,'folder':str(disk_folder) if disk_folder else None}
+                    output=ROOT/'test-results'/('save-profile-'+storage_type+'.json')
                     output.write_text(json.dumps(report,indent=2),encoding='utf-8')
                     print('Profile passed:',output,flush=True)
                     for run in runs:

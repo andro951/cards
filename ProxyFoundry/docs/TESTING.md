@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 532 | Every completed change |
-| Extended | 92 | Relevant changes or an explicit full sweep |
+| Routine | 537 | Every completed change |
+| Extended | 94 | Relevant changes or an explicit full sweep |
 
 The latest routine run passed all 531 selected tests in 190.33 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer

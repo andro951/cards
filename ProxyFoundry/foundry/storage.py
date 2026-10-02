@@ -389,6 +389,7 @@ class Store:
                 with os.fdopen(fd, 'wb') as out:
                     out.write(content); out.flush(); os.fsync(out.fileno())
                 os.replace(temp, target)
+                self.asset_written(ident,target)
             finally:
                 if os.path.exists(temp): os.unlink(temp)
         with self.connect() as db:
@@ -397,6 +398,9 @@ class Store:
             if width and height:
                 db.execute('UPDATE assets SET width=?,height=?,mime=? WHERE id=?', (width, height, mime, ident))
         return self.asset(ident)
+
+    def asset_written(self,ident,path):
+        pass
 
     def asset(self, ident: str) -> dict[str, Any] | None:
         path = self.asset_path(ident)
@@ -463,7 +467,10 @@ class Store:
             return
         with self.connect() as db:
             db.execute('DELETE FROM assets WHERE id=?',(ident,))
-        path=self.asset_path(ident);path.unlink(missing_ok=True)
+        self.remove_render_file(self.asset_path(ident))
+
+    def remove_render_file(self,path):
+        path.unlink(missing_ok=True)
         try:path.parent.rmdir()
         except OSError:pass
 
@@ -480,6 +487,18 @@ class Store:
         try:os.link(source,destination)
         except (OSError, AttributeError):shutil.copy2(source,destination)
 
+    @contextmanager
+    def render_save(self):
+        yield
+
+    def write_render_file(self,source,output,previous_source=None):
+        temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
+        try:
+            self.copy_render_file(source,temp)
+            os.replace(temp,output)
+        finally:temp.unlink(missing_ok=True)
+        return output
+
     @timed('storage.render')
     def render_put(self, key: str, asset: dict[str, Any], *, deck_id: str | None = None, card_id: str | None = None,
                    face_id: str | None = None, deck_name='Deck', face_name='Card') -> dict[str, Any]:
@@ -494,12 +513,8 @@ class Store:
         output=self._render_file(deck_id,deck_name,face_id,face_name)
         output.parent.mkdir(parents=True,exist_ok=True)
         source=self.asset_path(asset['id'])
-        temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
-        try:
-            self.copy_render_file(source,temp)
-            os.replace(temp,output)
-        finally:
-            temp.unlink(missing_ok=True)
+        previous_source=self.asset_path(old['asset_id']) if old and self.home/old['file_path']==output else None
+        output=self.write_render_file(source,output,previous_source)
         rel=str(output.relative_to(self.home)).replace('\\','/')
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -510,9 +525,7 @@ class Store:
         if old:
             old_path=self.home/old['file_path']
             if old_path!=output:
-                old_path.unlink(missing_ok=True)
-                try:old_path.parent.rmdir()
-                except OSError:pass
+                self.remove_render_file(old_path)
             if old['asset_id']!=asset['id']:
                 self._delete_render_asset_if_unused(old['asset_id'])
         return self.render_get(key)

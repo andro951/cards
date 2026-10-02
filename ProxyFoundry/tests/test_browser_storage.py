@@ -433,3 +433,63 @@ def request(app, method, url, body, headers):
     assert restored==hashlib.sha256(raw.getvalue()).hexdigest()
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     (evidence/'render-save-benchmark.json').write_text(json.dumps({'bytes':len(raw.getvalue()),'source':'Syr Gwyn review render' if review.is_file() else 'high-detail texture','runs':results},indent=2),encoding='utf-8')
+
+
+@pytest.mark.parametrize('failure',['fail','pause'])
+def test_render_checkpoint_failure_after_write_restores_previous_image_on_reload(static_browser,failure):
+    import io
+    from PIL import Image
+    directory,context,origin=static_browser
+    for name,color in [('first','blue'),('second','red')]:
+        raw=io.BytesIO();Image.new('RGBA',(40,56),color).save(raw,'PNG')
+        (directory/(name+'.png')).write_bytes(raw.getvalue())
+    worker=directory/'web/engine-worker.js'
+    injected="""
+original_request=request
+test_deck=None
+def request(app,method,url,body,headers):
+    global test_deck
+    if str(url).startswith('/api/__test__/atomic-save/'):
+        if test_deck is None:test_deck=app.ws.new_deck('Atomic save')['id']
+        mode=str(url).rsplit('/',1)[-1]
+        original_persist=app.store.persist
+        calls=[]
+        def persist(path):
+            calls.append(path)
+            if mode=='pause' and len(calls)==1:
+                import time
+                time.sleep(20)
+            original_persist(path)
+            if mode=='fail' and len(calls)==1:raise OSError('Injected checkpoint after acceptance')
+        app.store.persist=persist
+        try:
+            target={'key':('a' if mode=='seed' else 'b')*64,'name':'Card','deckId':test_deck,'faceId':'face'}
+            result=app.ws.save_render(target,body,[40,56])
+            result['checkpoints']=len(calls)
+        finally:app.store.persist=original_persist
+        return {'status':200,'mime':'application/json','body':json.dumps(result).encode(),'headers':{}}
+    if str(url)=='/api/__test__/atomic-state':
+        return {'status':200,'mime':'application/json','body':json.dumps({'old':app.store.render_get('a'*64),'new':app.store.render_get('b'*64)}).encode(),'headers':{}}
+    return original_request(app,method,url,body,headers)
+"""
+    worker.write_text(worker.read_text(encoding='utf-8').replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    seeded=page.evaluate("""async()=>{const png=await (await fetch('/first.png')).blob();return (await (await fetch('/api/__test__/atomic-save/seed',{method:'POST',headers:{'Content-Type':'image/png'},body:png})).json());}""")
+    assert seeded['checkpoints']==1
+    if failure=='fail':
+        error=page.evaluate("""async()=>{const png=await (await fetch('/second.png')).blob();const response=await fetch('/api/__test__/atomic-save/fail',{method:'POST',headers:{'Content-Type':'image/png'},body:png});return {ok:response.ok,text:await response.text()};}""")
+        assert not error['ok'] and 'checkpoint after acceptance' in error['text']
+    else:
+        page.evaluate("""()=>{window.pendingSave=fetch('/second.png').then(response=>response.blob()).then(png=>fetch('/api/__test__/atomic-save/pause',{method:'POST',headers:{'Content-Type':'image/png'},body:png}));}""")
+        import time
+        deadline=time.monotonic()+15
+        while time.monotonic()<deadline:
+            files=page.evaluate("""async path=>{let folder=await navigator.storage.getDirectory();for(const part of path.split('/').slice(0,-1))folder=await folder.getDirectoryHandle(part);const names=[];for await(const name of folder.keys())if(name.endsWith('.png'))names.push(name);return names;}""",seeded['file_path'])
+            if len(files)>=2:break
+            time.sleep(.05)
+        else:raise AssertionError('No replacement file was committed before the checkpoint.')
+    page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    state=page.evaluate("async()=> (await (await fetch('/api/__test__/atomic-state')).json())")
+    assert state['old']['asset_id']==seeded['asset_id'] and state['new'] is None
+    matches=page.evaluate("""async path=>{const root=await navigator.storage.getDirectory();let handle=root;const parts=path.split('/');for(const part of parts.slice(0,-1))handle=await handle.getDirectoryHandle(part);const file=await (await handle.getFileHandle(parts.at(-1))).getFile();const actual=await file.arrayBuffer(),expected=await (await fetch('/first.png')).arrayBuffer();return [...new Uint8Array(actual)].join(',')===[...new Uint8Array(expected)].join(',');}""",seeded['file_path'])
+    assert matches

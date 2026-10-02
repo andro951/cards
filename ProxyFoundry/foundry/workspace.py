@@ -894,8 +894,10 @@ class Workspace:
         if isinstance(target,str):target=self._render_target_from_key(target)
         if target.get('deckId') and not self.store.get('decks',target['deckId']):
             raise ValidationError('This deck was deleted. Its images cannot be saved.')
-        asset=ingest_render_png(self.store,raw,expected_size)
-        return self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
+        with self.store.render_save():
+            asset=ingest_render_png(self.store,raw,expected_size)
+            result=self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
+        return result
     def export_cc(self,deck_ids):
         entries=[];used_keys=set()
         for ident in deck_ids:
