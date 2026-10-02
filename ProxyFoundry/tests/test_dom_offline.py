@@ -173,7 +173,8 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
         return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'version-'+githubWrites,content:btoa(JSON.stringify(savedGithub))})};
       };
       await __mod_artwork_files.rememberGithub(__fixture.deck.id,'https://github.com/owner/cards/tree/main/deck',savedGithub);
-      window.openSave=art=>{window.savePromise=__mod_artwork_review.offerDataSave(__fixture.deck.id,[{name:'Spirit',art}],savedGithub);};
+      window.exportCards=[{name:'Spirit',scryfall:{id:'dc4e2134-f0c2-49aa-9ea3-ebf83af1445c',oracle_id:'6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a',scryfall_uri:'https://scryfall.com/card/tst/1/spirit'},faces:[{index:0,name:'Spirit'}]},{name:'Test creature',scryfall:{oracle_id:'b9ad70d0-7e71-4ec1-a39e-7d9363501322',scryfall_uri:'https://scryfall.com/card/tst/2/test-creature'},faces:[{index:0,name:'Test creature'}]}];
+      window.openSave=art=>{window.savePromise=__mod_artwork_review.offerDataSave(__fixture.deck.id,[{name:'Spirit',art}],savedGithub,'',exportCards);};
       openSave('first.png');
     }''')
     page.get_by_role('button',name='Update data.json on GitHub',exact=True).wait_for()
@@ -221,7 +222,12 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     page.get_by_role('button',name='Forget GitHub connection',exact=True).click()
     page.wait_for_function('document.querySelector("[role=status]")?.textContent==="GitHub connection forgotten." || [...document.querySelectorAll("[role=status]")].some(node=>node.textContent==="GitHub connection forgotten.")')
     assert page.evaluate('async()=>!!await __mod_artwork_files.githubCredential("owner/cards")') is False
-    assert page.evaluate('savedGithub.cards[0]')=={'name':'Spirit','nickname':'Ghost','art':'second.png'}
+    assert page.evaluate('savedGithub.cards[0]')=={'name':'Spirit','nickname':'Ghost','art':'second.png','oracle_id':'6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a','scryfall_url':'https://scryfall.com/card/tst/1/spirit'}
+    assert page.evaluate('savedGithub.cards[1]')=={'name':'Test creature','oracle_id':'b9ad70d0-7e71-4ec1-a39e-7d9363501322','scryfall_url':'https://scryfall.com/card/tst/2/test-creature'}
+    with page.expect_download() as download:page.get_by_role('button',name='Download data.json',exact=True).click()
+    exported=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+    assert exported['cards'][0]['art']=='third.png'
+    assert all(row.get('oracle_id') and row.get('scryfall_url') for row in exported['cards'])
     assert not errors,errors
 
 
@@ -545,4 +551,53 @@ def test_browser_diagnostics_include_image_timing_and_pending_previews(dom_page)
     page.evaluate("()=>{const image=document.createElement('img');image.src='/not-visible.png';image.loading='lazy';image.alt='Waiting art';image.style.marginTop='100000px';document.body.append(image);}")
     pending=page.evaluate('__mod_diagnostics.browserDiagnosticReport().pendingImages')
     assert any(image['label']=='Waiting art' and image['loading']=='lazy' for image in pending)
+    assert not errors,errors
+
+
+def test_export_references_cover_cards_token_variants_faces_and_printings(dom_page):
+    page,errors=dom_page
+    report=page.evaluate("""async()=>{
+      const m=__mod_artwork_files,ids=['dc4e2134-f0c2-49aa-9ea3-ebf83af1445c','6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a','b9ad70d0-7e71-4ec1-a39e-7d9363501322','2bb2f9ed-6378-40c9-9170-976711919014'];
+      const card=(name,id,url)=>({name,scryfall:{name,id,oracle_id:id,scryfall_uri:url},faces:[{index:0,name}]});
+      const normal=card('Normal card',ids[0],'https://scryfall.com/card/tst/1/normal');
+      const secondPrinting=structuredClone(normal);secondPrinting.scryfall.id=ids[3];secondPrinting.scryfall.scryfall_uri='https://scryfall.com/card/tst/2/normal';
+      const cards=[normal,structuredClone(normal),secondPrinting,card('Spirit',ids[1],'https://scryfall.com/card/tst/3/spirit'),card('Spirit',ids[2],'https://scryfall.com/card/tst/4/spirit'),
+        {name:'Day // Night',scryfall:{id:ids[3],oracle_id:ids[3],scryfall_uri:'https://scryfall.com/card/tst/5/day-night',card_faces:[{name:'Day'},{name:'Night'}]},faces:[{index:0,name:'Day'},{index:1,name:'Night'}]},
+        {name:'Reference card',scryfall:{id:ids[3],scryfall_uri:'https://scryfall.com/card/tst/6/reference'},faces:[{index:0,name:'Reference card'}]}];
+      const original={version:1,cards:[{name:'Normal card',nickname:'Hero',artist:'Me',flavor_text:'Keep this.'},{name:'Spirit',nickname:'Ghost'},{name:'Spirit',oracle_id:ids[1],art:'first.png'},{name:'Day',artist:'Day artist'},{name:'Other deck card',artist:'Someone'}]};
+      const changes=[{name:'Spirit',oracle_id:ids[2],art:'second.png'}];
+      const result=m.enrichDataDocument(m.mergeDataDocument(original,changes),cards,changes);
+      let saved;
+      const file={queryPermission:async()=> 'granted',getFile:async()=>({text:async()=>JSON.stringify(original)}),createWritable:async()=>({write:async text=>{saved=JSON.parse(text);},close:async()=>{},abort:async()=>{}})};
+      await m.saveLocalData({file,document:original},changes,cards);
+      return {result,saved,again:m.enrichDataDocument(result,cards)};
+    }""")
+    result=report['result'];assert result==report['saved']==report['again']
+    assert len(result['cards'])==8
+    normal=[row for row in result['cards'] if row['name']=='Normal card']
+    assert len(normal)==2 and all(row['nickname']=='Hero' and row['artist']=='Me' and row['flavor_text']=='Keep this.' for row in normal)
+    assert len({row['scryfall_id'] for row in normal})==2 and len({row['scryfall_url'] for row in normal})==2
+    spirits=[row for row in result['cards'] if row['name']=='Spirit']
+    assert len(spirits)==2 and {row['art'] for row in spirits}=={'first.png','second.png'}
+    assert all(row['nickname']=='Ghost' and row['oracle_id'] for row in spirits)
+    day=next(row for row in result['cards'] if row['name']=='Day');night=next(row for row in result['cards'] if row['name']=='Night')
+    assert day['oracle_id']==night['oracle_id'] and day['artist']=='Day artist'
+    reference=next(row for row in result['cards'] if row['name']=='Reference card')
+    assert reference['scryfall_id'] and 'oracle_id' not in reference
+    assert result['cards'][0]=={'name':'Other deck card','artist':'Someone'}
+    from foundry.card_data import parse_document
+    assert parse_document(json.dumps(result).encode())==result['cards']
+    assert not errors,errors
+
+
+def test_export_reference_enrichment_uses_indexed_lookup(dom_page):
+    page,errors=dom_page
+    report=page.evaluate("""()=>{
+      const cards=Array.from({length:5000},(_,index)=>({name:'Card '+index,scryfall:{oracle_id:'00000000-0000-4000-8000-'+String(index).padStart(12,'0'),scryfall_uri:'https://scryfall.com/card/tst/'+index},faces:[{index:0,name:'Card '+index}]}));
+      const original={version:1,cards:cards.map(card=>({name:card.name,artist:'Artist'}))};
+      const start=performance.now(),result=__mod_artwork_files.enrichDataDocument(original,cards);
+      return {seconds:(performance.now()-start)/1000,count:result.cards.length,last:result.cards.at(-1)};
+    }""")
+    assert report['count']==5000 and report['last']['oracle_id'].endswith('000000004999')
+    assert report['last']['artist']=='Artist' and report['seconds']<3
     assert not errors,errors

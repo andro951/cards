@@ -19,12 +19,15 @@ An `art` entry selects an exact filename relative to the selected artwork folder
     {
       "oracle_id": "dc4e2134-f0c2-49aa-9ea3-ebf83af1445c",
       "name": "Spirit",
+      "scryfall_url": "https://scryfall.com/card/tst/1/spirit",
       "art": "my-white-spirit.png",
       "artist": "Artist Name"
     }
   ]
 }
 ```
+
+Exported downloads, local file updates, and GitHub updates include a reference entry for every deck face. Entries include the Oracle ID and the selected printing’s `scryfall_url` when Scryfall provides them. The URL is informational and is never used as a matching selector. Records without an Oracle ID use the printing ID. Separate faces retain their names, token variants remain separate, and multiple selected printings of the same card also retain their printing IDs. Existing nicknames, flavor text, artists, artwork mappings, and entries for other decks are preserved.
 
 `name`, `oracle_id`, or `scryfall_id` is required. Supplied selectors must all match. A face name distinguishes two faces sharing an Oracle ID: for Day // Night, use two entries with `name: "Day"` and `name: "Night"`. Automatic UUID filenames for these faces should include `day` or `night`, such as `day_UUID.png` and `night_UUID.png`.
 

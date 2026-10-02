@@ -108,3 +108,18 @@ def test_large_card_data_uses_indexed_selectors():
     started=time.perf_counter();ws._apply_card_data(deck,entries);elapsed=time.perf_counter()-started
     assert all(row['faces'][0]['artFilename']==str(i)+'.png' for i,row in enumerate(rows))
     assert elapsed<1,elapsed
+
+
+
+def test_reference_entries_roundtrip_without_overrides():
+    entry={'name':'Spirit','oracle_id':ONE,'scryfall_url':'https://scryfall.com/card/tst/1/spirit'}
+    entries=parse_document(json.dumps({'version':1,'cards':[entry]}).encode())
+    assert entries==[entry]
+    assert validate_targets({'cards':[card()]},entries)==entries
+    assert parse_document(json.dumps({'version':1,'cards':[{'oracle_id':ONE}]}).encode())==[{'oracle_id':ONE}]
+
+
+@pytest.mark.parametrize('url',['http://scryfall.com/card/tst/1','https://evil.example/card/tst/1','https://scryfall.com.evil.example/card/tst/1','https://scryfall.com@evil.example/card/tst/1','javascript:alert(1)','https://scryfall.com/card/bad link'])
+def test_reference_entries_reject_invalid_links(url):
+    with pytest.raises(ValidationError,match='Scryfall link'):
+        parse_document(json.dumps({'version':1,'cards':[{'name':'Spirit','scryfall_url':url}]}).encode())

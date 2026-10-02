@@ -11,10 +11,10 @@ def validate_entries(cards):
     result=[];seen=set()
     for i,item in enumerate(cards,1):
         if not isinstance(item,dict):raise ValidationError(f'data.json card entry {i} must be an object.')
-        unknown=set(item)-{'name','oracle_id','scryfall_id','nickname','flavor_text','artist','art'}
+        unknown=set(item)-{'name','oracle_id','scryfall_id','nickname','flavor_text','artist','art','scryfall_url'}
         if unknown:raise ValidationError(f'data.json card entry {i} has unsupported field(s): '+', '.join(sorted(unknown))+'.')
         entry={}
-        for key,maximum in [('name',300),('oracle_id',36),('scryfall_id',36),('nickname',300),('flavor_text',20000),('artist',300),('art',1000)]:
+        for key,maximum in [('name',300),('oracle_id',36),('scryfall_id',36),('nickname',300),('flavor_text',20000),('artist',300),('art',1000),('scryfall_url',2000)]:
             value=item.get(key,'')
             if value is None:value=''
             if not isinstance(value,str):raise ValidationError(f'data.json {key} for entry {i} must be text.')
@@ -28,12 +28,14 @@ def validate_entries(cards):
             if key in entry:
                 if not UUID.fullmatch(entry[key]):raise ValidationError('Invalid '+key+' in data.json.')
                 entry[key]=entry[key].lower()
+        if 'scryfall_url' in entry and not re.fullmatch(r'https://scryfall\.com/[^\s]+',entry['scryfall_url']):
+            raise ValidationError('Invalid Scryfall link in data.json.')
         if 'art' in entry:
             path=entry['art']
             if path.startswith('/') or '\\' in path or ':' in path or any(p in {'','..','.'} for p in path.split('/')):
                 raise ValidationError('Artwork filenames must be relative to the selected artwork folder.')
             if not re.search(r'\.(png|jpe?g|webp|gif)$',path,re.I):raise ValidationError('Choose a supported artwork image filename.')
-        if not any(k in entry for k in ['nickname','flavor_text','artist','art']):continue
+        if not any(k in entry for k in ['nickname','flavor_text','artist','art','scryfall_url','oracle_id','scryfall_id']):continue
         key=selector_key(entry)
         if key in seen:raise ValidationError('data.json contains more than one nonempty entry for '+str(entry.get('name') or entry.get('oracle_id') or entry.get('scryfall_id'))+'.')
         seen.add(key);result.append(entry)

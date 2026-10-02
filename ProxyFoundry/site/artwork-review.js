@@ -1,5 +1,5 @@
 import {$,api,job,modal,closeModal,thumbnail,state,toast,uploadFolder} from './ui.js';
-import {sourceRecord,mergeDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
+import {sourceRecord,mergeDataDocument,enrichDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
 
 const element=(tag,text=``)=>{
     const node=document.createElement(tag);
@@ -192,7 +192,7 @@ const githubGuideSnippet=(number,label)=>{
     image.onclick=()=>enlarge(image.src,label);
     return image;
 };
-export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
+export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=>{
     if(!changes.length)
         return;
 
@@ -215,7 +215,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
         const intro=element(`p`,`Save a data.json to reuse these choices next time.`);intro.style.margin=`0 0 6px`;
         choices.append(intro);body.append(choices);
         const finish=()=>{if(saving)return;closeModal();resolve();};
-        choices.append(button(`Download data.json`,()=>{if(saving)return;downloadData(mergeDataDocument(document,changes));finish();}));
+        choices.append(button(`Download data.json`,()=>{if(saving)return;downloadData(enrichDataDocument(mergeDataDocument(document,changes),cards,changes));finish();}));
         if(url) {
             const save=button(`Update data.json on GitHub`,async()=>{
                 if(saving)return;
@@ -229,7 +229,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
                         guide.focus();save.disabled=false;saving=false;return;
                     }
 
-                    const merged=await saveGithubData(location,token,changes,record.document);
+                    const merged=await saveGithubData(location,token,changes,record.document,fetch,cards);
                     await rememberResult(merged);status.textContent=`Updated ${location.repo}/${location.path} on ${location.branch}.`;
                     toast(status.textContent);
                     if(!remember.checked&&!remembered)
@@ -288,7 +288,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
         else if(record.file||record.folder) {
             const save=button(record.file?`Update existing data.json`:`Create data.json in artwork folder`,async()=>{
                 save.disabled=true;saving=true;status.textContent=`Saving data.json…`;
-                try{const result=await saveLocalData(record,changes);await sourceRecord(`deck:${deckId}`,result);saving=false;finish();}
+                try{const result=await saveLocalData(record,changes,cards);await sourceRecord(`deck:${deckId}`,result);saving=false;finish();}
                 catch(error){status.textContent=error.message;}
                 finally{save.disabled=false;saving=false;}
             });choices.append(save);
@@ -335,7 +335,7 @@ export const ensureArtworkReady=async id=>{
     if(settings.source.mode!==`scryfall`) {
         settings.artDefaults=result.defaults;settings.artReviewSignature=result.signature;
         const saved=await api(`/api/decks/`+id+`/save`,{revision:deck.revision,settings,cardData:result.changes});
-        await offerDataSave(id,result.changes,{version:1,cards:saved.cardData||[]},settings.dataJsonSource?.kind===`github`?settings.githubSetupFolder||settings.source.githubFolder:``);
+        await offerDataSave(id,result.changes,{version:1,cards:saved.cardData||[]},settings.dataJsonSource?.kind===`github`?settings.githubSetupFolder||settings.source.githubFolder:``,saved.cards);
         if(state.activeDeck?.id===id)
             state.activeDeck=saved;
     }

@@ -421,7 +421,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     return saveQueue;
   }
   async function exportPairs(){
-    await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'');pairedChanges=[];
+    await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'',deck.cards);pairedChanges=[];
   }
   let generating=false;
   async function generate(){
