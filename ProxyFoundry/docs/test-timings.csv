@@ -640,6 +640,7 @@ tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_wit
 tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[nonland],extended,4.112,passed,2026-10-01T02:07:46.348888-04:00
 tests/test_helper_native.py::test_helper_trackers_render_all_four_faces,extended,46.992,passed,2026-09-30T18:53:37.538665-04:00
 tests/test_modal_focus.py::test_modal_does_not_steal_focus_or_type_into_quantity,extended,2.233,passed,2026-09-29T06:38:32.298111-04:00
+tests/test_native_concurrency.py::test_one_two_three_native_renderers_preserve_pixels,extended,394.923,passed,2026-10-02T05:53:35.163103-04:00
 tests/test_native_deck.py::test_real_native_deck_and_dfc_pairing,extended,70.654,passed,2026-10-02T01:01:47.274513-04:00
 tests/test_native_readiness.py::test_native_first_use_and_no_wait_pixels,extended,318.523,passed,2026-10-02T00:41:44.823908-04:00
 tests/test_native_task_yields.py::test_native_stage_yields_and_timer_fallback_preserve_pixels,extended,337.823,passed,2026-10-02T04:53:47.974519-04:00

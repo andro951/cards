@@ -208,3 +208,22 @@ passes in 56.55s. Its cause is not established. Added startup failure screenshot
 body/errors/browser diagnostic capture; retain startup recurrence as a stability
 investigation for the final sweep. The approved anchor/folder session is alive
 and granted. Python compilation and git diff checks pass.
+
+## Chunk 8 — renderer concurrency and worker compatibility
+
+Baseline main: dcb449b. Two balanced temporary static runs compare one, two and
+three native iframes, priming every face in every iframe before measurement.
+Final means for seven production-resolution faces: 6.099, 6.241 and 7.099s.
+Two are 2.3 percent slower; three 16.4 percent slower, with longer reported tasks.
+Keep production at one renderer. Distinct DOM/global canvas pixel surfaces
+estimate 334/669/1,003 MB; this is not actual process RAM/GPU allocation and
+excludes decoded images/caches. Main-thread task time is not total process CPU.
+
+All 42 measured PNGs match every RGBA channel in each run. A dedicated worker
+with OffscreenCanvas available cannot initialize the pinned creator script:
+window is not defined. The adapter's DOM/control/font dependencies also remain.
+No native rewrite or parallel production change is justified by these results.
+The new extended gate passes in 400.02s; harness/test Python compilation and all
+four vendor hashes pass. The prior 580 routine results cover unchanged production.
+Next: remaining full-resolution UI previews, startup recurrence and final stress
+and recovery sweep. See docs/RENDERER_CONCURRENCY.md and raw measurements.

@@ -9,7 +9,7 @@
 - [x] Collection search/caret/selection and inspector drafts survive image progress.
 - [ ] Continuous generation progress and durable completion notification.
 - [x] Bounded render/save overlap measured with byte integrity/recovery.
-- [ ] Pipeline production benefit demonstrated; current overlap experiment is not justified.
+- [x] Pipeline experiments measured; only demonstrated benefits shipped.
 - [ ] Startup/UI improvements measured and version-safe.
 - [ ] Long-session, cancellation, reload and storage failure checks pass.
 - [ ] Final checkpoint tested, committed and pushed to main with report.
