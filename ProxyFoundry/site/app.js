@@ -100,7 +100,17 @@ let routeCounter=0,lastHash=location.hash||'#decks';
 export async function route(){
   if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
   state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
-  $('#selection-tray').classList.add('hidden');$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===(name==='deck'?'decks':name)));
+  $('#selection-tray').classList.add('hidden');
+  for(const link of $$('[data-nav]')){
+    const selected=link.dataset.nav===(name==='deck'?'decks':name);
+    link.classList.toggle('active',selected);
+    if(selected)link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+    link.style.background=selected?'linear-gradient(#48250f,#2b180d)':'';
+    link.style.borderColor=selected?'var(--accent)':'';
+    link.style.color=selected?'var(--accent2)':'';
+    link.style.boxShadow=selected?'0 0 12px #f47a2038, inset 0 0 0 1px #7a431f':'';
+  }
   document.title=`${{decks:'Deck Library',deck:'Deck',templates:'Templates',orders:'Print Orders',settings:'Settings'}[name]||'Bulk Proxy Forge'} · Bulk Proxy Forge`;
   if(name==='decks'&&state.immediateLibrary){
     state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';return;
