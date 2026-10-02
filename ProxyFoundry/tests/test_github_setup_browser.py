@@ -38,23 +38,23 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     page.fill('#deck-artist', 'Artist stays')
     page.fill('#github-setup-folder', remote.url+suffix)
     page.click('#github-setup-button')
-    expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
+    expect(page.locator('#github-setup-status')).to_contain_text('Your setup is saved', timeout=20000)
     expect(page.locator('[data-mode=github]')).to_have_class('choice selected')
     expect(page.locator('#github-folder')).to_have_value(remote.url + '/art')
     expect(page.locator('#art-fallback')).not_to_be_checked()
     expect(page.locator('#fallback-line')).to_be_visible()
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed', 'true')
-    expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     expect(page.locator('#data-json-status')).to_have_text('my deck/data.json')
     expect(page.locator('#data-json-preview')).to_have_count(0)
-    assert app.ws.deck(d['id'])['settings']['symbols'] == app.ws.default_symbols()  # Existing defaults are unchanged until Save.
-    assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')  # data.json is staged too.
+    assert app.ws.deck(d['id'])['settings']['symbols'] != app.ws.default_symbols()  # One-click import is persisted immediately.
+    assert app.ws.deck(d['id'])['cards'][0]['faces'][0]['semanticOverrides']['nickname']=='Dean Winchester'
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
-    page.click('#save-setup')
-    page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    page.click('#review-artwork');page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
     page.get_by_role('button',name='Not now',exact=True).click()
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved = app.ws.deck(d['id'])
     assert saved['cards'][0] != original_card
     overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
@@ -112,12 +112,12 @@ def test_failed_import_preserves_existing_draft_and_allows_retry(browser_app):
     expect(page.locator('#github-setup-button')).to_be_enabled()
     expect(page.locator('#deck-artist')).to_be_enabled()
     expect(page.locator('#deck-artist')).to_have_value('Unsaved artist')
-    expect(page.locator('#setup-state')).to_have_text('Unsaved changes')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert page.locator('.symbol-upload img').count() == 4  # Bundled defaults remain visible after the failed import.
     assert app.ws.deck(d['id'])['settings']['symbols'] == app.ws.default_symbols()
     remote.file(missing, raw)
     page.click('#github-setup-button')
-    expect(page.locator('#github-setup-status')).to_contain_text('Review below, then save', timeout=20000)
+    expect(page.locator('#github-setup-status')).to_contain_text('Your setup is saved', timeout=20000)
     expect(page.locator('[data-back-action=custom]')).to_have_attribute('aria-pressed', 'true')
     expect(page.locator('#deck-artist')).to_have_value('Unsaved artist')
     assert not errors, errors
@@ -137,7 +137,7 @@ def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
     page.fill('#github-setup-folder', remote.url)
     try:
         page.click('#github-setup-button')
-        expect(page.locator('#save-setup')).to_be_disabled()
+        expect(page.locator('#save-generate')).to_be_disabled()
         expect(page.locator('#deck-artist')).to_be_disabled()
         expect(page.locator('#github-setup-button')).to_be_disabled()
         expect(page.locator('#activity-cancel')).to_have_text('Cancel')
@@ -145,7 +145,7 @@ def test_import_locks_manual_setup_and_cancel_restores_saved_state(browser_app):
         expect(page.locator('#activity-cancel')).to_be_disabled()
         release.set()
         expect(page.locator('#github-setup-status')).to_contain_text('cancelled', timeout=20000)
-        expect(page.locator('#save-setup')).to_be_enabled()
+        expect(page.locator('#save-generate')).to_be_enabled()
         assert not page.evaluate("document.querySelector('#setup-fields').inert")
         assert not page.evaluate("import('/site/ui.js').then(m=>m.state.dirty||m.state.busy)")
         assert page.locator('.symbol-upload img').count() == 4
@@ -165,7 +165,7 @@ def test_one_click_without_symbols_uses_bundled_defaults(browser_app):
     page.click('#github-setup-button')
     expect(page.locator('#github-setup-status')).to_contain_text('bundled default rarity symbols',timeout=20000)
     expect(page.locator('.symbol-upload img')).to_have_count(4)
-    page.click('#save-setup')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
     saved=app.ws.deck(d['id'])
     assert saved['settings']['symbols']==app.ws.default_symbols()
     assert not errors,errors

@@ -130,7 +130,7 @@ function editTemplate(original){
   let approved=false,revision=0;const abort=new AbortController();
   let selectedRegion='title';
   const host=modal(model.id?'Edit Template':'Create Template','',{size:'large',
-    footer:'<button class="button" id="preview-template">Generate template preview</button><button class="button primary" id="save-template" disabled>Save template</button>',
+    footer:'<button class="button" id="preview-template">Generate template preview</button><button class="button primary" id="save-template" disabled>Use template</button>',
     onClose:()=>{abort.abort();for(const url of sampleUrls.values()){URL.revokeObjectURL(url);}return true;}});
   const body=$('.modal-body',host);
   const form=element('div','','two-col');

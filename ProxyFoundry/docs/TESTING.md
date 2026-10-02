@@ -9,7 +9,9 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 610 | Every completed change |
-| Extended | 128 | Relevant changes or an explicit full sweep |
+| Extended | 133 | Relevant changes or an explicit full sweep |
+
+Setup persistence regression checks cover both Generate Images buttons saving the latest edits before preparation, navigation preserving edits, storage failure blocking generation with retry, and one-click GitHub import saving before reporting completion.
 
 The artwork-matching checkpoint adds schema/UUID/token-variant/filename checks,
 metadata-only inventory review, indexed 5,000-image lookup and 2,000-entry selector

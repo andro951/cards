@@ -52,13 +52,13 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     app,server,page,errors=browser_app
     d=app.ws.create({'name':'Browser deck','source':'2 A Test Creature'})
     page.goto(server.origin+'/#deck/'+d['id']+'/setup')
-    page.locator('#save-setup').wait_for()
+    page.locator('#setup-state').wait_for()
     assert page.locator('.page-head h1').inner_text()=='Browser deck'
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'back.png','mimeType':'image/png','buffer':png((300,420))})
     expect(page.locator('#back-designer [data-back-preview]')).to_have_count(1)
-    page.fill('#deck-artist','Deck Artist');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.fill('#deck-artist','Deck Artist');page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     page.click('[data-tab=cards]');page.locator('[data-card]').first.click();page.fill('#card-qty','3');page.click('#save-card')
     expect(page.locator('.quantity-pill')).to_have_text('3×')
     page.locator('.topbar a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
@@ -90,6 +90,7 @@ def test_browser_card_inspector_art_and_text_controls(browser_app):
     expect(page.get_by_role('dialog').last).to_contain_text('suggested')
     page.get_by_role('dialog').last.get_by_role('button',name='Use current Oracle text').click()
     page.click('#save-card')
+    expect(page.locator('#save-card')).to_have_count(0)
     saved=app.ws.deck(deck['id'])
     assert saved['cards'][0]['scryfall']['rarity']=='rare'
     assert saved['cards'][0]['faces'][0]['selectedArtPrintingId']==saved['cards'][0]['scryfall']['id']
@@ -126,7 +127,7 @@ def test_new_deck_import_stays_simple_and_chooses_look_afterward(browser_app):
     assert not app.store.list('decks'),'Add deck must not start the import before a look is chosen.'
     page.get_by_role('button',name='Customize Look').click()
     expect(page.get_by_role('status')).to_contain_text('Images will be generated after you finish your choices.')
-    page.locator('#save-setup').wait_for(timeout=30000)
+    page.locator('#setup-state').wait_for(timeout=30000)
     assert not errors,errors
 
 def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
@@ -161,7 +162,7 @@ def test_browser_symbol_folder_upload(browser_app,tmp_path):
     chooser.value.set_files(str(folder))
     expect(page.locator('.symbol-upload img')).to_have_count(4,timeout=15000)
     expect(page.locator('#symbol-folder-status')).to_contain_text('Loaded common, uncommon, rare, and mythic')
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);assert set(saved['settings']['symbols'])=={'common','uncommon','rare','mythic'}
     assert len(set(saved['settings']['symbols'].values()))==4
     bad=tmp_path/'bad-symbols';bad.mkdir()
@@ -356,7 +357,7 @@ def test_browser_deck_artist_previews(browser_app):
     assert page.locator('#scryfall-credit-preview,#custom-credit-preview').count()==0
     assert page.locator('#deck-modification').count()==0
     assert page.locator('#use-land-library').count()==0
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     current=app.ws.deck(d['id'])
     assert current['settings']['artist']=='My Custom Artist'
     assert 'modificationCredit' not in current['settings']
@@ -376,16 +377,16 @@ def test_browser_default_icon_full_back_and_reload(browser_app):
     before=page.locator('[data-back-preview]').get_attribute('src')
     page.check('[data-back-guide]');expect(page.locator('.back-icon-guide')).to_be_visible()
     assert page.locator('[data-back-preview]').get_attribute('src')==before
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);assert saved['settings']['backDesign']['mode']=='icon'
     icon_id=saved['settings']['backAsset']
     page.reload();expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true')
     with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'whole_back.png','mimeType':'image/png','buffer':png((300,420))})
     expect(page.locator('[data-back-action=custom]')).to_have_attribute('aria-pressed','true')
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert app.ws.deck(d['id'])['settings']['backAsset']!=icon_id
-    page.click('[data-back-action=default]');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.click('[data-back-action=default]');page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert app.ws.deck(d['id'])['settings']['backAsset']==app.ws.backs.builtin('default')['id']
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
@@ -407,8 +408,8 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     page.fill('#token-toughness','8')
     page.fill('#token-subtypes','Illusion')
     page.select_option('#token-legendary-mode','nonlegendary')
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
 
     saved=app.ws.deck(d['id'])['settings']
     assert saved['allCardsTokens'] is True
@@ -427,9 +428,8 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     payload={'version':1,'cards':[{'name':'A Test Creature','nickname':'Test Nickname','flavor_text':'Test flavor text.'}]}
     page.locator('#data-json-file').set_input_files({'name':'data.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
     expect(page.locator('#data-json-status')).to_have_text('data.json')
-    assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides['nickname']=='Test Nickname'
     assert overrides['flavor_text']=='Test flavor text.'

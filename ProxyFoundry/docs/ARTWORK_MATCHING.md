@@ -32,7 +32,7 @@ Existing `nickname`, `flavor_text`, and `artist` fields remain supported. UUID-s
 
 ## Review and persistence
 
-**Match custom artwork** opens the helper in Art & Setup. Saving setup or requesting generation checks the inventory too. No renderer runs during matching. Extra files must be acknowledged; unresolved cards require pairing or the explicit **Default Art for the rest** choice when fallback is enabled. Inventory changes invalidate the acknowledgement. Pending pairs are retained in browser storage; completed choices are persisted in the deck.
+**Match custom artwork** opens the helper in Art & Setup. Requesting generation checks the inventory too. Setup edits save automatically without opening the matching helper. No renderer runs during matching. Extra files must be acknowledged; unresolved cards require pairing or the explicit **Default Art for the rest** choice when fallback is enabled. Inventory changes invalidate the acknowledgement. Pending pairs are retained in browser storage; completed choices are persisted in the deck.
 
 The helper initially creates at most 80 card thumbnails and 60 artwork thumbnails. Search and Show more let large folders remain usable. Local paths and original extensions are retained rather than reducing every image to a card-name stem.
 

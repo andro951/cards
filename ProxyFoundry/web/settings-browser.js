@@ -67,7 +67,7 @@ export async function showSettings(){
     });
     if(changed)location.reload();
   }));
-  if(folder)locationActions.append(button('Save in browser storage',async()=>{
+  if(folder)locationActions.append(button('Use browser storage',async()=>{
     const changed=await changeWorkspace(async()=>{
     const target=await navigator.storage.getDirectory();
     const occupied=await containsWorkspace(target);

@@ -63,7 +63,7 @@ export function renderSetup(root,deck,onSaved){
         <label class="check-line"><input type="checkbox" id="token-nonlegendary" ${s.tokenOptions.nonlegendary?'checked':''}><span>Make nonlegendary<small>Removes Legendary from the supertype when it is present.</small></span></label>
       </div>
     </section>
-  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div></fieldset>`;
+  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Changes saved</span><button class="button primary" id="save-generate">Generate images</button></div></fieldset>`;
   $('#disable-autofit',root).closest('details').remove();
   for(const id of ['deck-name','deck-notes','reuse-style','flavor-policy','refresh-data'])$('#'+id,root).closest('label').remove();
   $('.credit-preview',root)?.remove();
@@ -165,7 +165,8 @@ export function renderSetup(root,deck,onSaved){
   computerMode.onclick=()=>{computerMode.classList.add('selected');githubMode.classList.remove('selected');localDataButton.style.display='';urlLabel.style.display='none';};
   githubMode.onclick=()=>{githubMode.classList.add('selected');computerMode.classList.remove('selected');localDataButton.style.display='none';urlLabel.style.display='';};
   dataUrl.addEventListener('change',()=>{if(dataUrl.value.trim())linkDataButton.click();});
-  const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
+  let changeVersion=0,persistedVersion=0,saveTimer=null,saveQueue=Promise.resolve();
+  const mark=()=>{changeVersion++;state.dirty=true;$('#setup-state',root).textContent='Saving changes…';clearTimeout(saveTimer);saveTimer=setTimeout(()=>attempt(()=>persistSetup()),400);};
   byCard.onclick=()=>attempt(async()=>{
     s.artist=$('#deck-artist',root).value.trim();
     const previews=await api('/api/setup/custom-art-previews',{deckId:deck.id,settings:s});
@@ -192,7 +193,7 @@ export function renderSetup(root,deck,onSaved){
         if(!entry){entry={name};stagedCardData.push(entry);}
         entry.artist=input.value.trim();
       }
-      closeModal();mark();toast('Artist credits staged. Save changes to apply.');
+      closeModal();mark();toast('Artist credits imported.');
     };
   });
   const stageCardData=(entries,source)=>{
@@ -201,7 +202,7 @@ export function renderSetup(root,deck,onSaved){
     stagedCardData=structuredClone(entries);
     s.dataJsonSource=source;
     dataJsonImportNote='';
-    dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' staged. Save changes to apply.';
+    dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' imported.';
     dataStatus.hidden=false;
     redrawDataJsonStatus();
     (source?.kind==='github'?githubMode:computerMode).onclick();
@@ -270,7 +271,7 @@ export function renderSetup(root,deck,onSaved){
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
     s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;redrawFrames();mark();
   },{onBusy:busy=>{
-    for(const id of ['save-setup','save-generate'])$('#'+id,root).disabled=busy;
+    for(const id of ['save-generate','generate-deck'])($('#'+id,root)||$('#'+id)).disabled=busy;
   },allowNone:true});
   const redrawBack=()=>backPicker.set(s);
   function creditPreview(){
@@ -298,7 +299,7 @@ export function renderSetup(root,deck,onSaved){
   }
   $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;redrawSource();mark();});
   const githubImport=mountGithubSetupImport($('#github-setup',root),{
-    isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
+    isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#symbol-folder-button:disabled,#save-generate:disabled',root),
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
     onImport:async(patch,cardData,hasDataJson,document)=>{
@@ -308,7 +309,7 @@ export function renderSetup(root,deck,onSaved){
         stagedCardData=structuredClone(cardData||[]);
         s.dataJsonSource=patch.dataJsonSource||null;
         dataJsonImportNote='';
-        dataStatus.textContent='1-click GitHub data.json: '+stagedCardData.length+' nonempty card entries staged. Save changes to apply.';
+        dataStatus.textContent='1-click GitHub data.json: '+stagedCardData.length+' card entries imported.';
       }else if(!stagedCardData.length){
         s.dataJsonSource=null;
         dataJsonImportNote='No data.json found in the GitHub project root.';
@@ -321,7 +322,7 @@ export function renderSetup(root,deck,onSaved){
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
-      redrawSource();redrawSymbols();redrawBack();redrawFrames();mark();
+      redrawSource();redrawSymbols();redrawBack();redrawFrames();mark();await persistSetup(true);
     }
   });
   let importingArtwork=false;
@@ -360,11 +361,11 @@ export function renderSetup(root,deck,onSaved){
     return true;
   };
   const reviewButton=document.createElement('button');reviewButton.type='button';reviewButton.className='button';reviewButton.textContent='Match custom artwork';reviewButton.id='review-artwork';
-  $('#local-count',root).closest('section').append(reviewButton);reviewButton.onclick=()=>attempt(reviewArtwork);
+  $('#local-count',root).closest('section').append(reviewButton);reviewButton.onclick=()=>attempt(async()=>{if(await reviewArtwork()){mark();await persistSetup();await exportPairs();}});
   $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
 $('#symbol-folder',root).onchange=()=>attempt(async()=>{
   const input=$('#symbol-folder',root),files=input.files;if(!files.length)return;
-  const button=$('#symbol-folder-button',root),save=$('#save-setup',root),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
+  const button=$('#symbol-folder-button',root),save=$('#generate-deck'),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
   button.disabled=true;save.disabled=true;render.disabled=true;
   try{
     const selected=symbolFolderFiles(files),next={};let done=0;
@@ -399,15 +400,43 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     };
     s.templateRules.token=$('#token-frame',root).value;
   }
-  async function save(generate){
-    if(importingArtwork)throw new Error('Artwork is still importing. The progress is shown in Art & Setup.');
-    if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
-    if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
-    readSettings();
-    if(!await reviewArtwork())return;
-    if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
-    $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
-    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:s,cardData:stagedCardData});deck.revision=d.revision;state.dirty=false;toast('Deck setup saved.');await offerDataSave(deck.id,pairedChanges,{version:1,cards:d.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'');pairedChanges=[];await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
+  function persistSetup(importComplete=false){
+    clearTimeout(saveTimer);
+    const operation=async()=>{
+      if(persistedVersion===changeVersion)return deck;
+      if(githubImport.isBusy()&&!importComplete){saveTimer=setTimeout(()=>attempt(()=>persistSetup()),400);return deck;}
+      if(importingArtwork||backPicker.isBusy()){
+        await new Promise(resolve=>setTimeout(resolve,100));return operation();
+      }
+      readSettings();
+      const version=changeVersion;
+      const updated=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)});
+      Object.assign(deck,updated);persistedVersion=version;
+      if(state.activeDeck?.id===deck.id)state.activeDeck=deck;
+      if(state.setupActions?.root===root)state.dirty=persistedVersion!==changeVersion;
+      if(root.isConnected)$('#setup-state',root).textContent=state.dirty?'Saving changes…':'Changes saved';
+      return deck;
+    };
+    saveQueue=saveQueue.catch(error=>console.error("Previous setup save failed",error)).then(operation).catch(error=>{if(root.isConnected)$('#setup-state',root).textContent='Could not save changes: '+error.message;throw error;});
+    return saveQueue;
   }
-  $('#save-setup',root).onclick=()=>attempt(()=>save(false));$('#save-generate',root).onclick=()=>attempt(()=>save(true));
+  async function exportPairs(){
+    await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'');pairedChanges=[];
+  }
+  let generating=false;
+  async function generate(){
+    if(generating)return;
+    if(importingArtwork||githubImport.isBusy()||backPicker.isBusy())throw new Error('An import is still finishing. Its progress is shown in Art & Setup.');
+    generating=true;
+    const buttons=[$('#save-generate',root),$('#generate-deck')].filter(Boolean);
+    for(const button of buttons){button.disabled=true;}
+    try{
+    if(!await reviewArtwork())return;
+    if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
+    mark();await persistSetup();await exportPairs();await onSaved(deck,true);
+    }finally{generating=false;for(const button of buttons){if(button.isConnected)button.disabled=false;}}
+  }
+  const actions={deckId:deck.id,root,flush:persistSetup,generate};state.setupActions=actions;
+  $('#save-generate',root).onclick=()=>attempt(generate);
+  return actions;
 }

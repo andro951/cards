@@ -138,7 +138,11 @@ function mountNavigation(){
 }
 let routeCounter=0,lastHash=location.hash||'#decks';
 export async function route(){
-  if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
+  if(state.setupActions?.root.isConnected){
+    try{await state.setupActions.flush();}
+    catch(error){history.replaceState(null,'',lastHash);toast(error.message,true);return;}
+    state.setupActions=null;
+  }
   state.generationView=null;state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
   state.routeEpoch=current;state.deckTab=tab||'cards';state.routeDeck=id||null;
   $('#selection-tray').classList.add('hidden');

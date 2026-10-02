@@ -674,7 +674,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 page.locator('.modal-body textarea').fill('1 Syr Gwyn, Hero of Ashvale')
                 page.click('#do-import')
                 page.get_by_role('button',name=look,exact=True).click(timeout=90000)
-                page.locator('#card-search' if look=='Normal Look' else '#save-setup').wait_for(timeout=90000)
+                page.locator('#card-search' if look=='Normal Look' else '#setup-state').wait_for(timeout=90000)
                 if look=='Normal Look':
                     assert page.url.endswith('/cards') and page.locator('#save-setup').count()==0
                     normal=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return (await ui.api('/api/decks/'+ui.state.activeDeck.id)).settings;}")
@@ -682,7 +682,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                     assert not normal['disableAutofit'] and not normal['allCardsTokens'] and normal['showFlavorText']
                     assert normal['templateRules']['land']=='normal' and not normal['tokenOptions']['power']
                     assert not generation,'Normal Look must wait for Generate images.'
-                    page.click('[data-tab=setup]');page.locator('#save-setup').wait_for(timeout=90000)
+                    page.click('[data-tab=setup]');page.locator('#setup-state').wait_for(timeout=90000)
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
                                             'nickname':'Test Commander Nickname'}]}
                 page.locator('#data-json-file').set_input_files({
@@ -697,14 +697,13 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 page.screenshot(path=str(evidence/'static-frame-picker.png'))
                 page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]').click()
-                page.click('#save-setup')
-                page.get_by_text('Deck setup saved.').wait_for(timeout=30000)
+                page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
                 assert not generation,'Setup must not generate images: '+repr(generation)
                 page.click('#generate-deck')
                 page.locator('.badge.ready').wait_for(timeout=180000)
                 page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
                 page.get_by_role('button',name='View deck').click()
-                assert page.locator('#card-search').evaluate('(input)=>parseFloat(getComputedStyle(input).paddingLeft)')>=33
+                page.wait_for_function("() => {const input=document.querySelector('#card-search');return input && parseFloat(getComputedStyle(input).paddingLeft)>=33;}")
                 page.screenshot(path=str(evidence/'ready-deck-search.png'))
                 page.get_by_role('button',name='Review & Print').click()
                 page.click('#order-plan')

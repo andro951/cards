@@ -43,17 +43,17 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
     warnings.replaceChildren();message('Reading GitHub project folder…');
     try{
       const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',resources:deckId?['deck:'+deckId]:[],onProgress:j=>{if(host.isConnected)message(j.message);}});
-      // A navigation during the job must not apply the result to a different deck.
-      if(!host.isConnected)return;
+      // The callback is bound to the importing deck, even after navigation.
       await onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'),result.cardDataDocument);applied=true;input.value=result.settings.githubSetupFolder;
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?', plus data.json':'';
-      message(`Imported ${art}, ${symbols}, and ${back}${data}. Review below, then save your setup.`,'success');
+      message(`Imported ${art}, ${symbols}, and ${back}${data}. Your setup is saved.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}
-      toast('GitHub setup imported. Review below, then save.');
+      toast('GitHub setup imported and saved.');
     }catch(error){
       if(host.isConnected)message(error.message+' Your setup was not changed.','error');
+      else toast(error.message,true);
     }finally{
       importing=false;
       if(host.isConnected){if(!applied)state.dirty=wasDirty;button.disabled=false;input.disabled=false;button.textContent='1-click import';onBusy(false);}

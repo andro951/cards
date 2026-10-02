@@ -616,20 +616,20 @@ tests/test_batch_bridge.py::test_batches_append_in_sequence_and_choose_once[2-re
 tests/test_batch_bridge.py::test_cancel_stops_before_next_batch,extended,6.718,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_batch_bridge.py::test_count_mismatch_stops_before_next_batch,extended,10.641,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_batch_bridge.py::test_second_batch_failure_does_not_retry_or_send_third,extended,9.970,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_artist_credit_and_custom_upload,extended,5.097,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_card_hover_shows_assigned_back_without_flip_button,extended,5.123,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_card_inspector_art_and_text_controls,extended,5.645,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_card_search_preserves_typing_order_and_caret,extended,4.138,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_data_json_section_stages_and_saves_metadata,extended,4.637,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_deck_artist_previews,extended,4.108,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_default_icon_full_back_and_reload,extended,5.659,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_import_setup_edit_template_and_mobile,extended,6.661,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_other_options_all_cards_tokens,extended,4.604,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_paired_order_snapshot,extended,7.647,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_saved_orders_are_reachable_from_library,extended,4.126,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_browser_symbol_folder_upload,extended,5.149,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_new_deck_import_stays_simple_and_chooses_look_afterward,extended,5.655,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_normal_look_uses_classic_frames_for_every_ordinary_group,extended,4.639,passed,2026-10-02T15:50:08.493415-04:00
+tests/test_browser.py::test_browser_artist_credit_and_custom_upload,extended,4.578,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_card_hover_shows_assigned_back_without_flip_button,extended,3.584,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_card_inspector_art_and_text_controls,extended,11.148,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_card_search_preserves_typing_order_and_caret,extended,3.083,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_data_json_section_stages_and_saves_metadata,extended,3.559,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_deck_artist_previews,extended,4.599,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_default_icon_full_back_and_reload,extended,5.614,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_import_setup_edit_template_and_mobile,extended,12.776,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_other_options_all_cards_tokens,extended,3.603,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_paired_order_snapshot,extended,6.618,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_saved_orders_are_reachable_from_library,extended,2.546,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_browser_symbol_folder_upload,extended,4.082,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_new_deck_import_stays_simple_and_chooses_look_afterward,extended,4.591,passed,2026-10-02T16:22:28.502710-04:00
+tests/test_browser.py::test_normal_look_uses_classic_frames_for_every_ordinary_group,extended,4.615,passed,2026-10-02T16:22:28.502710-04:00
 tests/test_browser.py::test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box,extended,45.526,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_browser.py::test_real_cardconjurer_roundtrip,extended,40.728,passed,2026-10-02T08:36:31.880749-04:00
 tests/test_browser_storage.py::test_binary_files_and_zip_do_not_live_in_python_memory_and_survive_reload,extended,40.436,passed,2026-10-02T10:02:28.069828-04:00
@@ -647,25 +647,30 @@ tests/test_browser_storage.py::test_render_checkpoint_failure_after_write_restor
 tests/test_browser_storage.py::test_repeated_asset_lookups_reuse_file_metadata_and_writes_refresh_it,extended,12.329,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_repeated_database_reads_keep_browser_heap_bounded,extended,15.667,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_second_tab_cannot_write_and_can_open_after_first_closes,extended,21.225,passed,2026-10-02T10:02:28.069828-04:00
-tests/test_browser_storage.py::test_static_artwork_pairing_persists_without_rendering[native-handles],extended,34.096,passed,2026-10-02T14:26:46.770907-04:00
+tests/test_browser_storage.py::test_static_artwork_pairing_persists_without_rendering[native-handles],extended,37.533,passed,2026-10-02T16:20:21.658899-04:00
 tests/test_browser_storage.py::test_storage_quota_error_is_readable_diagnosed_and_upload_can_retry,extended,12.027,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_workspace_picker_holds_exclusive_access_and_releases_on_cancel,extended,19.971,passed,2026-10-02T10:02:28.069828-04:00
-tests/test_dom_offline.py::test_artwork_cancel_resume_defaults_and_mobile,extended,2.242,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_artwork_file_merge_permissions_and_github_sha,extended,1.607,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,extended,2.936,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,2.094,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.442,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_artwork_refresh_does_not_reuse_stale_images_or_pairs,extended,2.973,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_choose_look_routes_without_generating[Customize Look],extended,2.853,passed,2026-10-02T15:49:36.994395-04:00
-tests/test_dom_offline.py::test_choose_look_routes_without_generating[Normal Look],extended,5.479,passed,2026-10-02T15:49:36.994395-04:00
-tests/test_dom_offline.py::test_delete_cancels_generation_once_and_uses_latest_revision,extended,1.622,passed,2026-10-02T15:36:40.171031-04:00
-tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,1.144,passed,2026-10-02T15:36:40.171031-04:00
-tests/test_dom_offline.py::test_library_initial_covers_and_backs_use_small_previews,extended,1.676,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,11.260,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_offline_large_card_grid_keeps_input_and_tiles_during_progress,extended,2.624,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_offline_library_progress_keeps_search_selection_and_filters,extended,1.770,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_offline_settings_and_mobile,extended,1.628,passed,2026-10-02T14:27:37.205412-04:00
-tests/test_dom_offline.py::test_one_click_github_updates_source_choices_and_restores_on_reopen,extended,6.094,passed,2026-10-02T14:27:37.205412-04:00
+tests/test_dom_offline.py::test_artwork_cancel_resume_defaults_and_mobile,extended,1.955,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_artwork_file_merge_permissions_and_github_sha,extended,1.240,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,extended,2.955,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,1.374,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.100,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_artwork_refresh_does_not_reuse_stale_images_or_pairs,extended,2.680,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_choose_look_routes_without_generating[Customize Look],extended,2.768,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_choose_look_routes_without_generating[Normal Look],extended,2.495,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_delete_cancels_generation_once_and_uses_latest_revision,extended,1.299,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,1.239,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_library_initial_covers_and_backs_use_small_previews,extended,1.779,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,10.376,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_offline_large_card_grid_keeps_input_and_tiles_during_progress,extended,2.540,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_offline_library_progress_keeps_search_selection_and_filters,extended,2.301,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_offline_settings_and_mobile,extended,1.613,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_one_click_github_updates_source_choices_and_restores_on_reopen[navigate],extended,2.372,passed,2026-10-02T16:30:10.251995-04:00
+tests/test_dom_offline.py::test_one_click_github_updates_source_choices_and_restores_on_reopen[stay],extended,2.289,passed,2026-10-02T16:30:10.251995-04:00
+tests/test_dom_offline.py::test_setup_generation_buttons_persist_latest_changes_first[generate-deck],extended,3.118,passed,2026-10-02T16:30:10.251995-04:00
+tests/test_dom_offline.py::test_setup_generation_buttons_persist_latest_changes_first[save-generate],extended,1.964,passed,2026-10-02T16:30:10.251995-04:00
+tests/test_dom_offline.py::test_setup_navigation_persists_edits_without_confirmation,extended,1.690,passed,2026-10-02T16:30:10.251995-04:00
+tests/test_dom_offline.py::test_setup_save_failure_blocks_generation_and_allows_retry,extended,3.434,passed,2026-10-02T16:30:10.251995-04:00
 tests/test_downloads_browser.py::test_large_exports_keep_streaming_file_picker,extended,0.977,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_downloads_browser.py::test_small_exports_use_normal_download_without_picker[card_review.png],extended,2.568,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_downloads_browser.py::test_small_exports_use_normal_download_without_picker[small_export.zip],extended,1.063,passed,2026-10-02T07:58:16.535911-04:00
@@ -674,18 +679,18 @@ tests/test_extension.py::test_installed_extension_transfers_exact_zip_to_new_tab
 tests/test_extension.py::test_installed_helper_fetches_public_decks_without_a_server_function,extended,5.303,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_full_art_examples.py::test_supernatural_full_card_art_and_downloaded_reviews,extended,202.884,passed,2026-10-02T10:08:34.152560-04:00
 tests/test_github_setup.py::test_live_existing_eggs_fall_folder,extended,4.307,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_github_setup_browser.py::test_failed_import_preserves_existing_draft_and_allows_retry,extended,5.087,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[art-subfolder],extended,12.217,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[project],extended,13.186,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_github_setup_browser.py::test_import_locks_manual_setup_and_cancel_restores_saved_state,extended,3.605,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_github_setup_browser.py::test_one_click_without_symbols_uses_bundled_defaults,extended,9.698,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_github_setup_browser.py::test_single_symbol_bundle_is_rejected_without_changing_setup,extended,4.063,passed,2026-10-02T13:52:06.240978-04:00
-tests/test_godzilla_browser.py::test_art_setup_stages_local_and_github_data_and_opens_frame_picker,extended,6.136,passed,2026-10-02T07:58:16.535911-04:00
+tests/test_github_setup_browser.py::test_failed_import_preserves_existing_draft_and_allows_retry,extended,5.641,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[art-subfolder],extended,8.142,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[project],extended,10.680,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_github_setup_browser.py::test_import_locks_manual_setup_and_cancel_restores_saved_state,extended,4.110,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_github_setup_browser.py::test_one_click_without_symbols_uses_bundled_defaults,extended,4.096,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_github_setup_browser.py::test_single_symbol_bundle_is_rejected_without_changing_setup,extended,5.110,passed,2026-10-02T16:13:16.981663-04:00
+tests/test_godzilla_browser.py::test_art_setup_stages_local_and_github_data_and_opens_frame_picker,extended,4.638,passed,2026-10-02T16:27:48.130631-04:00
 tests/test_godzilla_browser.py::test_native_black_and_colorless_nickname_tokens_have_complete_frames,extended,32.528,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_godzilla_browser.py::test_native_noncreature_godzilla_frames_render_without_missing_text,extended,46.647,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[basic-land],extended,7.162,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[land],extended,5.646,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[nonland],extended,5.110,passed,2026-10-02T07:58:16.535911-04:00
+tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[basic-land],extended,4.584,passed,2026-10-02T16:27:48.130631-04:00
+tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[land],extended,4.594,passed,2026-10-02T16:27:48.130631-04:00
+tests/test_godzilla_browser.py::test_setup_and_frame_picker_use_static_backs_without_generating[nonland],extended,4.629,passed,2026-10-02T16:27:48.130631-04:00
 tests/test_helper_native.py::test_helper_trackers_render_all_four_faces[custom-art],extended,56.914,passed,2026-10-02T11:52:23.037838-04:00
 tests/test_helper_native.py::test_helper_trackers_render_all_four_faces[scryfall-scans],extended,37.761,passed,2026-10-02T11:52:23.037838-04:00
 tests/test_modal_focus.py::test_modal_does_not_steal_focus_or_type_into_quantity,extended,2.725,passed,2026-10-02T07:58:16.535911-04:00
@@ -733,7 +738,7 @@ tests/test_website.py::test_static_startup_timings_and_root_subpath_reloads,exte
 tests/test_website.py::test_static_template_editor_generates_only_on_request_and_saves_validated_model,extended,68.817,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_token_styles_and_upstream_assets,extended,11.281,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_website_fetches_pinned_station_script,extended,10.589,passed,2026-10-02T10:19:12.560749-04:00
-tests/test_website.py::test_static_website_import_frame_review_and_zip[Customize Look-/],extended,58.174,passed,2026-10-02T10:19:12.560749-04:00
+tests/test_website.py::test_static_website_import_frame_review_and_zip[Customize Look-/],extended,66.664,passed,2026-10-02T16:24:04.105598-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/],extended,65.088,passed,2026-10-02T15:51:43.519777-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/],extended,58.025,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,15.065,passed,2026-10-02T10:19:12.560749-04:00

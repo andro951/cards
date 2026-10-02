@@ -297,9 +297,70 @@ def test_choose_look_routes_without_generating(dom_page,look):
         assert settings['artist']=='' and not settings['allCardsTokens']
         assert page.locator('#generate-deck').is_visible()
     else:
-        page.locator('#save-setup').wait_for()
+        page.locator('#setup-state').wait_for()
         assert page.url.endswith('/setup')
     assert not page.evaluate('prematureGeneration')
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('button',['generate-deck','save-generate'])
+def test_setup_generation_buttons_persist_latest_changes_first(dom_page,button):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      __fixture.deck.settings.symbols=Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)]));
+      window.setupCalls=[];const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path.endsWith('/save')){setupCalls.push({kind:'save',artist:JSON.parse(options.body).settings.artist});await new Promise(resolve=>setTimeout(resolve,100));}
+        if(path.endsWith('/prepare')){setupCalls.push({kind:'prepare',artist:__fixture.deck.settings.artist});return {ok:true,text:async()=>JSON.stringify({id:'prepare-fixture'})};}
+        if(path==='/api/jobs/prepare-fixture')return {ok:true,text:async()=>JSON.stringify({state:'done',kind:'Prepare deck',result:__fixture.deck})};
+        if(path==='/api/render-sessions'){setupCalls.push({kind:'render'});return {ok:true,text:async()=>JSON.stringify({targets:[],errors:[],cached:1})};}
+        return original(path,options);
+      };
+      location.hash='#deck/'+__fixture.deck.id+'/setup';
+    }''')
+    page.locator('#deck-artist').fill('Latest edit')
+    assert page.locator('#save-setup').count()==0
+    assert page.locator('#save-generate').inner_text()=='Generate images'
+    page.click('#'+button)
+    page.wait_for_function('setupCalls.some(call=>call.kind==="render")')
+    calls=page.evaluate('setupCalls')
+    assert calls[0]=={'kind':'save','artist':'Latest edit'}
+    assert next(call for call in calls if call['kind']=='prepare')['artist']=='Latest edit'
+    assert not page.locator('.toast.error').count()
+    assert not errors,errors
+
+
+
+def test_setup_save_failure_blocks_generation_and_allows_retry(dom_page):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      __fixture.deck.settings.symbols=Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)]));
+      window.failSetupSave=true;window.prepareAttempts=0;const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path.endsWith('/save')&&failSetupSave)return {ok:false,status:500,text:async()=>JSON.stringify({error:'Test storage failure'})};
+        if(path.endsWith('/prepare')){prepareAttempts++;return {ok:true,text:async()=>JSON.stringify({id:'retry-prepare'})};}
+        if(path==='/api/jobs/retry-prepare')return {ok:true,text:async()=>JSON.stringify({state:'done',kind:'Prepare deck',result:__fixture.deck})};
+        if(path==='/api/render-sessions')return {ok:true,text:async()=>JSON.stringify({targets:[],errors:[],cached:1})};
+        return original(path,options);
+      };
+      location.hash='#deck/'+__fixture.deck.id+'/setup';
+    }""")
+    page.locator('#deck-artist').fill('Retry edit');page.click('#generate-deck')
+    page.wait_for_function("document.querySelector('#setup-state')?.textContent.includes('Test storage failure')")
+    assert page.evaluate('prepareAttempts')==0
+    assert page.locator('#generate-deck').is_enabled() and page.locator('#save-generate').is_enabled()
+    page.evaluate('failSetupSave=false');page.click('#save-generate')
+    page.wait_for_function('prepareAttempts===1')
+    assert page.evaluate('__fixture.deck.settings.artist')=='Retry edit'
+    assert not errors,errors
+
+
+def test_setup_navigation_persists_edits_without_confirmation(dom_page):
+    page,errors=dom_page
+    page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+    page.locator('#deck-artist').fill('Keep this edit')
+    page.click('.topbar [data-nav=decks]');page.locator('#deck-search').wait_for()
+    assert page.evaluate('__fixture.deck.settings.artist')=='Keep this edit'
     assert not errors,errors
 
 
@@ -413,20 +474,21 @@ def test_offline_library_progress_keeps_search_selection_and_filters(dom_page):
     assert not errors,errors
 
 
-def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page):
+@pytest.mark.parametrize('leave_during_import',[False,True],ids=['stay','navigate'])
+def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page,leave_during_import):
     page,errors=dom_page
     page.evaluate("""()=>{
       const fetch=window.fetch;
       window.fetch=async(path,opts={})=>{
         let value;
         if(path==='/api/setup/github-import')value={id:'github-fixture'};
-        else if(path==='/api/jobs/github-fixture')value={state:'done',kind:'GitHub setup',message:'Done',done:1,total:1,result:{
+        else if(path==='/api/jobs/github-fixture'){await new Promise(resolve=>setTimeout(resolve,200));value={state:'done',kind:'GitHub setup',message:'Done',done:1,total:1,result:{
           settings:{source:{mode:'github',githubFolder:'https://github.com/owner/cards/tree/main/deck/art',localFiles:{},fallback:false},
             symbols:Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)])),
             symbolsSource:{kind:'github',value:'https://github.com/owner/cards/tree/main/deck/set_symbols'},
             dataJsonSource:{kind:'github',value:'deck/data.json'},backAsset:null,backDesign:{mode:'default'},
             githubSetupFolder:'https://github.com/owner/cards/tree/main/deck'},
-          cardData:[{name:'Test creature',nickname:'New name'}],summary:{art:'github',symbols:'folder',back:'default',data:1},warnings:[]}};
+          cardData:[{name:'Test creature',nickname:'New name'}],summary:{art:'github',symbols:'folder',back:'default',data:1},warnings:[]}};}
         else return fetch(path,opts);
         return {ok:true,status:200,text:async()=>JSON.stringify(value)};
       };
@@ -434,13 +496,19 @@ def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page
     }""")
     page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/deck')
     page.click('#github-setup-button')
-    page.wait_for_function("document.querySelector('#github-setup-status')?.classList.contains('success')")
+    if leave_during_import:
+        page.click('.topbar [data-nav=decks]');page.locator('#deck-search').wait_for()
+        page.wait_for_function("window.__fixture.deck.settings.symbolsSource?.kind==='github'")
+        page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+        page.locator('#setup-state').wait_for()
+    else:
+        page.wait_for_function("document.querySelector('#github-setup-status')?.classList.contains('success')")
     symbols=page.locator('#symbol-grid').locator('xpath=..')
     data=page.locator('#data-json-section')
     for panel in [symbols,data]:
         assert 'selected' in panel.get_by_role('button',name='From GitHub',exact=True).get_attribute('class')
         assert 'selected' not in panel.get_by_role('button',name='From Computer',exact=True).get_attribute('class')
-    page.click('#save-setup')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
     page.wait_for_function("window.__fixture.deck.settings.symbolsSource?.kind==='github'")
     page.evaluate("()=>{const root=document.querySelector('#setup-fields').parentElement;__mod_setup.renderSetup(root,window.__fixture.deck,()=>{});}")
     for panel in [symbols,data]:

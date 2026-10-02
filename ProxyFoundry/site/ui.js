@@ -180,5 +180,5 @@ export async function uploadFolder(files,onProgress=()=>{},source=null){
 }
 export function loading(text='Loading…'){return `<div class="loading-state"><span class="spinner"></span>${esc(text)}</div>`;}
 export function empty(title,text,button=''){return `<div class="empty-state"><span class="eyebrow">MAKE IT YOURS</span><h2>${esc(title)}</h2><p>${esc(text)}</p>${button}</div>`;}
-export function nav(hash){if(state.dirty&&!window.confirm('Leave without saving these setup changes?'))return;state.dirty=false;location.hash=hash;}
+export function nav(hash){location.hash=hash;}
 window.addEventListener('beforeunload',e=>{if(state.dirty||state.busy){e.preventDefault();e.returnValue='';}});

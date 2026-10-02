@@ -67,7 +67,7 @@ def request(app,method,url,body,headers):
     page.set_viewport_size({'width':1280,'height':720})
     for file in ['first','second']:
         page.locator('[data-artwork-card]').first.click();page.locator('[data-artwork-file="'+file+'"]').click()
-    page.click('#artwork-finish');page.click('#save-setup')
+    page.click('#artwork-finish');page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
     page.get_by_role('heading',name='Save artwork choices for next time?').wait_for();page.get_by_role('button',name='Not now',exact=True).click()
     page.evaluate("""async()=>{
       const files=await import('/site/artwork-files.js'),root=await navigator.storage.getDirectory();

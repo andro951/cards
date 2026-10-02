@@ -24,13 +24,13 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
     page.locator('#open-card-data').wait_for()
 
+    page.evaluate('window.showOpenFilePicker=undefined')
     local={'version':1,'cards':[{'name':'A Test Creature','nickname':'Local name'}]}
     with page.expect_file_chooser() as chooser:
         page.click('#open-card-data')
     chooser.value.set_files({'name':'data.json','mimeType':'application/json',
                             'buffer':json.dumps(local).encode()})
-    expect(page.locator('#card-data-status')).to_contain_text('1 nonempty card entry staged')
-    assert not app.ws.deck(deck['id'])['cards'][0]['faces'][0].get('semanticOverrides')
+    expect(page.locator('#card-data-status')).to_contain_text('1 nonempty card entry imported')
 
     original=app.ws.net.transport
     def transport(url):
@@ -43,7 +43,7 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.locator('#data-json-section').get_by_role('button',name='From GitHub',exact=True).click()
     page.fill('#card-data-url','https://github.com/owner/repo/blob/main/data.json')
     page.locator('#card-data-url').press('Tab')
-    expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry staged')
+    expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry imported')
     assert not errors,errors
 
     page.click('[data-frame-group=standard]')
@@ -52,8 +52,8 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.click('#modal-close')
     expect(page.locator('#activity')).to_be_hidden(timeout=60000)
 
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     values=app.ws.deck(deck['id'])['cards'][0]['faces'][0]['semanticOverrides']
     assert values['nickname']=='GitHub name'
     assert values['flavor_text']=='Linked flavor'
@@ -82,8 +82,8 @@ def test_setup_and_frame_picker_use_static_backs_without_generating(browser_app,
     page.locator('#modal-host .modal').screenshot(path=str(output/('static-frame-picker-'+group+'.png')))
     choice.locator('img').click()
     expect(page.locator('#modal-host')).to_be_empty()
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert app.ws.deck(deck['id'])['settings']['templateRules'][group]==style
     assert not requests and not page.locator('iframe.render-frame').count()
     assert not page.evaluate("import('/site/ui.js').then(m=>m.state.busy)")
