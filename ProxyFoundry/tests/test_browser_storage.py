@@ -522,3 +522,23 @@ def request(app,method,url,body,headers):
     assert state['old']['asset_id']==seeded['asset_id'] and state['new'] is None
     matches=page.evaluate("""async path=>{const root=await navigator.storage.getDirectory();let handle=root;const parts=path.split('/');for(const part of parts.slice(0,-1))handle=await handle.getDirectoryHandle(part);const file=await (await handle.getFileHandle(parts.at(-1))).getFile();const actual=await file.arrayBuffer(),expected=await (await fetch('/first.png')).arrayBuffer();return [...new Uint8Array(actual)].join(',')===[...new Uint8Array(expected)].join(',');}""",seeded['file_path'])
     assert matches
+
+
+
+def test_repeated_database_reads_keep_browser_heap_bounded(static_browser):
+    directory,context,origin=static_browser
+    worker=directory/'web/engine-worker.js'
+    worker.write_text(worker.read_text(encoding='utf-8').replace('initialized=true;','self.testPython=python;initialized=true;'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
+    page.locator('#import-deck').wait_for(timeout=90000)
+    engine=next(worker for worker in page.workers if 'engine-worker' in worker.url)
+    def reads():
+        engine.evaluate("()=>testPython.runPython('for index in range(2000):app.store.list(\"settings\")')")
+        return engine.evaluate('testPython._module.HEAPU8.byteLength')
+    warmed=reads();later=reads()
+    assert later-warmed<=32*1024*1024,{'warmHeap':warmed,'laterHeap':later}
+    mode=engine.evaluate('(code)=>testPython.runPython(code)', 'with app.store.connect() as db:mode=db.execute("PRAGMA journal_mode").fetchone()[0]\nmode')
+    assert mode=='delete'
+    import json
+    evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+    (evidence/'database-read-heap.json').write_text(json.dumps({'warmHeap':warmed,'laterHeap':later,'reads':4000,'journal':mode},indent=2),encoding='utf-8')

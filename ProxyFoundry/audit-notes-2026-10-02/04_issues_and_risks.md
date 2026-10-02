@@ -43,3 +43,10 @@
 - Repeated startup launches pass but do not establish the cause of the isolated
   timeout. Production stage/total diagnostics now expose future failures. Local
   bundle timings cannot justify a shared cache based on public network assumptions.
+
+
+- The expanded 400-output browser run failed after 36 completed images with
+  Python MemoryError followed by SQLite disk I/O errors. Evidence is preserved
+  under test-results/stress-400-oom-*. The failed engine exhausted memory;
+  which allocations accumulated is not established yet. Do not treat this as
+  a harmless harness error. A test-only heap/GC/database probe is running.

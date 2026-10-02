@@ -50,6 +50,11 @@ class BrowserStore(Store):
         self._render_rollback=[]
         self._render_cleanup=[]
         super().__init__(home)
+        #The browser serializes requests and owns the only SQLite writer.
+        #Repeated WAL opens grow the Wasm heap; a rollback journal keeps
+        #transactions without that growth in the browser filesystem.
+        with super().connect() as db:db.execute('PRAGMA journal_mode=DELETE')
+        self.checkpoint()
 
     def copy_render_file(self,source,destination):
         if self.copy_file is None:return super().copy_render_file(source,destination)

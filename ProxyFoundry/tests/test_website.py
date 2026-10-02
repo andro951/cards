@@ -156,7 +156,8 @@ def request(app,method,url,body,headers):
                             return original(path,options);};}""",first)
                     page.evaluate("document.querySelector('.render-frame').contentWindow.postMessage({type:'__testReleaseNative'},location.origin)")
                     page.wait_for_function("window.originalCard.querySelector('img')?.getAttribute('src')?.includes('/api/assets/')",timeout=90000)
-                    page.wait_for_function("import('/site/ui.js').then(ui=>!ui.work.busy)",timeout=90000)
+                    page.evaluate("async()=>{window.__testUI=await import('/site/ui.js');}")
+                    page.wait_for_function("!window.__testUI.work.busy",timeout=90000)
                     assert page.evaluate('originalSearch===document.querySelector("#card-search")&&originalCard===document.querySelector("[data-card]")&&document.activeElement===originalSearch')
                     expect(page.locator('#card-search')).to_have_value('Concurrent')
                     assert page.locator('#card-search').evaluate('(input)=>input.selectionStart')==caret
@@ -820,8 +821,9 @@ def test_static_template_editor_generates_only_on_request_and_saves_validated_mo
 @pytest.mark.skipif(os.environ.get('PF_DECK_STRESS')!='1',reason='Affected full-deck browser rendering stress run')
 def test_published_deck_100_image_browser_generation_and_reload(tmp_path):
     from playwright.sync_api import sync_playwright
+    count=int(os.environ.get('PF_STRESS_IMAGES','100'));assert 100<=count<=400
     build_site(tmp_path)
-    #Repeat actual imported printings with fresh face identities to exercise 100 uncached outputs.
+    #Repeat actual imported printings with fresh face identities to exercise uncached outputs.
     #The injection exists only in this isolated test build, never in the distribution.
     import shutil
     site=tmp_path/'site';shutil.copytree(tmp_path/'built',site)
@@ -833,7 +835,7 @@ def request(app, method, url, body, headers):
         import copy
         from foundry.domain import uid
         deck=app.ws.deck(str(url).rsplit('/',1)[-1]);original=deck['cards'];cards=[]
-        for index in range(100):
+        for index in range(STRESS_COUNT):
             card=copy.deepcopy(original[index%len(original)]);card['id']=uid();card['quantity']=1
             for face in card['faces']:
                 face['id']=uid()
@@ -843,12 +845,19 @@ def request(app, method, url, body, headers):
         return {'status':200,'mime':'application/json','body':b'{"ok":true}','headers':{}}
     return original_request(app, method, url, body, headers)
 """
-    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    injected=injected.replace('STRESS_COUNT',str(count))
+    source=source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):')
+    source=source.replace("if(method==='POST')await mount.syncfs();","if(method==='POST')await mount.syncfs();\n    if(method==='POST'&&url.startsWith('/api/render-sessions/'))self.postMessage({type:'stress-memory',heap:python._module.HEAPU8.byteLength,python:python.runPython(\"import gc; json.dumps({'counts':gc.get_count(),'enabled':gc.isenabled(),'objects':len(gc.get_objects()),'database':app.store.db_path.stat().st_size})\")});")
+    worker.write_text(source,encoding='utf-8')
+    bootstrap=site/'web/bootstrap.js';source=bootstrap.read_text(encoding='utf-8')
+    source=source.replace('const data=event.data;','const data=event.data;\n    if(data.type==="job" && (data.job.done%10===0 || ["done","failed","cancelled"].includes(data.job.state)))console.info("STRESS_JOB "+JSON.stringify({kind:data.job.kind,state:data.job.state,done:data.job.done,total:data.job.total,message:data.job.message,error:data.job.error}));')
+    source=source.replace('const data=event.data;', 'const data=event.data;\n    if(data.type===\"stress-memory\")console.info(\"STRESS_MEMORY \"+JSON.stringify(data));')
+    bootstrap.write_text(source,encoding='utf-8')
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
-            context=playwright.chromium.launch_persistent_context(str(tmp_path/'profile'),headless=True,viewport={'width':1440,'height':1000});page=context.pages[0]
+            context=playwright.chromium.launch_persistent_context(str(tmp_path/'profile'),headless=os.environ.get('PF_STRESS_HEADFUL')!='1',viewport={'width':1440,'height':1000});page=context.pages[0]
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
@@ -860,7 +869,7 @@ def request(app, method, url, body, headers):
                 page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/__test__/expand-deck/'+ui.state.activeDeck.id,{});}")
                 page.reload(wait_until='domcontentloaded');page.locator('#generate-deck').wait_for(timeout=90000)
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
-                page.on('console',lambda message:print('Browser console: '+message.text,flush=True) if message.type=='error' else None)
+                page.on('console',lambda message:print(('Browser console: '+message.text).encode('ascii',errors='backslashreplace').decode(),flush=True) if message.type=='error' or message.text.startswith(('STRESS_JOB ','STRESS_MEMORY ')) else None)
                 def capture(response):
                     if '/api/decks/' not in response.url or response.request.method!='GET':return
                     raw=b''
@@ -875,26 +884,63 @@ def request(app, method, url, body, headers):
                         saved.append(response.url)
                         if len(saved)%10==0:print('Full deck: '+str(len(saved))+' rendered images saved',flush=True)
                 page.on('response',progress)
+                deck_id=original['id'];interactions=[]
+                def interaction(label,operation):
+                    import time
+                    started=time.perf_counter();operation();interactions.append({'action':label,'seconds':time.perf_counter()-started})
+                def navigate(key,selector):
+                    page.click('.topbar [data-nav='+key+']');page.locator(selector).first.wait_for(timeout=30000)
+                def return_cards():
+                    page.evaluate("id=>{location.hash='#deck/'+id+'/cards';}",deck_id)
+                    page.locator('#card-search').wait_for(timeout=30000)
+                def menus():
+                    interaction('settings',lambda:navigate('settings','#main input[type=checkbox]'))
+                    interaction('templates',lambda:navigate('templates','#main .template-grid'))
+                    interaction('library',lambda:navigate('decks','#deck-search'))
+                    page.locator('#deck-search').fill('New');assert page.locator('#deck-search').input_value()=='New'
+                    interaction('open import',lambda:page.click('#import-deck'))
+                    page.locator('.modal-body input[type=url]').fill('https://scryfall.com/@andro951/decks/e18f48e7-a2b7-479e-8361-de947bc734ff')
+                    assert page.locator('#do-import').is_enabled();page.click('#modal-close')
+                    interaction('return to cards',return_cards)
+                #Validate selectors and navigation before investing in a large render.
+                menus();interactions.clear()
                 page.click('#generate-deck')
-                page.wait_for_function("() => document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=3600000)
+                page.wait_for_function("document.querySelector('.render-frame') || document.querySelector('.toast.error')",timeout=900000)
+                assert page.locator('.render-frame').count(),page.locator('.toast.error').all_text_contents()
+                menus()
+                page.locator('#card-search').fill('Syr');page.keyboard.press('ArrowLeft')
+                caret=page.locator('#card-search').evaluate('(input)=>input.selectionStart')
+                page.evaluate("window.stressSearch=document.querySelector('#card-search');window.stressCard=document.querySelector('[data-card]');")
+                page.evaluate("async()=>{window.__stressUI=await import('/site/ui.js');}")
+                page.wait_for_function("!window.__stressUI.work.busy",timeout=3600000)
+                assert page.evaluate("stressSearch===document.querySelector('#card-search')&&stressCard===document.querySelector('[data-card]')&&document.activeElement===stressSearch")
+                assert page.locator('#card-search').input_value()=='Syr'
+                assert page.locator('#card-search').evaluate('(input)=>input.selectionStart')==caret
+                page.locator('#card-search').fill('')
                 failure=page.locator('.toast.error').all_text_contents()
                 (evidence/'full-deck-browser-terminal.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
                 data=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 (evidence/'full-deck-browser-diagnostics.json').write_text(json.dumps({'toasts':failure,'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()'),'browser':page.evaluate("()=>JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")},indent=2),encoding='utf-8')
                 assert data['status']=='ready',{'toasts':failure,'saved':len(saved),'faces':[(card['name'],face.get('error')) for card in data['cards'] for face in card['faces'] if face.get('error')]}
-                assert data['summary']['faces']>=100 and data['summary']['rendered']==data['summary']['faces']
-                assert len(saved)==100 and len({face['compiled']['renderKey'] for card in data['cards'] for face in card['faces']})==100
-                page.get_by_role('button',name='View deck',exact=True).click()
+                assert data['summary']['faces']>=count and data['summary']['rendered']==data['summary']['faces']
+                assert len(saved)==count and len({face['compiled']['renderKey'] for card in data['cards'] for face in card['faces']})==count
+                assert page.locator('.badge.ready').count()
+                assert page.get_by_role('dialog',name='Your deck is ready').count()==0
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
                 page.locator('.card-grid img').first.wait_for(timeout=90000)
                 page.wait_for_function("()=>[...document.querySelectorAll('.card-grid img')].slice(0,4).every(image=>image.complete&&image.naturalWidth>0)",timeout=90000)
                 page.screenshot(path=str(evidence/'full-deck-browser-grid.png'),full_page=True)
-                report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved),'storage':page.evaluate('()=>navigator.storage.estimate()')}
+                report={'deckId':data['id'],'summary':data['summary'],'saved':len(saved),'interactions':interactions,'requestedImages':count,'storage':page.evaluate('()=>navigator.storage.estimate()')}
                 (evidence/'full-deck-browser-summary.json').write_text(json.dumps(report,indent=2))
                 page.reload(wait_until='domcontentloaded');page.locator('.badge.ready').wait_for(timeout=90000)
                 previous=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 assert previous['summary']['rendered']==data['summary']['rendered']
+            except Exception:
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'stress-failure.png'))
+                (evidence/'stress-failure.json').write_text(json.dumps({'body':page.locator('body').inner_text(),'diagnostics':page.evaluate('localStorage.getItem("bulk-proxy-forge-browser-diagnostics")')},indent=2),encoding='utf-8')
+                raise
             finally:context.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 

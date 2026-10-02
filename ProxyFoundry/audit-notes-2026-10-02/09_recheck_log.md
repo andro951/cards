@@ -298,3 +298,22 @@ The large-session harness also caught a strict selector matching two template
 grids. The captured page confirms Templates opened; target the first actual
 grid. A pre-generation menu/input pass now validates all selectors before the
 expensive long run. The corrected 400-image run is active, not yet passed.
+
+
+## Chunk 12 — isolate browser database growth
+
+The corrected asynchronous completion wait exposed a real 400-output failure
+at 36 completed images: MemoryError followed by SQLite I/O errors. Heap/GC/database
+sampling showed 2.3 GB at first save, growing toward 4 GB, with a 5.4 MB database
+and flat tracked Python object counts. Full collection did not arrest growth.
+An independent worker probe isolates WAL database opens: 500 reads grow capacity
+113.8 to 196.7 MB; after switching DELETE, 1,000 further reads add no capacity.
+The precise underlying allocation remains unestablished.
+
+BrowserStore now uses a rollback journal and checkpoints workspace migration.
+Local Store retains WAL. Migration/rollback/reload and actual 4,000-read heap
+regressions pass in 19.29s; the latter stays at 78,970,880 bytes. Corrected
+400-output and final all-enabled verification (584 routine, 114 extended) are
+active. Full tracing was removed; no manual GC workaround shipped. All 15 Node
+cases including live sites and all four approved vendor hashes pass. See
+ docs/BROWSER_DATABASE_MEMORY.md and its scoped raw measurements.

@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 583 | Every completed change |
-| Extended | 113 | Relevant changes or an explicit full sweep |
+| Routine | 584 | Every completed change |
+| Extended | 114 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -159,3 +159,15 @@ and actual static browser comparison. Routine image cases cover changed bytes,
 trimming, missing files, invalid input and eviction. The actual static ingestion
 check is extended; it verifies byte identity without a machine-dependent timing
 threshold.
+
+
+### Browser database memory
+
+[Journal measurements](BROWSER_DATABASE_MEMORY.md) isolate repeated WAL opens
+as the trigger for browser heap growth. Routine tests verify saved-workspace
+migration and rollback; the extended actual browser case checks 4,000 reads
+against a bounded heap-growth allowance. The opt-in deck stress test supports
+PF_STRESS_IMAGES=400 and PF_STRESS_HEADFUL=1 for an expanded visible run.
+Only its existing default 100-output case is part of an ordinary full sweep.
+The larger fixture repeats four actual printings with fresh face IDs; it does
+not claim coverage of 400 distinct artworks.
