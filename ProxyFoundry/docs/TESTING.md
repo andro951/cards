@@ -8,10 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 519 | Every completed change |
+| Routine | 522 | Every completed change |
 | Extended | 89 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 519 selected tests in 280.52 seconds. The
+The latest routine run passed all 522 selected tests in 216.91 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -75,3 +75,5 @@ The affected five-card Supernatural full-art browser test passed in 338.24 secon
 It downloads the actual review ZIP and checks rendered art pixels against full-card
 source coordinates. Run `tests/test_full_art_examples.py` with `PF_BROWSER=1`
 and `PF_LIVE_CC=1`; see [full-art verification](FULL_ART_VERIFICATION.md).
+
+Slow application operations now have [timing logs](TIMING_LOGS.md), separate from the per-test timing CSV.

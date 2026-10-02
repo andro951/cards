@@ -417,6 +417,11 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                     assert archive.namelist()==['FRONT/000001.png','BACK/000001.png']
                     assert all(archive.read(name).startswith(b'\x89PNG') for name in archive.namelist())
                 assert saved.stat().st_size>1024
+                diagnostic_bytes=page.evaluate("async()=>[...new Uint8Array(await (await fetch((window.__pfBasePath||'')+'/api/diagnostics.zip')).arrayBuffer())]")
+                import io
+                with zipfile.ZipFile(io.BytesIO(bytes(diagnostic_bytes))) as diagnostics:
+                    log=diagnostics.read('app.log').decode('utf-8')
+                    assert 'TIMING ' in log and 'render.native' in log and 'network.fetch' in log and 'native.settle-wait' in log
                 page.reload(wait_until='domcontentloaded')
                 page.get_by_text('New deck',exact=True).first.wait_for(timeout=90000)
                 assert not errors,errors

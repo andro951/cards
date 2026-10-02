@@ -1,6 +1,7 @@
 """Read-through cache and bounded, rate-limited network operations."""
 from __future__ import annotations
 
+from .timing import timed, timing
 import json
 import os
 import threading
@@ -58,7 +59,7 @@ class Network:
         opener = urllib.request.build_opener(SafeRedirect)
         for attempt in range(2):
             try:
-                with opener.open(req, timeout=25) as response:
+                with timing(self.store,'network.attempt',url=url,attempt=attempt+1), opener.open(req, timeout=25) as response:
                     size = response.headers.get('Content-Length')
                     if size and int(size) > MAX_REMOTE_BYTES:
                         raise ValidationError('An individual asset exceeded the 64 MB download limit.')
@@ -70,7 +71,8 @@ class Network:
                 if exc.code in (429, 503) and attempt == 0:
                     try: delay = max(1., min(120., float(exc.headers.get('Retry-After', '10'))))
                     except ValueError: delay = 10.
-                    self.sleep(delay); continue
+                    with timing(self.store,'network.retry-wait',url=url,status=exc.code,delay=delay):self.sleep(delay)
+                    continue
                 detail = f'HTTP {exc.code}'
                 try:
                     parsed = json.loads(exc.read(4096))
@@ -82,6 +84,7 @@ class Network:
                 raise ValidationError(f'Could not fetch {url}: {exc}') from exc
         raise ValidationError('Network request failed.')
 
+    @timed('network.fetch')
     def fetch(self, url: str, *, refresh: bool = False, immutable: bool = False,
               ttl: float | None = None) -> tuple[bytes, str, dict[str, Any]]:
         url = validate_remote_url(url)
@@ -98,9 +101,10 @@ class Network:
             if urllib.parse.urlsplit(url).hostname == 'api.scryfall.com':
                 with self._lock:
                     remaining = .12 - (time.monotonic() - self._last_scryfall)
-                    if remaining > 0: self.sleep(remaining)
+                    if remaining > 0:
+                        with timing(self.store,'network.rate-wait',url=url,delay=remaining):self.sleep(remaining)
                     self._last_scryfall = time.monotonic()
-            body, mime, headers = self.transport(url)
+            with timing(self.store,'network.download',url=url):body, mime, headers = self.transport(url)
             if not body:
                 raise ValidationError('The server returned an empty file: ' + url)
             if 'json' in mime or urllib.parse.urlsplit(url).hostname == 'api.scryfall.com':
@@ -113,10 +117,11 @@ class Network:
             self.misses += 1
             return body, mime, {'cache': False, 'fetchedAt': now}
 
+    @timed('network.transient')
     def fetch_transient(self, url: str) -> tuple[bytes, str, dict[str, Any]]:
         """Fetch a remote asset without adding it to the persistent workspace cache."""
         url = validate_remote_url(url)
-        body, mime, headers = self.transport(url)
+        with timing(self.store,'network.download',url=url):body, mime, headers = self.transport(url)
         if not body:
             raise ValidationError('The server returned an empty file: ' + url)
         return body, mime, {'cache': False, 'transient': True}

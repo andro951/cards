@@ -1,5 +1,6 @@
 """Deck orchestration. Source changes invalidate front renders; backs/quantities do not."""
 from __future__ import annotations
+from .timing import timed
 import base64,copy,hashlib,io,json,math,re,time,zipfile
 from pathlib import Path,PurePosixPath
 from PIL import Image
@@ -433,6 +434,7 @@ class Workspace:
                             'assetId':art_id})
         return out
 
+    @timed('art.resolve')
     def _art(self,sf,face,opts,settings,index):
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
         name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
@@ -560,6 +562,7 @@ class Workspace:
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
 
+    @timed('card.prepare')
     def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total):
         if cancel():raise ValidationError('Preparation cancelled.')
         sf=c['scryfall']
@@ -615,6 +618,7 @@ class Workspace:
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
         return index
+    @timed('deck.prepare')
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
@@ -626,6 +630,7 @@ class Workspace:
             d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
+    @timed('card.prepare-single')
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing this card.')

@@ -1,6 +1,7 @@
 """Transactional local workspace, immutable asset store and HTTP cache metadata."""
 from __future__ import annotations
 
+from .timing import timed
 import hashlib
 import json
 import os
@@ -253,6 +254,7 @@ class Store:
         return [{**json.loads(r['body']), 'id': r['id'], 'revision': r['rev'],
                  'createdAt': r['created'], 'updatedAt': r['updated'], 'deleted': bool(r['deleted'])} for r in rows]
 
+    @timed('storage.document')
     def put(self, kind: str, data: dict[str, Any], expected: int | None = None) -> dict[str, Any]:
         ident = data.get('id') or uid()
         now = time.time()
@@ -373,6 +375,7 @@ class Store:
             raise ValidationError('Invalid asset identifier.')
         return self.home / 'assets' / ident[:2] / ident
 
+    @timed('storage.asset')
     def add_asset(self, content: bytes, mime: str, width: int | None = None, height: int | None = None) -> dict[str, Any]:
         if not content:
             raise ValidationError('The uploaded file is empty.')
@@ -472,6 +475,7 @@ class Store:
             return None
         return {**dict(row),'url':'/api/assets/'+row['asset_id']}
 
+    @timed('storage.render')
     def render_put(self, key: str, asset: dict[str, Any], *, deck_id: str | None = None, card_id: str | None = None,
                    face_id: str | None = None, deck_name='Deck', face_name='Card') -> dict[str, Any]:
         if not asset.get('width') or not asset.get('height'):

@@ -57,6 +57,7 @@ class App:
         from logging.handlers import RotatingFileHandler
         handler = RotatingFileHandler(self.store.home / 'logs' / 'app.log', maxBytes=2 * 1024 ** 2, backupCount=2, encoding='utf-8')
         self.log.addHandler(handler)
+        self.store.timing_logger=self.log
         self.log.info('APP_START app=1.3.0 pipeline=%s root=%s workspace=%s', PIPELINE_VERSION, ROOT, self.store.home)
 
     @staticmethod
@@ -622,7 +623,8 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/render-diagnostic':
             diag=d.get('diagnostic') if isinstance(d.get('diagnostic'),dict) else {}
             payload={'key':str(d.get('key') or '')[:64],'stage':str(d.get('stage') or '')[:80],'diagnostic':diag}
-            self.app.log.info('RUNTIME_SYMBOL %s',json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
+            label='TIMING' if payload['stage']=='timing' else 'RUNTIME_SYMBOL'
+            self.app.log.info('%s %s',label,json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
             return self.respond({'ok':True})
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))

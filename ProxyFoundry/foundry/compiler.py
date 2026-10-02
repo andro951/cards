@@ -1,5 +1,6 @@
 """Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
+from .timing import timed
 import copy,math,re
 from PIL import Image
 from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
@@ -2185,6 +2186,7 @@ class Compiler:
                                  'schemaVersion':t.get('schemaVersion',1),'baseGroup':t.get('baseGroup'),
                                  'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{})})
         return 'custom:'+choice,fingerprint,1
+    @timed('card.compile')
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
         for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):

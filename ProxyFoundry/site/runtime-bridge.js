@@ -134,38 +134,55 @@
     await timeout(Promise.all([...families].map(async f=>{const list=await document.fonts.load('16px "'+String(f).replace(/["\\]/g,'')+'"');if(!list.length)throw new Error('No CardConjurer font definition for '+f+'.');})),30000,'CardConjurer fonts');
     await timeout(document.fonts.ready,30000,'Font decoding');
   }
+  async function measureNative(stage,key,operation){
+    const started=performance.now();let outcome='failed';
+    try{
+      const result=await operation();outcome='ok';return result;
+    }finally{
+      const seconds=(performance.now()-started)/1000;
+      if(seconds>=.1)post('diagnostic',{key,stage:'timing',diagnostic:{stage,seconds:Number(seconds.toFixed(4)),outcome}});
+    }
+  }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
     clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
-      await preload(data);await fontsReady(data);
+      await measureNative('native.assets',request.key,()=>preload(data));
+      await measureNative('native.fonts',request.key,()=>fontsReady(data));
       // Structural scripts run through native loadCard only after it assigns the new card.
       if(window.writingText)clearTimeout(window.writingText);
       let symbols=usedSymbols(data);for(const sym of symbols)S.requireImage(sym.image);
-      await readyImages(symbols.map(s=>['symbol '+s.name,s.image]));
+      await measureNative('native.symbols',request.key,()=>readyImages(symbols.map(s=>['symbol '+s.name,s.image])));
       S.phase='load';localStorage.setItem(storageKey,JSON.stringify(data));
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
-      await window.loadCard(storageKey);await scriptsSettled();
-      await sagaReady(data);await stationReady(data);
+      await measureNative('native.load-and-scripts',request.key,async()=>{
+        await window.loadCard(storageKey);await scriptsSettled();
+        await sagaReady(data);await stationReady(data);
+      });
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
-      await readyImages(imagesFor(window.card,symbols));await fontsReady(window.card);
+      await measureNative('native.loaded-images',request.key,()=>readyImages(imagesFor(window.card,symbols)));
+      await measureNative('native.loaded-fonts',request.key,()=>fontsReady(window.card));
       symbolRuntimeSnapshot('after-load',request.key,data);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
       S.phase='render';if(window.writingText)clearTimeout(window.writingText);
-      await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
+      await measureNative('native.first-draw',request.key,async()=>{
+        await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
+      });
       symbolRuntimeSnapshot('after-first-draw',request.key,data);
-      await sleep(550);
+      await measureNative('native.settle-wait',request.key,()=>sleep(550));
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
-      await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
+      await measureNative('native.final-draw',request.key,async()=>{
+        await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
+      });
       symbolRuntimeSnapshot('after-final-draw',request.key,data);
       const errors=S.errors.filter(x=>x.phase!=='bootstrap');
       if(errors.length)throw new Error(errors[0].message);
       const canvas=window.cardCanvas;
       const width=Math.round(data.width*(1+2*(data.marginX||0))),height=Math.round(data.height*(1+2*(data.marginY||0)));
       if(!(canvas instanceof HTMLCanvasElement)||canvas.width!==width||canvas.height!==height)throw new Error('Native canvas dimensions do not match the saved template.');
-      const blob=await timeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export');
+      const blob=await measureNative('native.png-export',request.key,()=>timeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
     }finally{localStorage.removeItem(storageKey);S.active=false;S.phase='idle';}
   }

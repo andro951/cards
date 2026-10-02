@@ -1,11 +1,13 @@
 """Exact-printing Scryfall imports and explicit GitHub art folders."""
 from __future__ import annotations
+from .timing import timed
 import hashlib,json,re
 from urllib.parse import quote,urlsplit
 from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group
 from .legacy import deck_parser,ingest
 class Sources:
     def __init__(self,network):self.net=network
+    @timed('scryfall.resolve')
     def resolve_card(self,source,refresh=False):
         source=str(source).strip()
         try:parsed=ingest.parse_scryfall_source(source)
@@ -35,6 +37,7 @@ class Sources:
         meld_result={k:card.get(k) for k in ('id','name','artist','set','collector_number','rarity') if card.get(k) is not None}
         meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
         return {**d,'_meld_proxy':True,'_meld_result':meld_result}
+    @timed('deck.import')
     def import_deck(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
@@ -120,6 +123,7 @@ class Sources:
         if self.git_blob_sha(raw)!=expected:
             raise ValidationError('GitHub returned artwork bytes that did not match the folder listing. Generate again after GitHub finishes updating.')
         return raw,url
+    @timed('github.index')
     def github_index(self,url,branch=None,refresh=False):
         loc=github_location(url,branch)
         if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0 if refresh else 600).get('default_branch','main')
@@ -150,6 +154,7 @@ class Sources:
         d=self.net.json(url,refresh=refresh)
         return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
 
+    @timed('scryfall.flavor')
     def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
         if policy=='resolved' or policy=='auto' and source_exact:return sf
         name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')

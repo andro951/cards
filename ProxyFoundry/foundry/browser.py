@@ -4,6 +4,7 @@ Pyodide runs this module in a dedicated Web Worker. No HTTP server is started.
 """
 from __future__ import annotations
 
+from .timing import timed
 import json
 import mimetypes
 import re
@@ -50,6 +51,7 @@ class BrowserStore(Store):
             changed=db.total_changes>0
         if changed:self.checkpoint()
 
+    @timed('storage.checkpoint')
     def checkpoint(self):
         snapshot=self.home/'.checkpoint.sqlite3'
         try:
@@ -247,6 +249,7 @@ def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambd
     return app
 
 
+@timed('api.request')
 def request(app, method, url, body=b'', headers=None):
     parsed = urllib.parse.urlsplit(url)
     path = urllib.parse.unquote(parsed.path)
