@@ -548,10 +548,16 @@ def test_static_token_styles_and_upstream_assets(tmp_path):
                     }
                     seeds.push({style,version:seed.version,text:seed.text.rules.text,assets});
                   }
-                  return {templates,seeds};
+                  const derived=[];
+                  for(const kind of ['Title','Crown']){
+                    const response=await fetch('/img/frames/proxy-foundry/godzilla/'+kind+'B.png');
+                    derived.push({status:response.status,size:(await response.arrayBuffer()).byteLength});
+                  }
+                  return {templates,seeds,derived};
                 }''')
                 assert {row['id'] for row in result['templates']} >= {'token-classic','token-full-art','token-borderless'}
                 assert [row['version'] for row in result['seeds']]==['tokenTextlessM15','tokenTextless','tokenTextlessBorderless']
+                assert all(asset['status']==200 and asset['size']>0 for asset in result['derived'])
                 for seed in result['seeds']:
                     assert seed['text']=='Flying'
                     assert all(asset['status']==200 and asset['size']>0 for asset in seed['assets']),seed

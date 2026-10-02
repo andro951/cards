@@ -257,6 +257,7 @@ export function renderSetup(root,deck,onSaved){
         readSettings();
         openFramePicker(deck,group,s,stagedCardData,selected,choice=>{
           s.templateRules[group]=choice;
+          if(group==='token')tokenFrame.value=choice;
           redrawFrames();
           mark();
         });
@@ -267,6 +268,7 @@ export function renderSetup(root,deck,onSaved){
     host.append(body);
   };
   redrawFrames();
+  tokenFrame.addEventListener('input',()=>{s.templateRules.token=tokenFrame.value;redrawFrames();});
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
     s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;redrawFrames();mark();
@@ -398,7 +400,6 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       nonlegendary:$('#token-legendary-mode',root).value==='nonlegendary',
       legendaryMode:$('#token-legendary-mode',root).value
     };
-    s.templateRules.token=$('#token-frame',root).value;
   }
   function persistSetup(importComplete=false){
     clearTimeout(saveTimer);

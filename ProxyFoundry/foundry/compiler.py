@@ -1889,18 +1889,6 @@ def _nickname_code(sem):
     if code and code in 'WUBRGMAL':return code
     return 'C'
 
-def _nickname_title_src(code,complete=False):
-    if code=='C':
-        return ('/img/frames/m15/nickname/m15NicknameTitleA.png' if complete
-                else '/img/frames/m15/nickname/addons/m15NicknameTitleC.png')
-    return f'/img/frames/m15/nickname/m15NicknameTitle{code}.png'
-
-def _nickname_crown_src(code,complete=False):
-    if code=='C':
-        return ('/img/frames/m15/nickname/m15NicknameCrownA.png' if complete
-                else '/img/frames/m15/nickname/smooth/c.png')
-    return f'/img/frames/m15/nickname/m15NicknameCrown{code}.png'
-
 def _nickname_frame_src(code):
     # The pinned pack has no C body image. Its complete neutral A body pairs
     # with the genuine colorless title and P/T addon.
@@ -1934,31 +1922,23 @@ def _nickname_text(data,sem,group,force=False):
         }
         return True
 
-    # Standard portrait nickname typography. Special card families keep all of
-    # their own type/rules/chapter/loyalty/helper-strip geometry.
-    nickname_x=.0854;nickname_w=.8292
-    if group=='transform-front' or group in {'modal-front','modal-back'}:
-        nickname_x=.1614;nickname_w=.7534
-    elif group=='planeswalker':
-        nickname_x=.0867;nickname_w=.8267
-    nickname_y=.0372 if group=='planeswalker' else .0522
-    title_y=.1015 if group=='planeswalker' else .1129
-    text['nickname']={
-        'name':'Nickname','text':nickname,'x':nickname_x,'y':nickname_y,
-        'width':nickname_w,'height':.0548 if group=='planeswalker' else .0543,
-        'oneLine':True,'font':'belerenb','size':.0381,'color':'white',
-        'shadowX':.0014,'shadowY':.001,
-    }
+    old=text.get('title') if isinstance(text.get('title'),dict) else {}
+    text['nickname']={**old,'name':'Nickname','text':nickname,
+        'x':old.get('x',.0854),'y':old.get('y',.0522),
+        'width':old.get('width',.8292),'height':old.get('height',.0543),
+        'oneLine':True,'font':old.get('font','belerenb'),'size':old.get('size',.0381)}
+    main=text['nickname']
     text['title']={
-        'name':'Title','text':true_name if nickname!=true_name else '', 'x':.14,'y':title_y,'width':.72,'height':.0243,
+        'name':'Title','text':true_name,'x':main['x']+.0546,
+        'y':main['y']+main['height']+.0064,'width':max(.1,main['width']-.1092),'height':.0243,
         'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
         'shadowX':.0014,'shadowY':.001,'align':'center',
     }
     return True
 
 
-def _apply_full_m15_nickname_pack(data,sem,refit=False):
-    """Replace the current structural frame with CardConjurer's M15Nickname pack.
+def _apply_godzilla_frame(data,sem,refit=False):
+    """Build the Godzilla frame without the optional real-name addon.
 
     The pack has complete W/U/B/R/G/M/A/L frames. Colorless uses its
     neutral A body and title because the pinned pack has no C body.
@@ -1975,16 +1955,14 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
     frames=[
         {'name':f'{color_name} Frame','src':frame_src,'masks':[]},
     ]
-    if legendary:
-        frames.append({
-            'name':f'{color_name} Crown','src':_nickname_crown_src(code,True),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS),
-        })
-    else:
-        frames.append({
-            'name':f'{color_name} Title','src':_nickname_title_src(code,True),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
-        })
+    kind='Crown' if legendary else 'Title'
+    title_bounds=copy.deepcopy(_NICKNAME_CROWN_BOUNDS if legendary else _NICKNAME_TITLE_BOUNDS)
+    title_bounds['height']=.0933 if legendary else .069
+    frames.insert(0,{
+        'name':f'{color_name} {kind}',
+        'src':f'/img/frames/proxy-foundry/godzilla/{kind}{code if code in "WUBRGMAL" else "A"}.png',
+        'masks':[],'bounds':title_bounds,
+    })
     if pt_text:
         # CardConjurer draws the first frame last, above the other frame layers.
         frames.insert(0,{
@@ -2043,42 +2021,10 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
         'oneLine':True,'align':'center','color':'white',
     })
 
+    text['title']=copy.deepcopy(text.pop('nickname'))
+    text['title'].update(name='Title',text=str(sem.get('name') or ''))
     if refit:native.auto_fit(data,sem['art_local_path'])
     return True
-
-
-def _force_token_text_white(data):
-    """Token nickname fallback must remain legible over the dark token boxes."""
-    text=data.get('text') or {}
-    for key in ('nickname','title','type','rules','pt'):
-        field=text.get(key)
-        if isinstance(field,dict):field['color']='white'
-
-
-def _apply_planeswalker_nickname_frame(data):
-    changed=False
-    for frame in data.get('frames',[]):
-        if not isinstance(frame,dict):continue
-        src=str(frame.get('src') or '')
-        m=re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame([WUBRGMA])\.png',src)
-        if not m:continue
-        frame['src']=f'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame{m.group(1)}.png'
-        changed=True
-    if changed:data['version']='planeswalkerNickname'
-    return changed
-
-def _apply_modal_nickname_frame(data):
-    changed=False
-    for frame in data.get('frames',[]):
-        if not isinstance(frame,dict):continue
-        src=str(frame.get('src') or '')
-        m=re.fullmatch(r'/img/frames/modal/regular/(back/)?([wubrgma])\.png',src)
-        if not m:continue
-        side='b' if m.group(1) else 'f'
-        frame['src']=f'/img/frames/modal/nickname/{m.group(2)}{side}.png'
-        changed=True
-    if changed:data['version']='modalNickname'
-    return changed
 
 
 def apply_full_art_text(data):
@@ -2103,47 +2049,21 @@ def reserve_nickname_mana_space(data,sem):
 
 
 def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame=False):
-    """Apply complete nickname frames where supported, preserving special layouts."""
-    nickname=str(sem.get('nickname') or '').strip()
-    if not nickname and not force:return False
-    effective_sem=sem
-    if force and not nickname:
-        effective_sem={**sem,'nickname':str(sem.get('name') or '')}
-    # A nickname alone adds the two-name treatment to the chosen ordinary
-    # frame. Only the explicit Godzilla choice replaces that frame outright.
-    # Tokens retain their complete nickname pack because their native frame
-    # needs the matching full title/body assets.
-    if full_frame or group=='token':
-        if _apply_full_m15_nickname_pack(data,effective_sem,refit):
-            if force and not nickname:(data.get('text') or {}).get('title',{})['text']=''
-            return True
-    if not _nickname_text(data,effective_sem,group):return False
-    if group=='token':_force_token_text_white(data)
-
-    # Battle has no rotatable nickname frame asset in CardConjurer. Its native
-    # Battle frame stays intact; only the two-name text treatment is applied.
+    """Choose the Godzilla base independently, then overlay an actual nickname."""
+    if full_frame or force:
+        _apply_godzilla_frame(data,sem,refit)
+    if not str(sem.get('nickname') or '').strip():return False
+    if not _nickname_text(data,sem,group):return False
+    # Battle is landscape and keeps its existing two-name typography.
     if group=='battle':return True
-
-    # These two structural families have real CardConjurer nickname packs.
-    if group=='planeswalker' and _apply_planeswalker_nickname_frame(data):
-        return True
-    if group in {'modal-front','modal-back'} and _apply_modal_nickname_frame(data):
-        return True
-
     code=_nickname_code(sem)
-    legendary=bool(sem.get('legendary'))
-    frames=data.setdefault('frames',[])
-    if legendary:
-        frames.insert(0,{
-            'name':'Nickname Crown','src':_nickname_crown_src(code),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
-            if code!='C' else {'x':0,'y':0,'width':1,'height':1},
-        })
-    else:
-        frames.insert(0,{
-            'name':'Nickname Title','src':_nickname_title_src(code),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
-        })
+    main=data['text']['nickname']
+    bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':main['width']+.0722,'height':main['height']+.051}
+    data.setdefault('frames',[]).insert(0,{
+        'name':'Nickname Title',
+        'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
+        'masks':[],'bounds':bounds,
+    })
     return True
 
 
@@ -2364,7 +2284,7 @@ class Compiler:
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
         if nickname_applied and group in ORDINARY_GROUPS:
             reserve_nickname_mana_space(data,sem)
-        if nickname_applied and data.get('version')=='m15Nickname':
+        if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
         if recipe in {'art_series_scan','helper_scan'}:

@@ -601,3 +601,37 @@ def test_export_reference_enrichment_uses_indexed_lookup(dom_page):
     assert report['count']==5000 and report['last']['oracle_id'].endswith('000000004999')
     assert report['last']['artist']=='Artist' and report['seconds']<3
     assert not errors,errors
+
+@pytest.mark.parametrize('choice,label',[('token-full-art','Modern full-art token'),('token-borderless','Modern borderless token')])
+def test_generated_token_frame_changes_persist_before_regeneration(dom_page,choice,label):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      __fixture.deck.status='ready';__fixture.deck.summary.rendered=1;
+      __fixture.deck.cards[0].faces[0].group='token';
+      __fixture.deck.settings.symbols=Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)]));
+      window.preparedFrames=[];const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path.endsWith('/prepare')){preparedFrames.push(__fixture.deck.settings.templateRules.token);return {ok:true,text:async()=>JSON.stringify({id:'prepare-fixture'})};}
+        if(path==='/api/jobs/prepare-fixture')return {ok:true,text:async()=>JSON.stringify({state:'done',kind:'Prepare deck',result:__fixture.deck})};
+        if(path==='/api/render-sessions')return {ok:true,text:async()=>JSON.stringify({targets:[],errors:[],cached:1})};
+        return original(path,options);
+      };
+      location.hash='#deck/'+__fixture.deck.id+'/setup';
+    }""")
+    page.locator('[data-frame-group="token"]').click()
+    page.get_by_role('button',name='Select '+label,exact=True).click()
+    assert page.locator('#token-frame').input_value()==choice
+    page.click('#save-generate')
+    page.wait_for_function('preparedFrames.length===1')
+    assert page.evaluate('preparedFrames')==[choice]
+    assert page.evaluate('__fixture.deck.settings.templateRules.token')==choice
+    page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+    page.locator('[data-frame-group="token"]').wait_for()
+    assert page.locator('#token-frame').input_value()==choice
+    page.locator('#all-cards-tokens').check()
+    page.locator('#token-frame').select_option('token-classic')
+    page.wait_for_function("__fixture.deck.settings.templateRules.token==='token-classic'")
+    page.locator('[data-frame-group="token"]').click()
+    assert 'selected' in page.get_by_role('button',name='Select Classic arched token',exact=True).inner_text()
+    page.locator('#modal-close').click()
+    assert not errors,errors

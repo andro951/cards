@@ -117,6 +117,18 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|Crown)([WUBRGMAL])\.png',path)
+        if match:
+            kind,code=match.groups()
+            source=f'/img/frames/m15/nickname/m15Nickname{kind}{code}.png'
+            raw,_=self.fetch(source)
+            #Keep the pinned main title/crown; exclude its attached real-name strip.
+            height,original=(.069,.1053) if kind=='Title' else (.0933,.1286)
+            with Image.open(io.BytesIO(raw)) as image:
+                image=image.crop((0,0,image.width,round(image.height*height/original)))
+                output=io.BytesIO();image.save(output,'PNG')
+            with self.lock:self.requested[path]={'source':source,'bytes':len(output.getvalue()),'adapter':'Godzilla main title without real-name strip'}
+            return output.getvalue(),'image/png'
         if path=='/js/creator-23.js':return self.creator_script()
         if path=='/js/frames/versionStation.js':return self.station_script()
         # The hidden native frame picker does not need its thumbnail catalogue.

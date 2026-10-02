@@ -56,6 +56,26 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
             assert output.size==(2010,2814)
             evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
             output.thumbnail((603,844));output.save(evidence/'token_treasure.png')
+            previous_key=compiled['renderKey']
+            for choice,label,version in [('token-full-art','Modern full-art token','tokenRegular'),('token-borderless','Modern borderless token','tokenTextlessBorderless')]:
+                if page.locator('#modal-close').count():page.locator('#modal-close').click()
+                page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+                page.locator('[data-frame-group="token"]').click()
+                page.get_by_role('button',name='Select '+label,exact=True).click()
+                with page.expect_response(lambda response:response.url.endswith('/api/render-sessions')):
+                    page.click('#save-generate')
+                page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+                ready=app.ws.deck(deck['id'])
+                assert ready['status']=='ready',page.locator('#activity-log').text_content()
+                compiled=ready['cards'][0]['faces'][0]['compiled']
+                assert ready['settings']['templateRules']['token']==choice
+                assert compiled['data']['version']==version and compiled['renderKey']!=previous_key
+                rendered=store.render_get(compiled['renderKey'])
+                assert rendered is not None
+                output=Image.open(store.asset_path(rendered['asset_id']))
+                assert output.size==(2010,2814)
+                output.thumbnail((603,844));output.save(evidence/('token_treasure_'+choice+'.png'))
+                previous_key=compiled['renderKey']
             assert not errors,errors
         finally:
             browser.close();server.shutdown();server.server_close();app.close()

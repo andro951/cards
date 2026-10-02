@@ -3,6 +3,8 @@ import copy
 import io
 import json
 
+import pytest
+
 from PIL import Image
 
 from foundry.network import Network
@@ -54,3 +56,28 @@ def test_new_deck_is_dirty_without_claiming_pipeline_upgrade(tmp_path):
     ws=Workspace(Store(tmp_path))
     deck=ws.new_deck()
     assert not ws.deck(deck['id']).get('upgradeRequired')
+
+
+@pytest.mark.parametrize('style,version',[('token-classic','tokenRegularM15'),('token-full-art','tokenRegular'),('token-borderless','tokenTextlessBorderless')])
+def test_changing_generated_token_frame_replaces_cache_key(tmp_path,style,version):
+    store=Store(tmp_path)
+    card={'id':'11111111-1111-4111-8111-111111111111','name':'Treasure',
+          'layout':'token','type_line':'Token Artifact — Treasure','colors':[],
+          'mana_cost':'','oracle_text':'{T}, Sacrifice this token: Add one mana of any color.',
+          'rarity':'common','artist':'Test Artist','image_uris':{'art_crop':'https://cards.scryfall.io/test.png'}}
+    image=io.BytesIO();Image.new('RGB',(900,650),'blue').save(image,'PNG')
+    def transport(url):
+        if 'api.scryfall.com' in url:return json.dumps(card).encode(),'application/json',{}
+        return image.getvalue(),'image/png',{}
+    ws=Workspace(store,Network(store,transport=transport,sleeper=lambda _:None))
+    deck=ws.prepare(ws.create({'source':card['id']})['id'])
+    compiled=deck['cards'][0]['faces'][0]['compiled'];old_key=compiled['renderKey']
+    rendered=io.BytesIO();Image.new('RGB',(compiled['data']['width'],compiled['data']['height']),'orange').save(rendered,'PNG')
+    ws.save_render(old_key,rendered.getvalue(),(compiled['data']['width'],compiled['data']['height']))
+    assert ws.render_targets([deck['id']])['cached']==1
+    deck=ws.deck(deck['id'])
+    ws.save(deck['id'],{'revision':deck['revision'],'settings':{'templateRules':{'token':style}}})
+    deck=ws.prepare(deck['id']);compiled=deck['cards'][0]['faces'][0]['compiled']
+    assert compiled['data']['version']==version
+    plan=ws.render_targets([deck['id']])
+    assert compiled['renderKey']!=old_key and plan['cached']==0 and len(plan['targets'])==1

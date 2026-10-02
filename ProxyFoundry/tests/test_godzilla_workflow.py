@@ -69,10 +69,10 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
     if type_line=='Land':
         assert any(item['src'].endswith('m15NicknameTitleL.png') for item in data['frames'])
     elif not colors:
-        assert any(item['src'].endswith('m15NicknameTitleA.png') for item in data['frames'])
+        assert any(item['src'].endswith('m15NicknameTitleC.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
     if type_line!='Land':
-        assert 'm15NicknamePT' in data['frames'][0]['src']
+        assert 'm15NicknamePT' in data['frames'][1]['src']
     assert data['text']['nickname']['text']=='Alternate Name'
     assert data['text']['title']['text']=='Test Card'
     for key in ('type','rules'):
@@ -81,7 +81,7 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
         assert data['text'][key]['outlineWidth']>0
 
 
-def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_layers(tmp_path):
+def test_token_conversion_adds_nickname_without_replacing_selected_frame(tmp_path):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
     source=card()
     compiled=Compiler(store).compile_face(source,source,0,
@@ -90,14 +90,11 @@ def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_lay
                                    art,'Deck-wide token',sem={**source,'types':['Creature'],
                                    'legendary':False,'nickname':'Alternate Name','name':'Test Card'})
     data=converted['data']
-    assert any(item['src'].endswith('m15NicknameFrameB.png') for item in data['frames'])
-    assert all(item.get('masks')==[] for item in data['frames'])
-    assert data['artBounds']['height']>.9
-    assert 'm15NicknamePT' in data['frames'][0]['src']
+    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
+    assert any('/img/frames/token/' in item['src'] for item in data['frames'][1:])
+    assert not any('m15NicknameFrame' in item['src'] for item in data['frames'])
     assert data['text']['nickname']['text']=='Alternate Name'
-    for key in ('title','type','rules'):
-        assert data['text'][key]['color']=='white'
-        assert data['text'][key]['outlineWidth']>0
+
 
 
 def test_native_token_text_gets_white_black_outline(tmp_path):
@@ -182,3 +179,30 @@ def test_commander_picker_keeps_distinct_frames_and_groups_matching_choices(tmp_
                for target in plan['targets'])
     assert all(target['data']['text']['nickname']['x']+target['data']['text']['nickname']['width']<0.70
                for target in plan['targets'])
+
+
+@pytest.mark.parametrize('choice,type_line',[('godzilla-card','Creature - Human'),('godzilla-land','Land')])
+def test_godzilla_base_has_no_real_name_strip_without_nickname(tmp_path,choice,type_line):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line=type_line)
+    compiled=Compiler(store).compile_face(source,source,0,{'templateOverride':choice},ws.validate_settings({}),art)
+    data=compiled['data']
+    assert data['version']=='m15Nickname'
+    assert 'nickname' not in data['text'] and data['text']['title']['text']==source['name']
+    assert any('/proxy-foundry/godzilla/' in f['src'] for f in data['frames'])
+    assert not any('/nickname/addons/' in f['src'] for f in data['frames'])
+
+
+@pytest.mark.parametrize('choice',['auto','token-classic','token-full-art','token-borderless','godzilla-card'])
+def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp_path,choice):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Token Creature - Spirit',layout='token')
+    settings=ws.validate_settings({});compiler=Compiler(store)
+    plain=compiler.compile_face(source,source,0,{'templateOverride':choice},settings,art)['data']
+    named=compiler.compile_face(source,source,0,{'templateOverride':choice,'semanticOverrides':{'nickname':'Ghost'}},settings,art)['data']
+    assert named['version']==plain['version']
+    assert named['frames'][1:]==plain['frames']
+    assert named['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
+    assert named['text']['nickname']['text']=='Ghost' and named['text']['title']['text']==source['name']
+    for field in ('type','rules','pt'):
+        assert named['text'][field]==plain['text'][field]

@@ -97,10 +97,11 @@ def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path
     art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Noncreature Godzilla')
     settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'test_artifact':art,'test_land':art,'test_mountain':art}},'artist':'Fixture Artist'})
     cards=[]
-    for i,(name,types,style) in enumerate([('Test Artifact','Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land'),('Test Mountain','Basic Land — Mountain','godzilla-land')]):
+    for i,(name,types,style) in enumerate([('Test Artifact','Legendary Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land'),('Test Mountain','Basic Land — Mountain','godzilla-land')]):
         source={'name':name,'layout':'normal','type_line':types,'colors':['B'] if i==0 else [],
                 'mana_cost':'{B}' if i==0 else '', 'oracle_text':'Equipped creature gets +1/+1.\nEquip {1}' if i==0 else ('{T}: Add {R}.' if i==2 else '{T}: Add {B}.'),
                 'rarity':'common','artist':'Fixture Artist'}
+        if i==1:source['flavor_name']='Renamed Land'
         cards.append({'id':'card-'+str(i),'name':name,'quantity':1,'scryfall':source,
                       'faces':[{'id':'face-'+str(i),'name':name,'index':0,'templateOverride':style}]})
     app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
@@ -122,7 +123,7 @@ def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_path):
+def test_native_black_and_colorless_nickname_tokens_keep_selected_frame(tmp_path):
     store=Store(tmp_path/'native-tokens')
     network=Network(store)
     app=App(store,network)
@@ -163,9 +164,9 @@ def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_pat
             for card_entry in current['cards']:
                 compiled=card_entry['faces'][0]['compiled']
                 frames=compiled['data']['frames']
-                assert any('m15NicknameFrame' in frame['src'] for frame in frames)
-                assert all(frame.get('masks')==[] for frame in frames)
-                assert 'm15NicknamePT' in frames[0]['src']
+                assert frames[0]['src'].startswith('/img/frames/m15/nickname/addons/')
+                assert any('/img/frames/token/' in frame['src'] for frame in frames[1:])
+                assert not any('m15NicknameFrame' in frame['src'] for frame in frames)
                 render=store.render_get(compiled['renderKey'])
                 assert render
                 picture=Image.open(store.asset_path(render['asset_id']))
