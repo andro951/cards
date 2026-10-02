@@ -1,0 +1,4925 @@
+{
+  "measuredDate": "2026-10-02",
+  "browser": "Playwright Chromium, headful",
+  "storageType": "browser",
+  "outputSize": [
+    2010,
+    2814
+  ],
+  "artwork": "supernatural/art/syr_gwyn_hero_of_ashvale.png; resized and assigned distinct content IDs per card",
+  "comparisonReference": "Second baseline pass. Baseline flags compare its second pass against its first pass.",
+  "excludes": [
+    "preparation",
+    "renderer startup",
+    "PNG saving",
+    "evidence collection"
+  ],
+  "results": {
+    "baseline": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 4.536400000095368,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 2.1835,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.743,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.3628,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3433,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0022,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0031,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0164,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5612,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0061,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3017,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 1.3182999999523164,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.2036,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.1504,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1096,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0016,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0319,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5538,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2543,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 2.3971000001430514,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.2911,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.3572,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.788,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.169,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0168,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5564,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0072,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2075,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 1.6299000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.2768,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.1542,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3385,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.032,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5648,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0062,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2496,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 6.643899999856949,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 2.8657,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.1644,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 2.1383,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.5034,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5597,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0935,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3135,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 1.6511000001430511,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.5988,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1304,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0018,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0247,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5567,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0071,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3253,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 4.1197000000476836,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 2.4272,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.1813,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3733,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0026,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0969,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5518,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0825,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3977,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.5742999999523162,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.3897,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2873,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0067,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5512,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3289,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 1.101100000143051,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.059,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1166,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.029,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5511,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0071,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3307,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 1.1484000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0707,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2457,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.566,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0063,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2434,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 1.1444000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0614,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.229,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0287,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5588,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0063,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2571,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 2.7855999999046324,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.767,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.9097,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1326,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5562,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0981,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3172,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 1.1269000000953675,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0915,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1283,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0022,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.026,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5575,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0045,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3115,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.7225999999046326,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.36,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4034,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.056,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5533,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0588,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2851,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "retained-assets": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 1.7450999999046326,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.39670000004768374
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0514,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0718,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0342,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3139,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0021,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.02,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5543,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0062,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2757,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 1.1022000000476837,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.033100000143051145
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0301,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0134,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1316,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0411,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.552,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0059,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2886,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 1.2419000000953675,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.050600000143051146
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0348,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0294,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2749,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0318,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5539,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0047,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2586,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 1.1742999999523163,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.04510000014305115
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0345,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0142,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2182,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0201,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5646,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0065,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2673,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 2.991199999809265,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.7372000000476837
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0508,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0158,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.0221,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.2104,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5547,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0934,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3018,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 1.0662000000476837,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.08519999980926514
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0327,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1055,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.026,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5522,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0055,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2539,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 1.817,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.32459999990463256
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0434,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.019,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1059,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5608,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0608,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2961,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.2915999999046326,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.02159999990463257
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0399,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3347,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0016,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0078,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5535,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0052,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3228,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 1.0842999999523162,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.015099999904632568
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0309,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1311,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0311,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5555,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0044,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3063,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 1.1147999999523164,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.016299999952316284
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0316,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2503,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0171,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5573,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0056,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2334,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 1.2225,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017700000047683715
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0315,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1762,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0128,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5501,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0114,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.4189,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 2.4132999999523164,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017900000095367432
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0493,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.0182,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.419,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5522,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0889,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2634,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 1.037,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.01760000014305115
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0391,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1146,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0016,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0182,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5612,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0055,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2734,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.3655,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.01590000009536743
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0375,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3953,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0024,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.062,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5547,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2377,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "no-wait": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 1.4432000000476837,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.5014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0948,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0386,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3081,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0145,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.1959,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0112,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2725,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 0.7063999998569489,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0578,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0206,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1489,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0334,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.1081,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0071,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3244,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 0.7340999999046326,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0913,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0476,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2819,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0235,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0358,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.249,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 0.6363000001907348,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0591,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0241,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2221,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0055,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0071,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2964,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 2.403199999809265,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.8022,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0233,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.023,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1858,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0884,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2753,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 0.536,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0842,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1027,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0241,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0448,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0034,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2709,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 1.4548000001907349,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.3415,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0234,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3771,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0033,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0977,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.2416,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0602,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3041,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.0880999999046326,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.3899,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2261,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0027,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0078,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.1649,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2892,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 0.5319000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0519,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.0971,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0297,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0824,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0045,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2599,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 0.6067000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0897,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2128,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0167,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0521,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2309,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 0.568,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0631,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1832,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0098,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0078,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3002,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 2.3165,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.9148,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.8805,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1077,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0941,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3152,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 0.5149000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0808,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.095,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0018,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.019,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0524,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0045,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2567,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.5426999998092652,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.4074,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4308,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0734,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.2946,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0635,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.266,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "single-draw": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 1.7460999999046325,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.4154,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0898,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0365,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3205,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0021,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5626,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0155,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2987,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 1.0677999999523162,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0529,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0205,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1122,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0036,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5537,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0295,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2904,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 1.279899999856949,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0958,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0497,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2774,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5636,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0187,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2719,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 1.1783999998569488,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0652,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0228,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2246,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5572,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0169,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2878,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 3.511899999856949,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 1.0629,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.026,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.3253,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.564,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.2122,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3181,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 1.2102000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.1007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1221,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0031,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0009,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5511,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0305,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3959,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 1.8182999999523164,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.4046,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0225,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4083,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5595,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.1324,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2822,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.6844000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.4415,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3346,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5528,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0129,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3363,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 1.1014000000953674,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0581,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1452,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0019,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0021,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5554,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0312,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3039,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 1.2162000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0909,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2579,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5565,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0186,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2888,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 1.202,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0792,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.225,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0018,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0009,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5746,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0104,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3068,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 3.0400999999046325,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.9524,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.009,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5613,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.1919,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3213,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 1.0672000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.1011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5518,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0209,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2831,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.8187999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.391,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3826,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0023,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5536,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0994,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3832,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "combined": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 2.155899999856949,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.8191000001430512
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0509,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.1189,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0603,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4262,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0034,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0032,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.204,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.029,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.4346,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 0.6997000000476837,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.039799999952316284
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.041,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0212,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1527,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0042,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.1136,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0323,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2888,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 0.9345999999046326,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.09660000014305115
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0434,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0487,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3548,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0312,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3557,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 0.9220999999046325,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.06270000004768371
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0511,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0285,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2961,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0019,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0589,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0241,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3937,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 4.441800000190735,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.9765
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0652,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0245,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 2.7078,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.3115,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3509,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 0.7042999999523163,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.0805
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0436,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1389,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0568,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0256,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.352,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 1.9496000001430511,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.4325
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0423,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0192,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.5581,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0063,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.4031,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.1541,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.326,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.1956000001430511,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017699999809265135
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0652,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4766,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0037,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.2074,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0166,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3978,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 0.7767000000476837,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017799999952316285
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0412,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1771,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0027,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0015,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0943,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0342,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.403,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 0.6380999999046326,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017100000143051148
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0423,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2636,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0012,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0119,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2985,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 0.7783999998569489,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017700000047683715
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0629,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2164,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0154,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0109,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.4511,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 1.693,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017100000143051148
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0574,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.1593,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.1321,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3237,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 0.5416999998092651,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.017
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0307,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1204,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0013,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0006,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.0494,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.02,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2984,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.1695999999046325,
+        "stages": [
+          {
+            "stage": "experiment.retain-assets",
+            "seconds": 0.01760000014305115
+          },
+          {
+            "stage": "native.assets",
+            "seconds": 0.0494,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.436,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0031,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.3186,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0773,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2624,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "reuse-scripts": [
+      {
+        "name": "Verdant Test",
+        "round": 0,
+        "seconds": 2.109400000095367,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.6222,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0946,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0351,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.3793,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0024,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0166,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5525,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0071,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3869,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 0,
+        "seconds": 1.0972999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0562,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0172,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0017,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0009,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0333,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5629,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0049,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3114,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 0,
+        "seconds": 1.2887000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0781,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0399,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.321,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0212,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5585,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0054,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.262,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 0,
+        "seconds": 1.2485999999046327,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0852,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0213,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2372,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0011,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0306,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5602,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0078,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3002,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Station Test",
+        "round": 0,
+        "seconds": 3.6842999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.9219,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0005,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0285,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 1.1138,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.2381,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5572,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.4448,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3725,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 0,
+        "seconds": 1.138,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.1024,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1157,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0022,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0305,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5586,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0067,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3149,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 0,
+        "seconds": 1.9582000000476838,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.418,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0978,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4154,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0018,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1133,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5602,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0658,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2818,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Verdant Test",
+        "round": 1,
+        "seconds": 1.7879000000953675,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.5782,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0004,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.2715,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0162,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5532,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0047,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3559,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Triome Test",
+        "round": 1,
+        "seconds": 1.1722999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0793,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1508,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0019,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0302,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5562,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.009,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3412,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Chronicle Test",
+        "round": 1,
+        "seconds": 1.1222999999523162,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.0843,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1735,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0146,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5624,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0079,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.2776,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Walker Test",
+        "round": 1,
+        "seconds": 1.0807999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.059,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.108,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0008,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0014,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0141,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5638,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0089,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3217,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": false
+      },
+      {
+        "name": "Station Test",
+        "round": 1,
+        "seconds": 3.389600000143051,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.9223,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.935,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.1227,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5606,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.439,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.4042,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Godzilla Profile",
+        "round": 1,
+        "seconds": 1.1575,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.1045,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0003,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.1286,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.0007,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0241,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5588,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0046,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3326,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      },
+      {
+        "name": "Prepare Profile",
+        "round": 1,
+        "seconds": 1.8857999999523163,
+        "stages": [
+          {
+            "stage": "native.assets",
+            "seconds": 0.4114,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.fonts",
+            "seconds": 0.0002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.symbols",
+            "seconds": 0.0001,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.load-and-scripts",
+            "seconds": 0.4436,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-images",
+            "seconds": 0.0025,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.loaded-fonts",
+            "seconds": 0.002,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.first-draw",
+            "seconds": 0.0651,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.settle-wait",
+            "seconds": 0.5557,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.final-draw",
+            "seconds": 0.0686,
+            "outcome": "ok"
+          },
+          {
+            "stage": "native.png-export",
+            "seconds": 0.3319,
+            "outcome": "ok"
+          }
+        ],
+        "pixelsIdentical": true
+      }
+    ],
+    "frame-cache-persistence": [
+      {
+        "batched": false,
+        "repeat": 0,
+        "seconds": 2.9442000000000235,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122
+      },
+      {
+        "batched": true,
+        "repeat": 0,
+        "seconds": 2.741899999999987,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122
+      },
+      {
+        "batched": false,
+        "repeat": 1,
+        "seconds": 2.672399999999982,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122
+      },
+      {
+        "batched": true,
+        "repeat": 1,
+        "seconds": 2.2952000000000226,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122
+      },
+      {
+        "batched": false,
+        "repeat": 2,
+        "seconds": 2.730799999999988,
+        "checkpoints": 20,
+        "files": 10,
+        "bytes": 11201122
+      },
+      {
+        "batched": true,
+        "repeat": 2,
+        "seconds": 2.570700000000045,
+        "checkpoints": 1,
+        "files": 10,
+        "bytes": 11201122
+      }
+    ]
+  }
+}
