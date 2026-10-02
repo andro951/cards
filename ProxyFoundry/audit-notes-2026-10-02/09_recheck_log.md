@@ -92,3 +92,31 @@ The approved live filesystem browser is still connected at CDP 9227 with granted
 read/write access to the benchmark folder. No new native picker was opened.
 Next: benchmark bounded render/save overlap in browser and selected-folder
 storage, then choose a production change only from measured integrity/timing.
+
+## Chunk 4 — bounded render/save and asset-prefetch experiment
+
+Baseline main: f503693. Added a standalone temporary static-build harness for
+visible Chromium, reusing the already-approved CDP filesystem session. Production
+rendering and saving are unchanged. Tested seven structural faces using original
+Supernatural artwork, two warm repetitions per mode, plus a cold serial trial.
+The experiment permits at most one older pending PNG save. Asset prefetch is a
+benchmark-only bridge hook and begins only during explicit generation.
+
+Caught a benchmark confound: repeated identical outputs reuse stored PNG assets.
+Reran browser and filesystem trials with generated PNG assets removed outside
+measurement, keeping input caches warm. Fresh browser means were serial 11.711s,
+overlap 11.648s and overlap/prefetch 11.642s for seven faces. Fresh selected-folder
+means were 19.077s, 20.771s and 18.942s. The small prefetch differences are not a
+reliable benefit; plain filesystem overlap worsened timing. Keep production
+serial and target native main-thread pauses next. No overlap experiment is shipped.
+
+Verification: all 196 PNGs passed exact four-channel pixel comparisons and
+production saved-byte hash checks; final seven outputs in all four runs survived
+reload with unchanged bytes. Native long-task attribution is the CardConjurer
+iframe, with UI timer gaps near one second. Dependency/plan warmup and result
+collection are excluded from pipeline timings. Original selected-folder preference
+is restored and its granted browser session remains open without a new picker.
+Harness Python compilation and all four canonical vendor hash checks pass.
+The prior chunk's 558 routine/affected browser results still cover unchanged
+production code; this chunk adds measured experiments and documentation only.
+See docs/GENERATION_PIPELINE_PROFILE.md and generation-pipeline-profile.json.

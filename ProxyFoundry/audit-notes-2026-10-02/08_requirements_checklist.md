@@ -7,7 +7,8 @@
 - [x] Conflicts identify the affected deck/job and cannot overwrite newer edits.
 - [x] No rendering or bulk artwork download in setup/frame selection.
 - [ ] Continuous generation progress and durable completion notification.
-- [ ] Bounded render/save overlap improves timing with byte integrity/recovery.
+- [x] Bounded render/save overlap measured with byte integrity/recovery.
+- [ ] Pipeline production benefit demonstrated; current overlap experiment is not justified.
 - [ ] Startup/UI improvements measured and version-safe.
 - [ ] Long-session, cancellation, reload and storage failure checks pass.
 - [ ] Final checkpoint tested, committed and pushed to main with report.

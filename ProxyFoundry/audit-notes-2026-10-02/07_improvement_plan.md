@@ -17,3 +17,10 @@ After each verified milestone: commit and push main, update findings and measure
 results. Begin final verification by 08:31 Eastern for a 09:31 checkpoint.
 If one experiment is blocked, continue independent tasks without asking the
 sleeping user for filesystem picker access.
+
+## After chunk 4 measurements
+
+Render/save overlap remains experimental: fresh browser writes showed less than
+one percent difference and longer individual save calls. Prioritize native iframe
+long-task boundaries and UI remount/input retention next. Use fresh-write trials
+and exact RGBA/saved-byte/reload checks for further pipeline experiments.

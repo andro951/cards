@@ -99,3 +99,12 @@ between 100 ms chunks, and checks cancellation. The standalone reproduction is
 benchmark, not a deck-generation throughput measurement.
 
 Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).
+
+### Render/save pipeline experiments
+
+[Pipeline measurements](GENERATION_PIPELINE_PROFILE.md) distinguish existing
+identical PNG assets from fresh writes in browser and selected-folder storage.
+The standalone harness uses visible Chromium, exact RGBA comparisons, saved-byte
+hash checks and reload verification. `--folder` reuses an approved CDP session
+without opening a permission picker. These are opt-in performance experiments,
+not an additional routine test or a change to the production render pipeline.
