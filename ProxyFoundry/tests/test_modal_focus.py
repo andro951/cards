@@ -7,6 +7,7 @@ The old 20ms autofocus would then change the focused input; the fixed code must 
 import os
 from pathlib import Path
 import pytest
+from ui_component import ui_source
 pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1' and os.environ.get('PF_DOM')!='1',reason='Opt-in Chromium component test')
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -18,7 +19,7 @@ def test_modal_does_not_steal_focus_or_type_into_quantity():
         page=browser.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         try:
             page.set_content('<!doctype html><body><button id="launch">Open</button><div id="modal-host"></div><div id="toast-host"></div>')
-            text=(ROOT/'site/ui.js').read_text(encoding='utf-8').replace('export ','')
+            text=ui_source()
             page.add_script_tag(content=text)
             page.evaluate('''()=>{
               window.heldTimers=[];const nativeTimer=window.setTimeout;

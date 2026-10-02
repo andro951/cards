@@ -1,0 +1,80 @@
+{
+  "baseline": "2098941",
+  "revision": "2098941f7f4abd24d97ecc86e2d7c3a7f34c924e",
+  "note": "Preview byte/pixel measurements through the production browser API. Order filtering is offline DOM/JS only; excludes initial mount, network, image decoding and native rendering.",
+  "trials": [
+    {
+      "seconds": 0.20790000009536744,
+      "mutations": 8240,
+      "sameImage": false,
+      "focused": true,
+      "imageCount": 400,
+      "thumbnailCount": 0,
+      "baseline": true
+    },
+    {
+      "seconds": 0.018800000190734863,
+      "mutations": 0,
+      "sameImage": true,
+      "focused": true,
+      "imageCount": 400,
+      "thumbnailCount": 400,
+      "baseline": false
+    },
+    {
+      "seconds": 0.015899999856948854,
+      "mutations": 0,
+      "sameImage": true,
+      "focused": true,
+      "imageCount": 400,
+      "thumbnailCount": 400,
+      "baseline": false
+    },
+    {
+      "seconds": 0.15879999995231628,
+      "mutations": 8240,
+      "sameImage": false,
+      "focused": true,
+      "imageCount": 400,
+      "thumbnailCount": 0,
+      "baseline": true
+    }
+  ],
+  "image": {
+    "sourceBytes": 7042974,
+    "sourceSize": [
+      2010,
+      2814
+    ],
+    "thumbnailTrials": [
+      {
+        "repeat": 0,
+        "seconds": 0.2835425999946892,
+        "bytes": 431126,
+        "size": [
+          420,
+          588
+        ]
+      },
+      {
+        "repeat": 1,
+        "seconds": 0.003810900030657649,
+        "bytes": 431126,
+        "size": [
+          420,
+          588
+        ]
+      },
+      {
+        "repeat": 2,
+        "seconds": 0.003363699885085225,
+        "bytes": 431126,
+        "size": [
+          420,
+          588
+        ]
+      }
+    ],
+    "originalUnchanged": true
+  }
+}

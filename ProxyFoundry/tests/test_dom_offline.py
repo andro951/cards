@@ -83,6 +83,17 @@ def test_offline_settings_and_mobile(dom_page):
     assert not errors,errors
 
 
+def test_library_initial_covers_and_backs_use_small_previews(dom_page):
+    page,errors=dom_page
+    page.evaluate("()=>{const deck=window.__fixture.deck;deck.cover='/api/assets/'+'a'.repeat(64);deck.settings.backAsset='b'.repeat(64);}")
+    page.click('.topbar [data-nav=settings]');page.locator('#global-refresh').wait_for()
+    page.click('.topbar [data-nav=decks]');page.locator('.deck-cover img').first.wait_for()
+    assert page.locator('.deck-cover a img').get_attribute('src')=='/api/assets/'+'a'*64+'/thumbnail'
+    assert page.locator('.deck-back-thumb').get_attribute('src')=='/api/assets/'+'b'*64+'/thumbnail'
+    assert page.locator('.deck-back-thumb').get_attribute('loading')=='lazy'
+    assert not errors,errors
+
+
 def test_offline_large_card_grid_keeps_input_and_tiles_during_progress(dom_page):
     page,errors=dom_page
     page.evaluate("""()=>{

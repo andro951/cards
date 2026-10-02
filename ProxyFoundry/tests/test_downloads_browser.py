@@ -2,6 +2,7 @@
 import os,re
 from pathlib import Path
 import pytest
+from ui_component import ui_source
 
 ROOT=Path(__file__).resolve().parents[1]
 pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Opt-in browser download tests')
@@ -9,8 +10,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Opt-in b
 @pytest.fixture
 def download_page():
     from playwright.sync_api import sync_playwright
-    source=(ROOT/'site/ui.js').read_text(encoding='utf-8')
-    source=re.sub(r'\bexport\s+','',source)
+    source=ui_source()
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)
         page=browser.new_page(accept_downloads=True)

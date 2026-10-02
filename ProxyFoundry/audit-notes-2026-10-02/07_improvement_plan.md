@@ -32,3 +32,11 @@ remaining timer gaps still require investigation. Next cover synchronous GitHub
 setup and archive job families with safe cancellation/publication boundaries,
 then measure renderer concurrency and worker feasibility. Keep fresh-write,
 pixel/hash/reload comparisons and reserve the final hour for the full sweep.
+
+
+## After chunk 9
+
+Remaining small library/order previews and stable order filtering are verified.
+Next measure startup cold/warm and investigate the earlier unexplained timeout;
+reserve sufficient time for all-enabled stress, recovery, live and large-file
+verification before the morning checkpoint.

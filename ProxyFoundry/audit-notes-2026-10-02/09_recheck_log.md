@@ -227,3 +227,22 @@ The new extended gate passes in 400.02s; harness/test Python compilation and all
 four vendor hashes pass. The prior 580 routine results cover unchanged production.
 Next: remaining full-resolution UI previews, startup recurrence and final stress
 and recovery sweep. See docs/RENDERER_CONCURRENCY.md and raw measurements.
+
+
+## Chunk 9 — small previews and stable order filtering
+
+Baseline main: 2098941. Library initial covers/backs and both order grid paths
+now use the existing thumbnail API. Enlargement and exported originals retain
+full resolution. Browser order search hides mounted tiles: 400 cards / 40 inputs
+average 0.183s to 0.017s; child-list mutations 8,240 to zero, image identity/focus
+retained. This is isolated DOM work, not initial load or generation throughput.
+A 7,042,974-byte native PNG produces a 431,126-byte 420 x 588 tile; cold preview
+creation 0.284s, cached reads 0.0034–0.0038s. Original bytes unchanged.
+Fixed extended component harnesses to include actual WorkCoordinator imports.
+580 routine cases pass in 209.24s, 16 component cases in 28.07s, five browser
+cases in 185.06s including all three complete static deployment flows.
+Actual review screenshot inspected: card image, text, actions and modal layout
+are legible and correctly proportioned. Static tests prove small preview decode,
+full-size enlargement, and ZIP bytes. No startup failure in these three flows.
+See docs/SMALL_PREVIEWS.md and raw measurements. Startup recurrence and final
+stress/recovery sweep remain next.

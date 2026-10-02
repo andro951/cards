@@ -1,4 +1,4 @@
-import {$,api,attempt,modal,closeModal,job,asset,bytes,toast} from '/site/ui.js';
+import {$,api,attempt,modal,closeModal,job,asset,thumbnail,bytes,toast} from '/site/ui.js';
 
 function node(tag,text='',className=''){
   const item=document.createElement(tag);
@@ -14,7 +14,7 @@ function action(label,callback,className='button'){
 }
 function imageButton(id,label,callback){
   const button=node('button','','card-image');button.type='button';button.title='Enlarge '+label;
-  const image=node('img');image.src=asset(id);image.alt=label;image.loading='lazy';button.append(image);
+  const image=node('img');image.src=thumbnail(asset(id));image.alt=label;image.loading='lazy';image.decoding='async';button.append(image);
   button.onclick=callback;return button;
 }
 function maximize(host){
@@ -46,7 +46,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       if(!unique.has(key))unique.set(key,{...card,quantity:0});
       unique.get(key).quantity++;
     }
-    return [...unique.values()].filter(card=>(card.name+' '+card.deckName).toLowerCase().includes(query.toLowerCase()));
+    return [...unique.values()];
   }
   async function accept(issue){
     const deck=await api('/api/decks/'+issue.deckId);
@@ -109,12 +109,13 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
     const header=node('div','','toolbar section-gap');
     header.append(node('h2','Front & Back'));
     const search=node('input');search.type='search';search.placeholder='Find a card';search.value=query;
-    search.oninput=()=>{query=search.value;drawGrid();};header.append(search);body.append(header);
+    search.oninput=()=>{query=search.value;filterGrid();};header.append(search);body.append(header);
     const grid=node('div','','pair-grid');grid.id='browser-pair-grid';body.append(grid);
     function drawGrid(){
       grid.replaceChildren();
       for(const card of cards()){
         const tile=node('article','','well');
+        tile.dataset.search=(card.name+' '+card.deckName).toLowerCase();
         const pair=node('div','','pair-images');
         pair.append(imageButton(card.frontAsset,card.name+' front',()=>lightbox(card.frontAsset,card.name+' front')));
         if(!defaultBacks.has(card.backAsset)){
@@ -125,7 +126,11 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
         tile.append(pair,node('b',`${card.quantity}× ${card.name}`),node('small',card.deckName));grid.append(tile);
       }
     }
-    drawGrid();
+    function filterGrid(){
+      const text=query.toLowerCase();
+      for(const tile of grid.children)tile.hidden=!tile.dataset.search.includes(text);
+    }
+    drawGrid();filterGrid();
     if(saved){
       const download=node('a','Download ZIP','button');download.href='/api/orders/'+plan.id+'/download';download.download='';footer.append(download);
       footer.append(action('Open in TCGPlaytest',()=>openOrder(plan.id),'button primary'));

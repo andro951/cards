@@ -33,3 +33,9 @@
   network slowness without evidence. Failure artifacts now capture the body,
   screenshot, browser errors and persisted browser diagnostics. Recheck in the
   final full sweep and investigate any recurrence.
+
+
+- Remaining small library/order tiles now use thumbnails; order filtering keeps
+  image elements stable. Initial large-grid mounting and thumbnail creation are
+  still separate costs. The current fixture proves reduced bytes and DOM work,
+  not a reduction in native render time or initial 400-image decode latency.

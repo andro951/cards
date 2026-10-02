@@ -9,7 +9,7 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 580 | Every completed change |
-| Extended | 107 | Relevant changes or an explicit full sweep |
+| Extended | 111 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -134,3 +134,11 @@ selection, filters and inspector drafts during progress, plus real static
 native generation and a failed progress read after switching from library to
 cards. The collection milestone passed all 558 routine cases in 178.50 seconds
 and all 14 affected UI/browser cases, including three complete production flows.
+
+
+### Small previews and order filtering
+
+[Preview measurements](SMALL_PREVIEWS.md) cover the remaining library and order
+grid previews. Affected component tests include 400-card stable filtering and
+original-image enlargement; complete static flows verify decode and ZIP bytes.
+The milestone passed 580 routine tests, 16 components and five browser cases.

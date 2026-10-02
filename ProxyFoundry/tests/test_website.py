@@ -669,6 +669,14 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 page.get_by_role('button',name='Review & Print').click()
                 page.click('#order-plan')
                 page.locator('#browser-pair-grid').wait_for(timeout=90000)
+                page.wait_for_function("()=>[...document.querySelectorAll('#browser-pair-grid img')].every(image=>image.complete&&image.naturalWidth>0)",timeout=30000)
+                assert page.locator('#browser-pair-grid img').first.evaluate('(image)=>image.naturalWidth')<=420
+                page.screenshot(path=str(evidence/'thumbnail-review-grid.png'))
+                page.locator('#browser-pair-grid button').first.click()
+                enlarged=page.locator('body > div > img').last
+                enlarged.wait_for();enlarged.evaluate('(image)=>image.decode()')
+                assert enlarged.evaluate('(image)=>image.naturalWidth')>420
+                page.get_by_role('button',name='Close image').click()
                 page.get_by_role('button',name='Review card').click()
                 page.get_by_role('button',name='It Looks Fine').click()
                 page.locator('.modal-body').get_by_text('Needs Review').wait_for(state='hidden',timeout=30000)
