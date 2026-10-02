@@ -175,3 +175,42 @@ def test_native_black_and_colorless_nickname_tokens_keep_selected_frame(tmp_path
         finally:
             browser.close()
             server.shutdown();server.server_close();app.close()
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in genuine outlined italic rendering')
+def test_native_nickname_and_flavor_outlines_use_round_joins(tmp_path):
+    store=Store(tmp_path/'italic-outlines');app=App(store,Network(store));server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Italic outlines')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'spirit':art,'construct':art,'syr_gwyn':art}},'artist':'Fixture Artist'})
+    cards=[]
+    for index,(name,types,style) in enumerate([('Spirit','Token Creature — Spirit','token-full-art'),('Construct','Token Artifact Creature — Construct','token-full-art'),('Syr Gwyn','Legendary Creature — Human Knight','godzilla-card')]):
+        source={'name':name,'layout':'token' if index<2 else 'normal','type_line':types,'colors':['W'] if index==0 else ([] if index==1 else ['W','B','R']),
+                'mana_cost':'' if index<2 else '{3}{R}{W}{B}','oracle_text':'Flying' if index==0 else 'Vigilance',
+                'flavor_text':'Spirit and Construct share a sharp italic corner.','flavor_name':'Test '+name+' Nickname','rarity':'common','power':'1','toughness':'1','artist':'Fixture Artist'}
+        cards.append({'id':'card-'+str(index),'name':name,'quantity':1,'scryfall':source,'faces':[{'id':'face-'+str(index),'name':name,'index':0,'templateOverride':style}]})
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=False);page=browser.new_page();errors=[]
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        page.add_init_script("""(()=>{
+          const original=CanvasRenderingContext2D.prototype.strokeText;window.__outlineJoins=[];
+          CanvasRenderingContext2D.prototype.strokeText=function(text,...args){
+            if(window.__PF_RUNTIME?.active)parent.postMessage({type:'outline-test',text:String(text),join:this.lineJoin,font:this.font},window.__PF_PARENT_ORIGIN);
+            return original.call(this,text,...args);
+          };
+          window.addEventListener('message',event=>{if(event.data?.type==='outline-test')window.__outlineJoins.push(event.data);});
+        })();""")
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id']);assert current['status']=='ready',page.locator('#activity-log').text_content()
+            joins=page.evaluate('window.__outlineJoins')
+            assert joins and all(item['join']=='round' for item in joins),joins
+            assert any('Spirit' in item['text'] for item in joins) and any('Construct' in item['text'] for item in joins)
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            (output/'round-outline-evidence.json').write_text(json.dumps(joins),encoding='utf-8')
+            for entry in current['cards']:
+                render=store.render_get(entry['faces'][0]['compiled']['renderKey']);picture=Image.open(store.asset_path(render['asset_id']))
+                picture.save(output/(entry['name'].replace(' ','_')+'_round_outlines.png'))
+            assert not errors,errors
+        finally:browser.close();server.shutdown();server.server_close();app.close()

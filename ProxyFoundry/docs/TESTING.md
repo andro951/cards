@@ -9,7 +9,9 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 629 | Every completed change |
-| Extended | 142 | Relevant changes or an explicit full sweep |
+| Extended | 143 | Relevant changes or an explicit full sweep |
+
+Outlined italic rendering checks generate actual Spirit, Construct, and legendary Godzilla cards, inspect native stroke calls for rounded joins, and save final PNGs for visual inspection. Pipeline v32 invalidates cached images with the previous sharp outlines.
 
 Normal Look starts image generation automatically after deck import, using normal artwork and frames without entering Art & Setup. Customize Look still defers generation until Generate Images. Offline DOM and HTTP regressions cover both paths; the production static website checks automatic completion followed by explicit customized regeneration.
 

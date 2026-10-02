@@ -2,6 +2,15 @@
 (() => {
   'use strict';
   const S=window.__PF_RUNTIME,post=S.post,sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  //Sharp italic glyph corners can extend miter outlines into adjacent frame borders.
+  const nativeStrokeText=CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText=function(...args){
+    if(!S.active)return nativeStrokeText.apply(this,args);
+    const join=this.lineJoin;
+    this.lineJoin='round';
+    try{return nativeStrokeText.apply(this,args);}
+    finally{this.lineJoin=join;}
+  };
   const pendingScripts=new Set();
   const assetCacheReady=import('/site/runtime-assets.js').then(({RuntimeAssets})=>new RuntimeAssets());
   const disposeAssets=()=>assetCacheReady.then(cache=>cache.dispose()).catch(error=>post('diagnostic',{stage:'asset-cleanup',diagnostic:{error:error.message}}));
