@@ -36,4 +36,14 @@ interruption, quota and reload checks are included in the final full sweep.
 
 [Raw isolated measurements](browser-database-memory-profile.json) retain the
 baseline, test scope and interpretation. The corrected 400-output stress run
-and all-enabled sweep are still in progress; final results will be appended.
+passed in 2,029.90 seconds: 400 distinct render keys, zero errors/warnings,
+all outputs retained after reload, and a steady 136,708,096-byte Wasm heap
+at every save. This repeats four printings with fresh face identities; it
+is a persistence/session-length test, not 400 distinct artworks.
+
+Navigation during that run remained functional, but Templates and returning
+to cards measured 14.85 and 17.43 seconds while an independent full sweep
+competed for CPU/RAM. These waits remain under investigation; stable memory
+does not establish that every foreground transition is fast. A stronger
+400-output rerun actually imports another deck during generation. The
+all-enabled sweep and that strengthened stress run are still in progress.

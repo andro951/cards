@@ -25,6 +25,11 @@ EXAMPLES=[('Syr Gwyn, Hero of Ashvale','001_syr_gwyn_hero_of_ashvale.png'),
           ('Command Tower','102_command_tower.png')]
 
 
+def example_art(repo,filename):
+    numbered=repo/'art'/filename
+    return numbered if numbered.is_file() else repo/'art'/filename.split('_',1)[1]
+
+
 def test_supernatural_full_card_art_and_downloaded_reviews(tmp_path):
     repo=ROOT.parent/'supernatural'
     if not repo.is_dir():
@@ -38,7 +43,7 @@ def test_supernatural_full_card_art_and_downloaded_reviews(tmp_path):
     deck=source.create({'name':'Supernatural full-card art verification','source':'\n'.join('1 '+name for name,_ in EXAMPLES)})
     metadata=json.loads((repo/'data.json').read_text(encoding='utf-8'))['cards']
     rows=[row for row in metadata if row['name'] in {name for name,_ in EXAMPLES}]
-    images={filename:base64.b64encode((repo/'art'/filename).read_bytes()).decode() for _,filename in EXAMPLES}
+    images={filename:base64.b64encode(example_art(repo,filename).read_bytes()).decode() for _,filename in EXAMPLES}
     build_site(tmp_path);site=copy_site(tmp_path)
     worker=site/'web/engine-worker.js'
     injected='''
@@ -87,12 +92,12 @@ def request(app, method, url, body, headers):
                 compiled=card['faces'][0]['compiled'];data=compiled['data'];recipes.append(compiled['recipe'])
                 assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
                 filename=next(filename for name,filename in EXAMPLES if name==card['name'])
-                original=Image.open(repo/'art'/filename).convert('RGB')
+                original=Image.open(example_art(repo,filename)).convert('RGB')
                 zoom=max(2010/original.width,2814/original.height)
                 assert data['artZoom']==pytest.approx(zoom)
                 assert data['artX']*2010==pytest.approx((2010-original.width*zoom)/2)
                 assert data['artY']*2814==pytest.approx((2814-original.height*zoom)/2)
-                (output/(filename.removesuffix('.png')+'_original.png')).write_bytes((repo/'art'/filename).read_bytes())
+                (output/(filename.removesuffix('.png')+'_original.png')).write_bytes(example_art(repo,filename).read_bytes())
             assert {'land_full_dual','land_full_tri','land_full_legendary','land_five_color'}<=set(recipes),recipes
             page.evaluate('window.showSaveFilePicker=undefined')
             page.click('#deck-menu')
@@ -110,7 +115,7 @@ def request(app, method, url, body, headers):
                 from foundry.domain import slug
                 review=Image.open(output/(slug(card['name'])+'_review.png')).convert('RGB')
                 assert review.size==(4021,2814)
-                original=Image.open(repo/'art'/filename).convert('RGB')
+                original=Image.open(example_art(repo,filename)).convert('RGB')
                 #Sample uncovered art on the real rendered half, using the source
                 #coordinates implied by full-canvas cover fit, independently of the compiler.
                 zoom=max(2010/original.width,2814/original.height)

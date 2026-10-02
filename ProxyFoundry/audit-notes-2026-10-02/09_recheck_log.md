@@ -317,3 +317,26 @@ regressions pass in 19.29s; the latter stays at 78,970,880 bytes. Corrected
 active. Full tracing was removed; no manual GC workaround shipped. All 15 Node
 cases including live sites and all four approved vendor hashes pass. See
  docs/BROWSER_DATABASE_MEMORY.md and its scoped raw measurements.
+
+### Chunk 12 long-session result and harness corrections
+
+The corrected 400-output run passes in 2,029.90s, including actual saved PNGs,
+400 distinct render keys, ready state, preserved search/focus/caret/button
+identity and reload. Heap remains 136,708,096 bytes at every save. The fixture
+repeats four printings; separate structural and full-art gates cover variety.
+The grid and five full-art review images were visually inspected. Full-art
+source-coordinate pixel comparisons also pass.
+
+Two all-enabled harness failures were reproduced as test assumptions: the
+cached second Generate click must first dismiss the intentional ready popup,
+and local example art must accept the user's renamed unnumbered filenames.
+The corrected two cases pass in 234.18s. No user art files are renamed by this
+work. The full sweep is still active; its final traces remain to be checked.
+
+Large-run menu waits (Templates 14.85s, return to cards 17.43s) need separate
+interpretation because the full sweep was competing on an 8 GB machine.
+The stronger run now imports another deck, checks that its faces are still
+uncompiled, returns to the original generation, then verifies completion.
+This run is active. A disposable saved-profile read probe could not recover
+the original completed workspace after pytest temp retention; it contributes
+no timing evidence. No speculative performance fix was shipped from it.

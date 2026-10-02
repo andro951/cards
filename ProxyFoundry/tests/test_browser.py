@@ -243,6 +243,8 @@ def test_real_cardconjurer_roundtrip(tmp_path):
             assert im.size==(2010,2814)
             assert len(im.resize((100,140)).getcolors(14000) or [])>80,'Native output is unexpectedly blank or flat'
             before=len(app.runtime.requested)
+            page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
+            page.get_by_role('button',name='View deck',exact=True).click()
             page.click('#generate-deck');page.wait_for_timeout(2500)
             assert len(app.runtime.requested)==before,'Unchanged front was not reused from render cache'
             (ROOT/'test-results').mkdir(exist_ok=True)
