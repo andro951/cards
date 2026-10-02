@@ -45,8 +45,15 @@
   bundle timings cannot justify a shared cache based on public network assumptions.
 
 
-- The expanded 400-output browser run failed after 36 completed images with
-  Python MemoryError followed by SQLite disk I/O errors. Evidence is preserved
-  under test-results/stress-400-oom-*. The failed engine exhausted memory;
-  which allocations accumulated is not established yet. Do not treat this as
-  a harmless harness error. A test-only heap/GC/database probe is running.
+- The original 400-output browser run exhausted memory after 36 completed
+  images. Repeated WAL database opens were isolated as the growth trigger;
+  BrowserStore now migrates to DELETE rollback journaling. The corrected run
+  saves/reloads all 400 outputs with a constant 136.7 MB Wasm heap. The precise
+  SQLite/Wasm allocation remains unestablished. See BROWSER_DATABASE_MEMORY.md.
+- Large-run navigation measured Templates 14.85s and return to cards 17.43s
+  while the independent all-enabled sweep competed on an 8 GB machine. A
+  separate actual static worker with 400 synthetic faces measured Templates
+  0.0035–0.0067s, deck reads 0.273–0.786s and library reads 0.219–0.508s.
+  That fixture has minimal compiled metadata and no real saved PNGs, so it
+  does not establish how much of the large-run delay comes from native drawing,
+  memory pressure, full snapshot size or individual browser scheduling.

@@ -11,10 +11,12 @@ small previews, startup stages and repeated artwork normalization. Synthetic
 queue/DOM timings and isolated warm-operation gains are not end-to-end deck
 speed claims. Exact pixels, native PNG bytes and reload checks remain gates.
 
-Final long-session and all-enabled verification remain open. The expanded
-400-output stress run found Python memory exhaustion after 36 completed images;
-its original failure evidence is retained and memory instrumentation is running.
-That failure must be explained and repaired before claiming final quality.
+The expanded 400-output run exposed real Python memory exhaustion after 36
+images. Controlled worker reads isolated WAL opens as the growth trigger.
+Rollback journaling repairs the browser case: 4,000-read regression and a
+complete 400-output save/reload pass with bounded memory. Original failure
+evidence is retained. The strengthened import-during-generation run and final
+all-enabled verification remain open.
 The earlier isolated startup timeout also has no established cause, despite
 24 successful profiling launches and subsequent successful static flows.
 
