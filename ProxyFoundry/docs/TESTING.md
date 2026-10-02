@@ -9,7 +9,7 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 558 | Every completed change |
-| Extended | 100 | Relevant changes or an explicit full sweep |
+| Extended | 104 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -108,3 +108,12 @@ The standalone harness uses visible Chromium, exact RGBA comparisons, saved-byte
 hash checks and reload verification. `--folder` reuses an approved CDP session
 without opening a permission picker. These are opt-in performance experiments,
 not an additional routine test or a change to the production render pipeline.
+
+### Stable collection updates
+
+[Collection responsiveness](COLLECTION_RESPONSIVENESS.md) records the isolated
+400-card and 300-deck DOM comparison. Regressions verify stable search/caret,
+selection, filters and inspector drafts during progress, plus real static
+native generation and a failed progress read after switching from library to
+cards. The collection milestone passed all 558 routine cases in 178.50 seconds
+and all 14 affected UI/browser cases, including three complete production flows.

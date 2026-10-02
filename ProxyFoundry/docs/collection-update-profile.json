@@ -1,0 +1,98 @@
+{
+  "note": "Offline DOM/JS fixture: 400 cards, 300 decks, 20 progress updates and 40 search changes per variant. Network, native drawing, persistence and initial mount excluded.",
+  "baselineRevision": "d1888b3",
+  "trials": [
+    {
+      "variant": "baseline",
+      "cards": {
+        "refresh": {
+          "seconds": 0.6992000000476837,
+          "remounts": 40,
+          "inputRetained": false,
+          "buttonRetained": false,
+          "focusRetained": false
+        },
+        "searchSeconds": 0.7057999999523162
+      },
+      "library": {
+        "refresh": {
+          "seconds": 0.25670000004768373,
+          "remounts": 60,
+          "templatesReads": 20,
+          "inputRetained": false,
+          "focusRetained": false
+        },
+        "searchSeconds": 1.4599000000953675
+      }
+    },
+    {
+      "variant": "current",
+      "cards": {
+        "refresh": {
+          "seconds": 0.0475,
+          "remounts": 0,
+          "inputRetained": true,
+          "buttonRetained": true,
+          "focusRetained": true
+        },
+        "searchSeconds": 0.01809999990463257
+      },
+      "library": {
+        "refresh": {
+          "seconds": 0.14109999990463257,
+          "remounts": 0,
+          "templatesReads": 0,
+          "inputRetained": true,
+          "focusRetained": true
+        },
+        "searchSeconds": 0.016300000190734864
+      }
+    },
+    {
+      "variant": "current",
+      "cards": {
+        "refresh": {
+          "seconds": 0.045399999856948856,
+          "remounts": 0,
+          "inputRetained": true,
+          "buttonRetained": true,
+          "focusRetained": true
+        },
+        "searchSeconds": 0.018399999856948852
+      },
+      "library": {
+        "refresh": {
+          "seconds": 0.14870000004768372,
+          "remounts": 0,
+          "templatesReads": 0,
+          "inputRetained": true,
+          "focusRetained": true
+        },
+        "searchSeconds": 0.016300000190734864
+      }
+    },
+    {
+      "variant": "baseline",
+      "cards": {
+        "refresh": {
+          "seconds": 0.6655999999046326,
+          "remounts": 40,
+          "inputRetained": false,
+          "buttonRetained": false,
+          "focusRetained": false
+        },
+        "searchSeconds": 0.661
+      },
+      "library": {
+        "refresh": {
+          "seconds": 0.25039999985694883,
+          "remounts": 60,
+          "templatesReads": 20,
+          "inputRetained": false,
+          "focusRetained": false
+        },
+        "searchSeconds": 1.3992000000476836
+      }
+    }
+  ]
+}

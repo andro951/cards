@@ -6,6 +6,7 @@
 - [x] Unrelated import/setup/navigation/deletion works during generation.
 - [x] Conflicts identify the affected deck/job and cannot overwrite newer edits.
 - [x] No rendering or bulk artwork download in setup/frame selection.
+- [x] Collection search/caret/selection and inspector drafts survive image progress.
 - [ ] Continuous generation progress and durable completion notification.
 - [x] Bounded render/save overlap measured with byte integrity/recovery.
 - [ ] Pipeline production benefit demonstrated; current overlap experiment is not justified.

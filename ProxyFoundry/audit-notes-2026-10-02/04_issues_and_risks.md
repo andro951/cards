@@ -18,3 +18,10 @@
   native stages before considering additional renderers; preserve exact pixels.
 - Identical-output reruns deduplicate saved assets and overstate overlap benefits.
   Use fresh generated PNG writes with warm input caches for throughput decisions.
+
+- Card progress still fetches a complete deck snapshot per image. Measure a lean
+  progress response or saved-face update before changing its revision/review
+  semantics. Stable DOM fixes remount/input loss but does not eliminate that read.
+- Collections retain their mounted tiles while filtering. Initial mount and very
+  large-collection memory remain separate profiling targets; no virtualization
+  benefit is claimed by the 400-card/300-deck fixture.

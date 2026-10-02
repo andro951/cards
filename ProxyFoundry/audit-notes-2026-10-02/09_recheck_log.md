@@ -120,3 +120,37 @@ Harness Python compilation and all four canonical vendor hash checks pass.
 The prior chunk's 558 routine/affected browser results still cover unchanged
 production code; this chunk adds measured experiments and documentation only.
 See docs/GENERATION_PIPELINE_PROFILE.md and generation-pipeline-profile.json.
+
+## Chunk 5 — stable collection updates and input retention
+
+Baseline main: d1888b3. Cards and library searches/filter changes retain mounted
+tiles and controls. Image progress patches thumbnails, status/counts and filters;
+library progress no longer reads templates. The current view receives updates even
+if generation started on another page. Its failed read logs without stopping
+production generation. Only the current card-grid updater retains its DOM; route
+changes release it. Same-deck mutation leases and unsaved-setup protections remain.
+Deck completion preserves focused inputs/open dialogs and avoids duplicate notices.
+
+Measured offline DOM/JS work against the previous committed UI, using identical
+400-card and 300-deck fixtures in balanced two-repeat trials. Twenty card updates
+fell from mean 0.682s to 0.046s; 40 card search changes from 0.683s to 0.018s.
+Twenty library updates fell from 0.254s to 0.145s and eliminated 20 template reads;
+40 library search changes fell from 1.430s to 0.016s. New progress retains search,
+focus and card button identity with zero main remounts. This excludes initial
+mount, network, rendering and persistence; it is not deck throughput. Raw timings
+and scope are in docs/COLLECTION_RESPONSIVENESS.md and collection-update-profile.json.
+
+Verification: all 558 routine tests pass in 178.50s. All 14 affected UI/browser
+cases pass across the final runs: four offline controls/large-collection cases,
+three existing browser search/hover/mobile controls, three actual static native
+concurrency/search/cross-view cases, late response navigation and three complete
+normal/custom/GitHub Pages import/setup/generate/review/ZIP/reload flows. The
+library-to-card case injects one failed progress read and still finishes generation
+with retained focus/caret and updated final counts. Screenshot checks wait for the
+rendered thumbnail to decode. Python compilation, touched JS syntax and all four
+canonical vendor hashes pass. No native frame/art/canvas implementation changed.
+Final hover check: seven focused cases pass in 12.58s, including a preview
+whose back becomes available during progress without replacing its button.
+The decoded screenshot was visually inspected: rendered card, orange appearance,
+focused search and one success notification are intact.
+Next: native task-yield experiment and remaining long-job families/recovery.

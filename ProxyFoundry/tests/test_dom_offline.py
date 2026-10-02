@@ -42,7 +42,7 @@ def dom_page(tmp_path):
         window.fetch=async(path,opts={})=>{
           const d=opts.body?JSON.parse(opts.body):null,F=window.__fixture;let value={};
           if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{},backs:{default:{id:'a'.repeat(64)},blank:{id:'b'.repeat(64)},iconBounds:{x:207,y:450,size:640},blankSize:[1055,1491]}};
-          else if(path==='/api/decks')value=[F.deck];
+          else if(path==='/api/decks')value=F.decks||[F.deck];
           else if(path==='/api/templates'&&!d)value=F.templates;
           else if(path==='/api/templates'&&d){value={...d,id:'33333333-3333-4333-8333-333333333333'};F.templates.push(value);}
           else if(path.startsWith('/api/templates/seed'))value=F.seed;
@@ -80,4 +80,74 @@ def test_offline_settings_and_mobile(dom_page):
     assert page.evaluate('window.__fixture.settings.refreshData') is True
     page.set_viewport_size({'width':390,'height':844});page.click('.topbar [data-nav=decks]');page.locator('.deck-tile').wait_for()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    assert not errors,errors
+
+
+def test_offline_large_card_grid_keeps_input_and_tiles_during_progress(dom_page):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      const deck=window.__fixture.deck,card=deck.cards[0];
+      card.faces[0].selectedArtUrl='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      deck.settings.backAsset=null;
+      deck.cards=Array.from({length:400},(_,index)=>({...structuredClone(card),id:`00000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`,name:`Card ${String(index).padStart(3,'0')}`,quantity:1}));
+      deck.summary={cards:400,faces:400,rendered:0,warnings:0,errors:0};
+    }""")
+    page.locator('.deck-tile').click();page.locator('#card-search').wait_for()
+    page.evaluate("window.originalSearch=document.querySelector('#card-search');window.originalCard=document.querySelector('[data-card]');")
+    page.locator('#card-search').fill('Card 00')
+    assert page.locator('.card-item:visible').count()==10
+    page.keyboard.press('ArrowLeft');caret=page.locator('#card-search').evaluate('(input)=>input.selectionStart')
+    report=page.evaluate("""async()=>{
+      const deck=window.__fixture.deck;deck.status='prepared';deck.settings.backAsset='b'.repeat(64);
+      for(const card of deck.cards)card.faces[0].compiled={render:{url:'/api/assets/'+'a'.repeat(64)}};
+      deck.summary.rendered=400;
+      const started=performance.now();
+      for(let index=0;index<10;index++)await __mod_deck.refreshDeckProgress(deck.id);
+      return {seconds:(performance.now()-started)/1000,sameSearch:originalSearch===document.querySelector('#card-search'),
+        sameCard:originalCard===document.querySelector('[data-card]'),focused:document.activeElement===originalSearch};
+    }""")
+    assert report['sameSearch'] and report['sameCard'] and report['focused'],report
+    assert page.locator('#card-search').input_value()=='Card 00'
+    assert page.locator('#card-search').evaluate('(input)=>input.selectionStart')==caret
+    assert page.locator('.count-label').inner_text()=='400 cards · 400 faces · 400 rendered'
+    assert page.locator('[data-card] img').first.get_attribute('src').endswith('/thumbnail')
+    page.locator('[data-card]').first.evaluate("button=>button.dispatchEvent(new Event('mouseenter'))")
+    assert page.locator('[data-card] img').first.get_attribute('src')=='/api/assets/'+'b'*64+'/thumbnail'
+    page.locator('[data-card]').first.evaluate("button=>button.dispatchEvent(new Event('mouseleave'))")
+    assert page.locator('[data-card] img').first.get_attribute('src')=='/api/assets/'+'a'*64+'/thumbnail'
+    page.locator('[data-card-filter=unrendered]').click()
+    assert page.locator('.card-item:visible').count()==0
+    assert page.get_by_role('heading',name='No cards match',exact=True).is_visible()
+    page.locator('[data-card-filter=all]').click()
+    page.locator('#card-search').fill('Card 00');page.locator('[data-card]:visible').first.click()
+    page.fill('#card-qty','3')
+    page.evaluate('async()=>{await __mod_deck.refreshDeckProgress(window.__fixture.deck.id);}')
+    assert page.locator('#card-qty').input_value()=='3'
+    assert page.locator('[role=dialog]').count()==1
+    assert not errors,errors
+
+
+def test_offline_library_progress_keeps_search_selection_and_filters(dom_page):
+    page,errors=dom_page
+    page.evaluate("""async()=>{
+      const fixture=window.__fixture;fixture.decks=[fixture.deck,...Array.from({length:299},(_,index)=>({...structuredClone(fixture.deck),id:`00000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`,name:`Other ${index}`}))];
+      await __mod_app.route();window.originalSearch=document.querySelector('#deck-search');
+      window.templatesReads=0;const original=window.fetch;window.fetch=async(path,options)=>{if(path==='/api/templates')templatesReads++;return original(path,options);};
+    }""")
+    page.locator('#deck-search').fill('Test');page.locator('[data-select]:visible').check();page.locator('#deck-search').focus()
+    page.evaluate("""async()=>{
+      const deck=window.__fixture.deck;deck.status='ready';deck.summary.rendered=1;
+      await __mod_app.refreshLibraryProgress();
+    }""")
+    assert page.evaluate('originalSearch===document.querySelector("#deck-search")&&document.activeElement===originalSearch')
+    assert page.locator('#deck-search').input_value()=='Test'
+    assert page.locator('[data-select]:visible').is_checked()
+    assert page.locator('#select-visible-decks').inner_text()=='Deselect All'
+    assert page.locator('.deck-tile:visible .deck-meta').inner_text().find('1/1 images')>=0
+    assert page.evaluate('templatesReads')==0
+    page.locator('[data-filter=work]').click()
+    assert page.locator('.deck-tile:visible').count()==0
+    assert page.get_by_text('No decks match your search.',exact=True).is_visible()
+    page.locator('[data-filter=ready]').click()
+    assert page.locator('.deck-tile:visible').count()==1
     assert not errors,errors

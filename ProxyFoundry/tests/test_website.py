@@ -36,7 +36,8 @@ def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
     assert all(row['foregroundSeconds']<.75 for row in report['trials'])
 
 
-def test_static_foreground_work_during_real_generation_preserves_setup_and_cancel_owner(tmp_path):
+@pytest.mark.parametrize('stay_on_cards',[False,True,'library'],ids=['other-deck-setup','generation-search','library-to-cards'])
+def test_static_foreground_work_during_real_generation_preserves_setup_and_cancel_owner(tmp_path,stay_on_cards):
     """Hold actual native generation while operating independent deck UI and jobs."""
     from playwright.sync_api import sync_playwright,expect
     import base64,io
@@ -99,10 +100,40 @@ def request(app,method,url,body,headers):
                     page.get_by_role('button',name='Normal Look',exact=True).click()
                     page.locator('#save-setup').wait_for(timeout=60000)
                     return page.evaluate("import('/site/ui.js').then(ui=>ui.state.activeDeck.id)")
-                first=import_card();page.click('#generate-deck')
+                first=import_card()
+                if stay_on_cards=='library':
+                    page.click('.topbar [data-nav=decks]');page.locator('[data-select]').check();page.click('#render-selected')
+                else:page.click('#generate-deck')
                 page.wait_for_function("document.querySelector('.render-frame')?.contentWindow.__testNativeHeld",timeout=120000)
                 conflict=page.evaluate("async id=>{const ui=await import('/site/ui.js');try{await ui.api('/api/decks/'+id+'/save',{name:'Must not overwrite'});return '';}catch(error){return error.message;}}",first)
                 assert 'Generate images for' in conflict and 'using this deck' in conflict
+                if stay_on_cards:
+                    page.evaluate("async id=>{location.hash='#deck/'+id+'/cards';}",first)
+                    page.locator('#card-search').wait_for(timeout=15000)
+                    page.locator('#card-search').fill('Concurrent')
+                    page.evaluate("window.originalSearch=document.querySelector('#card-search');window.originalCard=document.querySelector('[data-card]');")
+                    page.keyboard.press('ArrowLeft');caret=page.locator('#card-search').evaluate('(input)=>input.selectionStart')
+                    if stay_on_cards=='library':
+                        page.evaluate("""id=>{window.__failProgressOnce=true;const original=window.fetch;window.fetch=(path,options)=>{
+                            if(path==='/api/decks/'+id&&window.__failProgressOnce){window.__failProgressOnce=false;return Promise.resolve(new Response(JSON.stringify({error:'Test view refresh failure'}),{status:503,headers:{'Content-Type':'application/json'}}));}
+                            return original(path,options);};}""",first)
+                    page.evaluate("document.querySelector('.render-frame').contentWindow.postMessage({type:'__testReleaseNative'},location.origin)")
+                    page.wait_for_function("window.originalCard.querySelector('img')?.getAttribute('src')?.includes('/api/assets/')",timeout=90000)
+                    page.wait_for_function("import('/site/ui.js').then(ui=>!ui.work.busy)",timeout=90000)
+                    assert page.evaluate('originalSearch===document.querySelector("#card-search")&&originalCard===document.querySelector("[data-card]")&&document.activeElement===originalSearch')
+                    expect(page.locator('#card-search')).to_have_value('Concurrent')
+                    assert page.locator('#card-search').evaluate('(input)=>input.selectionStart')==caret
+                    expect(page.locator('.count-label')).to_contain_text('1 rendered')
+                    expect(page.get_by_role('dialog',name='Your deck is ready')).to_have_count(0)
+                    if stay_on_cards=='library':
+                        assert page.evaluate('window.__failProgressOnce') is False
+                        expect(page.locator('#toast-host')).to_contain_text('Rendering complete')
+                    else:expect(page.locator('#toast-host')).to_contain_text('ready to review and print')
+                    expect(page.locator('#toast-host .toast')).to_have_count(1)
+                    page.wait_for_function("(()=>{const image=window.originalCard.querySelector('img');return image?.complete&&image.naturalHeight>image.naturalWidth;})()",timeout=30000)
+                    page.screenshot(path=str(ROOT/'test-results/generation-search-retained.png'),full_page=True)
+                    assert not errors,errors
+                    return
                 page.click('.topbar [data-nav=decks]');page.locator('#import-deck').wait_for(timeout=15000)
                 second=import_card();assert first!=second
                 page.fill('#deck-artist','Keep this unsaved draft')

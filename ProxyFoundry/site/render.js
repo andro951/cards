@@ -37,7 +37,7 @@ async function runRenderPlan(plan,options={}){
     if(signal?.aborted)cancel();
     if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
     report('Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
-    if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));outcome='cached';endActivity(idleMessage,false,owner);toast(idleToast);return;}
+    if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));outcome='cached';endActivity(idleMessage,false,owner);if(idleToast)toast(idleToast);return;}
     if(plan.force)report('Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
     await measure('runtime.prepare',()=>job('/api/runtime/prepare',{}, {label:'Load CardConjurer',owner}));
     if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
@@ -75,7 +75,7 @@ async function runRenderPlan(plan,options={}){
       await onUpdate();
     }
     if(plan.errors.length){endActivity('Rendered available cards; some need attention',true,owner);throw new Error(plan.errors.join('\n'));}
-    outcome='ok';endActivity(successMessage,false,owner);toast(successToast);
+    outcome='ok';endActivity(successMessage,false,owner);if(successToast)toast(successToast);
   }catch(e){
     if(cancelled){if(work.visible()===owner)$('#activity').classList.add('hidden');}
     else{api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true,owner);}
@@ -83,17 +83,23 @@ async function runRenderPlan(plan,options={}){
   }finally{logTiming('render.total',started,cancelled?'cancelled':outcome,{cards:plan.targets.length,cached:plan.cached});signal?.removeEventListener('abort',cancel);cleanup();await onUpdate();}
 }
 
-export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false,signal=null}={}){
+export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false,signal=null,notify=true}={}){
+  const update=async id=>{
+    const view=state.generationView;
+    if(view?.route===state.route&&(!view.id||ids.includes(view.id)))
+      await view.refresh().catch(error=>recordDiagnostic('Progress view refresh',error.message));
+    await onUpdate(id);
+  };
   const name=ids.length===1?(state.decks.find(deck=>deck.id===ids[0])?.name||(state.activeDeck?.id===ids[0]?state.activeDeck.name:'deck')):ids.length+' decks';
   return work.render(owner=>measure('generation.total',async()=>{
     if(prepare){
       for(const id of ids){
-        await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck',owner});await onUpdate(id);
+        await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck',owner});await update(id);
       }
     }
     if(owner.controller.signal.aborted)throw new Error('Generation cancelled. Completed images are saved.');
     const plan=await api('/api/render-sessions',{deckIds:ids,force});
-    return runRenderPlan(plan,{label:'Render deck',onUpdate,owner,successMessage:'All card images saved',successToast:'Rendering complete. Your decks are ready for order review.'});
+    return runRenderPlan(plan,{label:'Render deck',onUpdate:update,owner,successMessage:'All card images saved',successToast:notify?'Rendering complete. Your decks are ready for order review.':null,idleToast:notify?'Cached images reused. No rendering needed.':null});
   },{decks:ids.length}).catch(error=>{endActivity(error.message,true,owner);throw error;}),{label:'Generate images for '+name,resources:ids.map(id=>'deck:'+id),signal});
 }
 

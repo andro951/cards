@@ -36,3 +36,19 @@ Repaired in chunk 2: task-based active work accounting and owned progress/cancel
 Finishing foreground work restores retained generation progress. Workspace-wide
 restore can cancel through its own exclusive lease. Picker cancellation releases
 that lease, and conflicts are rejected before a native picker can be opened.
+
+## High: image progress replaces active collection controls
+
+Evidence before chunk 5: deck.generate calls showDeck after each image, replacing
+main and rebuilding the grid; library generation calls refreshLibrary (including
+templates) and showLibrary after each image. Search itself also reconstructs the
+collection. The offline comparison against d1888b3 confirms old progress loses
+search focus and node identity, and performs 20 unnecessary template reads.
+
+Repaired in chunk 5: stable tile/status updates and filtering with existing
+controls. Visible-view ownership follows navigation and releases old grids;
+progress-read failure logs without stopping native generation. Completion preserves
+focused inputs and emits one deck notification. Actual generation tests retain
+search/caret/card buttons, including library-to-card navigation and an injected
+failed progress read. Offline 400-card/300-deck cases retain inspector drafts and
+selection. Full-deck snapshot reads and native drawing pauses remain separate risks.

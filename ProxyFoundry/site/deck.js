@@ -1,11 +1,13 @@
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,requireDeckAvailable} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
+let activeCardsView=null;
+window.addEventListener('hashchange',()=>{activeCardsView=null;});
 async function prepareDeckSource(source){
   const text=source.trim();
   if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(text)){
@@ -51,7 +53,7 @@ function preparationStatus(title,message){
   return detail;
 }
 function preparationComplete(deck){
-  if($('.modal')||state.dirty){
+  if($('.modal')||state.dirty||document.activeElement?.matches('input,textarea,[contenteditable=true]')){
     const notice=document.createElement('div');notice.className='toast';notice.setAttribute('role','status');
     const message=document.createElement('span');message.textContent=deck.name+' is ready to review and print.';
     const view=document.createElement('button');view.textContent='View deck';view.onclick=()=>{notice.remove();nav('deck/'+deck.id+'/cards');};
@@ -184,9 +186,9 @@ export async function showDeck(id,tab='cards'){
   const epoch=state.routeEpoch;
   if(tab==='review')tab='cards';
   const oldScroll=$('.card-grid')?.scrollTop||0;
-  const d=await api('/api/decks/'+id);if(epoch!==state.routeEpoch)return;state.activeDeck=d;state.deckTab=tab;
+  let d=await api('/api/decks/'+id);if(epoch!==state.routeEpoch)return;activeCardsView=null;state.activeDeck=d;state.deckTab=tab;
   let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}
-  const summary=d.summary,dirty=d.status==='draft';
+  let summary=d.summary,dirty=d.status==='draft';
   $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.status)}<span class="count-label">${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
     <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
@@ -232,33 +234,103 @@ export async function showDeck(id,tab='cards'){
     $('#review-order').onclick=()=>attempt(()=>chooseOrder([id]));return;
   }
   function cardsGrid(){
-    let cards=d.cards.filter(c=>c.name.toLowerCase().includes(v.query.toLowerCase()));
-    if(v.filter==='attention')cards=cards.filter(c=>c.faces.some(f=>f.error||(((f.compiled?.crop?.warning||f.compiled?.flags?.length)&&f.acceptedWarningKey!==f.compiled?.renderKey))));
-    if(v.filter==='unrendered')cards=cards.filter(c=>c.faces.some(f=>!f.compiled?.render));
+    const cards=d.cards;
     $('#deck-body').innerHTML=`${dirty?'<div class="notice info">You have saved changes to prepare. Generate images will rebuild only the affected faces and reuse unchanged PNGs.</div>':''}<div class="toolbar"><div class="filter-pills"><button data-card-filter="all" class="${v.filter==='all'?'active':''}">All cards</button><button data-card-filter="unrendered" class="${v.filter==='unrendered'?'active':''}">Not rendered</button><button data-card-filter="attention" class="${v.filter==='attention'?'active':''}">Needs review</button></div><label class="search"><input id="card-search" type="search" aria-label="Find a card" placeholder="Find a card…" value="${esc(v.query)}"></label><button class="button small" id="quick-order">Review order ↗</button></div>${cards.length?`<div class="card-grid">${cards.map(c=>{
       const f=c.faces[0],front=thumbnail(preview(c,f)),back=thumbnail(backPreview(c,d)),done=!!f.compiled?.render;
     const warning=c.faces.some(x=>x.error||(((x.compiled?.crop?.warning||x.compiled?.flags?.length)&&x.acceptedWarningKey!==x.compiled?.renderKey)));
     return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span><span class="card-name-pill" title="${esc(c.name)}">${esc(c.name)}</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done||f.lastRender?.render?.url?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':f.lastRender?.render?.url?'Previous render · changes pending':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button></article>`;
     }).join('')}</div>`:empty(d.cards.length?'No cards match':'This deck is waiting for cards',d.cards.length?'Try a different search or review filter.':'Add a card list or a Scryfall export to get started.',`<button class="button primary" id="empty-add">＋ Add cards</button>`)}<div class="subtitle-line">Hover a card to see its back. Click it to edit its artist, art, printing, quantity or template. Real double-faced cards hover to their actual reverse face.</div>`;
     $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
-    $$('[data-hover-back]').forEach(img=>{const card=img.closest('[data-card]'),front=img.dataset.hoverFront,back=img.dataset.hoverBack;if(!card||!front||!back)return;card.onmouseenter=()=>{img.src=back;};card.onmouseleave=()=>{img.src=front;};});
-    $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;cardsGrid();});
+    $$('[data-hover-front]').forEach(img=>{const card=img.closest('[data-card]');if(!card)return;card.onmouseenter=()=>{img.src=img.dataset.hoverBack||img.dataset.hoverFront;};card.onmouseleave=()=>{img.src=img.dataset.hoverFront;};});
+    $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;filterCards();});
     const attention=$('[data-card-filter="attention"]');
     if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
     $('.card-grid')?.style.setProperty('max-height','none');
     $('.card-grid')?.style.setProperty('overflow','visible');
     $('#quick-order')?.remove();
     $('.subtitle-line', $('#deck-body'))?.remove();
-    $('#card-search').oninput=e=>{v.query=e.target.value;const start=e.target.selectionStart??v.query.length,end=e.target.selectionEnd??start;cardsGrid();const search=$('#card-search');search.focus();try{search.setSelectionRange(start,end)}catch{}};
+    $('#card-search').oninput=e=>{v.query=e.target.value;filterCards();};
     if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
   }
-  cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
+  const body=$('#deck-body');
+  function filterCards(){
+    const query=v.query.toLowerCase(),cards=new Map(d.cards.map(card=>[card.id,card]));
+    let visible=0;
+    for(const button of $$('[data-card]',body)){
+      const card=cards.get(button.dataset.card);
+      const matches=card&&card.name.toLowerCase().includes(query)
+        &&(v.filter!=='unrendered'||card.faces.some(face=>!face.compiled?.render))
+        &&(v.filter!=='attention'||card.faces.some(face=>face.error||((face.compiled?.crop?.warning||face.compiled?.flags?.length)&&face.acceptedWarningKey!==face.compiled?.renderKey)));
+      button.closest('.card-item').hidden=!matches;
+      if(matches)visible++;
+    }
+    for(const button of $$('[data-card-filter]',body)){
+      button.classList.toggle('active',button.dataset.cardFilter===v.filter);
+    }
+    let empty=body.querySelector('[data-no-card-matches]');
+    if(!empty&&d.cards.length){
+      empty=document.createElement('div');empty.className='empty-state';empty.dataset.noCardMatches='';
+      const heading=document.createElement('h2');heading.textContent='No cards match';
+      const detail=document.createElement('p');detail.textContent='Try a different search or review filter.';
+      empty.append(heading,detail);body.append(empty);
+    }
+    if(empty)empty.hidden=visible>0;
+  }
+  const refresh=updated=>{
+    if(!body.isConnected||epoch!==state.routeEpoch||state.dirty)return;
+    d=updated;state.activeDeck=d;summary=d.summary;dirty=d.status==='draft';
+    const count=$('.count-label');if(count)count.textContent=`${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered`;
+    const badge=$('.page-head .badge');if(badge){badge.className='badge '+d.status;badge.textContent=humanStatus(d.status);}
+    const attention=$('[data-card-filter="attention"]',body);if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
+    const steps=$$('.deck-progress>span');
+    if(steps[1])steps[1].className=dirty?'current':'complete';
+    if(steps[2])steps[2].className=d.status==='ready'?'complete':!dirty?'current':'';
+    if(steps[1]?.firstElementChild)steps[1].firstElementChild.textContent=dirty?'2':'✓';
+    if(steps[2]?.firstElementChild)steps[2].firstElementChild.textContent=d.status==='ready'?'✓':'3';
+    if(!dirty)body.querySelector(':scope>.notice.info')?.remove();
+    const cards=new Map(d.cards.map(card=>[card.id,card]));
+    for(const button of $$('[data-card]',body)){
+      const card=cards.get(button.dataset.card);if(!card)continue;
+      const face=card.faces[0],front=thumbnail(preview(card,face)),back=thumbnail(backPreview(card,d)),done=!!face.compiled?.render;
+      let image=$('img',button);
+      if(front&&!image){
+        image=document.createElement('img');image.loading='lazy';image.alt=card.name;
+        $('.card-empty-symbol',button)?.remove();button.append(image);
+        button.onmouseenter=()=>{image.src=image.dataset.hoverBack||image.dataset.hoverFront;};
+        button.onmouseleave=()=>{image.src=image.dataset.hoverFront;};
+      }
+      if(image){
+        const previous=image.dataset.hoverFront;
+        image.dataset.hoverFront=front;image.dataset.hoverBack=back||'';
+        if(previous!==front||!image.getAttribute('src'))image.src=front;
+        image.classList.toggle('art-only',!done&&!face.lastRender?.render?.url);
+      }
+      let label=$('.image-label',button);
+      if(!label&&(!done||dirty)){label=document.createElement('span');label.className='image-label';button.append(label);}
+      if(label){label.hidden=done&&!dirty;label.textContent=face.error?'Needs attention':face.lastRender?.render?.url||done?'Previous render · changes pending':'Art preview · not rendered';}
+      const warning=card.faces.some(face=>face.error||((face.compiled?.crop?.warning||face.compiled?.flags?.length)&&face.acceptedWarningKey!==face.compiled?.renderKey));
+      let mark=$('.warn-pill',button);
+      if(warning&&!mark){mark=document.createElement('span');mark.className='warn-pill';mark.textContent='!';button.append(mark);}
+      if(mark)mark.hidden=!warning;
+    }
+    filterCards();
+  };
+  activeCardsView={id,refresh};
+  state.generationView={route:'deck',id,refresh:()=>refreshDeckProgress(id)};
+  cardsGrid();filterCards();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
+}
+export async function refreshDeckProgress(id){
+  if(state.route!=='deck'||state.activeDeck?.id!==id||state.deckTab!=='cards'||state.dirty)return;
+  const view=activeCardsView,epoch=state.routeEpoch;
+  if(view?.id!==id)return;
+  const updated=await api('/api/decks/'+id);
+  if(epoch===state.routeEpoch&&activeCardsView===view)view.refresh(updated);
 }
 async function generate(d){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
-  await renderDecks([d.id],{onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='cards'&&!state.dirty)await showDeck(d.id,'cards');}});
+  await renderDecks([d.id],{notify:false});
   const finished=await api('/api/decks/'+d.id);
   if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
   if(finished.status==='ready')preparationComplete(finished);
