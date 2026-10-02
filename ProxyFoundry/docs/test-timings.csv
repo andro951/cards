@@ -629,7 +629,7 @@ tests/test_browser.py::test_browser_paired_order_snapshot,extended,7.647,passed,
 tests/test_browser.py::test_browser_saved_orders_are_reachable_from_library,extended,4.126,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_browser.py::test_browser_symbol_folder_upload,extended,5.149,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_browser.py::test_new_deck_import_stays_simple_and_chooses_look_afterward,extended,5.655,passed,2026-10-02T07:58:16.535911-04:00
-tests/test_browser.py::test_normal_look_uses_classic_frames_for_every_ordinary_group,extended,6.146,passed,2026-10-02T07:58:16.535911-04:00
+tests/test_browser.py::test_normal_look_uses_classic_frames_for_every_ordinary_group,extended,4.639,passed,2026-10-02T15:50:08.493415-04:00
 tests/test_browser.py::test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box,extended,45.526,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_browser.py::test_real_cardconjurer_roundtrip,extended,40.728,passed,2026-10-02T08:36:31.880749-04:00
 tests/test_browser_storage.py::test_binary_files_and_zip_do_not_live_in_python_memory_and_survive_reload,extended,40.436,passed,2026-10-02T10:02:28.069828-04:00
@@ -656,6 +656,8 @@ tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,e
 tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,2.094,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.442,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_artwork_refresh_does_not_reuse_stale_images_or_pairs,extended,2.973,passed,2026-10-02T14:27:37.205412-04:00
+tests/test_dom_offline.py::test_choose_look_routes_without_generating[Customize Look],extended,2.853,passed,2026-10-02T15:49:36.994395-04:00
+tests/test_dom_offline.py::test_choose_look_routes_without_generating[Normal Look],extended,5.479,passed,2026-10-02T15:49:36.994395-04:00
 tests/test_dom_offline.py::test_delete_cancels_generation_once_and_uses_latest_revision,extended,1.622,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,1.144,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_dom_offline.py::test_library_initial_covers_and_backs_use_small_previews,extended,1.676,passed,2026-10-02T14:27:37.205412-04:00
@@ -732,6 +734,6 @@ tests/test_website.py::test_static_template_editor_generates_only_on_request_and
 tests/test_website.py::test_static_token_styles_and_upstream_assets,extended,11.281,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_website_fetches_pinned_station_script,extended,10.589,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Customize Look-/],extended,58.174,passed,2026-10-02T10:19:12.560749-04:00
-tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/],extended,64.252,passed,2026-10-02T10:19:12.560749-04:00
+tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/],extended,65.088,passed,2026-10-02T15:51:43.519777-04:00
 tests/test_website.py::test_static_website_import_frame_review_and_zip[Normal Look-/cards/],extended,58.025,passed,2026-10-02T10:19:12.560749-04:00
 tests/test_website.py::test_static_website_prepare_frames_load_from_pinned_fallback,extended,15.065,passed,2026-10-02T10:19:12.560749-04:00

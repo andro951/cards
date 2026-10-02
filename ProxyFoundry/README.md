@@ -64,6 +64,9 @@ node --test tests_web/*.test.mjs
 
 The original Python app remains available through `START_PROXY_FOUNDRY.bat` and `run.py`.
 
+**Normal Look** applies the normal MTG artwork and frames and opens Cards directly.
+**Customize Look** opens Art & Setup. Both wait for **Generate images** before rendering.
+
 **Diagnostics:** Download Diagnostics includes engine logs, job logs, and browser
 logs in one ZIP. Browser logs capture notifications, caught/unhandled errors,
 console warnings/errors, button clicks, dialogs, and visible status messages, plus

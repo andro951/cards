@@ -269,6 +269,40 @@ def test_general_browser_diagnostics_include_messages_and_download_snapshot(dom_
     assert not errors,errors
 
 
+@pytest.mark.parametrize('look',['Normal Look','Customize Look'])
+def test_choose_look_routes_without_generating(dom_page,look):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      window.importSettings=null;window.prematureGeneration=[];const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path==='/api/decks/import'){
+          importSettings=JSON.parse(options.body).settings;
+          __fixture.deck.settings={...__fixture.deck.settings,...importSettings};
+          return {ok:true,text:async()=>JSON.stringify({id:'import-fixture'})};
+        }
+        if(path==='/api/jobs/import-fixture')return {ok:true,text:async()=>JSON.stringify({state:'done',kind:'Import deck',result:__fixture.deck})};
+        if(path.includes('/prepare')||path.includes('/render-sessions'))prematureGeneration.push(path);
+        return original(path,options);
+      };
+    }''')
+    page.click('#import-deck');page.locator('.modal-body summary').click()
+    page.locator('.modal-body textarea').fill('1 Test creature');page.click('#do-import')
+    page.get_by_role('button',name=look,exact=True).click()
+    if look=='Normal Look':
+        page.locator('#card-search').wait_for()
+        assert page.url.endswith('/cards') and page.locator('#save-setup').count()==0
+        settings=page.evaluate('importSettings')
+        assert settings['source']['mode']=='scryfall'
+        assert all(value=='normal' for value in settings['templateRules'].values())
+        assert settings['artist']=='' and not settings['allCardsTokens']
+        assert page.locator('#generate-deck').is_visible()
+    else:
+        page.locator('#save-setup').wait_for()
+        assert page.url.endswith('/setup')
+    assert not page.evaluate('prematureGeneration')
+    assert not errors,errors
+
+
 def test_artwork_refresh_does_not_reuse_stale_images_or_pairs(dom_page):
     page,errors=dom_page;artwork_helper(page,count=1,images=1)
     page.get_by_role('button',name='Back to setup',exact=True).click()

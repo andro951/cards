@@ -9,7 +9,7 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 610 | Every completed change |
-| Extended | 126 | Relevant changes or an explicit full sweep |
+| Extended | 128 | Relevant changes or an explicit full sweep |
 
 The artwork-matching checkpoint adds schema/UUID/token-variant/filename checks,
 metadata-only inventory review, indexed 5,000-image lookup and 2,000-entry selector
