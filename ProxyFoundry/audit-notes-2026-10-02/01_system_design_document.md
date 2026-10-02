@@ -50,10 +50,17 @@ between chunks join the serialized queue before the next scheduled chunk.
 Preparation yields after sources are indexed and after each persisted card.
 The legacy local application drains the same generator synchronously.
 
-Other job families remain synchronous until their own safe boundaries are
-converted. A slow network request or single card preparation still blocks the
-engine within that chunk. Scoped job/resource ownership now permits independent
-deck work. Remaining synchronous job families still need safe chunk boundaries.
+Imports now yield between resolved metadata rows and publish the deck only after
+all rows finish. Add Cards retains its starting revision so intervening edits
+reject the final write. Runtime preparation yields after each pinned dependency.
+Foreground jobs preempt background preparation at these boundaries, with equal
+priorities rotating and cancelled jobs closing first. Whole-deck preparation and
+runtime setup are background jobs; imports remain foreground jobs.
+
+A slow network request or single card preparation still blocks the engine within
+that chunk. GitHub setup, archives, orders and backups remain synchronous until
+their own safe boundaries are converted. Scoped ownership permits independent
+deck work but does not make those individual operations parallel.
 
 ## User-visible progress
 

@@ -19,6 +19,37 @@ def test_start_returns_before_operation_and_persists_progress(tmp_path):
     assert BrowserJobs(store).get(ident)['state']=='done'
 
 
+def test_foreground_chunks_preempt_background_and_equal_priorities_rotate(tmp_path):
+    jobs=BrowserJobs(Store(tmp_path));steps=[]
+    def operation(name):
+        def run(update,cancel):
+            for index in range(2):steps.append((name,index));yield
+            return name
+        return run
+    background=jobs.start('Prepare deck',operation('background'),priority=1)['id']
+    jobs.run_pending(limit=1)
+    first=jobs.start('Import A',operation('A'))['id']
+    second=jobs.start('Import B',operation('B'))['id']
+    for _ in range(6):jobs.run_pending(limit=1)
+    assert steps==[('background',0),('A',0),('B',0),('A',1),('B',1)]
+    assert jobs.get(first)['result']=='A' and jobs.get(second)['result']=='B'
+    assert jobs.get(background)['state']=='running'
+    jobs.run_pending();assert jobs.get(background)['result']=='background'
+
+
+def test_cancelled_background_closes_before_queued_foreground_chunks(tmp_path):
+    cancelled=set();steps=[]
+    jobs=BrowserJobs(Store(tmp_path),cancelled=lambda ident:ident in cancelled)
+    def background(update,cancel):
+        try:yield
+        finally:steps.append('closed')
+    ident=jobs.start('Prepare deck',background,priority=1)['id'];jobs.run_pending(limit=1)
+    jobs.start('Import',lambda update,cancel:steps.append('foreground'))
+    cancelled.add(ident);jobs.run_pending(limit=1)
+    assert steps==['closed'] and jobs.get(ident)['state']=='cancelled'
+    jobs.run_pending();assert steps==['closed','foreground']
+
+
 def test_browser_control_plane_can_cancel_at_a_checkpoint(tmp_path):
     control={'cancelled':False};completed=[]
     jobs=BrowserJobs(Store(tmp_path),cancelled=lambda ident:control['cancelled'])

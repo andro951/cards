@@ -8,11 +8,12 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 550 | Every completed change |
-| Extended | 99 | Relevant changes or an explicit full sweep |
+| Routine | 558 | Every completed change |
+| Extended | 100 | Relevant changes or an explicit full sweep |
 
-The overnight task-ownership milestone passed all 550 routine tests in 199.68
-seconds, including scoped leases, native queue priority, cancellation and failure
+The overnight metadata/runtime scheduling milestone passed all 558 routine tests
+in 195.15 seconds, including foreground job priority, import publication/revision
+safety, scoped leases, native queue priority, cancellation and failure
 cleanup. Affected static browser checks cover importing/editing during generation,
 queued cancellation, wrong-task cancellation prevention, workspace picker
 exclusion and cancellation release, unrelated deletion and stale route responses. The

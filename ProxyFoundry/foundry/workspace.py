@@ -153,8 +153,14 @@ class Workspace:
             if choice=='land' and group in {'legendary','legendary-land'}:raise ValidationError('Full-art land has no compatible crown.')
         return s
     def create(self,payload,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.create_steps(payload,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def create_steps(self,payload,progress=lambda *a:None,cancel=lambda:False):
         refresh=bool(payload.get('settings',{}).get('refreshData',self.global_settings().get('refreshData',False)))
-        result=self.sources.import_deck(payload.get('source',''),payload.get('includeOutside',True),refresh,progress,cancel)
+        result=yield from self.sources.import_deck_steps(payload.get('source',''),payload.get('includeOutside',True),refresh,progress,cancel)
         if cancel():raise ValidationError('Import cancelled.')
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
@@ -391,9 +397,16 @@ class Workspace:
             raise ValidationError('That printing has no matching card face.')
         return printing,selected
     def add_cards(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.add_cards_steps(ident,payload,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def add_cards_steps(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=payload.get('revision')
         if rev!=d['revision']:raise ConflictError('Reload the deck before adding cards.')
-        result=self.sources.import_deck(payload.get('source',''),payload.get('includeOutside',False),d['settings'].get('refreshData',False),progress,cancel)
+        result=yield from self.sources.import_deck_steps(payload.get('source',''),payload.get('includeOutside',False),d['settings'].get('refreshData',False),progress,cancel)
+        if cancel():raise ValidationError('Import cancelled.')
         if sum(c['quantity'] for c in d['cards']+result['cards'])>10000:raise ValidationError('Deck limit is 10,000 cards.')
         d['cards']+=result['cards'];d['status']='draft';d.pop('summary',None)
         return self.store.put('decks',d,rev)

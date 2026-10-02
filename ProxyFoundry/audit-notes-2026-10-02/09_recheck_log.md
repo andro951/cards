@@ -60,3 +60,35 @@ All three current production static import/setup/render/review/paired-ZIP/reload
 flows passed in 165.77 seconds, including normal/custom looks and the GitHub
 Pages base path. Six final DOM/ownership cases also passed after the final legacy
 backup ownership adjustment. No PNG/native drawing or art placement changed.
+
+## Chunk 3 — metadata and runtime chunks, foreground job priority
+
+Baseline main: 9654933. Sources.import_deck_steps yields after manifest parsing
+and each resolved row, including duplicate rows. Workspace.create_steps keeps
+the deck unpublished until import completes. Add Cards holds its starting
+optimistic revision through resolution. Synchronous local wrappers drain the
+same operations. Existing deck.import timing now spans all generator chunks.
+Runtime.prepare_steps yields after each pinned dependency and checks cancellation
+before returning ready. Browser routes use these generators; the old server's
+threaded/synchronous interface retains its original operation types.
+
+BrowserJobs gives foreground metadata/import jobs priority over background
+deck/runtime preparation at safe boundaries. Equal priorities rotate. Cancelled
+jobs close before new work to release resources promptly. Individual synchronous
+network calls remain non-preemptible; this is not parallel card rendering.
+
+Verification: 558 routine cases passed in 195.15 seconds, including eight new
+priority/import/runtime tests. Focused tests prove duplicate quantities/sections,
+metadata cache reuse after cancellation, no partial published deck, retained
+intervening edits, inclusive import timing and cancellation after the final file.
+Five affected actual static browser flows passed in 218.41 seconds, covering all
+three full import/render/review/ZIP/reload variants, concurrent UI work and
+cancellation/reload. The additional 12-row metadata-import browser fixture
+passed in 19.13 seconds; a foreground settings read took 0.185 seconds while only
+two of twelve rows had resolved. No rendering or artwork acquisition occurs in
+that import. Python compilation and all four canonical vendor hashes pass.
+
+The approved live filesystem browser is still connected at CDP 9227 with granted
+read/write access to the benchmark folder. No new native picker was opened.
+Next: benchmark bounded render/save overlap in browser and selected-folder
+storage, then choose a production change only from measured integrity/timing.

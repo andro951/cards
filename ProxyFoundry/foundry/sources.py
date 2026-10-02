@@ -1,6 +1,6 @@
 """Exact-printing Scryfall imports and explicit GitHub art folders."""
 from __future__ import annotations
-from .timing import timed
+from .timing import timed,timing
 import hashlib,json,re
 from urllib.parse import quote,urlsplit
 from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group
@@ -37,8 +37,18 @@ class Sources:
         meld_result={k:card.get(k) for k in ('id','name','artist','set','collector_number','rarity') if card.get(k) is not None}
         meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
         return {**d,'_meld_proxy':True,'_meld_result':meld_result}
-    @timed('deck.import')
     def import_deck(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.import_deck_steps(source,include_outside,refresh,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def import_deck_steps(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+        with timing(self.net.store,'deck.import',source=source[:300] if isinstance(source,str) else '[Scryfall export]',refresh=refresh):
+            return (yield from self._import_deck_steps(source,include_outside,refresh,progress,cancel))
+
+    def _import_deck_steps(self,source,include_outside,refresh,progress,cancel):
+        if cancel():raise ValidationError('Import cancelled.')
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
             text=source.strip()
@@ -79,6 +89,8 @@ class Sources:
         else:raise ValidationError('Upload a Scryfall export, paste a public deck link or card names.')
         if not manifest:raise ValidationError('No cards were supplied.')
         if sum(r['quantity'] for r in manifest)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
+        #No deck is published until all rows are resolved; cached metadata is durable.
+        yield
         seen={};cards=[];resolved={}
         for i,row in enumerate(manifest):
             if cancel():raise ValidationError('Import cancelled.')
@@ -86,10 +98,14 @@ class Sources:
             key=str(row['source'])
             sf=resolved.setdefault(key,self.resolve_card(key,refresh)) if key not in resolved else resolved[key]
             identity=(sf['id'],row['section'])
-            if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity']);continue
-            entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
-            entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
-            seen[identity]=entry;cards.append(entry)
+            if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity'])
+            else:
+                entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
+                entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
+                seen[identity]=entry;cards.append(entry)
+            progress(i+1,len(manifest),'Resolved selected printing '+sf['name'])
+            yield
+        if cancel():raise ValidationError('Import cancelled.')
         progress(len(manifest),len(manifest),'Selected printings imported')
         return {'name':str(title),'cards':cards,'importedSource':original}
     def entry(self,sf,count=1,section='mainboard'):

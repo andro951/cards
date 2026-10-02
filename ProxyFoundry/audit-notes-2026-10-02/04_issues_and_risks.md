@@ -2,8 +2,8 @@
 
 - Synchronous network transport can make a single chunk long. Measure actual
   card, source-index and asset request spans before changing transport.
-- Several non-preparation jobs still run to completion; imports, runtime setup,
-  orders, archives and backups need their own safe yield boundaries.
+- Imports and runtime setup now yield; GitHub setup, orders, archives and backups
+  still need their own safe yield boundaries.
 - Same-deck generation/edit races require optimistic revisions and ownership.
   Shared asset caches may gain orphan bytes on conflict but must not lose edits.
 - Pipelines need bounded in-flight Blobs; failure/cancel must settle pending

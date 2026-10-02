@@ -142,9 +142,18 @@ class Runtime:
         with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False)}
         return raw,mime
     def prepare(self,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.prepare_steps(progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def prepare_steps(self,progress=lambda *a:None,cancel=lambda:False):
         for i,p in enumerate(self.SOURCE_FILES):
             if cancel():raise ValidationError('Renderer preparation cancelled.')
             progress(i,len(self.SOURCE_FILES),'Loading pinned CardConjurer '+p.rsplit('/',1)[-1]);self.fetch(p)
+            progress(i+1,len(self.SOURCE_FILES),'Loaded pinned CardConjurer '+p.rsplit('/',1)[-1])
+            yield
+        if cancel():raise ValidationError('Renderer preparation cancelled.')
         progress(len(self.SOURCE_FILES),len(self.SOURCE_FILES),'Native CardConjurer ready to start')
         return {'repository':CC_REPO,'commit':CC_COMMIT,'host':'/runtime/host'}
     def fonts_css(self):

@@ -149,10 +149,11 @@ class BrowserJobs:
             json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
         self.publish(dict(job))
 
-    def start(self,kind,operation):
+    def start(self,kind,operation,*,priority=0):
+        if priority not in {0,1}:raise ValueError('Use foreground or background job priority.')
         ident=uid()
         job={'id':ident,'kind':kind,'state':'queued','done':0,'total':0,
-             'message':'Queued','events':[],'cancelled':False,'startedAt':time.time()}
+             'message':'Queued','events':[],'cancelled':False,'startedAt':time.time(),'priority':priority}
         self.jobs[ident]=job;self.pending[ident]=operation
         self._publish(job)
         return {'id':ident}
@@ -161,7 +162,10 @@ class BrowserJobs:
         """Run bounded safe chunks; the worker yields to requests between calls."""
         steps=0
         while self.pending and (limit is None or steps<limit):
-            ident=next(iter(self.pending))
+            #Cancelled tasks release their resources promptly; foreground chunks
+            #take priority over background preparation. Equal priorities rotate.
+            ident=min(self.pending,key=lambda key:(
+                not (self.jobs[key]['cancelled'] or self.cancelled(key)),self.jobs[key]['priority']))
             self._step(ident);steps+=1
         return bool(self.pending)
 
@@ -275,11 +279,23 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        if path == '/api/decks/import':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Import deck',
+                lambda update,cancel:self.app.ws.create_steps(data,update,cancel)))
+        add=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/add',path)
+        if add:
+            data=self.data()
+            return self.respond(self.app.jobs.start('Add cards',
+                lambda update,cancel:self.app.ws.add_cards_steps(add[1],data,update,cancel)))
+        if path == '/api/runtime/prepare':
+            self.data()
+            return self.respond(self.app.jobs.start('Load CardConjurer',self.app.runtime.prepare_steps,priority=1))
         prepare=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/prepare',path)
         if prepare:
             self.data()
             return self.respond(self.app.jobs.start('Prepare deck',
-                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel)))
+                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel),priority=1))
         if path == '/api/cleanup/retry':
             for queue in self.app.store.list('cleanup'):
                 queue.pop('error',None)

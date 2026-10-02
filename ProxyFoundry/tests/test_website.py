@@ -197,6 +197,52 @@ def test_static_late_view_responses_do_not_replace_selected_page(tmp_path):
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 
+def test_static_metadata_import_services_foreground_reads_before_completion(tmp_path):
+    from playwright.sync_api import sync_playwright
+    build_site(tmp_path);site=copy_site(tmp_path)
+    injected='''
+original_transport=app.ws.net.transport
+def fixture_transport(url):
+    if str(url).startswith('https://api.scryfall.com/cards/11111111-1111-4111-8111-'):
+        import time
+        time.sleep(.075)
+        ident=url.rsplit('/',1)[-1]
+        return json.dumps({'id':ident,'name':'Scheduled '+ident[-2:],'layout':'normal',
+            'type_line':'Creature — Wizard','colors':['U'],'mana_cost':'{U}',
+            'oracle_text':'Flying','rarity':'common','power':'1','toughness':'1'}).encode(),'application/json',{}
+    return original_transport(url)
+app.ws.net.transport=fixture_transport
+'''
+    worker=site/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                report=page.evaluate("""async()=>{
+                    const ui=await import('/site/ui.js');
+                    const source=Array.from({length:12},(_,index)=>({id:'11111111-1111-4111-8111-'+String(index).padStart(12,'0')}));
+                    const {id}=await ui.api('/api/decks/import',{source});
+                    let state;
+                    do{await new Promise(resolve=>setTimeout(resolve,20));state=await ui.api('/api/jobs/'+id);}while(state.done<1);
+                    const started=performance.now();const settings=await ui.api('/api/settings');
+                    const seconds=(performance.now()-started)/1000;
+                    const before=await ui.api('/api/jobs/'+id);
+                    do{await new Promise(resolve=>setTimeout(resolve,30));state=await ui.api('/api/jobs/'+id);}while(!['done','failed','cancelled'].includes(state.state));
+                    return {seconds,intermediate:before.done,intermediateState:before.state,finished:state.state,
+                        cards:state.result?.cards?.length,compiled:state.result?.cards?.some(card=>card.faces.some(face=>face.compiled)),settings:!!settings.id};
+                }""")
+                assert report['seconds']<.75 and report['intermediateState']=='running' and 0<report['intermediate']<12,report
+                assert report['finished']=='done' and report['cards']==12 and not report['compiled'] and report['settings'],report
+                (ROOT/'test-results/metadata-import-scheduling.json').write_text(json.dumps(report,indent=2))
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_engine_releases_image_responses_and_error_diagnostics(tmp_path):
     """Exercise real Pyodide proxy lifetimes without rendering a whole deck."""
     from playwright.sync_api import sync_playwright
