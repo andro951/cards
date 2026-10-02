@@ -162,6 +162,7 @@ def test_artwork_file_merge_permissions_and_github_sha(dom_page):
 
 def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     page,errors=dom_page
+    page.add_style_tag(content=(ROOT/'site/forge-theme.css').read_text(encoding='utf-8'))
     page.evaluate('''async()=>{
       window.savedGithub={version:1,cards:[{name:'Spirit',nickname:'Ghost'}]};window.githubWrites=0;
       const original=window.fetch;
@@ -174,6 +175,24 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
       window.openSave=art=>{window.savePromise=__mod_artwork_review.offerDataSave(__fixture.deck.id,[{name:'Spirit',art}],savedGithub);};
       openSave('first.png');
     }''')
+    page.get_by_role('button',name='Update data.json on GitHub',exact=True).wait_for()
+    screenshot_dir=ROOT/'test-results';screenshot_dir.mkdir(exist_ok=True)
+    page.screenshot(path=str(screenshot_dir/'artwork-save-options-desktop.png'))
+    page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
+    guide=page.get_by_role('link',name='Open GitHub token setup')
+    from urllib.parse import urlparse,parse_qs
+    assert parse_qs(urlparse(guide.get_attribute('href')).query)=={'name':['BulkProxyForge'],'description':['Update data.json artwork choices'],'target_name':['owner'],'contents':['write'],'expires_in':['90']}
+    assert guide.get_attribute('target')=='_blank'
+    assert page.locator('.modal-body ol li').count()==3
+    assert page.get_by_role('img',name='Screenshot placeholder:',exact=False).count()==3
+    assert page.get_by_role('button',name='Connect and update data.json',exact=True).is_disabled()
+    page.screenshot(path=str(screenshot_dir/'artwork-github-guide-desktop.png'))
+    page.set_viewport_size({'width':390,'height':844})
+    assert page.evaluate('''()=>[...document.querySelectorAll('.modal-body input,.modal-body img,.modal-body .button')].filter(x=>x.getClientRects().length).every(x=>{const r=x.getBoundingClientRect(),p=x.closest('.modal-body').getBoundingClientRect();return r.left>=p.left&&r.right<=p.right+1;})''')
+    page.screenshot(path=str(screenshot_dir/'artwork-github-guide-mobile.png'))
+    page.get_by_role('button',name='Back to save options',exact=True).click()
+    assert page.get_by_role('button',name='Download data.json',exact=True).is_visible()
+    assert not guide.is_visible()
     page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
     page.get_by_role('textbox',name='GitHub connection token').fill('one-use-token')
     page.get_by_role('button',name='Connect and update data.json',exact=True).click()

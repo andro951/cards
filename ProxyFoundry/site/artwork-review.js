@@ -186,6 +186,18 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
 //#endregion
 
 //#region Optional data.json export
+const githubGuideSnippet=(label,height)=>{
+    const canvas=window.document.createElement(`canvas`);canvas.width=480;canvas.height=height;
+    const context=canvas.getContext(`2d`);
+    context.fillStyle=`#25201b`;context.fillRect(0,0,480,height);
+    context.strokeStyle=`#80603c`;context.strokeRect(1,1,478,height-2);
+    context.fillStyle=`#c7ac87`;context.font=`16px sans-serif`;context.textAlign=`center`;
+    context.fillText(`Screenshot placeholder`,240,height/2-8);
+    context.font=`13px sans-serif`;context.fillText(label,240,height/2+17);
+    const image=element(`img`);image.src=canvas.toDataURL();image.alt=`Screenshot placeholder: ${label}`;
+    Object.assign(image.style,{display:`block`,width:`100%`,maxWidth:`480px`,height:`auto`,borderRadius:`8px`});
+    return image;
+};
 export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
     if(!changes.length)
         return;
@@ -197,13 +209,19 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
     catch(error){url=``;sourceWarning=`Use the full GitHub folder link in Art & Setup to update data.json. You can download it now.`;}
     return new Promise(resolve=>{
         let saving=false;
-        modal(`Save artwork choices for next time?`,``,{onClose:()=>{if(saving)return false;resolve();return true;},size:`small`});
+        modal(`Save artwork choices for next time?`,``,{onClose:()=>{if(saving)return false;resolve();return true;}});
         const dialog=$(`#modal-host .modal-backdrop`);
         const body=$(`.modal-body`,dialog),status=element(`p`);status.setAttribute(`role`,`status`);
+        $(`.modal`,dialog).style.width=`580px`;
+        Object.assign(body.style,{display:`flex`,flexDirection:`column`,gap:`18px`});
+        status.style.margin=`0`;status.style.overflowWrap=`anywhere`;
         status.textContent=sourceWarning;
-        body.append(element(`p`,`Your choices are saved in this deck. You can also save them in data.json for future imports.`));
+        const choices=element(`section`);
+        Object.assign(choices.style,{display:`flex`,flexDirection:`column`,gap:`12px`});
+        const intro=element(`p`,`Save a data.json to reuse these choices next time.`);intro.style.margin=`0 0 6px`;
+        choices.append(intro);body.append(choices);
         const finish=()=>{if(saving)return;closeModal();resolve();};
-        body.append(button(`Download data.json`,()=>{if(saving)return;downloadData(mergeDataDocument(document,changes));finish();}));
+        choices.append(button(`Download data.json`,()=>{if(saving)return;downloadData(mergeDataDocument(document,changes));finish();}));
         if(url) {
             const save=button(`Update data.json on GitHub`,async()=>{
                 if(saving)return;
@@ -212,7 +230,9 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
                     const location=githubDataLocation(url);
                     let token=await githubCredential(location.repo);
                     if(!token) {
-                        connection.hidden=false;tokenInput.focus();save.disabled=false;saving=false;return;
+                        choices.style.display=`none`;connection.style.display=`flex`;
+                        $(`#modal-title`,dialog).textContent=`Connect GitHub`;status.textContent=``;
+                        guide.focus();save.disabled=false;saving=false;return;
                     }
 
                     const merged=await saveGithubData(location,token,changes,record.document);
@@ -225,22 +245,47 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
                 catch(error){status.textContent=error.message;}
                 finally{if(!remember.checked&&!remembered)await disconnectGithub(githubDataLocation(url).repo);save.disabled=false;saving=false;}
             });
-            const connection=element(`section`);connection.hidden=true;
-            connection.append(element(`p`,`Connect this repository so we can update your data.json.`));
-            const guide=element(`a`,`Create a connection token for this repository`);guide.href=`https://github.com/settings/personal-access-tokens/new`;guide.target=`_blank`;guide.rel=`noopener`;
+            const location=githubDataLocation(url),[owner,repo]=location.repo.split(`/`);
+            const connection=element(`section`);
+            Object.assign(connection.style,{display:`none`,flexDirection:`column`,gap:`18px`});
+            const summary=element(`p`,`Connect ${location.repo} to save your data.json.`);summary.style.margin=`0`;
+            const guide=element(`a`,`Open GitHub token setup ↗`);guide.className=`button`;
+            guide.href=`https://github.com/settings/personal-access-tokens/new?`+new URLSearchParams({name:`BulkProxyForge`,description:`Update data.json artwork choices`,target_name:owner,contents:`write`,expires_in:`90`});guide.target=`_blank`;guide.rel=`noopener noreferrer`;
+            connection.append(summary,guide);
+            const steps=element(`ol`);Object.assign(steps.style,{display:`flex`,flexDirection:`column`,gap:`20px`,paddingLeft:`24px`,margin:`0`});
+            const instructions=[
+                [`Choose your repository`,`Resource owner: ${owner}. Choose an expiration, then Only select repositories → ${repo}.`,`Repository selection`,120],
+                [`Check the permission`,`Under Repository permissions, Contents should say Read and write.`,`Contents permission`,90],
+                [`Generate and copy`,`Click Generate token. Copy the token, then paste it below.`,`Generate token and copy button`,90]
+            ];
+            for(const [title,text,snippet,height] of instructions) {
+                const step=element(`li`),heading=element(`strong`,title),detail=element(`p`,text);
+                heading.style.display=`block`;detail.style.margin=`6px 0 10px`;
+                step.append(heading,detail,githubGuideSnippet(snippet,height));steps.append(step);
+            }
+
+            connection.append(steps);
             const tokenInput=element(`input`);tokenInput.type=`password`;tokenInput.autocomplete=`off`;tokenInput.setAttribute(`aria-label`,`GitHub connection token`);
-            const help=element(`p`,`Select only this repository and enable Contents: Read and write. Paste the token here.`);
+            tokenInput.placeholder=`Paste your GitHub token`;
+            Object.assign(tokenInput.style,{display:`block`,width:`100%`,boxSizing:`border-box`,minWidth:`0`,padding:`12px`,borderRadius:`8px`,border:`1px solid #76502d`,background:`#100c08`,color:`#f0d7aa`});
+            const tokenLabel=element(`label`,`GitHub token`);tokenLabel.style.display=`block`;tokenLabel.append(tokenInput);
             const remember=element(`input`);remember.type=`checkbox`;
-            const label=element(`label`);label.append(remember,documentNode(`Remember access to update data.json in this repository. Leave unchecked for this update only.`));
+            const label=element(`label`);label.append(remember,documentNode(`Remember access to update data.json next time`));
+            Object.assign(label.style,{display:`flex`,alignItems:`flex-start`,gap:`10px`});
+            Object.assign(remember.style,{flexShrink:`0`,marginTop:`4px`});
+            const once=element(`small`,`Unchecked: connect for this update only.`);once.style.display=`block`;
             let remembered=false;
-            sourceRecord(`github:${githubDataLocation(url).repo}`).then(token=>{remembered=!!token;}).catch(error=>{status.textContent=error.message;});
+            sourceRecord(`github:${githubDataLocation(url).repo}`).then(token=>{remembered=!!token;forget.style.display=remembered?`block`:`none`;}).catch(error=>{status.textContent=error.message;});
             const connect=button(`Connect and update data.json`,async()=>{
                 if(saving)return;
                 try{await connectGithub(githubDataLocation(url).repo,tokenInput.value,remember.checked);tokenInput.value=``;await save.onclick();}
                 catch(error){status.textContent=error.message;}
             });
+            connect.disabled=true;tokenInput.oninput=()=>{connect.disabled=!tokenInput.value.trim();};
             const forget=button(`Forget GitHub connection`,async()=>{await disconnectGithub(githubDataLocation(url).repo);remembered=false;status.textContent=`GitHub connection forgotten.`;});
-            connection.append(guide,help,tokenInput,label,connect);body.append(save,forget,connection);
+            forget.style.display=`none`;
+            const back=button(`Back to save options`,()=>{if(saving)return;connection.style.display=`none`;choices.style.display=`flex`;$(`#modal-title`,dialog).textContent=`Save artwork choices for next time?`;status.textContent=``;save.focus();});
+            connection.append(tokenLabel,label,once,connect,back);choices.append(save,forget);body.append(connection);
         }
         else if(record.file||record.folder) {
             const save=button(record.file?`Update existing data.json`:`Create data.json in artwork folder`,async()=>{
@@ -248,11 +293,14 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
                 try{const result=await saveLocalData(record,changes);await sourceRecord(`deck:${deckId}`,result);saving=false;finish();}
                 catch(error){status.textContent=error.message;}
                 finally{save.disabled=false;saving=false;}
-            });body.append(save);
+            });choices.append(save);
         }
 
         const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged});
         body.append(status,button(`Not now`,finish));
+        for(const control of body.querySelectorAll(`.button`)) {
+            Object.assign(control.style,{whiteSpace:`normal`,overflowWrap:`anywhere`,width:`100%`,boxSizing:`border-box`});
+        }
     });
 };
 const documentNode=text=>window.document.createTextNode(text);
