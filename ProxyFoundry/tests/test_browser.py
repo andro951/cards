@@ -139,12 +139,14 @@ def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
     page.get_by_role('button',name='Normal Look').wait_for(timeout=5000)
     generation=[]
     page.on('request',lambda request:generation.append(request.url) if '/prepare' in request.url or '/render-sessions' in request.url else None)
-    page.get_by_role('button',name='Normal Look').click()
+    page.route('**/api/render-sessions',lambda route:route.fulfill(json={'targets':[],'errors':[],'cached':1}))
+    with page.expect_request('**/api/render-sessions',timeout=30000):
+        page.get_by_role('button',name='Normal Look').click()
     page.locator('#card-search').wait_for(timeout=30000)
     assert page.locator('#save-setup').count()==0
     assert page.url.endswith('/cards')
     assert page.locator('#generate-deck').is_visible()
-    assert not generation,generation
+    assert any('/prepare' in url for url in generation) and any('/render-sessions' in url for url in generation),generation
     decks=app.store.list('decks')
     assert len(decks)==1
     assert all(decks[0]['settings']['templateRules'][group]=='normal' for group in ('standard','legendary','land','legendary-land','basic-land'))

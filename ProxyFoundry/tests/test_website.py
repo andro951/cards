@@ -145,8 +145,9 @@ def request(app,method,url,body,headers):
                 def import_card():
                     page.click('#import-deck');page.locator('.modal-body summary').click()
                     page.locator('.modal-body textarea').fill(card['id']);page.click('#do-import')
-                    page.get_by_role('button',name='Normal Look',exact=True).click()
-                    page.locator('#card-search').wait_for(timeout=60000)
+                    page.get_by_role('button',name='Customize Look',exact=True).click()
+                    page.locator('#setup-state').wait_for(timeout=60000)
+                    page.click('[data-tab=cards]');page.locator('#card-search').wait_for(timeout=60000)
                     return page.evaluate("import('/site/ui.js').then(ui=>ui.state.activeDeck.id)")
                 first=import_card()
                 if stay_on_cards=='library':
@@ -185,6 +186,7 @@ def request(app,method,url,body,headers):
                     return
                 page.click('.topbar [data-nav=decks]');page.locator('#import-deck').wait_for(timeout=15000)
                 second=import_card();assert first!=second
+                page.click('[data-tab=setup]');page.locator('#setup-state').wait_for(timeout=60000)
                 page.fill('#deck-artist','Keep this unsaved draft')
                 expect(page.locator('#activity-kind')).to_have_text('Render deck')
                 page.evaluate("""async()=>{
@@ -211,7 +213,9 @@ def request(app,method,url,body,headers):
                 ready=page.evaluate("async id=>(await (await fetch('/api/decks/'+id)).json()).status",first)
                 assert ready=='ready',page.locator('body').inner_text()
                 expect(page.locator('#deck-artist')).to_have_value('Keep this unsaved draft')
-                assert page.evaluate("import('/site/ui.js').then(ui=>ui.state.dirty&&ui.state.activeDeck.id)")==second
+                assert page.evaluate("import('/site/ui.js').then(ui=>ui.state.activeDeck.id)")==second
+                saved=page.evaluate("async id=>{const ui=await import('/site/ui.js');await ui.state.setupActions.flush();return (await ui.api('/api/decks/'+id)).settings.artist;}",second)
+                assert saved=='Keep this unsaved draft'
                 expect(page.get_by_role('dialog',name='Your deck is ready')).to_have_count(0)
                 expect(page.locator('#toast-host')).to_contain_text('ready to review and print')
                 evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
@@ -509,7 +513,6 @@ def request(app, method, url, body, headers):
                 page.locator('.modal-body textarea').fill('1 Command Tower')
                 page.click('#do-import');page.get_by_role('button',name='Normal Look',exact=True).click(timeout=90000)
                 page.locator('#card-search').wait_for(timeout=90000)
-                page.click('#generate-deck')
                 page.wait_for_function("() => document.querySelector('.badge.ready') || document.querySelector('.toast.error')",timeout=180000)
                 failure=page.locator('.toast.error').all_text_contents()
                 data=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
@@ -687,7 +690,10 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                     assert normal['source']['mode']=='scryfall' and normal['artist']==''
                     assert not normal['disableAutofit'] and not normal['allCardsTokens'] and normal['showFlavorText']
                     assert normal['templateRules']['land']=='normal' and not normal['tokenOptions']['power']
-                    assert not generation,'Normal Look must wait for Generate images.'
+                    page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=180000)
+                    assert any('/prepare' in url for url in generation) and any('/render-sessions' in url for url in generation),generation
+                    page.get_by_role('button',name='View deck').click()
+                    generation.clear()
                     page.click('[data-tab=setup]');page.locator('#setup-state').wait_for(timeout=90000)
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
                                             'nickname':'Test Commander Nickname'}]}
@@ -881,8 +887,9 @@ def request(app, method, url, body, headers):
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
                 page.locator('#import-deck').wait_for(timeout=90000)
                 page.click('#import-deck');page.get_by_role('textbox',name='Deck link',exact=True).fill('https://scryfall.com/@andro951/decks/e18f48e7-a2b7-479e-8361-de947bc734ff')
-                page.click('#do-import');page.get_by_role('button',name='Normal Look',exact=True).click()
-                page.locator('#card-search').wait_for(timeout=180000)
+                page.click('#do-import');page.get_by_role('button',name='Customize Look',exact=True).click()
+                page.locator('#setup-state').wait_for(timeout=180000)
+                page.click('[data-tab=cards]');page.locator('#card-search').wait_for(timeout=180000)
                 original=page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                 assert original['cards'] and any(card['name']=='Syr Gwyn, Hero of Ashvale' for card in original['cards'])
                 page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/__test__/expand-deck/'+ui.state.activeDeck.id,{});}")
@@ -924,8 +931,9 @@ def request(app, method, url, body, headers):
                     if import_deck:
                         def finish_import():
                             page.click('#do-import')
-                            page.get_by_role('button',name='Normal Look',exact=True).click()
-                            page.locator('#card-search').wait_for(timeout=60000)
+                            page.get_by_role('button',name='Customize Look',exact=True).click()
+                            page.locator('#setup-state').wait_for(timeout=60000)
+                            page.click('[data-tab=cards]');page.locator('#card-search').wait_for(timeout=60000)
                         interaction('import deck metadata',finish_import)
                         imported=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
                         assert imported['id']!=deck_id and imported['cards']

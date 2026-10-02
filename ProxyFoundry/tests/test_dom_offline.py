@@ -288,18 +288,20 @@ def test_general_browser_diagnostics_include_messages_and_download_snapshot(dom_
 
 
 @pytest.mark.parametrize('look',['Normal Look','Customize Look'])
-def test_choose_look_routes_without_generating(dom_page,look):
+def test_choose_look_generates_normal_and_defers_custom(dom_page,look):
     page,errors=dom_page
     page.evaluate('''()=>{
       window.importSettings=null;window.prematureGeneration=[];const original=window.fetch;
       window.fetch=async(path,options={})=>{
         if(path==='/api/decks/import'){
           importSettings=JSON.parse(options.body).settings;
-          __fixture.deck.settings={...__fixture.deck.settings,...importSettings};
+          __fixture.deck.settings={...__fixture.deck.settings,...importSettings,symbols:Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)]))};
           return {ok:true,text:async()=>JSON.stringify({id:'import-fixture'})};
         }
         if(path==='/api/jobs/import-fixture')return {ok:true,text:async()=>JSON.stringify({state:'done',kind:'Import deck',result:__fixture.deck})};
-        if(path.includes('/prepare')||path.includes('/render-sessions'))prematureGeneration.push(path);
+        if(path.endsWith('/prepare')){prematureGeneration.push(path);return {ok:true,text:async()=>JSON.stringify({id:'normal-prepare'})};}
+        if(path==='/api/jobs/normal-prepare')return {ok:true,text:async()=>JSON.stringify({state:'done',result:__fixture.deck})};
+        if(path==='/api/render-sessions'){prematureGeneration.push(path);__fixture.deck.status='ready';return {ok:true,text:async()=>JSON.stringify({targets:[],errors:[],cached:1})};}
         return original(path,options);
       };
     }''')
@@ -314,10 +316,12 @@ def test_choose_look_routes_without_generating(dom_page,look):
         assert all(value=='normal' for value in settings['templateRules'].values())
         assert settings['artist']=='' and not settings['allCardsTokens']
         assert page.locator('#generate-deck').is_visible()
+        page.get_by_role('dialog',name='Your deck is ready').wait_for()
+        assert page.evaluate('prematureGeneration')==['/api/decks/'+page.evaluate('__fixture.deck.id')+'/prepare','/api/render-sessions']
     else:
         page.locator('#setup-state').wait_for()
         assert page.url.endswith('/setup')
-    assert not page.evaluate('prematureGeneration')
+        assert not page.evaluate('prematureGeneration')
     assert not errors,errors
 
 

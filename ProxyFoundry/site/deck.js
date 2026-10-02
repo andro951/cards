@@ -54,7 +54,7 @@ function preparationStatus(title,message){
   return detail;
 }
 function preparationComplete(deck){
-  if($('.modal')||state.dirty||document.activeElement?.matches('input,textarea,[contenteditable=true]')){
+  if(state.route!=='deck'||state.activeDeck?.id!==deck.id||$('.modal')||state.dirty||document.activeElement?.matches('input,textarea,[contenteditable=true]')){
     const notice=document.createElement('div');notice.className='toast';notice.setAttribute('role','status');
     const message=document.createElement('span');message.textContent=deck.name+' is ready to review and print.';
     const view=document.createElement('button');view.textContent='View deck';view.onclick=()=>{notice.remove();nav('deck/'+deck.id+'/cards');};
@@ -88,7 +88,7 @@ function chooseLook(source,includeOutside=true){
       choosing=true;
       closeModal();
       const status=preparationStatus('Reading your deck list',
-        value==='normal'?'We’re importing your deck with the normal artwork and frames. You can generate images when it’s ready.':'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+        value==='normal'?'We’re importing your deck, then generating its images with the normal artwork and frames. We’ll tell you when it’s ready.':'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
       const epoch=state.routeEpoch;
       let deck=null;
       try{
@@ -96,6 +96,7 @@ function chooseLook(source,includeOutside=true){
         deck=await job('/api/decks/import',{source:prepared,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
         if(epoch===state.routeEpoch)nav('deck/'+deck.id+(value==='normal'?'/cards':'/setup'));
         else toast(deck.name+' was imported. Open it from Deck Library when you’re ready.');
+        if(value==='normal')await generate(deck);
       }catch(error){
         if(epoch!==state.routeEpoch){toast(error.message,true);return;}
         status.textContent='We could not finish preparing this deck.';
