@@ -39,4 +39,4 @@ The importer checks the project root for `data.json`. The same file may instead 
 }
 ```
 
-`name` must exactly match a card face in the deck. The other fields are optional; empty values do not erase an existing override. A nickname adds the alternate title and real-name treatment. The `artist` field supplies the credit for matching custom art. Invalid JSON or unmatched names fail before setup is saved.
+Select a card by exact face `name`, `oracle_id`, or `scryfall_id`; supplied selectors must all match. The other fields are optional; empty values do not erase an existing override. A nickname adds the alternate title and real-name treatment. The `artist` field supplies the credit for matching custom art. An `art` field can name any exact image filename in the artwork folder. The [artwork helper and save options](ARTWORK_MATCHING.md) resolve missing or ambiguous images and retain manual mappings for reuse. Invalid JSON or unmatched selectors fail before setup is saved.

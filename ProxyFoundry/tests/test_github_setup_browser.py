@@ -1,5 +1,5 @@
 """Real Chromium interactions against the real bundle endpoint and a fake remote."""
-import os
+import os,json
 import threading
 from pathlib import Path
 
@@ -20,7 +20,16 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     remote = BundleRemote(back='icon', data={'version':1,'cards':[
         {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'The family business.'}
     ]})
-    app.ws.net.transport = remote.transport
+    def transport(url):
+        if '/commits/' in url:return json.dumps({'sha':'c'*40}).encode(),'application/json',{}
+        raw,mime,headers=remote.transport(url.replace('?ref='+'c'*40,'?ref=main'))
+        if '/contents/' in url:
+            rows=json.loads(raw)
+            for row in rows:
+                if row['type']=='file':row['sha']='a'*40
+            raw=json.dumps(rows).encode()
+        return raw,mime,headers
+    app.ws.net.transport = transport
     page.evaluate("import('/site/ui.js').then(m=>{m.state.bootstrap.browser=true})")
     page.goto(server.origin + '/#deck/' + d['id'] + '/setup')
     page.locator('#github-setup-button').wait_for()
@@ -43,6 +52,8 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')  # data.json is staged too.
     expect(page.locator('#deck-artist')).to_have_value('Artist stays')
     page.click('#save-setup')
+    page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
+    page.get_by_role('button',name='Not now',exact=True).click()
     expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
     saved = app.ws.deck(d['id'])
     assert saved['cards'][0] != original_card

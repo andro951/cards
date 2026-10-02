@@ -3,6 +3,7 @@ import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
+import {ensureArtworkReady} from './artwork-review.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
@@ -218,7 +219,7 @@ export async function showDeck(id,tab='cards'){
   $('#deck-menu').onclick=()=>deckMenu(d);
   if(tab==='setup'){
     renderSetup($('#deck-body'),d,async(updated,generateNow)=>{
-      if(generateNow){history.replaceState(null,'','#deck/'+id);await showDeck(id,'cards');await generate(updated);}
+      if(generateNow){history.replaceState(null,'','#deck/'+id);await showDeck(id,'cards');await generate(updated,true);}
       else await showDeck(id,'setup');
     });return;
   }
@@ -326,11 +327,13 @@ export async function refreshDeckProgress(id){
   const updated=await api('/api/decks/'+id);
   if(epoch===state.routeEpoch&&activeCardsView===view)view.refresh(updated);
 }
-async function generate(d){
+async function generate(d,artChecked=false){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
+  if(!artChecked&&!await ensureArtworkReady(d.id))return;
+  d=await api('/api/decks/'+d.id);
   d=await ensureCustomArtCredits(d);if(!d)return;
-  await renderDecks([d.id],{notify:false});
+  await renderDecks([d.id],{notify:false,artChecked:true});
   const finished=await api('/api/decks/'+d.id);
   if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
   if(finished.status==='ready')preparationComplete(finished);

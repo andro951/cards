@@ -89,6 +89,7 @@ def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
     assert index['one_card']=={
         'url':'https://raw.githubusercontent.com/owner/repo/'+commit+'/art/one_card.png',
         'blobSha':blob,
+        'filename':'one_card.png',
     }
     assert [url for url,_ in net.calls]==[
         'https://api.github.com/repos/owner/repo',

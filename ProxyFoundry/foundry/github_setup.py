@@ -20,84 +20,16 @@ DATA_JSON_MAX_CARDS = 10000
 
 
 def parse_card_data_json(raw):
-    """Validate the optional v1 nickname/flavor metadata file."""
-    if not isinstance(raw, (bytes, bytearray)) or len(raw) > DATA_JSON_MAX_BYTES:
-        raise ValidationError('data.json must be a UTF-8 JSON file no larger than 2 MB.')
-    try:
-        value = json.loads(bytes(raw).decode('utf-8-sig'))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
-    if not isinstance(value, dict):
-        raise ValidationError('data.json must contain a JSON object.')
-    unknown_root = set(value) - {'version', 'cards'}
-    if unknown_root:
-        raise ValidationError('data.json has unsupported top-level field(s): ' + ', '.join(sorted(unknown_root)) + '.')
-    if value.get('version') != 1:
-        raise ValidationError('data.json version must be 1.')
-    cards = value.get('cards')
-    if not isinstance(cards, list):
-        raise ValidationError('data.json cards must be an array.')
-    if len(cards) > DATA_JSON_MAX_CARDS:
-        raise ValidationError('data.json may contain at most 10,000 card entries.')
-
-    def clean(item, key, label, maximum, *, multiline=False, required=False):
-        raw_value = item.get(key, '')
-        if raw_value is None:
-            raw_value = ''
-        if not isinstance(raw_value, str):
-            raise ValidationError(label + ' must be text.')
-        text = raw_value.strip()
-        if required and not text:
-            raise ValidationError(label + ' is required.')
-        if len(text) > maximum:
-            raise ValidationError(label + ' is too long.')
-        allowed = {'\n', '\t'} if multiline else set()
-        if any((ord(ch) < 32 and ch not in allowed) or ord(ch) == 127 for ch in text):
-            raise ValidationError(label + ' contains unsupported control characters.')
-        return text
-
-    result = []
-    seen = set()
-    allowed_keys = {'name', 'nickname', 'flavor_text', 'artist'}
-    for index, item in enumerate(cards, 1):
-        if not isinstance(item, dict):
-            raise ValidationError(f'data.json card entry {index} must be an object.')
-        unknown = set(item) - allowed_keys
-        if unknown:
-            raise ValidationError(
-                f'data.json card entry {index} has unsupported field(s): ' + ', '.join(sorted(unknown)) + '.'
-            )
-        name = clean(item, 'name', f'data.json card entry {index} name', 300, required=True)
-        nickname = clean(item, 'nickname', f'data.json nickname for {name}', 300)
-        flavor = clean(item, 'flavor_text', f'data.json flavor_text for {name}', 20000, multiline=True)
-        artist = clean(item, 'artist', f'data.json artist for {name}', 300)
-        if not nickname and not flavor and not artist:
-            continue
-        if name in seen:
-            raise ValidationError('data.json contains more than one nonempty entry for ' + name + '.')
-        seen.add(name)
-        entry = {'name': name}
-        if nickname:
-            entry['nickname'] = nickname
-        if flavor:
-            entry['flavor_text'] = flavor
-        if artist:
-            entry['artist'] = artist
-        result.append(entry)
-    return result
+    from .card_data import parse_document
+    return parse_document(raw)
 
 
-def validate_card_data_for_deck(workspace, deck_id, entries):
-    deck = workspace.deck(str(deck_id))
-    names = {str(face.get('name') or '') for card in deck.get('cards', []) for face in card.get('faces', [])}
-    missing = [entry['name'] for entry in entries if entry['name'] not in names]
-    if missing:
-        preview = ', '.join(missing[:8]) + ('…' if len(missing) > 8 else '')
-        raise ValidationError('data.json card name(s) were not found in this deck: ' + preview + '. Names must exactly match a card face.')
-    return entries
+def validate_card_data_for_deck(workspace,deck_id,entries):
+    from .card_data import validate_targets
+    return validate_targets(workspace.deck(str(deck_id)),entries)
 
 
-def import_card_data_url(workspace, payload):
+def import_card_data_url(workspace, payload, include_document=False):
     url = str(payload.get('url') or '').strip()
     if len(url) > 4096:
         raise ValidationError('The GitHub data.json link is too long.')
@@ -109,7 +41,8 @@ def import_card_data_url(workspace, payload):
     raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + quote(loc['ref'], safe='') + '/' + quote(loc['folder'], safe='/')
     raw, _, _ = workspace.net.fetch(raw_url, refresh=True, ttl=0)
     entries = parse_card_data_json(raw)
-    return validate_card_data_for_deck(workspace, payload['deckId'], entries)
+    entries=validate_card_data_for_deck(workspace, payload['deckId'], entries)
+    return {'cardData':entries,'document':json.loads(raw.decode('utf-8-sig'))} if include_document else entries
 
 
 def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
@@ -390,5 +323,6 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
                          'symbolsSource': {'kind':'github','value':base+'/'+quote(symbol_folder,safe='/')} if symbol_rows else None,
                          'dataJsonSource': {'kind':'github','value':data_row['path']} if data_row else None},
             'cardData': card_data,
+            'cardDataDocument': json.loads(raw.decode('utf-8-sig')) if data_row else None,
             'summary': summary,
             'warnings': warnings}

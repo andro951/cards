@@ -158,11 +158,13 @@ class Sources:
         for r in rows:
             if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)$',r.get('name',''),re.I):
                 stem=slug(r['name'].rsplit('.',1)[0])
-                if stem in index:raise ValidationError('Ambiguous filenames in GitHub folder: '+r['name'])
+                base=stem;number=1
+                while stem in index:
+                    number+=1;stem=base+'__'+str(number)
                 blob=str(r.get('sha') or '').lower()
                 if not re.fullmatch(r'[0-9a-f]{40}',blob):
                     raise ValidationError('GitHub did not return a blob SHA for '+r['name']+'.')
-                index[stem]={'url':'https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(r['path'],safe='/'),'blobSha':blob}
+                index[stem]={'url':'https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(r['path'],safe='/'),'blobSha':blob,'filename':r['name']}
         return index
     def printings(self,name,refresh=False,next_page=None):
         url=next_page or 'https://api.scryfall.com/cards/search?unique=prints&order=released&q='+quote('!"'+name.replace('"','')+'" game:paper')

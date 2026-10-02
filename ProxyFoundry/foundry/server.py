@@ -597,6 +597,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(self.app.jobs.start('Restore workspace backup', restore))
         d = self.data()
         if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
+        if p == '/api/setup/artwork-review':
+            return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review(d,u,c)))
         if p == '/api/setup/custom-art-previews':
             return self.respond(self.app.ws.custom_art_previews(d['deckId'],d['settings']))
         if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
@@ -621,7 +623,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/setup/symbols/github':
             return self.respond(self.app.jobs.start('Import GitHub set symbols', lambda u, c: import_symbol_folder(self.app.ws, d, u, c)))
         if p == '/api/setup/card-data/github':
-            return self.respond({'cardData': import_card_data_url(self.app.ws, d)})
+            return self.respond(import_card_data_url(self.app.ws, d, include_document=True))
         if p == '/api/svg/validate':
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})

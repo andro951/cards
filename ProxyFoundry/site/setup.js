@@ -1,6 +1,8 @@
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
+import {checkArtwork,offerDataSave} from './artwork-review.js';
+import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub} from './artwork-files.js';
 import {originalArtist,composeCredit} from './credits.js';
 import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
@@ -25,7 +27,7 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};let stagedCardData=[],dataJsonImportNote='';
+  const s=structuredClone(deck.settings),groups={};let stagedCardData=structuredClone(deck.cardData||[]),dataJsonImportNote='';
   s.dataJsonSource=s.dataJsonSource&&typeof s.dataJsonSource==='object'?structuredClone(s.dataJsonSource):null;s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:false,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
@@ -150,6 +152,7 @@ export function renderSetup(root,deck,onSaved){
   dataStatus.hidden=true;
   $('#data-json-section',root).append(dataStatus);
   $('#data-json-section .panel-head p',root).remove();
+  $('#data-json-section h2',root).textContent='Card data & artwork mappings';
   $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
   $('#data-json-section .well code',root).style.whiteSpace='pre-wrap';
   $('#data-json-file',root).closest('label').style.display='none';
@@ -193,6 +196,8 @@ export function renderSetup(root,deck,onSaved){
     };
   });
   const stageCardData=(entries,source)=>{
+    pairedChanges=[];
+    s.artReviewSignature='';
     stagedCardData=structuredClone(entries);
     s.dataJsonSource=source;
     dataJsonImportNote='';
@@ -202,13 +207,23 @@ export function renderSetup(root,deck,onSaved){
     (source?.kind==='github'?githubMode:computerMode).onclick();
     mark();
   };
-  localDataButton.onclick=()=>$('#data-json-file',root).click();
+  localDataButton.onclick=()=>attempt(async()=>{
+    if(!window.showOpenFilePicker){$('#data-json-file',root).click();return;}
+    let handle;
+    try{[handle]=await window.showOpenFilePicker({types:[{description:'Card data',accept:{'application/json':['.json']}}],multiple:false});}
+    catch(error){if(error.name==='AbortError')return;throw error;}
+    const file=await handle.getFile();
+    const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');
+    await rememberFile(deck.id,handle,JSON.parse(await file.text()));
+    stageCardData(result.cardData,{kind:'local',value:file.name});
+  });
   linkDataButton.onclick=()=>attempt(async()=>{
     if(!dataUrl.value.trim())throw new Error('Paste a GitHub data.json file link.');
     linkDataButton.disabled=true;
     try{
       const result=await api('/api/setup/card-data/github',{deckId:deck.id,url:dataUrl.value.trim()});
       stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()});
+      await rememberGithub(deck.id,dataUrl.value.trim(),result.document||{version:1,cards:result.cardData});
     }finally{linkDataButton.disabled=false;}
   });
   const redrawFrames=()=>{
@@ -273,7 +288,7 @@ export function renderSetup(root,deck,onSaved){
   (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
   symbolGithubInput.value=s.symbolsSource?.value||'';
   (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
-  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
@@ -286,7 +301,9 @@ export function renderSetup(root,deck,onSaved){
     isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
-    onImport:(patch,cardData,hasDataJson)=>{
+    onImport:async(patch,cardData,hasDataJson,document)=>{
+      pairedChanges=[];s.artDefaults=[];s.artReviewSignature='';
+      await rememberGithub(deck.id,patch.githubSetupFolder,document||{version:1,cards:cardData||[]});
       if(hasDataJson){
         stagedCardData=structuredClone(cardData||[]);
         s.dataJsonSource=patch.dataJsonSource||null;
@@ -307,7 +324,43 @@ export function renderSetup(root,deck,onSaved){
       redrawSource();redrawSymbols();redrawBack();redrawFrames();mark();
     }
   });
-  $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
+  let importingArtwork=false;
+  const importArtwork=async files=>{
+    if(!files?.length)return;
+    if(importingArtwork)throw new Error('Artwork import is already running.');
+    importingArtwork=true;
+    try{
+    const data=[...files].find(file=>(file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name)==='data.json');
+    if(data){const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,JSON.parse(await data.text()),'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'});}
+    s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;},s.source);
+    s.artDefaults=[];s.artReviewSignature='';
+    $('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();
+    }finally{importingArtwork=false;}
+  };
+  $('#local-art',root).onchange=()=>attempt(()=>importArtwork($('#local-art',root).files));
+  if(window.showDirectoryPicker){
+    const folderButton=document.createElement('button');folderButton.type='button';folderButton.className='button';folderButton.textContent='Choose artwork folder';
+    $('#local-art',root).hidden=true;$('#local-art',root).after(folderButton);
+    folderButton.onclick=()=>attempt(async()=>{let files;try{files=await pickArtworkFiles(deck.id);}catch(error){if(error.name==='AbortError')return;throw error;}await importArtwork(files);});
+  }
+  let pairedChanges=[];
+  const reviewArtwork=async()=>{
+    readSettings();
+    const result=await checkArtwork(deck,s,stagedCardData,async()=>{
+      if(s.source.mode==='github')return;
+      const files=await pickArtworkFiles(deck.id);
+      if(!files)throw new Error('Return to setup to add images in this browser.');
+      await importArtwork(files);
+    });
+    if(!result)return false;
+    s.artDefaults=result.defaults;s.artReviewSignature=result.signature;
+    stagedCardData=mergeDataDocument({version:1,cards:stagedCardData},result.changes).cards;
+    pairedChanges=mergeDataDocument({version:1,cards:pairedChanges},result.changes).cards;
+    if(result.changes.length)mark();
+    return true;
+  };
+  const reviewButton=document.createElement('button');reviewButton.type='button';reviewButton.className='button';reviewButton.textContent='Match custom artwork';reviewButton.id='review-artwork';
+  $('#local-count',root).closest('section').append(reviewButton);reviewButton.onclick=()=>attempt(reviewArtwork);
   $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
 $('#symbol-folder',root).onchange=()=>attempt(async()=>{
   const input=$('#symbol-folder',root),files=input.files;if(!files.length)return;
@@ -347,12 +400,14 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     s.templateRules.token=$('#token-frame',root).value;
   }
   async function save(generate){
+    if(importingArtwork)throw new Error('Artwork is still importing. The progress is shown in Art & Setup.');
     if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
     if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
     readSettings();
+    if(!await reviewArtwork())return;
     if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
-    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:s,cardData:stagedCardData});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
+    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:s,cardData:stagedCardData});deck.revision=d.revision;state.dirty=false;toast('Deck setup saved.');await offerDataSave(deck.id,pairedChanges,{version:1,cards:d.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'');pairedChanges=[];await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
   }
   $('#save-setup',root).onclick=()=>attempt(()=>save(false));$('#save-generate',root).onclick=()=>attempt(()=>save(true));
 }

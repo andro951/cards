@@ -11,12 +11,12 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['diagnostics','work','ui','deletion','credits','backs','github-setup','render','frame-picker','setup','orders','templates','settings','deck','app']:
+    for name in ['diagnostics','work','ui','deletion','credits','backs','github-setup','artwork-files','artwork-review','render','frame-picker','setup','orders','templates','settings','deck','app']:
         text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
         text=text.replace("await import('./ui.js')",'__mod_ui')
-        text=re.sub(r'\bexport\s+','',text)
+        text=re.sub(r'(?m)^export[ \t]+','',text)
         out.append('const __mod_'+name.replace('-','_')+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
     return '\n'.join(out)
 
@@ -35,7 +35,7 @@ def dom_page(tmp_path):
     with sync_playwright() as p:
         exe=os.environ.get('PF_DOM_EXECUTABLE') or shutil.which('chromium')
         b=p.chromium.launch(headless=True,**({'executable_path':exe} if exe else {}));page=b.new_page(viewport={'width':1440,'height':1024});errors=[]
-        page.on('pageerror',lambda e:errors.append(str(e)));page.set_content(html);page.add_style_tag(content=(ROOT/'site/styles.css').read_text(encoding='utf-8'))
+        page.on('pageerror',lambda e:errors.append(str(e)));page.route('http://fixture.test/**',lambda route:route.fulfill(body=html,content_type='text/html'));page.goto('http://fixture.test/');page.add_style_tag(content=(ROOT/'site/styles.css').read_text(encoding='utf-8'))
         page.evaluate('window.__fixture='+json.dumps(state))
         page.add_script_tag(content=r'''
         window.postMessage=()=>{};
@@ -49,6 +49,8 @@ def dom_page(tmp_path):
           else if(path==='/api/settings'){if(d)F.settings={...F.settings,...d,revision:F.settings.revision+1};value=F.settings;}
           else if(path==='/api/stats')value={renders:1,cacheEntries:4,assetBytes:3000,home:'local workspace'};
           else if(path==='/api/trash'||path==='/api/orders')value=[];
+          else if(path==='/api/setup/artwork-review')value={id:'artwork-fixture'};
+          else if(path==='/api/jobs/artwork-fixture')value={state:'done',result:{needsReview:false,signature:'matched',items:[],inventory:[]}};
           else if(path.includes('/cards/')&&d){const c=F.deck.cards[0];if(d.quantity)c.quantity=Number(d.quantity);if(d.artistOverride!==undefined)c.faces[0].artistOverride=d.artistOverride;F.deck.summary.cards=c.quantity;F.deck.revision++;value=F.deck;}
           else if(path.endsWith('/save')){F.deck={...F.deck,...d,revision:F.deck.revision+1};value=F.deck;}
           else if(path.startsWith('/api/decks/'))value=F.deck;
@@ -71,6 +73,144 @@ def test_offline_deck_controls_and_templates(dom_page):
     page.locator('.page-head h1').click();page.locator('.page-head input').fill('Edited deck');page.locator('.page-head input').press('Enter')
     page.wait_for_function("document.querySelector('h1')?.textContent==='Edited deck'")
     page.click('.topbar [data-nav=templates]');page.click('#new-template');page.fill('#template-name','My frame');page.click('#save-template');page.get_by_text('My frame',exact=True).wait_for()
+    assert not errors,errors
+
+
+def artwork_helper(page,count=2,images=2,fallback=False):
+    page.evaluate('''({count,images,fallback})=>{
+      const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      window.review={signature:'fixture',items:Array.from({length:count},(_,i)=>({id:'card'+i,name:'Spirit '+i,selector:{name:'Spirit '+i},image,status:'missing',key:null,reason:'Missing artwork'})),inventory:Array.from({length:images},(_,i)=>({key:'file'+i,filename:'custom_'+i+'.png',image}))};
+      window.openHelper=()=>__mod_artwork_review.openArtworkHelper(review,{deckId:__fixture.deck.id,settings:{source:{mode:'local',fallback}}});
+      window.helperPromise=openHelper().then(result=>window.helperResult=result);
+    }''',{'count':count,'images':images,'fallback':fallback})
+    page.locator('#artwork-counts').wait_for()
+
+
+def test_artwork_pairing_undo_finish_and_no_rendering(dom_page):
+    page,errors=dom_page;artwork_helper(page)
+    assert page.locator('#artwork-finish').is_disabled()
+    assert not page.locator('#artwork-default-rest').is_visible()
+    assert not page.locator('iframe').count()
+    assert page.locator('[aria-label="Cards needing artwork"]').inner_text()=='Cards needing artwork'
+    page.locator('[data-artwork-card="card0"]').click();page.locator('[data-artwork-file="file1"]').click()
+    assert page.locator('[data-artwork-pair]').count()==1
+    page.get_by_role('button',name='Undo artwork pairing for Spirit 0').click()
+    assert page.locator('[data-artwork-pair]').count()==0
+    for card,file in [('card0','file1'),('card1','file0')]:
+        page.locator('[data-artwork-card="'+card+'"]').click();page.locator('[data-artwork-file="'+file+'"]').click()
+    assert page.locator('#artwork-finish').is_enabled()
+    page.screenshot(path=str(ROOT/'test-results/artwork-helper-desktop.png'))
+    page.click('#artwork-finish');page.wait_for_function('window.helperResult!==undefined')
+    assert page.evaluate('helperResult.changes')==[{'name':'Spirit 0','art':'custom_1.png'},{'name':'Spirit 1','art':'custom_0.png'}]
+    assert not errors,errors
+
+
+def test_artwork_cancel_resume_defaults_and_mobile(dom_page):
+    page,errors=dom_page;artwork_helper(page,count=3,images=2,fallback=True)
+    page.locator('[data-artwork-card="card0"]').click();page.locator('[data-artwork-file="file0"]').click()
+    page.get_by_role('button',name='Back to setup',exact=True).click()
+    page.wait_for_function('helperResult===null')
+    page.evaluate('()=>{window.helperResult=undefined;window.helperPromise=openHelper().then(result=>window.helperResult=result);}')
+    page.locator('[data-artwork-pair]').wait_for()
+    page.set_viewport_size({'width':390,'height':844})
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    page.screenshot(path=str(ROOT/'test-results/artwork-helper-mobile.png'))
+    page.click('#artwork-default-rest');page.wait_for_function('helperResult!==undefined')
+    assert page.evaluate('helperResult.defaults')==['card1','card2']
+    assert not errors,errors
+
+
+def test_artwork_large_inventory_limits_dom_and_search(dom_page):
+    page,errors=dom_page;artwork_helper(page,count=100,images=5000)
+    assert page.locator('[data-artwork-card]').count()==80
+    assert page.locator('[data-artwork-file]').count()==60
+    started=page.evaluate('performance.now()');page.get_by_role('searchbox',name='Find an artwork filename').fill('custom_4999')
+    assert page.locator('[data-artwork-file]').count()==1
+    assert page.evaluate('performance.now()')-started<1000
+    assert not errors,errors
+
+
+def test_artwork_file_merge_permissions_and_github_sha(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,original={version:1,cards:[{name:'Spirit',nickname:'Ghost',artist:'Me'}]},changes=[{name:'Spirit',art:'custom.png'}];
+      let text=JSON.stringify(original),writes=0,permissions=0;
+      const handle={queryPermission:async()=> 'prompt',requestPermission:async()=>{permissions++;return 'granted';},getFile:async()=>({text:async()=>text}),createWritable:async()=>({write:async value=>{text=typeof value==='string'?value:await value.text();writes++;},close:async()=>{},abort:async()=>{}})};
+      await m.saveLocalData({file:handle,document:original},changes);
+      let denied=false;try{await m.saveLocalData({file:{...handle,requestPermission:async()=> 'denied'}},changes);}catch(e){denied=true;}
+      const calls=[],fetcher=async(url,opts)=>{calls.push({url,...opts});return opts.method==='PUT'?{ok:true}:{ok:true,status:200,json:async()=>({sha:'current',encoding:'base64',content:btoa(JSON.stringify(original))})};};
+      const location=m.githubDataLocation('https://github.com/owner/cards/tree/main/deck');
+      await m.saveGithubData(location,'private-test-token',changes,original,fetcher);
+      let conflict=false;try{m.mergeDataDocument({version:1,cards:[{name:'Spirit',art:'changed.png'}]},changes,original);}catch(e){conflict=true;}
+      await m.connectGithub(location.repo,'once',false);const onceStored=await m.sourceRecord('github:'+location.repo);await m.disconnectGithub(location.repo);
+      const originalFetch=window.fetch;let uploads=0;const source={},progress=[];
+      window.fetch=async()=>({ok:true,json:async()=>({stem:'spirit',id:'asset-'+(++uploads)})});
+      const files=[new File(['a'],'Spirit.png'),new File(['b'],'spirit.jpg')];Object.defineProperty(files[0],'artworkPath',{value:'folder/Spirit.png'});
+      const imported=await __mod_ui.uploadFolder(files,(done,total)=>progress.push([done,total]),source);window.fetch=originalFetch;
+      let shaConflict=false;try{await m.saveGithubData(location,'test',changes,original,async(url,opts)=>opts.method==='PUT'?{ok:false,status:409}:{ok:true,status:200,json:async()=>({sha:'changed',encoding:'base64',content:btoa(JSON.stringify(original))})});}catch(error){shaConflict=error.message.includes('changed on GitHub');}
+      return {local:JSON.parse(text),writes,permissions,denied,conflict,shaConflict,imported,names:source.localNames,progress,onceStored:!!onceStored,put:JSON.parse(calls[1].body),location,raw:m.githubDataLocation('https://raw.githubusercontent.com/owner/cards/main/deck/data.json')};
+    }''')
+    assert report['local']['cards'][0]=={'name':'Spirit','nickname':'Ghost','artist':'Me','art':'custom.png'}
+    assert report['writes']==1 and report['permissions']==1 and report['denied'] and report['conflict']
+    assert not report['onceStored'] and report['put']['sha']=='current'
+    assert report['location']==report['raw']=={'repo':'owner/cards','branch':'main','path':'deck/data.json'}
+    assert report['imported']=={'spirit':'asset-1','spirit__2':'asset-2'}
+    assert report['names']=={'spirit':'folder/Spirit.png','spirit__2':'spirit.jpg'}
+    assert report['progress']==[[1,2],[2,2]] and report['shaConflict']
+    assert not errors,errors
+
+
+def test_artwork_github_save_ui_remember_and_one_update(dom_page):
+    page,errors=dom_page
+    page.evaluate('''async()=>{
+      window.savedGithub={version:1,cards:[{name:'Spirit',nickname:'Ghost'}]};window.githubWrites=0;
+      const original=window.fetch;
+      window.fetch=async(url,options={})=>{
+        if(!String(url).startsWith('https://api.github.com/'))return original(url,options);
+        if(options.method==='PUT'){window.savedGithub=JSON.parse(atob(JSON.parse(options.body).content));githubWrites++;return {ok:true};}
+        return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'version-'+githubWrites,content:btoa(JSON.stringify(savedGithub))})};
+      };
+      await __mod_artwork_files.rememberGithub(__fixture.deck.id,'https://github.com/owner/cards/tree/main/deck',savedGithub);
+      window.openSave=art=>{window.savePromise=__mod_artwork_review.offerDataSave(__fixture.deck.id,[{name:'Spirit',art}],savedGithub);};
+      openSave('first.png');
+    }''')
+    page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
+    page.get_by_role('textbox',name='GitHub connection token').fill('one-use-token')
+    page.get_by_role('button',name='Connect and update data.json',exact=True).click()
+    page.wait_for_function('githubWrites===1 && !document.querySelector(".modal")')
+    assert page.evaluate('async()=>!!await __mod_artwork_files.githubCredential("owner/cards")') is False
+    page.evaluate('()=>{openSave("second.png");}')
+    page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
+    page.get_by_role('textbox',name='GitHub connection token').fill('remembered-token')
+    page.get_by_role('checkbox',name='Remember access to update').check()
+    page.get_by_role('button',name='Connect and update data.json',exact=True).click()
+    page.wait_for_function('githubWrites===2 && !document.querySelector(".modal")')
+    assert page.evaluate('async()=>await __mod_artwork_files.sourceRecord("github:owner/cards")')=='remembered-token'
+    page.evaluate('()=>{openSave("third.png");}')
+    page.get_by_role('button',name='Forget GitHub connection',exact=True).click()
+    page.wait_for_function('document.querySelector("[role=status]")?.textContent==="GitHub connection forgotten." || [...document.querySelectorAll("[role=status]")].some(node=>node.textContent==="GitHub connection forgotten.")')
+    assert page.evaluate('async()=>!!await __mod_artwork_files.githubCredential("owner/cards")') is False
+    assert page.evaluate('savedGithub.cards[0]')=={'name':'Spirit','nickname':'Ghost','art':'second.png'}
+    assert not errors,errors
+
+
+def test_artwork_refresh_does_not_reuse_stale_images_or_pairs(dom_page):
+    page,errors=dom_page;artwork_helper(page,count=1,images=1)
+    page.get_by_role('button',name='Back to setup',exact=True).click()
+    page.evaluate('''()=>{
+      window.helperResult=undefined;
+      window.helperPromise=__mod_artwork_review.openArtworkHelper(review,{deckId:__fixture.deck.id,settings:{source:{mode:'github',fallback:false}},onAdd:async()=>{
+        review={...review,signature:'changed',inventory:[{...review.inventory[0],filename:'changed.png',identity:'new-image'}]};return review;
+      }}).then(result=>window.helperResult=result);
+    }''')
+    page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click()
+    page.get_by_role('button',name='Refresh GitHub folder',exact=True).click()
+    page.locator('[data-artwork-file]').filter(has_text='changed.png').wait_for()
+    assert page.locator('[data-artwork-pair]').count()==0
+    assert page.locator('#artwork-finish').is_disabled()
+    page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
+    page.wait_for_function('helperResult!==undefined')
+    assert page.evaluate('helperResult.changes[0].art')=='changed.png'
     assert not errors,errors
 
 def test_offline_settings_and_mobile(dom_page):

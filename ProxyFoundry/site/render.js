@@ -1,5 +1,6 @@
 import {recordDiagnostic} from './diagnostics.js';
 import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast,work} from './ui.js';
+import {ensureArtworkReady} from './artwork-review.js';
 let activeFrame=null;
 
 function logTiming(stage,started,outcome,detail={}){
@@ -83,7 +84,8 @@ async function runRenderPlan(plan,options={}){
   }finally{logTiming('render.total',started,cancelled?'cancelled':outcome,{cards:plan.targets.length,cached:plan.cached});signal?.removeEventListener('abort',cancel);cleanup();await onUpdate();}
 }
 
-export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false,signal=null,notify=true}={}){
+export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false,signal=null,notify=true,artChecked=false}={}){
+  if(!artChecked)for(const id of ids)if(!await ensureArtworkReady(id))return;
   const update=async id=>{
     const view=state.generationView;
     if(view?.route===state.route&&(!view.id||ids.includes(view.id)))
@@ -104,6 +106,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
 }
 
 export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false}={}){
+  if(!await ensureArtworkReady(deckId))return;
   return work.render(async owner=>{
     const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
     return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});

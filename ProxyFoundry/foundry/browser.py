@@ -285,6 +285,9 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        if path == '/api/setup/artwork-review':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review_steps(data,u,c),priority=1))
         if path in {'/api/setup/github-import','/api/setup/symbols/github'}:
             data=self.data()
             operation=import_github_setup_steps if path.endswith('github-import') else import_symbol_folder_steps

@@ -19,8 +19,11 @@ export function artworkKind(deck, card, face, artOverride) {
   if(face.selectedArtPrintingId)return 'scryfall';
   const source=deck.settings.source||{},mode=source.mode||'scryfall';
   const sfFace=card.scryfall.card_faces?.[face.index||0]||card.scryfall;
+  const identity=(sfFace.oracle_id||card.scryfall.oracle_id||card.scryfall.id||card.id)+'/'+(sfFace.name||face.name);
+  if(deck.settings.artDefaults?.includes(identity))return 'scryfall';
   if(mode==='scryfall')return 'scryfall';
   if(mode==='local'&&source.localFiles?.[stem(face.name||sfFace.name)])return 'custom';
+  if(mode==='local'&&Object.entries(source.localNames||{}).some(([key,filename])=>source.localFiles?.[key]&&(filename===face.artFilename||String(filename).toLowerCase().includes(String(sfFace.oracle_id||card.scryfall.oracle_id||'invalid-uuid').toLowerCase())||stem(filename.replace(/\.[^.]+$/,'').replace(/^\d+_/,''))===stem(face.name||sfFace.name))))return 'custom';
   if(mode==='local'&&source.fallback!==false)return 'scryfall';
   if(deck.status!=='draft'&&face.compiled?.artOrigin)return face.compiled.artOrigin==='Scryfall selected printing'?'scryfall':'custom';
   return 'pending';

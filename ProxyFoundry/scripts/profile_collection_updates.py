@@ -12,13 +12,13 @@ import test_dom_offline as fixture
 
 def bundled(revision):
     out=[]
-    for name in ['diagnostics','work','ui','deletion','credits','backs','github-setup','render','frame-picker','setup','orders','templates','settings','deck','app']:
+    for name in ['diagnostics','work','ui','deletion','credits','backs','github-setup','artwork-files','artwork-review','render','frame-picker','setup','orders','templates','settings','deck','app']:
         path='site/'+name+'.js'
         text=subprocess.check_output(['git','show',revision+':ProxyFoundry/'+path],cwd=ROOT).decode('utf-8') if revision and name in {'deck','app'} else (ROOT/path).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         if name=='app':exports.append('showLibrary')
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
-        text=text.replace("await import('./ui.js')",'__mod_ui');text=re.sub(r'\bexport\s+','',text)
+        text=text.replace("await import('./ui.js')",'__mod_ui');text=re.sub(r'(?m)^export[ \t]+','',text)
         out.append('const __mod_'+name.replace('-','_')+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
     return '\n'.join(out)
 

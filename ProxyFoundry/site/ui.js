@@ -170,11 +170,11 @@ export async function uploadImage(file,{symbol=false,back=false}={}){
   return blobRequest('/api/uploads'+(kind?('?kind='+encodeURIComponent(kind)):''),blob,'image/png',{'X-Filename':encodeURIComponent(file.name.replace(/\.svg$/i,'.png'))});
 }
 export function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not decode image.'));i.src=src;});}
-export async function uploadFolder(files,onProgress=()=>{}){
+export async function uploadFolder(files,onProgress=()=>{},source=null){
   const images=[...files].filter(f=>/\.(png|jpe?g|webp|gif)$/i.test(f.name));if(images.length>5000)throw new Error('Select at most 5,000 art images.');
-  const result={};let n=0;
-  for(const file of images){const a=await uploadImage(file);if(result[a.stem])throw new Error('Two images have the same normalized card name: '+file.name);result[a.stem]=a.id;onProgress(++n,images.length);}
-  if(!n)throw new Error('No supported images were found in that folder.');return result;
+  const result={},names={};let done=0;
+  for(const file of images){const a=await uploadImage(file);let key=a.stem,duplicate=1;while(Object.hasOwn(result,key))key=a.stem+'__'+(++duplicate);result[key]=a.id;names[key]=file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name;onProgress?.(++done,images.length);}
+  if(!images.length)throw new Error('No supported images were found in that folder.');if(source)source.localNames=names;return result;
 }
 export function loading(text='Loading…'){return `<div class="loading-state"><span class="spinner"></span>${esc(text)}</div>`;}
 export function empty(title,text,button=''){return `<div class="empty-state"><span class="eyebrow">MAKE IT YOURS</span><h2>${esc(title)}</h2><p>${esc(text)}</p>${button}</div>`;}

@@ -14,17 +14,80 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Actual C
 
 
 @pytest.fixture
-def static_browser(tmp_path):
+def static_browser(tmp_path,request):
     from playwright.sync_api import sync_playwright
     subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py'),'--output',str(tmp_path/'built')],cwd=ROOT,check=True,capture_output=True)
     directory=tmp_path/'site';shutil.copytree(tmp_path/'built',directory)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(directory)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     with sync_playwright() as playwright:
-        browser=playwright.chromium.launch(headless=True);context=browser.new_context()
+        channel=getattr(request,'param',None)
+        if channel:
+            # Chromium cannot restore serialized OPFS handles in its private
+            # test context. A regular profile exercises actual handle reuse.
+            context=playwright.chromium.launch_persistent_context(str(tmp_path/'browser-profile'),headless=True,channel=channel);browser=context.browser
+        else:
+            browser=playwright.chromium.launch(headless=True);context=browser.new_context()
         yield directory,context,f'http://127.0.0.1:{server.server_port}'
         context.close();browser.close()
     server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+@pytest.mark.parametrize('static_browser',['chromium'],indirect=True,ids=['native-handles'])
+def test_static_artwork_pairing_persists_without_rendering(static_browser):
+    directory,context,origin=static_browser
+    worker=directory/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    injected="""
+original_artwork_request=request
+def request(app,method,url,body,headers):
+    if str(url)=='/api/__test__/seed-artwork':
+        import copy,base64
+        from foundry.workspace import DEFAULT_SETTINGS
+        settings=copy.deepcopy(DEFAULT_SETTINGS)
+        raw=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=')
+        asset=app.store.add_asset(raw,'image/png',1,1)
+        settings['source'].update(mode='local',localFiles={'first':asset['id'],'second':asset['id']},localNames={'first':'112_spirit.png','second':'113_spirit.png'},fallback=False)
+        cards=[]
+        for oracle,color in [('dc4e2134-f0c2-49aa-9ea3-ebf83af1445c','W'),('6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a','U')]:
+            sf={'id':oracle,'oracle_id':oracle,'name':'Spirit','type_line':'Token Creature — Spirit','layout':'token','colors':[color],'power':'1','toughness':'1','image_uris':{'normal':'data:image/png;base64,'+base64.b64encode(raw).decode()}}
+            cards.append(app.ws.sources.entry(sf))
+        deck=app.store.put('decks',{'name':'Pair spirits','id':'11111111-1111-4111-8111-111111111111','settings':settings,'status':'draft','cards':cards})
+        return {'status':200,'mime':'application/json','body':json.dumps(deck).encode(),'headers':{}}
+    return original_artwork_request(app,method,url,body,headers)
+"""
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    page.evaluate("async()=>{await fetch('/api/__test__/seed-artwork');location.hash='#deck/11111111-1111-4111-8111-111111111111/setup';}")
+    page.click('#review-artwork');page.locator('#artwork-counts').wait_for(timeout=30000)
+    assert page.locator('[data-artwork-card]').count()==2 and page.locator('[data-artwork-file]').count()==2
+    page.screenshot(path=str(ROOT/'test-results/artwork-static-desktop.png'))
+    page.set_viewport_size({'width':390,'height':844})
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    page.screenshot(path=str(ROOT/'test-results/artwork-static-mobile.png'))
+    page.set_viewport_size({'width':1280,'height':720})
+    for file in ['first','second']:
+        page.locator('[data-artwork-card]').first.click();page.locator('[data-artwork-file="'+file+'"]').click()
+    page.click('#artwork-finish');page.click('#save-setup')
+    page.get_by_role('heading',name='Save artwork choices for next time?').wait_for();page.get_by_role('button',name='Not now',exact=True).click()
+    page.evaluate("""async()=>{
+      const files=await import('/site/artwork-files.js'),root=await navigator.storage.getDirectory();
+      const folder=await root.getDirectoryHandle('artwork-source-test',{create:true}),handle=await folder.getFileHandle('data.json',{create:true});
+      const original={version:1,cards:[{name:'Spirit',nickname:'Ghost'}]},writer=await handle.createWritable();await writer.write(JSON.stringify(original));await writer.close();
+      await files.rememberFile('artwork-native-file',handle,original);await files.rememberFolder('artwork-native-folder',await folder.getDirectoryHandle('new-data',{create:true}));
+    }""")
+    page.reload(wait_until='domcontentloaded');page.locator('#review-artwork').wait_for(timeout=90000)
+    report=page.evaluate("""async()=>{const ui=await import('/site/ui.js'),files=await import('/site/artwork-files.js');const deck=await ui.api('/api/decks/11111111-1111-4111-8111-111111111111');const review=await ui.job('/api/setup/artwork-review',{deckId:deck.id});
+      const retained=await files.sourceRecord('deck:artwork-native-file');
+      const saved=await files.saveLocalData(retained,[{name:'Spirit',art:'spirit.png'}]);
+      const folderRecord=await files.sourceRecord('deck:artwork-native-folder');
+      const created=await files.saveLocalData(folderRecord,[{name:'Day',art:'day.png'}]);
+      const local=JSON.parse(await (await saved.file.getFile()).text());
+      return {local,created:JSON.parse(await (await created.file.getFile()).text()),data:deck.cardData,faces:deck.cards.map(c=>c.faces[0].artFilename),review,iframes:document.querySelectorAll('iframe').length};}""")
+    assert set(report['faces'])=={'112_spirit.png','113_spirit.png'}
+    assert len(report['data'])==2 and all(entry.get('oracle_id') for entry in report['data'])
+    assert not report['review']['needsReview'] and not report['iframes']
+    assert report['local']['cards']==[{'name':'Spirit','nickname':'Ghost','art':'spirit.png'}]
+    assert report['created']['cards']==[{'name':'Day','art':'day.png'}]
 
 
 def test_folder_permission_requires_reconnection_without_workspace_fallback(static_browser):

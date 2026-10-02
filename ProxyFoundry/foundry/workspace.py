@@ -9,6 +9,8 @@ from .storage import Store,display_name
 from .network import Network
 from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_variants
 from .sources import Sources
+from .artwork import ArtworkIndex,build_review,face_key
+from .card_data import validate_entries,validate_targets,matches,merge_entries,identity,matching_keys,selector_key
 from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds,build_token_data,configure_token_style,token_has_short_text
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
@@ -17,7 +19,7 @@ from .template_model import convert_cardconjurer, validate_model
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
-FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','showFlavorText','allCardsTokens','tokenOptions'}
+FRONT_SETTINGS={'artDefaults','source','symbols','artist','templateRules','disableAutofit','flavorPolicy','showFlavorText','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
         self.store=store or Store();self.net=network or Network(self.store);self.sources=Sources(self.net);self.compiler=Compiler(self.store);self.backs=Backs(self.store);self._default_symbols=None
@@ -119,6 +121,11 @@ class Workspace:
                 s[field]={'kind':kind,'value':value}
             else:
                 raise ValidationError('Invalid '+label+' source reference.')
+        defaults=s.get('artDefaults',[])
+        if not isinstance(defaults,list) or len(defaults)>10000 or any(not isinstance(k,str) or len(k)>500 for k in defaults):raise ValidationError('Invalid default artwork choices.')
+        if not isinstance(s.get('artReviewSignature',''),str) or len(s.get('artReviewSignature',''))>64:raise ValidationError('Invalid artwork review reference.')
+        names=s['source'].get('localNames',{})
+        if not isinstance(names,dict) or any(not isinstance(k,str) or not isinstance(v,str) or len(v)>1000 for k,v in names.items()):raise ValidationError('Invalid artwork filenames.')
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
         raw_token_options=s.get('tokenOptions') or {}
         if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')
@@ -234,62 +241,52 @@ class Workspace:
         return out
     @staticmethod
     def _validated_card_data(value):
-        if value is None:return []
-        if not isinstance(value,list):raise ValidationError('Imported card data must be an array.')
-        if len(value)>10000:raise ValidationError('Imported card data may contain at most 10,000 entries.')
-        result=[];seen=set()
-        for index,item in enumerate(value,1):
-            if not isinstance(item,dict):raise ValidationError(f'Imported card data entry {index} must be an object.')
-            unknown=set(item)-{'name','nickname','flavor_text','artist'}
-            if unknown:raise ValidationError(f'Imported card data entry {index} has unsupported fields.')
-            name=item.get('name')
-            if not isinstance(name,str) or not name.strip() or len(name.strip())>300:
-                raise ValidationError(f'Imported card data entry {index} has an invalid name.')
-            name=name.strip()
-            values={}
-            for key,maximum in (('nickname',300),('flavor_text',20000),('artist',300)):
-                raw=item.get(key,'')
-                if raw is None:raw=''
-                if not isinstance(raw,str):raise ValidationError(f'Imported {key} for {name} must be text.')
-                text=raw.strip()
-                if len(text)>maximum:raise ValidationError(f'Imported {key} for {name} is too long.')
-                allowed={'\n','\t'} if key=='flavor_text' else set()
-                if any((ord(ch)<32 and ch not in allowed) or ord(ch)==127 for ch in text):
-                    raise ValidationError(f'Imported {key} for {name} contains unsupported control characters.')
-                if text:values[key]=text
-            if not values:continue
-            if name in seen:raise ValidationError('Imported card data contains more than one nonempty entry for '+name+'.')
-            seen.add(name);result.append({'name':name,**values})
-        return result
+        return validate_entries(value)
 
     def _apply_card_data(self,d,value):
-        entries=self._validated_card_data(value)
+        entries=validate_targets(d,validate_entries(value))
         if not entries:return False
-        targets={}
+        merged=merge_entries(d.get('cardData',[]),entries)
+        selectors={selector_key(entry):entry for entry in merged}
+        dirty=False
         for card in d.get('cards',[]):
             for face in card.get('faces',[]):
-                targets.setdefault(str(face.get('name') or ''),[]).append(face)
-        missing=[entry['name'] for entry in entries if entry['name'] not in targets]
-        if missing:
-            preview=', '.join(missing[:8])+('…' if len(missing)>8 else '')
-            raise ValidationError('Imported card data name(s) were not found in this deck: '+preview+'.')
-        dirty=False
-        for entry in entries:
-            for face in targets[entry['name']]:
-                current=face.get('semanticOverrides')
-                overrides=copy.deepcopy(current) if isinstance(current,dict) else {}
-                changed=False
-                for key in ('nickname','flavor_text'):
-                    if key in entry and overrides.get(key)!=entry[key]:
-                        overrides[key]=entry[key];changed=True
-                if 'artist' in entry and face.get('artistOverride')!=entry['artist']:
-                    face['artistOverride']=entry['artist'];changed=True
+                updates=[selectors[key] for key in set(matching_keys(card,face)) if key in selectors]
+                updates.sort(key=lambda e:(bool(e.get('oracle_id') or e.get('scryfall_id')),sum(bool(e.get(k)) for k in ['oracle_id','scryfall_id','name']),bool(e.get('scryfall_id'))))
+                values={k:v for entry in updates for k,v in entry.items() if k in {'nickname','flavor_text','artist','art'}}
+                current=face.get('semanticOverrides') or {};changed=False
+                for key in ['nickname','flavor_text']:
+                    if key in values and current.get(key)!=values[key]:current={**current,key:values[key]};changed=True
+                if 'artist' in values and face.get('artistOverride')!=values['artist']:face['artistOverride']=values['artist'];changed=True
+                if 'art' in values and face.get('artFilename')!=values['art']:
+                    face['artFilename']=values['art'];changed=True
+                    defaults=d['settings'].get('artDefaults',[])
+                    d['settings']['artDefaults']=[key for key in defaults if key!=face_key(card,face)]
                 if changed:
-                    face['semanticOverrides']=overrides
-                    self.invalidate_face(face)
-                    dirty=True
+                    face['semanticOverrides']=current;self.invalidate_face(face);dirty=True
+        d['cardData']=merged
         if dirty:d['status']='draft'
         return dirty
+
+    @timed('artwork.review')
+    def artwork_review(self,payload,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.artwork_review_steps(payload,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def artwork_review_steps(self,payload,progress=lambda *a:None,cancel=lambda:False):
+        d=copy.deepcopy(self.deck(payload['deckId']))
+        s=self.validate_settings(payload.get('settings') or d['settings']);d['settings']=s
+        self._apply_card_data(d,payload.get('cardData',[]))
+        progress(0,1,'Checking artwork filenames…');yield
+        if cancel():raise ValidationError('Artwork check cancelled.')
+        index=self._prepare_sources(s,progress)
+        yield
+        if cancel():raise ValidationError('Artwork check cancelled.')
+        result=build_review(d,s,index);progress(1,1,'Artwork filenames checked')
+        return result
+
 
     def save(self,ident,patch):
         d=self.deck(ident);expected=patch.get('revision')
@@ -371,7 +368,7 @@ class Workspace:
                         source={'printingId':printing['id'],'field':selected['field']}
                     if f.get(field_name)!=text or f.get(kind)!=source:
                         f[field_name]=text;f[kind]=source;face_dirty=True
-                for k in ('artistOverride','artistCreditMode','artOverride','templateOverride','fit','semanticOverrides'):
+                for k in ('artistOverride','artistCreditMode','artOverride','artFilename','templateOverride','fit','semanticOverrides'):
                     if k in patch:
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
                         if k=='artistOverride' and patch[k] is not None:
@@ -431,7 +428,7 @@ class Workspace:
     def custom_art_previews(self,deck_id,settings):
         deck=self.deck(deck_id)
         selected=self.validate_settings(settings)
-        index=self._prepare_sources(selected,lambda *args:None) if selected['source']['mode']=='github' else {}
+        index=self._prepare_sources(selected,lambda *args:None)
         out=[]
         for card in deck['cards']:
             faces=ingest.face_list(card['scryfall'])
@@ -439,31 +436,37 @@ class Workspace:
                 sf_face=faces[min(face.get('index',0),len(faces)-1)]
                 name=sf_face.get('name',card['name'])
                 local=selected['source'].get('localFiles',{})
-                if face.get('selectedArtPrintingId') and not face.get('artOverride'):continue
-                if not (face.get('artOverride') or selected['source']['mode']=='local' and matching_art_key(local,name) is not None
-                        or selected['source']['mode']=='github' and matching_art_key(index,name) is not None):continue
+                if (face.get('selectedArtPrintingId') or face_key(card,face) in selected.get('artDefaults',[])) and not face.get('artOverride'):continue
+                if not (face.get('artOverride') or selected['source']['mode']=='local' and index.resolve(name,identity(card,face)['oracle_id'],face.get('artFilename',''),len(faces)>1) is not None
+                        or selected['source']['mode']=='github' and index.resolve(name,identity(card,face)['oracle_id'],face.get('artFilename',''),len(faces)>1) is not None):continue
                 art_id,_,_=self._art(card['scryfall'],sf_face,face,selected,index)
                 out.append({'cardId':card['id'],'faceId':face['id'],'name':face['name'],
                             'artist':face.get('artistOverride') or selected.get('artist') or '',
-                            'assetId':art_id})
+                            'assetId':art_id,**identity(card,face)})
         return out
 
     @timed('art.resolve')
     def _art(self,sf,face,opts,settings,index):
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
         name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
+        if not isinstance(index,ArtworkIndex):index=ArtworkIndex(settings['source'].get('localFiles',{}) if settings['source']['mode']=='local' else index,settings['source'].get('localNames'))
+        oracle=str(face.get('oracle_id') or sf.get('oracle_id') or '').lower()
+        default_key=(oracle or sf.get('id') or '')+'/'+name
+        if default_key in settings.get('artDefaults',[]):
+            url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
         local=settings['source'].get('localFiles',{})
-        if opts.get('selectedArtPrintingId'):
+        if url is not None:pass
+        elif opts.get('selectedArtPrintingId'):
             alternate,alternate_face=self._matching_printing_face({'scryfall':sf},opts,opts['selectedArtPrintingId'])
             url=self.sources.art_url(alternate,alternate_face)
             if not url:raise ValidationError('That printing has no artwork for this face.')
             opts['selectedArtArtist']=str(alternate_face.get('artist') or alternate.get('artist') or '').strip() or None
             origin='Scryfall selected printing'
         elif settings['source']['mode']=='local':
-            key=matching_art_key(local,name)
+            key=index.resolve(name,oracle,opts.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id',''))
             if key is not None:return local[key],'computer folder',None
         elif settings['source']['mode']=='github':
-            key=matching_art_key(index,name)
+            key=index.resolve(name,oracle,opts.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id',''))
             if key is not None:remote_entry=index[key];origin='GitHub folder'
         if remote_entry is None and url is None:
             if settings['source']['mode']!='scryfall' and not settings['source'].get('fallback',False):raise ValidationError('Missing custom art: '+stem+'.png. Upload it or enable Scryfall fallback.')
@@ -631,7 +634,8 @@ class Workspace:
         if s['source']['mode']=='github':
             if not s['source'].get('githubFolder'):raise ValidationError('Provide the GitHub art folder.')
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
-        return index
+        if s['source']['mode']=='local':index=s['source'].get('localFiles',{})
+        return ArtworkIndex(index,s['source'].get('localNames'))
     @timed('deck.prepare')
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.prepare_steps(ident,progress,cancel)

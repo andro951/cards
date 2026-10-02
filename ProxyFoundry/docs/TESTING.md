@@ -8,8 +8,18 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 594 | Every completed change |
-| Extended | 117 | Relevant changes or an explicit full sweep |
+| Routine | 609 | Every completed change |
+| Extended | 124 | Relevant changes or an explicit full sweep |
+
+The artwork-matching checkpoint adds schema/UUID/token-variant/filename checks,
+metadata-only inventory review, indexed 5,000-image lookup and 2,000-entry selector
+regressions. Browser coverage includes pairing, undo/resume, explicit fallback,
+bounded thumbnail DOM, refreshed-image invalidation, local permission denial,
+GitHub merge/SHA behavior, one-update and remembered connections, and actual
+static-site save/reload persistence without rendering. The full routine suite
+and affected DOM, GitHub import and static browser cases are run for this change;
+this is not another full extended sweep. Live authenticated GitHub writes are
+not performed; the write protocol and UI are tested with API fixtures.
 
 The subsequent GitHub source-selector and nickname-overlay fix passed all 591
 routine cases in 240.97 seconds and all six offline DOM cases in 34.16 seconds.
