@@ -26,6 +26,16 @@ def copy_site(tmp_path):
     return site
 
 
+def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
+    """Real service-worker/engine requests must run before a long job completes."""
+    output=tmp_path/'responsiveness.json'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/profile_responsiveness.py'),
+        '--cooperative','--verify','--output',str(output)],cwd=ROOT,check=True,capture_output=True)
+    report=json.loads(output.read_text(encoding='utf-8'))
+    assert len(report['trials'])==3
+    assert all(row['foregroundSeconds']<.75 for row in report['trials'])
+
+
 def test_static_engine_releases_image_responses_and_error_diagnostics(tmp_path):
     """Exercise real Pyodide proxy lifetimes without rendering a whole deck."""
     from playwright.sync_api import sync_playwright

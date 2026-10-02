@@ -111,6 +111,15 @@ function responseBytes(value){
 
 let sequence=Promise.resolve();
 let cleanupTimer=null;
+let jobTimer=null;
+function scheduleJobs(){
+  if(jobTimer!==null)return;
+  //A timer turn lets foreground requests enter the queue before another chunk.
+  jobTimer=setTimeout(()=>{
+    jobTimer=null;
+    sequence=sequence.then(runJobs).then(pending=>{if(pending)scheduleJobs();});
+  },0);
+}
 function scheduleCleanup(){
   if(cleanupTimer!==null)return;
   cleanupTimer=setTimeout(()=>{
@@ -133,7 +142,7 @@ self.onmessage=event=>{
     ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
     return;
   }
-  sequence=sequence.then(()=>handle(event)).then(runJobs).then(scheduleCleanup);
+  sequence=sequence.then(()=>handle(event)).then(()=>{scheduleJobs();scheduleCleanup();});
 };
 
 async function handle(event){
@@ -171,10 +180,11 @@ async function handle(event){
 async function runJobs(){
   if(!initialized)return;
   try{
-    python.runPython('app.jobs.run_pending()');
-    if(!completedJobs.length)return;
+    const pending=python.runPython('app.jobs.run_pending(limit=1)');
+    if(!completedJobs.length)return pending;
     await mount.syncfs();
     for(const job of completedJobs){self.postMessage({type:'job',job});}
+    return pending;
   }
   catch(error){
     for(const job of completedJobs){

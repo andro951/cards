@@ -1,0 +1,44 @@
+{
+  "revision": "893adad55015b0b5353b2502a89f0db668b5ca91",
+  "at": 1790919576.5214033,
+  "storageType": "browser",
+  "headless": false,
+  "cooperative": true,
+  "startupSeconds": 8.884683100041002,
+  "note": "Synthetic two-second synchronous job; no card artwork or native rendering.",
+  "trials": [
+    {
+      "startSeconds": 0.03920000004768372,
+      "foregroundSeconds": 0.1165,
+      "maxMainThreadTimerGapMilliseconds": 21.5,
+      "mainThreadTicks": 5,
+      "cancelAcknowledgeSeconds": 0.003799999952316284,
+      "cancelFinishSeconds": 0.1725,
+      "cancelledState": "cancelled",
+      "completedChunksBeforeCancel": 1,
+      "fixtureSeconds": 2
+    },
+    {
+      "startSeconds": 0.027100000143051146,
+      "foregroundSeconds": 0.11839999985694885,
+      "maxMainThreadTimerGapMilliseconds": 21.300000190734863,
+      "mainThreadTicks": 5,
+      "cancelAcknowledgeSeconds": 0.0017000000476837158,
+      "cancelFinishSeconds": 0.1427999999523163,
+      "cancelledState": "cancelled",
+      "completedChunksBeforeCancel": 1,
+      "fixtureSeconds": 2
+    },
+    {
+      "startSeconds": 0.029400000095367432,
+      "foregroundSeconds": 0.10659999990463256,
+      "maxMainThreadTimerGapMilliseconds": 21.299999952316284,
+      "mainThreadTicks": 5,
+      "cancelAcknowledgeSeconds": 0.0029000000953674316,
+      "cancelFinishSeconds": 0.14409999990463257,
+      "cancelledState": "cancelled",
+      "completedChunksBeforeCancel": 1,
+      "fixtureSeconds": 2
+    }
+  ]
+}

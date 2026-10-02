@@ -8,10 +8,12 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 539 | Every completed change |
-| Extended | 95 | Relevant changes or an explicit full sweep |
+| Routine | 546 | Every completed change |
+| Extended | 96 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 539 selected tests in 249.55 seconds. The
+The overnight scheduling milestone passed 542 routine tests in 197.75 seconds,
+then all 12 focused scheduling/preparation tests, covering four further routine
+tests added during that run. All 546 current routine cases have passed. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -84,5 +86,13 @@ source coordinates. Run `tests/test_full_art_examples.py` with `PF_BROWSER=1`
 and `PF_LIVE_CC=1`; see [full-art verification](FULL_ART_VERIFICATION.md).
 
 Slow application operations now have [timing logs](TIMING_LOGS.md), separate from the per-test timing CSV.
+
+For worker scheduling changes, run
+`tests/test_website.py::test_static_engine_foreground_requests_between_job_chunks`
+with `PF_BROWSER=1` and `PF_LIVE_CC=1`. It exercises the real static service worker
+and Pyodide engine using a temporary two-second job, requires foreground replies
+between 100 ms chunks, and checks cancellation. The standalone reproduction is
+`scripts/profile_responsiveness.py --cooperative --verify`. This is a scheduling
+benchmark, not a deck-generation throughput measurement.
 
 Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).

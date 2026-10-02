@@ -15,6 +15,7 @@ import time
 import traceback
 import urllib.parse
 from pathlib import Path
+from types import GeneratorType
 
 from .domain import ConflictError, ValidationError, uid
 from .network import Network
@@ -156,27 +157,53 @@ class BrowserJobs:
         self._publish(job)
         return {'id':ident}
 
-    def run_pending(self):
-        for ident in list(self.pending):
-            operation=self.pending.pop(ident);job=self.jobs[ident]
-            def cancel():
-                job['cancelled']=job['cancelled'] or self.cancelled(ident)
-                return job['cancelled']
-            def update(done,total,message):
-                job.update(done=done,total=total,message=str(message))
-                job['events'].append({'at':time.time(),'done':done,'total':total,'message':str(message)})
-                job['events']=job['events'][-200:]
-                self._publish(job)
-            try:
-                if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+    def run_pending(self,limit=None):
+        """Run bounded safe chunks; the worker yields to requests between calls."""
+        steps=0
+        while self.pending and (limit is None or steps<limit):
+            ident=next(iter(self.pending))
+            self._step(ident);steps+=1
+        return bool(self.pending)
+
+    def _step(self,ident):
+        operation=self.pending.pop(ident);job=self.jobs[ident]
+        def cancel():
+            job['cancelled']=job['cancelled'] or self.cancelled(ident)
+            return job['cancelled']
+        def update(done,total,message):
+            job.update(done=done,total=total,message=str(message))
+            job['events'].append({'at':time.time(),'done':done,'total':total,'message':str(message)})
+            job['events']=job['events'][-200:]
+            self._publish(job)
+        try:
+            if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+            if job['state']=='queued':
                 job.update(state='running',message='Starting');self._publish(job)
-                result=operation(update,cancel)
-                if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
-                job.update(state='done',result=result,message='Complete')
-            except Exception as exc:
-                job.update(state='cancelled' if job['cancelled'] else 'failed',
-                           error=browser_error(exc),message=browser_error(exc),trace=traceback.format_exc())
-            finally:
+                operation=operation(update,cancel)
+            result=operation
+            if isinstance(operation,GeneratorType):
+                try:
+                    next(operation)
+                except StopIteration as finished:
+                    result=finished.value
+                else:
+                    if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+                    #Reinsert at the end so other queued jobs also get a turn.
+                    self.pending[ident]=operation
+                    return
+            if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+            job.update(state='done',result=result,message='Complete')
+        except Exception as exc:
+            job.update(state='cancelled' if job['cancelled'] else 'failed',
+                       error=browser_error(exc),message=browser_error(exc),trace=traceback.format_exc())
+            if isinstance(operation,GeneratorType):
+                try:operation.close()
+                except Exception as cleanup_error:
+                    job['error']+=' Cleanup failed: '+browser_error(cleanup_error)
+                    job['message']=job['error']
+                    job['trace']+='\n'+traceback.format_exc()
+        finally:
+            if ident not in self.pending:
                 job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
                 completed=[key for key,row in self.jobs.items() if row['state'] in {'done','failed','cancelled'}]
                 for key in completed[:-20]:self.jobs.pop(key)
@@ -248,6 +275,11 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        prepare=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/prepare',path)
+        if prepare:
+            self.data()
+            return self.respond(self.app.jobs.start('Prepare deck',
+                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel)))
         if path == '/api/cleanup/retry':
             for queue in self.app.store.list('cleanup'):
                 queue.pop('error',None)

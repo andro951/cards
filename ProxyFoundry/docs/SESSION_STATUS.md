@@ -2,6 +2,14 @@
 
 Updated 2026-10-01. The current application is the static browser website. Double-click `START_BULK_PROXY_FORGE.bat` for local preview. `START_PROXY_FOUNDRY.bat` retains the old local application.
 
+The 2026-10-02 overnight performance goal is active. Its current findings,
+ordered backlog and checkpoint record are in
+[the performance audit](../audit-notes-2026-10-02/00_README.md).
+Preparation now yields between durably saved cards so engine requests can run
+between chunks. Global UI locks and other synchronous job families are still
+being addressed. The measured scheduling fixture reduced menu-data waiting
+from 2.503 seconds to 0.114 seconds; this is not a measured deck speedup.
+
 ## Current behavior
 
 - Full-art artwork uses centered cover fitting across the entire card canvas, including Godzilla and the original full-art land families. Frame and text overlays retain their native positions. Pipeline v29 invalidates earlier placement results. See [full-art verification](FULL_ART_VERIFICATION.md).

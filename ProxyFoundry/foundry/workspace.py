@@ -620,14 +620,23 @@ class Workspace:
         return index
     @timed('deck.prepare')
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.prepare_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def prepare_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
         index=self._prepare_sources(s,progress)
+        yield
         total=sum(len(c['faces']) for c in d['cards']);done=0
         for c in d['cards']:
             done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
             # Checkpoint preparation so cancellation/reload preserves finished faces.
             d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
+            yield
+        if cancel():raise ValidationError('Preparation cancelled.')
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         self.store.put('decks',d,rev);return self.deck(ident)
     @timed('card.prepare-single')
