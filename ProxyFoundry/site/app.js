@@ -167,10 +167,23 @@ export async function route(){
     else{state.route='decks';showLibrary();}
   }catch(e){if(current===routeCounter)showWorkspaceError(e,()=>route());}
 }
+function placeNotifications(){
+  const host=$('#toast-host'),activity=$('#activity');
+  if(!host||!activity)return;
+  const position=()=>{
+    const bounds=activity.getBoundingClientRect();
+    host.style.top='auto';
+    host.style.bottom=(bounds.height?window.innerHeight-bounds.top+12:24)+'px';
+  };
+  position();
+  new ResizeObserver(position).observe(activity);
+  window.addEventListener('resize',position);
+}
 async function boot(){
   try{
     const data=await api('/api/bootstrap');state.csrf=data.csrf;state.bootstrap=data;
     mountNavigation();
+    placeNotifications();
     resumeDeletions();
     window.addEventListener('pf-library-deletion',()=>{state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';});
     window.addEventListener('pf-deletion-failed',()=>{if(state.route==='decks')void route();});
