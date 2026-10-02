@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'tests'))
+sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from test_website import build_site,copy_site
 from test_browser_storage import test_native_png_save_benchmark_preserves_bytes_and_survives_reload
 from playwright.sync_api import sync_playwright

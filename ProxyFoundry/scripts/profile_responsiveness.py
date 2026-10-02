@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+from static_server import StaticSiteServer
 
 ROOT=Path(__file__).resolve().parents[1]
 INJECT='''
@@ -90,7 +91,7 @@ def main():
         worker.write_text(source.replace(anchor,injected+'\n'+anchor),encoding='utf-8')
         class QuietHandler(http.server.SimpleHTTPRequestHandler):
             def log_message(self,*args):pass
-        server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=str(site)))
+        server=StaticSiteServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=str(site)))
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         try:
             with sync_playwright() as playwright:

@@ -376,3 +376,49 @@ despite isolated templates API reads of 4–7ms. The stronger 400 run under cont
 measured even longer waits. Native runtime asset requests share the serial worker
 request chain with UI reads; inspect that queue before claiming priority coverage
 for every renderer-startup request. The goal remains active for this investigation.
+
+## Final foreground scheduling and completion verification
+
+A controlled twenty-read asset burst isolates Promise-chain message starvation:
+foreground Templates waits 0.985–0.988s before repair. RequestQueue admits
+messages across task turns, ranks UI calls and foreground Python job chunks
+before background assets, preserves FIFO at equal priority and serializes each
+operation through its durable save. Job rank is evaluated at dispatch so a
+new import can promote an already queued chunk. Final fixture replies in
+10–35ms and finishes foreground jobs in 102–234ms; all twenty reads complete.
+Five Node regressions cover serialization, FIFO, rejection, task admission and
+job promotion. Native drawing and response/persistence formats are unchanged.
+
+An early website run loaded mojibake fixture/selector text from an edit that
+was corrected after that process imported the module. The corrected-source
+run passes those cases and saves/reloads all 100 outputs with an actual import
+during generation, stable search/focus, zero errors/warnings and no premature
+compilation of the imported deck. Templates opens in 1.04s and metadata import
+in 2.23s; separate earlier measurements were 9.22s and 13.87s. Cache/network
+conditions differ; no universal whole-deck throughput claim is made.
+
+The final website run has 21 passes and two profiler import failures, zero
+skips. Standalone startup/ingest helpers lacked the project root needed by the
+new shared static-server import. Their paths and the two analogous benchmark
+helpers are corrected. Both profiler reruns pass; four import-only regressions
+pass from an unrelated directory without opening browsers or permission pickers.
+The current source differs from the previous commit only in verified scheduling,
+build inclusion, helper import paths, tests and audit/measurement documentation.
+
+Verification: all 585 prior routine cases pass, four new routine import cases
+pass, all 17 storage cases pass, native readiness/full-art checks pass with exact
+pixels/source-coordinate checks, and all 20 Node cases pass. Four canonical
+vendor hashes remain unchanged. All 704 collected pytest IDs exactly match
+passing timing records (589 routine, 115 extended) across the full overnight
+sweep and affected reruns. This is explicitly aggregate coverage rather than
+one entirely green fresh all-enabled invocation. The new large-flow summary and
+controlled measurements are retained in docs/REQUEST_PRIORITY.md.
+
+Completion audit rechecked the seven ordered plan items against source maps,
+measurements, PNG/persistence artifacts and tests. Scope includes browser-only
+hosting, choices before generation, foreground interaction/conflicts, pipeline
+and worker feasibility experiments, collection/startup work, long-session memory,
+exports and recovery. Serial rendering and saves remain deliberate measured
+choices; native synchronous pauses, initial-grid mounting and per-image full
+deck metadata reads are documented costs, not promised eliminated work.
+Unrelated Supernatural artwork changes remain outside this work's commits.

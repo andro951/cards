@@ -14,7 +14,7 @@ from PIL import Image
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'tests'))
+sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from test_website import build_site,copy_site
 
 PYTHON_PROFILE='''

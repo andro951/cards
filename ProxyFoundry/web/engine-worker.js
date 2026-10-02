@@ -1,3 +1,4 @@
+import {RequestQueue,requestPriority} from './request-queue.js';
 import {mountWorkspaceFiles} from './workspace-fs.js';
 import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs';
 
@@ -9,8 +10,11 @@ let ready;
 let owner;
 let initialized=false;
 let completedJobs=[];
+const foregroundJobs=new Set();
 self.publishJob=encoded=>{
   const job=JSON.parse(responseText(encoded));
+  if(['done','failed','cancelled'].includes(job.state))foregroundJobs.delete(job.id);
+  else if(job.priority===0)foregroundJobs.add(job.id);
   if(['done','failed','cancelled'].includes(job.state))completedJobs.push(job);
   else self.postMessage({type:'job',job});
 };
@@ -132,7 +136,7 @@ function responseBytes(value){
   return bytes;
 }
 
-let sequence=Promise.resolve();
+const requests=new RequestQueue();
 let cleanupTimer=null;
 let jobTimer=null;
 function scheduleJobs(){
@@ -140,14 +144,14 @@ function scheduleJobs(){
   //A timer turn lets foreground requests enter the queue before another chunk.
   jobTimer=setTimeout(()=>{
     jobTimer=null;
-    sequence=sequence.then(runJobs).then(pending=>{if(pending)scheduleJobs();});
+    requests.enqueue(runJobs,()=>foregroundJobs.size?0:2).then(pending=>{if(pending)scheduleJobs();});
   },0);
 }
 function scheduleCleanup(){
   if(cleanupTimer!==null)return;
   cleanupTimer=setTimeout(()=>{
     cleanupTimer=null;
-    sequence=sequence.then(async()=>{
+    requests.enqueue(async()=>{
       if(!initialized)return;
       try{
         const result=JSON.parse(python.runPython('json.dumps(app.store.cleanup_step())'));
@@ -156,7 +160,7 @@ function scheduleCleanup(){
         if(result.pending>result.errors.length)scheduleCleanup();
       }
       catch(error){self.postMessage({type:'cleanup-warning',message:String(error.message||error)});}
-    });
+    },3);
   },150);
 }
 self.onmessage=event=>{
@@ -165,7 +169,7 @@ self.onmessage=event=>{
     ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
     return;
   }
-  sequence=sequence.then(()=>handle(event)).then(()=>{scheduleJobs();scheduleCleanup();});
+  requests.enqueue(()=>handle(event),requestPriority(event.data)).then(()=>{scheduleJobs();scheduleCleanup();});
 };
 
 async function handle(event){

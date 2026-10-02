@@ -1,0 +1,22 @@
+{
+  "revision": "3bcc9cbf710700b278a340d30a4f306706e267df",
+  "at": 1790948923.9824882,
+  "storageType": "browser",
+  "headless": false,
+  "startupSeconds": 8.202301300130785,
+  "note": "Twenty serial 50 ms asset reads per trial; no artwork download or native rendering. Baseline worker uses the pre-change Promise chain.",
+  "trials": [
+    {
+      "foregroundSeconds": 0.9874000000953674,
+      "assets": 20
+    },
+    {
+      "foregroundSeconds": 0.9849000000953674,
+      "assets": 20
+    },
+    {
+      "foregroundSeconds": 0.9876999998092652,
+      "assets": 20
+    }
+  ]
+}

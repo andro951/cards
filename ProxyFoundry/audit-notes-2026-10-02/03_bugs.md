@@ -52,3 +52,18 @@ focused inputs and emits one deck notification. Actual generation tests retain
 search/caret/card buttons, including library-to-card navigation and an injected
 failed progress read. Offline 400-card/300-deck cases retain inspector drafts and
 selection. Full-deck snapshot reads and native drawing pauses remain separate risks.
+
+
+## High: foreground requests wait behind native asset bursts
+
+The old Promise chain begins the next synchronous Python operation before
+incoming worker messages can be delivered. A controlled twenty-read asset
+burst makes a Templates request wait about 0.99 seconds even though its handler
+is fast. RequestQueue yields a task turn, then ranks pending UI calls and
+foreground Python chunks ahead of background assets/jobs. Foreground job rank
+is dynamic so a queued background chunk is promoted when an import starts.
+
+The final controlled actual-worker trials answer in 10–35 ms and finish a
+foreground job in 102–234 ms; all asset requests complete. Five Node regressions
+cover precedence, serialization, task admission, rejection and job promotion.
+See docs/REQUEST_PRIORITY.md. All 23 website cases have passing results, including corrected standalone profiler reruns and the high-memory boundary case.

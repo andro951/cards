@@ -49,6 +49,7 @@ does not establish that every foreground transition is fast. A stronger
 400 outputs with steady memory, then hit a local JavaScript-module fetch failure
 on reload. After local-server transport hardening, its saved workspace reopened
 and a direct API check confirmed all 400 renders and distinct keys. A fresh
-100-output import/generate/reload run passed. All 699 current pytest IDs have
-passing results across the full sweep and affected reruns; startup foreground
-latency remains an open investigation, separate from the repaired memory growth.
+100-output import/generate/reload run passed. All 704 collected pytest IDs have
+passing results across the full sweep and affected reruns. The separate foreground
+queue repair is measured in REQUEST_PRIORITY.md; remaining native canvas pauses
+are distinct from the repaired memory growth.

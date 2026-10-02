@@ -17,10 +17,12 @@ Rollback journaling repairs the browser case: 4,000-read regression and a
 complete 400-output save/reload pass with bounded memory. Original failure
 evidence is retained. The stronger run imports another deck and saves all 400
 outputs, then exposes a local module-fetch failure on reload. Transport hardening,
-persisted 400-output reopening and a fresh 100-output flow pass. All 699 current
+persisted 400-output reopening and a fresh 100-output flow pass. All 704 collected
 pytest IDs have passing results across the full sweep and affected reruns.
-Cold renderer startup still delays Templates despite a fast isolated API read;
-that foreground queue investigation keeps overall goal completion open.
+The cold-start queue issue is isolated and repaired with actual worker and
+foreground-job priority checks. Final 100-output generation/import/reload passes;
+Templates opens in 1.04s and metadata import in 2.23s in that measured flow.
+The repair does not eliminate pauses within individual synchronous native calls.
 The earlier isolated startup timeout also has no established cause, despite
 24 successful profiling launches and subsequent successful static flows.
 

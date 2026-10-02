@@ -45,8 +45,10 @@ must fail the stale preparation write rather than discard the user's edit.
 ## Current scheduling repair
 
 BrowserJobs accepts ordinary operations and resumable Python generators.
-The worker asks for one chunk per event-loop turn. Foreground requests received
-between chunks join the serialized queue before the next scheduled chunk.
+The worker asks for one chunk per event-loop turn. RequestQueue admits new
+messages across task turns, then ranks UI requests ahead of thumbnails, native
+work and diagnostics/cleanup. Each operation and its durable save remains
+serialized; equal priorities keep arrival order.
 Preparation yields after sources are indexed and after each persisted card.
 The legacy local application drains the same generator synchronously.
 
@@ -58,9 +60,10 @@ priorities rotating and cancelled jobs closing first. Whole-deck preparation and
 runtime setup are background jobs; imports remain foreground jobs.
 
 A slow network request or single card preparation still blocks the engine within
-that chunk. GitHub setup, archives, orders and backups remain synchronous until
-their own safe boundaries are converted. Scoped ownership permits independent
-deck work but does not make those individual operations parallel.
+that chunk. GitHub setup, archives, orders and backups now yield at their own
+safe boundaries. Scoped ownership permits independent deck work but does not
+make Python operations parallel. Native renderer concurrency and render/save
+overlap remain experimental because measurements did not support shipping them.
 
 ## User-visible progress
 

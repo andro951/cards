@@ -1,0 +1,26 @@
+{
+  "revision": "3bcc9cbf710700b278a340d30a4f306706e267df",
+  "at": 1790950479.0608625,
+  "storageType": "browser",
+  "headless": false,
+  "startupSeconds": 15.678840900072828,
+  "note": "Twenty serial 50 ms asset reads per trial; no artwork download or native rendering.",
+  "trials": [
+    {
+      "foregroundSeconds": 0.03540000009536743,
+      "foregroundJobSeconds": 0.23359999990463257,
+      "assets": 20
+    },
+    {
+      "foregroundSeconds": 0.009799999952316283,
+      "foregroundJobSeconds": 0.10180000019073486,
+      "assets": 20
+    },
+    {
+      "foregroundSeconds": 0.014099999904632569,
+      "foregroundJobSeconds": 0.15410000014305114,
+      "assets": 20
+    }
+  ],
+  "workingTree": "Final production queue and foreground job promotion before their milestone commit."
+}

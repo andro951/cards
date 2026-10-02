@@ -45,7 +45,7 @@ for path in (root / 'site').iterdir():
         destination=dist/'site'/path.name
         if path.suffix in {'.js','.mjs','.html','.css'}:destination.write_text(deployed_source(path.read_text(encoding='utf-8')),encoding='utf-8')
         else:shutil.copy2(path,destination)
-for name in ('bootstrap.js', 'engine-worker.js', 'storage-choice.js', 'settings-browser.js', 'templates-browser.js', 'review-browser.js', 'workspace-files.js', 'workspace-fs.js'):
+for name in ('bootstrap.js', 'engine-worker.js', 'storage-choice.js', 'settings-browser.js', 'templates-browser.js', 'review-browser.js', 'workspace-files.js', 'workspace-fs.js', 'request-queue.js'):
     (dist/'web'/name).write_text(deployed_source((root/'web'/name).read_text(encoding='utf-8')),encoding='utf-8')
 (dist/'sw.js').write_text(deployed_source((root/'web/service-worker.js').read_text(encoding='utf-8')),encoding='utf-8')
 

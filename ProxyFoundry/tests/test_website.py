@@ -52,6 +52,16 @@ def test_static_startup_timings_and_root_subpath_reloads(tmp_path):
     assert all(not row['errors'] and any(stage['stage']=='engine-total' and stage['outcome']=='ok' for stage in row['stages']) for row in rows)
 
 
+def test_static_engine_foreground_requests_overtake_pending_assets(tmp_path):
+    """Real message delivery must admit UI calls between background reads."""
+    output=tmp_path/'request-priority.json'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/profile_request_priority.py'),
+        '--verify','--output',str(output)],cwd=ROOT,check=True,capture_output=True,timeout=240)
+    rows=json.loads(output.read_text(encoding='utf-8'))['trials']
+    assert len(rows)==3 and all(row['assets']==20 for row in rows)
+    assert all(row['foregroundSeconds']<.35 and row['foregroundJobSeconds']<.35 for row in rows)
+
+
 def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
     """Real service-worker/engine requests must run before a long job completes."""
     output=tmp_path/'responsiveness.json'

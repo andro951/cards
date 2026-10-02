@@ -3,7 +3,7 @@
 | System | Entry points and interactions |
 | --- | --- |
 | Startup/routing | web/bootstrap.js, web/service-worker.js → engine-worker.js |
-| Worker scheduling | engine-worker.js sequence, scheduleJobs, scheduleCleanup |
+| Worker scheduling | engine-worker.js → request-queue.js priority task turns, scheduleJobs, scheduleCleanup |
 | Python jobs | foundry/browser.py BrowserJobs.start/run_pending/_step |
 | Preparation | server.App.prepare_deck_steps → Workspace.prepare_steps → _prepare_card_faces |
 | Metadata import | BrowserHandler.post → Workspace.create_steps/add_cards_steps → Sources.import_deck_steps |
