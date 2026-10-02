@@ -27,7 +27,8 @@ export function setEngineStatus(status){
 export function browserDiagnosticReport(){
   persist();
   return {url:location.href,userAgent:navigator.userAgent,engineStatus,
-    serviceWorker:navigator.serviceWorker?.controller?.scriptURL||null,entries,previousSession};
+    serviceWorker:navigator.serviceWorker?.controller?.scriptURL||null,entries,previousSession,
+    pendingImages:[...document.images].filter(image=>!image.complete).map(image=>({url:cleanDetail(image.currentSrc||image.src),label:image.alt,loading:image.loading}))};
 }
 export async function diagnosticZipRequest(csrf){
   return fetch('/api/diagnostics.zip',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Proxy-CSRF':csrf},body:JSON.stringify({browser:browserDiagnosticReport()})});
@@ -75,3 +76,18 @@ new MutationObserver(mutations=>{
     statusTexts.set(status,text);
   }
 }).observe(window.document.documentElement,{subtree:true,childList:true,characterData:true});
+
+if(window.PerformanceObserver){
+  const imageTimings=new PerformanceObserver(list=>{
+    for(const resource of list.getEntries()){
+      if(resource.initiatorType!==`img`||resource.duration<100)continue;
+      const detailed=resource.responseStart>0;
+      recordDiagnostic(`timing`,JSON.stringify({stage:`preview.image-request`,url:resource.name,
+        seconds:Number((resource.duration/1000).toFixed(4)),outcome:`complete`,
+        source:new URL(resource.name,location.href).origin===location.origin?`workspace`:`remote`,
+        detailedTimingAvailable:detailed,
+        ...(detailed?{waitSeconds:Number(((resource.responseStart-resource.startTime)/1000).toFixed(4)),transferSeconds:Number(((resource.responseEnd-resource.responseStart)/1000).toFixed(4)),transferBytes:resource.transferSize}:{})}));
+    }
+  });
+  imageTimings.observe({type:`resource`,buffered:true});
+}

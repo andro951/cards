@@ -515,3 +515,22 @@ def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page
         assert 'selected' in panel.get_by_role('button',name='From GitHub',exact=True).get_attribute('class')
     assert page.locator('#symbol-github-folder').input_value().endswith('/set_symbols')
     assert not errors,errors
+
+
+def test_browser_diagnostics_include_image_timing_and_pending_previews(dom_page):
+    import time
+    page,errors=dom_page
+    from test_browser import png
+    def delayed_image(route):
+        time.sleep(.2)
+        route.fulfill(body=png(),content_type='image/png')
+    page.route('http://fixture.test/slow-preview.png',delayed_image)
+    page.evaluate("()=>{const image=document.createElement('img');image.src='/slow-preview.png';document.body.append(image);}")
+    page.wait_for_function("__mod_diagnostics.browserDiagnosticReport().entries.some(entry=>entry.kind==='timing'&&entry.detail.includes('preview.image-request'))")
+    timing=page.evaluate("JSON.parse(__mod_diagnostics.browserDiagnosticReport().entries.find(entry=>entry.kind==='timing'&&entry.detail.includes('slow-preview.png')).detail)")
+    assert timing['seconds']>=.1 and timing['source']=='workspace'
+    assert timing['detailedTimingAvailable'] and timing['transferBytes']>0
+    page.evaluate("()=>{const image=document.createElement('img');image.src='/not-visible.png';image.loading='lazy';image.alt='Waiting art';image.style.marginTop='100000px';document.body.append(image);}")
+    pending=page.evaluate('__mod_diagnostics.browserDiagnosticReport().pendingImages')
+    assert any(image['label']=='Waiting art' and image['loading']=='lazy' for image in pending)
+    assert not errors,errors

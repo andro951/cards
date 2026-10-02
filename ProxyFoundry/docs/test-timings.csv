@@ -656,10 +656,11 @@ tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,e
 tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,1.374,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.100,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_artwork_refresh_does_not_reuse_stale_images_or_pairs,extended,2.680,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_browser_diagnostics_include_image_timing_and_pending_previews,extended,7.627,passed,2026-10-02T16:36:10.162968-04:00
 tests/test_dom_offline.py::test_choose_look_routes_without_generating[Customize Look],extended,2.768,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_choose_look_routes_without_generating[Normal Look],extended,2.495,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_delete_cancels_generation_once_and_uses_latest_revision,extended,1.299,passed,2026-10-02T16:21:48.409863-04:00
-tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,1.239,passed,2026-10-02T16:21:48.409863-04:00
+tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,2.243,passed,2026-10-02T16:36:10.162968-04:00
 tests/test_dom_offline.py::test_library_initial_covers_and_backs_use_small_previews,extended,1.779,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,10.376,passed,2026-10-02T16:21:48.409863-04:00
 tests/test_dom_offline.py::test_offline_large_card_grid_keeps_input_and_tiles_during_progress,extended,2.540,passed,2026-10-02T16:21:48.409863-04:00
