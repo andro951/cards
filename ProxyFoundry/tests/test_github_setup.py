@@ -112,6 +112,7 @@ def test_four_symbols_live_art_and_icon_are_staged(tmp_path):
     assert ws.store.get('decks', deck['id']) == before
     assert not any('/art/' in url or 'scryfall' in url for url in remote.calls)
     assert s['githubSetupFolder'] == remote.url
+    assert s['symbolsSource']['kind']=='github'
 
 
 def test_art_subfolder_link_imports_parent_symbols_back_and_card_data(tmp_path):

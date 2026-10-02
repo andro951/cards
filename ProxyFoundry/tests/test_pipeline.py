@@ -768,7 +768,7 @@ def test_nickname_legendary_keeps_automatic_frame(workspace):
     data=Compiler(s).compile_face(card,card,0,{},settings,a)['data']
     assert data['version']=='m15Regular'
     assert any('/img/frames/m15/regular/' in frame.get('src','') for frame in data['frames'])
-    assert any('m15NicknameCrownU.png' in frame.get('src','') for frame in data['frames'])
+    assert 'm15NicknameCrownU.png' in data['frames'][0]['src']
     assert not any('m15NicknameFrame' in frame.get('src','') for frame in data['frames'])
 
 
@@ -785,7 +785,8 @@ def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay(
         }
         sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':False}
         assert apply_nickname_treatment(data,sem,group)
-        assert data['frames'][0]['src']=='/keep/me.png'
+        assert data['frames'][0]['name']=='Nickname Title'
+        assert data['frames'][1]['src']=='/keep/me.png'
         assert any(f.get('name')=='Nickname Title' for f in data['frames'])
         assert data['text']['nickname']['text']=='Reskin'
         assert data['text']['title']['text']=='Underlying'
@@ -1051,3 +1052,25 @@ def test_full_art_fit_preserves_explicit_manual_placement(workspace):
     fit={'artX':-.15,'artY':.02,'artZoom':2.4,'artRotate':3}
     result=Compiler(store).compile_face(card,card,0,{'templateOverride':'godzilla-card','fit':fit},settings,art)
     assert {key:result['data'][key] for key in fit}==fit
+
+
+def test_nickname_overlay_is_topmost_for_legendary_and_regular_structural_cards():
+    for legendary in [False,True]:
+        for group in ['saga','saga-creature','class','station','prepare','transform-front','transform-back','flip','meld','prototype','adventure','standard','land']:
+            original=[{'name':'Covering frame','src':'/keep/me.png','masks':[]}]
+            data={'width':2010,'height':2814,'version':group,'frames':original.copy(),
+                  'text':{'title':{'text':'Original'}}}
+            sem={'name':'Original','nickname':'Reskin','colors':['U'],'types':['Enchantment'],'subtypes':[], 'legendary':legendary}
+            assert apply_nickname_treatment(data,sem,group)
+            assert data['frames'][0]['name']==('Nickname Crown' if legendary else 'Nickname Title')
+            assert data['frames'][1:]==original
+
+
+def test_compiled_saga_nickname_strip_remains_above_structural_frames(workspace):
+    store,art,settings=workspace
+    card=sf('Enchantment — Saga',['U'])
+    card.update(name='Underlying Saga',flavor_name='Reskinned Saga',oracle_text='I — Draw a card.\nII — Scry 2.\nIII — Draw two cards.')
+    data=Compiler(store).compile_face(card,card,0,{},settings,art)['data']
+    assert data['frames'][0]['name']=='Nickname Title'
+    assert 'm15NicknameTitleU.png' in data['frames'][0]['src']
+    assert any('saga' in frame.get('src','').lower() for frame in data['frames'][1:])

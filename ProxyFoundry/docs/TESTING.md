@@ -8,8 +8,13 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 589 | Every completed change |
-| Extended | 115 | Relevant changes or an explicit full sweep |
+| Routine | 591 | Every completed change |
+| Extended | 116 | Relevant changes or an explicit full sweep |
+
+The subsequent GitHub source-selector and nickname-overlay fix passed all 591
+routine cases in 240.97 seconds and all six offline DOM cases in 34.16 seconds.
+New checks cover source selection during import, saved setup restoration, and
+topmost nickname strips in final compiled Saga cards.
 
 The final 2026-10-02 checkpoint covers all 704 collected pytest IDs with passing
 results across the all-enabled overnight sweep and affected reruns, with no

@@ -16,7 +16,7 @@ from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
-DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
 FRONT_SETTINGS={'source','symbols','artist','templateRules','disableAutofit','flavorPolicy','showFlavorText','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
@@ -107,17 +107,18 @@ class Workspace:
         if len(s['source'].get('localFiles',{}))>5000:raise ValidationError('Select at most 5,000 local art files.')
         if s.get('flavorPolicy') not in {'auto','resolved','latest'}:raise ValidationError('Choose an automatic, selected-printing or latest-printing flavor policy.')
         s['showFlavorText']=bool(s.get('showFlavorText',True))
-        raw_data_source=s.get('dataJsonSource')
-        if raw_data_source in (None,''):
-            s['dataJsonSource']=None
-        elif isinstance(raw_data_source,dict):
-            kind=raw_data_source.get('kind');value=raw_data_source.get('value')
-            if kind not in {'local','github'} or not isinstance(value,str):raise ValidationError('Invalid data.json source reference.')
-            value=value.strip()
-            if not value or len(value)>1000 or any(ord(ch)<32 or ord(ch)==127 for ch in value):raise ValidationError('Invalid data.json source reference.')
-            s['dataJsonSource']={'kind':kind,'value':value}
-        else:
-            raise ValidationError('Invalid data.json source reference.')
+        for field,label in [('dataJsonSource','data.json'),('symbolsSource','set symbols')]:
+            raw_data_source=s.get(field)
+            if raw_data_source in (None,''):
+                s[field]=None
+            elif isinstance(raw_data_source,dict):
+                kind=raw_data_source.get('kind');value=raw_data_source.get('value')
+                if kind not in {'local','github'} or not isinstance(value,str):raise ValidationError('Invalid '+label+' source reference.')
+                value=value.strip()
+                if not value or len(value)>1000 or any(ord(ch)<32 or ord(ch)==127 for ch in value):raise ValidationError('Invalid '+label+' source reference.')
+                s[field]={'kind':kind,'value':value}
+            else:
+                raise ValidationError('Invalid '+label+' source reference.')
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
         raw_token_options=s.get('tokenOptions') or {}
         if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')

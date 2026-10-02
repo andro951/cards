@@ -2113,13 +2113,13 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     legendary=bool(sem.get('legendary'))
     frames=data.setdefault('frames',[])
     if legendary:
-        frames.append({
+        frames.insert(0,{
             'name':'Nickname Crown','src':_nickname_crown_src(code),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
             if code!='C' else {'x':0,'y':0,'width':1,'height':1},
         })
     else:
-        frames.append({
+        frames.insert(0,{
             'name':'Nickname Title','src':_nickname_title_src(code),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
         })

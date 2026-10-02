@@ -199,6 +199,7 @@ export function renderSetup(root,deck,onSaved){
     dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' staged. Save changes to apply.';
     dataStatus.hidden=false;
     redrawDataJsonStatus();
+    (source?.kind==='github'?githubMode:computerMode).onclick();
     mark();
   };
   localDataButton.onclick=()=>$('#data-json-file',root).click();
@@ -250,7 +251,7 @@ export function renderSetup(root,deck,onSaved){
     host.append(body);
   };
   redrawFrames();
-  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
+  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
     s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;redrawFrames();mark();
   },{onBusy:busy=>{
@@ -269,6 +270,9 @@ export function renderSetup(root,deck,onSaved){
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
   const redrawDataJsonStatus=()=>{const status=$('#data-json-status',root);if(!status)return;status.textContent=s.dataJsonSource?.value||dataJsonImportNote||'';status.hidden=!status.textContent;};
   redrawDataJsonStatus();
+  (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
+  symbolGithubInput.value=s.symbolsSource?.value||'';
+  (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
   $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
@@ -293,6 +297,10 @@ export function renderSetup(root,deck,onSaved){
         dataJsonImportNote='No data.json found in the GitHub project root.';
       }
       redrawDataJsonStatus();
+      (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
+      s.symbolsSource=patch.symbolsSource||null;
+      symbolGithubInput.value=s.symbolsSource?.value||'';
+      (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
@@ -311,7 +319,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       status.textContent=`Uploading set symbols ${done+1} / 4 · ${selected[rarity].name}`;
       next[rarity]=(await uploadImage(selected[rarity],{symbol:true})).id;done++;
     }
-    s.symbols=next;redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
+    s.symbols=next;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
   }finally{
     input.value='';button.disabled=false;save.disabled=false;render.disabled=false;
   }
@@ -321,7 +329,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     symbolGithubImport.disabled=true;
     try{
       const result=await job('/api/setup/symbols/github',{url},{label:'Import set symbols'});
-      s.symbols=result.symbols;redrawSymbols();mark();toast('Four rarity symbols imported.');
+      s.symbols=result.symbols;s.symbolsSource={kind:'github',value:url};symbolGithub.click();redrawSymbols();mark();toast('Four rarity symbols imported.');
     }finally{symbolGithubImport.disabled=false;}
   });
   function readSettings(){

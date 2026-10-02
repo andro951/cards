@@ -162,3 +162,39 @@ def test_offline_library_progress_keeps_search_selection_and_filters(dom_page):
     page.locator('[data-filter=ready]').click()
     assert page.locator('.deck-tile:visible').count()==1
     assert not errors,errors
+
+
+def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      const fetch=window.fetch;
+      window.fetch=async(path,opts={})=>{
+        let value;
+        if(path==='/api/setup/github-import')value={id:'github-fixture'};
+        else if(path==='/api/jobs/github-fixture')value={state:'done',kind:'GitHub setup',message:'Done',done:1,total:1,result:{
+          settings:{source:{mode:'github',githubFolder:'https://github.com/owner/cards/tree/main/deck/art',localFiles:{},fallback:false},
+            symbols:Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)])),
+            symbolsSource:{kind:'github',value:'https://github.com/owner/cards/tree/main/deck/set_symbols'},
+            dataJsonSource:{kind:'github',value:'deck/data.json'},backAsset:null,backDesign:{mode:'default'},
+            githubSetupFolder:'https://github.com/owner/cards/tree/main/deck'},
+          cardData:[{name:'Test creature',nickname:'New name'}],summary:{art:'github',symbols:'folder',back:'default',data:1},warnings:[]}};
+        else return fetch(path,opts);
+        return {ok:true,status:200,text:async()=>JSON.stringify(value)};
+      };
+      location.hash='#deck/'+window.__fixture.deck.id+'/setup';
+    }""")
+    page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/deck')
+    page.click('#github-setup-button')
+    page.wait_for_function("document.querySelector('#github-setup-status')?.classList.contains('success')")
+    symbols=page.locator('#symbol-grid').locator('xpath=..')
+    data=page.locator('#data-json-section')
+    for panel in [symbols,data]:
+        assert 'selected' in panel.get_by_role('button',name='From GitHub',exact=True).get_attribute('class')
+        assert 'selected' not in panel.get_by_role('button',name='From Computer',exact=True).get_attribute('class')
+    page.click('#save-setup')
+    page.wait_for_function("window.__fixture.deck.settings.symbolsSource?.kind==='github'")
+    page.evaluate("()=>{const root=document.querySelector('#setup-fields').parentElement;__mod_setup.renderSetup(root,window.__fixture.deck,()=>{});}")
+    for panel in [symbols,data]:
+        assert 'selected' in panel.get_by_role('button',name='From GitHub',exact=True).get_attribute('class')
+    assert page.locator('#symbol-github-folder').input_value().endswith('/set_symbols')
+    assert not errors,errors

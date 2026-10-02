@@ -387,6 +387,7 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
         summary['data'] = len(card_data)
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
                          'githubSetupFolder': root_url,
+                         'symbolsSource': {'kind':'github','value':base+'/'+quote(symbol_folder,safe='/')} if symbol_rows else None,
                          'dataJsonSource': {'kind':'github','value':data_row['path']} if data_row else None},
             'cardData': card_data,
             'summary': summary,
