@@ -162,6 +162,7 @@ def test_artwork_file_merge_permissions_and_github_sha(dom_page):
 
 def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     page,errors=dom_page
+    page.route('**/site/github-token-step-*.png',lambda route:route.fulfill(path=str(ROOT/'site'/route.request.url.rsplit('/',1)[-1]),content_type='image/png'))
     page.add_style_tag(content=(ROOT/'site/forge-theme.css').read_text(encoding='utf-8'))
     page.evaluate('''async()=>{
       window.savedGithub={version:1,cards:[{name:'Spirit',nickname:'Ghost'}]};window.githubWrites=0;
@@ -183,13 +184,23 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     from urllib.parse import urlparse,parse_qs
     assert parse_qs(urlparse(guide.get_attribute('href')).query)=={'name':['BulkProxyForge'],'description':['Update data.json artwork choices'],'target_name':['owner'],'contents':['write'],'expires_in':['90']}
     assert guide.get_attribute('target')=='_blank'
-    assert page.locator('.modal-body ol li').count()==3
-    assert page.get_by_role('img',name='Screenshot placeholder:',exact=False).count()==3
+    assert page.locator('.modal-body ol li').count()==5
+    assert page.locator('.modal-body ol img').count()==5
+    page.wait_for_function("[...document.querySelectorAll('.modal-body ol img')].every(image=>image.complete&&image.naturalWidth>0)")
+    assert page.locator('.modal-body').get_by_text('Check owner/cards is listed',exact=True).count()==1
+    assert page.get_by_text('Expiration: choose 90 days. Click an image to enlarge.',exact=True).is_visible()
+    assert page.locator('.modal-body ol img').evaluate_all("images=>images.every((image,index)=>image.src.endsWith(`/site/github-token-step-${index+1}.png`))")
     assert page.get_by_role('button',name='Connect and update data.json',exact=True).is_disabled()
     page.screenshot(path=str(screenshot_dir/'artwork-github-guide-desktop.png'))
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('''()=>[...document.querySelectorAll('.modal-body input,.modal-body img,.modal-body .button')].filter(x=>x.getClientRects().length).every(x=>{const r=x.getBoundingClientRect(),p=x.closest('.modal-body').getBoundingClientRect();return r.left>=p.left&&r.right<=p.right+1;})''')
     page.screenshot(path=str(screenshot_dir/'artwork-github-guide-mobile.png'))
+    page.locator('.modal-body ol img').first.click()
+    enlarged=page.get_by_role('dialog',name='Choose Only select repositories, search for your repository, and check its box.',exact=True)
+    assert enlarged.is_visible()
+    assert enlarged.locator('img').get_attribute('src').endswith('/site/github-token-step-1.png')
+    enlarged.get_by_role('button',name='Close',exact=True).click()
+    assert not enlarged.count()
     page.get_by_role('button',name='Back to save options',exact=True).click()
     assert page.get_by_role('button',name='Download data.json',exact=True).is_visible()
     assert not guide.is_visible()
@@ -197,6 +208,7 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     page.get_by_role('textbox',name='GitHub connection token').fill('one-use-token')
     page.get_by_role('button',name='Connect and update data.json',exact=True).click()
     page.wait_for_function('githubWrites===1 && !document.querySelector(".modal")')
+    assert page.get_by_text('Updated owner/cards/deck/data.json on main.',exact=True).is_visible()
     assert page.evaluate('async()=>!!await __mod_artwork_files.githubCredential("owner/cards")') is False
     page.evaluate('()=>{openSave("second.png");}')
     page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()

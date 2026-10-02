@@ -186,16 +186,10 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
 //#endregion
 
 //#region Optional data.json export
-const githubGuideSnippet=(label,height)=>{
-    const canvas=window.document.createElement(`canvas`);canvas.width=480;canvas.height=height;
-    const context=canvas.getContext(`2d`);
-    context.fillStyle=`#25201b`;context.fillRect(0,0,480,height);
-    context.strokeStyle=`#80603c`;context.strokeRect(1,1,478,height-2);
-    context.fillStyle=`#c7ac87`;context.font=`16px sans-serif`;context.textAlign=`center`;
-    context.fillText(`Screenshot placeholder`,240,height/2-8);
-    context.font=`13px sans-serif`;context.fillText(label,240,height/2+17);
-    const image=element(`img`);image.src=canvas.toDataURL();image.alt=`Screenshot placeholder: ${label}`;
-    Object.assign(image.style,{display:`block`,width:`100%`,maxWidth:`480px`,height:`auto`,borderRadius:`8px`});
+const githubGuideSnippet=(number,label)=>{
+    const image=element(`img`);image.src=`${window.__pfBasePath||``}/site/github-token-step-${number}.png`;image.alt=label;
+    Object.assign(image.style,{display:`block`,width:`100%`,maxWidth:`680px`,height:`auto`,borderRadius:`8px`,cursor:`zoom-in`});
+    image.onclick=()=>enlarge(image.src,label);
     return image;
 };
 export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
@@ -212,7 +206,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
         modal(`Save artwork choices for next time?`,``,{onClose:()=>{if(saving)return false;resolve();return true;}});
         const dialog=$(`#modal-host .modal-backdrop`);
         const body=$(`.modal-body`,dialog),status=element(`p`);status.setAttribute(`role`,`status`);
-        $(`.modal`,dialog).style.width=`580px`;
+        $(`.modal`,dialog).style.width=`760px`;
         Object.assign(body.style,{display:`flex`,flexDirection:`column`,gap:`18px`});
         status.style.margin=`0`;status.style.overflowWrap=`anywhere`;
         status.textContent=sourceWarning;
@@ -236,7 +230,8 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
                     }
 
                     const merged=await saveGithubData(location,token,changes,record.document);
-                    await rememberResult(merged);status.textContent=`data.json updated on GitHub.`;
+                    await rememberResult(merged);status.textContent=`Updated ${location.repo}/${location.path} on ${location.branch}.`;
+                    toast(status.textContent);
                     if(!remember.checked&&!remembered)
                         await disconnectGithub(location.repo);
 
@@ -248,20 +243,23 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``)=>{
             const location=githubDataLocation(url),[owner,repo]=location.repo.split(`/`);
             const connection=element(`section`);
             Object.assign(connection.style,{display:`none`,flexDirection:`column`,gap:`18px`});
-            const summary=element(`p`,`Connect ${location.repo} to save your data.json.`);summary.style.margin=`0`;
+            const summary=element(`p`,`Connect ${location.repo}.`);summary.style.margin=`0`;
             const guide=element(`a`,`Open GitHub token setup ↗`);guide.className=`button`;
             guide.href=`https://github.com/settings/personal-access-tokens/new?`+new URLSearchParams({name:`BulkProxyForge`,description:`Update data.json artwork choices`,target_name:owner,contents:`write`,expires_in:`90`});guide.target=`_blank`;guide.rel=`noopener noreferrer`;
             connection.append(summary,guide);
             const steps=element(`ol`);Object.assign(steps.style,{display:`flex`,flexDirection:`column`,gap:`20px`,paddingLeft:`24px`,margin:`0`});
+            const expiration=element(`small`,`Expiration: choose 90 days. Click an image to enlarge.`);connection.append(expiration);
             const instructions=[
-                [`Choose your repository`,`Resource owner: ${owner}. Choose an expiration, then Only select repositories → ${repo}.`,`Repository selection`,120],
-                [`Check the permission`,`Under Repository permissions, Contents should say Read and write.`,`Contents permission`,90],
-                [`Generate and copy`,`Click Generate token. Copy the token, then paste it below.`,`Generate token and copy button`,90]
+                [`Select ${repo}`,`Choose Only select repositories, search for your repository, and check its box.`],
+                [`Check ${location.repo} is listed`,`Verify that only your repository is selected.`],
+                [`Click Generate token`,`Generate the token at the bottom of the page.`],
+                [`Confirm Generate token`,`Confirm Contents: Read and write, then generate.`],
+                [`Copy the token, then paste it below`,`Copy your token using GitHub’s copy button.`]
             ];
-            for(const [title,text,snippet,height] of instructions) {
-                const step=element(`li`),heading=element(`strong`,title),detail=element(`p`,text);
-                heading.style.display=`block`;detail.style.margin=`6px 0 10px`;
-                step.append(heading,detail,githubGuideSnippet(snippet,height));steps.append(step);
+            for(const [index,[title,description]] of instructions.entries()) {
+                const step=element(`li`),heading=element(`strong`,title);
+                heading.style.display=`block`;heading.style.marginBottom=`10px`;
+                step.append(heading,githubGuideSnippet(index+1,description));steps.append(step);
             }
 
             connection.append(steps);
