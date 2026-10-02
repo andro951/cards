@@ -45,5 +45,10 @@ Navigation during that run remained functional, but Templates and returning
 to cards measured 14.85 and 17.43 seconds while an independent full sweep
 competed for CPU/RAM. These waits remain under investigation; stable memory
 does not establish that every foreground transition is fast. A stronger
-400-output rerun actually imports another deck during generation. The
-all-enabled sweep and that strengthened stress run are still in progress.
+400-output rerun actually imports another deck during generation. It saved all
+400 outputs with steady memory, then hit a local JavaScript-module fetch failure
+on reload. After local-server transport hardening, its saved workspace reopened
+and a direct API check confirmed all 400 renders and distinct keys. A fresh
+100-output import/generate/reload run passed. All 699 current pytest IDs have
+passing results across the full sweep and affected reruns; startup foreground
+latency remains an open investigation, separate from the repaired memory growth.

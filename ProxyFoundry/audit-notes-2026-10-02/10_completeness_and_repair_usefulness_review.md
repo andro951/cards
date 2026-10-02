@@ -15,8 +15,12 @@ The expanded 400-output run exposed real Python memory exhaustion after 36
 images. Controlled worker reads isolated WAL opens as the growth trigger.
 Rollback journaling repairs the browser case: 4,000-read regression and a
 complete 400-output save/reload pass with bounded memory. Original failure
-evidence is retained. The strengthened import-during-generation run and final
-all-enabled verification remain open.
+evidence is retained. The stronger run imports another deck and saves all 400
+outputs, then exposes a local module-fetch failure on reload. Transport hardening,
+persisted 400-output reopening and a fresh 100-output flow pass. All 699 current
+pytest IDs have passing results across the full sweep and affected reruns.
+Cold renderer startup still delays Templates despite a fast isolated API read;
+that foreground queue investigation keeps overall goal completion open.
 The earlier isolated startup timeout also has no established cause, despite
 24 successful profiling launches and subsequent successful static flows.
 

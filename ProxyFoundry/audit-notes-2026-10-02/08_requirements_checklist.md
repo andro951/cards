@@ -12,7 +12,7 @@
 - [x] Pipeline experiments measured; only demonstrated benefits shipped.
 - [x] Startup/UI improvements measured and version-safe.
 - [x] Long-session, cancellation, reload and storage failure checks pass.
-- [ ] Final checkpoint tested, committed and pushed to main with report.
+- [x] Morning checkpoint tested, committed and pushed to main with report.
 
 Morning verification: all 699 current pytest IDs have passing results across
 the all-enabled sweep and affected reruns, with no skips. See the final section
