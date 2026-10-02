@@ -8,10 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 522 | Every completed change |
-| Extended | 89 | Relevant changes or an explicit full sweep |
+| Routine | 528 | Every completed change |
+| Extended | 90 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 522 selected tests in 216.91 seconds. The
+The latest routine run passed all 528 selected tests in 239.30 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and
@@ -77,3 +77,5 @@ source coordinates. Run `tests/test_full_art_examples.py` with `PF_BROWSER=1`
 and `PF_LIVE_CC=1`; see [full-art verification](FULL_ART_VERIFICATION.md).
 
 Slow application operations now have [timing logs](TIMING_LOGS.md), separate from the per-test timing CSV.
+
+Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).

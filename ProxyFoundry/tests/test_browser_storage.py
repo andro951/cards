@@ -355,3 +355,61 @@ def request(app, method, url, body, headers):
     page.wait_for_function("localStorage.getItem(window.journalKey)==='{}'")
     assert not page.get_by_text('Delete me',exact=True).count()
     page.close()
+
+
+
+def test_native_png_save_benchmark_preserves_bytes_and_survives_reload(static_browser,tmp_path):
+    """Compare the previous re-encode path with validated native PNG persistence."""
+    import io,json
+    from PIL import Image
+    directory,context,origin=static_browser
+    review=ROOT/'test-results/supernatural-full-art/syr_gwyn_hero_of_ashvale_review.png'
+    if review.is_file():
+        with Image.open(review) as image:canvas=image.crop((2011,0,4021,2814))
+    else:canvas=Image.effect_noise((2010,2814),100).convert('RGBA')
+    raw=io.BytesIO();canvas.save(raw,'PNG',compress_level=1)
+    (directory/'benchmark.png').write_bytes(raw.getvalue())
+    worker=directory/'web/engine-worker.js'
+    injection="""
+original_request = request
+def request(app, method, url, body, headers):
+    if str(url).startswith('/api/__test__/save-benchmark/'):
+        from foundry.images import ingest_image
+        import time, hashlib
+        mode=str(url).rsplit('/',1)[1]
+        started=time.perf_counter()
+        target={'key':hashlib.sha256((mode+str(time.time())).encode()).hexdigest(),'name':'Benchmark '+mode}
+        if mode=='old':
+            asset=ingest_image(app.store,body)
+            result=app.store.render_put(target['key'],asset,face_name=target['name'])
+        else:result=app.ws.save_render(target,body,[2010,2814])
+        saved=app.store.asset_path(result['asset_id']).read_bytes()
+        response={'seconds':time.perf_counter()-started,'asset':result['asset_id'],'sameBytes':saved==body,'size':len(saved)}
+        return {'status':200,'mime':'application/json','body':json.dumps(response).encode(),'headers':{}}
+    return original_request(app,method,url,body,headers)
+"""
+    worker.write_text(worker.read_text(encoding='utf-8').replace('def browser_request(method, url, body, headers):',injection+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    results=page.evaluate("""async()=>{
+      const png=await (await fetch('/benchmark.png')).blob(),rows=[];
+      for(const mode of ['old','new','old','new']){
+        const started=performance.now();
+        const response=await fetch('/api/__test__/save-benchmark/'+mode,{method:'POST',headers:{'Content-Type':'image/png'},body:png});
+        const result=await response.json();if(!response.ok)throw new Error(JSON.stringify(result));
+        rows.push({mode,...result,totalSeconds:(performance.now()-started)/1000});
+      }
+      return rows;
+    }""")
+    assert all(row['sameBytes'] for row in results if row['mode']=='new')
+    assert all(not row['sameBytes'] for row in results if row['mode']=='old')
+    asset=results[-1]['asset']
+    page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    restored=page.evaluate("""async asset=>{
+      const raw=await (await fetch('/api/assets/'+asset)).arrayBuffer();
+      const digest=await crypto.subtle.digest('SHA-256',raw);
+      return [...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+    }""",asset)
+    import hashlib
+    assert restored==hashlib.sha256(raw.getvalue()).hexdigest()
+    evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+    (evidence/'render-save-benchmark.json').write_text(json.dumps({'bytes':len(raw.getvalue()),'source':'Syr Gwyn review render' if review.is_file() else 'high-detail texture','runs':results},indent=2),encoding='utf-8')

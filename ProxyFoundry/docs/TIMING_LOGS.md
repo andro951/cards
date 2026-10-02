@@ -12,6 +12,8 @@ Each entry identifies the stage, elapsed seconds and outcome, plus the available
 - `network.rate-wait`: Scryfall throttle delay.
 - `scryfall.resolve` / `scryfall.flavor`: metadata and flavor selection.
 - `deck.import`, `github.index`, `deck.prepare`, `card.prepare`, `art.resolve`, `card.compile`: import, folder listing, per-deck/per-card preparation, artwork acquisition and compiled frame/card data.
+- `image.decode`, `image.encode-png`: decoding and PNG conversion for ordinary image imports; native rendered PNGs bypass re-encoding.
+- `render.validate-png`, `render.persist`: native PNG verification/decode and complete engine-side persistence.
 - `storage.asset`, `storage.document`, `storage.render`, `storage.checkpoint`: asset and metadata writes, saved render registration, SQLite snapshot/persistence.
 - `api.request`: browser engine request processing, including slow export/ZIP operations. It excludes message queue time.
 - `runtime.prepare`, `runtime.start`: renderer dependency preparation and startup.

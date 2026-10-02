@@ -7,7 +7,7 @@ from PIL import Image
 from .domain import *
 from .storage import Store,display_name
 from .network import Network
-from .images import ingest_image,data_uri,decode_image,rarity_variants
+from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_variants
 from .sources import Sources
 from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds,build_token_data,configure_token_style,token_has_short_text
 from .legacy import ingest,compiler as native,tokens
@@ -889,12 +889,12 @@ class Workspace:
                         return {'key':key,'name':f.get('name') or c.get('name') or 'Card','deckName':d.get('name') or 'Deck','deckId':d.get('id'),'cardName':c.get('name') or 'Card','cardId':c.get('id'),'faceId':f.get('id'),'data':comp.get('data') or {}}
         return {'key':key,'name':'Card','deckName':'Deck','data':{}}
 
+    @timed('render.persist')
     def save_render(self,target,raw,expected_size):
         if isinstance(target,str):target=self._render_target_from_key(target)
         if target.get('deckId') and not self.store.get('decks',target['deckId']):
             raise ValidationError('This deck was deleted. Its images cannot be saved.')
-        asset=ingest_image(self.store,raw)
-        if [asset['width'],asset['height']]!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
+        asset=ingest_render_png(self.store,raw,expected_size)
         return self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
     def export_cc(self,deck_ids):
         entries=[];used_keys=set()

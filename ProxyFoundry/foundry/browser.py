@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from .timing import timed
 import json
+import hashlib
 import mimetypes
 import re
 import sqlite3
@@ -41,6 +42,7 @@ class BrowserStore(Store):
     """Persist a complete SQLite snapshot after each mutation, never after reads."""
     def __init__(self,home,persist=lambda path:None):
         self.persist=persist
+        self._checkpoint_digest=None
         super().__init__(home)
 
     @contextmanager
@@ -53,11 +55,18 @@ class BrowserStore(Store):
 
     @timed('storage.checkpoint')
     def checkpoint(self):
+        hasher=hashlib.sha256(self.db_path.read_bytes())
+        #Committed changes can still be in SQLite's WAL while a connection is open.
+        wal=Path(str(self.db_path)+'-wal')
+        if wal.is_file():hasher.update(wal.read_bytes())
+        digest=hasher.digest()
+        if digest==self._checkpoint_digest:return
         snapshot=self.home/'.checkpoint.sqlite3'
         try:
             with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
                 source.backup(destination)
             self.persist(str(snapshot))
+            self._checkpoint_digest=digest
         finally:snapshot.unlink(missing_ok=True)
 
 
