@@ -27,3 +27,5 @@ Slow network, preparation, storage and rendering operations are recorded in diag
 Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).
 
 New timing records and the diagnostics summary identify browser versus selected-folder storage.
+
+The real Windows selected-folder save benchmark passed using the user's Documents folder: old full requests averaged 8.187 sec, optimized requests 5.881 sec (28.2% faster). Exact PNG bytes, physical files and reload recovery were verified. See the save verification report for evidence and reproduction.
