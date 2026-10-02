@@ -214,3 +214,55 @@ def test_native_nickname_and_flavor_outlines_use_round_joins(tmp_path):
                 picture.save(output/(entry['name'].replace(' ','_')+'_round_outlines.png'))
             assert not errors,errors
         finally:browser.close();server.shutdown();server.server_close();app.close()
+
+
+@pytest.mark.parametrize('layout,group',[('transform','transform-front'),('modal_dfc','modal-back')])
+def test_two_sided_godzilla_selection_saves_without_rendering(browser_app,layout,group):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Two-sided frames','source':'1 A Test Creature'})
+    front={**sf(),'name':'Front Creature'}
+    back={'name':'Back Land','type_line':'Land','oracle_text':'{T}: Add {G}.','colors':[],'mana_cost':''}
+    deck['cards'][0]['scryfall'].update(name='Front Creature // Back Land',layout=layout,card_faces=[front,back])
+    deck['cards'][0]['faces']=[{'id':'front-face','index':0,'name':front['name']},{'id':'back-face','index':1,'name':back['name']}]
+    app.ws.store.put('decks',deck,deck['revision'])
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.locator('[data-frame-group='+group+']').click()
+    expect(page.get_by_role('button',name='Select Godzilla full art',exact=True)).to_be_enabled()
+    expect(page.locator('#modal-host')).to_contain_text('without the usual two-sided icons')
+    page.get_by_role('button',name='Select Godzilla full art',exact=True).click()
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    assert app.ws.deck(deck['id'])['settings']['templateRules'][group]=='godzilla-card'
+    assert not app.jobs.jobs
+    assert not errors,errors
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer two-sided rendering')
+def test_native_godzilla_two_sided_creature_and_land(tmp_path):
+    store=Store(tmp_path/'two-sided');app=App(store,Network(store));server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id']
+    deck=app.ws.new_deck('Godzilla two-sided')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'front_creature':art,'back_land':art}},'artist':'Fixture Artist',
+        'templateRules':{'modal-front':'godzilla-card','modal-back':'godzilla-card'}})
+    front={**sf(),'name':'Front Creature','flavor_name':'Creature Nickname'}
+    back={'name':'Back Land','type_line':'Land','oracle_text':'{T}: Add {G}.','colors':[],'mana_cost':''}
+    source={**front,'name':'Front Creature // Back Land','layout':'modal_dfc','card_faces':[front,back]}
+    for key in ('id','oracle_id','flavor_name'):
+        source.pop(key,None)
+    card={'id':'two-sided-card','name':source['name'],'quantity':1,'scryfall':source,
+        'faces':[{'id':'front','name':front['name'],'index':0},{'id':'back','name':back['name'],'index':1}]}
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':[card]},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id'])
+            assert current['status']=='ready',page.locator('#activity-log').text_content()
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            for face in current['cards'][0]['faces']:
+                compiled=face['compiled'];assert compiled['data']['version']=='m15Nickname'
+                render=store.render_get(compiled['renderKey']);assert render
+                picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
+                picture.save(output/('godzilla-dfc-'+face['id']+'.png'))
+        finally:browser.close();server.shutdown();server.server_close();app.close()

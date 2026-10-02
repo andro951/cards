@@ -24,9 +24,10 @@ BUILTINS.extend([
  {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
  {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
  {'id':'token-borderless','name':'Modern borderless token','description':'Edge-to-edge artwork with outlined rules text and the modern token bars.','legendary':True,'groups':['token']},
- {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token']},
+ {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token','transform-front','transform-back','modal-front','modal-back']},
  {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
 ])
+GODZILLA_DFC_GROUPS={'transform-front','transform-back','modal-front','modal-back'}
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
 APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
@@ -1938,6 +1939,26 @@ def _nickname_text(data,sem,group,force=False):
     return True
 
 
+def build_godzilla_dfc_data(sem,artist,autofit):
+    """Use ordinary portrait geometry for an explicitly selected DFC frame.
+
+    Each face keeps its own text and stats; the Godzilla body replaces the
+    special DFC shell, so opposite-face bars and transform icons are omitted.
+    """
+    seed=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        seed.pop(key,None)
+    creature='Creature' in seed.get('types',[])
+    seed['layout']=('creature_legendary' if seed.get('legendary') else 'creature') if creature else ('card_legendary' if seed.get('legendary') else 'card_noncreature')
+    if 'Land' in seed.get('types',[]) or not seed.get('colors'):
+        seed['frame_color']='M'
+    try:
+        data=native.build_one(seed,{'artist':artist},autofit)['data']
+    except native.BuildError as error:
+        raise ValidationError(str(error)) from error
+    return seed,data,'godzilla_dfc'
+
+
 def _apply_godzilla_frame(data,sem,refit=False):
     """Build the Godzilla frame without the optional real-name addon.
 
@@ -2123,7 +2144,7 @@ class Compiler:
     def template_identity(self,group,choice):
         if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0);return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
         # Custom template data is already embedded in compiled CardConjurer data,
@@ -2162,17 +2183,20 @@ class Compiler:
                 raise ValidationError('This template does not support '+group+'.')
             if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card','token-classic','token-full-art','token-borderless'}:
                 raise ValidationError('Choose automatic or a custom template for '+group+'.')
-            if choice=='godzilla-card' and group!='token' and 'Land' in sem.get('types',[]):
+            if choice=='godzilla-card' and group!='token' and group not in GODZILLA_DFC_GROUPS and 'Land' in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla land template for lands.')
             if choice=='godzilla-land' and 'Land' not in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla non-land template for this card.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
-            if group in {'modal-front','modal-back'}:
+            if group in {'modal-front','modal-back'} and not choice.startswith('godzilla-'):
                 pair=tuple(x.get('name') for x in sf.get('card_faces',[]))
                 if pair not in APPROVED_MODAL_DFC_PAIRS:
                     approved='; '.join(' / '.join(x) for x in sorted(APPROVED_MODAL_DFC_PAIRS))
                     raise ValidationError('This modal DFC needs a compatible custom template. Approved built-in pairs: '+approved+'.')
-            if group in {'transform-front','transform-back'}:
+            if group in GODZILLA_DFC_GROUPS and choice.startswith('godzilla-'):
+                d0,data,recipe=build_godzilla_dfc_data(sem,artist,not settings.get('disableAutofit',False))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group in {'transform-front','transform-back'}:
                 d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='battle':
@@ -2290,7 +2314,7 @@ class Compiler:
             if not settings.get('disableAutofit',False):cover_art_window(data,art)
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
-        if nickname_applied and group in ORDINARY_GROUPS:
+        if nickname_applied and (group in ORDINARY_GROUPS or choice.startswith('godzilla-')):
             reserve_nickname_mana_space(data,sem)
         if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.

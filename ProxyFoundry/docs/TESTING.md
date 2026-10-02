@@ -8,8 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 632 | Every completed change |
-| Extended | 145 | Relevant changes or an explicit full sweep |
+| Routine | 640 | Every completed change |
+| Extended | 148 | Relevant changes or an explicit full sweep |
+
+Explicit Godzilla two-sided frame checks cover transform, modal DFC, double-faced token, and reversible faces; independent creature/land text and stats; optional nickname overlays; full-card fitting; static picker selection and autosaving; and a real two-face CardConjurer render inspected visually. Automatic keeps its existing structural frame rules.
 
 Art & Setup layout checks cover desktop and mobile section order and widths, adjacent Other Options, collapsed Format help, artist autosaving, reachable expanded token controls above the sticky footer, and no image generation while configuring the deck. Desktop and mobile screenshots are visually inspected.
 

@@ -1081,3 +1081,39 @@ def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
         assert data['text']['rules']['outlineColor']=='black'
         assert data['text']['pt']['text']==''
         assert data['infoArtist'] and data['infoNote']==CARD_FOOTER_NOTE
+
+
+@pytest.mark.parametrize('layout',['transform','modal_dfc','double_faced_token','reversible_card'])
+@pytest.mark.parametrize('nickname',[False,True])
+def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nickname):
+    store,art,settings=workspace
+    front={**sf('Legendary Creature — Human',['G']),'name':'Front Creature'}
+    back={'name':'Back Land','type_line':'Land','mana_cost':'','colors':[],'oracle_text':'{T}: Add {G}.','artist':'Other Artist'}
+    card={**front,'name':'Front Creature // Back Land','layout':layout,'card_faces':[front,back]}
+    for index,face in enumerate(card['card_faces']):
+        group=('modal-' if layout=='modal_dfc' else 'transform-')+('back' if index else 'front')
+        selected={**settings,'templateRules':{group:'godzilla-card'}}
+        options={'semanticOverrides':{'nickname':'Custom '+face['name']}} if nickname else {}
+        result=Compiler(store).compile_face(card,face,index,options,selected,art)
+        data=result['data']
+        assert result['group']==group
+        assert data['version']=='m15Nickname'
+        assert data['artBounds']==FULL_ART_NONLAND_BOUNDS
+        assert data['text']['rules']['text'].find('Vigilance' if index==0 else 'Add {G}')>=0
+        assert data['text']['title']['text']==face['name']
+        assert not any('/transform/' in frame.get('src','') or '/modal/' in frame.get('src','') for frame in data['frames'])
+        assert all(frame.get('masks')==[] for frame in data['frames'])
+        if index==0:
+            assert data['text']['pt']['text']=='2/3'
+        else:
+            assert data['text']['pt']['text']==''
+        if nickname:
+            assert data['text']['nickname']['text']=='Custom '+face['name']
+            assert data['frames'][0]['name']=='Nickname Title'
+        else:
+            assert 'nickname' not in data['text']
+        assert any('m15NicknameFrame' in frame.get('src','') for frame in data['frames'])
+    # The new override must not broaden Automatic's deliberately supported modal pairs.
+    if layout=='modal_dfc':
+        with pytest.raises(ValidationError,match='Approved built-in pairs'):
+            Compiler(store).compile_face(card,front,0,{},settings,art)

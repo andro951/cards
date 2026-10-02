@@ -1,11 +1,13 @@
 import {$,modal,closeModal,state,asset} from './ui.js';
 
+const twoSidedGroups=['transform-front','transform-back','modal-front','modal-back'];
+
 export function frameChoices(group,legendary=false){
   const ordinary=['standard','legendary','land','legendary-land','basic-land'].includes(group);
   return state.templates.filter(template=>
     (template.id==='auto'||(template.groups==='ordinary'?ordinary:Array.isArray(template.groups)&&template.groups.includes(group)))
     &&(!legendary||template.legendary)
-  );
+  ).map(template=>template.id==='godzilla-card'&&twoSidedGroups.includes(group)?{...template,name:'Godzilla full art'}:template);
 }
 
 export function framePlaceholder(settings){
@@ -20,6 +22,11 @@ export function openFramePicker(deck,group,settings,cardData,selected,onSelect){
   gallery.style.display='flex';
   gallery.style.flexWrap='wrap';
   gallery.style.gap='16px';
+  if(twoSidedGroups.includes(group)){
+    const note=document.createElement('p');
+    note.textContent='Godzilla uses a full-art frame for each face without the usual two-sided icons or opposite-face bar.';
+    body.append(note);
+  }
   body.append(gallery);
 
   for(const choice of choices){
