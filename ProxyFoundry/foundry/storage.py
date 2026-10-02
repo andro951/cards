@@ -193,6 +193,7 @@ def display_name(text: str, fallback='item') -> str:
 
 class Store:
     def __init__(self, home: Path | None = None):
+        self.storage_type='local-folder'
         self.home = Path(home or default_home()).resolve()
         self.home.mkdir(parents=True, exist_ok=True)
         for name in ('assets', 'renders', 'runtime', 'orders', 'logs', 'backups', 'tmp'):

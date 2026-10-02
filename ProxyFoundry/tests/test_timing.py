@@ -51,3 +51,18 @@ def test_logger_failure_does_not_break_work(monkeypatch):
         def info(self,*args):raise OSError('log full')
     monkeypatch.setattr(timing,'THRESHOLD_SECONDS',0)
     with timing.timing(SimpleNamespace(timing_logger=Broken()),'operation'):pass
+
+
+@pytest.mark.parametrize('storage_type',['browser','selected-folder','local-folder'])
+def test_timings_and_diagnostics_identify_storage_type(tmp_path,monkeypatch,storage_type):
+    from foundry.browser import create_app,request
+    app=create_app(tmp_path,lambda url:(b'{}','application/json',{}),'http://127.0.0.1',storage_type=storage_type)
+    stream=capture(app.store);monkeypatch.setattr(timing,'THRESHOLD_SECONDS',0)
+    with timing.timing(app.store,'test.operation'):pass
+    assert rows(stream)[-1]['storageType']==storage_type
+    assert app.diagnostic_data()['workspace']['storageType']==storage_type
+    response=request(app,'GET','/api/bootstrap')
+    assert json.loads(response['body'])['storageType']==storage_type
+    request(app,'POST','/api/render-diagnostic',json.dumps({'stage':'timing','diagnostic':{'stage':'native.first-draw','seconds':1,'storageType':'incorrect'}}).encode())
+    log=(app.store.home/'logs/app.log').read_text(encoding='utf-8')
+    assert '"storageType":"'+storage_type+'"' in log

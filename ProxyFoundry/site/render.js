@@ -5,7 +5,7 @@ let activeFrame=null;
 function logTiming(stage,started,outcome,detail={}){
   const seconds=(performance.now()-started)/1000;
   if(seconds<.1)return;
-  const diagnostic={stage,seconds:Number(seconds.toFixed(4)),outcome,...detail};
+  const diagnostic={stage,seconds:Number(seconds.toFixed(4)),outcome,...detail,storageType:state.bootstrap.storageType||'unknown'};
   recordDiagnostic('timing',JSON.stringify(diagnostic));
   api('/api/render-diagnostic',{stage:'timing',diagnostic}).catch(error=>recordDiagnostic('timing log error',error.message));
 }

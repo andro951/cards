@@ -12,7 +12,8 @@ def record_timing(store,stage,started,outcome='ok',**details):
     seconds=time.perf_counter()-started
     logger=getattr(store,'timing_logger',None)
     if seconds<THRESHOLD_SECONDS or logger is None:return
-    payload={'at':time.time(),'stage':stage,'seconds':round(seconds,4),'outcome':outcome,**details}
+    payload={'at':time.time(),'stage':stage,'seconds':round(seconds,4),'outcome':outcome,**details,
+             'storageType':getattr(store,'storage_type','unknown')}
     #Diagnostic logging must not turn successful work into an application error.
     try:logger.info('TIMING %s',json.dumps(payload,ensure_ascii=False,default=str))
     except Exception:pass

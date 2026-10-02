@@ -4,7 +4,7 @@ Updated 2026-10-01. This replaces the obsolete early integration checkpoint.
 
 The final product is a static website with the engine running in the browser. The local preview launcher serves static files for development and local use; there is no hosted application server.
 
-- Routine pytest gate: 528 passed, 0 failed, 0 skipped in the selected group (239.30 seconds).
+- Routine pytest gate: 531 passed, 0 failed, 0 skipped in the selected group (190.33 seconds).
 - JavaScript syntax and six Node adapter/helper checks passed.
 - Actual static Chromium workflow and template validation checks passed.
 - Ten browser storage checks passed, including selected-folder reconnection, tab ownership, binary ZIP persistence, interrupted generation, quota recovery, file rename/log rotation, cached file metadata invalidation, immediate deck deletion/order guards/reload recovery, and failed-rename source/destination preservation and retry.
@@ -16,3 +16,5 @@ The final product is a static website with the engine running in the browser. Th
 Timing instrumentation: 522 routine tests passed (216.91 seconds), with an affected static-browser render/export check verifying TIMING records in diagnostics. See [timing logs](TIMING_LOGS.md).
 
 Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).
+
+Timing storage labels: 531 routine tests and two real Chromium startup-path checks passed. The selected-folder permission fixture uses a simulated folder handle; it is not a disk-folder performance benchmark.

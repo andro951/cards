@@ -2,6 +2,8 @@
 
 Operations taking at least 0.1 seconds write a `TIMING` JSON entry to the rotating workspace `logs/app.log`, included in Settings → Download Diagnostics. Browser render totals also appear in the browser diagnostics JSON. Use a newly loaded website to capture a new run; older sessions do not have this instrumentation.
 
+Each new entry includes `storageType`: `browser` for browser-managed storage, `selected-folder` for a user-selected computer folder, or `local-folder` for the old local application. The diagnostics summary also includes `workspace.storageType`; earlier log entries are not backfilled.
+
 Each entry identifies the stage, elapsed seconds and outcome, plus the available card name, URL, render key, asset byte count or cache status. Failures retain their original behavior. Logging failures do not fail the operation. The 0.1-second threshold suppresses fast operations; an absent entry does not mean the operation was skipped.
 
 ## Stages

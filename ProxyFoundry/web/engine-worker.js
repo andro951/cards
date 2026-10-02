@@ -76,7 +76,7 @@ def transport(url):
     return buffer_bytes(result.bytes), str(result.mime), {}
 app = create_app('/workspace', transport, str(location.origin),
     lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
-    lambda ident:bool(jobCancelled(ident)), checkpointMetadata)
+    lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}')
 def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))

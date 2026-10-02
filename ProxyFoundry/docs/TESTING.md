@@ -8,10 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 528 | Every completed change |
+| Routine | 531 | Every completed change |
 | Extended | 90 | Relevant changes or an explicit full sweep |
 
-The latest routine run passed all 528 selected tests in 239.30 seconds. The
+The latest routine run passed all 531 selected tests in 190.33 seconds. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and

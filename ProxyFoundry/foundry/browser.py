@@ -240,7 +240,7 @@ class BrowserHandler(server.Handler):
                 db.execute("INSERT OR IGNORE INTO meta VALUES ('workspace_id',?)",(uid(),))
                 workspace_id=db.execute("SELECT value FROM meta WHERE key='workspace_id'").fetchone()[0]
             self.respond({'version':'2.0.0','browser':True,'pipelineVersion':server.PIPELINE_VERSION,
-                          'workspaceId':workspace_id,
+                          'workspaceId':workspace_id,'storageType':self.app.store.storage_type,
                           'csrf':self.app.csrf,'runtimeOrigin':self.app.runtime_origin,
                           'groups':server.GROUP_LABELS,'settings':self.app.ws.global_settings(),
                           'stats':self.app.store.stats(),'backs':self.app.ws.backs.catalog()})
@@ -248,8 +248,9 @@ class BrowserHandler(server.Handler):
         return super().get(path, query)
 
 
-def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None):
+def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser'):
     store = BrowserStore(Path(home),persist)
+    store.storage_type=storage_type
     app = server.App(store, Network(store, transport=transport),
                      jobs_factory=lambda store:BrowserJobs(store,publish,cancelled))
     app.origin = origin

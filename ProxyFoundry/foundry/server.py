@@ -250,7 +250,7 @@ class App:
 
     def diagnostic_data(self):
         return {'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
-                'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}
+                'workspace': {**{k: v for k, v in self.store.stats().items() if k != 'home'},'storageType':self.store.storage_type}}
 
     def diagnostic_zip(self):
         b = io.BytesIO()
@@ -432,6 +432,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
             return self.respond({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+                                 'storageType':self.app.store.storage_type,
                                  'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
@@ -622,6 +623,7 @@ class Handler(BaseHTTPRequestHandler):
             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
         if p == '/api/render-diagnostic':
             diag=d.get('diagnostic') if isinstance(d.get('diagnostic'),dict) else {}
+            if d.get('stage')=='timing':diag={**diag,'storageType':self.app.store.storage_type}
             payload={'key':str(d.get('key') or '')[:64],'stage':str(d.get('stage') or '')[:80],'diagnostic':diag}
             label='TIMING' if payload['stage']=='timing' else 'RUNTIME_SYMBOL'
             self.app.log.info('%s %s',label,json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])

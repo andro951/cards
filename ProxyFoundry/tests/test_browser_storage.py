@@ -44,6 +44,7 @@ def test_folder_permission_requires_reconnection_without_workspace_fallback(stat
     assert not page.locator('#import-deck').is_visible()
     page.get_by_role('button',name='Reconnect workspace folder').click()
     page.locator('#import-deck').wait_for(timeout=90000)
+    assert page.evaluate("async()=>(await (await fetch('/api/bootstrap')).json()).storageType")== 'selected-folder'
     page.evaluate("async()=>{const ui=await import('/site/ui.js');await ui.api('/api/decks/new',{name:'Folder deck'});localStorage.setItem('folder-permission','prompt');}")
     page.reload(wait_until='domcontentloaded')
     page.get_by_role('button',name='Reconnect workspace folder').wait_for(timeout=15000)
@@ -56,6 +57,7 @@ def test_second_tab_cannot_write_and_can_open_after_first_closes(static_browser)
     directory,context,origin=static_browser
     first=context.new_page();first.goto(origin,wait_until='domcontentloaded')
     first.locator('#import-deck').wait_for(timeout=90000)
+    assert first.evaluate("async()=>(await (await fetch('/api/bootstrap')).json()).storageType")== 'browser'
     first.evaluate("async()=>{const ui=await import('/site/ui.js');await ui.api('/api/decks/new',{name:'Saved once'});}")
     second=context.new_page();second.goto(origin,wait_until='domcontentloaded')
     second.get_by_role('button',name='Retry opening workspace').wait_for(timeout=15000)
