@@ -26,7 +26,9 @@ export function setupHelper(){
   $('#recheck-helper').onclick=()=>{window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);setTimeout(()=>toast(state.helper?'Print helper is connected.':'Not connected yet. Load the extension, then reload this page.',!state.helper),700);};
 }
 export async function showOrders(deckId=null){
+  const epoch=state.routeEpoch;
   const all=await api('/api/orders');
+  if(epoch!==state.routeEpoch)return;
   const orders=deckId?all.filter(order=>order.decks.some(deck=>deck.id===deckId)):all;
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">BUILT FOR THE TABLETOP</span><h1>Print orders</h1><p>Combine any number of decks. Each physical card gets an explicit front/back pair.</p></div><button class="button primary" id="new-order">＋ Create print order</button></div><section class="hero-strip"><div><h2>One order. Every back in the right place.</h2><p>Order packages are saved snapshots. Editing a deck later won’t change a ZIP you already built. The printer opens in a new tab when you’re ready.</p></div><div class="order-icon" aria-hidden="true">▱</div></section>${orders.length?`<section class="panel order-list">${orders.map(o=>`<div class="order-row"><div class="order-title"><h3>${o.count} cards · ${o.decks.length} deck${o.decks.length===1?'':'s'}</h3><p>${o.decks.map(d=>esc(d.name)).join(' · ')}</p><small>${date(o.createdAt)} · ${bytes(o.zipBytes)} · paired filenames</small></div><div class="actions"><a class="button small" href="${esc(o.download)}" download>Download ZIP</a><button class="button primary small" data-open-order="${o.id}">Open in TCGPlaytest ↗</button><button class="button quiet small" data-review-order="${o.id}">Review</button></div></div>`).join('')}</section>`:empty('Your first print order is a few clicks away','Generate your deck images, select the decks you want, and check the paired preview before you package them.',`<button class="button primary" id="empty-order">Choose decks</button>`)}`;
   if(state.bootstrap?.browser){
@@ -66,7 +68,7 @@ export async function chooseOrder(preselected=[]){
   const host=modal('Choose decks for this order',`<p class="muted">Select one deck or combine several. Quantities are preserved; double-faced cards use their actual reverse.</p>${decks.length?`<div class="order-decks">${decks.map(d=>`<label class="order-deck-row"><input type="checkbox" data-order-deck="${d.id}" ${selected.has(d.id)?'checked':''}><div class="order-deck-info"><b>${esc(d.name)}</b><small>${d.summary.cards} cards · ${d.summary.rendered}/${d.summary.faces} faces rendered</small></div>${badge(d.status)}</label>`).join('')}</div>`:empty('No decks yet','Import a deck and generate its images before creating a print order.')}<div id="order-selection-message" class="notice info"></div>`,{size:'large',footer:`<span class="footer-hint" id="order-count"></span>${state.bootstrap?.browser?'':'<button class="button" id="order-generate">Generate selected images</button>'}<button class="button primary" id="order-plan">Review</button>`});
   function update(){
     const chosen=decks.filter(d=>selected.has(d.id)),count=chosen.reduce((n,d)=>n+d.summary.cards,0),needs=chosen.filter(d=>d.status!=='ready');
-    $('#order-count').textContent=`${chosen.length} decks · ${count} physical cards`;$('#order-plan').disabled=!chosen.length||!!needs.length;if($('#order-generate'))$('#order-generate').disabled=!chosen.length||state.busy;
+    $('#order-count').textContent=`${chosen.length} decks · ${count} physical cards`;$('#order-plan').disabled=!chosen.length||!!needs.length;if($('#order-generate'))$('#order-generate').disabled=!chosen.length;
     $('#order-selection-message').textContent=needs.length?`${needs.length} selected deck${needs.length===1?' needs':'s need'} images. Open the deck and generate images first.`:chosen.length?'Review both sides and resolve any crop warnings before printing.':'Choose the decks you’d like to print.';
   }
   $$('[data-order-deck]',host).forEach(el=>el.onchange=()=>{el.checked?selected.add(el.dataset.orderDeck):selected.delete(el.dataset.orderDeck);update();});update();
@@ -94,7 +96,6 @@ function reviewPlan(plan,ids,saved=false){
   if($('#ack-order-warnings'))$('#ack-order-warnings').onchange=enableBuild;enableBuild();
   $('#build-order').onclick=async()=>{
     try{
-      if(state.busy)throw new Error('Wait for the current task before building an order.');
       const acknowledge=!!$('#ack-order-warnings')?.checked;
       if(plan.warnings?.length&&!acknowledge)throw new Error('Review and acknowledge the warnings first.');
       const payload={deckIds:[...ids],acknowledge};

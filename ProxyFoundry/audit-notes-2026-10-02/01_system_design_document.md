@@ -52,13 +52,18 @@ The legacy local application drains the same generator synchronously.
 
 Other job families remain synchronous until their own safe boundaries are
 converted. A slow network request or single card preparation still blocks the
-engine within that chunk. Removing global UI busy guards must therefore be
-paired with scoped job/resource ownership and stale-result checks.
+engine within that chunk. Scoped job/resource ownership now permits independent
+deck work. Remaining synchronous job families still need safe chunk boundaries.
 
 ## User-visible progress
 
-The shared activity panel currently represents one operation. Concurrent jobs
-can replace its title/cancel handler. state.busy is a boolean used across render,
-imports, GitHub setup, order generation and deletion; nested jobs save/restore
-it. These are coordination weaknesses to fix before enabling concurrent UI work.
-Route changes must never apply an old async response to the newly selected page.
+WorkCoordinator owns active tasks, per-deck leases, exclusive workspace changes
+and the single native-render queue. Foreground progress temporarily replaces
+background progress, with a cancel button belonging to that task. Finishing it
+restores background progress. Queued generations have separate cancel buttons.
+state.busy derives from all active/queued work for unload protection.
+
+Deck/settings/templates/orders views reject stale route responses. Generation
+refreshes only its own visible cards view; completion preserves unsaved setup
+and existing dialogs. Whole-workspace restore/location changes are exclusive,
+and location cancellation releases their lease before another change begins.

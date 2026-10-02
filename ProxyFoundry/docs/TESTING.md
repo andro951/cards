@@ -8,12 +8,14 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 546 | Every completed change |
-| Extended | 96 | Relevant changes or an explicit full sweep |
+| Routine | 550 | Every completed change |
+| Extended | 99 | Relevant changes or an explicit full sweep |
 
-The overnight scheduling milestone passed 542 routine tests in 197.75 seconds,
-then all 12 focused scheduling/preparation tests, covering four further routine
-tests added during that run. All 546 current routine cases have passed. The
+The overnight task-ownership milestone passed all 550 routine tests in 199.68
+seconds, including scoped leases, native queue priority, cancellation and failure
+cleanup. Affected static browser checks cover importing/editing during generation,
+queued cancellation, wrong-task cancellation prevention, workspace picker
+exclusion and cancellation release, unrelated deletion and stale route responses. The
 extended group contains browser UI, printer-extension fixtures, real CardConjurer
 rendering, live dependency checks, a 100-image browser-session stress check, and
 the 2.3 GiB archive transfer. The 100-image test is intentionally expensive and

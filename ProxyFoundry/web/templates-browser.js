@@ -18,7 +18,9 @@ function chooseFile(accept){
 }
 
 export async function showTemplates(){
+  const epoch=state.routeEpoch;
   const templates=await api('/api/templates');
+  if(epoch!==state.routeEpoch)return;
   const main=$('#main');main.replaceChildren();
   const heading=element('div','','page-head');heading.append(element('h1','Templates'));
   const actions=element('div','','actions');

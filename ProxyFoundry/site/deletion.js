@@ -1,4 +1,4 @@
-import {$,state,api,toast,modal,closeModal,nav,confirmAction} from './ui.js';
+import {$,state,api,toast,modal,closeModal,nav,confirmAction,requireDeckAvailable} from './ui.js';
 
 let key=null;
 let pending={};
@@ -49,7 +49,7 @@ export function resumeDeletions(){
   for(const id of Object.keys(pending)){void finish(id);}
 }
 export async function deleteDeck(deck){
-  if(state.busy)throw new Error('Wait for image generation to finish before deleting this deck.');
+  requireDeckAvailable(deck.id);
   const button=$('#trash-deck');
   if(button){button.disabled=true;button.textContent='Checking print orders…';}
   let orders;

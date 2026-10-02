@@ -1,7 +1,9 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav,work} from './ui.js';
 import {pickFile} from './setup.js';
 export async function showSettings(){
+  const epoch=state.routeEpoch;
   const [settings,stats,trash]=await Promise.all([api('/api/settings'),api('/api/stats'),api('/api/trash')]);
+  if(epoch!==state.routeEpoch)return;
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">YOUR WORKSPACE, YOUR RULES</span><h1>Settings & backup</h1><p>Control data freshness, reusable artwork and where your work is saved.</p></div></div><div class="stat-grid"><div class="stat-card"><b>${stats.renders}</b><span>cached renders</span></div><div class="stat-card"><b>${stats.cacheEntries}</b><span>cached requests</span></div><div class="stat-card"><b>${bytes(stats.renderBytes||0)}</b><span>generated image storage</span></div><div class="stat-card"><b>${bytes(stats.assetBytes)}</b><span>local artwork & cache assets</span></div></div>
   <div class="two-col section-gap"><section class="panel"><div class="panel-head"><div><h2>Data & artwork defaults</h2><p>These defaults apply to new imports. Each deck can also have its own refresh setting.</p></div></div><label class="check-line"><input type="checkbox" id="global-refresh" ${settings.refreshData?'checked':''}><span>Fetch new Scryfall data<small>Off: reuse data for one year. On: refresh only when the cache is at least one week old. This does not refetch every request.</small></span></label><label class="check-line"><input type="checkbox" id="permanent-delete" ${settings.deletePermanently?'checked':''}><span>Permanently delete decks instead of moving them to Trash<small>Saved immediately. When enabled, deleting a deck skips Trash and cannot be undone. Shared artwork and render caches are retained.</small></span></label><div class="notice info">Existing template geometry is never updated from Scryfall. This setting affects card metadata and artwork downloads, not your approved frame recipes.</div></section>
   <section class="panel"><div class="panel-head"><div><h2>Safe, portable backups</h2><p>Include decks, uploaded art, symbols, templates, and completed renders. No browser credentials or CardConjurer/font cache.</p></div></div><div class="well"><span class="eyebrow">SAVED OUTSIDE THE APP FOLDER</span><p><code>${esc(stats.home)}</code></p><small class="muted">Replacing or deleting an extracted app folder does not remove your saved workspace. Keep a backup before moving computers.</small></div><div class="actions section-gap"><button class="button primary" id="export-backup">Export workspace backup</button><button class="button" id="import-backup">Restore a backup</button><button class="button danger" id="delete-all-images">Delete All Images</button></div><p class="subtitle-line">Restoring adds copies; it never overwrites existing decks. Uploaded backups must be under 2 GB.</p></section></div>
@@ -30,8 +32,11 @@ export async function showSettings(){
   $('#import-backup').onclick=()=>attempt(async()=>{
     const file=await pickFile('.zip');if(!file)return;if(file.size>2*1024**3)throw new Error('Choose a backup under 2 GB.');
     if(!await confirmAction('Restore this workspace backup?',`Restore ${file.name} as new deck/template copies? Your current decks and settings will not be overwritten.`,'Restore copies'))return;
-    const r=await fetch('/api/backups/import',{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':'application/zip'},body:file});const d=await r.json();if(!r.ok)throw new Error(d.error||'Backup upload failed.');
-    await waitExistingJob(d.id);await showSettings();toast('Backup restored as new copies. Find the decks in your library.');
+    const task=work.begin({label:'Restore backup',resources:['workspace']});const epoch=state.routeEpoch;
+    try{
+      const r=await fetch('/api/backups/import',{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':'application/zip'},body:file});const d=await r.json();if(!r.ok)throw new Error(d.error||'Backup upload failed.');
+      await waitExistingJob(d.id,task);if(epoch===state.routeEpoch)await showSettings();toast('Backup restored as new copies. Find the decks in your library.');
+    }finally{work.finish(task);}
   });
   $('#delete-all-images').onclick=()=>attempt(async()=>{
     if(!await confirmAction('Delete all generated images?','This removes every generated card image from every deck. Decks, source artwork, symbols, backs, and settings are kept. Images can be generated again later.','Delete all images',true))return;
@@ -47,10 +52,14 @@ function inspectTrashDeck(d){
   const cards=d.cards||[],physical=cards.reduce((n,c)=>n+(Number(c.quantity)||1),0);
   modal('Deleted deck · '+d.name,`<div class="well"><b>${physical} physical cards · ${cards.length} card entries</b>${d.notes?`<p class="muted" style="margin-top:8px">${esc(d.notes)}</p>`:''}</div><div class="stack section-gap">${cards.length?cards.map(c=>`<div class="trash-row"><div><b>${Number(c.quantity)||1}× ${esc(c.name)}</b><small class="muted">${esc((c.scryfall?.set||'').toUpperCase())}${c.scryfall?.collector_number?' · '+esc(c.scryfall.collector_number):''}</small></div></div>`).join(''):'<p class="muted">This deck has no cards.</p>'}</div>`,{size:'large'});
 }
-async function waitExistingJob(id){
+async function waitExistingJob(id,task){
   const {activity,endActivity,sleep}=await import('./ui.js');
-  $('#activity-cancel').textContent='Cancel';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>attempt(()=>api('/api/jobs/'+id+'/cancel',{}));
-  while(true){const d=await api('/api/jobs/'+id);activity('Restore backup',d.kind,d.message,d.done,d.total);if(d.state==='done'){endActivity('Backup restored');return d.result;}if(['failed','cancelled'].includes(d.state)){endActivity(d.message,true);throw new Error(d.error||d.message);}await sleep(450);}
+  const cancel=()=>attempt(()=>api('/api/jobs/'+id+'/cancel',{},'POST',task));
+  task.controller.signal.addEventListener('abort',cancel,{once:true});
+  if(task.controller.signal.aborted)cancel();
+  try{
+    while(true){const d=await api('/api/jobs/'+id);activity('Restore backup',d.kind,d.message,d.done,d.total,task);if(d.state==='done'){endActivity('Backup restored',false,task);return d.result;}if(['failed','cancelled'].includes(d.state)){endActivity(d.message,true,task);throw new Error(d.error||d.message);}await sleep(450);}
+  }finally{task.controller.signal.removeEventListener('abort',cancel);}
 }
 export async function showHelp(){
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">FROM FIRST IMPORT TO FIRST GAME</span><h1>Quick start & Card Tools</h1><p>The short path to a print-ready deck, with the original utility tools still available.</p></div></div><div class="two-col"><section class="panel"><h2>Your first deck</h2><div class="stack section-gap"><div><h3>1 · Import the deck you chose</h3><p class="muted">Use a public Scryfall deck link or JSON export to keep exact printings. A list with set and collector numbers also keeps those printings. Plain card names can be changed to another printing later.</p></div><div><h3>2 · Choose art & style</h3><p class="muted">Keep Scryfall art, paste a GitHub folder, or select a folder on your computer. Start with the built-in templates or create/upload your own. Add four rarity symbols—or let the app make four treatments from one—and a back.</p></div><div><h3>3 · Generate once, reuse often</h3><p class="muted">Watch cards appear in the grid. Only changed front inputs need rendering. Changing a back or quantity does not redraw the front. Review any crop or layout warnings.</p></div><div><h3>4 · Review and open the printer</h3><p class="muted">Select one or several decks. Check both sides, build the paired ZIP, then download it or open TCGPlaytest in a new tab. Review the printer preview and checkout yourself.</p></div></div><a class="button primary section-gap" href="#decks">Open deck library →</a></section>

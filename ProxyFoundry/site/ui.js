@@ -1,8 +1,10 @@
 import {recordDiagnostic,downloadBrowserDiagnostics} from './diagnostics.js';
+import {WorkCoordinator} from './work.js';
 export const $=(s,root=document)=>root.querySelector(s);
 export const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Set(),dirty:false,busy:false,helper:false,route:'decks',activeDeck:null};
+export const work=new WorkCoordinator(()=>refreshWorkActivity());
+export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Set(),dirty:false,get busy(){return work.busy},helper:false,route:'decks',activeDeck:null,routeEpoch:0,deckTab:'cards'};
 export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024**2).toFixed(1)+' MB':Math.ceil(n/1024)+' KB';
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const asset=id=>id?'/api/assets/'+id:'';
@@ -10,7 +12,23 @@ export const thumbnail=url=>/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/
 export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-export async function api(path,data,method='POST'){
+export function requireDeckAvailable(id,owner=null){if(id)work.requireAvailable(['deck:'+id],owner);}
+export function requireWorkspaceIdle(){work.requireIdle();}
+function mutationResources(path,data){
+  const match=/^\/api\/decks\/([-a-f0-9]{36})(?:\/(save|add|delete|restore|prepare|cards)(?:\/|$))/.exec(path);
+  if(match)return ['deck:'+match[1]];
+  if(['/api/orders/plan','/api/orders/build'].includes(path))return (data?.deckIds||[]).map(id=>'deck:'+id);
+  if(['/api/images/delete-all','/api/backups/import-selected','/api/backups/restore'].includes(path))return ['workspace'];
+  return [];
+}
+export async function api(path,data,method='POST',owner=null){
+  const resources=data!==undefined&&method==='POST'?mutationResources(path,data):[];
+  if(data!==undefined&&method==='POST')work.requireAvailable(resources,owner);
+  const lease=!owner&&resources.length?work.begin({label:resources.includes('workspace')?'Update workspace':'Save deck changes',resources}):null;
+  try{return await requestApi(path,data,method);}
+  finally{if(lease)work.finish(lease);}
+}
+async function requestApi(path,data,method){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
   const r=await fetch(path,opt);const text=await r.text();let result;
   try{result=JSON.parse(text)}catch(error){
@@ -91,29 +109,54 @@ export function confirmAction(title,text,label='Continue',danger=false){return n
   $('#confirm-no').onclick=()=>closeModal();$('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
 });}
 export function errorBox(el,message){let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
-export function activity(kind,title,detail,done=0,total=0){
+export function activity(kind,title,detail,done=0,total=0,owner=null){
+  if(owner){work.update(owner,{kind,title,detail,done,total});return;}
+  drawActivity(kind,title,detail,done,total);
+}
+function drawActivity(kind,title,detail,done=0,total=0){
   $('#activity').classList.remove('hidden');$('#activity-kind').textContent=kind;$('#activity-title').textContent=title;$('#activity-detail').textContent=detail||'';$('#activity-count').textContent=total?`${done} / ${total}`:'';
   const pct=total?Math.min(100,done/total*100):4;$('#activity-bar').style.width=pct+'%';$('.progress-track').setAttribute('aria-valuenow',Math.round(pct));
   const line=`${new Date().toLocaleTimeString()} · ${detail||title}`;
   if(!$('#activity-log').textContent.endsWith(line+'\n'))$('#activity-log').textContent=($('#activity-log').textContent+line+'\n').split('\n').slice(-80).join('\n');
 }
-export function endActivity(message,error=false){$('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if($('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);}
-export async function job(path,data,{label='Working',onProgress=null,signal=null}={}){
-  const previousBusy=state.busy;state.busy=true;let ident=null;
-  const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{}).catch(error=>recordDiagnostic('cancel task',error.message));};
+function refreshWorkActivity(){
+  const panel=$('#activity');if(!panel)return;
+  const task=work.visible();
+  if(task){
+    const p=task.progress;drawActivity(p.kind,p.title,p.detail,p.done,p.total);
+    const cancel=$('#activity-cancel');cancel.textContent=task.controller.signal.aborted?'Cancelling…':'Cancel';cancel.disabled=task.controller.signal.aborted;cancel.onclick=()=>task.controller.abort();
+  }
+  let queued=$('#queued-work');
+  if(!queued){queued=document.createElement('div');queued.id='queued-work';queued.style.display='grid';queued.style.gap='8px';panel.append(queued);}
+  queued.replaceChildren();
+  for(const entry of work.queue){
+    const row=document.createElement('div');row.style.display='flex';row.style.alignItems='center';row.style.gap='12px';
+    const label=document.createElement('span');label.textContent=entry.task.label+' · queued';
+    const cancel=document.createElement('button');cancel.className='button quiet small';cancel.textContent='Cancel queued task';cancel.setAttribute('aria-label','Cancel queued '+entry.task.label);cancel.onclick=()=>entry.task.controller.abort();
+    row.append(label,cancel);queued.append(row);panel.classList.remove('hidden');
+  }
+}
+export function endActivity(message,error=false,owner=null){
+  if(owner&&work.visible()!==owner)return;
+  $('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
+}
+export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null}={}){
+  const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal});
+  signal=task.controller.signal;let ident=null;
+  const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{},'POST',task).catch(error=>recordDiagnostic('cancel task',error.message));};
   signal?.addEventListener('abort',cancel,{once:true});
   try{
     if(signal?.aborted)throw new Error('Task cancelled.');
-    const result=await api(path,data);if(!result?.id)throw new Error('The app did not start the task.');ident=result.id;
+    activity(label,'Starting…','Starting task',0,0,task);
+    const result=await api(path,data,'POST',task);if(!result?.id)throw new Error('The app did not start the task.');ident=result.id;
     if(signal?.aborted)cancel();
-    $('#activity-cancel').disabled=false;$('#activity-cancel').textContent='Cancel';$('#activity-cancel').onclick=()=>attempt(async()=>{await api('/api/jobs/'+ident+'/cancel',{});$('#activity-cancel').disabled=true;});
-    activity(label,'Starting…','Starting task');
     while(true){
-      await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total);onProgress?.(j);
-      if(j.state==='done'){endActivity('Complete');return j.result;}
-      if(j.state==='failed'||j.state==='cancelled'){endActivity(j.message,true);throw new Error(j.error||j.message);}
+      await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total,task);onProgress?.(j);
+      if(j.state==='done'){if(!owner)endActivity('Complete',false,task);return j.result;}
+      if(j.state==='failed'||j.state==='cancelled'){if(!owner)endActivity(j.message,true,task);throw new Error(j.error||j.message);}
     }
-  }finally{signal?.removeEventListener('abort',cancel);state.busy=previousBusy;}
+  }catch(error){if(!owner)endActivity(error.message,true,task);throw error;}
+  finally{signal?.removeEventListener('abort',cancel);if(!owner)work.finish(task);}
 }
 export async function uploadImage(file,{symbol=false,back=false}={}){
   if(!file)throw new Error('Choose an image.');if(file.size>64*1024**2)throw new Error('Choose an image under 64 MB.');

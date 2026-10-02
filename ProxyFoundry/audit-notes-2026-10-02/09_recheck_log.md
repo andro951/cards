@@ -26,3 +26,37 @@ does not generate, production preparation completes and output/export survives
 reload. No native rendering or artwork-placement code changed in this chunk.
 The chunk is ready to commit and push main.
 Next: scoped UI/job ownership, route safety and additional long-job families.
+
+## Chunk 2 — scoped UI ownership and route safety
+
+Baseline main: 943646d. Replaced global busy guards with task ownership,
+per-deck mutation leases and a single cancellable native-render queue. Independent
+deck imports, setup, deletion and order operations remain usable during generation.
+Whole-workspace restore and location changes hold exclusive access. The location
+lease is released before reload and on picker cancellation. Backup cancellation
+uses its own task token, including while the workspace is exclusively held.
+
+The activity panel belongs to the visible foreground task and restores retained
+background progress when that task finishes. Queued generations have individual
+cancel buttons; duplicates and same-deck changes produce a specific conflict.
+Late deck/templates/settings/orders responses no longer replace a selected page.
+Generation completion preserves an open dialog and unsaved setup; navigation to
+the completed deck is explicit. Added generation.total timing around the whole
+preparation/render/save operation. Render/save overlap remains unchanged.
+
+Verification: 550 routine tests passed in 199.68 seconds. Nine affected browser
+cases passed in 109.24 seconds; two offline DOM cases initially skipped because
+their opt-in flag was absent, then both were enabled and passed in the four-case
+ownership run (46.41 seconds). That run also verified real native generation,
+foreground cancellation, queued cancellation, exclusive backup cancellation,
+and workspace-picker exclusion/release without any native permission prompt.
+The existing deletion/order-filter/recovery case passed during unrelated work.
+The delayed-response test confirmed navigation wins over old deck/template reads.
+Six Node adapter/helper cases, JavaScript syntax, Python compilation and all four
+canonical vendor hashes pass. The held-render screenshot was visually inspected:
+orange appearance is intact and the other deck's unsaved setup remains visible.
+Two completion notifications remain to consolidate in the next chunk.
+All three current production static import/setup/render/review/paired-ZIP/reload
+flows passed in 165.77 seconds, including normal/custom looks and the GitHub
+Pages base path. Six final DOM/ownership cases also passed after the final legacy
+backup ownership adjustment. No PNG/native drawing or art placement changed.

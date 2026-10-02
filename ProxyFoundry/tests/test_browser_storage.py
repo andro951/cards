@@ -66,6 +66,33 @@ def test_second_tab_cannot_write_and_can_open_after_first_closes(static_browser)
     second.get_by_text('Saved once',exact=True).wait_for(timeout=90000)
 
 
+def test_workspace_picker_holds_exclusive_access_and_releases_on_cancel(static_browser):
+    from playwright.sync_api import expect
+    _,context,origin=static_browser
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
+    page.locator('#import-deck').wait_for(timeout=90000)
+    page.click('.topbar [data-nav=settings]')
+    page.get_by_role('heading',name='Workspace storage',exact=True).wait_for(timeout=30000)
+    page.evaluate("""async()=>{
+        const ui=await import('/site/ui.js');window.__work=ui.work;
+        window.__generation=ui.work.begin({label:'Generate A',resources:['deck:A']});
+        window.__pickerCalls=0;
+        window.showDirectoryPicker=()=>{window.__pickerCalls++;return new Promise((_,reject)=>window.__cancelPicker=reject);};
+    }""")
+    page.get_by_role('button',name='Choose a different location',exact=True).click()
+    expect(page.locator('#toast-host')).to_contain_text('whole workspace')
+    assert page.evaluate('window.__pickerCalls')==0
+    page.evaluate('window.__work.finish(window.__generation)')
+    page.get_by_role('button',name='Choose a different location',exact=True).click()
+    page.wait_for_function('window.__pickerCalls===1')
+    conflict=page.evaluate("async()=>{const ui=await import('/site/ui.js');try{await ui.api('/api/decks/new',{});return '';}catch(error){return error.message;}}")
+    assert 'Move workspace is changing the workspace' in conflict
+    page.evaluate("window.__cancelPicker(new DOMException('Picker cancelled','AbortError'))")
+    page.wait_for_function('!window.__work.busy')
+    deck=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/new',{name:'After picker cancellation'});}")
+    assert deck['name']=='After picker cancellation'
+
+
 def test_binary_files_and_zip_do_not_live_in_python_memory_and_survive_reload(static_browser):
     directory,context,origin=static_browser
     worker=directory/'web/engine-worker.js';source=worker.read_text()
@@ -298,6 +325,7 @@ def request(app, method, url, body, headers):
     page.evaluate("async()=>{await fetch('/api/__test__/seed-deletion');await (await import('/site/app.js')).route();}")
     page.evaluate("""async()=>{
       const ui=await import('/site/ui.js');const deletion=await import('/site/deletion.js');
+      window.backgroundTask=ui.work.begin({label:'Generate unrelated deck',resources:['deck:99999999-9999-4999-8999-999999999999'],background:true});
       const original=window.fetch;window.testFetch=original;window.journalKey='pf-pending-deck-deletions:'+ui.state.bootstrap.workspaceId;window.releaseDelete=null;
       window.fetch=async(url,options)=>{
         if(String(url).endsWith('/delete')){await new Promise(resolve=>window.releaseDelete=resolve);}
@@ -314,6 +342,7 @@ def request(app, method, url, body, headers):
     page.screenshot(path=str(tmp_path/'immediate-deletion.png'),full_page=True)
     page.evaluate('window.releaseDelete()')
     page.wait_for_function("localStorage.getItem(window.journalKey)==='{}'")
+    assert page.evaluate("import('/site/ui.js').then(ui=>ui.state.busy)")
     #A late failure restores the deck to the visible library.
     page.evaluate("""async()=>{
       const ui=await import('/site/ui.js'),deletion=await import('/site/deletion.js');
@@ -348,7 +377,7 @@ def request(app, method, url, body, headers):
     assert page.evaluate("async()=>{const ui=await import('/site/ui.js');return (await ui.api('/api/decks/22222222-2222-4222-8222-222222222222/orders')).length}")==0
     #Pending deletion persists through reload; boot resends it idempotently.
     page.evaluate("""async()=>{
-      const ui=await import('/site/ui.js');await ui.api('/api/__test__/seed-deletion');
+      const ui=await import('/site/ui.js');ui.work.finish(window.backgroundTask);await ui.api('/api/__test__/seed-deletion');
       const deck=(await ui.api('/api/decks')).find(deck=>deck.name==='Delete me');
       localStorage.setItem(window.journalKey,JSON.stringify({[deck.id]:{revision:deck.revision}}));
       location.hash='decks';

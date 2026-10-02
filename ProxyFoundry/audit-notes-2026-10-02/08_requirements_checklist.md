@@ -3,9 +3,9 @@
 - [x] Approved persistent filesystem browser remains alive at initial preflight.
 - [x] Baseline separates main-thread responsiveness from engine queue latency.
 - [x] Preparation yields only at saved-card boundaries; stale edits reject writes.
-- [ ] Unrelated import/setup/navigation/deletion works during generation.
-- [ ] Conflicts identify the affected deck/job and cannot overwrite newer edits.
-- [ ] No rendering or bulk artwork download in setup/frame selection.
+- [x] Unrelated import/setup/navigation/deletion works during generation.
+- [x] Conflicts identify the affected deck/job and cannot overwrite newer edits.
+- [x] No rendering or bulk artwork download in setup/frame selection.
 - [ ] Continuous generation progress and durable completion notification.
 - [ ] Bounded render/save overlap improves timing with byte integrity/recovery.
 - [ ] Startup/UI improvements measured and version-safe.

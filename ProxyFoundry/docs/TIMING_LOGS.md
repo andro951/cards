@@ -20,6 +20,7 @@ Each entry identifies the stage, elapsed seconds and outcome, plus the available
 - `api.request`: browser engine request processing, including slow export/ZIP operations. It excludes message queue time.
 - `runtime.prepare`, `runtime.start`: renderer dependency preparation and startup.
 - `render.load-face`, `render.native`, `render.save`, `render.total`: loading compiled data, native rendering, saving PNG and render-plan total.
+- `generation.total`: the full explicit Generate Images operation, including deck preparation, renderer setup, all images and saves. It excludes time waiting in the native-render queue.
 - `native.assets`, `native.fonts`, `native.symbols`, `native.load-and-scripts`, `native.loaded-images`, `native.loaded-fonts`, `native.first-draw`, `native.settle-wait`, `native.final-draw`, `native.png-export`: renderer substeps. The settle wait is the existing 550ms delay, now visible in timings.
 
 Start with the longest entries and inspect their nested stages to distinguish network, storage, compilation and rendering costs. Timings are inclusive: for example, card.prepare includes art.resolve and card.compile; do not add every entry together. Rendering diagnostics retain their existing details to explain which assets/frame were being processed. No new server or analytics service is used.

@@ -100,6 +100,7 @@ let routeCounter=0,lastHash=location.hash||'#decks';
 export async function route(){
   if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
   state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
+  state.routeEpoch=current;state.deckTab=tab||'cards';state.routeDeck=id||null;
   $('#selection-tray').classList.add('hidden');
   for(const link of $$('[data-nav]')){
     const selected=link.dataset.nav===(name==='deck'?'decks':name);
@@ -124,7 +125,7 @@ export async function route(){
     else if(name==='settings')await (state.bootstrap?.browser?(await import('/web/settings-browser.js')).showSettings():showSettings());
     else if(name==='help')await showHelp();
     else{state.route='decks';showLibrary();}
-  }catch(e){showWorkspaceError(e,()=>route());}
+  }catch(e){if(current===routeCounter)showWorkspaceError(e,()=>route());}
 }
 async function boot(){
   try{

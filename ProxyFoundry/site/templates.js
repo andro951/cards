@@ -4,7 +4,9 @@ const ordinary=['standard','legendary','land','legendary-land','basic-land'];
 const fieldNames={title:'Card name',type:'Type line',mana:'Mana cost',rules:'Rules + flavor',flavor:'Flavor text',pt:'Power / toughness',loyalty:'Starting loyalty',defense:'Defense','face2.title':'Other face · name','face2.type':'Other face · type','face2.mana':'Other face · mana','face2.rules':'Other face · rules'};
 for(let i=1;i<=12;i++)fieldNames['line'+i]='Rules line '+i;
 export async function showTemplates(){
+  const epoch=state.routeEpoch;
   state.templates=await api('/api/templates');
+  if(epoch!==state.routeEpoch)return;
   const built=state.templates.filter(t=>!t.data),custom=state.templates.filter(t=>t.data);
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">A STYLE THAT’S YOURS</span><h1>Templates</h1><p>Use the approved Card Tools frames, customize a copy, or upload your own CardConjurer template.</p></div><div class="actions"><button class="button" id="upload-template">Upload template</button><button class="button primary" id="new-template">＋ Create template</button></div></div>
   <div class="notice info">The built-in recipes are protected. Creating or editing a template always makes a separate custom style; it never changes your approved originals.</div>

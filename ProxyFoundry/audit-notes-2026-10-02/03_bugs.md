@@ -19,9 +19,12 @@ Evidence: addNewDeck/importDeck, GitHub setup and deleteDeck reject state.busy;
 runRenderPlan also rejects all work. User impact: menus/import/deletion cannot
 operate on independent decks during generation.
 
-Repair pending: resource ownership, generation queue, activity ownership and
-route-safe callbacks. Tests must cover simultaneous unrelated actions and
-specific same-deck conflicts, duplicate clicks and late responses.
+Repaired in chunk 2: per-deck resource ownership, a cancellable native queue,
+owned activity and route-safe callbacks. Actual static tests import a second
+deck during a held native render, preserve its unsaved artist credit, cancel
+foreground work without cancelling generation, and cancel a queued generation.
+The existing deletion/order-dependency/recovery test now deletes an unrelated
+deck while background work remains active. Same-deck writes identify the owner.
 
 ## Medium: concurrent activity ownership is undefined
 
@@ -29,4 +32,7 @@ Evidence: ui.job and runRenderPlan overwrite one activity cancel button;
 busy restoration uses previous boolean values. Enabling concurrency without
 repair would allow wrong-task cancellation and inaccurate unload protection.
 
-Repair pending: token-based active work accounting and owned progress/cancel.
+Repaired in chunk 2: task-based active work accounting and owned progress/cancel.
+Finishing foreground work restores retained generation progress. Workspace-wide
+restore can cancel through its own exclusive lease. Picker cancellation releases
+that lease, and conflicts are rejected before a native picker can be opened.

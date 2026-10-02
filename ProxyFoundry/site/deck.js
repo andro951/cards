@@ -1,6 +1,6 @@
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {chooseOrder,setupHelper} from './orders.js';
@@ -51,11 +51,18 @@ function preparationStatus(title,message){
   return detail;
 }
 function preparationComplete(deck){
+  if($('.modal')||state.dirty){
+    const notice=document.createElement('div');notice.className='toast';notice.setAttribute('role','status');
+    const message=document.createElement('span');message.textContent=deck.name+' is ready to review and print.';
+    const view=document.createElement('button');view.textContent='View deck';view.onclick=()=>{notice.remove();nav('deck/'+deck.id+'/cards');};
+    const dismiss=document.createElement('button');dismiss.textContent='×';dismiss.setAttribute('aria-label','Dismiss deck ready notification');dismiss.onclick=()=>notice.remove();
+    notice.append(message,view,dismiss);$('#toast-host').append(notice);return;
+  }
   const host=modal('Your deck is ready','',{size:'small',footer:'<button class="button primary" id="view-ready-deck">View deck</button>',
-    onClose:()=>{nav('deck/'+deck.id+'/cards');return true;}});
+    onClose:()=>true});
   const body=$('.modal-body',host);
   const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
-  $('#view-ready-deck').onclick=closeModal;
+  $('#view-ready-deck').onclick=()=>{closeModal();nav('deck/'+deck.id+'/cards');};
 }
 function chooseLook(source,includeOutside=true){
   let choosing=false;
@@ -79,13 +86,15 @@ function chooseLook(source,includeOutside=true){
       closeModal();
       const status=preparationStatus('Reading your deck list',
         'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+      const epoch=state.routeEpoch;
       let deck=null;
       try{
         const prepared=await prepareDeckSource(source);
         deck=await job('/api/decks/import',{source:prepared,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
-        nav('deck/'+deck.id+'/setup');
+        if(epoch===state.routeEpoch)nav('deck/'+deck.id+'/setup');
+        else toast(deck.name+' was imported. Open it from Deck Library when you’re ready.');
       }catch(error){
-        $('#activity')?.classList.add('hidden');
+        if(epoch!==state.routeEpoch){toast(error.message,true);return;}
         status.textContent='We could not finish preparing this deck.';
         const notice=document.createElement('div');notice.className='notice error';notice.setAttribute('role','alert');notice.textContent=error.message;status.after(notice);
         const next=document.createElement('button');next.type='button';next.className='button primary';
@@ -97,7 +106,6 @@ function chooseLook(source,includeOutside=true){
   }
 }
 function addNewDeck(){
-  if(state.busy)throw new Error('Wait for the current task to finish.');
   const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import" disabled>Add deck</button>'});
   const body=$('.modal-body',host),addButton=$('#do-import');
   const intro=document.createElement('p');intro.className='muted';intro.textContent="Give us your deck link from a website like Scryfall, MTGGoldfish, or Archidekt, and we'll get the full deck for you.";body.append(intro);
@@ -143,7 +151,7 @@ function addNewDeck(){
 }
 export async function importDeck(existing=null){
   if(!existing)return addNewDeck();
-  if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
+  requireDeckAvailable(existing.id);
   const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside" checked><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
   $('#do-import').onclick=async()=>{
@@ -173,9 +181,10 @@ const hasPhysicalReverse=c=>c.faces.length===2||Boolean(c.meldBackAsset||c.scryf
 const physicalReverseName=c=>c.faces.length===2?c.faces[1].name:(c.scryfall?._meld_result?.name||'Meld reverse');
 
 export async function showDeck(id,tab='cards'){
+  const epoch=state.routeEpoch;
   if(tab==='review')tab='cards';
   const oldScroll=$('.card-grid')?.scrollTop||0;
-  const d=await api('/api/decks/'+id);state.activeDeck=d;
+  const d=await api('/api/decks/'+id);if(epoch!==state.routeEpoch)return;state.activeDeck=d;state.deckTab=tab;
   let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}
   const summary=d.summary,dirty=d.status==='draft';
   $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.status)}<span class="count-label">${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
@@ -249,8 +258,9 @@ async function generate(d){
   if(state.dirty)throw new Error('Save the setup changes before generating images.');
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   d=await ensureCustomArtCredits(d);if(!d)return;
-  await renderDecks([d.id],{onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
+  await renderDecks([d.id],{onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='cards'&&!state.dirty)await showDeck(d.id,'cards');}});
   const finished=await api('/api/decks/'+d.id);
+  if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
   if(finished.status==='ready')preparationComplete(finished);
 }
 function deckMenu(d){

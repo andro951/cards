@@ -36,6 +36,167 @@ def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
     assert all(row['foregroundSeconds']<.75 for row in report['trials'])
 
 
+def test_static_foreground_work_during_real_generation_preserves_setup_and_cancel_owner(tmp_path):
+    """Hold actual native generation while operating independent deck UI and jobs."""
+    from playwright.sync_api import sync_playwright,expect
+    import base64,io
+    from PIL import Image
+    build_site(tmp_path);site=copy_site(tmp_path)
+    card={'id':'11111111-1111-4111-8111-111111111111','name':'Concurrent Creature',
+        'layout':'normal','type_line':'Creature — Wizard','colors':['U'],'mana_cost':'{U}',
+        'oracle_text':'Flying','rarity':'common','power':'1','toughness':'1','artist':'Test Artist',
+        'set':'tst','collector_number':'1','image_uris':{'art_crop':'https://cards.scryfall.io/concurrency.png'}}
+    art=io.BytesIO();Image.new('RGB',(900,650),'#4378ad').save(art,'PNG')
+    injected=f'''
+original_transport=app.ws.net.transport
+def fixture_transport(url):
+    if 'api.scryfall.com/cards/' in url:return {json.dumps(card).encode()!r},'application/json',{{}}
+    if 'cards.scryfall.io/concurrency.png' in url:return base64.b64decode({base64.b64encode(art.getvalue()).decode()!r}),'image/png',{{}}
+    return original_transport(url)
+app.ws.net.transport=fixture_transport
+original_request=request
+def request(app,method,url,body,headers):
+    if str(url)=='/api/__test__/foreground-job':
+        import time
+        def operation(update,cancel):
+            for index in range(100):
+                if cancel():raise ValueError('Foreground task cancelled')
+                time.sleep(.05);update(index+1,100,'Importing item')
+                yield
+            return {{'done':True}}
+        result=app.jobs.start('Foreground fixture',operation)
+        return {{'status':200,'mime':'application/json','body':json.dumps(result).encode(),'headers':{{}}}}
+    return original_request(app,method,url,body,headers)
+'''
+    worker=site/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
+    worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    bridge=site/'site/runtime-bridge.js';source=bridge.read_text(encoding='utf-8')
+    anchor='async function render(request){'
+    assert source.count(anchor)==1
+    hold='''
+      window.__testNativeHeld=true;
+      await new Promise(resolve=>{
+        const release=event=>{
+          if(event.source!==parent||event.origin!==location.origin||event.data?.type!==`__testReleaseNative`)return;
+          window.removeEventListener(`message`,release);resolve();
+        };
+        window.addEventListener(`message`,release);
+      });
+    '''
+    bridge.write_text(source.replace(anchor,anchor+hold),encoding='utf-8')
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=False);page=browser.new_page(viewport={'width':1440,'height':1000})
+            errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                def import_card():
+                    page.click('#import-deck');page.locator('.modal-body summary').click()
+                    page.locator('.modal-body textarea').fill(card['id']);page.click('#do-import')
+                    page.get_by_role('button',name='Normal Look',exact=True).click()
+                    page.locator('#save-setup').wait_for(timeout=60000)
+                    return page.evaluate("import('/site/ui.js').then(ui=>ui.state.activeDeck.id)")
+                first=import_card();page.click('#generate-deck')
+                page.wait_for_function("document.querySelector('.render-frame')?.contentWindow.__testNativeHeld",timeout=120000)
+                conflict=page.evaluate("async id=>{const ui=await import('/site/ui.js');try{await ui.api('/api/decks/'+id+'/save',{name:'Must not overwrite'});return '';}catch(error){return error.message;}}",first)
+                assert 'Generate images for' in conflict and 'using this deck' in conflict
+                page.click('.topbar [data-nav=decks]');page.locator('#import-deck').wait_for(timeout=15000)
+                second=import_card();assert first!=second
+                page.fill('#deck-artist','Keep this unsaved draft')
+                expect(page.locator('#activity-kind')).to_have_text('Render deck')
+                page.evaluate("""async()=>{
+                    const ui=await import('/site/ui.js');
+                    window.__foreground=ui.job('/api/__test__/foreground-job',{}, {label:'Foreground import'})
+                        .then(()=>`done`,error=>error.message);
+                }""")
+                expect(page.locator('#activity-kind')).to_have_text('Foreground import')
+                page.click('#activity-cancel')
+                result=page.evaluate('window.__foreground')
+                assert 'cancelled' in result
+                expect(page.locator('#activity-kind')).to_have_text('Render deck')
+                assert page.evaluate("import('/site/ui.js').then(ui=>!ui.work.renderer.controller.signal.aborted)")
+                queued=page.evaluate("async()=>{const ui=await import('/site/ui.js');return (await ui.api('/api/decks/new',{name:'Queued deck'})).id;}")
+                page.evaluate("""async id=>{
+                    const render=await import('/site/render.js');
+                    window.__queued=render.renderDecks([id]).then(()=>`done`,error=>error.message);
+                }""",queued)
+                page.get_by_role('button',name='Cancel queued Generate images for deck',exact=True).click()
+                assert page.evaluate('window.__queued')=='Queued task cancelled.'
+                page.evaluate("document.querySelector('.render-frame').contentWindow.postMessage({type:'__testReleaseNative'},location.origin)")
+                page.evaluate("async()=>{window.__work=(await import('/site/ui.js')).work;}")
+                page.wait_for_function("!window.__work.busy",timeout=90000)
+                ready=page.evaluate("async id=>(await (await fetch('/api/decks/'+id)).json()).status",first)
+                assert ready=='ready',page.locator('body').inner_text()
+                expect(page.locator('#deck-artist')).to_have_value('Keep this unsaved draft')
+                assert page.evaluate("import('/site/ui.js').then(ui=>ui.state.dirty&&ui.state.activeDeck.id)")==second
+                expect(page.get_by_role('dialog',name='Your deck is ready')).to_have_count(0)
+                expect(page.locator('#toast-host')).to_contain_text('ready to review and print')
+                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                page.screenshot(path=str(evidence/'foreground-during-generation.png'),full_page=True)
+                page.evaluate("""async()=>{
+                    const ui=await import('/site/ui.js');
+                    window.__restore=ui.job('/api/__test__/foreground-job',{},
+                        {label:'Backup fixture',resources:['workspace']}).then(()=>`done`,error=>error.message);
+                }""")
+                expect(page.locator('#activity-kind')).to_have_text('Backup fixture')
+                page.click('#activity-cancel')
+                assert 'cancelled' in page.evaluate('window.__restore')
+                assert page.evaluate('!window.__work.busy')
+                assert not errors,errors
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+def test_static_late_view_responses_do_not_replace_selected_page(tmp_path):
+    from playwright.sync_api import sync_playwright,expect
+    build_site(tmp_path)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+            errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
+                page.locator('#import-deck').wait_for(timeout=90000)
+                deck=page.evaluate("async()=>{const ui=await import('/site/ui.js');return (await ui.api('/api/decks/new',{name:'Late deck'})).id;}")
+                page.evaluate("""async id=>{
+                    const original=window.fetch;
+                    window.fetch=async(path,options)=>{
+                        const response=await original(path,options);
+                        if(path==='/api/decks/'+id)await new Promise(resolve=>window.releaseView=resolve);
+                        return response;
+                    };
+                    window.lateDeck=(await import('/site/deck.js')).showDeck(id);
+                }""",deck)
+                page.wait_for_function("typeof window.releaseView==='function'")
+                page.click('.topbar [data-nav=settings]')
+                page.get_by_role('heading',name='Settings',exact=True).wait_for(timeout=30000)
+                page.evaluate('window.releaseView();window.lateDeck')
+                expect(page.get_by_role('heading',name='Settings',exact=True)).to_be_visible()
+                assert page.locator('#generate-deck').count()==0
+                page.evaluate("""async()=>{
+                    const original=window.fetch;let first=true;window.releaseView=null;
+                    window.fetch=async(path,options)=>{
+                        const response=await original(path,options);
+                        if(path==='/api/templates'&&first){first=false;await new Promise(resolve=>window.releaseView=resolve);}
+                        return response;
+                    };
+                    window.lateTemplates=(await import('/web/templates-browser.js')).showTemplates();
+                }""")
+                page.wait_for_function("typeof window.releaseView==='function'")
+                page.evaluate("location.hash='#orders'")
+                page.get_by_role('heading',name='Print orders',exact=True).wait_for(timeout=30000)
+                page.evaluate('window.releaseView();window.lateTemplates')
+                expect(page.get_by_role('heading',name='Print orders',exact=True)).to_be_visible()
+                assert not errors,errors
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 def test_static_engine_releases_image_responses_and_error_diagnostics(tmp_path):
     """Exercise real Pyodide proxy lifetimes without rendering a whole deck."""
     from playwright.sync_api import sync_playwright

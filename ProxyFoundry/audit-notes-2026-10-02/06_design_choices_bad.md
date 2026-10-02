@@ -1,8 +1,9 @@
 # Design debt to replace carefully
 
-- One boolean for every task conflates unload protection with resource conflicts.
-- Whole-job draining prevents menu API reads from running between saved cards.
-- One shared activity handler lacks ownership when tasks overlap.
+- Replaced in chunks 1–2: global busy rejection, whole-job preparation draining,
+  and unowned activity/cancellation. Further monolithic jobs remain to convert.
+- Duplicate render-complete toast and deck-ready notification still appear;
+  consolidate completion while retaining persistent notification during editing.
 - Serial render → save → refresh can waste renderer idle time; benchmark bounded
   overlap and throttle refresh before choosing a production change.
 - Runtime bundle no-store startup policy redownloads unchanged data; retain
