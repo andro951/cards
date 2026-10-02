@@ -1,0 +1,79 @@
+{
+  "revision": "dee035cc68e4a49082c659cb9be1b0af6b9befa8",
+  "at": 1790933148.1023562,
+  "note": "Actual static engine/import/export paths; temporary fixture adds 75ms per network read. No native rendering or live throughput claim.",
+  "trials": [
+    {
+      "kind": "github",
+      "serial": true,
+      "foregroundSeconds": 1.7904000000953675,
+      "stateAfterForeground": "done",
+      "doneAfterForeground": 5,
+      "completedSeconds": 1.8705,
+      "cancelFinishSeconds": 0.04909999990463257
+    },
+    {
+      "kind": "github",
+      "serial": false,
+      "foregroundSeconds": 0.14159999990463257,
+      "stateAfterForeground": "running",
+      "doneAfterForeground": 0,
+      "completedSeconds": 1.1595,
+      "cancelFinishSeconds": 0.025899999856948852
+    },
+    {
+      "kind": "github",
+      "serial": false,
+      "foregroundSeconds": 0.14030000019073485,
+      "stateAfterForeground": "running",
+      "doneAfterForeground": 0,
+      "completedSeconds": 1.143300000190735,
+      "cancelFinishSeconds": 0.04990000009536743
+    },
+    {
+      "kind": "github",
+      "serial": true,
+      "foregroundSeconds": 0.9599000000953675,
+      "stateAfterForeground": "done",
+      "doneAfterForeground": 5,
+      "completedSeconds": 1.0329000000953674,
+      "cancelFinishSeconds": 0.04809999990463257
+    },
+    {
+      "kind": "review",
+      "serial": true,
+      "foregroundSeconds": 3.3032999999523165,
+      "stateAfterForeground": "done",
+      "doneAfterForeground": 24,
+      "completedSeconds": 3.3992000000476836,
+      "cancelFinishSeconds": 0.12840000009536742
+    },
+    {
+      "kind": "review",
+      "serial": false,
+      "foregroundSeconds": 0.21559999990463258,
+      "stateAfterForeground": "running",
+      "doneAfterForeground": 1,
+      "completedSeconds": 3.7317000000476837,
+      "cancelFinishSeconds": 0.15709999990463258
+    },
+    {
+      "kind": "review",
+      "serial": false,
+      "foregroundSeconds": 0.25690000009536745,
+      "stateAfterForeground": "running",
+      "doneAfterForeground": 1,
+      "completedSeconds": 3.850199999809265,
+      "cancelFinishSeconds": 0.15409999990463258
+    },
+    {
+      "kind": "review",
+      "serial": true,
+      "foregroundSeconds": 3.2712000000476835,
+      "stateAfterForeground": "done",
+      "doneAfterForeground": 24,
+      "completedSeconds": 3.365,
+      "cancelFinishSeconds": 0.13020000004768373
+    }
+  ]
+}

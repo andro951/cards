@@ -936,7 +936,13 @@ class Workspace:
                     used_keys.add(key);entries.append({'key':key,'data':data})
         return json.dumps(entries,ensure_ascii=False,separators=(',',':')).encode()
     def original_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.original_images_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+    def original_images_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);out=self.store.home/'orders'/('originals-'+uid()+'.zip');names=set();count=0
+        complete=False
         try:
             with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED) as z:
                 for c in d['cards']:
@@ -950,11 +956,20 @@ class Workspace:
                         name=slug(f.get('name',c['name']))+'.png'
                         if name in names:name=slug(f.get('name',c['name']))+'_'+slug(sf.get('set','')+'_'+sf.get('collector_number','')+'_'+c['id'][:8])+'.png'
                         names.add(name);z.writestr(name,raw);count+=1
-                    progress(count,0,'Saved '+c['name'])
+                        progress(count,0,'Saved '+c['name'])
+                        yield
+            if cancel():raise ValidationError('Image export cancelled.')
+            complete=True
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
-        except Exception:out.unlink(missing_ok=True);raise
+        finally:
+            if not complete:out.unlink(missing_ok=True)
 
     def cropped_art(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.cropped_art_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+    def cropped_art_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
         """Download Scryfall art_crop files for the deck without modifying bytes."""
         d=self.deck(ident)
         entries=[]
@@ -1008,6 +1023,7 @@ class Workspace:
                 candidate=f'{base} {extra} ({number}){ext}';number+=1
             used.add(candidate.casefold());return candidate
 
+        complete=False
         try:
             with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as archive:
                 total=len(entries)
@@ -1029,9 +1045,12 @@ class Workspace:
                     archive.writestr(name,raw)
                     count+=1
                     progress(count,total,'Downloaded cropped art for '+str(face.get('name') or c.get('name') or 'Card'))
+                    yield
+            if cancel():raise ValidationError('Image export cancelled.')
+            complete=True
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
-        except Exception:
-            out.unlink(missing_ok=True);raise
+        finally:
+            if not complete:out.unlink(missing_ok=True)
 
     def _review_render(self,face,deck_name):
         if face.get('error'):raise ValidationError(deck_name+' / '+face['name']+': '+face['error'])
@@ -1077,6 +1096,11 @@ class Workspace:
         return {'filename':filename,'count':1,'bytes':out.stat().st_size,'download':'/api/files/'+filename}
 
     def review_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.review_images_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+    def review_images_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident)
         if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading review images.')
         stem=slug(d['name'])[:80] or 'deck'
@@ -1112,18 +1136,20 @@ class Workspace:
         if not total:raise ValidationError(d['name']+': deck has no review images to export.')
         progress(0,total,'Preparing '+str(total)+' review images…')
         count=0
+        complete=False
         try:
-            # This already runs inside the Jobs background executor. Keep the
-            # image downloads in that one bounded job instead of nesting another
-            # thread pool; nested workers made failures/cancellation look stuck
-            # and could burst Scryfall's image CDN with concurrent PNG requests.
-            with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as z:
+            #Keep downloads serial; yield between saved images so browser API
+            #requests can run without bursting Scryfall's image CDN.
+            with self.store.pin_assets(item[3]['asset_id'] for item in items),zipfile.ZipFile(out,'w',zipfile.ZIP_STORED,allowZip64=True) as z:
                 for filename,label,url,render in items:
                     if cancel():raise ValidationError('Review-image export cancelled.')
                     progress(count,total,'Downloading review image for '+label)
                     z.writestr(filename,self._review_composite(url,render,refresh))
                     count+=1;progress(count,total,'Saved review image for '+label)
+                    yield
+            if cancel():raise ValidationError('Image export cancelled.')
+            complete=True
             return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
-        except Exception:
-            out.unlink(missing_ok=True);raise
+        finally:
+            if not complete:out.unlink(missing_ok=True)
 

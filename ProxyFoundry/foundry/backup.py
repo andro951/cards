@@ -38,6 +38,13 @@ class Backups:
         self.store = workspace.store
 
     def export(self, progress=lambda *a: None, cancel=lambda: False, include_renders=True):
+        steps=self.export_steps(progress,cancel,include_renders)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def export_steps(self, progress=lambda *a: None, cancel=lambda: False, include_renders=True):
+        if cancel():raise ValidationError('Backup cancelled.')
         docs = {kind: self.store.list(kind) + self.store.list(kind, deleted=True)
                 for kind in ('decks', 'templates', 'style-presets')}
         docs['settings'] = [self.ws.global_settings()]
@@ -68,18 +75,19 @@ class Backups:
         dest = self.store.home / 'backups' / name
         partial = dest.with_suffix('.partial')
         try:
-            with zipfile.ZipFile(partial, 'w', zipfile.ZIP_DEFLATED, compresslevel=3, allowZip64=True) as z:
+            with self.store.pin_assets(a['id'] for a in assets),zipfile.ZipFile(partial, 'w', zipfile.ZIP_DEFLATED, compresslevel=3, allowZip64=True) as z:
                 z.writestr('workspace.json', json.dumps(manifest, ensure_ascii=False, allow_nan=False))
                 for i, a in enumerate(assets):
                     if cancel(): raise ValidationError('Backup cancelled.')
                     z.write(self.store.asset_path(a['id']), 'assets/' + a['id'] + '.png')
                     progress(i + 1, len(assets), 'Saving workspace image ' + str(i + 1))
+                    yield
+            if cancel():raise ValidationError('Backup cancelled.')
             partial.replace(dest)
             return {'filename': name, 'download': '/api/backups/' + name,
                     'bytes': dest.stat().st_size, 'decks': len(docs['decks'])}
-        except Exception:
+        finally:
             partial.unlink(missing_ok=True)
-            raise
 
     def catalog(self, path: Path):
         try:

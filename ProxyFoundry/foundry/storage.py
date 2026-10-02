@@ -194,6 +194,7 @@ def display_name(text: str, fallback='item') -> str:
 class Store:
     def __init__(self, home: Path | None = None):
         self.storage_type='local-folder'
+        self._asset_pins={};self._deferred_asset_deletes=set()
         self.home = Path(home or default_home()).resolve()
         self.home.mkdir(parents=True, exist_ok=True)
         for name in ('assets', 'renders', 'runtime', 'orders', 'logs', 'backups', 'tmp'):
@@ -463,11 +464,30 @@ class Store:
         return True
 
     def _delete_render_asset_if_unused(self, ident: str) -> None:
+        if self._asset_pins.get(ident):
+            self._deferred_asset_deletes.add(ident)
+            return
         if not ident or not re.fullmatch(r'[0-9a-f]{64}',str(ident)) or not self._asset_is_render_only(ident):
             return
         with self.connect() as db:
             db.execute('DELETE FROM assets WHERE id=?',(ident,))
         self.remove_render_file(self.asset_path(ident))
+
+    @contextmanager
+    def pin_assets(self,idents):
+        """Keep immutable snapshot inputs alive across cooperative export turns."""
+        idents=set(idents)
+        for ident in idents:self._asset_pins[ident]=self._asset_pins.get(ident,0)+1
+        try:yield
+        finally:
+            for ident in idents:
+                count=self._asset_pins[ident]-1
+                if count:self._asset_pins[ident]=count
+                else:
+                    self._asset_pins.pop(ident)
+                    if ident in self._deferred_asset_deletes:
+                        self._deferred_asset_deletes.remove(ident)
+                        self._delete_render_asset_if_unused(ident)
 
     def remove_render_file(self,path):
         path.unlink(missing_ok=True)

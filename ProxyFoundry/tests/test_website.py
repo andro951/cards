@@ -36,6 +36,18 @@ def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
     assert all(row['foregroundSeconds']<.75 for row in report['trials'])
 
 
+def test_static_github_setup_and_review_export_service_foreground_requests(tmp_path):
+    """Actual job families yield, cancel cleanly and publish complete results."""
+    output=tmp_path/'job-families.json'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/profile_job_families.py'),
+        '--output',str(output)],cwd=ROOT,check=True,capture_output=True,timeout=240)
+    rows=json.loads(output.read_text(encoding='utf-8'))['trials']
+    assert len(rows)==8
+    for row in rows:
+        assert row['stateAfterForeground']==('done' if row['serial'] else 'running')
+        if not row['serial']:assert row['foregroundSeconds']<.75
+
+
 @pytest.mark.parametrize('stay_on_cards',[False,True,'library'],ids=['other-deck-setup','generation-search','library-to-cards'])
 def test_static_foreground_work_during_real_generation_preserves_setup_and_cancel_owner(tmp_path,stay_on_cards):
     """Hold actual native generation while operating independent deck UI and jobs."""
@@ -609,7 +621,14 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
             page.on('request',lambda request:generation.append(request.url) if request.method=='POST' and ('/prepare' in request.url or '/render-sessions' in request.url) else None)
             try:
                 page.goto(origin,wait_until='domcontentloaded')
-                page.locator('#import-deck').wait_for(timeout=90000)
+                try:page.locator('#import-deck').wait_for(timeout=90000)
+                except Exception:
+                    evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+                    page.screenshot(path=str(evidence/'static-startup-failure.png'))
+                    (evidence/'static-startup-failure.json').write_text(json.dumps({
+                        'url':page.url,'body':page.locator('body').inner_text(),'errors':errors,
+                        'diagnostics':page.evaluate("localStorage.getItem('bulk-proxy-forge-browser-diagnostics')")},indent=2),encoding='utf-8')
+                    raise
                 assert page.locator('#deck-search').evaluate('(input)=>parseFloat(getComputedStyle(input).paddingLeft)')>=33
                 if look=='Normal Look':
                     page.evaluate("async()=>{const ui=await import((window.__pfBasePath||'')+'/site/ui.js');await ui.api('/api/settings',{defaults:{artist:'Inherited artist',disableAutofit:true,showFlavorText:false,allCardsTokens:true,tokenOptions:{power:'7',toughness:'7'},templateRules:{standard:'land',land:'land'}}});}")

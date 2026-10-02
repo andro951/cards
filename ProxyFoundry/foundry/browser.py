@@ -19,6 +19,7 @@ from types import GeneratorType
 
 from .domain import ConflictError, ValidationError, uid
 from .network import Network
+from .github_setup import import_github_setup_steps,import_symbol_folder_steps
 from .storage import Store
 from . import server
 
@@ -279,6 +280,21 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        if path in {'/api/setup/github-import','/api/setup/symbols/github'}:
+            data=self.data()
+            operation=import_github_setup_steps if path.endswith('github-import') else import_symbol_folder_steps
+            return self.respond(self.app.jobs.start('Import GitHub setup' if path.endswith('github-import') else 'Import GitHub set symbols',
+                lambda update,cancel:operation(self.app.ws,data,update,cancel)))
+        if path == '/api/orders/build':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Package paired order',
+                lambda update,cancel:self.app.orders.build_steps(data.get('deckIds',[]),bool(data.get('acknowledge')),update,cancel)))
+        export=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(originals|cropped-art|review-images)',path)
+        if export:
+            self.data()
+            operation={'originals':self.app.ws.original_images_steps,'cropped-art':self.app.ws.cropped_art_steps,'review-images':self.app.ws.review_images_steps}[export[2]]
+            return self.respond(self.app.jobs.start('Export deck images',
+                lambda update,cancel:operation(export[1],update,cancel)))
         if path == '/api/decks/import':
             data=self.data()
             return self.respond(self.app.jobs.start('Import deck',
@@ -334,7 +350,7 @@ class BrowserHandler(server.Handler):
             data=self.data()
             include=data.get('includeRenders') is True
             return self.respond(self.app.jobs.start('Export workspace backup',
-                lambda update,cancel:self.app.backups.export(update,cancel,include_renders=include)))
+                lambda update,cancel:self.app.backups.export_steps(update,cancel,include_renders=include)))
         match = re.fullmatch(r'/api/decks/([-a-f0-9]{36})/delete', path)
         if match:
             data = self.data()

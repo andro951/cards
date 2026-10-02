@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 558 | Every completed change |
-| Extended | 105 | Relevant changes or an explicit full sweep |
+| Routine | 580 | Every completed change |
+| Extended | 106 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -94,6 +94,13 @@ source coordinates. Run `tests/test_full_art_examples.py` with `PF_BROWSER=1`
 and `PF_LIVE_CC=1`; see [full-art verification](FULL_ART_VERIFICATION.md).
 
 Slow application operations now have [timing logs](TIMING_LOGS.md), separate from the per-test timing CSV.
+
+For GitHub setup or archive scheduling changes, run
+`tests/test_job_families.py` and the affected static check
+`tests/test_website.py::test_static_github_setup_and_review_export_service_foreground_requests`
+with `PF_BROWSER=1` and `PF_LIVE_CC=1`. The latter compares real browser-engine
+job families with controlled remote delays and verifies cancellation cleanup.
+See [cooperative imports/exports](COOPERATIVE_IMPORT_EXPORT.md).
 
 For worker scheduling changes, run
 `tests/test_website.py::test_static_engine_foreground_requests_between_job_chunks`

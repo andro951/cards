@@ -113,7 +113,17 @@ def import_card_data_url(workspace, payload):
 
 
 def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
+    steps=import_symbol_folder_steps(workspace,payload,progress,cancel)
+    while True:
+        try:next(steps)
+        except StopIteration as finished:return finished.value
+
+
+def import_symbol_folder_steps(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Import four rarity images from a public GitHub folder."""
+    def check_cancel():
+        if cancel():raise ValidationError('Set-symbol import cancelled.')
+    check_cancel()
     url=payload.get('url')
     if not isinstance(url,str) or not url.strip() or len(url)>4096:
         raise ValidationError('Paste a public GitHub set-symbol folder link.')
@@ -123,11 +133,15 @@ def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=la
         if not isinstance(repo,dict) or not isinstance(repo.get('default_branch'),str):
             raise ValidationError('GitHub did not return the repository default branch.')
         loc=github_location(url,repo['default_branch'])
+        yield
+        check_cancel()
     if not loc['folder']:
         raise ValidationError('Choose the folder containing four rarity images.')
     ref=quote(loc['ref'],safe='')
     api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+ref
     rows=workspace.net.json(api,ttl=0)
+    yield
+    check_cancel()
     if not isinstance(rows,list) or len(rows)>=1000:
         raise ValidationError('That GitHub link must be a small image folder.')
     found={}
@@ -155,11 +169,20 @@ def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=la
         raw_url='https://raw.githubusercontent.com/'+loc['repo']+'/'+ref+'/'+quote(path,safe='/')
         raw,_,_=workspace.net.fetch(raw_url,refresh=True,ttl=0)
         result[rarity]=ingest_image(workspace.store,raw,trim_transparent_padding=True)['id']
+        yield
+        check_cancel()
     progress(4,4,'Four rarity symbols imported')
     return {'symbols':result}
 
 
 def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
+    steps=import_github_setup_steps(workspace,payload,progress,cancel)
+    while True:
+        try:next(steps)
+        except StopIteration as finished:return finished.value
+
+
+def import_github_setup_steps(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Return a complete source/symbol/back settings patch, never a saved deck.
 
     Canonical set_symbols/ wins over the legacy set_symbol/ alias and the
@@ -186,6 +209,8 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         if not isinstance(repo, dict) or not isinstance(repo.get('default_branch'), str):
             raise ValidationError('GitHub did not return the repository default branch.')
         loc = github_location(url, repo['default_branch'])
+        yield
+        check_cancel()
     ref = quote(loc['ref'], safe='')
     base = 'https://github.com/' + loc['repo'] + '/tree/' + ref
     root_url = base + ('/' + quote(loc['folder'], safe='/') if loc['folder'] else '')
@@ -194,6 +219,8 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         check_cancel()
         api = 'https://api.github.com/repos/' + loc['repo'] + '/contents/'
         rows = net.json(api + quote(folder, safe='/') + '?ref=' + ref, ttl=0)
+        yield
+        check_cancel()
         if not isinstance(rows, list):
             raise ValidationError('That GitHub link is a file, not a project folder.')
         # The Contents API's directory limit must never look like a complete bundle.
@@ -248,11 +275,11 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             raise ValidationError(row['name'] + ': export SVG to PNG for GitHub setup import, or upload it individually below.')
         return row
 
-    rows = folder_rows(loc['folder'])
+    rows = yield from folder_rows(loc['folder'])
     if PurePosixPath(loc['folder']).name.lower()=='art' and not named_folder(rows,'art'):
         parent=str(PurePosixPath(loc['folder']).parent)
         if parent=='.':parent=''
-        parent_rows=folder_rows(parent)
+        parent_rows=yield from folder_rows(parent)
         if named_folder(parent_rows,'art')==loc['folder']:
             loc={**loc,'folder':parent}
             rows=parent_rows
@@ -269,7 +296,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         if candidate is None:
             continue
         progress(0, 0, 'Checking the four rarity symbols')
-        contents = folder_rows(candidate)
+        contents = yield from folder_rows(candidate)
         image_rows = [r for items in contents.values() for r in items
                       if PurePosixPath(r['name'].lower()).suffix in IMAGE_EXTENSIONS]
         if not image_rows:
@@ -310,6 +337,8 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             raise ValidationError(row['name'] + ': ' + str(exc)) from exc
         done += 1
         progress(done, total, 'Imported ' + row['name'])
+        yield
+        check_cancel()
         return image
 
     card_data = []
@@ -325,19 +354,27 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             validate_card_data_for_deck(workspace, deck_id, card_data)
         done += 1
         progress(done, total, 'Imported data.json')
+        yield
+        check_cancel()
 
     if symbol_rows:
-        symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()}
+        symbols = {}
+        for rarity,row in symbol_rows.items():
+            image=yield from download(row,trim_transparent_padding=True)
+            symbols[rarity]=image['id']
     else:
         symbols = workspace.default_symbols()
     if back:
-        back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
+        image=yield from download(back,trim_transparent_padding=True)
+        back_settings = {'backAsset': image['id'], 'backDesign': {'mode': 'custom'}}
     elif icon:
-        output = workspace.backs.icon(download(icon)['id'])
+        image=yield from download(icon)
+        output = workspace.backs.icon(image['id'])
         warnings.extend(output['placement'].get('warnings', []))
         back_settings = {'backAsset': output['id'], 'backDesign': output['design']}
     else:
         back_settings = workspace.backs.settings({'backDesign': {'mode': 'default'}})
+    yield
     check_cancel()
     source = {'mode': 'github' if art_folder else 'scryfall',
               'githubFolder': base + '/' + quote(art_folder, safe='/') if art_folder else '',

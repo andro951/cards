@@ -179,3 +179,32 @@ Seven affected actual static browser cases pass in 260.92s: three complete
 import/setup/generate/review/ZIP/reload flows, three foreground/cancel ownership
 cases during real generation, and browser job cancellation/reload. Touched Node
 syntax, Python compilation and git diff whitespace checks pass.
+
+## Chunk 7 — cooperative GitHub setup and archive exports
+
+Baseline main: dee035c. Browser jobs use generator paths for GitHub setup and
+four-symbol imports, paired order packaging, original/art-crop/review image ZIPs,
+and backup export. Legacy local routes drain the same implementation. Cancelled
+generators remove unfinished archives in finally blocks, including the final
+item boundary. Order publication rejects changed/deleted deck revisions. Immutable
+snapshot assets are pinned while an export reads them, then deferred cleanup is
+released; foreground deletion cannot remove an input still needed by that export.
+
+New tests caught and repaired a review-generator cleanup variable omission.
+All 22 new routine cases pass, including both complete/cancel paths on seven
+routes, full-storage errors, final cancellation, stale order snapshots and
+backup/review integrity during foreground deletion. Temporary actual static
+benchmark adds 75ms per remote read: foreground deck reads dropped from
+0.960–1.790s to 0.140–0.142s during setup, and 3.271–3.303s to 0.216–0.257s
+during 24-image review export. Cooperative reads return before job completion.
+All cancellation trials finish and cancelled review ZIPs are removed. These
+are queue measurements, not live network or archive throughput claims.
+See docs/COOPERATIVE_IMPORT_EXPORT.md and job-family-profile.json.
+Final routine sweep passes all 580 cases in 245.25s. The initial ten affected
+browser cases pass in 258.50s (new family benchmark, three complete static flows,
+six existing GitHub draft/save cases). After asset protection, the benchmark and
+two complete flows pass; the /cards/ case times out at startup once and then
+passes in 56.55s. Its cause is not established. Added startup failure screenshot,
+body/errors/browser diagnostic capture; retain startup recurrence as a stability
+investigation for the final sweep. The approved anchor/folder session is alive
+and granted. Python compilation and git diff checks pass.

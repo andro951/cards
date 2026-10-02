@@ -2,8 +2,9 @@
 
 - Synchronous network transport can make a single chunk long. Measure actual
   card, source-index and asset request spans before changing transport.
-- Imports and runtime setup now yield; GitHub setup, orders, archives and backups
-  still need their own safe yield boundaries.
+- Imports, runtime setup, GitHub setup, paired orders, deck image archives and
+  backup export now yield. Backup inspect/restore and legacy tools still need
+  their own safe boundaries; do not yield inside a mutation transaction.
 - Same-deck generation/edit races require optimistic revisions and ownership.
   Shared asset caches may gain orphan bytes on conflict but must not lose edits.
 - Pipelines need bounded in-flight Blobs; failure/cancel must settle pending
@@ -26,3 +27,9 @@
 - Collections retain their mounted tiles while filtering. Initial mount and very
   large-collection memory remain separate profiling targets; no virtualization
   benefit is claimed by the 400-card/300-deck fixture.
+
+- The complete /cards/ deployment test timed out at startup once after app
+  modules loaded, then passed on rerun. Cause unproven; do not dismiss it as
+  network slowness without evidence. Failure artifacts now capture the body,
+  screenshot, browser errors and persisted browser diagnostics. Recheck in the
+  final full sweep and investigate any recurrence.
