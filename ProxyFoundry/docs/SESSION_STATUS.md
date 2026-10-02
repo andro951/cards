@@ -29,3 +29,5 @@ Native render saves now validate and preserve original PNG bytes, and unchanged 
 New timing records and the diagnostics summary identify browser versus selected-folder storage.
 
 The real Windows selected-folder save benchmark passed using the user's Documents folder: old full requests averaged 8.187 sec, optimized requests 5.881 sec (28.2% faster). Exact PNG bytes, physical files and reload recovery were verified. See the save verification report for evidence and reproduction.
+
+Save profiling now separates the earlier benchmark's extra verification readback. For a first unique PNG in a real selected folder, render copying (34%), asset persistence (30%), and temporary input staging (24%) dominate. Synchronous filesystem bridge overhead accounts for 59% of total time; validation is only 3.5%. See [save profile](RENDER_SAVE_PROFILE.md). Production behavior is unchanged by this investigation.

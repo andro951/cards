@@ -34,6 +34,8 @@ Final gates: 528 routine tests passed in 239.30 seconds; all 11 actual browser s
 
 ## Real Windows folder benchmark — 2026-10-01
 
+**Measurement clarification:** these old/new benchmark requests also read the saved PNG back for verification inside the timer. The separate [save profile](RENDER_SAVE_PROFILE.md) times saving without that additional readback and ranks the remaining costs. The figures below remain valid comparisons of the two benchmark paths, but are not pure save latency.
+
 The same four-save Chromium/Pyodide benchmark also passed using a genuine File System Access directory handle selected by the user. This run writes to `D:\isaac\Documents\BulkProxyForge-Save-Benchmark-6e85df8a`, rather than browser storage or an OPFS stand-in for a folder handle. It uses the same 2010x2814 PNG, 9,168,781 bytes, and the same old/new save operations as the browser benchmark.
 
 | Save | Previous full request | Optimized full request |
