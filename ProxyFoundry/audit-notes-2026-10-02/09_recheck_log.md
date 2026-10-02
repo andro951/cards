@@ -246,3 +246,22 @@ are legible and correctly proportioned. Static tests prove small preview decode,
 full-size enlargement, and ZIP bytes. No startup failure in these three flows.
 See docs/SMALL_PREVIEWS.md and raw measurements. Startup recurrence and final
 stress/recovery sweep remain next.
+
+
+## Chunk 10 — actionable startup diagnostics
+
+Baseline de4e47c. Twelve root/subpath initial/warm launches before and twelve
+after instrumentation completed without startup timeout. Pyodide and Python
+app initialization dominate; local bundle fetch/unpack is about 0.2s. No cache
+or dependency rewrite is justified by this fixture. Production reports stages,
+storage type, engine total/outcome/last stage and website total in browser
+diagnostics, with clearer status messages. Timer boundaries and shared-process
+CDN caching limitations are documented in docs/STARTUP_PROFILE.md.
+Seven deterministic Node cases verify browser/folder success and five failure
+stages. Actual root/subpath cold/warm diagnostic assertions pass in 56.36s.
+580 routine cases pass in 242.94s; the new startup case is extended and separate.
+Earlier isolated timeout remains unexplained, with failure capture retained.
+A separate 400-image stress expansion is in progress: the original 180-second
+pre-render wait expired, while the instrumented rerun proves preparation is
+progressing (220/400 observed). Stress harness changes remain uncommitted until
+its final state/reload and foreground interactions are verified.

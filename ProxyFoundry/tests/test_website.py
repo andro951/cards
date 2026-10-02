@@ -26,6 +26,17 @@ def copy_site(tmp_path):
     return site
 
 
+def test_static_startup_timings_and_root_subpath_reloads(tmp_path):
+    """Actual startup completes with actionable timings at both deployment roots."""
+    output=tmp_path/'startup.json'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/profile_startup.py'),
+        '--repeats','1','--output',str(output)],cwd=ROOT,check=True,capture_output=True,timeout=360)
+    rows=json.loads(output.read_text(encoding='utf-8'))['trials']
+    assert len(rows)==4
+    assert {(row['base'],row['warm']) for row in rows}=={('/',False),('/',True),('/cards/',False),('/cards/',True)}
+    assert all(not row['errors'] and any(stage['stage']=='engine-total' and stage['outcome']=='ok' for stage in row['stages']) for row in rows)
+
+
 def test_static_engine_foreground_requests_between_job_chunks(tmp_path):
     """Real service-worker/engine requests must run before a long job completes."""
     output=tmp_path/'responsiveness.json'

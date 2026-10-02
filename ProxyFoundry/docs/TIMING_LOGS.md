@@ -21,8 +21,16 @@ Each entry identifies the stage, elapsed seconds and outcome, plus the available
 - `runtime.prepare`, `runtime.start`: renderer dependency preparation and startup.
 - `render.load-face`, `render.native`, `render.save`, `render.total`: loading compiled data, native rendering, saving PNG and render-plan total.
 - `generation.total`: the full explicit Generate Images operation, including deck preparation, renderer setup, all images and saves. It excludes time waiting in the native-render queue.
-- `native.assets`, `native.fonts`, `native.symbols`, `native.load-and-scripts`, `native.loaded-images`, `native.loaded-fonts`, `native.first-draw`, `native.settle-wait`, `native.final-draw`, `native.png-export`: renderer substeps. The settle wait is the existing 550ms delay, now visible in timings.
+- `native.assets`, `native.fonts`, `native.symbols`, `native.load-and-scripts`, `native.loaded-images`, `native.loaded-fonts`, `native.first-draw`, `native.settle-wait`, `native.final-draw`, `native.png-export`: renderer substeps. Readiness is explicit; the old fixed 550ms delay was removed and its compatibility timing field remains.
 
 Start with the longest entries and inspect their nested stages to distinguish network, storage, compilation and rendering costs. Timings are inclusive: for example, card.prepare includes art.resolve and card.compile; do not add every entry together. Rendering diagnostics retain their existing details to explain which assets/frame were being processed. No new server or analytics service is used.
 
 Verification covers the threshold, original exception/result behavior, logger failure isolation, cache versus download and byte counts, and actual static browser rendering with timing entries in the downloaded diagnostics ZIP.
+
+
+## Startup
+
+Browser diagnostics also contain `startup timing` stages for Pyodide, Pillow,
+workspace opening, bundle fetch/unpack, Python application initialization and
+engine/website totals. They identify storage type and failures retain the last
+stage reached. See [startup measurements](STARTUP_PROFILE.md) for timer boundaries.

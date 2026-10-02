@@ -19,9 +19,21 @@ self.jobCancelled=ident=>{
   return JSON.parse(new TextDecoder().decode(result.bytes)).cancelled;
 };
 async function start(folder){
+  const started=performance.now();
+  let stage='pyodide',measured=started;
+  const mark=next=>{
+    const now=performance.now(),seconds=(now-measured)/1000;
+    if(seconds>=.1)self.postMessage({type:'startup-timing',stage,seconds,storageType:folder?'selected-folder':'browser'});
+    stage=next;measured=now;
+  };
+  try{
   self.postMessage({type:'status',message:'Loading card engine…'});
   python=await loadPyodide();
+  mark('pillow');
+  self.postMessage({type:'status',message:'Loading image tools…'});
   await python.loadPackage('pillow');
+  mark('workspace-open');
+  self.postMessage({type:'status',message:'Opening saved workspace…'});
   const directory=folder||await navigator.storage.getDirectory();
   python.FS.mkdirTree('/workspace');
   for await(const [name,entry] of directory.entries()){
@@ -36,10 +48,16 @@ async function start(folder){
     if(request.status!==200)throw new Error(`Workspace checkpoint failed (${request.status}).`);
   };
   mount={syncfs:async()=>python.runPython('app.store.checkpoint()')};
+  mark('bundle-fetch');
+  self.postMessage({type:'status',message:'Loading application bundle…'});
   const archive=await fetch('/web/runtime.zip',{cache:'no-store'});
   if(!archive.ok)
     throw new Error(`Card engine bundle could not be loaded (${archive.status}).`);
-  python.unpackArchive(await archive.arrayBuffer(),'zip',{extractDir:'/app/ProxyFoundry'});
+  const archiveBytes=await archive.arrayBuffer();
+  mark('bundle-unpack');
+  python.unpackArchive(archiveBytes,'zip',{extractDir:'/app/ProxyFoundry'});
+  mark('python-app-init');
+  self.postMessage({type:'status',message:'Starting workspace tools…'});
 
   const bundleVersion=JSON.parse(new TextDecoder().decode(python.FS.readFile('/app/ProxyFoundry/build.json'))).id;
   if(bundleVersion!==buildId)throw new Error('The website engine bundle is a different version. Reload the page to finish updating.');
@@ -92,7 +110,12 @@ def browser_request(method, url, body, headers):
     return encoded
 `);
   initialized=true;
+  mark('ready');
   self.postMessage({type:'ready',buildId});
+  }
+  finally{
+    self.postMessage({type:'startup-timing',stage:'engine-total',seconds:(performance.now()-started)/1000,storageType:folder?'selected-folder':'browser',outcome:initialized?'ok':'failed',lastStage:stage});
+  }
 }
 
 //The marker avoids Pyodide's signed ASCII/buffer offsets above 2 GiB.

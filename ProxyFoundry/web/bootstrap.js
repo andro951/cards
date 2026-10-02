@@ -2,6 +2,7 @@ import {WorkspaceFiles} from './workspace-files.js';
 import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
 const basePath='';
 const buildId='development';
+const startupStarted=performance.now();
 window.__pfBasePath=basePath;
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
@@ -97,6 +98,7 @@ else{
 
   worker.onmessage=async event=>{
     const data=event.data;
+    if(data.type==='startup-timing')recordDiagnostic('startup timing',JSON.stringify(data));
     if(data.type==='cleanup-warning')window.dispatchEvent(new CustomEvent('pf-cleanup-warning',{detail:data.message}));
     if(data.type==='job'){
       const completed=[...jobs].filter(([,job])=>['done','failed','cancelled'].includes(job.state));
@@ -200,6 +202,7 @@ else{
     await Promise.all([import('/site/app.js'),appReady]);
     shell.style.display='';
     startup.remove();
+    recordDiagnostic('startup timing',JSON.stringify({stage:'website-total',seconds:(performance.now()-startupStarted)/1000,outcome:'ok',storageType:folder?'selected-folder':'browser'}));
   }
   catch(error){message.textContent=`Could not open the browser workspace: ${error.message}`;}
 }

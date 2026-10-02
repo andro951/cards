@@ -39,3 +39,7 @@
   image elements stable. Initial large-grid mounting and thumbnail creation are
   still separate costs. The current fixture proves reduced bytes and DOM work,
   not a reduction in native render time or initial 400-image decode latency.
+
+- Repeated startup launches pass but do not establish the cause of the isolated
+  timeout. Production stage/total diagnostics now expose future failures. Local
+  bundle timings cannot justify a shared cache based on public network assumptions.

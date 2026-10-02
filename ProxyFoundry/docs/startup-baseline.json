@@ -1,0 +1,414 @@
+{
+  "revision": "de4e47c743976067e90b75cd256894fad13bfe3e",
+  "note": "Fresh browser contexts and warm reloads; shared browser process may retain CDN HTTP cache. No import or generation. Local static bundle transport.",
+  "trials": [
+    {
+      "base": "/",
+      "repeat": 0,
+      "warm": false,
+      "seconds": 7.280614199815318,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.6625
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.352
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02390000009536743
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.24509999990463258
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.752800000190735
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 0,
+      "warm": true,
+      "seconds": 5.284587200032547,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.550900000095367
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.2697999999523163
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.0205
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.2042999999523163
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.700100000143051
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 1,
+      "warm": false,
+      "seconds": 6.564586600055918,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.521
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.38909999990463257
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.022
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.20059999990463256
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.692100000143051
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 1,
+      "warm": true,
+      "seconds": 5.123600699938834,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.3782000000476837
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.23959999990463257
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02090000009536743
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.21839999985694886
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.722
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 2,
+      "warm": false,
+      "seconds": 6.888143799966201,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.5125999999046327
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.3692000000476837
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02540000009536743
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.2312999999523163
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.9459000000953675
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 2,
+      "warm": true,
+      "seconds": 5.1494183000177145,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.431100000143051
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.26609999990463257
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02159999990463257
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.21180000019073486
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.6673999998569489
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 0,
+      "warm": false,
+      "seconds": 6.583490299992263,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.4947999999523165
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.3492000000476837
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.022299999952316286
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.20890000009536744
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.694899999856949
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 0,
+      "warm": true,
+      "seconds": 5.074955400079489,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.2805
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.23840000009536744
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02090000009536743
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.2037999999523163
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.7690999999046326
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 1,
+      "warm": false,
+      "seconds": 6.608650099951774,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.599199999809265
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.33420000004768374
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.022200000047683716
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.20159999990463257
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.7085
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 1,
+      "warm": true,
+      "seconds": 4.978171399794519,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.300699999809265
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.25380000019073484
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.019399999856948853
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.20310000014305116
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.678699999809265
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 2,
+      "warm": false,
+      "seconds": 7.076320599997416,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.6903000001907347
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.4515
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.028099999904632567
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.2695
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.8294000000953674
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 2,
+      "warm": true,
+      "seconds": 5.006544499890879,
+      "stages": [
+        {
+          "type": "__startup",
+          "stage": "pyodide",
+          "seconds": 2.343
+        },
+        {
+          "type": "__startup",
+          "stage": "pillow",
+          "seconds": 0.24489999985694885
+        },
+        {
+          "type": "__startup",
+          "stage": "workspace-open",
+          "seconds": 0.02160000014305115
+        },
+        {
+          "type": "__startup",
+          "stage": "bundle-fetch-unpack",
+          "seconds": 0.2062999999523163
+        },
+        {
+          "type": "__startup",
+          "stage": "python-app-init",
+          "seconds": 1.657
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

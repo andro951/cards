@@ -9,7 +9,7 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 580 | Every completed change |
-| Extended | 111 | Relevant changes or an explicit full sweep |
+| Extended | 112 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -142,3 +142,11 @@ and all 14 affected UI/browser cases, including three complete production flows.
 grid previews. Affected component tests include 400-card stable filtering and
 original-image enlargement; complete static flows verify decode and ZIP bytes.
 The milestone passed 580 routine tests, 16 components and five browser cases.
+
+
+### Startup diagnostics
+
+[Startup measurements](STARTUP_PROFILE.md) cover root/subpath initial loads and
+reloads, persisted timers and failure-stage reporting. Node startup timing tests
+run with the existing tests_web wildcard. The actual static startup test is
+extended and requires PF_BROWSER=1 and PF_LIVE_CC=1.
