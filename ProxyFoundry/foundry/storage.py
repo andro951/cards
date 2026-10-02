@@ -11,6 +11,8 @@ import sqlite3
 import string
 import tempfile
 import time
+import threading
+from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
@@ -194,6 +196,7 @@ def display_name(text: str, fallback='item') -> str:
 class Store:
     def __init__(self, home: Path | None = None):
         self.storage_type='local-folder'
+        self._image_ingest_cache=OrderedDict();self._image_ingest_lock=threading.RLock()
         self._asset_pins={};self._deferred_asset_deletes=set()
         self.home = Path(home or default_home()).resolve()
         self.home.mkdir(parents=True, exist_ok=True)

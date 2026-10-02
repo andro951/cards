@@ -265,3 +265,22 @@ A separate 400-image stress expansion is in progress: the original 180-second
 pre-render wait expired, while the instrumented rerun proves preparation is
 progressing (220/400 observed). Stress harness changes remain uncommitted until
 its final state/reload and foreground interactions are verified.
+
+
+## Chunk 11 — reuse identical normalized artwork
+
+Baseline d9e78e9. Actual static browser normalization benchmark with warm full-card
+PNG bytes: eight ingests take 27.748/26.556s before and 0.339/0.321s after;
+all normalized SHA-256/dimensions/bytes match. The bounded per-Store cache keeps
+128 input hashes/trim flags and IDs only, checks saved asset existence, and
+retains existing validation/normalization on misses. No early downloads/rendering,
+network refresh change, or native render-save change. Benchmark overlaps an
+independent large preparation run: do not infer end-to-end throughput from it.
+Six image cases pass in 10.06s; four actual static cases (normalization plus three
+complete production flows) pass in 205.78s; all 583 routine tests pass in 232.42s.
+The large-session harness is still in progress and remains uncommitted. Its
+second failed attempt was Unicode console encoding in the harness, and the
+next failed wait targeted old local Settings IDs that the browser UI does not
+use. Captured page proves Settings had opened while native images continued.
+Updated selectors target the actual browser settings/templates; rerun is live.
+See docs/IMAGE_INGEST_REUSE.md and raw operation trials.

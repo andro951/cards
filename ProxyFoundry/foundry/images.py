@@ -1,6 +1,6 @@
 """Image validation and opt-in rarity treatment; never generate substitute artwork."""
 from __future__ import annotations
-import base64,io,re,xml.etree.ElementTree as ET
+import base64,hashlib,io,re,xml.etree.ElementTree as ET
 from PIL import Image,ImageOps,UnidentifiedImageError
 from .domain import ValidationError,RARITIES
 from .timing import timing
@@ -27,11 +27,27 @@ def trim_transparent_edges(im):
     return im.crop(bbox)
 
 def ingest_image(store,raw,*,trim_transparent_padding=False):
+    if not raw or len(raw)>MAX_BYTES:raise ValidationError('Choose an image smaller than 64 MB.')
+    cache=getattr(store,'_image_ingest_cache',None)
+    key=(hashlib.sha256(raw).digest(),bool(trim_transparent_padding)) if cache is not None else None
+    if cache is not None:
+        with store._image_ingest_lock:
+            ident=cache.pop(key,None)
+            if ident:cache[key]=ident
+        if ident:
+            asset=store.asset(ident)
+            if asset:return asset
+            with store._image_ingest_lock:cache.pop(key,None)
     with timing(store,'image.decode',bytes=len(raw)):im=decode_image(raw)
     if trim_transparent_padding:im=trim_transparent_edges(im)
     out=io.BytesIO()
     with timing(store,'image.encode-png',width=im.width,height=im.height):im.save(out,'PNG')
-    return store.add_asset(out.getvalue(),'image/png',im.width,im.height)
+    asset=store.add_asset(out.getvalue(),'image/png',im.width,im.height)
+    if cache is not None:
+        with store._image_ingest_lock:
+            cache[key]=asset['id']
+            while len(cache)>128:cache.popitem(last=False)
+    return asset
 
 def ingest_render_png(store,raw,expected_size):
     """Validate native canvas PNGs without recompressing their existing pixels."""

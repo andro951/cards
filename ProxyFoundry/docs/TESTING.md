@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 580 | Every completed change |
-| Extended | 112 | Relevant changes or an explicit full sweep |
+| Routine | 583 | Every completed change |
+| Extended | 113 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -150,3 +150,12 @@ The milestone passed 580 routine tests, 16 components and five browser cases.
 reloads, persisted timers and failure-stage reporting. Node startup timing tests
 run with the existing tests_web wildcard. The actual static startup test is
 extended and requires PF_BROWSER=1 and PF_LIVE_CC=1.
+
+
+### Repeated artwork normalization
+
+[Image-ingest reuse](IMAGE_INGEST_REUSE.md) documents the bounded metadata cache
+and actual static browser comparison. Routine image cases cover changed bytes,
+trimming, missing files, invalid input and eviction. The actual static ingestion
+check is extended; it verifies byte identity without a machine-dependent timing
+threshold.

@@ -26,6 +26,20 @@ def copy_site(tmp_path):
     return site
 
 
+def test_static_repeated_artwork_ingest_preserves_normalized_bytes(tmp_path):
+    """Actual Pyodide reuse returns the same immutable PNG without re-encoding."""
+    import io
+    from PIL import Image
+    output=tmp_path/'ingest.json';image=tmp_path/'art.png'
+    data=Image.new('RGBA',(900,1260),(75,105,145,255));data.paste((30,40,50,255),(300,400,600,800));data.save(image,'PNG')
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/profile_image_ingest.py'),
+        '--image',str(image),'--output',str(output)],cwd=ROOT,check=True,capture_output=True,timeout=240)
+    rows=json.loads(output.read_text(encoding='utf-8'))['trials']
+    assert len(rows)==4 and len({row['asset'] for row in rows})==1
+    assert all(row['width']==900 and row['height']==1260 and row['repeats']==8 for row in rows)
+    #No machine-dependent speed threshold: correctness plus benchmark data.
+
+
 def test_static_startup_timings_and_root_subpath_reloads(tmp_path):
     """Actual startup completes with actionable timings at both deployment roots."""
     output=tmp_path/'startup.json'
