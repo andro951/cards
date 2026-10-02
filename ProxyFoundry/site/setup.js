@@ -1,3 +1,4 @@
+import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
@@ -430,8 +431,11 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     if(importingArtwork||githubImport.isBusy()||backPicker.isBusy())throw new Error('An import is still finishing. Its progress is shown in Art & Setup.');
     generating=true;
     const buttons=[$('#save-generate',root),$('#generate-deck')].filter(Boolean);
-    for(const button of buttons){button.disabled=true;}
     try{
+    if(!await githubImport.ensureImported(s.githubSetupFolder))return;
+    for(const button of buttons){button.disabled=true;}
+    readSettings();
+    recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
     if(!await reviewArtwork())return;
     if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     mark();await persistSetup();await exportPairs();await onSaved(deck,true);

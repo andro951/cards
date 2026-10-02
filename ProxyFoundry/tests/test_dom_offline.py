@@ -635,3 +635,46 @@ def test_generated_token_frame_changes_persist_before_regeneration(dom_page,choi
     assert 'selected' in page.get_by_role('button',name='Select Classic arched token',exact=True).inner_text()
     page.locator('#modal-close').click()
     assert not errors,errors
+
+
+@pytest.mark.parametrize('button',['generate-deck','save-generate'])
+@pytest.mark.parametrize('failure',[False,True],ids=['import-success','import-failure'])
+def test_generate_imports_pending_github_link_and_keeps_artist(dom_page,button,failure):
+    page,errors=dom_page
+    page.evaluate("""failure=>{
+      window.importCalls=0;window.preparedSettings=[];const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path==='/api/setup/github-import'){
+          importCalls++;
+          if(failure)return {ok:false,status:400,text:async()=>JSON.stringify({error:'GitHub folder unavailable'})};
+          return {ok:true,text:async()=>JSON.stringify({id:'github-pending'})};
+        }
+        if(path==='/api/jobs/github-pending')return {ok:true,text:async()=>JSON.stringify({state:'done',result:{
+          settings:{source:{mode:'github',githubFolder:'https://github.com/owner/cards/tree/main/deck/art',fallback:false,localFiles:{}},githubSetupFolder:'https://github.com/owner/cards/tree/main/deck',symbols:Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)])),backAsset:null,backDesign:{mode:'default'}},
+          cardData:[],summary:{art:'github',symbols:'default',back:'default'},warnings:[]}})};
+        if(path.endsWith('/prepare')){preparedSettings.push(structuredClone(__fixture.deck.settings));return {ok:true,text:async()=>JSON.stringify({id:'prepare-pending'})};}
+        if(path==='/api/jobs/prepare-pending')return {ok:true,text:async()=>JSON.stringify({state:'done',result:__fixture.deck})};
+        if(path==='/api/render-sessions')return {ok:true,text:async()=>JSON.stringify({targets:[],errors:[],cached:1})};
+        return original(path,options);
+      };
+      location.hash='#deck/'+__fixture.deck.id+'/setup';
+    }""",failure)
+    page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/deck')
+    page.locator('#deck-artist').fill('My custom artist')
+    page.click('#'+button)
+    page.wait_for_function('importCalls===1')
+    if failure:
+        page.locator('#github-setup-status').filter(has_text='GitHub folder unavailable').wait_for()
+        assert page.evaluate('preparedSettings')==[]
+        assert page.locator('#'+button).is_enabled()
+        assert page.locator('#deck-artist').input_value()=='My custom artist'
+    else:
+        page.wait_for_function('preparedSettings.length===1')
+        settings=page.evaluate('preparedSettings[0]')
+        assert settings['artist']=='My custom artist'
+        assert settings['source']['mode']=='github' and settings['source']['githubFolder'].endswith('/deck/art')
+        page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+        page.locator('#save-generate').click()
+        page.wait_for_function('preparedSettings.length===2')
+        assert page.evaluate('importCalls')==1
+    assert not errors,errors

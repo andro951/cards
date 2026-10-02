@@ -31,11 +31,11 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
     status.className='notice '+kind;status.textContent=text;
   }
   async function run(){
-    if(importing)return;
-    if(isBusy()){message('Wait for the current upload to finish before importing.');return;}
-    try{requireDeckAvailable(deckId);}catch(error){message(error.message);return;}
+    if(importing)return false;
+    if(isBusy()){message('Wait for the current upload to finish before importing.');return false;}
+    try{requireDeckAvailable(deckId);}catch(error){message(error.message);return false;}
     const url=input.value.trim();
-    if(!url){message('Paste the GitHub project folder link first.','error');input.focus();return;}
+    if(!url){message('Paste the GitHub project folder link first.','error');input.focus();return false;}
     const wasDirty=state.dirty;
     let applied=false;
     importing=true;state.dirty=true;
@@ -51,9 +51,11 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       message(`Imported ${art}, ${symbols}, and ${back}${data}. Your setup is saved.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}
       toast('GitHub setup imported and saved.');
+      return true;
     }catch(error){
       if(host.isConnected)message(error.message+' Your setup was not changed.','error');
       else toast(error.message,true);
+      return false;
     }finally{
       importing=false;
       if(host.isConnected){if(!applied)state.dirty=wasDirty;button.disabled=false;input.disabled=false;button.textContent='1-click import';onBusy(false);}
@@ -61,5 +63,9 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
   }
   button.onclick=run;
   input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();run();}});
-  return {isBusy:()=>importing};
+  return {isBusy:()=>importing,ensureImported:async folder=>{
+    const url=input.value.trim();
+    if(!url||url.replace(/\/$/,'')===String(folder||'').trim().replace(/\/$/,''))return true;
+    return run();
+  }};
 }

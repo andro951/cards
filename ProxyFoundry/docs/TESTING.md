@@ -9,11 +9,11 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 629 | Every completed change |
-| Extended | 138 | Relevant changes or an explicit full sweep |
+| Extended | 142 | Relevant changes or an explicit full sweep |
 
 Frame regeneration checks cover token picker/dropdown synchronization, saving before regeneration, new cache keys for changed styles, preserving the selected token frame when adding nicknames, topmost real-name addons, and Godzilla main titles without the real-name strip. Native Chromium checks regenerate an existing token in both modern styles and inspect Godzilla/nickname renders; the static website checks the derived pinned title assets.
 
-Setup persistence regression checks cover both Generate Images buttons saving the latest edits before preparation, navigation preserving edits, storage failure blocking generation with retry, and one-click GitHub import saving before reporting completion.
+Setup persistence regression checks cover both Generate Images buttons saving the latest edits before preparation, navigation preserving edits, storage failure blocking generation with retry, and one-click GitHub import saving before reporting completion. Pending one-click links are imported before either Generate Images button prepares a deck, retaining the entered artist; failed imports stop generation, and already imported links are not imported again.
 
 Card-reference export checks cover regular cards, token variants, two-sided face names, multiple selected printings, records without Oracle IDs, retained metadata, repeat exports, all three destinations, and 5,000-card indexed enrichment. Import checks accept reference-only entries and reject invalid Scryfall URLs.
 
