@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 591 | Every completed change |
-| Extended | 116 | Relevant changes or an explicit full sweep |
+| Routine | 594 | Every completed change |
+| Extended | 117 | Relevant changes or an explicit full sweep |
 
 The subsequent GitHub source-selector and nickname-overlay fix passed all 591
 routine cases in 240.97 seconds and all six offline DOM cases in 34.16 seconds.
@@ -186,3 +186,23 @@ PF_STRESS_IMAGES=400 and PF_STRESS_HEADFUL=1 for an expanded visible run.
 Only its existing default 100-output case is part of an ordinary full sweep.
 The larger fixture repeats four actual printings with fresh face IDs; it does
 not claim coverage of 400 distinct artworks.
+
+## Custom helper artwork (Day / Night)
+
+Automatic helper cards use complete Scryfall printing scans when artwork comes
+from Scryfall. Custom artwork uses the existing full-art floating bars and rules
+panel with the actual face name, Card type, outlined white rules, and artist
+credit. Artwork covers the full card canvas. This also applies to custom
+Experience and Poison Counter helper artwork.
+
+For Day / Night, use separate `day.png` and `night.png` files; numbered names
+such as `121_day.png` and `122_night.png` also match. A missing Night image
+requires Scryfall fallback or custom Night artwork. Night remains the printed
+reverse of Day.
+
+Verification: 594 routine tests passed in 232.02 seconds. Both native helper
+render cases passed in 96.28 seconds, covering four Scryfall scans, four custom
+art faces, numbered filename matching, and the Day/Night print-order pair.
+Custom Day and Night output images were visually inspected. The initial custom
+browser run stopped at the artist-credit prompt; the fixture now supplies its
+artist before generation.

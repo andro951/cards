@@ -1025,7 +1025,7 @@ def test_scryfall_helper_cards_use_complete_printing_images(workspace,name):
     for index,face in enumerate(card.get('card_faces') or [card]):
         assert type_group(face,card,index)=='helper'
         assert sources.art_url(card,face)==face['image_uris']['png']
-        result=Compiler(store).compile_face(card,face,index,{},settings,art)
+        result=Compiler(store).compile_face(card,face,index,{},settings,art,art_origin='Scryfall selected printing')
         assert result['group']=='helper' and result['recipe']=='helper_scan'
         data=result['data']
         assert data['frames']==[]
@@ -1074,3 +1074,23 @@ def test_compiled_saga_nickname_strip_remains_above_structural_frames(workspace)
     assert data['frames'][0]['name']=='Nickname Title'
     assert 'm15NicknameTitleU.png' in data['frames'][0]['src']
     assert any('saga' in frame.get('src','').lower() for frame in data['frames'][1:])
+
+
+@pytest.mark.parametrize('name',['experience','poison-counter','day'])
+def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
+    from pathlib import Path
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(name+'.json')).read_text(encoding='utf-8'))
+    for index,face in enumerate(card.get('card_faces') or [card]):
+        result=Compiler(store).compile_face(card,face,index,{},settings,art,art_origin='GitHub folder')
+        assert result['recipe']=='helper_full_art'
+        data=result['data']
+        assert data['frames'] and data['artBounds']==FULL_ART_NONLAND_BOUNDS
+        assert data['text']['title']['text']==face['name']
+        assert data['text']['type']['text']=='Card'
+        assert 'Land' not in data['text']['type']['text']
+        assert data['text']['rules']['text']
+        assert data['text']['rules']['color']=='white'
+        assert data['text']['rules']['outlineColor']=='black'
+        assert data['text']['pt']['text']==''
+        assert data['infoArtist'] and data['infoNote']==CARD_FOOTER_NOTE

@@ -48,6 +48,7 @@ AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-la
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':4,'godzilla-land':4,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=5
 AUTO_TEMPLATE_VERSIONS['station']=6
+AUTO_TEMPLATE_VERSIONS['helper']=2
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -1491,6 +1492,26 @@ def build_emblem_data(sem,artist,autofit,flags):
     return sem,data,'emblem'
 
 
+def build_custom_helper_data(sem,artist,autofit,flags):
+    """Put helper titles and rules over custom full-card artwork."""
+    # Reuse the approved floating bars and rules panel from the full-art land
+    # recipe, while preserving the helper's actual Card type and face text.
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Land'],subtypes=[],legendary=False,colors=[],
+                 land_colors=[],layout='land_full_single')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data['text']['type']['text']=str(sem.get('printed_type_line') or 'Card')
+    data['text']['mana']['text']=''
+    data['text'].setdefault('pt',{})['text']=''
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    apply_full_art_text(data)
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'helper_full_art'
+
+
 def build_art_series_data(sem,artist,flags,recipe='art_series_scan'):
     """Render an Art Series or helper face as its complete selected-printing scan."""
     donor=copy.deepcopy(sem)
@@ -2240,6 +2261,9 @@ class Compiler:
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='helper' and art_origin!='Scryfall selected printing':
+                d0,data,recipe=build_custom_helper_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group in {'art-series','helper'}:
                 d0,data,recipe=build_art_series_data(sem,artist,flags,'helper_scan' if group=='helper' else 'art_series_scan')
             elif group=='meld':
@@ -2328,7 +2352,7 @@ class Compiler:
             if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:apply_full_art_text(data)
         full_card_art=(
-            choice.startswith('godzilla-') or choice in {'land','legend-land'}
+            recipe=='helper_full_art' or choice.startswith('godzilla-') or choice in {'land','legend-land'}
             or (choice=='auto' and (recipe.startswith('land_') or recipe=='original_dual_land_textless'))
             or data.get('version')=='m15Nickname'
             or (source_aware_placement or {}).get('mode')=='full-art'
