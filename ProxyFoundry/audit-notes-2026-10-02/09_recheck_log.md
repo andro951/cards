@@ -154,3 +154,28 @@ whose back becomes available during progress without replacing its button.
 The decoded screenshot was visually inspected: rendered card, orange appearance,
 focused search and one success notification are intact.
 Next: native task-yield experiment and remaining long-job families/recovery.
+
+## Chunk 6 — native stage task boundaries
+
+Baseline main: 1d7d389. Yield a browser task after each existing measured native
+stage, using scheduler.yield when available and a zero-delay timer otherwise.
+No native drawing calls, order, readiness checks or pixels changed. Compared
+stage yields, extra drawing yields and timer yields against fresh serial saves.
+Mean longest reported native task fell from 588 to 357ms in browser storage and
+623 to 347ms in selected-folder storage. Seven-card warm browser time is similar
+(11.674 versus 11.599s); folder time was 2.8 percent slower (19.011 versus 19.543s).
+This improves task boundaries, without claiming faster generation or solved input
+latency. Some timer gaps remain over one second. Extra drawing yields are not shipped.
+
+All 175 pipeline PNGs match serial pixels and production stored-byte hashes;
+final outputs survived reload. The approved filesystem session was restored,
+remains granted, and stayed open without a picker. The keyboard experiment has
+an automation/status-probe confound and cannot establish end-to-end input latency.
+Broad regression: all 132 PNGs from 22 structural faces match exactly under
+original scheduling, stage yields and forced timer fallback (342.87s).
+All 558 routine tests pass in 172.56s. Godzilla full-card art and blue Prepare
+examples were visually inspected. See docs/NATIVE_TASK_YIELDS.md and raw reports.
+Seven affected actual static browser cases pass in 260.92s: three complete
+import/setup/generate/review/ZIP/reload flows, three foreground/cancel ownership
+cases during real generation, and browser job cancellation/reload. Touched Node
+syntax, Python compilation and git diff whitespace checks pass.

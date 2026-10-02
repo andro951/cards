@@ -24,3 +24,11 @@ Render/save overlap remains experimental: fresh browser writes showed less than
 one percent difference and longer individual save calls. Prioritize native iframe
 long-task boundaries and UI remount/input retention next. Use fresh-write trials
 and exact RGBA/saved-byte/reload checks for further pipeline experiments.
+
+## After chunk 6 measurements
+
+Native stage boundaries reduce the longest reported individual task, while
+remaining timer gaps still require investigation. Next cover synchronous GitHub
+setup and archive job families with safe cancellation/publication boundaries,
+then measure renderer concurrency and worker feasibility. Keep fresh-write,
+pixel/hash/reload comparisons and reserve the final hour for the full sweep.

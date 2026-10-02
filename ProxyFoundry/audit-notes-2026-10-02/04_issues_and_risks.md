@@ -13,9 +13,10 @@
 - Browser timing differs from visible Windows Chromium; avoid mixing the known
   anomalous headless native export measurements into performance claims.
 
-- Actual pipeline traces show near-one-second UI timer gaps with the longest
-  tasks attributed to the CardConjurer iframe. Test safe task yields between
-  native stages before considering additional renderers; preserve exact pixels.
+- Native stage yields reduce the longest reported task from about 600 to 350ms
+  with exact pixels preserved. Timer gaps still sometimes exceed a second;
+  synchronous native calls remain on the main thread. Measure remaining causes
+  before considering additional renderers.
 - Identical-output reruns deduplicate saved assets and overstate overlap benefits.
   Use fresh generated PNG writes with warm input caches for throughput decisions.
 

@@ -9,7 +9,7 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 558 | Every completed change |
-| Extended | 104 | Relevant changes or an explicit full sweep |
+| Extended | 105 | Relevant changes or an explicit full sweep |
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
@@ -61,6 +61,11 @@ It opens visible Chromium, renders 22 structural faces twice, and checks exact
 pixels against a delayed reference. The latest run took 325.26 seconds. Visible
 Chromium avoids this host's abnormal headless canvas/export delays; these timing
 results should not be mixed with headless measurements.
+
+For native task scheduling changes, run `tests/test_native_task_yields.py` with
+the same flags. It renders 22 structural faces twice under original scheduling,
+stage yields and the timer fallback, comparing all 132 PNGs exactly. The latest
+run passed in 342.87 seconds. See [native task boundaries](NATIVE_TASK_YIELDS.md).
 
 For a full sweep, use `RUN_TESTS.bat` option 3. Option 1 runs routine tests;
 option 2 runs only extended tests. Options 2 and 3 enable all browser, live

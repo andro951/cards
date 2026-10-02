@@ -187,24 +187,28 @@ def fixtures(tmp):
     return data,payload
 
 def main():
-    evidence=ROOT/'test-results/native-profile';evidence.mkdir(parents=True,exist_ok=True)
+    evidence=ROOT/('test-results/native-task-yields' if '--yields-only' in sys.argv else 'test-results/native-profile');evidence.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='bpf-native-profile-') as temporary:
         tmp=Path(temporary);data,payload=fixtures(tmp);build_site(tmp);site=copy_site(tmp)
         worker=site/'web/engine-worker.js'
-        worker.write_text(worker.read_text().replace('def browser_request(method, url, body, headers):',SEED+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
-        bridge=site/'site/runtime-bridge.js';source=bridge.read_text()
+        worker.write_text(worker.read_text(encoding='utf-8').replace('def browser_request(method, url, body, headers):',SEED+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+        bridge=site/'site/runtime-bridge.js';source=bridge.read_text(encoding='utf-8')
         source=source.replace('const pendingScripts=new Set();','const pendingScripts=new Set();\n'+EXPERIMENT)
         source=source.replace('loadedScripts.delete(path);','if(experiment!==`reuse-scripts`)loadedScripts.delete(path);')
         source=source.replace("if(seconds>=.1)post",'if(true)post')
-        source=source.replace("await measureNative('native.readiness'", "if(![`no-wait`,`combined`].includes(experiment))await sleep(550);\n      await measureNative('native.readiness'")
+        if '--yields-only' not in sys.argv:source=source.replace("await measureNative('native.readiness'", "if(![`no-wait`,`combined`].includes(experiment))await sleep(550);\n      await measureNative('native.readiness'")
         source=source.replace("await measureNative('native.first-draw',request.key,async()=>{","if(![`single-draw`,`combined`].includes(experiment))await measureNative('native.first-draw',request.key,async()=>{")
+        if '--yields-only' in sys.argv:
+            anchor='      await yieldToInput();'
+            assert source.count(anchor)==1
+            source=source.replace(anchor,"      if(experiment!==`baseline`)await (experiment===`yield-timer`?sleep(0):yieldToInput());")
         bridge.write_text(source,encoding='utf-8')
         (evidence/'experimental-bridge.js').write_text(source,encoding='utf-8')
         handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site))
         folder_mode='--folder' in sys.argv
         if folder_mode:
             import re
-            (site/'profile-connect.html').write_text(re.sub(r'<script\b[\s\S]*?</script>','',(site/'index.html').read_text()),encoding='utf-8')
+            (site/'profile-connect.html').write_text(re.sub(r'<script\b[\s\S]*?</script>','',(site/'index.html').read_text(encoding='utf-8')),encoding='utf-8')
         server=http.server.ThreadingHTTPServer(('127.0.0.1',8769 if folder_mode else 0),handler)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         report={};references={}
@@ -258,7 +262,7 @@ def main():
                 assert storage_type==('selected-folder' if folder_mode else 'browser'),storage_type
                 page.evaluate('''async payload=>{const response=await fetch(`/api/__test__/seed-render-profile`,{method:`POST`,headers:{'Content-Type':`application/json`},body:JSON.stringify(payload)});if(!response.ok)throw new Error(await response.text());}''',payload)
                 page.evaluate('''async()=>{const ui=await import(`/site/ui.js`);await ui.job(`/api/runtime/prepare`,{}, {label:`Profile dependencies`});}''')
-                experiments=[] if '--cache-only' in sys.argv else ['baseline','no-wait'] if '--readiness-only' in sys.argv else ['baseline','reuse-scripts'] if '--scripts-only' in sys.argv else ['baseline','no-wait','single-draw','combined','reuse-scripts']
+                experiments=['baseline','yield-stages','yield-timer'] if '--yields-only' in sys.argv else [] if '--cache-only' in sys.argv else ['baseline','no-wait'] if '--readiness-only' in sys.argv else ['baseline','reuse-scripts'] if '--scripts-only' in sys.argv else ['baseline','no-wait','single-draw','combined','reuse-scripts']
                 for experiment in experiments:
                     print('Running',experiment,flush=True)
                     current[0]=experiment

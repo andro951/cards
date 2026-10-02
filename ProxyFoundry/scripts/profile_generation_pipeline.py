@@ -25,7 +25,7 @@ DRIVE='''async({deckId,mode,freshSaves})=>{
     if(plan.errors.length)throw new Error(plan.errors.join(`\n`));
     const frame=document.createElement(`iframe`);frame.className=`render-frame`;
     frame.setAttribute(`sandbox`,`allow-scripts allow-same-origin`);
-    frame.src=`/runtime/host?parent=${encodeURIComponent(location.origin)}&owner=${encodeURIComponent(window.__pfOwner)}`;
+    frame.src=`/runtime/host?parent=${encodeURIComponent(location.origin)}&owner=${encodeURIComponent(window.__pfOwner)}&experiment=${mode}`;
     document.body.append(frame);
     let readyResolve,readyReject,pending=null,prefetch=null;
     const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
@@ -61,6 +61,7 @@ DRIVE='''async({deckId,mode,freshSaves})=>{
     try{
         await bounded(ready,65000,`Renderer startup timeout`);
         clearInterval(ping);last=performance.now();timer=setInterval(()=>{const now=performance.now();gaps.push(now-last);last=now;},16);
+        window.__pipelineMeasuring=true;
         const started=performance.now();
         for(let index=0;index<targets.length;index++){
             const target=targets[index],nativeStart=performance.now();
@@ -79,10 +80,10 @@ DRIVE='''async({deckId,mode,freshSaves})=>{
             if(previous)await settle(previous);
             if(nextReady)await settle(nextReady);
             previous=save(target,output).then(()=>({}),error=>({error}));
-            if(mode===`serial`){await settle(previous);previous=null;}
+            if(!mode.startsWith(`overlap`)){await settle(previous);previous=null;}
         }
         if(previous)await settle(previous);
-        const seconds=(performance.now()-started)/1000;clearInterval(timer);observer.disconnect();
+        const seconds=(performance.now()-started)/1000;window.__pipelineMeasuring=false;clearInterval(timer);observer.disconnect();
         const images=[];
         for(const output of outputs){
             const raw=await output.blob.arrayBuffer();
@@ -93,9 +94,9 @@ DRIVE='''async({deckId,mode,freshSaves})=>{
             const png=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(`,`)[1]);reader.readAsDataURL(output.blob);});
             images.push({key:output.key,name:output.name,hash,png,nativeSeconds:output.nativeSeconds});
         }
-        return {mode,seconds,saved,images,stages,maxTimerGapMs:Math.max(0,...gaps),longTasks,longTaskCount:longTasks.length,longTaskMs:longTasks.reduce((a,b)=>a+b.milliseconds,0),maxPendingSaves:mode===`serial`?0:1};
+        return {mode,seconds,saved,images,stages,maxTimerGapMs:Math.max(0,...gaps),longTasks,visibility:document.visibilityState,schedulerYieldAvailable:!!window.scheduler?.yield,longTaskCount:longTasks.length,longTaskMs:longTasks.reduce((a,b)=>a+b.milliseconds,0),maxPendingSaves:mode.startsWith(`overlap`)?1:0};
     }finally{
-        if(previous)await previous;clearInterval(ping);clearInterval(timer);observer.disconnect();
+        window.__pipelineMeasuring=false;if(previous)await previous;clearInterval(ping);clearInterval(timer);observer.disconnect();
         window.removeEventListener(`message`,listener);frame.contentWindow.postMessage({source:`pf-app`,type:`dispose`},location.origin);frame.remove();
     }
 }'''
@@ -104,12 +105,14 @@ DRIVE='''async({deckId,mode,freshSaves})=>{
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--folder',action='store_true')
+    parser.add_argument('--input-latency',action='store_true',help='Measure actual keyboard command latency during native rendering/saves')
+    parser.add_argument('--task-yields',action='store_true',help='Compare unchanged serial drawing with native stage/draw task yields')
     parser.add_argument('--fresh-saves',action='store_true',help='Delete prior generated assets before each trial, retaining warm frame/art caches')
     parser.add_argument('--cdp-url',default='http://127.0.0.1:9227')
     parser.add_argument('--output',type=Path)
     options=parser.parse_args()
     storage_type='selected-folder' if options.folder else 'browser'
-    evidence=ROOT/'test-results'/('pipeline-'+storage_type+('-fresh' if options.fresh_saves else ''));evidence.mkdir(parents=True,exist_ok=True)
+    evidence=ROOT/'test-results'/('pipeline-'+storage_type+('-fresh' if options.fresh_saves else '')+('-task-yields' if options.task_yields else '')+('-input' if options.input_latency else ''));evidence.mkdir(parents=True,exist_ok=True)
     output=options.output or evidence/'results.json'
     with tempfile.TemporaryDirectory(prefix='pf-pipeline-') as temporary:
         tmp=Path(temporary);_,payload=fixtures(tmp)
@@ -132,6 +135,16 @@ def main():
 '''
         assert source.count(anchor)==1
         bridge.write_text(source.replace(anchor,prefetch+anchor),encoding='utf-8')
+        if options.task_yields:
+            source=bridge.read_text(encoding='utf-8').replace('      await yieldToInput();','')
+            source=source.replace("  async function measureNative(stage,key,operation){", "  const experiment=new URL(location.href).searchParams.get('experiment');\n  const taskTurn=()=>window.scheduler?.yield?window.scheduler.yield():sleep(0);\n  async function measureNative(stage,key,operation){")
+            timing="      if(seconds>=.1)post('diagnostic',{key,stage:'timing',diagnostic:{stage,seconds:Number(seconds.toFixed(4)),startedAt:performance.timeOrigin+started,outcome}});"
+            assert timing in source
+            source=source.replace(timing,timing+"\n      if(experiment==='yield-stages'||experiment==='yield-draw')await taskTurn();\n      if(experiment==='yield-timer')await sleep(0);")
+            source=source.replace("await window.drawText();await window.bottomInfoEdited();", "await window.drawText();if(experiment==='yield-draw')await taskTurn();await window.bottomInfoEdited();if(experiment==='yield-draw')await taskTurn();")
+            source=source.replace("await window.watermarkEdited();window.drawFrames();window.drawCard();", "await window.watermarkEdited();if(experiment==='yield-draw')await taskTurn();window.drawFrames();if(experiment==='yield-draw')await taskTurn();window.drawCard();")
+            source=source.replace("window.drawFrames();window.drawCard();", "window.drawFrames();if(experiment==='yield-draw')await taskTurn();window.drawCard();")
+            bridge.write_text(source,encoding='utf-8')
         (site/'benchmark-connect.html').write_text('<!doctype html><title>Pipeline benchmark</title>')
         if options.folder:
             #The permission helper releases only its HTTP server, retaining its browser.
@@ -145,7 +158,7 @@ def main():
                 if not options.folder or time.monotonic()>deadline:raise
                 time.sleep(.25)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
-        report={'storageType':storage_type,'freshSaves':options.fresh_saves,'revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+        report={'storageType':storage_type,'freshSaves':options.fresh_saves,'taskYields':options.task_yields,'inputLatency':options.input_latency,'revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
             'note':'Prepared structural fixture using Supernatural artwork. Native drawing and production PNG persistence unchanged. Dependency/plan warmup excluded. One pending save maximum. Prefetch is experimental and runs only after explicit benchmark generation starts.','trials':[]}
         references={}
         try:
@@ -173,9 +186,22 @@ def main():
                     assert page.evaluate("async()=>(await(await fetch('/api/bootstrap')).json()).storageType")==storage_type
                     page.evaluate("async payload=>{const ui=await import('/site/ui.js');await ui.api('/api/__test__/seed-render-profile',payload);await ui.job('/api/runtime/prepare',{});}",payload)
                     #Balanced warm repetitions plus a separate cold/warmup trial.
-                    for index,mode in enumerate(['serial','serial','overlap','overlap-prefetch','overlap-prefetch','overlap','serial']):
+                    modes=['serial','serial','yield-stages','yield-draw','yield-timer','yield-timer','yield-draw','yield-stages','serial'] if options.task_yields else ['serial','serial','overlap','overlap-prefetch','overlap-prefetch','overlap','serial']
+                    for index,mode in enumerate(modes):
                         print(f'{storage_type}: trial {index} {mode}',flush=True)
-                        row=page.evaluate(DRIVE,{'deckId':deck['id'],'mode':mode,'freshSaves':options.fresh_saves});row['warmup']=index==0
+                        arguments={'deckId':deck['id'],'mode':mode,'freshSaves':options.fresh_saves}
+                        if options.input_latency:
+                            page.locator('#deck-search').focus()
+                            page.evaluate('arguments=>{window.__pipelineDone=false;window.__pipelineMeasuring=false;window.__pipelinePromise=('+DRIVE+')(arguments).finally(()=>{window.__pipelineDone=true;});window.__pipelinePromise.catch(()=>{});}',arguments)
+                            latency=[];deadline=time.monotonic()+300
+                            while not page.evaluate('window.__pipelineDone'):
+                                if time.monotonic()>deadline:raise TimeoutError('Input-latency trial timed out')
+                                if page.evaluate('window.__pipelineMeasuring'):
+                                    started=time.perf_counter();page.keyboard.type('x');page.keyboard.press('Backspace');latency.append((time.perf_counter()-started)*1000)
+                                time.sleep(.05)
+                            row=page.evaluate('window.__pipelinePromise');row['keyboardLatencyMs']=latency
+                        else:row=page.evaluate(DRIVE,arguments)
+                        row['warmup']=index==0
                         for image in row['images']:
                             raw=base64.b64decode(image.pop('png'));path=evidence/f'{index}-{image["name"].replace("/","_")}.png';path.write_bytes(raw)
                             pixels=Image.open(io.BytesIO(raw)).convert('RGBA')

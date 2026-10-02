@@ -158,6 +158,7 @@
     await timeout(Promise.all([...families].map(async f=>{const list=await document.fonts.load('16px "'+String(f).replace(/["\\]/g,'')+'"');if(!list.length)throw new Error('No CardConjurer font definition for '+f+'.');})),30000,'CardConjurer fonts');
     await timeout(document.fonts.ready,30000,'Font decoding');
   }
+  const yieldToInput=()=>window.scheduler?.yield?window.scheduler.yield():sleep(0);
   async function measureNative(stage,key,operation){
     const started=performance.now();let outcome='failed';
     try{
@@ -165,6 +166,8 @@
     }finally{
       const seconds=(performance.now()-started)/1000;
       if(seconds>=.1)post('diagnostic',{key,stage:'timing',diagnostic:{stage,seconds:Number(seconds.toFixed(4)),outcome}});
+      //Let foreground browser events run between stages without changing native drawing order.
+      await yieldToInput();
     }
   }
   async function render(request){
