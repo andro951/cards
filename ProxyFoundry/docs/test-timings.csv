@@ -682,7 +682,7 @@ tests/test_website.py::test_static_foreground_work_during_real_generation_preser
 tests/test_website.py::test_static_github_setup_and_review_export_service_foreground_requests,extended,37.681,passed,2026-10-02T05:32:04.275102-04:00
 tests/test_website.py::test_static_late_view_responses_do_not_replace_selected_page,extended,12.029,passed,2026-10-02T03:59:21.437470-04:00
 tests/test_website.py::test_static_metadata_import_services_foreground_reads_before_completion,extended,18.551,passed,2026-10-02T02:46:23.632844-04:00
-tests/test_website.py::test_static_repeated_artwork_ingest_preserves_normalized_bytes,extended,13.499,passed,2026-10-02T06:55:30.452940-04:00
+tests/test_website.py::test_static_repeated_artwork_ingest_preserves_normalized_bytes,extended,17.118,passed,2026-10-02T07:06:10.043598-04:00
 tests/test_website.py::test_static_startup_timings_and_root_subpath_reloads,extended,46.915,passed,2026-10-02T06:33:41.268640-04:00
 tests/test_website.py::test_static_template_editor_generates_only_on_request_and_saves_validated_model,extended,68.623,passed,2026-10-01T05:38:11.466577-04:00
 tests/test_website.py::test_static_token_styles_and_upstream_assets,extended,10.445,passed,2026-09-30T20:19:53.500119-04:00

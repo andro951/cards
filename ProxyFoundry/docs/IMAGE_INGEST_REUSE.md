@@ -36,3 +36,9 @@ pass in 205.78 seconds. All 583 routine tests pass in 232.42 seconds.
 
 Raw measurements: [image-ingest-profile.json](image-ingest-profile.json).
 Reproduce: `scripts/profile_image_ingest.py --image PATH_TO_ARTWORK`.
+
+The committed measurements used historical revision d9e78e9. Pass
+`--baseline d9e78e9` to reproduce that comparison with repository history present.
+The default and automated browser test temporarily disable the cache in the
+isolated fixture for the normalization comparison. This avoids a dependency on
+Git history in shallow CI checkouts; production behavior is not patched.

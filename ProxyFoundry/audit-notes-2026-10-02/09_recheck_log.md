@@ -284,3 +284,17 @@ next failed wait targeted old local Settings IDs that the browser UI does not
 use. Captured page proves Settings had opened while native images continued.
 Updated selectors target the actual browser settings/templates; rerun is live.
 See docs/IMAGE_INGEST_REUSE.md and raw operation trials.
+
+
+### Chunk 11 benchmark portability follow-up
+
+The default repeated-ingest fixture disables only the in-memory cache during
+its comparison, then restores it in finally. An explicit --baseline revision
+still permits historical comparison. This removes a Git-history dependency
+from the automated static test in shallow CI checkouts; no production code or
+checkout depth changes. The actual static case passes in 17.56s. The initial
+historical raw benchmark remains preserved with its actual revision.
+The large-session harness also caught a strict selector matching two template
+grids. The captured page confirms Templates opened; target the first actual
+grid. A pre-generation menu/input pass now validates all selectors before the
+expensive long run. The corrected 400-image run is active, not yet passed.

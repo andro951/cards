@@ -10,18 +10,23 @@ INJECT='''
 import time
 from foundry.images import ingest_image
 baseline_images={'__package__':'foundry','__name__':'foundry._ingest_baseline'}
-exec(base64.b64decode('BASELINE').decode(),baseline_images)
+baseline_source=base64.b64decode('BASELINE').decode()
+if baseline_source:exec(baseline_source,baseline_images)
 original_request=request
 
 def request(app,method,url,body,headers):
     if str(url).startswith('/api/__test__/ingest/'):
         warm=ingest_image(app.store,body)
         baseline=not str(url).endswith('/cached')
-        operation=baseline_images['ingest_image'] if baseline else ingest_image
+        operation=baseline_images.get('ingest_image',ingest_image) if baseline else ingest_image
+        retained=app.store._image_ingest_cache
+        if baseline:app.store._image_ingest_cache=None
         started=time.perf_counter()
-        for index in range(8):
-            result=operation(app.store,body)
-            if result['id']!=warm['id']:raise AssertionError('Normalized bytes changed')
+        try:
+            for index in range(8):
+                result=operation(app.store,body)
+                if result['id']!=warm['id']:raise AssertionError('Normalized bytes changed')
+        finally:app.store._image_ingest_cache=retained
         result={'seconds':time.perf_counter()-started,'baseline':baseline,'asset':result['id'],
             'width':result['width'],'height':result['height'],'bytes':result['size'],'repeats':8}
         return {'status':200,'mime':'application/json','body':json.dumps(result).encode(),'headers':{}}
@@ -31,10 +36,10 @@ def request(app,method,url,body,headers):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image',type=Path,required=True)
-    parser.add_argument('--baseline',default='d9e78e9')
+    parser.add_argument('--baseline',help='Optional historical revision; default compares with the cache disabled.')
     parser.add_argument('--output',type=Path,default=ROOT/'test-results/image-ingest-profile.json')
     args=parser.parse_args()
-    old=subprocess.check_output(['git','show',args.baseline+':ProxyFoundry/foundry/images.py'],cwd=ROOT)
+    old=subprocess.check_output(['git','show',args.baseline+':ProxyFoundry/foundry/images.py'],cwd=ROOT) if args.baseline else b''
     injected=INJECT.replace('BASELINE',base64.b64encode(old).decode())
     raw=args.image.read_bytes();trials=[]
     with tempfile.TemporaryDirectory(prefix='pf-ingest-') as temporary,sync_playwright() as playwright:
@@ -58,7 +63,7 @@ def main():
             assert not errors,errors
             assert len({row['asset'] for row in trials})==1
         finally:browser.close();server.shutdown();server.server_close();thread.join(timeout=5)
-    report={'baseline':args.baseline,'revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+    report={'baseline':args.baseline or 'normalization with cache disabled','revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'note':'Warm same-byte inputs through actual static browser engine. Python operation timers exclude startup and request body transfer. Bounded cache retains IDs only; all returned normalized PNG hashes match. No deck throughput claim.','sourceBytes':len(raw),'trials':trials}
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(report,indent=2),encoding='utf-8')
 
