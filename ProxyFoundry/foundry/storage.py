@@ -476,6 +476,10 @@ class Store:
             return None
         return {**dict(row),'url':'/api/assets/'+row['asset_id']}
 
+    def copy_render_file(self,source,destination):
+        try:os.link(source,destination)
+        except (OSError, AttributeError):shutil.copy2(source,destination)
+
     @timed('storage.render')
     def render_put(self, key: str, asset: dict[str, Any], *, deck_id: str | None = None, card_id: str | None = None,
                    face_id: str | None = None, deck_name='Deck', face_name='Card') -> dict[str, Any]:
@@ -492,8 +496,7 @@ class Store:
         source=self.asset_path(asset['id'])
         temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
         try:
-            try:os.link(source,temp)
-            except (OSError, AttributeError):shutil.copy2(source,temp)
+            self.copy_render_file(source,temp)
             os.replace(temp,output)
         finally:
             temp.unlink(missing_ok=True)

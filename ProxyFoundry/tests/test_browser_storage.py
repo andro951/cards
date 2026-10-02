@@ -148,7 +148,7 @@ def request(app, method, url, body, headers):
     page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
     saved=page.evaluate("async id=>({decks:await (await fetch('/api/decks')).json(),job:await (await fetch('/api/jobs/'+id)).json()})",ident)
     assert 3<=len(saved['decks'])<40
-    assert saved['job']['state']=='failed' and 'interrupted' in saved['job']['error']
+    assert saved['job'].get('state')=='failed' and 'interrupted' in saved['job'].get('error',''),saved
     assert saved['job']['done']<=len(saved['decks'])
 
 
@@ -180,11 +180,12 @@ def test_storage_quota_error_is_readable_diagnosed_and_upload_can_retry(static_b
 
 
 @pytest.mark.parametrize('existing_destination',[False,True])
-def test_failed_rename_preserves_source_and_destination_and_retries(static_browser,existing_destination):
+@pytest.mark.parametrize('operation',['rename','copy'])
+def test_failed_rename_preserves_source_and_destination_and_retries(static_browser,existing_destination,operation):
     directory,context,origin=static_browser
     page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
     page.locator('#import-deck').wait_for(timeout=90000)
-    result=page.evaluate("""async existing=>{
+    result=page.evaluate("""async ({existing,operation})=>{
       const {WorkspaceFiles}=await import('/web/workspace-files.js');
       const root=await (await navigator.storage.getDirectory()).getDirectoryHandle('rename-quota-test',{create:true});
       const assets=await root.getDirectoryHandle('assets',{create:true}),files=new WorkspaceFiles(root);
@@ -206,16 +207,16 @@ def test_failed_rename_preserves_source_and_destination_and_retries(static_brows
         return handle;
       };
       const rename=new URLSearchParams({destination:'assets/target.bin'});
-      let error;try{await files.execute('rename','assets/source.bin',rename);}catch(failure){error=failure.name;}
+      let error;try{await files.execute(operation,'assets/source.bin',rename);}catch(failure){error=failure.name;}
       const read=async name=>[...new Uint8Array(await (await files.file('assets/'+name)).arrayBuffer())];
       const source=await read('source.bin');let destination=null;
       try{destination=await read('target.bin');}catch(failure){if(failure.name!=='NotFoundError')throw failure;}
-      fail=false;await files.execute('rename','assets/source.bin',rename);
+      fail=false;await files.execute(operation,'assets/source.bin',rename);
       let sourceRemoved=false;try{await files.file('assets/source.bin');}catch(failure){sourceRemoved=failure.name==='NotFoundError';}
       return {error,source,destination,retried:await read('target.bin'),sourceRemoved};
-    }""",existing_destination)
+    }""",{'existing':existing_destination,'operation':operation})
     assert result=={'error':'QuotaExceededError','source':[4,5,6],
-        'destination':[1,2,3] if existing_destination else None,'retried':[4,5,6],'sourceRemoved':True}
+        'destination':[1,2,3] if existing_destination else None,'retried':[4,5,6],'sourceRemoved':operation=='rename'}
 
 
 def test_open_file_reads_and_log_rotation_use_the_renamed_paths(static_browser):
@@ -372,6 +373,11 @@ def test_native_png_save_benchmark_preserves_bytes_and_survives_reload(static_br
     raw=io.BytesIO();canvas.save(raw,'PNG',compress_level=1)
     (directory/'benchmark.png').write_bytes(raw.getvalue())
     worker=directory/'web/engine-worker.js'
+    filesystem=directory/'web/workspace-fs.js'
+    filesystem.write_text(filesystem.read_text(encoding='utf-8').replace('const query=new URLSearchParams',
+        'if(values.buffer)self.referenceWrites=(self.referenceWrites||0)+1;\n        const query=new URLSearchParams'),encoding='utf-8')
+    bootstrap=directory/'web/bootstrap.js'
+    bootstrap.write_text(bootstrap.read_text(encoding='utf-8').replace('const pending=new Map();','window.testInputBuffers=files.inputBuffers;\n  const pending=new Map();'),encoding='utf-8')
     injection="""
 original_request = request
 def request(app, method, url, body, headers):
@@ -390,7 +396,9 @@ def request(app, method, url, body, headers):
         return {'status':200,'mime':'application/json','body':json.dumps(response).encode(),'headers':{}}
     return original_request(app,method,url,body,headers)
 """
-    worker.write_text(worker.read_text(encoding='utf-8').replace('def browser_request(method, url, body, headers):',injection+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
+    source=worker.read_text(encoding='utf-8').replace('def browser_request(method, url, body, headers):',injection+'\ndef browser_request(method, url, body, headers):')
+    source=source.replace("if(method==='POST')await mount.syncfs();", "if(method==='POST')await mount.syncfs();\n    if(url.startsWith('/api/__test__/save-benchmark/')){const result=JSON.parse(responseBody);result.referenceWrites=self.referenceWrites||0;responseBody=JSON.stringify(result);}")
+    worker.write_text(source,encoding='utf-8')
     page=context.new_page();page.goto(origin,wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
     results=page.evaluate("""async()=>{
       const png=await (await fetch('/benchmark.png')).blob(),rows=[];
@@ -404,6 +412,16 @@ def request(app, method, url, body, headers):
     }""")
     assert all(row['sameBytes'] for row in results if row['mode']=='new')
     assert all(not row['sameBytes'] for row in results if row['mode']=='old')
+    assert results[0]['referenceWrites']==0
+    assert results[1]['referenceWrites']>=1
+    assert page.evaluate('window.testInputBuffers.size')==0
+    failed=page.evaluate("""async()=>{
+      const png=await (await fetch('/benchmark.png')).blob();
+      const response=await fetch('/api/__test__/save-benchmark/new',{method:'POST',headers:{'Content-Type':'image/png'},body:png.slice(0,png.size-32)});
+      await response.text();
+      return {ok:response.ok,buffers:window.testInputBuffers.size};
+    }""")
+    assert failed=={'ok':False,'buffers':0}
     asset=results[-1]['asset']
     page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
     restored=page.evaluate("""async asset=>{

@@ -58,3 +58,23 @@ def test_render_storage_is_fresh_schema_without_migration_code():
     assert 'ALTER TABLE' not in source
     settings=(Path(__file__).resolve().parents[1]/'site/settings.js').read_text(encoding='utf-8')
     assert 'Delete All Images' in settings and '/api/images/delete-all' in settings
+
+
+def test_browser_copy_failure_preserves_previous_render_and_metadata(tmp_path):
+    import shutil
+    from foundry.browser import BrowserStore
+    store=BrowserStore(tmp_path,copy_file=shutil.copy2)
+    first=ingest_image(store,png('#112233'))
+    previous=store.render_put('1'*64,first,face_id='face',face_name='Card')
+    output=store.home/previous['file_path'];saved=output.read_bytes()
+    second=ingest_image(store,png('#445566'))
+    def interrupted(source,destination):
+        Path(destination).write_bytes(Path(source).read_bytes()[:32])
+        raise OSError('Interrupted browser copy')
+    store.copy_file=interrupted
+    with pytest.raises(OSError,match='Interrupted browser copy'):
+        store.render_put('2'*64,second,face_id='face',face_name='Card')
+    assert output.read_bytes()==saved
+    assert store.render_get('1'*64)['asset_id']==first['id']
+    assert store.render_get('2'*64) is None
+    assert not list((store.home/'renders').rglob('*.tmp'))

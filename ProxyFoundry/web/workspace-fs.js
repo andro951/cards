@@ -2,7 +2,18 @@
 
 //Synchronous Python filesystem calls cross to async browser storage, one bounded chunk at a time.
 export function mountWorkspaceFiles(FS,owner) {
+    let input=null;
     const call=(operation,path,values={},body=null)=>{
+        //Pyodide may expose signed byte views; compare byte values before reusing an input.
+        if(operation===`write`&&input&&body?.length===input.bytes.length) {
+            let same=true;
+            for(let index=0;index<body.length;index++) {
+                if((body[index]&255)!==input.bytes[index]){same=false;break;}
+            }
+
+            if(same){values={...values,buffer:input.id};body=null;}
+        }
+
         const query=new URLSearchParams({owner,operation,path,...values});
         const request=new XMLHttpRequest();
         request.open(body?`POST`:`GET`,`/workspace-io?${query}`,false);
@@ -137,4 +148,10 @@ export function mountWorkspaceFiles(FS,owner) {
         const path=`/workspace/${name}`;
         FS.mkdirTree(path);call(`mkdir`,name);FS.mount(filesystem,{path:name},path);
     }
+
+    return {
+        setInput:(id,bytes)=>{input=bytes.length>=65536?{id,bytes}:null;},
+        clearInput:()=>{input=null;},
+        copyFile:(source,destination)=>call(`copy`,source,{destination})
+    };
 }

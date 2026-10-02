@@ -90,6 +90,7 @@ else{
       port.postMessage({type:'error',id,message:engineFailure});port.close();
     }
     pending.clear();
+    files.inputBuffers.clear();
   };
   worker.onerror=event=>failEngine(event.message||'The card engine stopped. Reload the page to continue; completed images are saved.');
   worker.onmessageerror=()=>failEngine('The card engine response could not be read. Reload the page to continue; completed images are saved.');
@@ -108,6 +109,7 @@ else{
     }
     if(data.type==='fatal')failEngine(data.message);
     if(data.type==='response'||data.type==='error'){
+      files.inputBuffers.delete(data.id);
       const port=pending.get(data.id);
       pending.delete(data.id);
       if(data.type==='error')recordDiagnostic('engine request failed',data.message);
@@ -155,6 +157,7 @@ else{
         port.postMessage({type:'response',id:data.id,status:200,mime:'application/json',body},[body.buffer]);port.close();return;
       }
       pending.set(data.id,port);
+      if(data.headers?.['content-type']==='image/png'&&data.body?.byteLength>=65536)files.inputBuffers.set(data.id,new Uint8Array(data.body.slice(0)));
       worker.postMessage(data,data.body?[data.body]:[]);
     }
     catch(error){port.postMessage({type:'error',id:data.id,message:String(error)});port.close();}

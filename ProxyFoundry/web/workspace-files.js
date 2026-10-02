@@ -5,6 +5,7 @@ export class WorkspaceFiles {
     constructor(directory) {
         this.directory=directory;
         this.writers=new Map();
+        this.inputBuffers=new Map();
     }
 
     parts = path => {
@@ -125,7 +126,7 @@ export class WorkspaceFiles {
             return {ok:true};
         }
 
-        if(operation===`rename`) {
+        if(operation===`rename`||operation===`copy`) {
             await this.close(path);
             const destination=query.get(`destination`);
             await this.close(destination);
@@ -144,7 +145,8 @@ export class WorkspaceFiles {
                 if(!existed)await target.directory.removeEntry(target.name).catch(()=>{});
                 throw error;
             }
-            await directory.removeEntry(name);
+            if(operation===`rename`)
+                await directory.removeEntry(name);
             return {ok:true};
         }
 
@@ -152,6 +154,14 @@ export class WorkspaceFiles {
     }
     respond = async data => {
         const url=new URL(data.url,location.origin);
+        const buffer=url.searchParams.get(`buffer`);
+        if(buffer) {
+            if(url.searchParams.get(`operation`)!==`write`||!this.inputBuffers.has(buffer))
+                throw new Error(`The workspace input buffer is unavailable.`);
+
+            data={...data,body:this.inputBuffers.get(buffer)};
+        }
+
         const result=await this.execute(url.searchParams.get(`operation`),url.searchParams.get(`path`),url.searchParams,data.body);
         if(result instanceof Blob)
             return {status:200,mime:`application/octet-stream`,body:result};

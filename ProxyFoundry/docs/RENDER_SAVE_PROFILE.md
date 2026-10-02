@@ -2,6 +2,8 @@
 
 ## Result
 
+The fixes and new measurements are in [save optimization verification](RENDER_SAVE_VERIFICATION.md#storage-bridge-optimization--2026-10-01). The breakdown below records the behavior before those fixes.
+
 The largest remaining cost is transferring PNG bytes through the synchronous Python/browser filesystem bridge. In a real selected Windows folder, the first unique image took 6.758 seconds. The worker made 119 storage requests taking 6.302 seconds; the corresponding browser filesystem operations took 2.330 seconds. The difference, 3.972 seconds (59% of the whole save), is bridge/transfer overhead rather than time inside the browser filesystem API.
 
 The same 2010x2814 Supernatural render PNG (9,168,781 bytes) was used. Files were physically verified under `D:\isaac\Documents\BulkProxyForge-Save-Benchmark-6e85df8a\profile-5372852b`; byte integrity after app reload passed.

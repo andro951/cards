@@ -40,10 +40,15 @@ class BrowserHeaders(dict):
 
 class BrowserStore(Store):
     """Persist a complete SQLite snapshot after each mutation, never after reads."""
-    def __init__(self,home,persist=lambda path:None):
+    def __init__(self,home,persist=lambda path:None,copy_file=None):
         self.persist=persist
+        self.copy_file=copy_file
         self._checkpoint_digest=None
         super().__init__(home)
+
+    def copy_render_file(self,source,destination):
+        if self.copy_file is None:return super().copy_render_file(source,destination)
+        self.copy_file(str(source),str(destination))
 
     @contextmanager
     def connect(self):
@@ -248,8 +253,8 @@ class BrowserHandler(server.Handler):
         return super().get(path, query)
 
 
-def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser'):
-    store = BrowserStore(Path(home),persist)
+def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser',copy_file=None):
+    store = BrowserStore(Path(home),persist,copy_file)
     store.storage_type=storage_type
     app = server.App(store, Network(store, transport=transport),
                      jobs_factory=lambda store:BrowserJobs(store,publish,cancelled))

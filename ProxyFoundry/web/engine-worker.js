@@ -4,6 +4,7 @@ import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodid
 const buildId='development';
 let python;
 let mount;
+let workspaceMount;
 let ready;
 let owner;
 let initialized=false;
@@ -26,7 +27,8 @@ async function start(folder){
   for await(const [name,entry] of directory.entries()){
     if(entry.kind==='file'&&['workspace.sqlite3','workspace.sqlite3-wal','workspace.sqlite3-shm'].includes(name))python.FS.writeFile('/workspace/'+name,new Uint8Array(await (await entry.getFile()).arrayBuffer()));
   }
-  mountWorkspaceFiles(python.FS,owner);
+  workspaceMount=mountWorkspaceFiles(python.FS,owner);
+  self.copyWorkspaceFile=(source,destination)=>workspaceMount.copyFile(String(source).replace('/workspace/',''),String(destination).replace('/workspace/',''));
   self.checkpointMetadata=path=>{
     const request=new XMLHttpRequest();
     request.open('POST',`/workspace-io?owner=${encodeURIComponent(owner)}&operation=checkpoint&path=workspace.sqlite3`,false);
@@ -56,14 +58,14 @@ async function start(folder){
   python.runPython(`
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
-from js import syncFetch, location, publishJob, jobCancelled, checkpointMetadata
+from js import syncFetch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile
 import base64, json, uuid
 from pathlib import Path
 from foundry.browser import create_app, request
 def buffer_bytes(buffer):
     if not buffer.byteLength:
         return b''
-    path=Path('/workspace/tmp')/('.http-'+str(uuid.uuid4()))
+    path=Path('/tmp')/('.http-'+str(uuid.uuid4()))
     try:
         with path.open('wb') as saved:
             buffer.to_file(saved)
@@ -76,7 +78,7 @@ def transport(url):
     return buffer_bytes(result.bytes), str(result.mime), {}
 app = create_app('/workspace', transport, str(location.origin),
     lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
-    lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}')
+    lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile)
 def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
@@ -140,6 +142,7 @@ async function handle(event){
   let invoke,response;
   try{
     await ready;
+    workspaceMount.setInput(id,headers?.['content-type']==='image/png'?new Uint8Array(body||[]):new Uint8Array());
     invoke=python.globals.get('browser_request');
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const encoded=response.toJs({dict_converter:Object.fromEntries});
@@ -155,6 +158,7 @@ async function handle(event){
   }
   catch(error){self.postMessage({type:'error',id,message:String(error.stack||error)});}
   finally{
+    workspaceMount?.clearInput();
     //Every PyProxy owns a Python reference; leaked responses retain whole PNGs.
     response?.destroy();
     invoke?.destroy();
