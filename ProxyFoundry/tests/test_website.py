@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from scripts.static_server import StaticSiteServer
 
 
 pytestmark=pytest.mark.skipif(
@@ -122,7 +123,7 @@ def request(app,method,url,body,headers):
       });
     '''
     bridge.write_text(source.replace(anchor,anchor+hold),encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -222,7 +223,7 @@ def request(app,method,url,body,headers):
 def test_static_late_view_responses_do_not_replace_selected_page(tmp_path):
     from playwright.sync_api import sync_playwright,expect
     build_site(tmp_path)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -284,7 +285,7 @@ app.ws.net.transport=fixture_transport
 '''
     worker=site/'web/engine-worker.js';source=worker.read_text(encoding='utf-8')
     worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'),encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -348,7 +349,7 @@ def request(app, method, url, body, headers):
     source=source.replace('self.onmessage=event=>{',"self.onmessage=event=>{\n  if(event.data.url==='/api/__test__/crash')throw new Error('Injected engine crash');")
     source=source.replace('global last_response',"global last_response\n    if str(url) == '/api/__test__/early-fail':\n        raise ValueError('Injected early failure')")
     worker.write_text(source,encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -464,7 +465,7 @@ def request(app, method, url, body, headers):
 """
     source=source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):')
     worker.write_text(source,encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -514,7 +515,7 @@ def request(app, method, url, body, headers):
 def test_static_token_styles_and_upstream_assets(tmp_path):
     from playwright.sync_api import sync_playwright
     build_site(tmp_path)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -562,7 +563,7 @@ def test_static_website_fetches_pinned_station_script(tmp_path):
         assert 'def build_station_land_data(' in archive.read('foundry/compiler.py').decode()
         assert "'helper_scan' if group=='helper'" in archive.read('foundry/compiler.py').decode()
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path)))
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    server=StaticSiteServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -592,7 +593,7 @@ def test_static_website_prepare_frames_load_from_pinned_fallback(tmp_path):
     build_site(tmp_path)
     assert '<body hidden>' in (tmp_path/'built'/'index.html').read_text(encoding='utf-8')
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path)))
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    server=StaticSiteServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -635,7 +636,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
     deployed=tmp_path/'deployed';deployed.mkdir()
     shutil.copytree(tmp_path/'built',deployed/base_path.strip('/') if base_path!='/' else deployed,dirs_exist_ok=True)
     handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(deployed))
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+    server=StaticSiteServer(('127.0.0.1',0),handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     origin=f'http://127.0.0.1:{server.server_port}'+base_path
     try:
@@ -755,7 +756,7 @@ def request(app, method, url, body, headers):
     return original_request(app, method, url, body, headers)
 """
     worker.write_text(source.replace('def browser_request(method, url, body, headers):',injected+'\ndef browser_request(method, url, body, headers):'))
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(tmp_path/'site')))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -787,7 +788,7 @@ def request(app, method, url, body, headers):
 def test_static_template_editor_generates_only_on_request_and_saves_validated_model(tmp_path):
     from playwright.sync_api import sync_playwright
     build_site(tmp_path)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -853,7 +854,7 @@ def request(app, method, url, body, headers):
     source=source.replace('const data=event.data;','const data=event.data;\n    if(data.type==="job" && (data.job.done%10===0 || ["done","failed","cancelled"].includes(data.job.state)))console.info("STRESS_JOB "+JSON.stringify({kind:data.job.kind,state:data.job.state,done:data.job.done,total:data.job.total,message:data.job.message,error:data.job.error}));')
     source=source.replace('const data=event.data;', 'const data=event.data;\n    if(data.type===\"stress-memory\")console.info(\"STRESS_MEMORY \"+JSON.stringify(data));')
     bootstrap.write_text(source,encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -878,6 +879,7 @@ def request(app, method, url, body, headers):
                     except Exception as error:
                         (evidence/'full-deck-invalid-response.json').write_text(json.dumps({'url':response.url,'status':response.status,'error':str(error),'length':len(raw),'raw':raw.decode('utf-8',errors='replace')},indent=2),encoding='utf-8')
                 page.on('response',capture)
+                page.on('requestfailed',lambda request:print('FAILED_REQUEST '+json.dumps({'url':request.url,'error':request.failure}),flush=True))
                 saved=[]
                 def progress(response):
                     if response.request.method=='POST' and '/api/render-sessions/' in response.url and response.status==200:
@@ -893,21 +895,31 @@ def request(app, method, url, body, headers):
                 def return_cards():
                     page.evaluate("id=>{location.hash='#deck/'+id+'/cards';}",deck_id)
                     page.locator('#card-search').wait_for(timeout=30000)
-                def menus():
+                def menus(import_deck=False):
                     interaction('settings',lambda:navigate('settings','#main input[type=checkbox]'))
                     interaction('templates',lambda:navigate('templates','#main .template-grid'))
                     interaction('library',lambda:navigate('decks','#deck-search'))
                     page.locator('#deck-search').fill('New');assert page.locator('#deck-search').input_value()=='New'
                     interaction('open import',lambda:page.click('#import-deck'))
                     page.locator('.modal-body input[type=url]').fill('https://scryfall.com/@andro951/decks/e18f48e7-a2b7-479e-8361-de947bc734ff')
-                    assert page.locator('#do-import').is_enabled();page.click('#modal-close')
+                    assert page.locator('#do-import').is_enabled()
+                    if import_deck:
+                        def finish_import():
+                            page.click('#do-import')
+                            page.get_by_role('button',name='Normal Look',exact=True).click()
+                            page.locator('#save-setup').wait_for(timeout=60000)
+                        interaction('import deck metadata',finish_import)
+                        imported=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/'+ui.state.activeDeck.id);}")
+                        assert imported['id']!=deck_id and imported['cards']
+                        assert all(not face.get('compiled') for card in imported['cards'] for face in card['faces'])
+                    else:page.click('#modal-close')
                     interaction('return to cards',return_cards)
                 #Validate selectors and navigation before investing in a large render.
                 menus();interactions.clear()
                 page.click('#generate-deck')
                 page.wait_for_function("document.querySelector('.render-frame') || document.querySelector('.toast.error')",timeout=900000)
                 assert page.locator('.render-frame').count(),page.locator('.toast.error').all_text_contents()
-                menus()
+                menus(True)
                 page.locator('#card-search').fill('Syr');page.keyboard.press('ArrowLeft')
                 caret=page.locator('#card-search').evaluate('(input)=>input.selectionStart')
                 page.evaluate("window.stressSearch=document.querySelector('#card-search');window.stressCard=document.querySelector('[data-card]');")
@@ -949,7 +961,7 @@ def request(app, method, url, body, headers):
 def test_static_cardconjurer_source_choices_are_immediate_without_generation(tmp_path):
     from playwright.sync_api import sync_playwright
     build_site(tmp_path)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(copy_site(tmp_path))))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:
@@ -982,7 +994,7 @@ def test_mixed_website_engine_version_stops_with_saved_workspace_guidance(tmp_pa
     build_site(tmp_path)
     site=copy_site(tmp_path);worker=site/'web/engine-worker.js'
     worker.write_text(worker.read_text(encoding='utf-8').replace("self.postMessage({type:'ready',buildId});","self.postMessage({type:'ready',buildId:'older-build'});"),encoding='utf-8')
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
+    server=StaticSiteServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(site)))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as playwright:

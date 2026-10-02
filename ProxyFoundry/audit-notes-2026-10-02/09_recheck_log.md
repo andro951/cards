@@ -340,3 +340,39 @@ uncompiled, returns to the original generation, then verifies completion.
 This run is active. A disposable saved-profile read probe could not recover
 the original completed workspace after pytest temp retention; it contributes
 no timing evidence. No speculative performance fix was shipped from it.
+
+## Morning checkpoint — full sweep and local transport
+
+All-enabled pytest completed: 695 passed, three failed, no skips, 4,546.26s.
+The first two traces confirm the ready popup intercepting the cached-generation
+test click and the user's locally renamed artwork. Corrected reruns pass.
+The third case saves all 100 PNGs, then reload fails to import app.js with
+ERR_CONNECTION_REFUSED. The stronger run imports another deck while generating,
+saves all 400 distinct outputs with a constant 136,708,096-byte heap, but encounters
+the same reload transport failure. Failure artifacts are preserved.
+
+The local Python static server has a five-connection listen backlog. A paused
+accept-loop probe accepts five of 32 pending connections, then times out; the
+128-entry server accepts all 32. The double-click launcher and website tests now
+share that static server class. It serves files only; production remains static
+and browser-only. Five launcher/connection cases pass in 2.10s. Failed-request
+URLs are captured by the stress harness. This confirms a transport weakness;
+it does not establish the exact refused URL or sole cause of the prior failure.
+
+The preserved 100-image profile reopens successfully twelve times even with the
+old queue. The preserved 400-image profile opens three times with the larger
+queue, then a direct persisted API check confirms ready, 400 renders, 400 distinct
+keys and zero errors/warnings. A fresh, stronger 100-image flow with the hardened
+server passes in 321.04s, including actual concurrent import, no early compilation,
+stable input, saved output and reload. No failed browser requests were reported.
+
+The committed timing list now covers 699 current pytest IDs: 585 routine and
+114 extended, all with passing results. Those results combine the full sweep,
+corrected two-case rerun, new launcher gate and successful stress rerun. All 15
+Node cases including live sites and four approved vendor hashes also pass.
+
+Remaining foreground gap: Templates opens in 9.22s during cold renderer startup,
+despite isolated templates API reads of 4–7ms. The stronger 400 run under contention
+measured even longer waits. Native runtime asset requests share the serial worker
+request chain with UI reads; inspect that queue before claiming priority coverage
+for every renderer-startup request. The goal remains active for this investigation.

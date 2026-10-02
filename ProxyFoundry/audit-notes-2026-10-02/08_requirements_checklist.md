@@ -11,8 +11,13 @@
 - [x] Bounded render/save overlap measured with byte integrity/recovery.
 - [x] Pipeline experiments measured; only demonstrated benefits shipped.
 - [x] Startup/UI improvements measured and version-safe.
-- [ ] Long-session, cancellation, reload and storage failure checks pass.
+- [x] Long-session, cancellation, reload and storage failure checks pass.
 - [ ] Final checkpoint tested, committed and pushed to main with report.
+
+Morning verification: all 699 current pytest IDs have passing results across
+the all-enabled sweep and affected reruns, with no skips. See the final section
+of `09_recheck_log.md`. Foreground delays during cold native startup remain an
+open priority investigation, so overall goal completion is not yet established.
 
 ## Evidence by requirement
 
@@ -31,4 +36,4 @@
 | Final sweep and handoff | All-enabled pytest process still live. The two corrected native/full-art harness cases pass; all 15 Node cases and four approved vendor hashes pass. Final totals, timings refresh and strengthened stress result remain pending. |
 
 Detailed measurements, source maps and limitations are in `09_recheck_log.md`
-and the linked `docs` reports. An unchecked gate remains incomplete.
+and the linked `docs` reports. An unchecked gate remains incomplete.

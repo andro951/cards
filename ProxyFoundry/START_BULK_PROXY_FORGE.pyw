@@ -1,6 +1,7 @@
 """Double-click preview for the static website; no console or cloud account needed."""
 from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import SimpleHTTPRequestHandler
+from scripts.static_server import StaticSiteServer
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
@@ -39,7 +40,7 @@ def is_foundry_preview(port=PORT):
 
 def make_server(directory, port=PORT):
     handler = partial(QuietSite, directory=str(directory))
-    server = ThreadingHTTPServer(('127.0.0.1', port), handler)
+    server = StaticSiteServer(('127.0.0.1', port), handler)
     server.daemon_threads = True
     return server
 

@@ -8,8 +8,16 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 584 | Every completed change |
+| Routine | 585 | Every completed change |
 | Extended | 114 | Relevant changes or an explicit full sweep |
+
+The 2026-10-02 morning checkpoint covers all 699 current pytest IDs with passing
+results and no skips. The all-enabled run completed with 695 passes and three
+failures; the popup/renamed-art cases passed on corrected rerun, and the long
+100-image flow passed after local transport hardening. The new connection-burst
+regression and four launcher cases also pass. This is a full sweep plus affected
+reruns, not a claim that the first sweep was entirely green. All 15 Node cases,
+including live deck sites, and four approved vendor hashes pass.
 
 The overnight metadata/runtime scheduling milestone passed all 558 routine tests
 in 195.15 seconds, including foreground job priority, import publication/revision
