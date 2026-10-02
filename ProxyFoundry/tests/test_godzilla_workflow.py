@@ -97,13 +97,19 @@ def test_token_conversion_adds_nickname_without_replacing_selected_frame(tmp_pat
 
 
 
-def test_native_token_text_gets_white_black_outline(tmp_path):
+@pytest.mark.parametrize('nickname',[False,True])
+@pytest.mark.parametrize('convert',[False,True])
+def test_modern_token_text_is_black_except_white_unoutlined_names(tmp_path,nickname,convert):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
     source=card(type_line='Creature — Zombie',layout='token')
-    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'token-full-art'},settings,art)['data']
-    for key in ('type','rules'):
-        assert data['text'][key]['color']=='white'
-        assert data['text'][key]['outlineColor']=='black'
+    if nickname:source['flavor_name']='Alternate Name'
+    compiled=Compiler(store).compile_face(source,source,0,{'templateOverride':'token-full-art'},settings,art)
+    if convert:
+        compiled=ws._apply_token_spec(compiled,{'token_frame_style':'token-full-art','output_key':'Test Card','token_key_suffix':''},art,'Deck-wide token',sem={**source,'types':['Creature'],'legendary':False,'nickname':'Alternate Name' if nickname else ''})
+    data=compiled['data']
+    for key,field in data['text'].items():
+        assert field['color']==('white' if key in {'title','nickname'} else 'black')
+        assert field['outlineWidth']==0 and field['shadowX']==0 and field['shadowY']==0
 
 
 @pytest.mark.parametrize('type_line,style',[('Artifact — Equipment','godzilla-card'),('Land','godzilla-land'),('Basic Land — Mountain','godzilla-land')])

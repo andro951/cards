@@ -1454,6 +1454,7 @@ def configure_token_style(data,code,style,short):
         for field in text.values():
             field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
         text['title']['color']='#fde367'
+    elif style=='token-full-art':apply_modern_token_text(data)
     else:apply_full_art_text(data)
 
 
@@ -2027,6 +2028,11 @@ def _apply_godzilla_frame(data,sem,refit=False):
     return True
 
 
+def apply_modern_token_text(data):
+    for key,field in data['text'].items():
+        field.update(color='white' if key in {'title','nickname'} else 'black',outlineWidth=0,shadowX=0,shadowY=0)
+
+
 def apply_full_art_text(data):
     """Use the native text renderer's white fill and black stroke on art."""
     for key in ('title','nickname','type','rules','flavor','pt'):
@@ -2270,7 +2276,9 @@ class Compiler:
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
-            if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:apply_full_art_text(data)
+            if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
+                if choice=='token-full-art':apply_modern_token_text(data)
+                else:apply_full_art_text(data)
         full_card_art=(
             recipe=='helper_full_art' or choice.startswith('godzilla-') or choice in {'land','legend-land'}
             or (choice=='auto' and (recipe.startswith('land_') or recipe=='original_dual_land_textless'))

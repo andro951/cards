@@ -604,6 +604,9 @@ def test_token_styles_preserve_text_and_choose_matching_geometry(workspace,style
         assert f'/img/frames/token/m15/{"textless" if short else "regular"}/u.png' in sources
         assert text['title']['color']=='#fde367'
         assert text['rules']['color']=='black' and text['rules']['outlineWidth']==0
+    elif style=='token-full-art':
+        assert text['title']['color']=='white' and text['title']['outlineWidth']==0
+        assert all(field['color']=='black' and field['outlineWidth']==0 for key,field in text.items() if key not in {'title','nickname'})
     else:
         assert text['rules']['color']=='white' and text['rules']['outlineWidth']>0
     if style=='token-borderless':

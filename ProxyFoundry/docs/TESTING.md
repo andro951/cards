@@ -8,8 +8,10 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 629 | Every completed change |
+| Routine | 632 | Every completed change |
 | Extended | 143 | Relevant changes or an explicit full sweep |
+
+Modern full-art token text checks cover black body text, white names without outlines or shadows, nickname overlays, short/long rules geometry, and deck-wide token conversion. Pipeline v33 refreshes previously generated images; a genuine native render is visually inspected.
 
 Outlined italic rendering checks generate actual Spirit, Construct, and legendary Godzilla cards, inspect native stroke calls for rounded joins, and save final PNGs for visual inspection. Pipeline v32 invalidates cached images with the previous sharp outlines.
 
