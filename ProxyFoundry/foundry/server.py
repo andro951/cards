@@ -277,10 +277,12 @@ class App:
         return {'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
                 'workspace': {**{k: v for k, v in self.store.stats().items() if k != 'home'},'storageType':self.store.storage_type}}
 
-    def diagnostic_zip(self):
+    def diagnostic_zip(self, browser=None):
         b = io.BytesIO()
         with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
             z.writestr('diagnostics.json', json.dumps(self.diagnostic_data(), indent=2))
+            if isinstance(browser,dict):
+                z.writestr('browser-diagnostics.json',json.dumps(browser,ensure_ascii=False,indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
             for p in sorted((self.store.home / 'logs').glob('job-*.json'), key=lambda p: p.stat().st_mtime)[-8:]:
@@ -650,6 +652,8 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='BulkProxyForge_Cards.cardconjurer')
         if p == '/api/client-error':
             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
+        if p == '/api/diagnostics.zip':
+            return self.send_bytes(self.app.diagnostic_zip(d.get('browser')), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
         if p == '/api/render-diagnostic':
             diag=d.get('diagnostic') if isinstance(d.get('diagnostic'),dict) else {}
             if d.get('stage')=='timing':diag={**diag,'storageType':self.app.store.storage_type}

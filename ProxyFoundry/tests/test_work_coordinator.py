@@ -36,6 +36,24 @@ assert.equal(work.busy,false);assert.equal(work.resources.size,0);
 ''')
 
 
+def test_deletion_cancels_only_generation_and_waits_for_settlement():
+    run('''
+const work=new WorkCoordinator();
+const target=work.begin({kind:`generation`,label:`Generate A`,resources:[`deck:A`]});
+const other=work.begin({kind:`generation`,label:`Generate B`,resources:[`deck:B`]});
+let settled=false;const cancellation=work.cancelGeneration(`deck:A`).then(()=>settled=true);
+assert.equal(target.controller.signal.aborted,true);assert.equal(other.controller.signal.aborted,false);
+await Promise.resolve();assert.equal(settled,false);
+assert.throws(()=>work.requireAvailable([`deck:A`]),/using this deck/);
+work.finish(target);await cancellation;work.requireAvailable([`deck:A`]);
+const mutation=work.begin({label:`Save A`,resources:[`deck:A`]});
+assert.throws(()=>work.cancelGeneration(`deck:A`),/Save A/);assert.equal(mutation.controller.signal.aborted,false);
+work.finish(mutation);work.finish(other);
+const workspace=work.begin({label:`Restore`,resources:[`workspace`]});
+assert.throws(()=>work.cancelGeneration(`deck:A`),/changing the workspace/);work.finish(workspace);
+''')
+
+
 def test_renderer_priority_queue_duplicate_guard_and_cancel():
     run('''
 const work=new WorkCoordinator();const ran=[];let finishFirst;

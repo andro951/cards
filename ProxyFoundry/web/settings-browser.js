@@ -1,5 +1,6 @@
 import {$,api,attempt,toast,modal,closeModal,confirmAction,job,bytes,downloadBlob,state,work} from '/site/ui.js';
 import {savedFolder,chooseFolder,useFolder,useBrowserStorage,containsWorkspace,copyWorkspace} from './storage-choice.js';
+import {diagnosticZipRequest} from '/site/diagnostics.js';
 
 function element(tag,text='',className=''){
   const node=document.createElement(tag);
@@ -18,7 +19,7 @@ function panel(title){
   return section;
 }
 async function download(path,name){
-  const response=await fetch(path);
+  const response=path==='/api/diagnostics.zip'?await diagnosticZipRequest(state.csrf):await fetch(path);
   if(!response.ok)throw new Error((await response.json()).error||'Download failed.');
   downloadBlob(await response.blob(),name);
 }

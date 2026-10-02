@@ -422,12 +422,12 @@ tests/test_server.py::test_bad_backup_is_rejected_before_deck_mutation,routine,1
 tests/test_server.py::test_card_inspector_actions_exist_in_source,routine,0.007,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged,routine,0.054,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_csrf_and_runtime_isolation,routine,1.310,passed,2026-10-02T14:30:30.913354-04:00
-tests/test_server.py::test_diagnostics_download_routes_return_real_files,routine,1.057,passed,2026-10-02T14:30:30.913354-04:00
+tests/test_server.py::test_diagnostics_download_routes_return_real_files,routine,1.055,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_server.py::test_download_cropped_art_is_in_deck_actions_menu,routine,0.012,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_grid_thumbnail_is_bounded_cached_and_preserves_print_image,routine,1.053,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_import_prepare_render_order_roundtrip,routine,2.578,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_prepare_error_becomes_attention_and_render_plan_reports_the_real_error,routine,2.055,passed,2026-10-02T14:30:30.913354-04:00
-tests/test_server.py::test_render_diagnostics_log_pipeline_cache_and_symbol_geometry,routine,2.054,passed,2026-10-02T14:30:30.913354-04:00
+tests/test_server.py::test_render_diagnostics_log_pipeline_cache_and_symbol_geometry,routine,2.104,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_server.py::test_render_targets_for_card_only_returns_the_requested_card_even_while_deck_is_draft,routine,0.181,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_review_images_action_is_in_deck_menu,routine,0.007,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_review_images_export_is_single_worker_and_reaches_complete_progress,routine,1.341,passed,2026-10-02T14:30:30.913354-04:00
@@ -442,7 +442,7 @@ tests/test_server.py::test_site_png_assets_are_served,routine,1.040,passed,2026-
 tests/test_server.py::test_symbol_and_back_uploads_trim_only_fully_transparent_edges,routine,1.048,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_template_validation_and_seed,routine,1.051,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_server.py::test_trash_controls_and_permanent_delete_setting,routine,2.063,passed,2026-10-02T14:30:30.913354-04:00
-tests/test_server.py::test_trash_ui_and_missing_generation_contracts,routine,0.006,passed,2026-10-02T14:30:30.913354-04:00
+tests/test_server.py::test_trash_ui_and_missing_generation_contracts,routine,0.007,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_server.py::test_uploaded_file_name_never_becomes_a_local_path,routine,1.068,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_set_symbol_frame_offsets.py::test_land_family_offsets_are_scoped_without_disabling_global_fit,routine,0.011,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[card_noncreature-data0-1606],routine,0.006,passed,2026-10-02T14:30:30.913354-04:00
@@ -604,6 +604,7 @@ tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_n
 tests/test_v58_station.py::test_station_planet_uses_normal_station_overlay_and_native_tiers[Scryfall selected printing-susur-B],routine,0.159,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_v58_station.py::test_station_underframe_policy_depends_on_art_source_not_card_color,routine,0.357,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_v58_station.py::test_threshold_continuation_and_seriema_shape,routine,0.004,passed,2026-10-02T14:30:30.913354-04:00
+tests/test_work_coordinator.py::test_deletion_cancels_only_generation_and_waits_for_settlement,routine,0.194,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_work_coordinator.py::test_renderer_failure_and_external_abort_release_resources,routine,0.106,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_work_coordinator.py::test_renderer_priority_queue_duplicate_guard_and_cancel,routine,0.110,passed,2026-10-02T14:30:30.913354-04:00
 tests/test_work_coordinator.py::test_scoped_locks_and_foreground_progress_restore,routine,0.112,passed,2026-10-02T14:30:30.913354-04:00
@@ -637,7 +638,7 @@ tests/test_browser_storage.py::test_failed_rename_preserves_source_and_destinati
 tests/test_browser_storage.py::test_failed_rename_preserves_source_and_destination_and_retries[rename-False],extended,12.994,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_failed_rename_preserves_source_and_destination_and_retries[rename-True],extended,11.750,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_folder_permission_requires_reconnection_without_workspace_fallback,extended,30.109,passed,2026-10-02T10:02:28.069828-04:00
-tests/test_browser_storage.py::test_immediate_deletion_order_guard_filter_and_recovery,extended,20.338,passed,2026-10-02T10:02:28.069828-04:00
+tests/test_browser_storage.py::test_immediate_deletion_order_guard_filter_and_recovery,extended,18.107,passed,2026-10-02T15:36:02.843935-04:00
 tests/test_browser_storage.py::test_native_png_save_benchmark_preserves_bytes_and_survives_reload,extended,24.527,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_open_file_reads_and_log_rotation_use_the_renamed_paths,extended,12.179,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_reload_mid_job_preserves_committed_items_and_reports_interruption,extended,24.169,passed,2026-10-02T10:02:28.069828-04:00
@@ -655,6 +656,8 @@ tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,e
 tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,2.094,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.442,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_artwork_refresh_does_not_reuse_stale_images_or_pairs,extended,2.973,passed,2026-10-02T14:27:37.205412-04:00
+tests/test_dom_offline.py::test_delete_cancels_generation_once_and_uses_latest_revision,extended,1.622,passed,2026-10-02T15:36:40.171031-04:00
+tests/test_dom_offline.py::test_general_browser_diagnostics_include_messages_and_download_snapshot,extended,1.144,passed,2026-10-02T15:36:40.171031-04:00
 tests/test_dom_offline.py::test_library_initial_covers_and_backs_use_small_previews,extended,1.676,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_offline_deck_controls_and_templates,extended,11.260,passed,2026-10-02T14:27:37.205412-04:00
 tests/test_dom_offline.py::test_offline_large_card_grid_keeps_input_and_tiles_during_progress,extended,2.624,passed,2026-10-02T14:27:37.205412-04:00

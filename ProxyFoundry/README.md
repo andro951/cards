@@ -63,3 +63,12 @@ node --test tests_web/*.test.mjs
 `RUN_TESTS.bat` runs routine, extended, or complete groups. CI runs the routine group plus focused static-browser production, progress/cancellation, and response-integrity checks. The extended group includes native rendering, the installed print helper, live dependencies, and large-order stress tests. See [test groups and measured timings](docs/TESTING.md). Tests never check out or enter payment information on TCGPlaytest.
 
 The original Python app remains available through `START_PROXY_FOUNDRY.bat` and `run.py`.
+
+**Diagnostics:** Download Diagnostics includes engine logs, job logs, and browser
+logs in one ZIP. Browser logs capture notifications, caught/unhandled errors,
+console warnings/errors, button clicks, dialogs, and visible status messages, plus
+the previous session. The browser history is bounded to 500 entries, with timing
+entries discarded first. Known GitHub token formats are redacted; input field
+values are not logged. Deleting a generating deck cancels its generation and
+removes it from the library while cancellation and file cleanup finish in the
+background. Print orders using the deck still block deletion.

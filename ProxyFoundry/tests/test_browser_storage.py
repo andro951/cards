@@ -389,6 +389,9 @@ def request(app, method, url, body, headers):
     page.evaluate("""async()=>{
       const ui=await import('/site/ui.js');const deletion=await import('/site/deletion.js');
       window.backgroundTask=ui.work.begin({label:'Generate unrelated deck',resources:['deck:99999999-9999-4999-8999-999999999999'],background:true});
+      const target=ui.state.decks.find(deck=>deck.name==='Delete me');
+      window.targetGeneration=ui.work.begin({label:'Generate deleted deck',kind:'generation',resources:['deck:'+target.id]});
+      targetGeneration.controller.signal.addEventListener('abort',()=>setTimeout(()=>ui.work.finish(targetGeneration),100),{once:true});
       const original=window.fetch;window.testFetch=original;window.journalKey='pf-pending-deck-deletions:'+ui.state.bootstrap.workspaceId;window.releaseDelete=null;
       window.fetch=async(url,options)=>{
         if(String(url).endsWith('/delete')){await new Promise(resolve=>window.releaseDelete=resolve);}
@@ -398,6 +401,8 @@ def request(app, method, url, body, headers):
     }""")
     page.get_by_role('button',name='Delete permanently',exact=True).click()
     page.wait_for_function("location.hash==='#decks'&&window.releaseDelete!==null")
+    assert page.evaluate('targetGeneration.controller.signal.aborted')
+    assert not page.evaluate('backgroundTask.controller.signal.aborted')
     page.get_by_role('heading',name='Deck library',exact=True).wait_for()
     assert not page.get_by_text('Delete me',exact=True).count()
     assert page.get_by_text('Protected deck',exact=True).count()
@@ -449,6 +454,17 @@ def request(app, method, url, body, headers):
     page.evaluate("async()=>{window.journalKey='pf-pending-deck-deletions:'+(await import('/site/ui.js')).state.bootstrap.workspaceId;}")
     page.wait_for_function("localStorage.getItem(window.journalKey)==='{}'")
     assert not page.get_by_text('Delete me',exact=True).count()
+    diagnostic_bytes=page.evaluate("""async()=>{
+      const ui=await import('/site/ui.js');ui.toast('Diagnostic notification example');
+      await ui.attempt(()=>{throw new Error('Diagnostic caught error example');});
+      return [...new Uint8Array(await (await (await import('/site/diagnostics.js')).diagnosticZipRequest(ui.state.csrf)).arrayBuffer())];
+    }""")
+    import io,json,zipfile
+    with zipfile.ZipFile(io.BytesIO(bytes(diagnostic_bytes))) as archive:
+        report=json.loads(archive.read('browser-diagnostics.json'))
+        assert any(e['detail']=='Diagnostic notification example' for e in report['entries'])
+        assert any(e['kind']=='caught error' and 'Diagnostic caught error example' in e['detail'] for e in report['entries'])
+        assert 'app.log' in archive.namelist()
     page.close()
 
 

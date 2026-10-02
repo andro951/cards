@@ -102,7 +102,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     if(owner.controller.signal.aborted)throw new Error('Generation cancelled. Completed images are saved.');
     const plan=await api('/api/render-sessions',{deckIds:ids,force});
     return runRenderPlan(plan,{label:'Render deck',onUpdate:update,owner,successMessage:'All card images saved',successToast:notify?'Rendering complete. Your decks are ready for order review.':null,idleToast:notify?'Cached images reused. No rendering needed.':null});
-  },{decks:ids.length}).catch(error=>{endActivity(error.message,true,owner);throw error;}),{label:'Generate images for '+name,resources:ids.map(id=>'deck:'+id),signal});
+  },{decks:ids.length}).catch(error=>{endActivity(error.message,true,owner);throw error;}),{label:'Generate images for '+name,resources:ids.map(id=>'deck:'+id),signal,kind:'generation'});
 }
 
 export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false}={}){
@@ -110,7 +110,7 @@ export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false
   return work.render(async owner=>{
     const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
     return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
-  },{label:'Generate card image',resources:['deck:'+deckId]});
+  },{label:'Generate card image',resources:['deck:'+deckId],kind:'generation'});
 }
 
 export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage,onPlan=()=>{},signal=null,choices=null){

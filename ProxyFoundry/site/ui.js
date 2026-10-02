@@ -35,7 +35,7 @@ async function requestApi(path,data,method){
     recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.length} characters; ${error.message}; start=${text.slice(0,300)}; end=${text.slice(-300)}`);
     throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
   }
-  if(!r.ok)throw new Error(result.error||'Request failed.');return result;
+  if(!r.ok){recordDiagnostic('API failure',`${path}: HTTP ${r.status}; ${result.error||'Request failed.'}`);throw new Error(result.error||'Request failed.');}return result;
 }
 export function showWorkspaceError(error,retry=null){
   recordDiagnostic('workspace error',error.stack||error.message);
@@ -86,12 +86,14 @@ export async function saveApiFile(path,name,size=null){
   downloadBlob(await response.blob(),name);
 }
 export function toast(message,error=false){
+  recordDiagnostic(error?'error notification':'notification',message);
   const el=document.createElement('div');el.className='toast'+(error?' error':'');el.setAttribute('role',error?'alert':'status');el.innerHTML=`<span>${esc(message)}</span><button aria-label="Dismiss notification">×</button>`;$('#toast-host').append(el);$('button',el).onclick=()=>el.remove();setTimeout(()=>el.remove(),error?14000:6500);
 }
-export async function attempt(fn){try{return await fn()}catch(e){console.error(e);toast(e.message,true);return null;}}
+export async function attempt(fn){try{return await fn()}catch(e){recordDiagnostic('caught error',e.stack||e.message);console.error(e);toast(e.message,true);return null;}}
 let lastFocus=null,modalCloser=null;
 export function closeModal(){if(modalCloser&&!modalCloser())return;$('#modal-host').replaceChildren();document.body.classList.remove('no-scroll');lastFocus?.focus?.();modalCloser=null;}
 export function modal(title,body,{size='',footer='',onClose=null}={}){
+  recordDiagnostic('dialog',title);
   lastFocus=document.activeElement;modalCloser=onClose;$('#modal-host').innerHTML=`<div class="modal-backdrop"><section class="modal ${esc(size)}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="modal-header"><h2 id="modal-title">${esc(title)}</h2><button class="button quiet icon" id="modal-close" aria-label="Close dialog">×</button></header><div class="modal-body">${body}</div>${footer?`<footer class="modal-footer">${footer}</footer>`:''}</section></div>`;
   document.body.classList.add('no-scroll');$('#modal-close').onclick=closeModal;
   const el=$('.modal');$('.modal-backdrop').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal();});
@@ -108,7 +110,7 @@ export function confirmAction(title,text,label='Continue',danger=false){return n
   modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button quiet" id="confirm-no">Cancel</button><button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
   $('#confirm-no').onclick=()=>closeModal();$('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
 });}
-export function errorBox(el,message){let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
+export function errorBox(el,message){recordDiagnostic('form error',message);let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
 export function activity(kind,title,detail,done=0,total=0,owner=null){
   if(owner){work.update(owner,{kind,title,detail,done,total});return;}
   drawActivity(kind,title,detail,done,total);

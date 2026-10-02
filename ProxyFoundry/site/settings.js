@@ -1,5 +1,6 @@
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav,work} from './ui.js';
 import {pickFile} from './setup.js';
+import {diagnosticZipRequest} from './diagnostics.js';
 export async function showSettings(){
   const epoch=state.routeEpoch;
   const [settings,stats,trash]=await Promise.all([api('/api/settings'),api('/api/stats'),api('/api/trash')]);
@@ -17,7 +18,7 @@ export async function showSettings(){
     finally{toggles.forEach(x=>{if(document.body.contains(x))x.disabled=false;});}
   }
   $('#download-diagnostics').onclick=()=>attempt(async()=>{
-    const response=await fetch('/api/diagnostics.zip',{cache:'no-store'});
+    const response=await diagnosticZipRequest(state.csrf);
     if(!response.ok){
       let detail='HTTP '+response.status;
       try{const body=await response.json();if(body?.error)detail=body.error;}catch{}

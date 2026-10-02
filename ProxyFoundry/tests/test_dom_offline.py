@@ -213,6 +213,62 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     assert not errors,errors
 
 
+def test_delete_cancels_generation_once_and_uses_latest_revision(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      const ui=__mod_ui,deck=__fixture.deck;window.deletionCalls=[];window.confirmations=0;
+      __mod_deletion.resumeDeletions();window.addEventListener('pf-library-deletion',()=>__mod_app.route());
+      const original=window.fetch;window.fetch=async(path,options={})=>{
+        if(path.endsWith('/orders'))return {ok:true,text:async()=> '[]'};
+        if(path.endsWith('/delete')){deletionCalls.push(JSON.parse(options.body));return {ok:true,text:async()=> '{}'};}
+        return original(path,options);
+      };
+      window.generation=ui.work.begin({label:'Generate this deck',kind:'generation',resources:['deck:'+deck.id]});
+      window.otherGeneration=ui.work.begin({label:'Other deck',kind:'generation',resources:['deck:other']});
+      window.deletePromise=__mod_deletion.deleteDeck(deck);
+    }''')
+    page.get_by_role('button',name='Delete permanently',exact=True).click()
+    page.wait_for_function('generation.controller.signal.aborted')
+    assert page.evaluate('deletionCalls.length')==0
+    assert not page.evaluate('otherGeneration.controller.signal.aborted')
+    assert not page.get_by_text('Test deck',exact=True).count()
+    assert page.get_by_role('button',name='Delete permanently',exact=True).count()==0
+    page.evaluate('''()=>{__fixture.deck.revision=17;__mod_ui.work.finish(generation);}''')
+    page.wait_for_function('deletionCalls.length===1')
+    assert page.evaluate('deletionCalls[0].revision')==17
+    page.evaluate('()=>__mod_ui.work.finish(otherGeneration)')
+    assert not errors,errors
+
+
+def test_general_browser_diagnostics_include_messages_and_download_snapshot(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      __mod_ui.toast('Saved deck');
+      await __mod_ui.attempt(()=>{throw new Error('Deletion blocked example');});
+      __mod_ui.errorBox(document.querySelector('#main'),'Missing custom image');
+      const status=document.createElement('p');status.setAttribute('role','status');status.textContent='GitHub update failed example';document.querySelector('#main').append(status);
+      console.warn('Warning example');await new Promise(resolve=>setTimeout(resolve,0));
+      __mod_diagnostics.recordDiagnostic('example','github_pat_secretExample Bearer hiddenToken');
+      const original=window.fetch;window.fetch=async(path,options)=>{window.diagnosticRequest={path,options};return {ok:true};};
+      await __mod_diagnostics.diagnosticZipRequest('test-csrf');window.fetch=original;
+      return {request:diagnosticRequest,stored:JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))};
+    }''')
+    payload=json.loads(report['request']['options']['body'])['browser']
+    assert report['request']['path']=='/api/diagnostics.zip'
+    assert report['request']['options']['headers']['X-Proxy-CSRF']=='test-csrf'
+    assert report['request']['options']['method']=='POST'
+    entries=payload['entries']
+    assert any(e['kind']=='notification' and e['detail']=='Saved deck' for e in entries)
+    assert any(e['kind']=='caught error' and 'Deletion blocked example' in e['detail'] for e in entries)
+    assert any(e['kind']=='error notification' and e['detail']=='Deletion blocked example' for e in entries)
+    assert any(e['kind']=='form error' and e['detail']=='Missing custom image' for e in entries)
+    assert any(e['kind']=='console warn' and e['detail']=='Warning example' for e in entries)
+    assert any(e['kind']=='displayed status' and e['detail']=='GitHub update failed example' for e in entries)
+    assert entries[-1]['detail']=='[redacted credential] [redacted credential]'
+    assert report['stored']['entries']==entries
+    assert not errors,errors
+
+
 def test_artwork_refresh_does_not_reuse_stale_images_or_pairs(dom_page):
     page,errors=dom_page;artwork_helper(page,count=1,images=1)
     page.get_by_role('button',name='Back to setup',exact=True).click()

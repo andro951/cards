@@ -366,6 +366,10 @@ class BrowserHandler(server.Handler):
         return super().post(path, query)
 
     def get(self, path, query):
+        match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/deletion-state',path)
+        if match:
+            deck=self.app.store.get('decks',match[1])
+            return self.respond({'deleted':not bool(deck),'revision':deck.get('revision') if deck else None})
         match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/orders',path)
         if match:
             return self.respond(self.app.store.blocking_orders(match[1]))

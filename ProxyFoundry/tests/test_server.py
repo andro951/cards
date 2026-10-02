@@ -105,6 +105,12 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
 
 def test_diagnostics_download_routes_return_real_files(running):
     app,s=running
+    browser={'entries':[{'kind':'error notification','detail':'Delete failed: generation owns deck'}],'previousSession':{'entries':[{'detail':'Previous error'}]}}
+    status,combined,_=request(s,'/api/diagnostics.zip',{'browser':browser},raw=True)
+    assert status==200
+    with zipfile.ZipFile(io.BytesIO(combined)) as archive:
+        assert json.loads(archive.read('browser-diagnostics.json'))==browser
+        assert 'app.log' in archive.namelist()
     # Simulate a legacy/corrupt job log containing a byte that Windows cp1252
     # cannot decode. Diagnostics should sanitize it instead of failing.
     bad=app.store.home/'logs'/'job-legacy-corrupt.json'
@@ -241,7 +247,7 @@ def test_trash_ui_and_missing_generation_contracts():
     assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
     assert 'Delete deck permanently' in deck
     assert 'force=force||' not in render
-    assert 'download-diagnostics' in settings and '/api/diagnostics.zip' in settings and 'downloadBlob' in settings
+    assert 'download-diagnostics' in settings and 'diagnosticZipRequest(state.csrf)' in settings and 'downloadBlob' in settings
 
 
 def test_template_validation_and_seed(running):

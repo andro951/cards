@@ -30,13 +30,14 @@ export class WorkCoordinator {
         if (task)
             throw new Error(`${task.label} is still ${task.phase}. Cancel that task or wait for it before changing the whole workspace.`);
     };
-    begin = ({label = `Working`, resources = [], background = false, signal = null} = {}) => {
+    begin = ({label = `Working`, resources = [], background = false, signal = null, kind = `change`} = {}) => {
         if (signal?.aborted)
             throw new Error(`Task cancelled.`);
 
         this.requireAvailable(resources);
-        const task = {id: ++this.serial, label, resources: [...new Set(resources)], background,
+        const task = {id: ++this.serial, label, resources: [...new Set(resources)], background, kind,
             phase: `running`, controller: new AbortController(), progress: null};
+        task.settled = new Promise(resolve => task.resolveSettled = resolve);
         task.forwardAbort = () => task.controller.abort();
         task.changed = () => this.onChange();
         task.externalSignal = signal;
@@ -62,6 +63,20 @@ export class WorkCoordinator {
         }
 
         this.onChange();
+        task.resolveSettled();
+    };
+    requireDeletable = resource => {
+        const task = this.resources.get(resource);
+        this.requireAvailable([resource],task?.kind === `generation` ? task : null);
+    };
+    cancelGeneration = resource => {
+        this.requireDeletable(resource);
+        const task = this.resources.get(resource);
+        if (!task)
+            return Promise.resolve();
+
+        task.controller.abort();
+        return task.settled;
     };
     update = (task, progress) => {
         if (!this.tasks.has(task.id))

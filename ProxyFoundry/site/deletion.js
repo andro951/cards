@@ -1,4 +1,5 @@
-import {$,state,api,toast,modal,closeModal,nav,confirmAction,requireDeckAvailable} from './ui.js';
+import {$,state,api,toast,modal,closeModal,nav,confirmAction,work} from './ui.js';
+import {recordDiagnostic} from './diagnostics.js';
 
 let key=null;
 let pending={};
@@ -19,6 +20,7 @@ window.addEventListener('pf-cleanup-warning',event=>{
 export function visibleDecks(decks){return decks.filter(deck=>!pending[deck.id]);}
 function persist(){localStorage.setItem(key,JSON.stringify(pending));}
 export function blockedDeletion(id){
+  recordDiagnostic('deck deletion blocked','A print order uses deck '+id);
   const host=modal('Deck cannot be deleted','');
   const body=$('.modal-body',host);
   const text=document.createElement('p');
@@ -26,12 +28,14 @@ export function blockedDeletion(id){
   const button=document.createElement('button');button.className='button primary';button.textContent='Show print orders';
   button.onclick=()=>{closeModal();nav('orders/'+id);};body.append(text,button);
 }
-async function finish(id){
+async function finish(id,cancellation=Promise.resolve()){
   if(running.has(id))return;
   running.add(id);
-  const item=pending[id];
   try{
-    await api('/api/decks/'+id+'/delete',{revision:item.revision});
+    await cancellation;
+    const current=await api('/api/decks/'+id+'/deletion-state');
+    recordDiagnostic('deck deletion','Deleting '+id+' at revision '+current.revision);
+    if(!current.deleted)await api('/api/decks/'+id+'/delete',{revision:current.revision});
     delete pending[id];persist();toast('Deck deleted.');
   }
   catch(error){
@@ -49,7 +53,8 @@ export function resumeDeletions(){
   for(const id of Object.keys(pending)){void finish(id);}
 }
 export async function deleteDeck(deck){
-  requireDeckAvailable(deck.id);
+  recordDiagnostic('deck deletion requested',deck.id+' '+deck.name);
+  work.requireDeletable('deck:'+deck.id);
   const button=$('#trash-deck');
   if(button){button.disabled=true;button.textContent='Checking print orders…';}
   let orders;
@@ -58,11 +63,13 @@ export async function deleteDeck(deck){
   closeModal();
   if(orders.length){blockedDeletion(deck.id);return;}
   if(!await confirmAction('Delete this deck permanently?',deck.name+' will be deleted and cannot be restored.','Delete permanently',true))return;
+  const cancellation=work.cancelGeneration('deck:'+deck.id);
+  recordDiagnostic('deck deletion','Confirmed '+deck.id+'; cancelling any generation before deletion');
   pending[deck.id]={revision:deck.revision};persist();
   state.decks=visibleDecks(state.decks);state.selected.delete(deck.id);state.immediateLibrary=true;
   state.dirty=false;
   if(location.hash==='#decks')window.dispatchEvent(new Event('pf-library-deletion'));
   else nav('decks');
   toast('Deck removed. Cleaning up saved files in the background.');
-  void finish(deck.id);
+  void finish(deck.id,cancellation);
 }
