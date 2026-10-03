@@ -142,8 +142,8 @@ export function endActivity(message,error=false,owner=null){
   if(owner&&work.visible()!==owner)return;
   $('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
 }
-export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null}={}){
-  const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal});
+export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null,background=false}={}){
+  const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal,background});
   signal=task.controller.signal;let ident=null;
   const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{},'POST',task).catch(error=>recordDiagnostic('cancel task',error.message));};
   signal?.addEventListener('abort',cancel,{once:true});

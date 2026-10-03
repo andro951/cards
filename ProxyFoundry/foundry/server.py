@@ -603,7 +603,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review(d,u,c)))
         if p == '/api/setup/custom-art-previews':
             return self.respond(self.app.ws.custom_art_previews(d['deckId'],d['settings']))
-        if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
+        if p == '/api/decks/manifest': return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(d.get('source',''),d.get('includeOutside',True),cancel=c)))
+        if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck',lambda u,c:self.app.ws.create_staged(d) if 'manifest' in d else self.app.ws.create(d,u,c)))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',p):
+            ident=m[1];return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.ws.resolve_metadata(ident,u,c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
         if p == '/api/images/delete-all': return self.respond(self.app.store.clear_renders())

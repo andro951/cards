@@ -1,6 +1,6 @@
 """Deck orchestration. Source changes invalidate front renders; backs/quantities do not."""
 from __future__ import annotations
-from .timing import timed
+from .timing import timed,timing
 import base64,copy,hashlib,io,json,math,re,time,zipfile
 from pathlib import Path,PurePosixPath
 from PIL import Image
@@ -173,6 +173,68 @@ class Workspace:
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
         return self.store.put('decks',{**result,'name':name,'settings':settings,'status':'draft','notes':''})
+    def create_staged(self,payload):
+        supplied=payload.get('manifest')
+        if not isinstance(supplied,dict):raise ValidationError('Read a deck list before choosing its look.')
+        listing=self.sources.read_deck_manifest(supplied,payload.get('includeOutside',True))
+        cards=[]
+        for row in listing['rows']:
+            sf={'name':row['name'],'layout':'normal','type_line':''}
+            if re.fullmatch(r'[0-9a-fA-F-]{36}',row['source']):sf['id']=row['source']
+            card=self.sources.entry(sf,row['quantity'],row['section']);card['metadataSource']=row['source'];cards.append(card)
+        settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
+        return self.store.put('decks',{'name':listing['name'],'cards':cards,'settings':settings,'status':'draft','notes':'',
+            'importedSource':supplied.get('importedSource',''),'pendingImport':True,'stagedImport':True})
+
+    @timed('deck.metadata')
+    def resolve_metadata(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.resolve_metadata_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def resolve_metadata_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        d=self.deck(ident)
+        if not d.get('pendingImport'):return d
+        resolved={};entries={};total=len(d['cards'])
+        with timing(self.store,'deck.metadata',deckId=ident,cards=total):
+            for index,card in enumerate(d['cards']):
+                if cancel():raise ValidationError('Card details cancelled. Your setup is saved; retry to continue.')
+                key=card['metadataSource'];progress(index,total,'Reading card details '+card['name'])
+                if key not in resolved:resolved[key]=self.sources.resolve_card(key,d['settings'].get('refreshData',False))
+                entry=self.sources.entry(resolved[key],card['quantity'],card.get('section','mainboard'))
+                entry['id']=card['id']
+                for number,face in enumerate(entry['faces']):
+                    if number<len(card['faces']):face['id']=card['faces'][number]['id']
+                entry['metadataSource']=key;entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or ':' in key or key.startswith('https://'));entries[card['id']]=entry
+                progress(index+1,total,'Read card details '+entry['name']);yield
+            #Metadata is merged into the current deck, never the setup snapshot
+            #taken before network calls. A deleted deck cannot be republished.
+            for attempt in range(5):
+                if cancel():raise ValidationError('Card details cancelled. Your setup is saved; retry to continue.')
+                current=self.deck(ident)
+                if not current.get('pendingImport'):return current
+                cards=[];seen={}
+                for card in current['cards']:
+                    entry=entries.get(card['id'])
+                    if not entry:raise ValidationError('The deck list changed while card details loaded. Retry preparation.')
+                    fresh=copy.deepcopy(entry)
+                    fresh['quantity']=card['quantity']
+                    #Keep user overrides applied while metadata was being read.
+                    for number,face in enumerate(fresh['faces']):
+                        if number<len(card['faces']):
+                            overrides={k:v for k,v in card['faces'][number].items() if k not in {'name','index','group','originalArtist'}}
+                            face.update(overrides)
+                    identity=(fresh['scryfall']['id'],fresh.get('section','mainboard'))
+                    if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+fresh['quantity'])
+                    else:seen[identity]=fresh;cards.append(fresh)
+                current['cards']=cards;current.pop('pendingImport',None)
+                current['metadataBaseRevision']=current['revision'];current.pop('summary',None)
+                try:return self.store.put('decks',current,current['revision'])
+                except ConflictError:
+                    if attempt==4:raise
+                yield
+
     def invalidate_face(self,face):
         previous=face.get('compiled') or {}
         if previous.get('renderKey') and self.store.render_get(previous['renderKey']):
@@ -244,7 +306,10 @@ class Workspace:
         return validate_entries(value)
 
     def _apply_card_data(self,d,value):
-        entries=validate_targets(d,validate_entries(value))
+        entries=validate_entries(value)
+        if d.get('pendingImport'):
+            d['cardData']=merge_entries(d.get('cardData',[]),entries);return False
+        entries=validate_targets(d,entries)
         if not entries:return False
         merged=merge_entries(d.get('cardData',[]),entries)
         selectors={selector_key(entry):entry for entry in merged}
@@ -291,6 +356,8 @@ class Workspace:
     def save(self,ident,patch):
         d=self.deck(ident);expected=patch.get('revision')
         if expected is None:raise ValidationError('A revision is required to save a deck safely.')
+        if expected==d.get('metadataBaseRevision') and d['revision']==expected+1:expected=d['revision']
+        d.pop('metadataBaseRevision',None)
         dirty=False;front_settings_dirty=False
         if 'name' in patch:d['name']=str(patch['name']).strip()[:200] or 'Untitled deck'
         if 'notes' in patch:d['notes']=str(patch['notes'])[:20000]
@@ -645,8 +712,10 @@ class Workspace:
             except StopIteration as finished:return finished.value
 
     def prepare_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        if self.deck(ident).get('pendingImport'):yield from self.resolve_metadata_steps(ident,progress,cancel)
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
+        self._apply_card_data(d,d.get('cardData',[]))
         index=self._prepare_sources(s,progress)
         yield
         total=sum(len(c['faces']) for c in d['cards']);done=0

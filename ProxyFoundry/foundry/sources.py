@@ -47,7 +47,8 @@ class Sources:
         with timing(self.net.store,'deck.import',source=source[:300] if isinstance(source,str) else '[Scryfall export]',refresh=refresh):
             return (yield from self._import_deck_steps(source,include_outside,refresh,progress,cancel))
 
-    def _import_deck_steps(self,source,include_outside,refresh,progress,cancel):
+    @timed('deck.list.fetch')
+    def read_deck_manifest(self,source,include_outside=True,refresh=False,cancel=lambda:False,*,include_digests=False):
         if cancel():raise ValidationError('Import cancelled.')
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
@@ -79,16 +80,30 @@ class Sources:
                 if not isinstance(row,dict):raise ValidationError('Deck source returned an invalid card row.')
                 section=str(row.get('section') or 'mainboard')
                 if not include_outside and section not in {'mainboard','commanders'}:continue
-                manifest.append({'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
+                manifest.append({'name':str(row.get('name') or ''), 'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
         elif isinstance(source,list):
             manifest=[]
             for r in source:
                 if not isinstance(r,dict):raise ValidationError('Card import rows must be objects.')
-                manifest.append({'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
+                manifest.append({'name':str(r.get('name') or ''), 'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
         elif isinstance(source,str):manifest=parse_deck_text(source,include_outside)
         else:raise ValidationError('Upload a Scryfall export, paste a public deck link or card names.')
         if not manifest:raise ValidationError('No cards were supplied.')
         if sum(r['quantity'] for r in manifest)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
+        for row in manifest:
+            key=str(row.get('source') or '').strip()
+            if not key:raise ValidationError('Every deck row needs a card name or printing identifier.')
+            try:ingest.parse_scryfall_source(key)
+            except ingest.DataError as exc:raise ValidationError(str(exc)) from exc
+            row['source']=key
+            row['name']=str(row.get('name') or digests.get(key,{}).get('name') or key)
+        listing={'name':str(title),'rows':manifest,'importedSource':original}
+        if include_digests:listing['digests']=digests
+        return listing
+
+    def _import_deck_steps(self,source,include_outside,refresh,progress,cancel):
+        listing=self.read_deck_manifest(source,include_outside,refresh,cancel,include_digests=True)
+        title=listing['name'];manifest=listing['rows'];original=listing['importedSource'];digests=listing['digests']
         #No deck is published until all rows are resolved; cached metadata is durable.
         yield
         seen={};cards=[];resolved={}

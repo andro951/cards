@@ -303,10 +303,17 @@ class BrowserHandler(server.Handler):
             operation={'originals':self.app.ws.original_images_steps,'cropped-art':self.app.ws.cropped_art_steps,'review-images':self.app.ws.review_images_steps}[export[2]]
             return self.respond(self.app.jobs.start('Export deck images',
                 lambda update,cancel:operation(export[1],update,cancel)))
+        if path == '/api/decks/manifest':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(data.get('source',''),data.get('includeOutside',True),cancel=c)))
+        metadata=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',path)
+        if metadata:
+            self.data()
+            return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.ws.resolve_metadata_steps(metadata[1],u,c),priority=1))
         if path == '/api/decks/import':
             data=self.data()
             return self.respond(self.app.jobs.start('Import deck',
-                lambda update,cancel:self.app.ws.create_steps(data,update,cancel)))
+                lambda update,cancel:self.app.ws.create_staged(data) if 'manifest' in data else self.app.ws.create_steps(data,update,cancel)))
         add=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/add',path)
         if add:
             data=self.data()

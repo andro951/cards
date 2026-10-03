@@ -26,7 +26,8 @@ def parse_card_data_json(raw):
 
 def validate_card_data_for_deck(workspace,deck_id,entries):
     from .card_data import validate_targets
-    return validate_targets(workspace.deck(str(deck_id)),entries)
+    deck=workspace.deck(str(deck_id))
+    return entries if deck.get('pendingImport') else validate_targets(deck,entries)
 
 
 def import_card_data_url(workspace, payload, include_document=False):

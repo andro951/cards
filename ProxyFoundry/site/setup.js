@@ -1,3 +1,4 @@
+import {ensureMetadata} from './metadata.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
@@ -31,6 +32,7 @@ export function renderSetup(root,deck,onSaved){
   const s=structuredClone(deck.settings),groups={};let stagedCardData=structuredClone(deck.cardData||[]),dataJsonImportNote='';
   s.dataJsonSource=s.dataJsonSource&&typeof s.dataJsonSource==='object'?structuredClone(s.dataJsonSource):null;s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:false,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
+  if(deck.pendingImport){for(const key of Object.keys(groups))delete groups[key];for(const group of ['standard','legendary','land','legendary-land','basic-land','token','saga'])groups[group]=null;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
       <div class="source-choices"><button class="choice ${s.source.mode==='scryfall'?'selected':''}" data-mode="scryfall"><span class="choice-symbol">▧</span><b>Scryfall printing</b><span>Use the art already selected in your deck.</span></button><button class="choice ${s.source.mode==='github'?'selected':''}" data-mode="github"><span class="choice-symbol">⌘</span><b>GitHub folder</b><span>Paste a folder link. No local repository needed.</span></button><button class="choice ${s.source.mode==='local'?'selected':''}" data-mode="local"><span class="choice-symbol">▱</span><b>Computer folder</b><span>Choose your artwork directly from this device.</span></button></div>
@@ -265,7 +267,7 @@ export function renderSetup(root,deck,onSaved){
     for(const [group,count] of Object.entries(groups)){
       const row=document.createElement('article');row.className='well';
       const layout=document.createElement('h3');
-      layout.textContent=(state.bootstrap.groups[group]||group)+' · '+count;
+      layout.textContent=(state.bootstrap.groups[group]||group)+' · '+(count===null?'Details loading':count);
       const selected=s.templateRules[group]||'auto';
       const picture=document.createElement('img');
       picture.alt='Current '+(state.bootstrap.groups[group]||group)+' frame preview';
@@ -291,6 +293,18 @@ export function renderSetup(root,deck,onSaved){
     }
     host.append(body);
   };
+  const metadataStatus=document.createElement('p');metadataStatus.setAttribute('role','status');metadataStatus.id='deck-metadata-status';
+  metadataStatus.textContent='Reading card details in the background. You can choose your art and options now.';
+  metadataStatus.hidden=!deck.pendingImport;
+  $('.setup-columns',root).before(metadataStatus);
+  function refreshMetadata(updated){
+    deck.cards=updated.cards;deck.revision=Math.max(deck.revision,updated.revision);delete deck.pendingImport;
+    for(const group of Object.keys(groups))delete groups[group];
+    for(const card of deck.cards){
+      for(const face of card.faces){const group=face.group||'standard';groups[group]=(groups[group]||0)+1;}
+    }
+    redrawFrames();metadataStatus.textContent='Card details are ready. Images start when you choose Generate Images.';
+  }
   redrawFrames();
   tokenFrame.addEventListener('input',()=>{s.templateRules.token=tokenFrame.value;redrawFrames();});
   const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();}));};
@@ -372,6 +386,7 @@ export function renderSetup(root,deck,onSaved){
   }
   let pairedChanges=[];
   const reviewArtwork=async()=>{
+    refreshMetadata(await ensureMetadata(deck.id));
     readSettings();
     const result=await checkArtwork(deck,s,stagedCardData,async()=>{
       if(s.source.mode==='github')return;
@@ -436,7 +451,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       readSettings();
       const version=changeVersion;
       const updated=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)});
-      Object.assign(deck,updated);persistedVersion=version;
+      if(updated.revision>=deck.revision)Object.assign(deck,updated);persistedVersion=version;
       if(state.activeDeck?.id===deck.id)state.activeDeck=deck;
       if(state.setupActions?.root===root)state.dirty=persistedVersion!==changeVersion;
       if(root.isConnected)$('#setup-state',root).textContent=state.dirty?'Saving changes…':'Changes saved';
@@ -459,12 +474,17 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     for(const button of buttons){button.disabled=true;}
     readSettings();
     recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
+    mark();await persistSetup();
+    refreshMetadata(await ensureMetadata(deck.id));
     if(!await reviewArtwork())return;
     if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
     mark();await persistSetup();await exportPairs();await onSaved(deck,true);
     }finally{generating=false;for(const button of buttons){if(button.isConnected)button.disabled=false;}}
   }
-  const actions={deckId:deck.id,root,flush:persistSetup,generate};state.setupActions=actions;
+  const actions={deckId:deck.id,root,flush:persistSetup,generate,refreshMetadata,
+    metadataProgress:progress=>{metadataStatus.textContent=progress.message+(progress.total?' · '+progress.done+' / '+progress.total:'');},
+    metadataError:error=>{metadataStatus.textContent='Card details could not finish: '+error.message+' Generate Images will retry.';}
+  };state.setupActions=actions;
   $('#save-generate',root).onclick=()=>attempt(generate);
   return actions;
 }

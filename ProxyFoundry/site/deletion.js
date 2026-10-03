@@ -1,3 +1,4 @@
+import {cancelMetadata} from './metadata.js';
 import {$,state,api,toast,modal,closeModal,nav,confirmAction,work} from './ui.js';
 import {recordDiagnostic} from './diagnostics.js';
 
@@ -63,7 +64,7 @@ export async function deleteDeck(deck){
   closeModal();
   if(orders.length){blockedDeletion(deck.id);return;}
   if(!await confirmAction('Delete this deck permanently?',deck.name+' will be deleted and cannot be restored.','Delete permanently',true))return;
-  const cancellation=work.cancelGeneration('deck:'+deck.id);
+  const cancellation=Promise.all([work.cancelGeneration('deck:'+deck.id),cancelMetadata(deck.id)]);
   recordDiagnostic('deck deletion','Confirmed '+deck.id+'; cancelling any generation before deletion');
   pending[deck.id]={revision:deck.revision};persist();
   state.decks=visibleDecks(state.decks);state.selected.delete(deck.id);state.immediateLibrary=true;

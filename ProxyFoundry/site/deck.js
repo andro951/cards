@@ -1,3 +1,4 @@
+import {startMetadata,ensureMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,requireDeckAvailable} from './ui.js';
@@ -67,7 +68,7 @@ function preparationComplete(deck){
   const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
   $('#view-ready-deck').onclick=()=>{closeModal();nav('deck/'+deck.id+'/cards');};
 }
-function chooseLook(source,includeOutside=true){
+function chooseLook(manifest,includeOutside=true){
   let choosing=false;
   const host=modal('Choose Look','',{size:'large'});
   const body=$('.modal-body',host);
@@ -92,8 +93,7 @@ function chooseLook(source,includeOutside=true){
       const epoch=state.routeEpoch;
       let deck=null;
       try{
-        const prepared=await prepareDeckSource(source);
-        deck=await job('/api/decks/import',{source:prepared,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
+        deck=await job('/api/decks/import',{manifest,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
         if(epoch===state.routeEpoch)nav('deck/'+deck.id+(value==='normal'?'/cards':'/setup'));
         else toast(deck.name+' was imported. Open it from Deck Library when you’re ready.');
         if(value==='normal')await generate(deck);
@@ -149,7 +149,14 @@ function addNewDeck(){
     if(source.startsWith('{')){
       try{JSON.parse(source);}catch{errorBox(body,'The JSON export is not valid.');return;}
     }
-    const includeOutside=outside.checked;closeModal();chooseLook(source,includeOutside);
+    const includeOutside=outside.checked;addButton.disabled=true;addButton.textContent='Reading deck list…';
+    try{
+      const prepared=await prepareDeckSource(source);
+      const manifest=await job('/api/decks/manifest',{source:prepared,includeOutside},{label:'Read deck list'});
+      if(!host.isConnected)return;
+      closeModal();chooseLook(manifest,includeOutside);
+    }catch(error){if(host.isConnected)errorBox(body,error.message);}
+    finally{addButton.textContent='Add deck';if(addButton.isConnected)updateButton();}
   };
   updateButton();
 }
@@ -173,6 +180,7 @@ export async function importDeck(existing=null){
   };
 }
 function preview(c,f){
+  if(c.metadataSource&&!f.compiled&&!f.lastRender)return '';
   return f.compiled?.render?.url||f.lastRender?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
 }
 function backPreview(c,d){
@@ -222,7 +230,9 @@ export async function showDeck(id,tab='cards'){
     const setup=renderSetup($('#deck-body'),d,async(updated,generateNow)=>{
       if(generateNow){history.replaceState(null,'','#deck/'+id);await showDeck(id,'cards');await generate(updated,true);}
       else await showDeck(id,'setup');
-    });$('#generate-deck').onclick=()=>attempt(setup.generate);return;
+    });$('#generate-deck').onclick=()=>attempt(setup.generate);
+    if(d.pendingImport)void startMetadata(d).catch(error=>console.info('Card details task stopped',error.message));
+    return;
   }
   if(tab==='review'){
     const issues=d.cards.flatMap(c=>c.faces.flatMap(f=>{
@@ -320,6 +330,7 @@ export async function showDeck(id,tab='cards'){
   activeCardsView={id,refresh};
   state.generationView={route:'deck',id,refresh:()=>refreshDeckProgress(id)};
   cardsGrid();filterCards();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
+  if(d.pendingImport)void startMetadata(d).catch(error=>console.info('Card details task stopped',error.message));
 }
 export async function refreshDeckProgress(id){
   if(state.route!=='deck'||state.activeDeck?.id!==id||state.deckTab!=='cards'||state.dirty)return;
@@ -330,6 +341,7 @@ export async function refreshDeckProgress(id){
 }
 async function generate(d,artChecked=false){
   if(state.setupActions?.root.isConnected&&state.setupActions.deckId===d.id)return state.setupActions.generate();
+  d=await ensureMetadata(d.id);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   if(!artChecked&&!await ensureArtworkReady(d.id))return;
   d=await api('/api/decks/'+d.id);
@@ -658,3 +670,4 @@ function copyToken(d,c){
   const host=modal('Copy token · '+c.name,`<p class="muted" style="margin-bottom:18px">Uses the preserved Card Tools token layout. Prepare the source card before creating a token.</p><label class="check-line"><input id="token-nonlegendary" type="checkbox" checked><span>Make it nonlegendary</span></label><label class="field"><span>Creature subtype override <small>optional</small></span><input id="token-subtypes" placeholder="e.g. Illusion"></label><label class="field"><span>Power / toughness <small>optional</small></span><input id="token-pt" placeholder="e.g. 0/1"></label><label class="field"><span>Frame color</span><select id="token-color"><option value="">Use source color</option>${['W','U','B','R','G','M','A','L'].map(x=>`<option>${x}</option>`).join('')}</select></label>`,{size:'small',footer:'<button class="button primary" id="make-token">Add copy token</button>'});
   $('#make-token').onclick=async()=>{try{const spec={nonlegendary:$('#token-nonlegendary').checked};if($('#token-subtypes').value)spec.replace_creature_subtypes=$('#token-subtypes').value.split(/[, ]+/).filter(Boolean);if($('#token-pt').value)spec.power_toughness=$('#token-pt').value;if($('#token-color').value)spec.frame_color=$('#token-color').value;await api('/api/decks/'+d.id+'/cards/'+c.id+'/token',{revision:d.revision,spec});closeModal();await showDeck(d.id);toast('Copy token added.');}catch(e){errorBox($('.modal-body',host),e.message);}};
 }
+window.addEventListener('pf-deck-metadata',event=>{void refreshDeckProgress(event.detail.id).catch(error=>toast(error.message,true));});
