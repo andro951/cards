@@ -1,0 +1,1856 @@
+[
+  {
+    "type": "Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "creature",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "creature_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Artifact Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "artifact_creature",
+    "frames": [
+      {
+        "name": "Artifact Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTA.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Artifact Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "artifact_creature_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Artifact Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTA.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Enchantment Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "nyx_creature",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Enchantment Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "nyx_creature_legendary",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Artifact Enchantment Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "artifact_enchantment_creature",
+    "frames": [
+      {
+        "name": "Artifact Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTA.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Artifact Enchantment Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "artifact_enchantment_creature_legendary",
+    "frames": [
+      {
+        "name": "Artifact Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTA.png",
+        "masks": []
+      },
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "nyx_enchantment",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "nyx_enchantment_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Artifact Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "artifact_enchantment",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Artifact Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "artifact_enchantment_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameANyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Artifact",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "card_noncreature",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Artifact",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "card_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Artifact \u2014 Vehicle",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "vehicle",
+    "frames": [
+      {
+        "name": "Vehicle Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTV.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Type Bar",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Title Bar",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Artifact \u2014 Vehicle",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "legendary_vehicle",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Vehicle Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTV.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Type Bar",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Title Bar",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Instant",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "card_noncreature",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Instant",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "card_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Sorcery",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "card_noncreature",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Sorcery",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "card_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Kindred Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "standard",
+    "recipe": "nyx_enchantment",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Kindred Enchantment",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {},
+    "group": "legendary",
+    "recipe": "nyx_enchantment_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownR.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownU.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameMNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Planeswalker \u2014 Test",
+    "layout": "normal",
+    "text": "+1: Draw a card.\n0: Draw a card.\n\u22122: Draw a card.",
+    "settings": {},
+    "group": "planeswalker",
+    "recipe": "planeswalker_regular_3",
+    "frames": [
+      {
+        "name": "Multicolored Planeswalker Frame",
+        "src": "/img/frames/planeswalker/regular/planeswalkerFrameM.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Legendary Planeswalker \u2014 Test",
+    "layout": "normal",
+    "text": "+1: Draw a card.\n0: Draw a card.\n\u22122: Draw a card.\n\u22123: Draw a card.",
+    "settings": {},
+    "group": "planeswalker",
+    "recipe": "planeswalker_tall_4",
+    "frames": [
+      {
+        "name": "Multicolored Planeswalker Tall Frame",
+        "src": "/img/frames/planeswalker/tall/planeswalkerTallM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Planeswalker Tall Frame",
+        "src": "/img/frames/planeswalker/tall/planeswalkerTallM.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Enchantment \u2014 Saga",
+    "layout": "normal",
+    "text": "I \u2014 Draw a card.\nII \u2014 Draw a card.",
+    "settings": {},
+    "group": "saga",
+    "recipe": "saga",
+    "frames": [
+      {
+        "name": "Blue/Red Gradient Saga Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Red Saga Tassel 2",
+        "src": "/img/frames/saga/regular/sagaFrameR.png",
+        "masks": [
+          "Saga Tassel 2"
+        ]
+      },
+      {
+        "name": "Blue Saga Tassel 1",
+        "src": "/img/frames/saga/regular/sagaFrameU.png",
+        "masks": [
+          "Saga Tassel 1"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/saga/regular/sagaFrameM.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Enchantment \u2014 Class",
+    "layout": "normal",
+    "text": "Gain 1 life.\n{1}{U}: Level 2\nDraw a card.\n{2}{R}: Level 3\nDraw two cards.",
+    "settings": {},
+    "group": "class",
+    "recipe": "class",
+    "frames": [
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/class/m.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Battle \u2014 Siege",
+    "layout": "battle",
+    "text": "Draw a card.",
+    "settings": {},
+    "group": "battle",
+    "recipe": "m15_battle",
+    "frames": [
+      {
+        "name": "Multicolored Battle Frame",
+        "src": "/img/frames/m15/battle/m.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Land",
+    "layout": "normal",
+    "text": "{T}: Add {U} or {R}.",
+    "settings": {},
+    "group": "land",
+    "recipe": "land_full_dual",
+    "frames": [
+      {
+        "name": "Temple Title Bar",
+        "src": "inline gradient",
+        "masks": []
+      },
+      {
+        "name": "Temple Type Bar",
+        "src": "inline gradient",
+        "masks": []
+      },
+      {
+        "name": "50% Black Transparent Rules Fill",
+        "src": "inline gradient",
+        "masks": []
+      },
+      {
+        "name": "Temple Rules Border",
+        "src": "inline gradient",
+        "masks": []
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Land",
+    "layout": "normal",
+    "text": "{T}: Add {U} or {R}.",
+    "settings": {},
+    "group": "legendary-land",
+    "recipe": "land_full_dual_legendary",
+    "frames": [
+      {
+        "name": "Red Legend Crown (Right Blend)",
+        "src": "/img/frames/m15/crowns/m15CrownRFloating.png",
+        "masks": [
+          "Right Blend"
+        ]
+      },
+      {
+        "name": "Blue Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownUFloating.png",
+        "masks": []
+      },
+      {
+        "name": "Neutral Land Generic Showcase Title",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Neutral Compact Land Type",
+        "src": "/img/frames/m15/boxTopper/short/ml.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "50% Black Transparent Rules Fill",
+        "src": "inline gradient",
+        "masks": []
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Basic Land \u2014 Island",
+    "layout": "normal",
+    "text": "{T}: Add {U}.",
+    "settings": {},
+    "group": "basic-land",
+    "recipe": "land_full_basic",
+    "frames": [
+      {
+        "name": "Island Symbol",
+        "src": "/img/frames/textless/eoe/symbols/island.png",
+        "masks": []
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/textless/eoe/u.png",
+        "masks": [
+          "No Border"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/textless/eoe/u.png",
+        "masks": [
+          "Pinlines"
+        ]
+      },
+      {
+        "name": "White Frame",
+        "src": "/img/frames/textless/eoe/w.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Legendary Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {
+      "templateRules": {
+        "legendary": "godzilla-card"
+      }
+    },
+    "group": "legendary",
+    "recipe": "creature_legendary",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/nickname/m15NicknamePTM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Crown",
+        "src": "/img/frames/proxy-foundry/godzilla/CrownM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/nickname/m15NicknameFrameM.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Creature",
+    "layout": "normal",
+    "text": "Flying",
+    "settings": {
+      "templateRules": {
+        "standard": "godzilla-card"
+      }
+    },
+    "group": "standard",
+    "recipe": "creature",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/nickname/m15NicknamePTM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Title",
+        "src": "/img/frames/proxy-foundry/godzilla/TitleM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/nickname/m15NicknameFrameM.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "Flying",
+    "settings": {
+      "templateRules": {
+        "token": "token-classic"
+      }
+    },
+    "group": "token",
+    "recipe": "token_classic_short",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/m15/textless/m.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "This creature gets +1/+1 for each artifact you control.",
+    "settings": {
+      "templateRules": {
+        "token": "token-classic"
+      }
+    },
+    "group": "token",
+    "recipe": "token_classic_rules",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/m15/regular/m.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "Flying",
+    "settings": {
+      "templateRules": {
+        "token": "token-full-art"
+      }
+    },
+    "group": "token",
+    "recipe": "token_full_art_short",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/textless/tokenFrameMTextless.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "This creature gets +1/+1 for each artifact you control.",
+    "settings": {
+      "templateRules": {
+        "token": "token-full-art"
+      }
+    },
+    "group": "token",
+    "recipe": "token_regular",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/regular/tokenFrameMRegular.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "Flying",
+    "settings": {
+      "templateRules": {
+        "token": "token-borderless"
+      }
+    },
+    "group": "token",
+    "recipe": "token_borderless_short",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/textless-borderless/tokenFrameMTextless.png",
+        "masks": []
+      }
+    ]
+  },
+  {
+    "type": "Token Creature \u2014 Spirit",
+    "layout": "token",
+    "text": "This creature gets +1/+1 for each artifact you control.",
+    "settings": {
+      "templateRules": {
+        "token": "token-borderless"
+      }
+    },
+    "group": "token",
+    "recipe": "token_borderless_rules",
+    "frames": [
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Blue/Red Gradient Pinline",
+        "src": "inline gradient",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Token Frame",
+        "src": "/img/frames/token/textless-borderless/tokenFrameMTextless.png",
+        "masks": []
+      }
+    ]
+  }
+]
