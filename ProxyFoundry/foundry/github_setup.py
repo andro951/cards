@@ -43,7 +43,8 @@ def import_card_data_url(workspace, payload, include_document=False):
     raw, _, _ = workspace.net.fetch(raw_url, refresh=True, ttl=0)
     entries = parse_card_data_json(raw)
     entries=validate_card_data_for_deck(workspace, payload['deckId'], entries)
-    return {'cardData':entries,'document':json.loads(raw.decode('utf-8-sig'))} if include_document else entries
+    from .card_data import document_settings
+    return {'cardData':entries,'document':json.loads(raw.decode('utf-8-sig')),'settings':document_settings(raw)} if include_document else entries
 
 
 def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
@@ -319,7 +320,9 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
                'back': back_settings['backDesign']['mode']}
     if data_row:
         summary['data'] = len(card_data)
+    from .card_data import document_settings
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
+                         **(document_settings(raw) if data_row else {}),
                          'githubSetupFolder': root_url,
                          'symbolsSource': {'kind':'github','value':base+'/'+quote(symbol_folder,safe='/')} if symbol_rows else None,
                          'dataJsonSource': {'kind':'github','value':data_row['path']} if data_row else None},

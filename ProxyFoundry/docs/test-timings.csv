@@ -39,28 +39,28 @@ tests/test_art_cache.py::test_old_refresh_art_setting_is_discarded,routine,0.980
 tests/test_art_cache.py::test_scryfall_cache_policy_is_unchanged,routine,0.972,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_art_source_visibility.py::test_github_refresh_toggle_is_removed,routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_art_source_visibility.py::test_scryfall_source_hides_custom_art_fallback_control,routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_double_face_uuid_needs_face_qualifier,routine,0.005,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_duplicates_missing_mapping_and_unused_acknowledgement,routine,0.005,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_explicit_file_then_uuid_then_name,routine,0.005,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_github_keeps_colliding_names_for_visual_review,routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_large_card_data_uses_indexed_selectors,routine,0.165,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_large_inventory_is_indexed_once,routine,0.176,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[../x.png],routine,0.007,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[/x.png],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[C:/x.png],routine,0.006,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[a//b.png],routine,0.007,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[a\\b.png],routine,0.005,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[x.txt],routine,0.006,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[http://scryfall.com/card/tst/1],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://evil.example/card/tst/1],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com.evil.example/card/tst/1],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com/card/bad link],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com@evil.example/card/tst/1],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[javascript:alert(1)],routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_reference_entries_roundtrip_without_overrides,routine,0.008,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_schema_ids_and_target_validation,routine,0.006,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_token_variants_do_not_share_name_match,routine,0.005,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_artwork_matching.py::test_workspace_review_and_save_are_atomic_and_metadata_only,routine,0.886,passed,2026-10-02T20:41:24.920141-04:00
+tests/test_artwork_matching.py::test_double_face_uuid_needs_face_qualifier,routine,0.009,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_duplicates_missing_mapping_and_unused_acknowledgement,routine,0.006,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_explicit_file_then_uuid_then_name,routine,0.007,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_github_keeps_colliding_names_for_visual_review,routine,0.010,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_large_card_data_uses_indexed_selectors,routine,0.313,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_large_inventory_is_indexed_once,routine,0.382,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[../x.png],routine,0.006,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[/x.png],routine,0.006,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[C:/x.png],routine,0.006,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[a//b.png],routine,0.008,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[a\\b.png],routine,0.007,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_mapping_rejects_unsafe_filename[x.txt],routine,0.007,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[http://scryfall.com/card/tst/1],routine,0.022,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://evil.example/card/tst/1],routine,0.011,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com.evil.example/card/tst/1],routine,0.011,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com/card/bad link],routine,0.017,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[https://scryfall.com@evil.example/card/tst/1],routine,0.006,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_reject_invalid_links[javascript:alert(1)],routine,0.039,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_reference_entries_roundtrip_without_overrides,routine,0.007,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_schema_ids_and_target_validation,routine,0.008,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_token_variants_do_not_share_name_match,routine,0.005,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_artwork_matching.py::test_workspace_review_and_save_are_atomic_and_metadata_only,routine,3.329,passed,2026-10-02T20:58:20.174530-04:00
 tests/test_backs.py::test_contain_exact_outside_pixels[size0],routine,0.092,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_backs.py::test_contain_exact_outside_pixels[size1],routine,0.063,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_backs.py::test_contain_exact_outside_pixels[size2],routine,0.078,passed,2026-10-02T20:41:24.920141-04:00
@@ -167,53 +167,61 @@ tests/test_domain.py::test_render_hash_quantity_independent,routine,0.005,passed
 tests/test_domain.py::test_store_revisions_and_trash,routine,0.095,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_domain.py::test_urzas_saga_structural_priority_beats_land,routine,0.004,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_frame_asset_batch.py::test_frame_assets_batch_durability_retry_and_reuse,routine,0.396,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_art_subfolder_link_imports_parent_symbols_back_and_card_data,routine,0.911,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data1-version must be 1],routine,1.661,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data2-cards must be an array],routine,1.270,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data3-nickname.*must be text],routine,1.085,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[data4-more than one nonempty entry],routine,1.354,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_data_json_fails_import[{bad json-valid UTF-8 JSON],routine,1.212,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[corrupt-rare.png: Could not decode],routine,1.523,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[duplicate-Duplicate rare],routine,1.049,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[missing-missing: mythic.png],routine,0.973,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[svg-export SVG to PNG],routine,0.967,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[symlink-symlink],routine,0.900,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unexpected-Unexpected: extra.png],routine,3.162,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unsafe-path-unsafe or unexpected],routine,0.954,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[5],routine,0.046,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[C:\\cards\\deck],routine,0.062,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[None],routine,0.046,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[],routine,0.050,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[file:///deck],routine,0.047,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_bad_urls_never_access_network[https://evil.example/setup],routine,0.052,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[download],routine,1.115,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[start],routine,1.002,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_data_json_merges_fields_without_clearing_existing_overrides,routine,1.254,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_data_json_nonempty_unknown_card_name_fails_atomically,routine,0.954,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_data_json_only_invalidates_faces_it_changes,routine,1.441,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_direct_github_symbol_folder_import,routine,0.250,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_does_not_enable_single_symbol_override,routine,0.088,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbol],routine,1.250,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbols],routine,1.007,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_four_symbols_live_art_and_icon_are_staged,routine,3.450,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_github_symbols_and_custom_back_trim_fully_transparent_padding,routine,0.325,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_http_bundle_import_stages_then_revision_save_preserves_cards_and_options,routine,3.359,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[art-file-art must be a regular],routine,0.096,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[back-corrupt-back.png: Could not decode],routine,0.442,passed,2026-10-02T20:41:24.920141-04:00
-"tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[file-url-file, not a project folder]",routine,0.090,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[invisible-icon-fully transparent],routine,0.612,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[listing-limit-too many entries],routine,0.107,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_missing_symbol_sources_use_bundled_defaults,routine,1.115,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_optional_data_json_is_staged_then_applied_on_save,routine,1.224,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_plural_symbol_folder_takes_priority_over_legacy_alias,routine,0.379,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_precedence_four_images_over_single_and_complete_back_over_icon,routine,0.349,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_reimport_fetches_changed_images_and_listing_without_stale_cache,routine,0.583,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[1234567abc],routine,0.339,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[art/v2],routine,0.444,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[main],routine,0.418,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_single_symbol_is_rejected,routine,0.065,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbol],routine,0.573,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbols],routine,0.373,passed,2026-10-02T20:41:24.920141-04:00
+tests/test_github_setup.py::test_art_subfolder_link_imports_parent_symbols_back_and_card_data,routine,0.898,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data1-version must be 1],routine,1.137,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data2-cards must be an array],routine,3.202,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data3-nickname.*must be text],routine,1.682,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[data4-more than one nonempty entry],routine,2.653,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_data_json_fails_import[{bad json-valid UTF-8 JSON],routine,1.640,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[corrupt-rare.png: Could not decode],routine,1.494,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[duplicate-Duplicate rare],routine,4.958,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[missing-missing: mythic.png],routine,1.303,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[svg-export SVG to PNG],routine,1.134,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[symlink-symlink],routine,1.151,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unexpected-Unexpected: extra.png],routine,1.264,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_symbol_folder_fails_without_falling_back_or_mutating_deck[unsafe-path-unsafe or unexpected],routine,0.928,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[5],routine,0.038,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[C:\\cards\\deck],routine,0.034,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[None],routine,0.035,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[],routine,0.028,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[file:///deck],routine,0.033,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_bad_urls_never_access_network[https://evil.example/setup],routine,0.032,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[download],routine,2.735,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_cancelled_import_cannot_change_saved_deck[start],routine,1.083,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_data_json_merges_fields_without_clearing_existing_overrides,routine,1.251,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_data_json_nonempty_unknown_card_name_fails_atomically,routine,1.481,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_data_json_only_invalidates_faces_it_changes,routine,3.526,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_direct_github_symbol_folder_import,routine,0.270,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_does_not_enable_single_symbol_override,routine,0.136,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbol],routine,4.315,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_empty_symbol_folder_uses_bundled_defaults[set_symbols],routine,3.192,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_four_symbols_live_art_and_icon_are_staged,routine,2.633,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_github_data_link_returns_deck_artist_settings,routine,1.270,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_github_symbols_and_custom_back_trim_fully_transparent_padding,routine,0.353,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_http_bundle_import_stages_then_revision_save_preserves_cards_and_options,routine,2.994,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[art-file-art must be a regular],routine,1.053,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[back-corrupt-back.png: Could not decode],routine,0.290,passed,2026-10-02T20:58:20.174530-04:00
+"tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[file-url-file, not a project folder]",routine,0.928,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[invisible-icon-fully transparent],routine,0.475,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_bundle_does_not_return_partial_settings[listing-limit-too many entries],routine,0.067,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_deck_artist_is_rejected[42],routine,0.004,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_deck_artist_is_rejected[None],routine,0.003,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_deck_artist_is_rejected[artist2],routine,0.005,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_invalid_deck_artist_is_rejected[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx],routine,0.004,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_local_data_file_returns_deck_artist_settings[fields0-settings0],routine,6.123,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_local_data_file_returns_deck_artist_settings[fields1-settings1],routine,2.051,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_local_data_file_returns_deck_artist_settings[fields2-settings2],routine,2.062,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_missing_symbol_sources_use_bundled_defaults,routine,2.518,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_optional_data_json_is_staged_then_applied_on_save,routine,1.320,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_plural_symbol_folder_takes_priority_over_legacy_alias,routine,0.437,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_precedence_four_images_over_single_and_complete_back_over_icon,routine,0.874,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_reimport_fetches_changed_images_and_listing_without_stale_cache,routine,0.485,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[1234567abc],routine,0.368,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[art/v2],routine,1.169,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_root_repository_default_ref_and_encoded_branch_are_preserved[main],routine,1.472,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_single_symbol_is_rejected,routine,0.075,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbol],routine,0.496,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_github_setup.py::test_symbol_folder_alias_no_art_enables_scryfall_and_default_back[set_symbols],routine,0.518,passed,2026-10-02T20:58:20.174530-04:00
 tests/test_godzilla_workflow.py::test_commander_picker_keeps_distinct_frames_and_groups_matching_choices,routine,1.942,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_godzilla_workflow.py::test_direct_data_json_uses_existing_schema_and_checks_deck_names,routine,1.272,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_godzilla_workflow.py::test_explicit_godzilla_uses_complete_frame_and_outlined_text[Creature \u2014 Human-colors0-godzilla-card-m15NicknameFrameB.png],routine,2.816,passed,2026-10-02T20:41:24.920141-04:00
@@ -480,14 +488,14 @@ tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_dual-data1-1601],routine,0.006,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[land_full_legendary-data2-1728],routine,0.099,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_set_symbol_frame_offsets.py::test_measured_frame_specific_set_symbol_vertical_offsets[original_dual_land_textless-data4-2402],routine,0.006,passed,2026-10-02T20:41:24.920141-04:00
-tests/test_staged_import.py::test_background_metadata_keeps_intervening_setup_and_uuid_data_file,routine,2.820,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_browser_background_job_yields_for_settings_and_is_safe_after_reload,routine,1.475,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_interrupted_metadata_is_resumable_and_cannot_republish_a_deleted_deck[cancel],routine,1.148,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_interrupted_metadata_is_resumable_and_cannot_republish_a_deleted_deck[delete],routine,1.339,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_large_list_only_import_does_not_resolve_cards,routine,0.074,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_metadata_only_revision_can_save_once_but_real_intervening_edit_conflicts,routine,1.311,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_public_list_fetch_preserves_names_printings_and_quantities_without_card_requests,routine,0.074,passed,2026-10-02T20:49:20.289187-04:00
-tests/test_staged_import.py::test_staged_metadata_rebuilds_two_faces_and_combines_duplicate_printings,routine,1.167,passed,2026-10-02T20:49:20.289187-04:00
+tests/test_staged_import.py::test_background_metadata_keeps_intervening_setup_and_uuid_data_file,routine,1.901,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_browser_background_job_yields_for_settings_and_is_safe_after_reload,routine,1.838,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_interrupted_metadata_is_resumable_and_cannot_republish_a_deleted_deck[cancel],routine,1.124,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_interrupted_metadata_is_resumable_and_cannot_republish_a_deleted_deck[delete],routine,1.243,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_large_list_only_import_does_not_resolve_cards,routine,0.084,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_metadata_only_revision_can_save_once_but_real_intervening_edit_conflicts,routine,1.561,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_public_list_fetch_preserves_names_printings_and_quantities_without_card_requests,routine,0.081,passed,2026-10-02T20:58:20.174530-04:00
+tests/test_staged_import.py::test_staged_metadata_rebuilds_two_faces_and_combines_duplicate_printings,routine,1.438,passed,2026-10-02T20:58:20.174530-04:00
 tests/test_static_preview_server.py::test_local_preview_accepts_pending_browser_connection_burst,routine,0.179,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_station_runtime_security.py::test_station_script_checksum_and_csp_safe_assignment,routine,0.007,passed,2026-10-02T20:41:24.920141-04:00
 tests/test_station_runtime_security.py::test_station_script_uses_allowed_pinned_host,routine,0.007,passed,2026-10-02T20:41:24.920141-04:00
@@ -692,7 +700,7 @@ tests/test_browser_storage.py::test_static_artwork_pairing_persists_without_rend
 tests/test_browser_storage.py::test_storage_quota_error_is_readable_diagnosed_and_upload_can_retry,extended,12.027,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_browser_storage.py::test_workspace_picker_holds_exclusive_access_and_releases_on_cancel,extended,19.971,passed,2026-10-02T10:02:28.069828-04:00
 tests/test_dom_offline.py::test_artwork_cancel_resume_defaults_and_mobile,extended,2.880,passed,2026-10-02T20:42:21.514852-04:00
-tests/test_dom_offline.py::test_artwork_file_merge_permissions_and_github_sha,extended,1.589,passed,2026-10-02T20:42:21.514852-04:00
+tests/test_dom_offline.py::test_artwork_file_merge_permissions_and_github_sha,extended,4.277,passed,2026-10-02T21:03:07.060825-04:00
 tests/test_dom_offline.py::test_artwork_github_save_ui_remember_and_one_update,extended,5.706,passed,2026-10-02T20:42:21.514852-04:00
 tests/test_dom_offline.py::test_artwork_large_inventory_limits_dom_and_search,extended,1.927,passed,2026-10-02T20:42:21.514852-04:00
 tests/test_dom_offline.py::test_artwork_pairing_undo_finish_and_no_rendering,extended,3.855,passed,2026-10-02T20:42:21.514852-04:00
@@ -730,8 +738,8 @@ tests/test_extension.py::test_installed_helper_fetches_public_decks_without_a_se
 tests/test_full_art_examples.py::test_supernatural_full_card_art_and_downloaded_reviews,extended,202.884,passed,2026-10-02T10:08:34.152560-04:00
 tests/test_github_setup.py::test_live_existing_eggs_fall_folder,extended,4.307,passed,2026-10-02T07:58:16.535911-04:00
 tests/test_github_setup_browser.py::test_failed_import_preserves_existing_draft_and_allows_retry,extended,5.117,passed,2026-10-02T18:05:06.961430-04:00
-tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[art-subfolder],extended,7.173,passed,2026-10-02T18:05:06.961430-04:00
-tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[project],extended,7.127,passed,2026-10-02T18:05:06.961430-04:00
+tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[art-subfolder],extended,8.148,passed,2026-10-02T21:00:31.674553-04:00
+tests/test_github_setup_browser.py::test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves[project],extended,9.678,passed,2026-10-02T21:00:31.674553-04:00
 tests/test_github_setup_browser.py::test_import_locks_manual_setup_and_cancel_restores_saved_state,extended,4.581,passed,2026-10-02T18:05:06.961430-04:00
 tests/test_github_setup_browser.py::test_one_click_without_symbols_uses_bundled_defaults,extended,5.590,passed,2026-10-02T18:05:06.961430-04:00
 tests/test_github_setup_browser.py::test_single_symbol_bundle_is_rejected_without_changing_setup,extended,4.578,passed,2026-10-02T18:05:06.961430-04:00

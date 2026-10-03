@@ -172,7 +172,7 @@ export function renderSetup(root,deck,onSaved){
   $('#data-json-section',root).append(dataStatus);
   $('#data-json-section .panel-head p',root).remove();
   $('#data-json-section h2',root).textContent='Card data & artwork mappings';
-  $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
+  $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,artist:'Deck Artist',cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
   $('#data-json-section .well code',root).style.whiteSpace='pre-wrap';
   const formatHelp=document.createElement('details');
   const formatTitle=document.createElement('summary');
@@ -222,7 +222,13 @@ export function renderSetup(root,deck,onSaved){
       closeModal();mark();toast('Artist credits imported.');
     };
   });
-  const stageCardData=(entries,source)=>{
+  const applyDataArtist=settings=>{
+    if(settings&&Object.hasOwn(settings,'artist')){
+      s.artist=settings.artist;$('#deck-artist',root).value=s.artist;
+    }
+  };
+  const stageCardData=(entries,source,settings)=>{
+    applyDataArtist(settings);
     pairedChanges=[];
     s.artReviewSignature='';
     stagedCardData=structuredClone(entries);
@@ -242,14 +248,14 @@ export function renderSetup(root,deck,onSaved){
     const file=await handle.getFile();
     const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');
     await rememberFile(deck.id,handle,JSON.parse(await file.text()));
-    stageCardData(result.cardData,{kind:'local',value:file.name});
+    stageCardData(result.cardData,{kind:'local',value:file.name},result.settings);
   });
   linkDataButton.onclick=()=>attempt(async()=>{
     if(!dataUrl.value.trim())throw new Error('Paste a GitHub data.json file link.');
     linkDataButton.disabled=true;
     try{
       const result=await api('/api/setup/card-data/github',{deckId:deck.id,url:dataUrl.value.trim()});
-      stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()});
+      stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()},result.settings);
       await rememberGithub(deck.id,dataUrl.value.trim(),result.document||{version:1,cards:result.cardData});
     }finally{linkDataButton.disabled=false;}
   });
@@ -330,7 +336,7 @@ export function renderSetup(root,deck,onSaved){
   (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
   symbolGithubInput.value=s.symbolsSource?.value||'';
   (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
-  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'},result.settings);}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
@@ -344,6 +350,7 @@ export function renderSetup(root,deck,onSaved){
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
     onImport:async(patch,cardData,hasDataJson,document)=>{
+      applyDataArtist(patch);
       pairedChanges=[];s.artDefaults=[];s.artReviewSignature='';
       await rememberGithub(deck.id,patch.githubSetupFolder,document||{version:1,cards:cardData||[]});
       if(hasDataJson){
@@ -373,7 +380,7 @@ export function renderSetup(root,deck,onSaved){
     importingArtwork=true;
     try{
     const data=[...files].find(file=>(file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name)==='data.json');
-    if(data){const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,JSON.parse(await data.text()),'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'});}
+    if(data){const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,JSON.parse(await data.text()),'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'},result.settings);}
     s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;},s.source);
     s.artDefaults=[];s.artReviewSignature='';
     $('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();

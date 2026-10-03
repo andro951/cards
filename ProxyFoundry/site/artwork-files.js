@@ -67,8 +67,10 @@ export const pickArtworkFiles=async(deckId)=>{
 //#region Data file merge
 const entryKey=entry=>JSON.stringify([entry.oracle_id?.toLowerCase()||``,entry.scryfall_id?.toLowerCase()||``,entry.name||``]);
 const validateDocument=document=>{
-    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`].includes(key)))
+    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`].includes(key)))
         throw new Error(`The existing data.json is invalid. It was not changed.`);
+    if(Object.hasOwn(document,`artist`)&&(typeof document.artist!==`string`||document.artist.length>300))
+        throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
     for(const entry of document.cards) {
         if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`artist`,`art`,`scryfall_url`].includes(key)))
             throw new Error(`The existing data.json has an invalid card entry. It was not changed.`);

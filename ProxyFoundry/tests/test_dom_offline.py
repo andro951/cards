@@ -135,7 +135,7 @@ def test_artwork_large_inventory_limits_dom_and_search(dom_page):
 def test_artwork_file_merge_permissions_and_github_sha(dom_page):
     page,errors=dom_page
     report=page.evaluate('''async()=>{
-      const m=__mod_artwork_files,original={version:1,cards:[{name:'Spirit',nickname:'Ghost',artist:'Me'}]},changes=[{name:'Spirit',art:'custom.png'}];
+      const m=__mod_artwork_files,original={version:1,artist:'Deck Artist',cards:[{name:'Spirit',nickname:'Ghost',artist:'Me'}]},changes=[{name:'Spirit',art:'custom.png'}];
       let text=JSON.stringify(original),writes=0,permissions=0;
       const handle={queryPermission:async()=> 'prompt',requestPermission:async()=>{permissions++;return 'granted';},getFile:async()=>({text:async()=>text}),createWritable:async()=>({write:async value=>{text=typeof value==='string'?value:await value.text();writes++;},close:async()=>{},abort:async()=>{}})};
       await m.saveLocalData({file:handle,document:original},changes);
@@ -153,6 +153,7 @@ def test_artwork_file_merge_permissions_and_github_sha(dom_page):
       return {local:JSON.parse(text),writes,permissions,denied,conflict,shaConflict,imported,names:source.localNames,progress,onceStored:!!onceStored,put:JSON.parse(calls[1].body),location,raw:m.githubDataLocation('https://raw.githubusercontent.com/owner/cards/main/deck/data.json')};
     }''')
     assert report['local']['cards'][0]=={'name':'Spirit','nickname':'Ghost','artist':'Me','art':'custom.png'}
+    assert report['local']['artist']=='Deck Artist'
     assert report['writes']==1 and report['permissions']==1 and report['denied'] and report['conflict']
     assert not report['onceStored'] and report['put']['sha']=='current'
     assert report['location']==report['raw']=={'repo':'owner/cards','branch':'main','path':'deck/data.json'}

@@ -350,22 +350,25 @@ def _deck_with_card(ws, name='A Test Creature'):
 
 
 def test_optional_data_json_is_staged_then_applied_on_save(tmp_path):
-    data={'version':1,'cards':[
-        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'},
+    data={'version':1,'artist':'Deck Artist','cards':[
+        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.','artist':'Card Artist'},
         {'name':'Ignored completely','nickname':'','flavor_text':''},
     ]}
     remote=BundleRemote(data=data)
     ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
     before=copy.deepcopy(ws.store.get('decks',deck['id']))
     result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
-    assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'}]
+    assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.','artist':'Card Artist'}]
+    assert result['settings']['artist']=='Deck Artist'
     assert result['summary']['data']==1
     assert result['settings']['dataJsonSource']=={'kind':'github','value':remote.child('data.json')}
     assert ws.store.get('decks',deck['id'])==before
-    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData'],'settings':result['settings']})
+    assert saved['settings']['artist']=='Deck Artist'
     face=saved['cards'][0]['faces'][0]
     assert face['semanticOverrides']['nickname']=='Dean Winchester'
     assert face['semanticOverrides']['flavor_text']=='Saving people, hunting things.'
+    assert face['artistOverride']=='Card Artist'
     assert saved['status']=='draft'
 
 
@@ -379,6 +382,31 @@ def test_data_json_merges_fields_without_clearing_existing_overrides(tmp_path):
     saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
     overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides=={'oracle_text':'Keep me','flavor_text':'Existing flavor','nickname':'Dean'}
+
+
+@pytest.mark.parametrize('artist',[None,42,{},'x'*301])
+def test_invalid_deck_artist_is_rejected(artist):
+    from foundry.card_data import parse_document
+    with pytest.raises(ValidationError,match='artist must be text'):
+        parse_document(json.dumps({'version':1,'artist':artist,'cards':[]}).encode())
+
+
+@pytest.mark.parametrize('fields,settings',[({},{}),({'artist':'  Deck Artist  '},{'artist':'Deck Artist'}),({'artist':''},{'artist':''})])
+def test_local_data_file_returns_deck_artist_settings(running,fields,settings):
+    app,server=running
+    deck=app.ws.new_deck('Local artist')
+    status,result,_=request(server,'/api/setup/card-data/file?deckId='+deck['id'],
+        json.dumps({'version':1,'cards':[],**fields}).encode(),headers={'Content-Type':'application/json'})
+    assert status==200 and result=={'cardData':[],'settings':settings}
+
+
+def test_github_data_link_returns_deck_artist_settings(tmp_path):
+    from foundry.github_setup import import_card_data_url
+    remote=BundleRemote(data={'version':1,'artist':'Deck Artist','cards':[]})
+    ws=workspace(tmp_path,remote);deck=ws.new_deck('Linked artist')
+    result=import_card_data_url(ws,{'url':remote.url+'/data.json','deckId':deck['id']},include_document=True)
+    assert result['settings']=={'artist':'Deck Artist'}
+    assert result['document']['artist']=='Deck Artist'
 
 
 def test_data_json_nonempty_unknown_card_name_fails_atomically(tmp_path):

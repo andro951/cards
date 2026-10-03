@@ -83,7 +83,13 @@ def parse_document(raw):
     try:value=json.loads(bytes(raw).decode('utf-8-sig'))
     except (ValueError,UnicodeError) as exc:raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
     if not isinstance(value,dict):raise ValidationError('data.json must contain a JSON object.')
-    if set(value)-{'version','cards'}:raise ValidationError('data.json has unsupported top-level fields.')
+    if set(value)-{'version','cards','artist'}:raise ValidationError('data.json has unsupported top-level fields.')
+    if 'artist' in value and (not isinstance(value['artist'],str) or len(value['artist'])>300):raise ValidationError('data.json artist must be text no longer than 300 characters.')
     if value.get('version')!=1:raise ValidationError('data.json version must be 1.')
     if not isinstance(value.get('cards'),list):raise ValidationError('data.json cards must be an array.')
     return validate_entries(value['cards'])
+
+def document_settings(raw):
+    parse_document(raw)
+    value=json.loads(bytes(raw).decode('utf-8-sig'))
+    return {'artist':value['artist'].strip()} if 'artist' in value else {}

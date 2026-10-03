@@ -23,11 +23,17 @@ Set symbols may also be imported directly from a public GitHub folder in the **S
 
 ## `data.json`
 
+Optional top-level `artist` sets the deck artist for custom artwork. Per-card
+`artist` values override it. Omitting the top-level field keeps the current deck
+artist; an empty string clears it. This works for local files, GitHub file links
+and 1-click imports.
+
 The importer checks the project root for `data.json`. The same file may instead be selected from the computer or linked directly as a GitHub `data.json` file in Art & Setup.
 
 ```json
 {
   "version": 1,
+  "artist": "Deck Artist",
   "cards": [
     {
       "name": "Syr Gwyn, Hero of Ashvale",

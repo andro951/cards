@@ -8,7 +8,7 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 648 | Every completed change |
+| Routine | 656 | Every completed change |
 | Extended | 149 | Relevant changes or an explicit full sweep |
 
 The staged-import milestone passed all 648 routine cases in 341.08 seconds,

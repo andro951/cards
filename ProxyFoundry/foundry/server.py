@@ -561,8 +561,10 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/setup/card-data/file':
             deck_ids = q.get('deckId', [])
             if len(deck_ids) != 1: raise ValidationError('Choose a deck before importing data.json.')
-            entries = parse_card_data_json(self.body(2 * 1024 * 1024))
-            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries)})
+            raw=self.body(2 * 1024 * 1024)
+            entries = parse_card_data_json(raw)
+            from .card_data import document_settings
+            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries),'settings':document_settings(raw)})
         if p == '/api/uploads':
             raw = self.body()
             kinds = q.get('kind', [])

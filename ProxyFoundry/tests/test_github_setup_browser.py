@@ -17,7 +17,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     app, server, page, errors = browser_app
     d = app.ws.create({'name': 'Bundle import', 'source': sf()['id']})
     original_card = app.ws.deck(d['id'])['cards'][0]
-    remote = BundleRemote(back='icon', data={'version':1,'cards':[
+    remote = BundleRemote(back='icon', data={'version':1,**({'artist':'Deck Artist'} if suffix else {}),'cards':[
         {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'The family business.'}
     ]})
     def transport(url):
@@ -50,7 +50,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     expect(page.locator('#data-json-preview')).to_have_count(0)
     assert app.ws.deck(d['id'])['settings']['symbols'] != app.ws.default_symbols()  # One-click import is persisted immediately.
     assert app.ws.deck(d['id'])['cards'][0]['faces'][0]['semanticOverrides']['nickname']=='Dean Winchester'
-    expect(page.locator('#deck-artist')).to_have_value('Artist stays')
+    expect(page.locator('#deck-artist')).to_have_value('Deck Artist' if suffix else 'Artist stays')
     page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
     page.click('#review-artwork');page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
     page.get_by_role('button',name='Not now',exact=True).click()
@@ -60,7 +60,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides['nickname']=='Dean Winchester'
     assert overrides['flavor_text']=='The family business.'
-    assert saved['settings']['artist'] == 'Artist stays'
+    assert saved['settings']['artist'] == ('Deck Artist' if suffix else 'Artist stays')
     assert saved['settings']['templateRules'].get('standard','auto') == 'auto'
     assert saved['notes'] == ''
     assert saved['settings']['backDesign']['mode'] == 'icon'
