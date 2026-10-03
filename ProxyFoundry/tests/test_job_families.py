@@ -69,6 +69,7 @@ def test_import_export_routes_yield_and_preserve_or_cleanup_results(app,kind,can
         assert not app.store.list('orders')
         assert not list((app.store.home/'orders').glob('*.zip'))
         assert not list((app.store.home/'backups').glob('*.zip'))
+        assert not list((app.store.home/'tmp'/'review-downloads').glob('*'))
     elif kind in {'github','symbols'}:
         symbols=job['result'].get('symbols') or job['result']['settings']['symbols']
         assert len(symbols)==4 and all(app.store.asset(value) for value in symbols.values())
@@ -76,6 +77,9 @@ def test_import_export_routes_yield_and_preserve_or_cleanup_results(app,kind,can
     else:
         result=job['result']
         path=app.store.home/('backups' if kind=='backup' else 'orders')/(result.get('filename') or result['id']+'.zip')
+        if kind=='review-images':
+            path=app.ws.review_download_file(result['download'].split('/')[3],result['filename'])
+            assert not list((app.store.home/'orders').iterdir())
         with zipfile.ZipFile(path) as archive:
             assert archive.testzip() is None
             if kind!='backup':assert len(archive.namelist())==(6 if kind=='order' else 3)
@@ -139,6 +143,8 @@ def test_export_snapshot_keeps_assets_during_foreground_deletion(app,kind):
     app.jobs.run_pending()
     job=app.jobs.get(ident);assert job['state']=='done',job
     path=app.store.home/('backups' if kind=='backup' else 'orders')/job['result']['filename']
+    if kind=='review-images':
+        result=job['result'];path=app.ws.review_download_file(result['download'].split('/')[3],result['filename'])
     with zipfile.ZipFile(path) as archive:
         assert archive.testzip() is None
         if kind=='backup':assert archive.read('assets/'+front+'.png')==png(size=(30,42))

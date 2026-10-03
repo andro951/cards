@@ -1145,6 +1145,32 @@ class Workspace:
         canvas.paste(ours,(ours.width+1,0),ours)
         out=io.BytesIO();canvas.save(out,'PNG');return out.getvalue()
 
+    def review_download_file(self,token,filename):
+        if not re.fullmatch(r'[-a-f0-9]{36}',str(token)) or not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:zip|png)',str(filename)):
+            raise ValidationError('Invalid review download.')
+        return self.store.home/'tmp'/'review-downloads'/(token+'_'+filename)
+
+    def release_review_download(self,token):
+        if not re.fullmatch(r'[-a-f0-9]{36}',str(token)):
+            raise ValidationError('Invalid review download.')
+        root=self.store.home/'tmp'/'review-downloads'
+        for path in root.glob(token+'_*'):
+            if path.is_file():path.unlink(missing_ok=True)
+        return {'ok':True}
+
+    def _review_download(self,filename):
+        root=self.store.home/'tmp'/'review-downloads';root.mkdir(exist_ok=True)
+        #A closed/reloaded tab cannot release its export. Remove abandoned staging files after a day.
+        for path in root.iterdir():
+            if path.is_file() and path.stat().st_mtime<time.time()-86400:path.unlink(missing_ok=True)
+        token=uid()
+        return token,self.review_download_file(token,filename)
+
+    def _review_download_result(self,token,filename,out,count):
+        return {'filename':filename,'count':count,'bytes':out.stat().st_size,
+                'download':'/api/review-downloads/'+token+'/'+filename,
+                'cleanup':'/api/review-downloads/'+token+'/delete'}
+
     def review_image(self,deck_id,card_id,face_id=None,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(deck_id)
         c=next((x for x in d.get('cards',[]) if x['id']==card_id),None)
@@ -1163,11 +1189,11 @@ class Workspace:
         refresh=bool(d.get('settings',{}).get('refreshData',False))
         raw=self._review_composite(reference_url,render,refresh)
         base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.png'
-        out=self.store.home/'orders'/filename
-        if out.exists():
-            filename=base+'_'+uid()[:8]+'_review.png';out=self.store.home/'orders'/filename
-        out.write_bytes(raw);progress(1,1,'Saved review image for '+face.get('name',c['name']))
-        return {'filename':filename,'count':1,'bytes':out.stat().st_size,'download':'/api/files/'+filename}
+        token,out=self._review_download(filename)
+        try:out.write_bytes(raw)
+        except Exception:out.unlink(missing_ok=True);raise
+        progress(1,1,'Review image ready for '+face.get('name',c['name']))
+        return self._review_download_result(token,filename,out,1)
 
     def review_images(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.review_images_steps(ident,progress,cancel)
@@ -1178,7 +1204,7 @@ class Workspace:
         d=self.deck(ident)
         if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading review images.')
         stem=slug(d['name'])[:80] or 'deck'
-        out=self.store.home/'orders'/('BulkProxyForge_Review_Images_'+stem+'_'+uid()[:8]+'.zip')
+        archive_name='BulkProxyForge_Review_Images_'+stem+'_'+uid()[:8]+'.zip'
         names=set();refresh=bool(d.get('settings',{}).get('refreshData',False))
         dfc_layouts={'transform','modal_dfc','double_faced_token','reversible_card'}
 
@@ -1208,6 +1234,7 @@ class Workspace:
 
         total=len(items)
         if not total:raise ValidationError(d['name']+': deck has no review images to export.')
+        token,out=self._review_download(archive_name)
         progress(0,total,'Preparing '+str(total)+' review images…')
         count=0
         complete=False
@@ -1223,7 +1250,7 @@ class Workspace:
                     yield
             if cancel():raise ValidationError('Image export cancelled.')
             complete=True
-            return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
+            return self._review_download_result(token,archive_name,out,count)
         finally:
             if not complete:out.unlink(missing_ok=True)
 

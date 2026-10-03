@@ -2,8 +2,9 @@
 
 //Binary files stay in the selected browser/folder workspace, outside Python memory.
 export class WorkspaceFiles {
-    constructor(directory) {
+    constructor(directory,downloadStaging=directory) {
         this.directory=directory;
+        this.downloadStaging=downloadStaging;
         this.writers=new Map();
         this.inputBuffers=new Map();
     }
@@ -18,6 +19,11 @@ export class WorkspaceFiles {
     parent = async (path,create=false) => {
         const parts=this.parts(path);
         let directory=this.directory;
+        if(parts[0]===`tmp`&&parts[1]===`review-downloads`) {
+            //Review exports are temporary browser files, never selected-folder order packages.
+            directory=this.downloadStaging;parts.shift();
+        }
+
         for(const part of parts.slice(0,-1)) {
             directory=await directory.getDirectoryHandle(part,{create});
         }

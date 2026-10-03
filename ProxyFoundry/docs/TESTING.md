@@ -2,14 +2,22 @@
 
 The [per-test timing list](test-timings.csv) records observed durations from the
 2026-09-29 full sweep and subsequent affected regression runs, refreshed on
-2026-10-02. Each row contains the pytest ID, group, seconds, outcome, and timestamp.
+2026-10-03. Each row contains the pytest ID, group, seconds, outcome, and timestamp.
 Times vary with the machine, disk, browser, and network. Historical extended
 measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 746 | Every completed change |
-| Extended | 150 | Relevant changes or an explicit full sweep |
+| Routine | 748 | Every completed change |
+| Extended | 154 | Relevant changes or an explicit full sweep |
+
+Review-image downloads use normal browser downloads for both PNGs and ZIPs,
+regardless of size. They do not create print orders or leave files in `orders`.
+Checks cover HTTP and static website downloads, cleanup after success/failure,
+cancellation, expiry of abandoned exports, and keeping temporary browser staging
+outside the selected workspace folder. The static browser also verifies reload
+cleanup and download contents. Large-file routing uses size metadata in the UI
+test; this change does not rerun the separate 2.3 GiB transfer stress test.
 
 The staged-import milestone passed all 648 routine cases in 341.08 seconds,
 30 offline UI cases in 126.99 seconds, three focused browser cases in 31.82

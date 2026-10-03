@@ -76,7 +76,13 @@ else{
       await new Promise(()=>{});
     }).catch(error=>{message.textContent=`Could not lock the workspace: ${error.message}`;});
   });
-  const files=new WorkspaceFiles(folder||await navigator.storage.getDirectory());
+  const browserRoot=await navigator.storage.getDirectory();
+  //The exclusive workspace lock makes prior-session download staging safe to discard.
+  await browserRoot.removeEntry(`bulk-proxy-forge-download-staging`,{recursive:true}).catch(error=>{
+    if(error.name!==`NotFoundError`)throw error;
+  });
+  const downloadStaging=await browserRoot.getDirectoryHandle(`bulk-proxy-forge-download-staging`,{create:true});
+  const files=new WorkspaceFiles(folder||browserRoot,downloadStaging);
   const pending=new Map();
   const jobs=new Map();
   let engineFailure=null;

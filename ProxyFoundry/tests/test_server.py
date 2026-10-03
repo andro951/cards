@@ -1,4 +1,5 @@
 from __future__ import annotations
+from foundry.domain import ValidationError
 import io,json,threading,urllib.request,urllib.error,zipfile,time
 from pathlib import Path
 import pytest
@@ -353,7 +354,7 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     assert app.ws.deck(deck['id'])['status']=='ready'
     out=app.ws.review_images(deck['id'])
     assert all(store.cache_get(url) is None for url in reference)
-    with zipfile.ZipFile(store.home/'orders'/out['filename']) as z:
+    with zipfile.ZipFile(app.ws.review_download_file(out['download'].split('/')[3],out['filename'])) as z:
         assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
         assert out['count']==3
         image=Image.open(io.BytesIO(z.read('review_normal_review.png')));image.load()
@@ -519,12 +520,17 @@ def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
         f['compiled']={'renderKey':key,'render':render,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version}
     deck['status']='prepared';deck=store.put('decks',deck,deck['revision'])
     out=app.ws.review_image(deck['id'],'dfc-card','dfc-back')
-    path=store.home/'orders'/out['filename']
+    path=app.ws.review_download_file(out['download'].split('/')[3],out['filename'])
+    assert not list((store.home/'orders').iterdir())
     assert path.suffix=='.png' and out['download'].endswith('.png')
     image=Image.open(path);image.load()
     assert image.size==(203,141)
     assert image.getpixel((5,5))[:3]==(30,30,220)
     assert image.getpixel((150,5))[:3]==(180,20,240)
+    image.close()
+    app.ws.release_review_download(out['download'].split('/')[3])
+    assert not path.exists()
+    assert not store.list('orders')
     app.close()
 
 
@@ -627,3 +633,33 @@ def test_grid_thumbnail_is_bounded_cached_and_preserves_print_image(running):
     assert request(server,path,raw=True)[1]==stored
     assert request(server,path+'/thumbnail?width=wrong')[0]==400
     assert request(server,path+'/thumbnail?width=8192')[0]==400
+
+
+def test_review_download_http_and_browser_adapter_cleanup_are_separate_from_orders(running):
+    from foundry.browser import request as browser_request
+    app,server=running
+    first,path=app.ws._review_download('card_review.png');path.write_bytes(b'PNG-CONTENT')
+    second,other=app.ws._review_download('review_images.zip');other.write_bytes(b'ZIP-CONTENT')
+    url='/api/review-downloads/'+first+'/card_review.png'
+    response=browser_request(app,'GET',url)
+    assert response['body']==b'' and response['file']==path.relative_to(app.store.home).as_posix()
+    status,body,headers=request(server,url,raw=True)
+    assert status==200 and body==b'PNG-CONTENT'
+    assert headers['Content-Type']=='image/png' and 'card_review.png' in headers['Content-Disposition']
+    status,result,_=request(server,'/api/review-downloads/'+first+'/delete',{})
+    assert status==200 and result=={'ok':True}
+    assert not path.exists() and other.read_bytes()==b'ZIP-CONTENT'
+    assert request(server,url,raw=True)[0]==404
+    assert not list((app.store.home/'orders').iterdir()) and not app.store.list('orders')
+    response=browser_request(app,'POST','/api/review-downloads/'+second+'/delete',b'{}')
+    assert response['status']==200 and not other.exists()
+
+
+def test_abandoned_review_downloads_expire_without_deleting_active_exports(tmp_path):
+    import os
+    app=App(Store(tmp_path));token,old=app.ws._review_download('old_review.png');old.write_bytes(b'old')
+    os.utime(old,(time.time()-90000,time.time()-90000))
+    _,active=app.ws._review_download('active_review.png');active.write_bytes(b'active')
+    assert not old.exists() and active.exists()
+    with pytest.raises(ValidationError):app.ws.release_review_download('../orders')
+    app.close()

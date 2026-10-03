@@ -530,6 +530,8 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
+            return self.file(self.app.ws.review_download_file(m[1],m[2]),filename=m[2])
         if m := re.fullmatch(r'/api/files/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
             mime='application/zip' if m[1].lower().endswith('.zip') else 'image/png'
             return self.file(self.app.store.home / 'orders' / m[1], mime, m[1])
@@ -558,6 +560,8 @@ class Handler(BaseHTTPRequestHandler):
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):
+        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/delete', p):
+            return self.respond(self.app.ws.release_review_download(m[1]))
         if p == '/api/setup/card-data/file':
             deck_ids = q.get('deckId', [])
             if len(deck_ids) != 1: raise ValidationError('Choose a deck before importing data.json.')
