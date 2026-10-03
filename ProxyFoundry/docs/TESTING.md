@@ -8,8 +8,8 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 656 | Every completed change |
-| Extended | 149 | Relevant changes or an explicit full sweep |
+| Routine | 746 | Every completed change |
+| Extended | 150 | Relevant changes or an explicit full sweep |
 
 The staged-import milestone passed all 648 routine cases in 341.08 seconds,
 30 offline UI cases in 126.99 seconds, three focused browser cases in 31.82
@@ -247,3 +247,16 @@ art faces, numbered filename matching, and the Day/Night print-order pair.
 Custom Day and Night output images were visually inspected. The initial custom
 browser run stopped at the artist-credit prompt; the fixture now supplies its
 artist before generation.
+
+
+## Native frame component repairs (2026-10-03)
+
+The compiler matrix exercises all ten color pairs across regular/tall planeswalkers,
+Class, Battle, Flip, Station, Godzilla cards and Godzilla lands. It checks preserved
+complete bases, idempotence, native crown blends, topmost nickname addons, modal
+reminder isolation and independent Prepare spell colors. Eight genuine upstream
+CardConjurer renders were inspected visually. Existing Prepare/Godzilla checks
+passed; Station and both Station land checks passed on desktop Chromium after
+headless Windows canvas loading hit the existing script timeout. These Station
+harnesses now use the same desktop mode as the native structural suite on Windows.
+The GitHub Pages website build succeeds. Vendor manifest hashes remain unchanged.

@@ -79,7 +79,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
 
     assert front['group']=='battle'
     assert front['recipe']=='m15_battle'
-    assert front['templateVersion']==3
+    assert front['templateVersion']==4
     assert front['data']['version']=='battle'
     assert front['data']['landscape'] is True
     assert (front['data']['width'],front['data']['height'])==(2814,2010)
@@ -103,7 +103,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
     assert back['data']['text']['pt']['text']=='8/8'
 
 
-def test_two_color_battle_uses_complete_multicolor_frame_without_component_masks(tmp_path):
+def test_two_color_battle_keeps_complete_frame_and_adds_native_pinline(tmp_path):
     store,art,settings=env(tmp_path)
     card=invasion_of_ikoria()
     front=card['card_faces'][0]
@@ -115,7 +115,6 @@ def test_two_color_battle_uses_complete_multicolor_frame_without_component_masks
     assert len(battle_frames)==1
     assert battle_frames[0]['masks']==[]
     assert not any('holostamp' in str(f.get('src','')).lower() for f in data['frames'])
-    assert not any(
-        any('pinline' in str(mask.get('name','')).lower() for mask in f.get('masks',[]) if isinstance(mask,dict))
-        for f in data['frames']
-    )
+    pinlines=sources_for_mask(data,'Pinline')
+    assert len(pinlines)==1 and pinlines[0].startswith('data:image/svg+xml')
+    assert any(m.get('src')=='/img/frames/m15/battle/maskPinline.png' for f in data['frames'] for m in f.get('masks',[]))

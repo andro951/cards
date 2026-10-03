@@ -49,7 +49,7 @@ def test_cleric_class_uses_native_cardconjurer_class_frame(tmp_path):
 
     assert result['group']=='class'
     assert result['recipe']=='class'
-    assert result['templateVersion']==4
+    assert result['templateVersion']==5
     assert data['version']=='class'
     assert data['onload']=='/js/frames/versionClass.js'
     assert data['class']=={'x':0.5014,'width':0.422,'count':2}

@@ -57,18 +57,16 @@ def test_prepare_host_frame_uses_its_color(env,colors,expected):
            'oracle_text':'Draw three cards, then put two cards from your hand on top of your library in any order.'}
     card=sf('Harmonized Trio // Brainstorm',layout='prepare',colors=colors,card_faces=[host,spell])
     compiled=w.compiler.compile_face(card,host,0,{},settings,art['id'])
-    assert compiled['group']=='prepare' and compiled['templateVersion']==2
+    assert compiled['group']=='prepare' and compiled['templateVersion']==3
     frames=compiled['data']['frames']
     prepare_frames=[f for f in frames if f.get('src','').startswith('/img/frames/prepare/regular/')]
-    assert len(prepare_frames)==(6 if len(colors)==2 else 8)
-    if len(colors)==2:
-        # Both native pinline masks become the existing two-color gradient.
-        assert all(f['src'].endswith('/m.png') for f in prepare_frames)
-        gradients=[f for f in frames if f.get('src','').startswith('data:image/svg+xml')
-                   and any('pinline' in m.get('name','').lower() for m in f.get('masks',[]))]
-        assert len(gradients)==2
-    else:
-        assert all(f['src']==f'/img/frames/prepare/regular/{expected}.png' for f in prepare_frames)
+    host_frames=[f for f in prepare_frames if not any('Prepare Spell' in m.get('name','') or m.get('name')=='Rules (Right Half)' for m in f.get('masks',[]))]
+    spell_frames=[f for f in prepare_frames if f not in host_frames]
+    assert spell_frames and all(f['src']=='/img/frames/prepare/regular/u.png' for f in spell_frames)
+    assert all(f['src']==f'/img/frames/prepare/regular/{expected}.png' for f in host_frames)
+    gradients=[f for f in frames if f.get('src','').startswith('data:image/svg+xml')
+               and any('pinline' in m.get('name','').lower() for m in f.get('masks',[]))]
+    assert len(gradients)==(1 if len(colors)==2 else 0)
     assert any(f.get('src')==f'/img/frames/m15/regular/m15PT{expected.upper()}.png' for f in frames)
     assert compiled['data']['text']['title']['text']=='Harmonized Trio'
 

@@ -50,6 +50,11 @@ BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':4
 AUTO_TEMPLATE_VERSIONS['token']=5
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
+# Refresh affected caches after exposing native color components.
+for _group in ('planeswalker','class','battle','flip','station','prepare','modal-front','modal-back'):
+    AUTO_TEMPLATE_VERSIONS[_group]=AUTO_TEMPLATE_VERSIONS.get(_group,1)+1
+for _choice in ('godzilla-card','godzilla-land'):
+    BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -223,7 +228,7 @@ def apply_prepare_frame_color(data,sem):
             frame['name']=f'{native.COLOR_NAMES[body]} Prepare Frame'
     return True
 
-_FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)'}
+_FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)','Prepare Spell','Prepare Spell Type/Title','Rules (Right Half)'}
 _FRAME_PINLINE_MASK='Pinline'
 
 def frame_treatment_colors(sem):
@@ -291,6 +296,15 @@ def _frame_effect_source(src,code):
         return f'/img/frames/m15/genericShowcase/m15GenericShowcaseFrame{code}.png' if code in 'WUBRGMALC' else src
     if re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame[WUBRGMA]\.png',src):
         return f'/img/frames/planeswalker/regular/planeswalkerFrame{code}.png' if code in 'WUBRGMA' else src
+    if re.fullmatch(r'/img/frames/planeswalker/tall/planeswalkerTall[WUBRGMA]\.png',src):
+        return f'/img/frames/planeswalker/tall/planeswalkerTall{code}.png' if code in 'WUBRGMA' else src
+    for family in ('station','m15/flip','modal/regular','modal/regular/back'):
+        if re.fullmatch(r'/img/frames/'+family+r'/[wubrgmalc]\.png',src):
+            # Station has a neutral artifact asset, not a separate land/void variant.
+            target='A' if family=='station' and code in 'LC' else code
+            return f'/img/frames/{family}/{target.lower()}.png' if target in 'WUBRGMALC' else src
+    if re.fullmatch(r'/img/frames/m15/nickname/m15NicknameFrame[WUBRGMAL]\.png',src):
+        return f'/img/frames/m15/nickname/m15NicknameFrame{code}.png' if code in 'WUBRGMAL' else src
 
     # Compact full-art-land accents.
     m=re.fullmatch(r'/img/frames/m15/boxTopper/short/([wubrgmal]{1,2})\.png',src)
@@ -315,8 +329,10 @@ def _crown_color_variant(src,code):
     one-off decorative crowns. Only complete legendary-crown color families
     belong here.
     """
-    if code not in 'WUBRGMALC':return None
+    if not code or code not in 'WUBRGMALC':return None
     src=str(src or '')
+    generated=re.fullmatch(r'(/img/frames/proxy-foundry/godzilla/Crown)([WUBRGMAL])(\.png)',src)
+    if generated and code in 'WUBRGMAL':return generated.group(1)+code+generated.group(3)
     lower=code.lower()
     lowered=src.lower()
 
@@ -451,6 +467,41 @@ def _dual_crown_layers_like(frame,dual):
 
     return [copy.deepcopy(frame)]
 
+def expose_native_frame_components(data,sem):
+    """Keep complete bases; expose only native overlays that need another color."""
+    colors=frame_treatment_colors(sem);code=frame_treatment_code(sem)
+    rebuilt=[]
+    # Only overlays ABOVE this base can supply its visible components.
+    existing=set()
+    for frame in data.get('frames',[]):
+        if isinstance(frame,dict):existing.update(m.get('src') for m in frame.get('masks',[]) if isinstance(m,dict))
+        src=str(frame.get('src','')) if isinstance(frame,dict) else ''
+        masks={}
+        if not isinstance(frame,dict) or frame.get('masks'):
+            rebuilt.append(frame);continue
+        if re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame[WUBRGMA]\.png',src):
+            masks={name:f'/img/frames/planeswalker/regular/planeswalkerMask{name}.png' for name in ('Pinline','Title','Type')}
+        elif re.fullmatch(r'/img/frames/planeswalker/tall/planeswalkerTall[WUBRGMA]\.png',src):
+            masks={'Pinline':'/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png','Title':'/img/frames/planeswalker/regular/planeswalkerMaskTitle.png','Type':'/img/frames/planeswalker/tall/planeswalkerTallMaskType.png'}
+        elif re.fullmatch(r'/img/frames/class/[wubrgmal]\.png',src):
+            masks={name:f'/img/frames/class/masks/mask{("Pinlines" if name=="Pinline" else name)}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/battle/[wubrgmalc]\.png',src):
+            masks={name:f'/img/frames/m15/battle/mask{name}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/flip/[wubrgmalc]\.png',src):
+            masks={'Pinline':'/img/frames/m15/flip/pinline.svg'}
+        elif re.fullmatch(r'/img/frames/station/[wubrgmalc]\.png',src):
+            masks={name:f'/img/frames/m15/regular/m15Mask{name}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/nickname/m15NicknameFrame[WUBRGMAL]\.png',src):
+            masks={'Pinline':'/img/frames/m15/regular/m15MaskPinlineSuper.png','Type':'/img/frames/m15/regular/m15MaskType.png','Rules':'/img/frames/m15/regular/m15MaskRules.png'}
+        for name,mask_src in masks.items():
+            if mask_src in existing:continue
+            if not (name=='Pinline' and len(colors)==2) and _frame_effect_source(src,code)==src:continue
+            layer=copy.deepcopy(frame);layer['name']=name+' Color Overlay';layer['masks']=[{'name':name,'src':mask_src}]
+            rebuilt.append(layer);existing.add(mask_src)
+        rebuilt.append(frame)
+    data['frames']=rebuilt
+
+
 def apply_universal_frame_color_treatment(data,sem):
     """Apply the five shared color effects once, after structural frame selection.
 
@@ -469,7 +520,9 @@ def apply_universal_frame_color_treatment(data,sem):
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
     dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
-    if not code and not dual:return False
+    if not code and not dual and not frame_treatment_code(sem.get('prepared_spell',{})):return False
+
+    expose_native_frame_components(data,sem)
 
     source_frames=data.get('frames',[])
     preserved_dual_crown_families=_old_dual_crown_families(source_frames) if dual else set()
@@ -479,6 +532,11 @@ def apply_universal_frame_color_treatment(data,sem):
             rebuilt.append(frame);continue
 
         old_src=str(frame.get('src',''))
+        effect_sem=sem.get('prepared_spell',sem) if any('Prepare Spell' in str(m.get('name','')) or m.get('name')=='Rules (Right Half)' for m in frame.get('masks',[]) if isinstance(m,dict)) else sem
+        effect_colors=frame_treatment_colors(effect_sem)
+        effect_code=frame_treatment_code(effect_sem)
+        if effect_sem is not sem and not effect_code:effect_code='A'
+        effect_dual=native.canonical_dual_color_order(effect_colors) if len(effect_colors)==2 else []
 
         # A card can contain multiple independent crown components. Process
         # each native color family independently, just as pinlines are handled
@@ -537,7 +595,7 @@ def apply_universal_frame_color_treatment(data,sem):
             layer=copy.deepcopy(frame)
             layer['masks']=boxes
             old=str(layer.get('src',''))
-            layer['src']=_frame_effect_source(old,code)
+            layer['src']=_frame_effect_source(old,effect_code)
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
@@ -546,13 +604,13 @@ def apply_universal_frame_color_treatment(data,sem):
             layer=copy.deepcopy(frame)
             layer['masks']=pin
             old=str(layer.get('src',''))
-            if dual:
-                first,second=dual
+            if effect_dual:
+                first,second=effect_dual
                 layer['src']=native.dual_gradient_fill_src(first,second)
                 saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
                 layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
             else:
-                layer['src']=_frame_effect_source(old,code)
+                layer['src']=_frame_effect_source(old,effect_code)
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
@@ -722,7 +780,10 @@ def semantic(sf,face,index=0):
     if sf.get('layout')=='prepare':
         faces=sf.get('card_faces',[])
         if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
-        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+        # Prepared spells have their own colors, independent of the host.
+        spell=faces[1]
+        spell_colors=spell.get('colors',spell.get('color_indicator',[c for c in 'WUBRG' if re.search(r'\{[^}]*'+c+r'[^}]*\}',str(spell.get('mana_cost','')))]))
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[],'colors':spell_colors},spell);d['scryfall_layout']='prepare'
     if sf.get('layout')=='flip':
         faces=sf.get('card_faces',[])
         if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
@@ -2303,6 +2364,8 @@ class Compiler:
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
                 if choice=='token-full-art':apply_modern_token_text(data)
                 else:apply_full_art_text(data)
+        if choice.startswith('godzilla-'):
+            apply_universal_frame_color_treatment(data,sem)
         full_card_art=(
             recipe=='helper_full_art' or choice.startswith('godzilla-') or choice in {'land','legend-land'}
             or (choice=='auto' and (recipe.startswith('land_') or recipe=='original_dual_land_textless'))

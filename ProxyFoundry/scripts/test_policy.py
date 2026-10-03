@@ -2,6 +2,7 @@
 
 EXTENDED_MODULES={
     'test_full_art_examples.py',
+    'test_frame_components_native.py',
     'test_art_series_native.py',
     'test_batch_bridge.py',
     'test_browser.py',

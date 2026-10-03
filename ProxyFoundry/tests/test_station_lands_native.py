@@ -32,7 +32,8 @@ def test_station_land_renders_with_normal_station_frame(tmp_path,name):
     deck=app.ws.prepare(deck['id'])
     assert not [f['error'] for c in deck['cards'] for f in c['faces'] if f.get('error')]
     with sync_playwright() as playwright:
-        browser=playwright.chromium.launch(headless=True)
+        # Match the desktop renderer on Windows; hidden headless canvas exports can stall native scripts.
+        browser=playwright.chromium.launch(headless=os.name!='nt')
         page=browser.new_page(viewport={'width':1200,'height':900})
         errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
         try:
