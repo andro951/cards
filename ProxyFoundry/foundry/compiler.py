@@ -55,6 +55,7 @@ for _group in ('planeswalker','class','battle','flip','station','prepare','modal
     AUTO_TEMPLATE_VERSIONS[_group]=AUTO_TEMPLATE_VERSIONS.get(_group,1)+1
 for _choice in ('godzilla-card','godzilla-land'):
     BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
+AUTO_TEMPLATE_VERSIONS['station']+=1
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -210,6 +211,34 @@ def build_station_land_data(sem,artist,autofit,flags,art_origin):
     apply_station_underframe_policy(data,sem,art_origin)
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return sem,data,'station'
+
+
+def apply_station_textbox_transparency(data,sem,art_origin):
+    """Replace the custom-art textbox instead of stacking translucent frame fills."""
+    if not _is_custom_art_origin(art_origin):return False
+    if any(frame.get('name')=='Station Textbox Cutout' for frame in data.get('frames',[]) if isinstance(frame,dict)):return False
+    frames=[]
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):frames.append(frame);continue
+        src=str(frame.get('src',''))
+        if src.startswith(('/img/frames/station/','/img/frames/m15/regular/')) and frame.get('masks'):
+            masks=[mask for mask in frame['masks'] if mask.get('name')!='Rules']
+            if not masks:continue
+            frame=copy.deepcopy(frame);frame['masks']=masks
+        frames.append(frame)
+    base=next((i for i,frame in enumerate(frames) if isinstance(frame,dict) and frame.get('src')=='/img/frames/station/a.png' and not frame.get('masks')),None)
+    if base is None:return False
+    mask={'name':'Rules','src':'/img/frames/m15/regular/m15MaskRules.png'}
+    code=frame_treatment_code(sem)
+    source=_frame_effect_source('/img/frames/station/a.png',code)
+    #Frames draw bottom-to-top. Clear only the frame canvas, then draw the
+    #upstream textbox once at its native alpha; Station badges draw separately.
+    frames[base:base]=[
+        {'name':'Station Textbox','src':source,'masks':[copy.deepcopy(mask)]},
+        {'name':'Station Textbox Cutout','src':'/img/black.png','masks':[copy.deepcopy(mask)],'erase':True},
+    ]
+    data['frames']=frames
+    return True
 
 
 def apply_prepare_frame_color(data,sem):
@@ -2349,6 +2378,8 @@ class Compiler:
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
         apply_universal_frame_color_treatment(data,sem)
+        if choice=='auto' and group=='station' and not options.get('rawCard'):
+            apply_station_textbox_transparency(data,sem,art_origin)
         nickname_applied=False
         if choice.startswith('godzilla-'):
             nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)

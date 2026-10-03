@@ -3,7 +3,7 @@ import copy, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds, apply_station_underframe_policy
+from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds, apply_station_underframe_policy, apply_station_textbox_transparency
 from foundry.domain import ValidationError, GENERATION_VERSION
 from foundry.images import ingest_image, data_uri
 from foundry.legacy import compiler as native
@@ -118,6 +118,19 @@ def test_station_underframe_policy_depends_on_art_source_not_card_color(env):
 
         custom=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='computer folder')
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in custom['data']['frames'])
+
+
+@pytest.mark.parametrize('colors',[[],['W'],['U','R']])
+def test_custom_station_has_one_translucent_textbox_above_cutout(env,colors):
+    _,comp,art,_,settings=env;c=card(colors=colors)
+    data=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder')['data']
+    frames=data['frames'];rules=[f for f in frames if any(m.get('name')=='Rules' for m in f.get('masks',[]))]
+    assert len(rules)==2 and rules[0]['name']=='Station Textbox'
+    assert rules[1]['name']=='Station Textbox Cutout' and rules[1]['erase']
+    assert frames.index(rules[0])<frames.index(rules[1])
+    before=copy.deepcopy(data)
+    assert not apply_station_textbox_transparency(data,semantic(c,c),'GitHub folder')
+    assert data==before
 
 def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)

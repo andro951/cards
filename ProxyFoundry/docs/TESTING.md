@@ -8,8 +8,14 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 749 | Every completed change |
-| Extended | 156 | Relevant changes or an explicit full sweep |
+| Routine | 752 | Every completed change |
+| Extended | 158 | Relevant changes or an explicit full sweep |
+
+Custom-art Station textbox checks cover neutral, single-color and dual-color
+frames, one native-alpha textbox above a frame-only cutout, and idempotence.
+Actual Station land renders include nicknames, custom artwork and a pixel check
+that rejects opaque/stacked textboxes. Template version 8 refreshes cached
+automatic Station images. The Scryfall underframe policy is preserved.
 
 All downloads use normal browser downloads regardless of size; there is no app
 save-location picker. Original printing, cropped-art and review-image downloads
