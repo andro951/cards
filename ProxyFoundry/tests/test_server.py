@@ -445,7 +445,7 @@ def test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged(tmp_path
     ws.deck=lambda ident: deck
 
     out=ws.cropped_art('deck')
-    with zipfile.ZipFile(store.home/'orders'/out['filename']) as archive:
+    with zipfile.ZipFile(ws.review_download_file(out['download'].split('/')[3],out['filename'])) as archive:
         assert archive.namelist()==['Card One.jpg','Bruce Banner.jpg','Hulk.jpg']
         assert archive.read('Card One.jpg')==urls['https://cards.scryfall.io/art_crop/front/a/a/card_one.jpg']
         assert archive.read('Bruce Banner.jpg')==urls['https://cards.scryfall.io/art_crop/front/b/b/banner.jpg']

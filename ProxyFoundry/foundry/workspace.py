@@ -1015,7 +1015,7 @@ class Workspace:
             try:next(steps)
             except StopIteration as finished:return finished.value
     def original_images_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
-        d=self.deck(ident);out=self.store.home/'orders'/('originals-'+uid()+'.zip');names=set();count=0
+        d=self.deck(ident);filename='originals-'+uid()+'.zip';token,out=self._review_download(filename);names=set();count=0
         complete=False
         try:
             with zipfile.ZipFile(out,'w',zipfile.ZIP_STORED) as z:
@@ -1034,7 +1034,7 @@ class Workspace:
                         yield
             if cancel():raise ValidationError('Image export cancelled.')
             complete=True
-            return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
+            return self._review_download_result(token,filename,out,count)
         finally:
             if not complete:out.unlink(missing_ok=True)
 
@@ -1067,7 +1067,8 @@ class Workspace:
             raise ValidationError(d['name']+': this deck has no Scryfall cropped artwork to export.')
 
         stem=slug(d['name'])[:80] or 'deck'
-        out=self.store.home/'orders'/('BulkProxyForge_Cropped_Art_'+stem+'_'+uid()[:8]+'.zip')
+        filename='BulkProxyForge_Cropped_Art_'+stem+'_'+uid()[:8]+'.zip'
+        token,out=self._review_download(filename)
         used=set();count=0
 
         def extension(url,mime):
@@ -1122,7 +1123,7 @@ class Workspace:
                     yield
             if cancel():raise ValidationError('Image export cancelled.')
             complete=True
-            return {'filename':out.name,'count':count,'bytes':out.stat().st_size,'download':'/api/files/'+out.name}
+            return self._review_download_result(token,filename,out,count)
         finally:
             if not complete:out.unlink(missing_ok=True)
 

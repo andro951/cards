@@ -1,7 +1,7 @@
 import {startMetadata,ensureMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile,downloadReviewFile,requireDeckAvailable} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {ensureArtworkReady} from './artwork-review.js';
@@ -372,15 +372,15 @@ function deckMenu(d){
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
-  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Originals.zip',out.bytes);else location.href=out.download;});
-  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Cropped_Art.zip',out.bytes);else location.href=out.download;});
+  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});await downloadExportFile(out);});
+  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});await downloadExportFile(out);});
   $('#download-review-images').onclick=()=>attempt(async()=>{
     closeModal();
     let current=await api('/api/decks/'+d.id);
     const needsGeneration=!!current.upgradeRequired||current.status==='draft'||Number(current.summary?.rendered||0)<Number(current.summary?.faces||0);
     if(needsGeneration)throw new Error('Generate images before downloading review images.');
     const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
-    await downloadReviewFile(out);
+    await downloadExportFile(out);
   });
   $('#trash-deck').onclick=()=>{if(state.bootstrap?.browser)return attempt(()=>deleteDeck(d));return attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});};
 }
@@ -582,7 +582,7 @@ async function inspect(deck,card,index=0){
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();if(!f.compiled?.render)throw new Error('Generate images for this card before downloading its review image.');
-    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});await downloadReviewFile(out);await showDeck(d.id,'cards');}finally{setBusy(false);}});
+    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});await downloadExportFile(out);await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
   $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{
     syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,selectedArtPrintingId:id,artOverride:null}));

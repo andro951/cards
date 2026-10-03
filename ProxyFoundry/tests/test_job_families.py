@@ -2,7 +2,7 @@
 import copy,json,zipfile
 import pytest
 from foundry.browser import create_app,request
-from foundry.domain import GENERATION_VERSION,uid
+from foundry.domain import GENERATION_VERSION,ValidationError,uid
 from foundry.images import ingest_image
 from foundry.workspace import DEFAULT_SETTINGS
 from test_github_setup import BundleRemote,png
@@ -77,7 +77,7 @@ def test_import_export_routes_yield_and_preserve_or_cleanup_results(app,kind,can
     else:
         result=job['result']
         path=app.store.home/('backups' if kind=='backup' else 'orders')/(result.get('filename') or result['id']+'.zip')
-        if kind=='review-images':
+        if kind in {'review-images','originals','cropped-art'}:
             path=app.ws.review_download_file(result['download'].split('/')[3],result['filename'])
             assert not list((app.store.home/'orders').iterdir())
         with zipfile.ZipFile(path) as archive:
@@ -118,6 +118,22 @@ def test_github_cancellation_after_last_asset_does_not_publish_a_setup(app):
     assert app.store.get('decks',app.fixture_deck['id'])==app.fixture_deck
 
 
+def test_standalone_original_download_uses_temporary_export_and_cleans_failures(app):
+    source={'entries':{'mainboard':[{'card_digest':{'name':'Card','image_uris':{
+        'front':'https://cards.scryfall.io/normal/front/card.jpg'}}}]}}
+    result=app.tools.originals({'source':source})
+    token=result['download'].split('/')[3]
+    path=app.ws.review_download_file(token,result['filename'])
+    with zipfile.ZipFile(path) as archive:
+        assert archive.read('card.png')==png(size=(30,42))
+    assert not list((app.store.home/'orders').iterdir())
+    app.ws.release_review_download(token)
+    assert not path.exists()
+    with pytest.raises(ValidationError,match='cancelled'):
+        app.tools.originals({'source':source},cancel=lambda:True)
+    assert not list((app.store.home/'tmp'/'review-downloads').iterdir())
+
+
 @pytest.mark.parametrize('kind',['order','backup'])
 def test_archive_write_failure_cleans_partial_and_releases_queue(app,kind,monkeypatch):
     def fail(*args,**kwargs):raise OSError(51,'Full')
@@ -143,7 +159,7 @@ def test_export_snapshot_keeps_assets_during_foreground_deletion(app,kind):
     app.jobs.run_pending()
     job=app.jobs.get(ident);assert job['state']=='done',job
     path=app.store.home/('backups' if kind=='backup' else 'orders')/job['result']['filename']
-    if kind=='review-images':
+    if kind in {'review-images','originals','cropped-art'}:
         result=job['result'];path=app.ws.review_download_file(result['download'].split('/')[3],result['filename'])
     with zipfile.ZipFile(path) as archive:
         assert archive.testzip() is None

@@ -8,11 +8,15 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 748 | Every completed change |
-| Extended | 154 | Relevant changes or an explicit full sweep |
+| Routine | 749 | Every completed change |
+| Extended | 156 | Relevant changes or an explicit full sweep |
 
-Review-image downloads use normal browser downloads for both PNGs and ZIPs,
-regardless of size. They do not create print orders or leave files in `orders`.
+All downloads use normal browser downloads regardless of size; there is no app
+save-location picker. Original printing, cropped-art and review-image downloads
+use temporary staging without creating print orders or leaving files in `orders`.
+Saved print orders retain their snapshots, and downloading them sends a separate
+copy to Downloads. Backups, diagnostics, helpers and JSON exports follow the same
+normal download flow.
 Checks cover HTTP and static website downloads, cleanup after success/failure,
 cancellation, expiry of abandoned exports, and keeping temporary browser staging
 outside the selected workspace folder. The static browser also verifies reload

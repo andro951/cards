@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,nav,work} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,blobRequest,downloadPost,downloadBlob,downloadExportFile,nav,work} from './ui.js';
 import {pickFile} from './setup.js';
 import {diagnosticZipRequest} from './diagnostics.js';
 export async function showSettings(){
@@ -71,7 +71,7 @@ export async function showHelp(){
 function originalsTool(){
   const host=modal('Original printing image downloader',`<label class="field"><span>Public Scryfall deck URL or deck JSON</span><textarea id="originals-source" rows="6" placeholder="https://scryfall.com/@you/decks/…"></textarea></label><label class="field"><span>Or upload the export</span><input type="file" id="originals-file" accept=".json"></label><label class="check-line"><input type="checkbox" id="originals-outside"><span>Include Outside the Game cards</span></label><p class="muted">No custom templates or set symbols are needed for original-image downloads.</p>`,{footer:'<button class="button primary" id="download-originals">Download original PNGs</button>'});
   $('#originals-file').onchange=()=>attempt(async()=>{const f=$('#originals-file').files[0];if(f){if(f.size>20*1024**2)throw new Error('Deck JSON limit is 20 MB.');$('#originals-source').value=await f.text();}});
-  $('#download-originals').onclick=async()=>{try{$('#download-originals').disabled=true;const r=await job('/api/tools/originals',{source:$('#originals-source').value.trim(),includeOutside:$('#originals-outside').checked},{label:'Download originals'});closeModal();const a=document.createElement('a');a.href=r.download;a.download=r.filename;a.click();toast(r.count+' printing images saved.');}catch(e){errorBox($('.modal-body',host),e.message);if($('#download-originals'))$('#download-originals').disabled=false;}};
+  $('#download-originals').onclick=async()=>{try{$('#download-originals').disabled=true;const r=await job('/api/tools/originals',{source:$('#originals-source').value.trim(),includeOutside:$('#originals-outside').checked},{label:'Download originals'});closeModal();await downloadExportFile(r);toast(r.count+' printing images saved.');}catch(e){errorBox($('.modal-body',host),e.message);if($('#download-originals'))$('#download-originals').disabled=false;}};
 }
 function tokensTool(){
   let entries=null;

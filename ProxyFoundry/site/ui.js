@@ -57,39 +57,16 @@ export async function downloadPost(path,data,filename){
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-export async function saveApiFile(path,name,size=null,{downloadFolder=false}={}){
-  let handle=null;
-  //Small exports use the browser download folder; large files stream to disk.
-  const smallFile=Number.isFinite(size)&&size>=0&&size<=50*1024*1024;
-  if(!downloadFolder&&!smallFile&&state.bootstrap?.browser&&typeof window.showSaveFilePicker==='function'){
-    try{handle=await window.showSaveFilePicker({suggestedName:name});}
-    catch(error){if(error.name==='AbortError')return;throw error;}
-  }
-  if(handle){
-    const writer=await handle.createWritable();
-    try{
-      let offset=0,total=null;
-      while(total===null||offset<total){
-        const response=await fetch(path,{headers:{Range:`bytes=${offset}-${offset+4*1024*1024-1}`}});
-        if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Download failed.');
-        const match=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('Content-Range')||'');
-        if(response.status!==206||!match||Number(match[1])!==offset)throw new Error('The saved file did not return a valid download range.');
-        const chunk=await response.arrayBuffer();
-        if(chunk.byteLength!==Number(match[2])-offset+1)throw new Error('The download was incomplete.');
-        await writer.write(chunk);offset+=chunk.byteLength;total=Number(match[3]);
-      }
-      await writer.close();return;
-    }catch(error){await writer.abort().catch(()=>{});throw error;}
-  }
+export async function saveApiFile(path,name){
   const response=await fetch(path);
   if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'Download failed.');}
   downloadBlob(await response.blob(),name);
 }
-export async function downloadReviewFile(output){
+export async function downloadExportFile(output){
   //The Blob has received all bytes before staging is removed; orders remain separate.
-  const downloading=saveApiFile(output.download,output.filename,output.bytes,{downloadFolder:true});
+  const downloading=saveApiFile(output.download,output.filename);
   await downloading.finally(()=>api(output.cleanup,{}).catch(error=>{
-    recordDiagnostic('review download cleanup failed',error.message);
+    recordDiagnostic('download cleanup failed',error.message);
   }));
 }
 export function toast(message,error=false){

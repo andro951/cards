@@ -1,4 +1,4 @@
-"""Exercise download-folder selection and large-export streaming in Chromium."""
+"""Exercise normal browser downloads and temporary export cleanup in Chromium."""
 import os,re
 from pathlib import Path
 import pytest
@@ -14,7 +14,7 @@ def download_page():
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)
         page=browser.new_page(accept_downloads=True)
-        page.add_script_tag(content=source+'\nwindow.downloadTest={saveApiFile,downloadReviewFile,state};')
+        page.add_script_tag(content=source+'\nwindow.downloadTest={saveApiFile,downloadExportFile,state};')
         page.evaluate('downloadTest.state.bootstrap={browser:true}')
         yield page
         browser.close()
@@ -32,29 +32,17 @@ def test_small_exports_use_normal_download_without_picker(download_page,filename
     assert download.suggested_filename==filename
     assert Path(download.path()).read_bytes()==bytes([1,2,3,4])
 
-def test_large_exports_keep_streaming_file_picker(download_page):
+@pytest.mark.parametrize('size',[None,51*1024*1024,1300*1024*1024])
+def test_all_exports_use_normal_download_without_picker(download_page,size):
     page=download_page
-    result=page.evaluate('''async () => {
-        const evidence={pickers:0,writes:[],closed:false,range:null};
-        window.showSaveFilePicker=async options=>{
-            evidence.pickers++;evidence.filename=options.suggestedName;
-            return {createWritable:async()=>({
-                write:async chunk=>evidence.writes.push([...new Uint8Array(chunk)]),
-                close:async()=>{evidence.closed=true;},
-                abort:async()=>{throw new Error('Unexpected abort');}
-            })};
-        };
-        window.fetch=async(path,options)=>{
-            evidence.range=options.headers.Range;
-            return new Response(new Uint8Array([1,2,3,4]),{
-                status:206,headers:{'Content-Range':'bytes 0-3/4'}
-            });
-        };
-        await downloadTest.saveApiFile('/api/files/export','large.zip',51*1024*1024);
-        return evidence;
-    }''')
-    assert result=={'pickers':1,'writes':[[1,2,3,4]],'closed':True,
-                    'range':'bytes=0-4194303','filename':'large.zip'}
+    page.evaluate("""() => {
+        window.showSaveFilePicker=()=>{throw new Error('Download opened a picker');};
+        window.fetch=async()=>new Response(new Uint8Array([1,2,3,4]));
+    }""")
+    with page.expect_download() as result:
+        page.evaluate("size=>downloadTest.saveApiFile('/api/files/export','large.zip',size)",size)
+    assert result.value.suggested_filename=='large.zip'
+    assert Path(result.value.path()).read_bytes()==bytes([1,2,3,4])
 
 
 @pytest.mark.parametrize('size',[4,1300*1024*1024])
@@ -70,7 +58,7 @@ def test_review_downloads_always_use_download_folder_and_release_staging(downloa
         };
     }""")
     with page.expect_download() as result:
-        page.evaluate("size=>downloadTest.downloadReviewFile({download:'/api/review-downloads/file',cleanup:'/api/review-downloads/token/delete',filename:'reviews.zip',bytes:size})",size)
+        page.evaluate("size=>downloadTest.downloadExportFile({download:'/api/review-downloads/file',cleanup:'/api/review-downloads/token/delete',filename:'reviews.zip',bytes:size})",size)
     assert Path(result.value.path()).read_bytes()==bytes([1,2,3,4])
     assert page.evaluate('reviewRequests')==[{'path':'/api/review-downloads/file','method':'GET'},{'path':'/api/review-downloads/token/delete','method':'POST'}]
 
@@ -84,7 +72,7 @@ def test_failed_review_download_releases_staging(download_page):
             return options?.method==='POST'?new Response(JSON.stringify({ok:true})):new Response(JSON.stringify({error:'Download failed'}),{status:500});
         };
         let error='';
-        try{await downloadTest.downloadReviewFile({download:'/review',cleanup:'/cleanup',filename:'review.png',bytes:4});}
+        try{await downloadTest.downloadExportFile({download:'/review',cleanup:'/cleanup',filename:'review.png',bytes:4});}
         catch(failure){error=failure.message;}
         return {calls,error};
     }""")
@@ -123,7 +111,7 @@ def request(app,method,url,body,headers):
     outputs=page.evaluate("async()=>await (await fetch('/api/__test__/seed-review-downloads')).json()")
     for output in outputs:
         with page.expect_download() as result:
-            page.evaluate("async output=>{const ui=await import('/site/ui.js');await ui.downloadReviewFile(output);}",output)
+            page.evaluate("async output=>{const ui=await import('/site/ui.js');await ui.downloadExportFile(output);}",output)
         data=Path(result.value.path()).read_bytes()
         assert result.value.suggested_filename==output['filename']
         if output['filename'].endswith('.zip'):
