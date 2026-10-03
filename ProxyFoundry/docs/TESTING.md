@@ -8,8 +8,17 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 640 | Every completed change |
-| Extended | 148 | Relevant changes or an explicit full sweep |
+| Routine | 648 | Every completed change |
+| Extended | 149 | Relevant changes or an explicit full sweep |
+
+The staged-import milestone passed all 648 routine cases in 341.08 seconds,
+30 offline UI cases in 126.99 seconds, three focused browser cases in 31.82
+seconds, and three actual static website import/generation/review/export flows
+in 295.91 seconds, including the GitHub Pages `/cards/` path. New checks cover
+list-only fetching, background metadata edits, cancellation/recovery, duplicate
+printings, two-sided cards, deferred data.json validation, and absence of card
+artwork downloads or rendering before Generate Images. Full metadata timing is
+recorded once as `deck.metadata`; the initial list fetch is `deck.list.fetch`.
 
 Explicit Godzilla two-sided frame checks cover transform, modal DFC, double-faced token, and reversible faces; independent creature/land text and stats; optional nickname overlays; full-card fitting; static picker selection and autosaving; and a real two-face CardConjurer render inspected visually. Automatic keeps its existing structural frame rules.
 

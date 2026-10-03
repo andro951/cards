@@ -490,3 +490,50 @@ def test_setup_sections_flow_without_gaps_or_hidden_controls(browser_app,width,h
     page.locator('#symbol-grid').scroll_into_view_if_needed()
     page.screenshot(path=str(ROOT/'test-results'/f'setup-layout-{width}.png'))
     assert not errors,errors
+
+
+
+def test_staged_custom_import_opens_setup_before_metadata_and_keeps_edits(browser_app):
+    app,server,page,errors=browser_app
+    released=threading.Event();started=threading.Event();calls=[]
+    original=app.ws.net.transport
+    def fetch(url):
+        calls.append(url)
+        if 'api.scryfall.com/cards/' in url:
+            started.set();assert released.wait(20),'Test did not release background metadata.'
+        return original(url)
+    app.ws.net.transport=fetch
+    requests=[];page.on('request',lambda request:requests.append(request.url))
+    try:
+        page.click('#import-deck');page.locator('.modal-body summary').click()
+        page.locator('.modal-body textarea').fill('1 A Test Creature')
+        page.click('#do-import')
+        expect(page.get_by_role('button',name='Customize Look',exact=True)).to_be_visible(timeout=5000)
+        assert not started.is_set() and not calls,'Choose Look must not resolve card metadata.'
+        page.get_by_role('button',name='Customize Look',exact=True).click()
+        page.locator('#deck-artist').wait_for(timeout=5000)
+        assert started.wait(5)
+        expect(page.locator('#deck-metadata-status')).to_be_visible()
+        page.locator('#deck-artist').fill('Artist while loading')
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=5000)
+        page.click('[data-frame-group=legendary]')
+        page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True).click()
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=5000)
+        page.locator('#show-flavor-text').uncheck()
+        page.locator('#deck-artist').focus()
+        released.set()
+        expect(page.locator('#deck-metadata-status')).to_contain_text('Card details are ready',timeout=15000)
+        expect(page.locator('#deck-artist')).to_be_focused()
+        expect(page.locator('#deck-artist')).to_have_value('Artist while loading')
+        expect(page.locator('#show-flavor-text')).not_to_be_checked()
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+        deck=app.ws.store.list('decks')[0]
+        assert deck['settings']['artist']=='Artist while loading'
+        assert deck['settings']['templateRules']['legendary']=='godzilla-card'
+        assert not deck.get('pendingImport')
+        page.click('[data-tab=cards]');page.locator('#card-search').wait_for()
+        assert not any('/api.scryfall.com/' not in url and 'cards.scryfall.io/' in url for url in requests)
+        assert not any('/api/render-sessions' in url or '/api/runtime/prepare' in url for url in requests)
+        assert not any('compiled' in face for card in deck['cards'] for face in card['faces'])
+        assert not errors,errors
+    finally:released.set()

@@ -1,3 +1,4 @@
+import {ensureMetadata} from './metadata.js';
 import {$,api,job,modal,closeModal,thumbnail,state,toast,uploadFolder} from './ui.js';
 import {sourceRecord,mergeDataDocument,enrichDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
 
@@ -316,7 +317,7 @@ export const checkArtwork=async(deck,settings=deck.settings,cardData=deck.cardDa
     return openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{if(onAdd)await onAdd();return load();}});
 };
 export const ensureArtworkReady=async id=>{
-    const deck=await api(`/api/decks/`+id);
+    const deck=await ensureMetadata(id);
     const settings=structuredClone(deck.settings);
     const add=async()=>{
         if(settings.source.mode===`github`)

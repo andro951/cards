@@ -49,6 +49,8 @@ def dom_page(tmp_path):
           else if(path==='/api/settings'){if(d)F.settings={...F.settings,...d,revision:F.settings.revision+1};value=F.settings;}
           else if(path==='/api/stats')value={renders:1,cacheEntries:4,assetBytes:3000,home:'local workspace'};
           else if(path==='/api/trash'||path==='/api/orders')value=[];
+          else if(path==='/api/decks/manifest')value={id:'list-fixture'};
+          else if(path==='/api/jobs/list-fixture')value={state:'done',result:{name:'Test deck',rows:[{source:'Test creature',name:'Test creature',quantity:2,section:'mainboard'}]}};
           else if(path==='/api/setup/artwork-review')value={id:'artwork-fixture'};
           else if(path==='/api/jobs/artwork-fixture')value={state:'done',result:{needsReview:false,signature:'matched',items:[],inventory:[]}};
           else if(path.includes('/cards/')&&d){const c=F.deck.cards[0];if(d.quantity)c.quantity=Number(d.quantity);if(d.artistOverride!==undefined)c.faces[0].artistOverride=d.artistOverride;F.deck.summary.cards=c.quantity;F.deck.revision++;value=F.deck;}

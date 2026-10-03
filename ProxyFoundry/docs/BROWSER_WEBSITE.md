@@ -4,7 +4,9 @@
 
 Double-click `START_BULK_PROXY_FORGE.bat`. The Local Preview window serves static files at the fixed localhost address. The engine and workspace run in the browser. The old `START_PROXY_FOUNDRY.bat` continues to open the old app.
 
-Both Normal Look and Customize Look lead to Art & Setup. Importing resolves card metadata, which can take time and now shows progress and a Cancel control. It does not download artwork or render cards. Frame pickers and CardConjurer source choices use static card-back samples. Explicit template-validation buttons render only the samples requested there. Deck rendering starts at Generate Images.
+Add deck reads only the deck name, card list, quantities and supplied printing identifiers before showing Choose Look. Customize Look opens Art & Setup immediately; remaining Scryfall metadata loads in the background while setup stays editable. Generate Images saves the current choices and finishes any pending metadata preparation before loading artwork and rendering. Normal Look skips setup and automatically prepares and generates with the normal artwork and frames.
+
+Import and background metadata preparation do not download card images or render cards. Frame pickers and CardConjurer source choices use static card-back samples. The artwork-pairing helper loads the images needed for matching when opened. Unfinished metadata preparation resumes when the deck is reopened or generated.
 
 ## Storage and recovery
 

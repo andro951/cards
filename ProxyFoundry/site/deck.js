@@ -88,8 +88,8 @@ function chooseLook(manifest,includeOutside=true){
       if(choosing)return;
       choosing=true;
       closeModal();
-      const status=preparationStatus('Reading your deck list',
-        value==='normal'?'We’re importing your deck, then generating its images with the normal artwork and frames. We’ll tell you when it’s ready.':'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+      const status=preparationStatus('Opening your deck',
+        value==='normal'?'We’re preparing your deck, then generating its images with the normal artwork and frames. We’ll tell you when it’s ready.':'Opening Art & Setup. Card details will load in the background while you choose your options.');
       const epoch=state.routeEpoch;
       let deck=null;
       try{

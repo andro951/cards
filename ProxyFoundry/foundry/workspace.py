@@ -186,7 +186,6 @@ class Workspace:
         return self.store.put('decks',{'name':listing['name'],'cards':cards,'settings':settings,'status':'draft','notes':'',
             'importedSource':supplied.get('importedSource',''),'pendingImport':True,'stagedImport':True})
 
-    @timed('deck.metadata')
     def resolve_metadata(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.resolve_metadata_steps(ident,progress,cancel)
         while True:

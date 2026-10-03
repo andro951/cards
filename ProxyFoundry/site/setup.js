@@ -193,6 +193,7 @@ export function renderSetup(root,deck,onSaved){
   let changeVersion=0,persistedVersion=0,saveTimer=null,saveQueue=Promise.resolve();
   const mark=()=>{changeVersion++;state.dirty=true;$('#setup-state',root).textContent='Saving changes…';clearTimeout(saveTimer);saveTimer=setTimeout(()=>attempt(()=>persistSetup()),400);};
   byCard.onclick=()=>attempt(async()=>{
+    refreshMetadata(await ensureMetadata(deck.id));
     s.artist=$('#deck-artist',root).value.trim();
     const previews=await api('/api/setup/custom-art-previews',{deckId:deck.id,settings:s});
     const host=modal('Artist credits by card','',{size:'large',footer:'<button class="button primary" id="save-artists">Apply credits</button>'});
@@ -294,7 +295,7 @@ export function renderSetup(root,deck,onSaved){
     host.append(body);
   };
   const metadataStatus=document.createElement('p');metadataStatus.setAttribute('role','status');metadataStatus.id='deck-metadata-status';
-  metadataStatus.textContent='Reading card details in the background. You can choose your art and options now.';
+  metadataStatus.textContent='Reading card details in the background. You can choose your art and options now. Images will be generated after you finish your choices.';
   metadataStatus.hidden=!deck.pendingImport;
   $('.setup-columns',root).before(metadataStatus);
   function refreshMetadata(updated){
