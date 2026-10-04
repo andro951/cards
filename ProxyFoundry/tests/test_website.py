@@ -559,7 +559,7 @@ def test_static_token_styles_and_upstream_assets(tmp_path):
                   return {templates,seeds,derived};
                 }''')
                 assert {row['id'] for row in result['templates']} >= {'token-classic','token-full-art','token-borderless'}
-                assert [row['version'] for row in result['seeds']]==['tokenTextlessM15','tokenTextless','tokenTextlessBorderless']
+                assert [row['version'] for row in result['seeds']]==['tokenTextlessM15','tokenRegular','tokenTextlessBorderless']
                 assert all(asset['status']==200 and asset['size']>0 for asset in result['derived'])
                 for seed in result['seeds']:
                     assert seed['text']=='Flying'

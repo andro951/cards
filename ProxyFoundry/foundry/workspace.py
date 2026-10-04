@@ -270,6 +270,11 @@ class Workspace:
                     f['lastRender']['render']=self.store.render_get(f['lastRender']['renderKey'])
                 if comp:
                     comp['render']=r
+                    #Converted cards retain their source template identity. Refresh
+                    #old modern token textless renders without invalidating other styles.
+                    data=comp.get('data') or {}
+                    if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
+                        d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     else:

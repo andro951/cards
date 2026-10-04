@@ -8,8 +8,14 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 752 | Every completed change |
+| Routine | 759 | Every completed change |
 | Extended | 158 | Relevant changes or an explicit full sweep |
+
+Modern full-art tokens use the filled native rules box for any rules or flavor
+text, including a single keyword. Empty/whitespace-only tokens keep the larger
+art variant. Coverage includes text preservation, geometry, conversion,
+refreshing old converted renders, template seeds and actual native PNGs inspected
+visually. Classic and borderless styles retain their existing short-text rules.
 
 Custom-art Station textbox checks cover neutral, single-color and dual-color
 frames, one native-alpha textbox above a frame-only cutout, and idempotence.

@@ -587,13 +587,15 @@ def test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline(w
     ('Flying, vigilance, lifelink','',False),
     ('{T}, Sacrifice this token: Add one mana of any color.','',False),
     ('Flying','A bird in the hand.',False),('Flying\nVigilance','',False),
+    ('','A bird in the hand.',False),('   ','',True),
 ])
 def test_token_styles_preserve_text_and_choose_matching_geometry(workspace,style,rules,flavor,short):
+    if style=='token-full-art':short=not (rules.strip() or flavor.strip())
     s,a,settings=workspace
     card={**sf('Token Creature — Bird',['U']),'layout':'token','oracle_text':rules,'flavor_text':flavor}
     result=Compiler(s).compile_face(card,card,0,{'templateOverride':style},settings,a)
     data=result['data'];text=data['text']
-    assert rules in text['rules']['text']
+    assert rules.strip() in text['rules']['text']
     assert flavor in text['rules']['text']
     assert text['pt']['text']=='2/3'
     assert text['type']['y']==(0.8196 if short or style=='token-borderless' else 0.65)
@@ -605,6 +607,8 @@ def test_token_styles_preserve_text_and_choose_matching_geometry(workspace,style
         assert text['title']['color']=='#fde367'
         assert text['rules']['color']=='black' and text['rules']['outlineWidth']==0
     elif style=='token-full-art':
+        assert data['version']==('tokenTextless' if short else 'tokenRegular')
+        assert ('/img/frames/token/textless/tokenFrameUTextless.png' if short else '/img/frames/token/regular/tokenFrameURegular.png') in sources
         assert text['title']['color']=='white' and text['title']['outlineWidth']==0
         assert all(field['color']=='black' and field['outlineWidth']==0 for key,field in text.items() if key not in {'title','nickname'})
     else:
@@ -673,7 +677,7 @@ def test_deck_wide_token_power_and_toughness_are_independent(workspace):
 
 
 @pytest.mark.parametrize('style,version',[
-    ('token-classic','tokenTextlessM15'),('token-full-art','tokenTextless'),('token-borderless','tokenTextlessBorderless'),
+    ('token-classic','tokenTextlessM15'),('token-full-art','tokenRegular'),('token-borderless','tokenTextlessBorderless'),
 ])
 def test_deck_wide_token_conversion_uses_selected_family(workspace,style,version):
     from foundry.workspace import Workspace
@@ -685,6 +689,21 @@ def test_deck_wide_token_conversion_uses_selected_family(workspace,style,version
     assert token['data']['version']==version
     assert token['data']['text']['rules']['text']=='Flying'
     assert token['data']['text']['pt']['text']=='2/3'
+
+
+def test_old_converted_modern_token_with_rules_requires_preparation(workspace):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace;ws=Workspace(s);card=sf('Creature — Bird',['U'])
+    card['oracle_text']='Flying'
+    comp=Compiler(s).compile_face(card,card,0,{},settings,a)
+    original_group=comp['group']
+    token=ws._apply_token_spec(comp,{'token_frame_style':'token-full-art'},a,'Deck-wide token',sem=semantic(card,card))
+    token['data']['version']='tokenTextless'
+    deck=ws.new_deck('Old converted token')
+    deck.update(status='prepared',cards=[{'id':'card','name':card['name'],'quantity':1,'scryfall':card,
+        'faces':[{'id':'face','name':card['name'],'group':original_group,'compiled':token}]}])
+    s.put('decks',deck,deck['revision'])
+    assert ws.deck(deck['id'])['status']=='draft'
 
 
 def test_deck_wide_token_setting_is_front_affecting(workspace):

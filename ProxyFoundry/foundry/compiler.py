@@ -22,7 +22,7 @@ BUILTINS=[
  {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
 BUILTINS.extend([
  {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
- {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
+ {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; a filled textbox whenever rules or flavor text is present.','legendary':True,'groups':['token']},
  {'id':'token-borderless','name':'Modern borderless token','description':'Edge-to-edge artwork with outlined rules text and the modern token bars.','legendary':True,'groups':['token']},
  {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token','transform-front','transform-back','modal-front','modal-back']},
  {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
@@ -56,6 +56,7 @@ for _group in ('planeswalker','class','battle','flip','station','prepare','modal
 for _choice in ('godzilla-card','godzilla-land'):
     BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 AUTO_TEMPLATE_VERSIONS['station']+=1
+BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=1
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -1497,7 +1498,7 @@ def build_token_data(sem,artist,autofit,flags,style='token-classic'):
     short=token_has_short_text(sem)
     configure_token_style(data,code,style,short)
     fit_token_art(data,sem['art_local_path'],autofit)
-    return base,data,('token_regular' if style=='token-full-art' and not short else style.replace('-','_')+('_short' if short else '_rules'))
+    return base,data,('token_regular' if style=='token-full-art' and data['version']=='tokenRegular' else style.replace('-','_')+('_short' if short else '_rules'))
 
 
 def token_has_short_text(sem):
@@ -1511,6 +1512,8 @@ def configure_token_style(data,code,style,short):
     classic=style=='token-classic'
     borderless=style=='token-borderless'
     large_art=short or borderless
+    #Black body text needs the filled native textbox even for one keyword.
+    if style=='token-full-art':large_art=not str(data['text']['rules'].get('text') or '').strip()
     family='textless' if large_art else 'regular'
     frame=next(f for f in reversed(data['frames']) if str(f.get('src','')).startswith('/img/frames/token/'))
     if not classic and not large_art:frame['src']=_token_frame_src(code)

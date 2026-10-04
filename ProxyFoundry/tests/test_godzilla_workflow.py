@@ -142,7 +142,7 @@ def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_di
     by_choice={target['choice']:target for target in plan['targets']}
     assert by_choice['auto']['choices']==['auto','token-classic']
     assert by_choice['auto']['data']['version']=='tokenTextlessM15'
-    assert by_choice['token-full-art']['data']['version']=='tokenTextless'
+    assert by_choice['token-full-art']['data']['version']=='tokenRegular'
     assert by_choice['token-borderless']['data']['version']=='tokenTextlessBorderless'
 
 
