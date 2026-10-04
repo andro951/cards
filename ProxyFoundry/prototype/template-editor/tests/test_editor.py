@@ -32,7 +32,7 @@ def page(origin):
         page = browser.new_page(viewport={'width': 1500, 'height': 1050}, accept_downloads=True)
         errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))
-        page.goto(origin)
+        page.goto(origin+'/classic')
         page.locator('canvas[data-ready]').wait_for(timeout=90000)
         yield page
         assert not errors
@@ -245,7 +245,7 @@ def test_cached_composite_invalidates_and_png_uses_full_resolution(page):
 
 def test_host_only_serves_prototype_files_and_rejects_traversal(origin):
     with urllib.request.urlopen(origin + '/') as response:
-        assert b'editor.js' in response.read()
+        assert b'studio.js' in response.read()
     from urllib.error import HTTPError
     for path in ['/server.py', '/%2e%2e/foundry/server.py', '/img/../server.py']:
         with pytest.raises(HTTPError):

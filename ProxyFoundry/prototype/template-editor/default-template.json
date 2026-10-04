@@ -488,7 +488,7 @@
       "id": "Watermark",
       "name": "Watermark",
       "kind": "image",
-      "visible": true,
+      "visible": false,
       "when": "always",
       "placement": {
         "relativeTo": "Rules",

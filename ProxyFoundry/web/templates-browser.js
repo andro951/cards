@@ -24,7 +24,11 @@ export async function showTemplates(){
   const main=$('#main');main.replaceChildren();
   const heading=element('div','','page-head');heading.append(element('h1','Templates'));
   const actions=element('div','','actions');
-  actions.append(button('Import Template',importTemplate));
+  const importButton=button('Import Template',async()=>{
+    importButton.disabled=true;importButton.textContent='Importing template…';
+    try{await importTemplate();}
+    finally{importButton.disabled=false;importButton.textContent='Import Template';}
+  });actions.append(importButton);
   actions.append(button('Import Card Conjurer File',importCardConjurer));
   actions.append(button('＋ Create Template',createTemplate,'button primary'));
   heading.append(actions);main.append(heading);
@@ -80,7 +84,9 @@ async function importTemplate(){
   if(file.size>64*1024**2)throw new Error('Template file limit is 64 MB.');
   const model=JSON.parse(await file.text());
   if(model.format!==format)throw new Error('Choose a Bulk Proxy Forge template JSON file. Card Conjurer files use the other import action.');
-  await api('/api/templates/import',model);await showTemplates();toast('Template imported.');
+  const epoch=state.routeEpoch;
+  toast('Importing template images…');
+  await api('/api/templates/import',model);if(epoch===state.routeEpoch)await showTemplates();toast('Template imported.');
 }
 async function exportTemplate(item){
   const response=await fetch(`/api/templates/${item.id}/export`);
@@ -124,6 +130,12 @@ async function importCardConjurer(){
 }
 
 function editTemplate(original){
+  if(original.visualRecipe){
+    const host=modal('Edit in Template Studio','');const body=$('.modal-body',host);
+    body.append(element('p','Export this template and open the JSON in Template Studio. Its editable layers and color images are included.','muted'));
+    body.append(button('Download editable template',()=>exportTemplate(original)));
+    return;
+  }
   if(![2,3].includes(original.schemaVersion))throw new Error('This legacy template still works in decks. Export its Card Conjurer source and import it through the visual conversion workflow to edit it.');
   const model=structuredClone(original);model.schemaVersion=3;model.variants=model.variants||[];model.layoutMetadata=model.layoutMetadata||{};
   let previewUrl=null;const sampleUrls=new Map();

@@ -6,7 +6,7 @@ export class Renderer {
     constructor() {
         this.images = new Map();
         this.fonts = new Map();
-        this.bounds = new Map();
+        this.bounds = new WeakMap();
         this.imageIds = new WeakMap();
         this.nextImageId = 1;
         this.frameCache = null;
@@ -16,6 +16,9 @@ export class Renderer {
 
     //#region Assets
     loadImage = source => {
+        if (this.images.size >= 24 && !this.images.has(source))
+            this.images.delete(this.images.keys().next().value);
+
         if (!this.images.has(source)) {
             const pending = new Promise((resolve, reject) => {
                 const image = new Image();
@@ -69,7 +72,7 @@ export class Renderer {
 
         return this.bounds.get(image);
     };
-    sourceFor = (model, part, code = model.preview.variant) => model.assets[part.map ? model.maps[part.map][code] || model.maps[part.map].C : part.asset];
+    sourceFor = (model, part, code = Model.ColorFor(part, model.preview)) => model.assets[part.map ? model.maps[part.map][code] || model.maps[part.map].C : part.asset];
     symbolPath = token => `/img/manaSymbols/${token.toLowerCase().replaceAll(/[{}\/]/g, "")}.svg`;
     tokens = text => text.match(/\{[^}]+\}|\n|[^\S\n]+|[^\s{]+|\{/g) || [];
     //#endregion
@@ -182,7 +185,7 @@ export class Renderer {
             if (part.mask)
                 sources.add(model.assets[part.mask]);
 
-            if (part.map && part.treatment === "crown" && model.preview.accentColors.length === 2) {
+            if (part.map && ["crown", "pinline"].includes(part.treatment) && model.preview.accentColors.length === 2) {
                 for (const color of model.preview.accentColors) {
                     sources.add(this.sourceFor(model, part, color));
                 }
@@ -310,7 +313,7 @@ export class Renderer {
 
                 lc.restore();
             }
-            else if (part.treatment === "pinline" && model.preview.accentColors.length === 2) {
+            else if (part.treatment === "pinline" && !part.map && model.preview.accentColors.length === 2) {
                 lc.fillStyle = this.gradient(lc, target, model.preview.accentColors, model.palette);
                 lc.fillRect(target.x, target.y, target.width, target.height);
             }
@@ -322,7 +325,7 @@ export class Renderer {
                     lc.fillStyle = "#000000"; lc.fillRect(0, 0, Model.Width, Model.Height);
                 }
 
-                if (part.treatment === "crown" && model.preview.accentColors.length === 2 && part.map) {
+                if (["crown", "pinline"].includes(part.treatment) && model.preview.accentColors.length === 2 && part.map) {
                     lc.clearRect(0, 0, Model.Width, Model.Height);
                     this.drawImage(lc, loaded.get(this.sourceFor(model, part, model.preview.accentColors[0])), part, target, warnings);
                     mc.clearRect(0, 0, Model.Width, Model.Height); mc.globalCompositeOperation = "source-over";
@@ -340,7 +343,8 @@ export class Renderer {
 
             if (part.mask) {
                 mc.clearRect(0, 0, Model.Width, Model.Height); mc.globalCompositeOperation = "source-over";
-                mc.drawImage(loaded.get(model.assets[part.mask]), 0, 0, Model.Width, Model.Height);
+                const maskTarget = part.alignment === "full-card" ? target : Model.Rect(0, 0, Model.Width, Model.Height);
+                mc.drawImage(loaded.get(model.assets[part.mask]), maskTarget.x, maskTarget.y, maskTarget.width, maskTarget.height);
                 lc.globalCompositeOperation = "destination-in"; lc.drawImage(mask, 0, 0, Model.Width, Model.Height); lc.globalCompositeOperation = "source-over";
             }
 

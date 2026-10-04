@@ -643,6 +643,8 @@ Editor.start = async () => {
     });
     window.TemplateEditor = Editor;
 };
+export { Editor };
+if (document.querySelector('script[src="/editor.js"]'))
 Editor.start().catch(error => {
     if (Editor.status)
         Editor.error(error);

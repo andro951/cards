@@ -38,9 +38,14 @@ def validate_model(value):
     if not isinstance(value,dict) or value.get('format')!=FORMAT or value.get('schemaVersion') not in {2,SCHEMA}:
         raise ValidationError('Choose a version 2 or 3 Bulk Proxy Forge template JSON file.')
     data=validate_template(value.get('data'))
+    if 'visualRecipe' in value:
+        from .visual_templates import validate_recipe
+        validate_recipe(value['visualRecipe'],data)
     groups=value.get('groups')
     if not isinstance(groups,list) or not groups or any(group not in GROUP_LABELS for group in groups):
         raise ValidationError('Choose valid structural groups for this template.')
+    if 'visualRecipe' in value and any(group not in {'standard','legendary','land','legendary-land','basic-land'} for group in groups):
+        raise ValidationError('Visual recipe version 1 supports ordinary cards and lands only.')
     base=value.get('baseGroup')
     if base not in groups:raise ValidationError('The base group must be one of the supported groups.')
     regions=value.get('regions')

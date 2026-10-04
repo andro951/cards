@@ -2188,6 +2188,9 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
 
 
 def custom_data(template,sem,other_faces=None):
+    if 'visualRecipe' in template:
+        from .visual_templates import compile_visual
+        return compile_visual(template,sem)
     template=select_variant(template,sem,sem.get('_template_group','standard')) if template.get('schemaVersion') in {2,3} else template
     d=copy.deepcopy(template['data'])
     if template.get('schemaVersion') in {2,3}:
@@ -2245,7 +2248,7 @@ class Compiler:
         # stays at baseline v1 to avoid redundant cache invalidation.
         fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'regions':t.get('regions',{}),
                                  'schemaVersion':t.get('schemaVersion',1),'baseGroup':t.get('baseGroup'),
-                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{})})
+                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{}),'visualRecipe':t.get('visualRecipe')})
         return 'custom:'+choice,fingerprint,1
     @timed('card.compile')
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
@@ -2380,7 +2383,8 @@ class Compiler:
                 data[k]=v
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
-        apply_universal_frame_color_treatment(data,sem)
+        visual_template=bool(not choice in {x['id'] for x in BUILTINS} and t.get('visualRecipe'))
+        if not visual_template:apply_universal_frame_color_treatment(data,sem)
         if choice=='auto' and group=='station' and not options.get('rawCard'):
             apply_station_textbox_transparency(data,sem,art_origin)
         nickname_applied=False
@@ -2389,7 +2393,7 @@ class Compiler:
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
-        elif recipe not in {'art_series_scan','helper_scan'}:
+        elif not visual_template and recipe not in {'art_series_scan','helper_scan'}:
             nickname_applied=apply_nickname_treatment(
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),

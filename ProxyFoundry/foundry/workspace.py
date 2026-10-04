@@ -819,6 +819,9 @@ class Workspace:
             if value.get('id') and value.get('revision') is None:
                 raise ValidationError('Reload the template before saving; its revision is required.')
             saved={key:model[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions','variants','layoutMetadata')}
+            if 'visualRecipe' in model:
+                saved['visualRecipe']=model['visualRecipe']
+                if 'editorSource' in model:saved['editorSource']=model['editorSource']
             result=self.store.put('templates',{'id':value.get('id'),**saved},value.get('revision'))
             self.invalidate_template(result['id'])
             return result
@@ -860,6 +863,9 @@ class Workspace:
         if template.get('schemaVersion') not in {2,3}:raise ValidationError('Convert this legacy template before exporting it.')
         from .backup import referenced_assets
         model={key:template[key] for key in ('format','schemaVersion','name','data','groups','legendary','baseGroup','regions','variants','layoutMetadata')}
+        if 'visualRecipe' in template:
+            model['visualRecipe']=template['visualRecipe']
+            if 'editorSource' in template:model['editorSource']=template['editorSource']
         assets={}
         for asset_id in referenced_assets(model):
             image=self.store.asset(asset_id)
@@ -868,8 +874,18 @@ class Workspace:
         model['assets']=assets
         return model
     def import_template_file(self,value):
-        model=validate_model(value)
+        model=copy.deepcopy(validate_model(value))
         from .backup import referenced_assets
+        if model.get('visualRecipe'):
+            with self.store.render_save():
+                for key,source in model['visualRecipe']['sources'].items():
+                    if not source.startswith('data:'):continue
+                    header,encoded=source.split(',',1)
+                    raw=base64.b64decode(encoded,validate=True)
+                    if len(raw)>24*1024**2:raise ValidationError('A template image exceeds 24 MB.')
+                    decoded=decode_image(raw)
+                    asset=self.store.add_asset(raw,header[5:].split(';')[0],decoded.width,decoded.height)
+                    model['visualRecipe']['sources'][key]='/api/assets/'+asset['id']
         assets=model.pop('assets',{})
         if not isinstance(assets,dict) or len(assets)>200:raise ValidationError('Template assets are invalid.')
         for asset_id in referenced_assets(model):

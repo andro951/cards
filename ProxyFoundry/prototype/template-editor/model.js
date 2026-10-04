@@ -6,6 +6,14 @@ Model.Height = 1400;
 Model.Variants = ["W", "U", "B", "R", "G", "M", "A", "L", "C", "V"];
 Model.Clone = model => ({ ...structuredClone({ ...model, assets: {} }), assets: { ...model.assets } });
 Model.Rect = (x, y, width, height) => ({ x, y, width, height });
+Model.ColorFor = (part, card) => {
+    const structural = ["A", "L", "V"].includes(card.variant);
+    if (!structural || ["Frame", "Border"].includes(part.id))
+        return card.variant;
+
+    const colors = card.accentColors.filter(code => "WUBRG".includes(code));
+    return colors.length === 1 ? colors[0] : colors.length > 1 ? "M" : card.variant;
+};
 
 //#region Geometry
 Model.ResolveAnchor = (model, id, visited = new Set()) => {
@@ -104,6 +112,12 @@ Model.Validate = value => {
     for (const part of value.parts) {
         if (!part || typeof part.id !== "string" || ids.has(part.id) || !["image", "artwork", "text", "mana", "fill", "divider"].includes(part.kind))
             throw new Error(`Each part needs a unique ID and a supported kind.`);
+
+        if (part.colorAssignments && (!Array.isArray(part.colorAssignments.assigned) || part.colorAssignments.assigned.some(code => !Model.Variants.includes(code)) || typeof part.colorAssignments.reuse !== "boolean"))
+            throw new Error(`Invalid color assignments: ${part.id}`);
+
+        if (part.colorSource && (!Model.SafeSource(part.colorSource.source) || part.colorSource.mask && !Model.SafeSource(part.colorSource.mask)))
+            throw new Error(`Invalid recolorable source: ${part.id}`);
 
         ids.add(part.id);
         if (!part.placement)

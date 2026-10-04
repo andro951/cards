@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "verifiedOn": "2026-10-04",
+  "result": "passed",
+  "scope": "Normal cards and lands; specialty structures deferred",
+  "tests": {
+    "node": 26,
+    "productionValidationAndCompiler": 49,
+    "originalPrototypeBrowser": 12,
+    "guidedStudioBrowser": 7,
+    "actualNativeRenders": 3,
+    "staticBrowserImportExport": 1
+  },
+  "warmPreview": {
+    "warmPreviewMilliseconds": [
+      139.5,
+      7.699999809265137,
+      6.599999904632568,
+      7.5,
+      8
+    ],
+    "viewport": [
+      760,
+      900
+    ],
+    "medianMilliseconds": 7.699999809265137,
+    "measurement": "Five text redraws with cached assets in headless Chromium on this machine; not a cross-machine guarantee."
+  },
+  "portableExport": {
+    "seconds": 14.828000000212342,
+    "bytes": 42553415
+  },
+  "browserImport": {
+    "importSeconds": 25.186999999918044,
+    "portableBytes": 42557217,
+    "storedImageCount": 87
+  },
+  "compiledCardBytes": 7596,
+  "nativeCases": [
+    "Existing M15 sheets and masks",
+    "Custom recolored image",
+    "Separate color images"
+  ],
+  "visualChecks": [
+    "Desktop review gallery",
+    "Smaller-screen workflow",
+    "Native ordinary legendary two-color card",
+    "Custom image placement and transparency"
+  ],
+  "limitations": [
+    "Ordinary cards/lands only",
+    "Built-in fonts; editor and native renderer have small text-metric differences",
+    "Custom watermark/divider images and per-card artwork focus/zoom are explicitly blocked"
+  ]
+}

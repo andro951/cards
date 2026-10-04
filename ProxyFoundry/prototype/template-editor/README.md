@@ -1,6 +1,6 @@
-# Template editor prototype
+# Template Studio
 
-A separate browser app for creating and editing normal card templates. It does not open, modify or generate production decks.
+A separate browser app for designing normal-card templates, with portable exports that the real BulkProxyForge app can import. The production app still uses CardConjurer for final rendering.
 
 ## Run
 
@@ -10,43 +10,55 @@ Open `START_TEMPLATE_EDITOR.pyw`, or run:
 python prototype/template-editor/server.py
 ```
 
-Open http://127.0.0.1:8778/. The local host only serves this prototype and pinned upstream images/fonts. Editing, fitting, compositing and JSON/PNG export happen in the browser. First use of a variant needs internet access; assets are cached in the system temporary directory. The production workspace is never used.
+Open http://127.0.0.1:8778/. The previous advanced prototype is retained at `/classic`.
 
-## What you can edit
+The loopback host serves the editor and pinned upstream images/fonts. Editing, fitting, previews and export happen in the browser. First use needs internet access; upstream assets are cached in the system temporary directory. Testing and editing do not modify production decks.
 
-- Existing M15 sheets and their Border, Frame, Rules, Title, Type and Pinline masks.
-- PT boxes, crowns, crown cover/cutout, subtitle, rules divider, artwork, watermark and set-symbol slots.
-- Each image variant independently, plus custom images shared across colors.
-- Relative anchors, text regions, fonts, colors, outlines, sizing, wrapping, opacity, visibility, layer order and two-color pinline/crown treatments.
-- Preview card text, mana, legendary status and nickname. Native mana icons also work inside rules text.
-- Drag a selected region to move it. Numeric inspector controls change its relative bounds. Editing a shared anchor moves all attached elements.
-- Undo/redo, browser autosave, JSON import/export, a JSON viewer, and 2000 by 2800 PNG downloads without guides.
+## Creator workflow
 
-## Image sizing
+The card stays visible beside five freely selectable steps. There is no Save button: the draft autosaves in this browser, and Undo/Redo work throughout.
 
-The canvas is fixed at 5:7. Full-card frame layers and masks keep their complete coordinate space. Other images fit inside a default region with their aspect ratio preserved: width or height reaches the region boundary first. Scale 1 means the default fit; higher/lower values scale proportionally around the center.
+1. **Start:** Use existing M15 sheets and masks, reopen a template, or upload a transparent custom full-card sheet. Choose existing M15 masks to split a compatible sheet into editable parts; otherwise keep it as one complete overlay. Upload test artwork separately; it never becomes part of the template.
+2. **Parts:** Choose a named part, replace its image, move or resize its region, and choose when it appears. Drag on the card or use percentage controls. Text follows the associated region. Advanced controls reveal masks, alignment, stacking and cutouts.
+3. **Colors:** Keep one image unchanged, create treatments from one neutral image, or assign separate images per color. Batch uploads suggest colors from filenames, then let you confirm them. Missing assignments block export unless you explicitly choose a shared fallback. Tint masks protect areas that should retain their original colors. Palette changes update recolorable uploads automatically.
+4. **Text:** Adjust named text regions, fonts, sizes, alignment and outlines. Mana and set-symbol reservations are automatic. Rules and italic flavor can share automatic flow and a divider, or use independent regions.
+5. **Review:** Inspect 24 representative samples, including ten color treatments and all ten two-color pairs. Click a sample to enlarge it. Missing images, incomplete colors and layout warnings block export. Download an importable template or an editable source.
 
-For Title, Type, Rules, PT_Box, Crown and Subtitle, **Upload standalone piece (all colors)** trims transparent padding, clears the old full-card mask, and uses the corresponding default region. It works even if the visible piece was uploaded on a mostly transparent full-card canvas. Original image data stays intact; dimensions and alpha bounds are recorded in assetMetadata. Pixels with alpha below 2 of 255 are ignored for the visible bounds.
+### Using the result
 
-**Replace variant image** replaces only the selected color's image while preserving the current alignment and mask. Shared image maps are copied for that part before editing so other parts are not unexpectedly changed. Use **Existing image set: FrameImages** to return to a native full-card sheet and its matching mask. New masks always use full-card coordinates. Cutout compositing erases the frame group, never the artwork.
+In BulkProxyForge, open **Templates → Import Template** and select the `.bpf-template.json` download. Choose it later in the deck's Art & Setup. The app stores each image once; compiled cards reference stored assets rather than embedding the whole image collection repeatedly.
 
-Disable transparent trimming to preserve intentional padding. Choose full-card alignment when a piece was intentionally positioned on a complete card canvas. Non-5:7 full-card images show a warning; check their preview alignment.
+To edit again, open the downloaded file in Studio. The app's **Export JSON** also preserves the editable source and its images. Studio templates use this editor rather than the older production template inspector.
 
-## JSON format
+## Image fitting
 
-`default-template.json` is the usable version 2 prototype format. The older document in docs/template-editor-prototype is an archived design draft and is not importable here. Version 2 uses a fixed canvas convention, named relative anchors, an ordered parts list, shared asset IDs and color maps. Frame sheets remain full-card even when text is anchored to a small logical region.
+The canvas is always 5:7. Full-card frame sheets, borders, pinlines and masks retain their complete coordinate space. Standalone pieces trim transparent padding and fit their normal role proportionally: whichever dimension reaches the region boundary first determines the fit. Very wide or tall pieces are never stretched to fill both dimensions. Alpha values below 2 of 255 are ignored while finding visible bounds; original pixels remain available.
 
-Uploaded images are embedded automatically. Check **Embed all template images** to include native frame images and masks too; this downloads unused color variants and makes a larger file. Fonts remain named built-ins supplied by the host. Native references resolve through the pinned provider recorded in provenance. No upstream renderer code is copied into this prototype. Review upstream image/font licensing before redistributing a bundled asset collection.
+An upload of a standalone rules/title/type/PT/crown/subtitle piece works even when it arrives on a mostly empty full-card image. Choose **Preserve full-card alignment** under Advanced when that padding is intentional. Masks use full-card transparency coordinates. Cutouts erase the frame group, leaving artwork beneath it intact.
 
-The prototype's Canvas renderer supplies both its preview and PNG export. It is not yet an adapter to the production CardConjurer renderer; production integration and specialty layouts require a later migration and comparison pass. Images are composited in listed order inside the frame group, with artwork below and text/symbols above. This grouping intentionally prevents cutouts from erasing art or text. Rules and flavor share measured flow by default; disable that checkbox to position either independently.
+Shared color maps are isolated when you replace one part. Replacing the whole sheet intentionally updates its linked parts. Reopening templates and Undo/Redo preserve these relationships.
+
+## Export contract and scope
+
+The editor's source is `bulk-proxy-forge-visual-template`, version 2. Production downloads use the existing `bulk-proxy-forge-template`, schema 3 envelope with a validated `visualRecipe` and `editorSource`. Sources are shared, native sheets/masks remain referenced together, and transformed pieces or color blends are baked into portable image layers. Artwork is excluded. Import normalizes images into content-addressed assets; re-export includes them again.
+
+Supported for this version: ordinary cards, legendary cards, lands, legendary lands and basic lands. Parts include border, frame, pinline, title, type, rules, crown and crown cutout/cover, real-name subtitle, PT, automatic rules divider, artwork placement and set-symbol bounds. No holofoil stamps.
+
+Specialty structures and type eligibility remain deferred. Watermark export, custom divider images, and per-card artwork focus/zoom are rejected explicitly rather than silently omitted. Built-in fonts are supplied by the runtime; the lightweight editing preview and CardConjurer can have small text-metric differences. Final native-render integration is tested separately.
+
+`native-base.json` contains data-only runtime defaults from the app's existing M15 seed. No upstream renderer implementation is copied. Existing image/font provenance is recorded in the seed and host; review their licensing before redistributing an asset collection.
 
 ## Tests
 
 ```powershell
-node --test prototype/template-editor/tests/model.test.mjs
-.venv/Scripts/python.exe -m pytest prototype/template-editor/tests/test_editor.py -q
+node --test prototype/template-editor/tests/model.test.mjs prototype/template-editor/tests/workflow.test.mjs
+.venv/Scripts/python.exe -m pytest prototype/template-editor/tests/test_editor.py prototype/template-editor/tests/test_studio.py tests/test_visual_templates.py tests/test_template_model_v2.py tests/test_template_model_v3.py tests/test_template_safety.py -q
+$env:PF_LIVE_CC='1'
+.venv/Scripts/python.exe -m pytest tests/test_visual_template_native.py -q
+$env:PF_BROWSER='1'
+.venv/Scripts/python.exe -m pytest tests/test_visual_template_website.py -q
 ```
 
-The browser tests exercise actual upstream assets, geometry, uploads, transparent cropping, text/mana collisions, JSON/PNG downloads, undo/redo, persistence and invalid imports. Their host uses a random port and temporary test images. They do not use your real decks.
+Tests use temporary workspaces and fresh exports. They cover native and custom images, recoloring, per-color assignment, cropping, shared anchors/maps, conditional layers, text binding, undo/redo, persistence, desktop/smaller layouts, portable round trips, actual static-browser import, and genuine CardConjurer PNG rendering. Performance results are recorded in `verification-v2.json`; generated screenshots live in ignored `test-results`.
 
-Revisit supported card types versus specialty overlays after the normal-card editor is settled.
+The design walkthrough and decisions are in `DESIGN.md`. Revisit supported card types versus specialty overlays after this normal-card workflow is settled.

@@ -17,14 +17,14 @@ CACHE = Path(tempfile.gettempdir()) / 'BulkProxyForge-TemplateEditor-assets'
 LOCK = threading.Lock()
 
 
-def shell():
+def shell(studio=False):
     document = ET.Element('html', lang='en')
     head = ET.SubElement(document, 'head')
     ET.SubElement(head, 'meta', charset='utf-8')
     ET.SubElement(head, 'meta', name='viewport', content='width=device-width, initial-scale=1')
     ET.SubElement(head, 'title').text = 'BulkProxyForge Template Editor Prototype'
     body = ET.SubElement(document, 'body')
-    ET.SubElement(body, 'script', type='module', src='/editor.js').text = ''
+    ET.SubElement(body, 'script', type='module', src='/studio.js' if studio else '/editor.js').text = ''
     return b'<!doctype html>' + ET.tostring(document, encoding='utf-8', method='html')
 
 
@@ -35,8 +35,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(400)
             return
         try:
-            if path == '/':
-                raw, mime = shell(), 'text/html'
+            if path in {'/', '/studio', '/classic'}:
+                raw, mime = shell(path != '/classic'), 'text/html'
             elif path.startswith(('/img/', '/fonts/')):
                 if Path(path).suffix.lower() not in {'.png', '.jpg', '.jpeg', '.svg', '.webp', '.ttf', '.otf', '.woff', '.woff2'}:
                     self.send_error(400)
