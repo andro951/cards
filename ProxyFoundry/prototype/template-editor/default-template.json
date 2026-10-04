@@ -1,0 +1,900 @@
+{
+  "format": "bulk-proxy-forge-visual-template",
+  "schemaVersion": 2,
+  "canvas": "card-5x7",
+  "name": "Normal M15",
+  "revision": 1,
+  "assets": {
+    "FrameImages_W": "/img/frames/m15/regular/m15FrameW.png",
+    "FrameImages_U": "/img/frames/m15/regular/m15FrameU.png",
+    "FrameImages_B": "/img/frames/m15/regular/m15FrameB.png",
+    "FrameImages_R": "/img/frames/m15/regular/m15FrameR.png",
+    "FrameImages_G": "/img/frames/m15/regular/m15FrameG.png",
+    "FrameImages_M": "/img/frames/m15/regular/m15FrameM.png",
+    "FrameImages_A": "/img/frames/m15/regular/m15FrameA.png",
+    "FrameImages_L": "/img/frames/m15/regular/m15FrameL.png",
+    "FrameImages_V": "/img/frames/m15/regular/m15FrameV.png",
+    "PTImages_W": "/img/frames/m15/regular/m15PTW.png",
+    "PTImages_U": "/img/frames/m15/regular/m15PTU.png",
+    "PTImages_B": "/img/frames/m15/regular/m15PTB.png",
+    "PTImages_R": "/img/frames/m15/regular/m15PTR.png",
+    "PTImages_G": "/img/frames/m15/regular/m15PTG.png",
+    "PTImages_M": "/img/frames/m15/regular/m15PTM.png",
+    "PTImages_A": "/img/frames/m15/regular/m15PTA.png",
+    "PTImages_C": "/img/frames/m15/regular/m15PTC.png",
+    "PTImages_V": "/img/frames/m15/regular/m15PTV.png",
+    "CrownImages_W": "/img/frames/m15/crowns/m15CrownW.png",
+    "CrownImages_U": "/img/frames/m15/crowns/m15CrownU.png",
+    "CrownImages_B": "/img/frames/m15/crowns/m15CrownB.png",
+    "CrownImages_R": "/img/frames/m15/crowns/m15CrownR.png",
+    "CrownImages_G": "/img/frames/m15/crowns/m15CrownG.png",
+    "CrownImages_M": "/img/frames/m15/crowns/m15CrownM.png",
+    "CrownImages_A": "/img/frames/m15/crowns/m15CrownA.png",
+    "CrownImages_L": "/img/frames/m15/crowns/m15CrownL.png",
+    "SubtitleImages_W": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
+    "SubtitleImages_U": "/img/frames/m15/nickname/addons/m15NicknameTitleU.png",
+    "SubtitleImages_B": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+    "SubtitleImages_R": "/img/frames/m15/nickname/addons/m15NicknameTitleR.png",
+    "SubtitleImages_G": "/img/frames/m15/nickname/addons/m15NicknameTitleG.png",
+    "SubtitleImages_M": "/img/frames/m15/nickname/addons/m15NicknameTitleM.png",
+    "SubtitleImages_A": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+    "SubtitleImages_L": "/img/frames/m15/nickname/addons/m15NicknameTitleL.png",
+    "FrameImages_C": "/img/frames/m15/regular/eldrazi.png",
+    "Mask_Border": "/img/frames/m15/regular/m15MaskBorder.png",
+    "Mask_Frame": "/img/frames/m15/regular/m15MaskFrame.png",
+    "Mask_Rules": "/img/frames/m15/regular/m15MaskRules.png",
+    "Mask_Title": "/img/frames/m15/regular/m15MaskTitle.png",
+    "Mask_Type": "/img/frames/m15/regular/m15MaskType.png",
+    "Mask_Pinline": "/img/frames/m15/regular/m15MaskPinline.png"
+  },
+  "maps": {
+    "FrameImages": {
+      "W": "FrameImages_W",
+      "U": "FrameImages_U",
+      "B": "FrameImages_B",
+      "R": "FrameImages_R",
+      "G": "FrameImages_G",
+      "M": "FrameImages_M",
+      "A": "FrameImages_A",
+      "L": "FrameImages_L",
+      "V": "FrameImages_V",
+      "C": "FrameImages_C"
+    },
+    "PTImages": {
+      "W": "PTImages_W",
+      "U": "PTImages_U",
+      "B": "PTImages_B",
+      "R": "PTImages_R",
+      "G": "PTImages_G",
+      "M": "PTImages_M",
+      "A": "PTImages_A",
+      "C": "PTImages_C",
+      "V": "PTImages_V",
+      "L": "PTImages_C"
+    },
+    "CrownImages": {
+      "W": "CrownImages_W",
+      "U": "CrownImages_U",
+      "B": "CrownImages_B",
+      "R": "CrownImages_R",
+      "G": "CrownImages_G",
+      "M": "CrownImages_M",
+      "A": "CrownImages_A",
+      "L": "CrownImages_L",
+      "C": "CrownImages_A",
+      "V": "CrownImages_A"
+    },
+    "SubtitleImages": {
+      "W": "SubtitleImages_W",
+      "U": "SubtitleImages_U",
+      "B": "SubtitleImages_B",
+      "R": "SubtitleImages_R",
+      "G": "SubtitleImages_G",
+      "M": "SubtitleImages_M",
+      "A": "SubtitleImages_A",
+      "L": "SubtitleImages_L",
+      "C": "SubtitleImages_A",
+      "V": "SubtitleImages_A"
+    }
+  },
+  "anchors": {
+    "Title": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.045,
+        "width": 0.8476,
+        "height": 0.065
+      }
+    },
+    "Type": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.559,
+        "width": 0.8476,
+        "height": 0.065
+      }
+    },
+    "Rules": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.086,
+        "y": 0.6303,
+        "width": 0.828,
+        "height": 0.2875
+      }
+    },
+    "ArtWindow": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.1129,
+        "width": 0.8476,
+        "height": 0.4429
+      }
+    },
+    "PT_Box": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.7573,
+        "y": 0.8848,
+        "width": 0.188,
+        "height": 0.0733
+      }
+    },
+    "Crown": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0274,
+        "y": 0.0191,
+        "width": 0.9454,
+        "height": 0.1667
+      }
+    },
+    "Subtitle": {
+      "relativeTo": "Title",
+      "rect": {
+        "x": 0,
+        "y": 1,
+        "width": 1,
+        "height": 0.65
+      }
+    },
+    "Footer": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.064,
+        "y": 0.957,
+        "width": 0.872,
+        "height": 0.028
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "Artwork",
+      "name": "Artwork",
+      "kind": "artwork",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "ArtWindow",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    },
+    {
+      "id": "Border",
+      "name": "Border",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Border"
+    },
+    {
+      "id": "Frame",
+      "name": "Frame body",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Frame"
+    },
+    {
+      "id": "Rules",
+      "name": "Rules box",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Rules"
+    },
+    {
+      "id": "Title",
+      "name": "Title bar",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Title"
+    },
+    {
+      "id": "Type",
+      "name": "Type bar",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Type"
+    },
+    {
+      "id": "Pinline",
+      "name": "Pinline",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "pinline",
+      "color": "#000000",
+      "asset": null,
+      "map": "FrameImages",
+      "mask": "Mask_Pinline"
+    },
+    {
+      "id": "Crown_BorderCover",
+      "name": "Crown border cover",
+      "kind": "fill",
+      "visible": true,
+      "when": "legendary",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0.0394,
+          "y": 0.0277,
+          "width": 0.9214,
+          "height": 0.0177
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    },
+    {
+      "id": "Crown_Cutout",
+      "name": "Crown cutout",
+      "kind": "image",
+      "visible": false,
+      "when": "legendary",
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "full-card",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "destination-out",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    },
+    {
+      "id": "Crown",
+      "name": "Legendary crown",
+      "kind": "image",
+      "visible": true,
+      "when": "legendary",
+      "placement": {
+        "relativeTo": "Crown",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "crown",
+      "color": "#000000",
+      "asset": null,
+      "map": "CrownImages",
+      "mask": null
+    },
+    {
+      "id": "Subtitle",
+      "name": "Real-name bar",
+      "kind": "image",
+      "visible": true,
+      "when": "nickname",
+      "placement": {
+        "relativeTo": "Subtitle",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "SubtitleImages",
+      "mask": null
+    },
+    {
+      "id": "PT_Box",
+      "name": "PT box",
+      "kind": "image",
+      "visible": true,
+      "when": "pt",
+      "placement": {
+        "relativeTo": "PT_Box",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": false,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": "PTImages",
+      "mask": null
+    },
+    {
+      "id": "Watermark",
+      "name": "Watermark",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0.15,
+          "y": 0.1,
+          "width": 0.7,
+          "height": 0.7
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 0.15,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    },
+    {
+      "id": "RulesDivider",
+      "name": "Rules divider",
+      "kind": "divider",
+      "visible": true,
+      "when": "rulesAndFlavor",
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0.125,
+          "y": 0.5,
+          "width": 0.75,
+          "height": 0.002
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 0.3,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    },
+    {
+      "id": "RulesText",
+      "name": "Rules text",
+      "kind": "text",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "rules",
+      "style": {
+        "font": "mplantin",
+        "size": 46,
+        "minSize": 29.900000000000002,
+        "color": "#000000",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "left",
+        "lineHeight": 1.1,
+        "oneLine": false
+      },
+      "flow": "rules"
+    },
+    {
+      "id": "FlavorText",
+      "name": "Flavor text",
+      "kind": "text",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "flavor",
+      "style": {
+        "font": "mplantini",
+        "size": 46,
+        "minSize": 29.900000000000002,
+        "color": "#000000",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "left",
+        "lineHeight": 1.1,
+        "oneLine": false
+      },
+      "flow": "rules"
+    },
+    {
+      "id": "TypeText",
+      "name": "Type text",
+      "kind": "text",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Type",
+        "rect": {
+          "x": 0.010264,
+          "y": 0.113846,
+          "width": 0.97829,
+          "height": 0.835384
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "type",
+      "style": {
+        "font": "belerenb",
+        "size": 45,
+        "minSize": 29.25,
+        "color": "#000000",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "left",
+        "lineHeight": 1.1,
+        "oneLine": true
+      },
+      "reserveFor": "SetSymbol"
+    },
+    {
+      "id": "TitleText",
+      "name": "Title text",
+      "kind": "text",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Title",
+        "rect": {
+          "x": 0.010264,
+          "y": 0.110769,
+          "width": 0.97829,
+          "height": 0.835384
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "displayName",
+      "style": {
+        "font": "belerenb",
+        "size": 53,
+        "minSize": 34.45,
+        "color": "#000000",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "left",
+        "lineHeight": 1.1,
+        "oneLine": true
+      },
+      "reserveFor": "ManaCost"
+    },
+    {
+      "id": "SubtitleText",
+      "name": "Real-name text",
+      "kind": "text",
+      "visible": true,
+      "when": "nickname",
+      "placement": {
+        "relativeTo": "Subtitle",
+        "rect": {
+          "x": 0,
+          "y": 0.2,
+          "width": 1,
+          "height": 0.65
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "name",
+      "style": {
+        "font": "mplantini",
+        "size": 32,
+        "minSize": 20.8,
+        "color": "#ffffff",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "center",
+        "lineHeight": 1.1,
+        "oneLine": true
+      }
+    },
+    {
+      "id": "PTText",
+      "name": "PT text",
+      "kind": "text",
+      "visible": true,
+      "when": "pt",
+      "placement": {
+        "relativeTo": "PT_Box",
+        "rect": {
+          "x": 0.18883,
+          "y": 0.23465,
+          "width": 0.727127,
+          "height": 0.5075
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "pt",
+      "style": {
+        "font": "belerenbsc",
+        "size": 52,
+        "minSize": 33.800000000000004,
+        "color": "#000000",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "center",
+        "lineHeight": 1.1,
+        "oneLine": true
+      }
+    },
+    {
+      "id": "FooterText",
+      "name": "Artist & proxy credit",
+      "kind": "text",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Footer",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "credit",
+      "style": {
+        "font": "sans-serif",
+        "size": 19,
+        "minSize": 12.35,
+        "color": "#ffffff",
+        "outlineColor": "#000000",
+        "outline": 0,
+        "align": "left",
+        "lineHeight": 1.1,
+        "oneLine": true
+      }
+    },
+    {
+      "id": "ManaCost",
+      "name": "Mana cost",
+      "kind": "mana",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Title",
+        "rect": {
+          "x": 0.01,
+          "y": 0.25077,
+          "width": 0.99,
+          "height": 0.52
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null,
+      "field": "mana",
+      "symbolSize": 60
+    },
+    {
+      "id": "SetSymbol",
+      "name": "Set symbol",
+      "kind": "image",
+      "visible": true,
+      "when": "always",
+      "placement": {
+        "relativeTo": "Type",
+        "rect": {
+          "x": 0.854412,
+          "y": 0.176923,
+          "width": 0.141576,
+          "height": 0.630769
+        }
+      },
+      "alignment": "piece",
+      "trimAlpha": true,
+      "scale": 1,
+      "opacity": 1,
+      "blend": "source-over",
+      "treatment": "none",
+      "color": "#000000",
+      "asset": null,
+      "map": null,
+      "mask": null
+    }
+  ],
+  "palette": {
+    "W": "#f6f5ee",
+    "U": "#286fa8",
+    "B": "#26212a",
+    "R": "#e43c24",
+    "G": "#0f8146"
+  },
+  "preview": {
+    "variant": "U",
+    "accentColors": [
+      "U"
+    ],
+    "legendary": false,
+    "name": "Template Preview",
+    "nickname": "",
+    "type": "Creature \u2014 Wizard",
+    "mana": "{2}{U}{U}",
+    "rules": "Flying\n{T}: Draw a card, then discard a card.",
+    "flavor": "Every frame begins with a spark.",
+    "pt": "2/3",
+    "credit": "Artist Name \u2022 BulkProxyForge \u2022 Unofficial Proxy"
+  },
+  "provenance": {
+    "provider": "CardConjurer",
+    "repository": "Investigamer/cardconjurer",
+    "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
+    "license": "Review upstream asset/font licenses before redistribution; assets are fetched, not vendored."
+  },
+  "notes": [
+    "Separate prototype format; production importer does not accept it yet.",
+    "Canvas is fixed 5:7. All rectangles are relative to the named anchor. Fonts use a fixed 1000x1400 design coordinate system.",
+    "Standalone images fit within default bounds after alpha trimming. Scale starts at 1. Full-card layers and masks preserve their complete canvas.",
+    "Original data URLs remain intact; crop bounds are derived once per image and cached.",
+    "Artwork is behind the frame composite; image layers follow listed order; text/symbol layers are above the frame composite.",
+    "Rules and flavor use a shared measured flow. Subtitle junction/layout still needs review when adapting other frame families."
+  ]
+}

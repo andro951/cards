@@ -1,5 +1,7 @@
 # Visual template draft, version 1
 
+Historical design draft. The working separate prototype is in `prototype/template-editor`; its `default-template.json` is the current version 2 format with a fixed 5:7 canvas and image fitting/alpha-cropping rules.
+
 `normal-m15.template.v1.json` is a design proposal for the separate editor prototype. It does not replace the production template model or alter rendering.
 
 ## Coordinate and placement contract
