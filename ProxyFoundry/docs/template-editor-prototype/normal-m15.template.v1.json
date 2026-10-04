@@ -1,0 +1,1198 @@
+{
+  "format": "bulk-proxy-forge-visual-template",
+  "schemaVersion": 1,
+  "status": "design-draft",
+  "identity": {
+    "id": "normal-m15-v1",
+    "name": "Normal M15",
+    "revision": 1,
+    "description": "First visual-editor definition for a normal card. No specialty-card classification or holofoil stamp.",
+    "author": "BulkProxyForge",
+    "derivedFrom": null
+  },
+  "canvas": {
+    "width": 2010,
+    "height": 2814,
+    "unit": "designPixel",
+    "orientation": "portrait",
+    "coordinateOrigin": "top-left",
+    "normalizedAxes": {
+      "x": "fraction of reference width",
+      "y": "fraction of reference height"
+    },
+    "outputScaling": "uniform",
+    "background": "#000000",
+    "bleed": {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    },
+    "safeArea": {
+      "x": 0.064,
+      "y": 0.045,
+      "width": 0.872,
+      "height": 0.89
+    }
+  },
+  "assets": {
+    "FrameImages": {
+      "variants": {
+        "W": "/img/frames/m15/regular/m15FrameW.png",
+        "U": "/img/frames/m15/regular/m15FrameU.png",
+        "B": "/img/frames/m15/regular/m15FrameB.png",
+        "R": "/img/frames/m15/regular/m15FrameR.png",
+        "G": "/img/frames/m15/regular/m15FrameG.png",
+        "M": "/img/frames/m15/regular/m15FrameM.png",
+        "A": "/img/frames/m15/regular/m15FrameA.png",
+        "L": "/img/frames/m15/regular/m15FrameL.png",
+        "C": "/img/frames/m15/regular/m15FrameC.png"
+      },
+      "fallbacks": {}
+    },
+    "PTImages": {
+      "variants": {
+        "W": "/img/frames/m15/regular/m15PTW.png",
+        "U": "/img/frames/m15/regular/m15PTU.png",
+        "B": "/img/frames/m15/regular/m15PTB.png",
+        "R": "/img/frames/m15/regular/m15PTR.png",
+        "G": "/img/frames/m15/regular/m15PTG.png",
+        "M": "/img/frames/m15/regular/m15PTM.png",
+        "A": "/img/frames/m15/regular/m15PTA.png",
+        "C": "/img/frames/m15/regular/m15PTC.png"
+      },
+      "fallbacks": {
+        "L": "C"
+      }
+    },
+    "CrownImages": {
+      "variants": {
+        "W": "/img/frames/m15/crowns/m15CrownW.png",
+        "U": "/img/frames/m15/crowns/m15CrownU.png",
+        "B": "/img/frames/m15/crowns/m15CrownB.png",
+        "R": "/img/frames/m15/crowns/m15CrownR.png",
+        "G": "/img/frames/m15/crowns/m15CrownG.png",
+        "M": "/img/frames/m15/crowns/m15CrownM.png",
+        "A": "/img/frames/m15/crowns/m15CrownA.png",
+        "L": "/img/frames/m15/crowns/m15CrownL.png"
+      },
+      "fallbacks": {
+        "C": "A"
+      }
+    },
+    "SubtitleImages": {
+      "variants": {
+        "W": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
+        "U": "/img/frames/m15/nickname/addons/m15NicknameTitleU.png",
+        "B": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+        "R": "/img/frames/m15/nickname/addons/m15NicknameTitleR.png",
+        "G": "/img/frames/m15/nickname/addons/m15NicknameTitleG.png",
+        "M": "/img/frames/m15/nickname/addons/m15NicknameTitleM.png",
+        "A": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+        "L": "/img/frames/m15/nickname/addons/m15NicknameTitleL.png"
+      },
+      "fallbacks": {
+        "C": "A"
+      }
+    },
+    "Masks": {
+      "Border": "/img/frames/m15/regular/m15MaskBorder.png",
+      "Frame": "/img/frames/m15/regular/m15MaskFrame.png",
+      "Rules": "/img/frames/m15/regular/m15MaskRules.png",
+      "Title": "/img/frames/m15/regular/m15MaskTitle.png",
+      "Type": "/img/frames/m15/regular/m15MaskType.png",
+      "Pinline": "/img/frames/m15/regular/m15MaskPinline.png"
+    },
+    "CrownCoverImage": {
+      "source": "/img/black.png"
+    },
+    "RulesDividerImage": {
+      "source": null,
+      "fallback": {
+        "kind": "line",
+        "color": "#000000",
+        "opacity": 0.25,
+        "thickness": 1
+      }
+    },
+    "fonts": {
+      "title": "belerenb",
+      "body": "mplantin",
+      "pt": "belerenbsc"
+    },
+    "provenance": {
+      "provider": "CardConjurer",
+      "resolution": "Use the configured upstream asset provider; do not duplicate its implementation.",
+      "license": {
+        "status": "Needs asset-by-asset review before redistribution",
+        "url": null
+      }
+    }
+  },
+  "anchors": {
+    "Canvas": {
+      "relativeTo": null,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      }
+    },
+    "ArtWindow": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.1129,
+        "width": 0.8476,
+        "height": 0.4429
+      }
+    },
+    "Title": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.045,
+        "width": 0.8476,
+        "height": 0.065
+      }
+    },
+    "Type": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.559,
+        "width": 0.8476,
+        "height": 0.065
+      }
+    },
+    "Rules": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0767,
+        "y": 0.624,
+        "width": 0.8476,
+        "height": 0.31
+      }
+    },
+    "PT_Box": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.7573,
+        "y": 0.8848,
+        "width": 0.188,
+        "height": 0.0733
+      }
+    },
+    "Crown": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0274,
+        "y": 0.0191,
+        "width": 0.9454,
+        "height": 0.1667
+      }
+    },
+    "Crown_BorderCover": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.0394,
+        "y": 0.0277,
+        "width": 0.9214,
+        "height": 0.0177
+      }
+    },
+    "Subtitle": {
+      "relativeTo": "Title",
+      "rect": {
+        "x": 0,
+        "y": 1,
+        "width": 1,
+        "height": 0.65
+      }
+    },
+    "Footer": {
+      "relativeTo": "Canvas",
+      "rect": {
+        "x": 0.064,
+        "y": 0.951,
+        "width": 0.872,
+        "height": 0.035
+      }
+    }
+  },
+  "artwork": {
+    "id": "Artwork",
+    "content": {
+      "field": "card.artwork"
+    },
+    "placement": {
+      "relativeTo": "ArtWindow",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      }
+    },
+    "fit": "cover",
+    "anchor": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "offset": {
+      "x": 0,
+      "y": 0
+    },
+    "zoom": 1,
+    "clipToBounds": true,
+    "fullArtOverride": {
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "fit": "cover",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "colorPolicy": {
+    "variants": {
+      "W": "White",
+      "U": "Blue",
+      "B": "Black",
+      "R": "Red",
+      "G": "Green",
+      "M": "Multicolor",
+      "A": "Artifact",
+      "L": "Land",
+      "C": "Colorless"
+    },
+    "inputColors": "card.frameColors",
+    "colorOrder": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+    ],
+    "bodyColor": {
+      "mode": "firstMatch",
+      "cases": [
+        {
+          "when": {
+            "field": "card.isLand",
+            "equals": true
+          },
+          "value": "L"
+        },
+        {
+          "when": {
+            "field": "card.colorCount",
+            "equals": 0
+          },
+          "valueFrom": {
+            "if": {
+              "field": "card.isArtifact",
+              "equals": true
+            },
+            "then": "A",
+            "else": "C"
+          }
+        },
+        {
+          "when": {
+            "field": "card.colorCount",
+            "equals": 1
+          },
+          "valueFrom": "card.frameColors[0]"
+        }
+      ],
+      "otherwise": "M"
+    },
+    "ptColor": {
+      "from": "bodyColor",
+      "remap": {
+        "L": "C"
+      }
+    },
+    "accentColor": {
+      "from": "bodyColor"
+    },
+    "palette": {
+      "W": "#f6f5ee",
+      "U": "#286fa8",
+      "B": "#26212a",
+      "R": "#e43c24",
+      "G": "#0f8146"
+    },
+    "pinlineColors": {
+      "single": "nativeImage",
+      "two": {
+        "kind": "gradient",
+        "colorsFrom": "card.frameColors",
+        "direction": "left-to-right",
+        "transition": {
+          "start": 0.4,
+          "end": 0.6,
+          "curve": "smoothstep"
+        },
+        "mask": "Masks.Pinline"
+      },
+      "threeOrMore": "nativeMulticolorImage"
+    },
+    "crownColors": {
+      "single": "nativeImage",
+      "two": {
+        "kind": "imageBlend",
+        "images": "CrownImages",
+        "colorsFrom": "card.frameColors",
+        "maskSpace": "canvas",
+        "direction": "left-to-right",
+        "transition": {
+          "start": 0.4,
+          "end": 0.6,
+          "curve": "smoothstep"
+        }
+      },
+      "threeOrMore": "nativeMulticolorImage"
+    }
+  },
+  "frameParts": [
+    {
+      "id": "Border",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Border",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Frame",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Frame",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Rules",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Rules",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Title",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Title",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Type",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Type",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Pinline",
+      "kind": "image",
+      "asset": "FrameImages",
+      "variantFrom": "bodyColor",
+      "mask": {
+        "asset": "Masks.Pinline",
+        "space": "canvas",
+        "operation": "keepAlpha"
+      },
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "blendMode": "source-over",
+      "visible": true,
+      "compositeGroup": "frame",
+      "treatment": "pinlineColors"
+    },
+    {
+      "id": "Crown_BorderCover",
+      "kind": "image",
+      "asset": "CrownCoverImage",
+      "placement": {
+        "relativeTo": "Crown_BorderCover",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.legendary",
+        "equals": true
+      },
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Crown_Cutout",
+      "kind": "mask",
+      "asset": null,
+      "placement": {
+        "relativeTo": "Canvas",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "operation": "eraseAlpha",
+      "targetGroup": "frame",
+      "visible": false
+    },
+    {
+      "id": "Crown",
+      "kind": "image",
+      "asset": "CrownImages",
+      "variantFrom": "accentColor",
+      "treatment": "crownColors",
+      "placement": {
+        "relativeTo": "Crown",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.legendary",
+        "equals": true
+      },
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "Subtitle",
+      "kind": "image",
+      "asset": "SubtitleImages",
+      "variantFrom": "bodyColor",
+      "placement": {
+        "relativeTo": "Subtitle",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.hasNickname",
+        "equals": true
+      },
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "PT_Box",
+      "kind": "image",
+      "asset": "PTImages",
+      "variantFrom": "ptColor",
+      "placement": {
+        "relativeTo": "PT_Box",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.hasPT",
+        "equals": true
+      },
+      "compositeGroup": "frame"
+    },
+    {
+      "id": "RulesDivider",
+      "kind": "image",
+      "asset": "RulesDividerImage",
+      "placement": {
+        "flow": "RulesContent",
+        "between": [
+          "RulesText",
+          "FlavorText"
+        ],
+        "width": 0.75,
+        "height": 0.001,
+        "units": "canvasFraction"
+      },
+      "visibleWhen": {
+        "all": [
+          {
+            "field": "card.hasRules",
+            "equals": true
+          },
+          {
+            "field": "card.hasDisplayedFlavor",
+            "equals": true
+          }
+        ]
+      },
+      "compositeGroup": "frame"
+    }
+  ],
+  "textParts": [
+    {
+      "id": "TitleText",
+      "kind": "text",
+      "content": {
+        "field": "card.displayName"
+      },
+      "placement": {
+        "relativeTo": "Title",
+        "rect": {
+          "x": 0.010264275601698914,
+          "y": 0.11076923076923084,
+          "width": 0.8745794388134832,
+          "height": 0.8353846153846154
+        },
+        "reserveSpaceFor": {
+          "part": "ManaCost",
+          "gap": 0.008,
+          "unit": "canvasWidth"
+        }
+      },
+      "style": {
+        "font": "title",
+        "fontSize": {
+          "value": 107.21340000000001,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 69.68871,
+        "maximumFontSize": 107.21340000000001,
+        "oneLine": true,
+        "wrap": false,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visible": true
+    },
+    {
+      "id": "TypeText",
+      "kind": "text",
+      "content": {
+        "field": "card.typeLine"
+      },
+      "placement": {
+        "relativeTo": "Type",
+        "rect": {
+          "x": 0.010264275601698914,
+          "y": 0.11384615384615326,
+          "width": 0.903927742129372,
+          "height": 0.8353846153846154
+        },
+        "reserveSpaceFor": {
+          "part": "SetSymbol",
+          "gap": 0.008,
+          "unit": "canvasWidth"
+        }
+      },
+      "style": {
+        "font": "title",
+        "fontSize": {
+          "value": 91.1736,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 59.26284,
+        "maximumFontSize": 91.1736,
+        "oneLine": true,
+        "wrap": false,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visible": true
+    },
+    {
+      "id": "RulesText",
+      "kind": "text",
+      "content": {
+        "field": "card.rules"
+      },
+      "placement": {
+        "flow": "RulesContent",
+        "item": "RulesText"
+      },
+      "style": {
+        "font": "body",
+        "fontSize": {
+          "value": 94.269,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 61.27485000000001,
+        "maximumFontSize": 94.269,
+        "oneLine": false,
+        "wrap": true,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visible": true
+    },
+    {
+      "id": "FlavorText",
+      "kind": "text",
+      "content": {
+        "field": "card.displayedFlavor"
+      },
+      "placement": {
+        "flow": "RulesContent",
+        "item": "FlavorText"
+      },
+      "style": {
+        "font": "body",
+        "fontSize": {
+          "value": 94.269,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": true
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 61.27485000000001,
+        "maximumFontSize": 94.269,
+        "oneLine": false,
+        "wrap": true,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.hasDisplayedFlavor",
+        "equals": true
+      }
+    },
+    {
+      "id": "PTText",
+      "kind": "text",
+      "content": {
+        "field": "card.powerToughness"
+      },
+      "placement": {
+        "relativeTo": "PT_Box",
+        "rect": {
+          "x": 0.18882978723404242,
+          "y": 0.23465211459754423,
+          "width": 0.727127659574468,
+          "height": 0.5075034106412005
+        }
+      },
+      "style": {
+        "font": "pt",
+        "fontSize": {
+          "value": 104.68079999999999,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "center",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 68.04252,
+        "maximumFontSize": 104.68079999999999,
+        "oneLine": true,
+        "wrap": false,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.hasPT",
+        "equals": true
+      }
+    },
+    {
+      "id": "SubtitleText",
+      "kind": "text",
+      "content": {
+        "field": "card.realName"
+      },
+      "placement": {
+        "relativeTo": "Subtitle",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "style": {
+        "font": "title",
+        "fontSize": {
+          "value": 70.35000000000001,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "center",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 45.727500000000006,
+        "maximumFontSize": 70.35000000000001,
+        "oneLine": true,
+        "wrap": false,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visibleWhen": {
+        "field": "card.hasNickname",
+        "equals": true
+      }
+    },
+    {
+      "id": "FooterText",
+      "kind": "text",
+      "content": {
+        "field": "card.creditLine"
+      },
+      "placement": {
+        "relativeTo": "Footer",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      },
+      "style": {
+        "font": "body",
+        "fontSize": {
+          "value": 42.21,
+          "unit": "designPixel"
+        },
+        "color": "#000000",
+        "outline": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "shadow": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "color": "#000000"
+        },
+        "align": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.05,
+        "paragraphGap": 0.3,
+        "italic": false
+      },
+      "fit": {
+        "mode": "shrink",
+        "minimumFontSize": 27.436500000000002,
+        "maximumFontSize": 42.21,
+        "oneLine": true,
+        "wrap": false,
+        "overflow": "error",
+        "preserveAspectRatio": true
+      },
+      "opacity": 1,
+      "visible": true
+    }
+  ],
+  "symbolParts": [
+    {
+      "id": "ManaCost",
+      "kind": "manaSymbols",
+      "content": {
+        "field": "card.manaCost"
+      },
+      "placement": {
+        "relativeTo": "Title",
+        "rect": {
+          "x": 0.01,
+          "y": 0.2507692307692308,
+          "width": 0.99,
+          "height": 0.52
+        }
+      },
+      "align": "right",
+      "symbolSize": {
+        "value": 121.97435897435896,
+        "unit": "designPixel"
+      },
+      "spacing": 0,
+      "visibleWhen": {
+        "field": "card.hasManaCost",
+        "equals": true
+      }
+    },
+    {
+      "id": "SetSymbol",
+      "kind": "imageSlot",
+      "content": {
+        "field": "deck.setSymbolForRarity"
+      },
+      "placement": {
+        "relativeTo": "Type",
+        "rect": {
+          "x": 0.8548843794242568,
+          "y": 0.1769230769230762,
+          "width": 0.1415762151958471,
+          "height": 0.6307692307692307
+        }
+      },
+      "fit": "contain",
+      "align": "right",
+      "verticalAlign": "center",
+      "visible": true
+    },
+    {
+      "id": "Watermark",
+      "kind": "imageSlot",
+      "content": {
+        "field": "card.watermark"
+      },
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0.15,
+          "y": 0.1,
+          "width": 0.7,
+          "height": 0.7
+        }
+      },
+      "fit": "contain",
+      "opacity": 0.15,
+      "visibleWhen": {
+        "field": "card.hasWatermark",
+        "equals": true
+      }
+    }
+  ],
+  "flows": {
+    "RulesContent": {
+      "placement": {
+        "relativeTo": "Rules",
+        "rect": {
+          "x": 0.010972156677678136,
+          "y": 0.020322580645161202,
+          "width": 0.9768758848513449,
+          "height": 0.8482930967283399
+        }
+      },
+      "direction": "vertical",
+      "items": [
+        "RulesText",
+        "RulesDivider",
+        "FlavorText"
+      ],
+      "gap": {
+        "value": 12,
+        "unit": "designPixel"
+      },
+      "fitTogether": true,
+      "avoid": [
+        {
+          "part": "PT_Box",
+          "padding": {
+            "value": 10,
+            "unit": "designPixel"
+          }
+        }
+      ],
+      "overflow": "error"
+    }
+  },
+  "drawOrder": {
+    "direction": "back-to-front",
+    "parts": [
+      "Artwork",
+      "Border",
+      "Frame",
+      "Rules",
+      "Title",
+      "Type",
+      "Pinline",
+      "Crown_BorderCover",
+      "Crown_Cutout",
+      "Crown",
+      "Subtitle",
+      "PT_Box",
+      "Watermark",
+      "RulesDivider",
+      "RulesText",
+      "FlavorText",
+      "TypeText",
+      "SetSymbol",
+      "TitleText",
+      "ManaCost",
+      "SubtitleText",
+      "PTText",
+      "FooterText"
+    ]
+  },
+  "controls": {
+    "fullArt": {
+      "type": "boolean",
+      "default": false
+    },
+    "showFlavorText": {
+      "type": "boolean",
+      "default": true
+    },
+    "showSubtitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "showWatermark": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "bindings": {
+    "card.displayName": "nickname when present, otherwise realName",
+    "card.hasNickname": "nonempty nickname and controls.showSubtitle",
+    "card.displayedFlavor": "flavorText when controls.showFlavorText, otherwise empty",
+    "card.frameColors": "semantic frame colors, supplied by card-data preparation",
+    "card.colorCount": "count of card.frameColors",
+    "card.powerToughness": "power + / + toughness",
+    "card.hasPT": "both power and toughness present",
+    "card.hasDisplayedFlavor": "displayedFlavor is nonempty",
+    "card.hasRules": "rules is nonempty",
+    "card.hasWatermark": "watermark exists and controls.showWatermark",
+    "card.hasManaCost": "manaCost is nonempty",
+    "card.creditLine": "resolved artist credit and proxy notice"
+  },
+  "previewCases": [
+    "one-color creature",
+    "two-color legendary creature",
+    "three-color creature",
+    "colorless artifact creature",
+    "noncreature spell",
+    "long title with long mana cost",
+    "rules plus flavor",
+    "nickname plus legendary crown"
+  ],
+  "validation": {
+    "uniquePartIds": true,
+    "rejectMissingAssets": true,
+    "rejectUnknownBindings": true,
+    "rejectAnchorCycles": true,
+    "rejectNonfiniteGeometry": true,
+    "rejectUnknownVariantsWithoutFallback": true,
+    "rejectTextOverflow": true,
+    "rejectArbitraryExecutableCode": true
+  },
+  "draftNotes": [
+    "This is a proposed editor schema, not accepted by the current schemaVersion 3 app importer.",
+    "Frame masks and native art/PT/crown coordinates were taken from the existing M15 recipe. Logical Title/Type/Rules anchors are editable layout regions, not cropped asset bounds.",
+    "Flavor flow, footer and subtitle anchor are provisional and need visual verification in the prototype.",
+    "The subtitle overlay must be above all ordinary frame images. The prototype must check its junction with the title and crown.",
+    "FullArt changes Artwork placement to Canvas; authors also configure or hide Frame/Rules fills so artwork can show through.",
+    "Crown_Cutout is an optional empty slot; do not invent or fetch an asset until a particular frame needs one.",
+    "Supported card types and specialty overlays are intentionally deferred."
+  ]
+}
