@@ -644,7 +644,7 @@ class Workspace:
             if comp['data'].get('version')=='m15Nickname':comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
             if comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
-        if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'])
+        if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
         elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])

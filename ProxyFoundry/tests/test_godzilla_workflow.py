@@ -97,18 +97,19 @@ def test_token_conversion_adds_nickname_without_replacing_selected_frame(tmp_pat
 
 
 
+@pytest.mark.parametrize('colors',[['W'],['U'],['B'],['R'],['G'],[],['W','U']])
 @pytest.mark.parametrize('nickname',[False,True])
 @pytest.mark.parametrize('convert',[False,True])
-def test_modern_token_text_is_black_except_white_unoutlined_names(tmp_path,nickname,convert):
+def test_modern_token_text_is_black_except_white_unoutlined_names(tmp_path,nickname,convert,colors):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
-    source=card(type_line='Creature — Zombie',layout='token')
+    source=card(type_line='Creature — Zombie',layout='token',colors=colors)
     if nickname:source['flavor_name']='Alternate Name'
     compiled=Compiler(store).compile_face(source,source,0,{'templateOverride':'token-full-art'},settings,art)
     if convert:
         compiled=ws._apply_token_spec(compiled,{'token_frame_style':'token-full-art','output_key':'Test Card','token_key_suffix':''},art,'Deck-wide token',sem={**source,'types':['Creature'],'legendary':False,'nickname':'Alternate Name' if nickname else ''})
     data=compiled['data']
     for key,field in data['text'].items():
-        assert field['color']==('white' if key in {'title','nickname'} else 'black')
+        assert field['color']==('white' if key in {'title','nickname'} and colors!=['W'] else 'black')
         assert field['outlineWidth']==0 and field['shadowX']==0 and field['shadowY']==0
 
 

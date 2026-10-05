@@ -47,7 +47,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':6,'godzilla-land':6,'token-classic':2,'token-full-art':2,'token-borderless':2}
-AUTO_TEMPLATE_VERSIONS['token']=5
+AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
 # Real-name addon bars now follow the shared two-color transition.
@@ -61,7 +61,7 @@ for _group in ('planeswalker','class','battle','flip','station','prepare','modal
 for _choice in ('godzilla-card','godzilla-land'):
     BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 AUTO_TEMPLATE_VERSIONS['station']+=1
-BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=1
+BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=2
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -1553,7 +1553,7 @@ def configure_token_style(data,code,style,short):
         for field in text.values():
             field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
         text['title']['color']='#fde367'
-    elif style=='token-full-art':apply_modern_token_text(data)
+    elif style=='token-full-art':apply_modern_token_text(data,code)
     else:apply_full_art_text(data)
 
 
@@ -2168,9 +2168,10 @@ def _apply_godzilla_frame(data,sem,refit=False):
     return True
 
 
-def apply_modern_token_text(data):
+def apply_modern_token_text(data,code):
+    name_color='black' if code=='W' else 'white'
     for key,field in data['text'].items():
-        field.update(color='white' if key in {'title','nickname'} else 'black',outlineWidth=0,shadowX=0,shadowY=0)
+        field.update(color=name_color if key in {'title','nickname'} else 'black',outlineWidth=0,shadowX=0,shadowY=0)
 
 
 def apply_full_art_text(data):
@@ -2427,7 +2428,7 @@ class Compiler:
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
-                if choice=='token-full-art':apply_modern_token_text(data)
+                if choice=='token-full-art':apply_modern_token_text(data,frame_treatment_code(sem))
                 else:apply_full_art_text(data)
         if choice.startswith('godzilla-'):
             apply_universal_frame_color_treatment(data,sem)
