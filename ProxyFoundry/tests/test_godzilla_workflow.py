@@ -212,3 +212,24 @@ def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp
     assert named['text']['nickname']['text']=='Ghost' and named['text']['title']['text']==source['name']
     for field in ('type','rules','pt'):
         assert named['text'][field]==plain['text'][field]
+
+
+@pytest.mark.parametrize('nickname',['','Alternate Name'])
+@pytest.mark.parametrize('has_pt',[False,True])
+def test_godzilla_rules_and_flavor_reserve_visible_pt_space(tmp_path,nickname,has_pt):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Legendary Creature — Human Warrior' if has_pt else 'Legendary Artifact')
+    source['oracle_text']='When this permanent enters, look at the top seven cards of your library. You may reveal an Equipment or Vehicle card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\nEquipment you control have equip {1}.\nVehicles you control have crew 1.'
+    source['flavor_text']='Heaven had rules. Balthazar preferred souvenirs.'
+    if not has_pt:
+        source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-card','semanticOverrides':{'nickname':nickname}},
+        ws.validate_settings({}),art)['data']
+    rules=data['text']['rules']
+    assert source['flavor_text'] in rules['text']
+    if has_pt:
+        overlay=next(frame for frame in data['frames'] if 'Power/Toughness' in frame['name'])
+        assert rules['y']+rules['height'] <= overlay['bounds']['y']-.008+1e-9
+    else:
+        assert rules['height']==.2875

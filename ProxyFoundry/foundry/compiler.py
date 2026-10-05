@@ -46,7 +46,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':4,'godzilla-land':4,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':5,'godzilla-land':5,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=5
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
@@ -2126,8 +2126,10 @@ def _apply_godzilla_frame(data,sem,refit=False):
         'oneLine':True,'font':'belerenb','size':.0324,'color':'white',
         'shadowX':.0014,'shadowY':.001,
     })
+    # Rules and flavor share this box; keep both above the visible P/T overlay.
+    rules_height=_NICKNAME_PT_BOUNDS['y']-.6303-.008 if pt_text else .2875
     rules.update({
-        'name':'Rules Text','x':.086,'y':.6303,'width':.828,'height':.2875,
+        'name':'Rules Text','x':.086,'y':.6303,'width':.828,'height':rules_height,
         'size':.0362,'color':'white','shadowX':.0014,'shadowY':.001,
     })
     pt.update({
