@@ -253,8 +253,11 @@ def test_dual_land_godzilla_title_and_real_name_blend_land_colors(tmp_path,nickn
     assert bars[0]['masks'][0]['name']=='Right Blend'
     assert bars[0]['bounds']==bars[1]['bounds']
     real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
-    assert len(real)==(2 if nickname else 0)
-    if nickname:
+    assert len(real)==(2 if nickname and not legendary else 0)
+    if nickname and legendary:
+        assert all('/CrownJoined' in f['src'] for f in bars)
+        assert data['frames'][:2]==bars
+    if nickname and not legendary:
         assert [f['src'][-5] for f in real]==['R','B']
         assert real[0]['masks'][0]['name']=='Right Blend'
         assert data['frames'][:2]==real

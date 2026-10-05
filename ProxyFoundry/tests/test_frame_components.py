@@ -81,7 +81,8 @@ def test_godzilla_final_pass_keeps_nickname_on_top(env,nickname,legendary):
     frames=w.compiler.compile_face(c,c,0,override,settings,art['id'])['data']['frames']
     crowns=[f for f in frames if '/godzilla/Crown' in f.get('src','')]
     assert len(crowns)==(2 if legendary else 0)
-    if nickname:assert frames[0]['name']=='Nickname Title'
+    if nickname:
+        assert '/godzilla/CrownJoined' in frames[0]['src'] if legendary else frames[0]['name']=='Nickname Title'
 
 
 def test_colorless_prepared_spell_does_not_inherit_colored_host():

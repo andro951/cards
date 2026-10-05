@@ -46,7 +46,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':7,'godzilla-land':7,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':8,'godzilla-land':8,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
@@ -366,7 +366,7 @@ def _crown_color_variant(src,code):
     """
     if not code or code not in 'WUBRGMALC':return None
     src=str(src or '')
-    generated=re.fullmatch(r'(/img/frames/proxy-foundry/godzilla/Crown)([WUBRGMAL])(\.png)',src)
+    generated=re.fullmatch(r'(/img/frames/proxy-foundry/godzilla/Crown(?:Joined)?)([WUBRGMAL])(\.png)',src)
     if generated and code in 'WUBRGMAL':return generated.group(1)+code+generated.group(3)
     lower=code.lower()
     lowered=src.lower()
@@ -2203,6 +2203,19 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     if not _nickname_text(data,sem,group):return False
     # Battle is landscape and keeps its existing two-name typography.
     if group=='battle':return True
+    # The native legendary crown already contains its correctly joined subtitle.
+    # Replace the detached crown only when a nickname requests that subtitle;
+    # a second addon would paint a second outline across the same junction.
+    frames=data.setdefault('frames',[])
+    for index,frame in enumerate(frames):
+        src=str(frame.get('src',''))
+        if re.fullmatch(r'/img/frames/proxy-foundry/godzilla/Crown[WUBRGMAL]\.png',src):
+            joined=frames.pop(index)
+            joined['src']=src.replace('/Crown','/CrownJoined')
+            joined['name']='Nickname Title'
+            joined['bounds']=copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
+            frames.insert(0,joined)
+            return True
     code=_nickname_code(sem)
     main=data['text']['nickname']
     bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':main['width']+.0722,'height':main['height']+.051}

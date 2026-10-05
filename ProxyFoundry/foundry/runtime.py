@@ -117,11 +117,14 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
-        match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|Crown)([WUBRGMAL])\.png',path)
+        match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|Crown|CrownJoined)([WUBRGMAL])\.png',path)
         if match:
             kind,code=match.groups()
-            source=f'/img/frames/m15/nickname/m15Nickname{kind}{code}.png'
+            source=f'/img/frames/m15/nickname/m15Nickname{"Crown" if kind=="CrownJoined" else kind}{code}.png'
             raw,_=self.fetch(source)
+            if kind=='CrownJoined':
+                with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'adapter':'Native joined Godzilla crown and real-name strip'}
+                return raw,'image/png'
             # Preserve the crown shoulders below the main bar. A rectangular
             # crop cuts through their outer black outline.
             height,original=(.069,.1053) if kind=='Title' else (.1286,.1286)
