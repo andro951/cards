@@ -46,7 +46,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':6,'godzilla-land':6,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':7,'godzilla-land':7,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
@@ -2095,7 +2095,7 @@ def _apply_godzilla_frame(data,sem,refit=False):
     ]
     kind='Crown' if legendary else 'Title'
     title_bounds=copy.deepcopy(_NICKNAME_CROWN_BOUNDS if legendary else _NICKNAME_TITLE_BOUNDS)
-    title_bounds['height']=.0933 if legendary else .069
+    title_bounds['height']=.1286 if legendary else .069
     main_bar={
         'name':f'{color_name} {kind}',
         'src':f'/img/frames/proxy-foundry/godzilla/{kind}{code if code in "WUBRGMAL" else "A"}.png',

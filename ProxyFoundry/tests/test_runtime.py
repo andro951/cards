@@ -112,7 +112,7 @@ def test_colorless_saga_creature_gap_asset_exists_at_pinned_commit():
         assert response.read(8)==b'\x89PNG\r\n\x1a\n'
 
 
-@pytest.mark.parametrize('kind,height,original',[('Title',.069,.1053),('Crown',.0933,.1286)])
+@pytest.mark.parametrize('kind,height,original',[('Title',.069,.1053)])
 def test_godzilla_main_title_is_cropped_from_pinned_asset(kind,height,original):
     import io
     from PIL import Image
@@ -133,3 +133,22 @@ def test_godzilla_main_title_is_cropped_from_pinned_asset(kind,height,original):
     expected=source.crop((0,0,60,round(100*height/original)))
     assert output.size==expected.size and output.tobytes()==expected.tobytes()
     assert runtime.diagnostic()['files'][path]['source'].endswith(f'm15Nickname{kind}B.png')
+
+
+def test_godzilla_crown_retains_shoulders_and_removes_subtitle():
+    import io
+    from PIL import Image
+    source=Image.new('RGBA',(1428,270),(200,40,30,255))
+    source.putpixel((80,222),(0,0,0,255))
+    source.putpixel((1348,222),(0,0,0,255))
+    buffer=io.BytesIO();source.save(buffer,'PNG')
+    class FakeNet:
+        def fetch(self,url,**kwargs):return buffer.getvalue(),'image/png',{}
+    raw,_=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/CrownR.png')
+    output=Image.open(io.BytesIO(raw))
+    assert output.size==source.size
+    assert output.getpixel((714,194))==(0,0,0,255)
+    for point in [(80,222),(1348,222),(714,100)]:
+        assert output.getpixel(point)==source.getpixel(point)
+    for point in [(714,200),(714,260),(80,240),(1348,240)]:
+        assert output.getpixel(point)[3]==0

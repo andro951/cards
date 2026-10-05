@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading,hashlib
 from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
-from PIL import Image
+from PIL import Image,ImageDraw,ImageChops
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 
 class Runtime:
@@ -122,10 +122,27 @@ class Runtime:
             kind,code=match.groups()
             source=f'/img/frames/m15/nickname/m15Nickname{kind}{code}.png'
             raw,_=self.fetch(source)
-            #Keep the pinned main title/crown; exclude its attached real-name strip.
-            height,original=(.069,.1053) if kind=='Title' else (.0933,.1286)
+            # Preserve the crown shoulders below the main bar. A rectangular
+            # crop cuts through their outer black outline.
+            height,original=(.069,.1053) if kind=='Title' else (.1286,.1286)
             with Image.open(io.BytesIO(raw)) as image:
-                image=image.crop((0,0,image.width,round(image.height*height/original)))
+                if kind=='Crown':
+                    image=image.convert('RGBA')
+                    width,total=image.size
+                    # Coordinates belong to the pinned 1428 x 270 crown asset.
+                    # Remove the attached subtitle inside the two shoulders.
+                    mask=Image.new('L',image.size,255)
+                    draw=ImageDraw.Draw(mask)
+                    points=[(134,194),(1294,194),(1282,226),(1428,226),
+                            (1428,270),(0,270),(0,226),(146,226)]
+                    draw.polygon([(round(x*width/1428),round(y*total/270)) for x,y in points],fill=0)
+                    image.putalpha(ImageChops.multiply(image.getchannel('A'),mask))
+                    # Close the newly separated edge, including the inner
+                    # shoulder cuts, with the native outline thickness.
+                    edge=[(146,224),(134,194),(1294,194),(1282,224)]
+                    ImageDraw.Draw(image).line([(round(x*width/1428),round(y*total/270)) for x,y in edge],fill=(0,0,0,255),width=max(1,round(4*width/1428)))
+                else:
+                    image=image.crop((0,0,image.width,round(image.height*height/original)))
                 output=io.BytesIO();image.save(output,'PNG')
             with self.lock:self.requested[path]={'source':source,'bytes':len(output.getvalue()),'adapter':'Godzilla main title without real-name strip'}
             return output.getvalue(),'image/png'
