@@ -233,3 +233,39 @@ def test_godzilla_rules_and_flavor_reserve_visible_pt_space(tmp_path,nickname,ha
         assert rules['y']+rules['height'] <= overlay['bounds']['y']-.008+1e-9
     else:
         assert rules['height']==.2875
+
+
+@pytest.mark.parametrize('nickname',['','Custom land name'])
+@pytest.mark.parametrize('legendary',[False,True])
+def test_dual_land_godzilla_title_and_real_name_blend_land_colors(tmp_path,nickname,legendary):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(name='Bloodstained Mire',type_line=('Legendary ' if legendary else '')+'Land',colors=[])
+    source.pop('power');source.pop('toughness')
+    source.update(mana_cost='',oracle_text='{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.')
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-land','semanticOverrides':{'nickname':nickname}},
+        ws.validate_settings({}),art)['data']
+    kind='Crown' if legendary else 'Title'
+    bars=[f for f in data['frames'] if '/godzilla/'+kind in f['src']]
+    assert len(bars)==2
+    assert [f['src'][-5] for f in bars]==['R','B']
+    assert bars[0]['masks'][0]['name']=='Right Blend'
+    assert bars[0]['bounds']==bars[1]['bounds']
+    real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
+    assert len(real)==(2 if nickname else 0)
+    if nickname:
+        assert [f['src'][-5] for f in real]==['R','B']
+        assert real[0]['masks'][0]['name']=='Right Blend'
+        assert data['frames'][:2]==real
+
+
+@pytest.mark.parametrize('style',['auto','godzilla-card'])
+def test_dual_nonland_real_name_bar_uses_same_color_blend(tmp_path,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['U','R'])
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':style,'semanticOverrides':{'nickname':'Alternate'}},
+        ws.validate_settings({}),art)['data']
+    real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
+    assert [f['src'][-5] for f in real]==['R','U']
+    assert real[0]['masks'][0]['name']=='Right Blend'

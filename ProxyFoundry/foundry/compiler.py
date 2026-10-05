@@ -46,10 +46,15 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':5,'godzilla-land':5,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':6,'godzilla-land':6,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=5
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
+# Real-name addon bars now follow the shared two-color transition.
+for _group in AUTO_TEMPLATE_VERSIONS:
+    AUTO_TEMPLATE_VERSIONS[_group]+=1
+for _choice in BUILTIN_TEMPLATE_VERSIONS:
+    if not _choice.startswith('godzilla-'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 # Refresh affected caches after exposing native color components.
 for _group in ('planeswalker','class','battle','flip','station','prepare','modal-front','modal-back'):
     AUTO_TEMPLATE_VERSIONS[_group]=AUTO_TEMPLATE_VERSIONS.get(_group,1)+1
@@ -1984,6 +1989,24 @@ def _nickname_code(sem):
     if code and code in 'WUBRGMAL':return code
     return 'C'
 
+def _nickname_bar_variant(src,code):
+    if code not in 'WUBRGMAL':return None
+    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/Title|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
+    return match.group(1)+code+match.group(3) if match else None
+
+
+def _nickname_bar_layers(frame,sem):
+    colors=frame_treatment_colors(sem)
+    if len(colors)!=2:return [frame]
+    first,second=native.canonical_dual_color_order(colors)
+    base=copy.deepcopy(frame);right=copy.deepcopy(frame)
+    base.update(src=_nickname_bar_variant(frame['src'],first),masks=[])
+    right.update(src=_nickname_bar_variant(frame['src'],second),
+                 masks=[{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}])
+    # Native frame order paints the right fade over the left color.
+    return [right,base]
+
+
 def _nickname_frame_src(code):
     # The pinned pack has no C body image. Its complete neutral A body pairs
     # with the genuine colorless title and P/T addon.
@@ -2057,7 +2080,7 @@ def _apply_godzilla_frame(data,sem,refit=False):
 
     The pack has complete W/U/B/R/G/M/A/L frames. Colorless uses its
     neutral A body and title because the pinned pack has no C body.
-    It is deliberately mask-free here: one full Frame plus Title/Crown and P/T.
+    Use a complete Frame plus Title/Crown and P/T, blending dual-color bars.
     """
     code=_nickname_code(sem)
     frame_src=_nickname_frame_src(code)
@@ -2073,11 +2096,12 @@ def _apply_godzilla_frame(data,sem,refit=False):
     kind='Crown' if legendary else 'Title'
     title_bounds=copy.deepcopy(_NICKNAME_CROWN_BOUNDS if legendary else _NICKNAME_TITLE_BOUNDS)
     title_bounds['height']=.0933 if legendary else .069
-    frames.insert(0,{
+    main_bar={
         'name':f'{color_name} {kind}',
         'src':f'/img/frames/proxy-foundry/godzilla/{kind}{code if code in "WUBRGMAL" else "A"}.png',
         'masks':[],'bounds':title_bounds,
-    })
+    }
+    frames[0:0]=_nickname_bar_layers(main_bar,sem) if kind=='Title' else [main_bar]
     if pt_text:
         # CardConjurer draws the first frame last, above the other frame layers.
         frames.insert(0,{
@@ -2181,11 +2205,12 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     code=_nickname_code(sem)
     main=data['text']['nickname']
     bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':main['width']+.0722,'height':main['height']+.051}
-    data.setdefault('frames',[]).insert(0,{
+    real_name_bar={
         'name':'Nickname Title',
         'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
         'masks':[],'bounds':bounds,
-    })
+    }
+    data.setdefault('frames',[])[0:0]=_nickname_bar_layers(real_name_bar,sem)
     return True
 
 
