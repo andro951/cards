@@ -35,6 +35,12 @@ E.afterChange = () => {
         item.setAttribute("aria-pressed", String(active)); item.style.background = active ? "#885022" : "#30251d";
     }
 
+    if (Studio.realNameButton) {
+        const active = Boolean(E.model.preview.nickname?.trim());
+        Studio.realNameButton.setAttribute("aria-pressed", String(active));
+        Studio.realNameButton.style.background = active ? "#885022" : "#30251d";
+    }
+
     E.scheduleRender(); E.saveSoon();
 };
 E.inspect = () => Studio.panel();
@@ -415,7 +421,7 @@ Studio.palette = async (code, color) => {
 };
 Studio.textPanel = () => {
     const parent = Studio.controls;
-    help(parent, "Text fits automatically. Edit its normal size and appearance; try the sample cards above the preview to check longer content.");
+    help(parent, "Text fits automatically. Edit its normal size and appearance; edit the sample text below the preview to check longer content.");
     Studio.partChooser(parent, part => ["text", "mana", "divider"].includes(part.kind));
     const part = E.model.parts.find(item => item.id === E.selected);
     if (!part || !["text", "mana", "divider"].includes(part.kind)) {
@@ -571,9 +577,18 @@ Studio.boot = async () => {
     Studio.controls = el("section", "", { flex: "1 1 360px", minWidth: "0", maxWidth: "650px", background: "#1c1915", border: "1px solid #49382b", padding: "24px", borderRadius: "12px", boxSizing: "border-box" });
     const preview = el("section", "", { flex: "1 1 340px", minWidth: "0", maxWidth: "620px", position: "sticky", top: "14px", textAlign: "center" });
     const presets = el("nav", "", { display: "flex", flexWrap: "wrap", justifyContent: "center", marginBottom: "8px" });
-    for (const sample of W.Samples) {
-        button(sample.label, () => E.change(model => Object.assign(model.preview, sample)), presets);
-    }
+    button("Ordinary", () => E.change(model => Object.assign(model.preview, { variant: "U", accentColors: ["U"], legendary: false })), presets);
+    button("Legendary · two colors", () => E.change(model => Object.assign(model.preview, { variant: "M", accentColors: ["U", "R"], legendary: true })), presets);
+    Studio.realNameButton = button("Real-name bar", () => E.change(model => {
+        if (model.preview.nickname?.trim()) {
+            Studio.previewNickname = model.preview.nickname; model.preview.nickname = "";
+        }
+        else
+            model.preview.nickname = Studio.previewNickname || "Preview nickname";
+    }), presets);
+    const hasNickname = Boolean(E.model.preview.nickname?.trim());
+    Studio.realNameButton.setAttribute("aria-pressed", String(hasNickname));
+    Studio.realNameButton.style.background = hasNickname ? "#885022" : "#30251d";
 
     preview.append(presets);
     const colorControls = el("nav", "", { display: "flex", flexWrap: "wrap", justifyContent: "center", marginBottom: "10px" });

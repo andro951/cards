@@ -16,13 +16,13 @@ The loopback host serves the editor and pinned upstream images/fonts. Editing, f
 
 ## Creator workflow
 
-The card stays visible beside five freely selectable steps. There is no Save button: the draft autosaves in this browser, and Undo/Redo work throughout.
+The card stays visible beside five freely selectable steps. Preview frame/color buttons preserve your sample text; Real-name bar is a separate toggle. There is no Save button: the draft autosaves in this browser, and Undo/Redo work throughout.
 
 1. **Start:** Use existing M15 sheets and masks, reopen a template, or upload a transparent custom full-card sheet. Choose existing M15 masks to split a compatible sheet into editable parts; otherwise keep it as one complete overlay. Upload test artwork separately; it never becomes part of the template.
 2. **Parts:** Choose a named part, replace its image, move or resize its region, and choose when it appears. Drag on the card or use percentage controls. Text follows the associated region. Advanced controls reveal masks, alignment, stacking and cutouts.
 3. **Colors:** Keep one image unchanged, create treatments from one neutral image, or assign separate images per color. Batch uploads suggest colors from filenames, then let you confirm them. Missing assignments block export unless you explicitly choose a shared fallback. Tint masks protect areas that should retain their original colors. Palette changes update recolorable uploads automatically.
 4. **Text:** Adjust named text regions, fonts, sizes, alignment and outlines. Mana and set-symbol reservations are automatic. Rules and italic flavor can share automatic flow and a divider, or use independent regions.
-5. **Review:** Inspect 24 representative samples, including ten color treatments and all ten two-color pairs. Click a sample to enlarge it. Missing images, incomplete colors and layout warnings block export. Download an importable template or an editable source.
+5. **Review:** Inspect 25 representative samples, including ten color treatments, all ten two-color pairs, and a separate nickname case. Click a sample to enlarge it. Missing images, incomplete colors and layout warnings block export. Download an importable template or an editable source.
 
 ### Using the result
 

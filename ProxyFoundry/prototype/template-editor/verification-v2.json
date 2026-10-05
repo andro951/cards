@@ -7,7 +7,7 @@
     "node": 26,
     "productionValidationAndCompiler": 49,
     "originalPrototypeBrowser": 12,
-    "guidedStudioBrowser": 7,
+    "guidedStudioBrowser": 8,
     "actualNativeRenders": 3,
     "staticBrowserImportExport": 1
   },
@@ -51,5 +51,6 @@
     "Ordinary cards/lands only",
     "Built-in fonts; editor and native renderer have small text-metric differences",
     "Custom watermark/divider images and per-card artwork focus/zoom are explicitly blocked"
-  ]
+  ],
+  "previewControls": "Frame treatment controls preserve sample text; real-name bar is independently toggled; review has 25 explicit samples."
 }

@@ -28,6 +28,30 @@ def ready(page):
     page.wait_for_function('() => document.querySelector("canvas[data-ready]")?.dataset.ready === String(TemplateEditor.epoch)',timeout=120000)
 
 
+def test_frame_controls_preserve_text_and_real_name_bar_is_independent(page):
+    before=page.evaluate('({...TemplateEditor.model.preview})')
+    page.get_by_role('button',name='Legendary · two colors',exact=True).click()
+    ready(page)
+    after=page.evaluate('({...TemplateEditor.model.preview})')
+    assert after['variant']=='M' and after['accentColors']==['U','R'] and after['legendary']
+    for field in ['name','nickname','type','mana','rules','flavor','pt']:
+        assert after[field]==before[field]
+    toggle=page.get_by_role('button',name='Real-name bar',exact=True)
+    assert toggle.get_attribute('aria-pressed')=='false'
+    toggle.click()
+    ready(page)
+    assert toggle.get_attribute('aria-pressed')=='true'
+    nickname=page.evaluate('TemplateEditor.model.preview.nickname')
+    page.get_by_role('button',name='Green',exact=True).click()
+    ready(page)
+    assert page.evaluate('TemplateEditor.model.preview.nickname')==nickname
+    assert page.evaluate('TemplateEditor.model.preview.rules')==before['rules']
+    toggle.click()
+    ready(page)
+    assert toggle.get_attribute('aria-pressed')=='false'
+    assert page.evaluate('TemplateEditor.model.preview.variant')=='G'
+
+
 def test_native_guided_workflow_and_review(page):
     page.get_by_role('button',name='Start from CardConjurer M15',exact=True).click()
     page.get_by_role('button',name='Title bar',exact=True).click()
@@ -42,7 +66,7 @@ def test_native_guided_workflow_and_review(page):
     page.get_by_role('button',name='Check representative cards',exact=True).click()
     page.wait_for_function('() => document.body.textContent.includes("Ready to export.")',timeout=120000)
     assert page.get_by_role('button',name='Download importable template').is_enabled()
-    assert page.locator('figure').count()==24
+    assert page.locator('figure').count()==25
     output=ROOT/'test-results';output.mkdir(exist_ok=True)
     page.screenshot(path=str(output/'studio-review.png'),full_page=True)
 
