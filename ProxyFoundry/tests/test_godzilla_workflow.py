@@ -72,7 +72,7 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
         assert any(item['src'].endswith('m15NicknameTitleC.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
     if type_line!='Land':
-        assert 'm15NicknamePT' in data['frames'][1]['src']
+        assert '/m15/regular/m15PT' in data['frames'][1]['src']
     assert data['text']['nickname']['text']=='Alternate Name'
     assert data['text']['title']['text']=='Test Card'
     for key in ('type','rules'):
@@ -273,3 +273,22 @@ def test_dual_nonland_real_name_bar_uses_same_color_blend(tmp_path,style):
     real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
     assert [f['src'][-5] for f in real]==['R','U']
     assert real[0]['masks'][0]['name']=='Right Blend'
+
+
+@pytest.mark.parametrize('colors,code',[(['W'],'W'),(['B'],'B'),(['U','R'],'M'),([],'C')])
+@pytest.mark.parametrize('convert',[False,True])
+def test_godzilla_uses_normal_pt_box_with_black_unoutlined_numbers(tmp_path,colors,code,convert):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Legendary Creature — Human',colors=colors)
+    source['flavor_name']='Alternate Name'
+    result=Compiler(store).compile_face(source,source,0,{'templateOverride':'godzilla-card'},ws.validate_settings({}),art)
+    if convert:
+        result=ws._apply_token_spec(result,{'output_key':'Test Card','token_key_suffix':''},art,'Token conversion',sem={**source,'types':['Creature'],'legendary':True,'nickname':'Alternate Name'})
+    data=result['data']
+    box=next(frame for frame in data['frames'] if 'Power/Toughness' in frame['name'])
+    assert box['src']=='/img/frames/m15/regular/m15PT'+code+'.png'
+    assert not any('m15NicknamePT' in frame['src'] for frame in data['frames'])
+    pt=data['text']['pt']
+    assert pt['color']=='black' and pt['outlineWidth']==0
+    assert pt['shadowX']==0 and pt['shadowY']==0
+    assert data['text']['rules']['y']+data['text']['rules']['height'] < box['bounds']['y']
