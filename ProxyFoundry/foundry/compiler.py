@@ -51,7 +51,7 @@ AUTO_TEMPLATE_VERSIONS['token']=7
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=4
 for _group in ('class','saga','saga-creature'):
-    AUTO_TEMPLATE_VERSIONS[_group]+=2
+    AUTO_TEMPLATE_VERSIONS[_group]+=3
 # Real-name addon bars now follow the shared two-color transition.
 for _group in AUTO_TEMPLATE_VERSIONS:
     AUTO_TEMPLATE_VERSIONS[_group]+=1
@@ -2275,7 +2275,9 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
 def reserve_structural_true_name_space(data):
     """Reflow vertical abilities below the added strip, preserving their bottom."""
     text=data.get('text',{})
-    offset=_NICKNAME_TITLE_BOUNDS['height']-.069
+    # Text rendering already provides padding above the first visible line.
+    # Reserve the subtitle text height, without adding its frame padding again.
+    offset=text['title']['height']
     if data.get('class'):
         count=data['class']['count']
         start=_CLASS_TEXT_START_Y+offset

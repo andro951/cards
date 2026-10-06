@@ -14,7 +14,7 @@ def test_nickname_reserves_strip_height_without_moving_ability_bottom(tmp_path,k
     normal=compiler.compile_face(card,card,0,{},settings,art)['data']
     named=compiler.compile_face(card,card,0,{'semanticOverrides':{'nickname':'Custom Name'}},settings,art)['data']
     first,last=('level0c','level2c') if kind=='class' else ('ability0','ability2')
-    assert named['text'][first]['y']-normal['text'][first]['y']==pytest.approx(.0363)
+    assert named['text'][first]['y']-normal['text'][first]['y']==pytest.approx(named['text']['title']['height'])
     end=lambda data:data['text'][last]['y']+data['text'][last]['height']
     assert end(named)==pytest.approx(end(normal),abs=1/2814)
     assert named['text'][first]['y']>named['text']['title']['y']+named['text']['title']['height']
