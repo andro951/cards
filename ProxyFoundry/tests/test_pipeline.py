@@ -1136,3 +1136,16 @@ def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nick
     if layout=='modal_dfc':
         with pytest.raises(ValidationError,match='Approved built-in pairs'):
             Compiler(store).compile_face(card,front,0,{},settings,art)
+
+
+@pytest.mark.parametrize('nickname',[False,True])
+def test_day_night_helper_titles_are_centered(workspace,nickname):
+    from pathlib import Path
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards/day.json').read_text(encoding='utf-8'))
+    for index,face in enumerate(card['card_faces']):
+        options={'semanticOverrides':{'nickname':'Custom '+face['name']}} if nickname else {}
+        data=Compiler(store).compile_face(card,face,index,options,settings,art,art_origin='GitHub folder')['data']
+        title=data['text']['nickname' if nickname else 'title']
+        assert title['align']=='center'
+        assert title['x']+title['width']/2==pytest.approx(.5,abs=.001)

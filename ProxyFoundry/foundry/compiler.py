@@ -49,7 +49,7 @@ AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-la
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':11,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
-AUTO_TEMPLATE_VERSIONS['helper']=2
+AUTO_TEMPLATE_VERSIONS['helper']=3
 # Real-name addon bars now follow the shared two-color transition.
 for _group in AUTO_TEMPLATE_VERSIONS:
     AUTO_TEMPLATE_VERSIONS[_group]+=1
@@ -2485,6 +2485,9 @@ class Compiler:
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
         if nickname_applied and (group in ORDINARY_GROUPS or choice.startswith('godzilla-')):
             reserve_nickname_mana_space(data,sem)
+        if group=='helper' and {str(f.get('name') or '').strip() for f in sf.get('card_faces',[])}=={'Day','Night'}:
+            title=(data.get('text') or {}).get('nickname' if nickname_applied else 'title')
+            if isinstance(title,dict):title['align']='center'
         if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
