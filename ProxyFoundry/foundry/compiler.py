@@ -47,7 +47,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':11,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
-AUTO_TEMPLATE_VERSIONS['token']=6
+AUTO_TEMPLATE_VERSIONS['token']=7
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=4
 for _group in ('class','saga','saga-creature'):
@@ -2195,7 +2195,10 @@ def _apply_godzilla_frame(data,sem,refit=False):
 def apply_modern_token_text(data,code):
     name_color='black' if code=='W' else 'white'
     for key,field in data['text'].items():
-        field.update(color=name_color if key in {'title','nickname'} else 'black',outlineWidth=0,shadowX=0,shadowY=0)
+        # The true name sits on the dark nickname addon, not the token's
+        # white title surface. Only the main name uses the token color rule.
+        color='white' if key=='title' and 'nickname' in data['text'] else name_color if key in {'title','nickname'} else 'black'
+        field.update(color=color,outlineWidth=0,shadowX=0,shadowY=0)
 
 
 def apply_full_art_text(data):
