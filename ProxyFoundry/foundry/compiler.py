@@ -50,6 +50,8 @@ BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=3
+for _group in ('class','saga','saga-creature'):
+    AUTO_TEMPLATE_VERSIONS[_group]+=1
 # Real-name addon bars now follow the shared two-color transition.
 for _group in AUTO_TEMPLATE_VERSIONS:
     AUTO_TEMPLATE_VERSIONS[_group]+=1
@@ -507,6 +509,13 @@ def _dual_crown_layers_like(frame,dual):
 
     return [copy.deepcopy(frame)]
 
+_CORRECTED_PINLINE_MASKS={
+    '/img/frames/class/masks/maskPinlines.png':'/img/frames/proxy-foundry/masks/class-pinline.png',
+    '/img/frames/saga/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/saga-pinline.png',
+    '/img/frames/saga/creature/masks/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/creature-saga-pinline.png',
+}
+
+
 def expose_native_frame_components(data,sem):
     """Keep complete bases; expose only native overlays that need another color."""
     colors=frame_treatment_colors(sem);code=frame_treatment_code(sem)
@@ -534,6 +543,7 @@ def expose_native_frame_components(data,sem):
         elif re.fullmatch(r'/img/frames/m15/nickname/m15NicknameFrame[WUBRGMAL]\.png',src):
             masks={'Pinline':'/img/frames/m15/regular/m15MaskPinlineSuper.png','Type':'/img/frames/m15/regular/m15MaskType.png','Rules':'/img/frames/m15/regular/m15MaskRules.png'}
         for name,mask_src in masks.items():
+            mask_src=_CORRECTED_PINLINE_MASKS.get(mask_src,mask_src)
             if mask_src in existing:continue
             if not (name=='Pinline' and len(colors)==2) and _frame_effect_source(src,code)==src:continue
             layer=copy.deepcopy(frame);layer['name']=name+' Color Overlay';layer['masks']=[{'name':name,'src':mask_src}]
@@ -562,6 +572,10 @@ def apply_universal_frame_color_treatment(data,sem):
     dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
     if not code and not dual and not frame_treatment_code(sem.get('prepared_spell',{})):return False
 
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        for mask in frame.get('masks',[]):
+            if isinstance(mask,dict):mask['src']=_CORRECTED_PINLINE_MASKS.get(mask.get('src'),mask.get('src'))
     expose_native_frame_components(data,sem)
 
     source_frames=data.get('frames',[])
@@ -647,7 +661,7 @@ def apply_universal_frame_color_treatment(data,sem):
             if effect_dual:
                 first,second=effect_dual
                 layer['src']=native.dual_gradient_fill_src(first,second)
-                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                saga=any('/saga/' in str(mask.get('src','')) or str(mask.get('src','')).endswith(('masks/saga-pinline.png','masks/creature-saga-pinline.png')) for mask in pin)
                 layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
             else:
                 layer['src']=_frame_effect_source(old,effect_code)

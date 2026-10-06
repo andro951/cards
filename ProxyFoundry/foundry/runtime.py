@@ -117,6 +117,11 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        mask=re.fullmatch(r'/img/frames/proxy-foundry/masks/(class|saga|creature-saga)-pinline\.png',path)
+        if mask:
+            raw=(Path(__file__).resolve().parents[1]/'assets/frame-masks'/(mask[1]+'-pinline.png')).read_bytes()
+            with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled pinline color mask preserving native black outlines'}
+            return raw,'image/png'
         match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|TitleJoined|Crown|CrownJoined)([WUBRGMAL])\.png',path)
         if match:
             kind,code=match.groups()

@@ -74,7 +74,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
             assert ready['summary']['rendered']==19
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
-            assert '/img/frames/saga/sagaMaskPinline.png' in app.runtime.requested, 'Dual-color Saga gradient pinline mask was not exercised by the native renderer'
+            assert '/img/frames/proxy-foundry/masks/saga-pinline.png' in app.runtime.requested, 'Dual-color Saga gradient pinline mask was not exercised by the native renderer'
             assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
             assert '/img/frames/m15/transform/regular/new/backL.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
@@ -104,7 +104,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             dual_frames=dual_saga['faces'][0]['compiled']['data']['frames']
             gradient=next(f for f in dual_frames if 'Gradient Saga Pinline' in f.get('name',''))
             assert gradient['src'].startswith('data:image/svg+xml;utf8,')
-            assert gradient['masks']==[{'src':'/img/frames/saga/sagaMaskPinline.png','name':'Pinline'}]
+            assert gradient['masks']==[{'src':'/img/frames/proxy-foundry/masks/saga-pinline.png','name':'Pinline'}]
             tassels=[f for f in dual_frames if any(m.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for m in f.get('masks',[]))]
             assert len(tassels)==2
             by_tassel={f['masks'][0]['name']:f for f in tassels}

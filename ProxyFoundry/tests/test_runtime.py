@@ -165,3 +165,27 @@ def test_joined_godzilla_crown_is_the_unchanged_native_asset(kind):
             return buffer.getvalue(),'image/png',{}
     raw,mime=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/'+kind+'JoinedW.png')
     assert raw==buffer.getvalue() and mime=='image/png'
+
+
+@pytest.mark.parametrize('kind,size',[('class',(2010,2814)),('saga',(1500,2100)),('creature-saga',(2010,2814))])
+def test_bundled_pinline_masks_load_without_network(kind,size):
+    import io
+    from PIL import Image
+    class NoNetwork:
+        def fetch(self,*args,**kwargs):raise AssertionError('Bundled mask must not fetch upstream')
+    raw,mime=Runtime(NoNetwork()).fetch('/img/frames/proxy-foundry/masks/'+kind+'-pinline.png')
+    mask=Image.open(io.BytesIO(raw)).convert('RGBA')
+    assert mime=='image/png' and mask.size==size
+    assert mask.getpixel((0,0))[3]==0
+    alpha=mask.getchannel('A')
+    assert alpha.getextrema()==(0,255)
+    assert sum(alpha.histogram()[1:])>1000
+
+
+@pytest.mark.parametrize('kind,black,gold',[('class',(151,135),(165,120)),('saga',(111,233),(123,90)),('creature-saga',(149,311),(142,120))])
+def test_corrected_pinline_masks_exclude_native_black_outline(kind,black,gold):
+    from pathlib import Path
+    from PIL import Image
+    mask=Image.open(Path(__file__).resolve().parents[1]/'assets/frame-masks'/(kind+'-pinline.png')).convert('RGBA')
+    assert mask.getpixel(black)[3]==0
+    assert mask.getpixel(gold)[3]==255

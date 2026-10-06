@@ -328,8 +328,8 @@ def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
 
 
 @pytest.mark.parametrize('type_line,colors,expected_mask',[
-    ('Enchantment — Saga',['U','G'],'/img/frames/saga/sagaMaskPinline.png'),
-    ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/saga/creature/masks/sagaMaskPinline.png'),
+    ('Enchantment — Saga',['U','G'],'/img/frames/proxy-foundry/masks/saga-pinline.png'),
+    ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/proxy-foundry/masks/creature-saga-pinline.png'),
 ])
 def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_line,colors,expected_mask):
     s,a,settings=workspace

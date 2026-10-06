@@ -40,7 +40,7 @@ def test_repaired_native_component_render(tmp_path):
                 comp=card['faces'][0]['compiled'];render=store.render_get(comp['renderKey']);assert render
                 image=Image.open(store.asset_path(render['asset_id']));assert image.size==(comp['data']['width'],comp['data']['height'])
                 image.thumbnail((400,560));image.save(output/(kind+'.png'))
-            for mask in ('/img/frames/planeswalker/regular/planeswalkerMaskPinline.png','/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png','/img/frames/class/masks/maskPinlines.png','/img/frames/m15/battle/maskPinline.png','/img/frames/m15/flip/pinline.svg'):
+            for mask in ('/img/frames/planeswalker/regular/planeswalkerMaskPinline.png','/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png','/img/frames/proxy-foundry/masks/class-pinline.png','/img/frames/m15/battle/maskPinline.png','/img/frames/m15/flip/pinline.svg'):
                 assert mask in app.runtime.requested,mask
             assert not errors,errors
         finally:
