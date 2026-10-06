@@ -49,7 +49,7 @@ AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-la
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':11,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
-AUTO_TEMPLATE_VERSIONS['helper']=3
+AUTO_TEMPLATE_VERSIONS['helper']=4
 for _group in ('class','saga','saga-creature'):
     AUTO_TEMPLATE_VERSIONS[_group]+=1
 # Real-name addon bars now follow the shared two-color transition.
@@ -2499,9 +2499,16 @@ class Compiler:
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
         if nickname_applied and (group in ORDINARY_GROUPS or choice.startswith('godzilla-')):
             reserve_nickname_mana_space(data,sem)
-        if group=='helper' and {str(f.get('name') or '').strip() for f in sf.get('card_faces',[])}=={'Day','Night'}:
+        unboxed_helper=group=='helper' and (
+            {str(f.get('name') or '').strip() for f in sf.get('card_faces',[])}=={'Day','Night'}
+            or str(sf.get('name') or '').strip().casefold()=='experience'
+        )
+        if unboxed_helper:
             title=(data.get('text') or {}).get('nickname' if nickname_applied else 'title')
             if isinstance(title,dict):title['align']='center'
+            if recipe=='helper_full_art':
+                data['text'].pop('type',None)
+                data['frames']=[frame for frame in data.get('frames',[]) if frame.get('name') not in {'Temple Type Bar','50% Black Transparent Rules Fill','Temple Rules Border'}]
         if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
@@ -2514,7 +2521,7 @@ class Compiler:
             bottom_info=data.get('bottomInfo') or {}
             if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id
-        data['setSymbolSource']='/img/blank.png' if recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
+        data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

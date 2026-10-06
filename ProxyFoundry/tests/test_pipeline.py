@@ -1093,8 +1093,11 @@ def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
         data=result['data']
         assert data['frames'] and data['artBounds']==FULL_ART_NONLAND_BOUNDS
         assert data['text']['title']['text']==face['name']
-        assert data['text']['type']['text']=='Card'
-        assert 'Land' not in data['text']['type']['text']
+        if name in {'day','experience'}:
+            assert 'type' not in data['text']
+        else:
+            assert data['text']['type']['text']=='Card'
+            assert 'Land' not in data['text']['type']['text']
         assert data['text']['rules']['text']
         assert data['text']['rules']['color']=='white'
         assert data['text']['rules']['outlineColor']=='black'
@@ -1139,13 +1142,19 @@ def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nick
 
 
 @pytest.mark.parametrize('nickname',[False,True])
-def test_day_night_helper_titles_are_centered(workspace,nickname):
+@pytest.mark.parametrize('helper',['day','experience'])
+def test_day_night_helper_titles_are_centered(workspace,nickname,helper):
     from pathlib import Path
     store,art,settings=workspace
-    card=json.loads((Path(__file__).parent/'fixtures/helper_cards/day.json').read_text(encoding='utf-8'))
-    for index,face in enumerate(card['card_faces']):
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(helper+'.json')).read_text(encoding='utf-8'))
+    for index,face in enumerate(card.get('card_faces') or [card]):
         options={'semanticOverrides':{'nickname':'Custom '+face['name']}} if nickname else {}
         data=Compiler(store).compile_face(card,face,index,options,settings,art,art_origin='GitHub folder')['data']
         title=data['text']['nickname' if nickname else 'title']
         assert title['align']=='center'
         assert title['x']+title['width']/2==pytest.approx(.5,abs=.001)
+        assert 'type' not in data['text']
+        assert data['text']['rules']['text']==face['oracle_text']
+        assert data['text']['rules']['color']=='white' and data['text']['rules']['outlineWidth']>0
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert not any('Type Bar' in f['name'] or 'Rules Fill' in f['name'] or 'Rules Border' in f['name'] for f in data['frames'])
