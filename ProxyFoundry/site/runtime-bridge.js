@@ -109,6 +109,12 @@
   };
   const nativeTextBuffer=window.drawTextBuffer;
   window.drawTextBuffer=function(...args){if(S.active&&S.phase!=='render')return;return nativeTextBuffer?.apply(this,args);};
+  //Loading one face triggers native redraw callbacks for every individual image.
+  //Only compose once all inputs are ready; the final native drawing order is unchanged.
+  for(const name of ['drawFrames','drawCard','drawText']){
+    const draw=window[name];
+    window[name]=function(...args){if(S.active&&S.phase!=='render')return;return draw.apply(this,args);};
+  }
   async function scriptsSettled(){while(pendingScripts.size)await Promise.all([...pendingScripts]);}
   function usedSymbols(data){
     const symbols=new Set();
@@ -149,7 +155,8 @@
     const paths=new Set([data.artSource,data.setSymbolSource,data.watermarkSource,'/img/black.png','/img/blank.png','/img/frames/cornerCutout.png']);
     for(const f of data.frames||[]){paths.add(f.src);for(const m of f.masks||[])paths.add(m.src);}
     const imgs=[...paths].filter(Boolean).map(path=>{const img=new Image();img.crossOrigin='anonymous';img.src=path;return [String(path).slice(0,130),img];});
-    await readyImages(imgs);
+    try{await readyImages(imgs);}
+    finally{if(window.__PF_WORKER_CORE)for(const [,img] of imgs)img.dispose();}
   }
   function symbolRuntimeSnapshot(stage,key,data){
     const image=window.setSymbol,card=window.card||{},cw=Number(card.width||data.width||0),ch=Number(card.height||data.height||0);
@@ -191,6 +198,7 @@
       let symbols=usedSymbols(data);for(const sym of symbols)S.requireImage(sym.image);
       await measureNative('native.symbols',request.key,()=>readyImages(symbols.map(s=>['symbol '+s.name,s.image])));
       S.phase='load';localStorage.setItem(storageKey,JSON.stringify(data));
+      if(window.__PF_WORKER_CORE)for(const frame of window.card.frames||[]){frame.image?.dispose();for(const mask of frame.masks||[])mask.image?.dispose();}
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
       await measureNative('native.load-and-scripts',request.key,async()=>{
         await window.loadCard(storageKey);await scriptsSettled();
@@ -209,6 +217,7 @@
       await measureNative('native.readiness',request.key,async()=>{await scriptsSettled();await readyImages(imagesFor(window.card,usedSymbols(window.card)));await fontsReady(window.card);});
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
+      if(window.__PF_PREPARE_VECTORS)await window.__PF_PREPARE_VECTORS();
       await measureNative('native.final-draw',request.key,async()=>{
         await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
       });
@@ -218,9 +227,9 @@
       const canvas=window.cardCanvas;
       const width=Math.round(data.width*(1+2*(data.marginX||0))),height=Math.round(data.height*(1+2*(data.marginY||0)));
       if(!(canvas instanceof HTMLCanvasElement)||canvas.width!==width||canvas.height!==height)throw new Error('Native canvas dimensions do not match the saved template.');
-      const blob=await measureNative('native.png-export',request.key,()=>timeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
+      const blob=await measureNative('native.png-export',request.key,()=>timeout(window.__PF_WORKER_CORE?canvas.convertToBlob({type:'image/png'}):new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
-    }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();S.active=false;S.phase='idle';}
+    }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();window.__PF_RELEASE_IMAGES?.();S.active=false;S.phase='idle';}
   }
   let initialized=false;
   const ready=async()=>{
@@ -232,7 +241,7 @@
     S.clearErrors();initialized=true;post('ready');
   };
   window.addEventListener('message',e=>{
-    if(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)||e.data?.source!=='pf-app')return;
+    if((!window.__PF_WORKER_CORE&&(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)))||e.data?.source!=='pf-app')return;
     const msg=e.data;
     if(msg.type==='dispose'){disposeAssets();return;}
     if(msg.type==='ping'){if(initialized)post('ready');return;}

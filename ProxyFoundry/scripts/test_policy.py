@@ -17,6 +17,7 @@ EXTENDED_MODULES={
     'test_modal_focus.py',
     'test_native_deck.py',
     'test_native_concurrency.py',
+    'test_native_workers_browser.py',
     'test_native_readiness.py',
     'test_native_task_yields.py',
     'test_order_dialog.py',

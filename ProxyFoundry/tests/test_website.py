@@ -138,6 +138,8 @@ def request(app,method,url,body,headers):
     try:
         with sync_playwright() as playwright:
             browser=playwright.chromium.launch(headless=False);page=browser.new_page(viewport={'width':1440,'height':1000})
+            #The hold/release probe intentionally targets iframe DOM messages.
+            page.add_init_script('window.OffscreenCanvas=undefined;')
             errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
@@ -724,7 +726,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 assert page.locator('#browser-pair-grid img').first.evaluate('(image)=>image.naturalWidth')<=420
                 page.screenshot(path=str(evidence/'thumbnail-review-grid.png'))
                 page.locator('#browser-pair-grid button').first.click()
-                enlarged=page.locator('body > div > img').last
+                enlarged=page.locator('body > dialog > img').last
                 enlarged.wait_for();enlarged.evaluate('(image)=>image.decode()')
                 assert enlarged.evaluate('(image)=>image.naturalWidth')>420
                 page.get_by_role('button',name='Close image').click()

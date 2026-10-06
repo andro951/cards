@@ -166,7 +166,9 @@ def test_runtime_symbol_source_instrumentation():
     render=(root/'site/render.js').read_text(encoding='utf-8')
     for token in ['lastSetSymbolDraw','image===window.setSymbol','after-load','after-first-draw','after-final-draw','expectedDraw']:
         assert token in bridge
-    assert "m.type==='diagnostic'" in render and '/api/render-diagnostic' in render
+    pool=(root/'site/native-render-pool.js').read_text(encoding='utf-8')
+    assert "message.type===`diagnostic`" in pool and 'this.diagnostic(message)' in pool
+    assert '/api/render-diagnostic' in render
 
 
 def test_import_prepare_render_order_roundtrip(running):

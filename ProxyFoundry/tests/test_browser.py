@@ -291,6 +291,8 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         try:
+            #The overflow probe reads native canvas pixels directly in the iframe.
+            page.add_init_script('window.OffscreenCanvas=undefined;')
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
             page.evaluate("""() => {
               const originalRemove=HTMLIFrameElement.prototype.remove;

@@ -1,0 +1,40 @@
+{
+  "cards": 117,
+  "faces": 121,
+  "storage": "Isolated local filesystem workspace; production render/save API. Not the browser selected-folder storage backend.",
+  "previousCommit": "a043a76",
+  "cachedPlanSeconds": 1.7690220000222325,
+  "cachedFaces": 121,
+  "cachedQueued": 0,
+  "trials": [
+    {
+      "mode": "serial",
+      "seconds": 210.62259999990462,
+      "saved": 121,
+      "stageSeconds": {
+        "native.assets": 0.818,
+        "native.final-draw": 50.0946,
+        "native.first-draw": 53.2552,
+        "native.load-and-scripts": 4.2154,
+        "native.png-export": 44.3703,
+        "render.native": 172.6937,
+        "save": 35.2253
+      }
+    },
+    {
+      "mode": "workers",
+      "seconds": 129.21969999980928,
+      "saved": 121,
+      "stageSeconds": {
+        "native.assets": 3.9391,
+        "native.final-draw": 63.3406,
+        "native.first-draw": 69.876,
+        "native.load-and-scripts": 0.9181,
+        "native.png-export": 46.689,
+        "native.symbols": 0.1813,
+        "render.native": 211.0135,
+        "save": 42.3121
+      }
+    }
+  ]
+}

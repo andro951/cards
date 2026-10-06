@@ -3,6 +3,17 @@ import pytest
 from foundry.runtime import Runtime
 from foundry.domain import ValidationError,CC_COMMIT,COMPAT_COMMIT
 
+def test_worker_host_preserves_controls_without_starting_native_dom_renderer():
+    runtime=Runtime(None)
+    runtime.fetch=lambda path:(b'<div><input id="native-choice" value="42"><script>untrusted()</script></div>','text/html')
+    runtime.parent_origin='http://127.0.0.1:1234'
+    worker=runtime.host(worker=True).decode()
+    legacy=runtime.host().decode()
+    assert 'id="native-choice" value="42"' in worker
+    assert worker.count('<script')==1 and '/site/runtime-worker-host.js' in worker
+    assert '/js/creator-23.js' not in worker and 'untrusted()' not in worker
+    assert '/js/creator-23.js' in legacy and '/site/runtime-bridge.js' in legacy
+
 def test_absolute_native_host_alias_is_resolved_to_pinned_path():
     assert Runtime.upstream_alias('https://cardconjurer.app/img/blank.png')=='/img/blank.png'
     assert Runtime.upstream_alias('https://www.cardconjurer.com/img/frames/a.png?cache=2')=='/img/frames/a.png'

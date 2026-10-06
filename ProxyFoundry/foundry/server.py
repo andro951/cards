@@ -701,10 +701,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def runtime_get(self, p, q):
         if p == '/runtime/host':
-            return self.send_bytes(self.app.runtime.host(), 'text/html; charset=utf-8', headers={'Content-Security-Policy':
+            return self.send_bytes(self.app.runtime.host(worker=q.get('worker')==['1']), 'text/html; charset=utf-8', headers={'Content-Security-Policy':
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors " + self.app.origin})
         if p == '/runtime/fonts.css': return self.send_bytes(self.app.runtime.fonts_css(), 'text/css')
-        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js', '/site/runtime-assets.js'):
+        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js', '/site/runtime-assets.js', '/site/runtime-worker-host.js', '/site/native-render-worker.js'):
             return self.file(ROOT / p.lstrip('/'), 'application/javascript')
         if m := re.fullmatch(r'/api/assets/([a-f0-9]{64})', p):
             if m[1] not in self.app.runtime_assets: raise PermissionError('That image is not part of an active render session.')

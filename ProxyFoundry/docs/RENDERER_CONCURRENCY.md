@@ -38,6 +38,9 @@ as measured outputs. The canonical vendor hashes remain unchanged.
 
 ## Worker compatibility
 
+The DOM-only findings below are historical. The subsequent dedicated-worker
+adapter and full-deck measurement are documented in [NATIVE_RENDER_WORKERS.md](NATIVE_RENDER_WORKERS.md).
+
 An actual dedicated worker was given the pinned production creator script.
 OffscreenCanvas is available, but the script fails during initialization with
 `ReferenceError: window is not defined`; the worker has neither window nor

@@ -1,7 +1,7 @@
 import {recordDiagnostic} from './diagnostics.js';
-import {$,state,api,blobRequest,job,activity,endActivity,sleep,toast,work} from './ui.js';
+import {$,state,api,blobRequest,job,activity,endActivity,toast,work} from './ui.js';
 import {ensureArtworkReady} from './artwork-review.js';
-let activeFrame=null;
+import {NativeRenderer,NativeRenderPool} from './native-render-pool.js';
 
 function logTiming(stage,started,outcome,detail={}){
   const seconds=(performance.now()-started)/1000;
@@ -19,69 +19,48 @@ async function measure(stage,operation,detail={}){
 
 
 async function runRenderPlan(plan,options={}){
-  const {label='Render deck',onUpdate=async()=>{},onImage=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.',owner=null}=options;
-  if(!owner)return work.render(task=>runRenderPlan(plan,{...options,owner:task}),{label,background:!onImage,signal:options.signal});
-  const signal=owner.controller.signal;
-  const report=(title,detail,done=0,total=0)=>activity(label,title,detail,done,total,owner);
-  const started=performance.now();let outcome='failed';
-  let cancelled=false,listener=null,rejectPending=null,pending=null,ready=false,readyResolve,readyReject,ping;
-  const origin=state.bootstrap.runtimeOrigin;
-  const cleanup=()=>{clearInterval(ping);if(listener)window.removeEventListener('message',listener);activeFrame?.contentWindow?.postMessage({source:'pf-app',type:'dispose'},origin);activeFrame?.remove();activeFrame=null;};
-  const cancel=()=>{
-    if(cancelled)return;
-    cancelled=true;
-    const error=new Error('Rendering cancelled. Completed images are saved.');
-    rejectPending?.(error);readyReject?.(error);cleanup();
-  };
-  signal?.addEventListener('abort',cancel,{once:true});
-  try{
-    if(signal?.aborted)cancel();
-    if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-    report('Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · force=${plan.force?'yes':'no'} · ${plan.targets.length} queued · ${plan.cached} cached`,0,plan.targets.length);
-    if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));outcome='cached';endActivity(idleMessage,false,owner);if(idleToast)toast(idleToast);return;}
-    if(plan.force)report('Pipeline upgrade','Ignoring cached PNGs and rebuilding every prepared face…',0,plan.targets.length);
-    await measure('runtime.prepare',()=>job('/api/runtime/prepare',{}, {label:'Load CardConjurer',owner}));
-    if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-    report('Starting native renderer','Loading the pinned CardConjurer runtime…',0,plan.targets.length);
-    const readyPromise=new Promise((r,j)=>{readyResolve=r;readyReject=j;});
-    listener=event=>{
-      if(event.origin!==origin||event.source!==activeFrame?.contentWindow||event.data?.source!=='pf-native-runtime')return;
-      const m=event.data;
-      if(m.type==='ready'){ready=true;readyResolve();return;}
-      if(m.type==='failed'&&!ready){readyReject(new Error(m.error));return;}
-      if(m.type==='diagnostic'){api('/api/render-diagnostic',{key:m.key,stage:m.stage,diagnostic:m.diagnostic}).catch(()=>{});return;}
-      if(!pending||m.key!==pending.key)return;
-      if(m.type==='progress'){report(pending.name,m.message,pending.index,plan.targets.length);return;}
-      if(m.type==='failed')pending.reject(new Error(m.error));
-      if(m.type==='rendered'){if(!(m.blob instanceof Blob)||m.blob.size===0)pending.reject(new Error('Native renderer returned an empty PNG.'));else pending.resolve(m);}
-    };
-    window.addEventListener('message',listener);
-    activeFrame=document.createElement('iframe');activeFrame.className='render-frame';activeFrame.title='Isolated native CardConjurer renderer';activeFrame.setAttribute('sandbox','allow-scripts allow-same-origin');
-    activeFrame.src=origin+(window.__pfBasePath||'')+'/runtime/host?parent='+encodeURIComponent(location.origin)+'&owner='+encodeURIComponent(window.__pfOwner||'');document.body.append(activeFrame);
-    ping=setInterval(()=>activeFrame?.contentWindow.postMessage({source:'pf-app',type:'ping'},origin),800);
-    await measure('runtime.start',()=>withTimeout(readyPromise,65000,'The native renderer did not start. Check Diagnostics in Settings.'));clearInterval(ping);
-    for(let i=0;i<plan.targets.length;i++){
-      if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-      const t=plan.targets[i];report(t.name,'Loading saved face and frame assets…',i,plan.targets.length);
-      const detail=await measure('render.load-face',()=>api('/api/render-sessions/'+plan.id+'/'+t.key),{card:t.name,key:t.key});
-      if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-      report(t.name,`Fresh render · key ${t.key.slice(0,12)} · ${detail.data.version||'unknown'} · set symbol zoom=${detail.data.setSymbolZoom??'n/a'} x=${detail.data.setSymbolX??'n/a'} y=${detail.data.setSymbolY??'n/a'}`,i,plan.targets.length);
-      const promise=new Promise((resolve,reject)=>{pending={...t,index:i,resolve,reject};rejectPending=reject;});
-      activeFrame.contentWindow.postMessage({source:'pf-app',type:'render',key:t.key,data:detail.data},origin);
-      const output=await measure('render.native',()=>withTimeout(promise,150000,t.name+': native render timed out. Retry will keep completed images.'),{card:t.name,key:t.key});
-      pending=null;rejectPending=null;
-      if(cancelled)throw new Error('Rendering cancelled. Completed images are saved.');
-      await measure('render.save',()=>onImage?onImage(t,output.blob):blobRequest('/api/render-sessions/'+plan.id+'/'+t.key,output.blob,'image/png'),{card:t.name,key:t.key,bytes:output.blob.size});
-      report(t.name,(onImage?'Preview ready · ':'PNG saved · ')+output.width+' × '+output.height,i+1,plan.targets.length);
-      await onUpdate();
+    const {label='Render deck',onUpdate=async()=>{},onImage=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.',owner=null}=options;
+    if(!owner)return work.render(task=>runRenderPlan(plan,{...options,owner:task}),{label,background:!onImage,signal:options.signal});
+    const signal=owner.controller.signal;
+    const report=(title,detail,done=0)=>activity(label,title,detail,done,plan.targets.length,owner);
+    const started=performance.now();let outcome='failed',pool=null,lastUpdate=0;
+    try{
+        if(signal.aborted)throw new Error('Rendering cancelled. Completed images are saved.');
+        report('Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · ${plan.targets.length} queued · ${plan.cached} cached`);
+        if(!plan.targets.length){if(plan.errors.length)throw new Error(plan.errors.join('\n'));outcome='cached';endActivity(idleMessage,false,owner);if(idleToast)toast(idleToast);return;}
+        await measure('runtime.prepare',()=>job('/api/runtime/prepare',{}, {label:'Load CardConjurer',owner}));
+        if(signal.aborted)throw new Error('Rendering cancelled. Completed images are saved.');
+        const workers=typeof Worker==='function'&&typeof OffscreenCanvas==='function'&&typeof OffscreenCanvas.prototype.convertToBlob==='function'&&typeof createImageBitmap==='function';
+        const count=workers&&plan.targets.length>1&&(navigator.deviceMemory||8)>4&&(navigator.hardwareConcurrency||2)>1?2:1;
+        report('Starting native renderer',workers?`Starting ${count} rendering worker${count===1?'':'s'}…`:'Loading the native renderer…');
+        pool=new NativeRenderPool({count,signal,createRenderer:()=>new NativeRenderer({
+            origin:state.bootstrap.runtimeOrigin,basePath:window.__pfBasePath||'',owner:window.__pfOwner||'',worker:workers,
+            diagnostic:message=>api('/api/render-diagnostic',{key:message.key,stage:message.stage,diagnostic:message.diagnostic}).catch(error=>recordDiagnostic('Render diagnostic',error.message)),
+            progress:(target,message)=>{if(!signal.aborted)report(target.name,message,pool.saved);}
+        })});
+        await measure('runtime.start',()=>Promise.all(pool.renderers.map(renderer=>renderer.ready)),{workers:count});
+        await pool.run(plan.targets,{
+            load:async target=>{
+                const detail=await measure('render.load-face',()=>api('/api/render-sessions/'+plan.id+'/'+target.key),{card:target.name,key:target.key});
+                return detail.data;
+            },
+            save:(target,output)=>measure('render.save',()=>onImage?onImage(target,output.blob):blobRequest('/api/render-sessions/'+plan.id+'/'+target.key,output.blob,'image/png'),{card:target.name,key:target.key,bytes:output.blob.size}),
+            saved:async(target,output,done)=>{
+                if(signal.aborted)return;
+                report(target.name,`${onImage?'Preview ready':'PNG saved'} · ${output.width} × ${output.height}`,done);
+                if(performance.now()-lastUpdate>=2000){lastUpdate=performance.now();await onUpdate();}
+            }
+        });
+        if(plan.errors.length){endActivity('Rendered available cards; some need attention',true,owner);throw new Error(plan.errors.join('\n'));}
+        outcome='ok';endActivity(successMessage,false,owner);if(successToast)toast(successToast);
+    }catch(error){
+        if(signal.aborted){if(work.visible()===owner)$('#activity').classList.add('hidden');}
+        else{api('/api/client-error',{error:'Native render: '+(error.stack||error.message)}).catch(()=>{});endActivity(error.message,true,owner);}
+        throw error;
+    }finally{
+        logTiming('render.total',started,signal.aborted?'cancelled':outcome,{cards:plan.targets.length,cached:plan.cached});
+        pool?.close();await onUpdate();
     }
-    if(plan.errors.length){endActivity('Rendered available cards; some need attention',true,owner);throw new Error(plan.errors.join('\n'));}
-    outcome='ok';endActivity(successMessage,false,owner);if(successToast)toast(successToast);
-  }catch(e){
-    if(cancelled){if(work.visible()===owner)$('#activity').classList.add('hidden');}
-    else{api('/api/client-error',{error:'Native render: '+(e.stack||e.message)}).catch(()=>{});endActivity(e.message,true,owner);}
-    throw e;
-  }finally{logTiming('render.total',started,cancelled?'cancelled':outcome,{cards:plan.targets.length,cached:plan.cached});signal?.removeEventListener('abort',cancel);cleanup();await onUpdate();}
 }
 
 export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=false,signal=null,notify=true,artChecked=false}={}){
@@ -136,5 +115,3 @@ export async function renderTemplateModel(model,onImage,signal=null){
     successMessage:'Template preview ready',successToast:'Inspect the text and region outlines before saving.'});
   return plan;
 }
-
-function withTimeout(p,ms,msg){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error(msg)),ms);p.then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)});});}
