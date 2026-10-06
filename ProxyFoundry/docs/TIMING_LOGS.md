@@ -14,7 +14,8 @@ Each entry identifies the stage, elapsed seconds and outcome, plus the available
 - `network.rate-wait`: Scryfall throttle delay.
 - `scryfall.resolve` / `scryfall.flavor`: metadata and flavor selection.
 - `deck.import`, `github.index`, `deck.prepare`, `card.prepare`, `art.resolve`, `card.compile`: import, folder listing, per-deck/per-card preparation, artwork acquisition and compiled frame/card data.
-- `image.decode`, `image.encode-png`: decoding and PNG conversion for ordinary image imports; native rendered PNGs bypass re-encoding.
+- `image.decode`, `image.encode-png`: source validation and necessary pixel transforms. Unchanged PNG/JPEG/WebP imports retain their original bytes; native rendered PNGs bypass re-encoding.
+- `prepare.load`, `prepare.settings`, `prepare.sources`, `prepare.cache-check`, `prepare.checkpoint`, `prepare.result`: saved deck loading, setup validation, artwork inventory checks, durable preparation reuse, batched saves, and final result loading.
 - `render.validate-png`, `render.persist`: native PNG verification/decode and complete engine-side persistence.
 - `storage.asset`, `storage.document`, `storage.render`, `storage.checkpoint`: asset and metadata writes, saved render registration, SQLite snapshot/persistence.
 - `api.request`: browser engine request processing, including slow export/ZIP operations. It excludes message queue time.
@@ -26,6 +27,18 @@ Each entry identifies the stage, elapsed seconds and outcome, plus the available
 Start with the longest entries and inspect their nested stages to distinguish network, storage, compilation and rendering costs. Timings are inclusive: for example, card.prepare includes art.resolve and card.compile; do not add every entry together. Rendering diagnostics retain their existing details to explain which assets/frame were being processed. No new server or analytics service is used.
 
 Verification covers the threshold, original exception/result behavior, logger failure isolation, cache versus download and byte counts, and actual static browser rendering with timing entries in the downloaded diagnostics ZIP.
+
+## Preparation benchmark
+
+`scripts/benchmark_preparation.py` measures a real Fighter Class printing with cold
+metadata/artwork, the same cached card, and another cached run after reopening the
+workspace. It uses an isolated temporary workspace and never invokes the renderer.
+Use `--source github` (default) for the real supernatural artwork folder, or
+`--source scryfall` for the printing's official artwork. Set `PYTHONPATH` to the
+application directory when running the script. `--output` selects the JSON report.
+For this explicit benchmark all stages are recorded, including operations below
+the normal diagnostic threshold. Cached runs fail the benchmark if compilation
+or image decoding occurs. Inclusive stage times must not be summed together.
 
 
 ## Startup

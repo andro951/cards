@@ -1,4 +1,4 @@
-"""Preparation yields only after durable cards and respects intervening edits."""
+"""Preparation yields between cards, batches durable saves, and respects edits."""
 import copy
 import io
 import json
@@ -29,13 +29,13 @@ def workspace(tmp_path):
     return ws,deck
 
 
-def test_prepare_yields_after_saved_card_and_matches_synchronous_output(tmp_path):
+def test_prepare_yields_between_cards_and_matches_synchronous_output(tmp_path):
     ws,deck=workspace(tmp_path);steps=ws.prepare_steps(deck['id'])
     next(steps)
     assert all('compiled' not in card['faces'][0] for card in ws.deck(deck['id'])['cards'])
     next(steps)
     saved=ws.deck(deck['id'])
-    assert 'compiled' in saved['cards'][0]['faces'][0]
+    assert 'compiled' not in saved['cards'][0]['faces'][0]
     assert 'compiled' not in saved['cards'][1]['faces'][0]
     next(steps)
     with pytest.raises(StopIteration) as finished:next(steps)
@@ -51,6 +51,7 @@ def test_prepare_intervening_edit_is_preserved_instead_of_overwritten(tmp_path):
     next(steps);next(steps)
     edited=ws.store.get('decks',deck['id']);edited['name']='User changed this'
     ws.store.put('decks',edited,edited['revision'])
+    next(steps) # The next card can be staged, but the checkpoint must reject stale writes.
     with pytest.raises(ConflictError):next(steps)
     saved=ws.store.get('decks',deck['id'])
     assert saved['name']=='User changed this'

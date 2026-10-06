@@ -197,7 +197,7 @@ def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace)
     for card in (urza_card,might_card):
         comp=card['faces'][0]['compiled']
         assert comp['recipe']=='m15_meld_front'
-        assert comp['templateVersion']==4
+        assert comp['templateVersion']==6
         icons=[f for f in comp['data']['frames'] if f.get('name')=='Meld']
         assert icons==[{'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524}}]
         assert comp['data']['text']['title']['x']==0.16
@@ -515,7 +515,7 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_classic_short'
-    assert result['templateVersion']==5
+    assert result['templateVersion']==9
     assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'

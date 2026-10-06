@@ -95,7 +95,7 @@ class Network:
             now = self.clock()
             fresh = old is not None and (immutable or (max(0, now - old['fetched']) < ttl if ttl is not None
                                                         else cache_is_fresh(old['fetched'], now, refresh)))
-            if fresh:
+            if fresh and self.store.asset(old['asset_id']):
                 self.hits += 1
                 return self.store.asset_path(old['asset_id']).read_bytes(), old['mime'], {'cache': True, 'fetchedAt': old['fetched']}
             if urllib.parse.urlsplit(url).hostname == 'api.scryfall.com':
@@ -126,7 +126,7 @@ class Network:
             raise ValidationError('The server returned an empty file: ' + url)
         return body, mime, {'cache': False, 'transient': True}
 
-    def json(self, url: str, *, refresh: bool = False, ttl: float | None = None) -> Any:
-        raw, _, _ = self.fetch(url, refresh=refresh, ttl=ttl)
+    def json(self, url: str, *, refresh: bool = False, ttl: float | None = None, immutable: bool = False) -> Any:
+        raw, _, _ = self.fetch(url, refresh=refresh, ttl=ttl, **({'immutable':True} if immutable else {}))
         try: return json.loads(raw)
         except (ValueError, UnicodeDecodeError) as exc: raise ValidationError('Invalid JSON response from ' + url) from exc

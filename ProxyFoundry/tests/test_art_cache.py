@@ -28,7 +28,7 @@ def make_workspace(tmp_path):
     return ws,sf,calls,raw
 
 
-def test_github_art_uses_pinned_immutable_url_and_verifies_blob(tmp_path):
+def test_github_art_uses_pinned_immutable_url_without_hashing(tmp_path):
     ws,sf,calls,raw=make_workspace(tmp_path)
     settings=ws.validate_settings({'source':{'mode':'github','githubFolder':'owner/repo/art'}})
     commit='a'*40
@@ -74,7 +74,7 @@ def test_ambiguous_art_does_not_silently_fall_back_to_scryfall(tmp_path):
 
 
 
-def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
+def test_github_folder_index_resolves_current_commit():
     commit='c'*40;blob='d'*40
     class Network:
         def __init__(self):self.calls=[]
@@ -88,7 +88,8 @@ def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
     net=Network();index=Sources(net).github_index('owner/repo/art',refresh=True)
     assert index['one_card']=={
         'url':'https://raw.githubusercontent.com/owner/repo/'+commit+'/art/one_card.png',
-        'blobSha':blob,
+        'commit':commit,
+        'path':'art/one_card.png',
         'filename':'one_card.png',
     }
     assert [url for url,_ in net.calls]==[
@@ -96,7 +97,8 @@ def test_github_folder_index_resolves_current_commit_and_keeps_blob_sha():
         'https://api.github.com/repos/owner/repo/commits/main',
         'https://api.github.com/repos/owner/repo/contents/art?ref='+commit,
     ]
-    assert all(kwargs=={'ttl':0} for _,kwargs in net.calls)
+    assert net.calls[-1][1]=={'immutable':True}
+    assert all(kwargs=={'ttl':0} for _,kwargs in net.calls[:-1])
 
 
 def test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes(tmp_path):
@@ -136,14 +138,12 @@ def test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes(tmp_path):
     assert all('/main/art/one_card.png' not in url for url,_ in net.fetch_calls)
 
 
-def test_github_blob_sha_mismatch_is_rejected(tmp_path):
+def test_github_no_longer_hashes_each_download(tmp_path,monkeypatch):
     ws,sf,_,raw=make_workspace(tmp_path)
     settings=ws.validate_settings({'source':{'mode':'github','githubFolder':'owner/repo/art'}})
-    commit='e'*40
-    entry={'url':'https://raw.githubusercontent.com/owner/repo/'+commit+'/art/one_card.png','blobSha':'0'*40}
-    assert blob_sha(raw)!='0'*40
-    with pytest.raises(ValidationError,match='did not match the folder listing'):
-        ws._art(sf,sf,{},settings,{'one_card':entry})
+    entry={'url':'https://raw.githubusercontent.com/owner/repo/'+('e'*40)+'/art/one_card.png','blobSha':'0'*40}
+    monkeypatch.setattr(Sources,'git_blob_sha',lambda *args:pytest.fail('Per-file Git blob hashing is obsolete'))
+    assert ws.store.asset(ws._art(sf,sf,{},settings,{'one_card':entry})[0])
 
 
 def test_old_refresh_art_setting_is_discarded(tmp_path):
@@ -157,6 +157,7 @@ def test_scryfall_cache_policy_is_unchanged(tmp_path):
     settings=ws.validate_settings({'source':{'mode':'scryfall'}})
     ws._art(sf,sf,{},settings,{});assert calls[-1][1]=={'refresh':False,'ttl':None}
     settings['refreshData']=True
+    processed=ws.store.list('processed-artwork')[0];processed['fetched']=0;ws.store.put('processed-artwork',processed)
     ws._art(sf,sf,{},settings,{});assert calls[-1][1]=={'refresh':True,'ttl':None}
 
 

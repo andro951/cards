@@ -8,8 +8,13 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 759 | Every completed change |
+| Routine | 901 | Every completed change |
 | Extended | 158 | Relevant changes or an explicit full sweep |
+
+The 2026-10-06 preparation cache pass completed the routine suite with 897 passed
+and four skipped cases in 512.18 seconds. Preparation-only live-source timings,
+cache behavior, and follow-up opportunities are recorded in
+[preparation performance](PREPARATION_PERFORMANCE.md).
 
 Modern full-art tokens use the filled native rules box for any rules or flavor
 text, including a single keyword. Empty/whitespace-only tokens keep the larger

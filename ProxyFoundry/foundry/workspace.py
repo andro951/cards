@@ -26,6 +26,11 @@ class Workspace:
     def default_symbols(self):
         """Import the four bundled rarity symbols into this workspace once."""
         if self._default_symbols is None:
+            paths=[BUNDLED_SYMBOL_ROOT/(rarity+'.png') for rarity in RARITIES]
+            cache_key=stable_hash({'version':1,'files':[(str(path),path.stat().st_size,path.stat().st_mtime_ns) for path in paths if path.is_file()]})
+            cached=self.store.get('bundled-symbols',cache_key)
+            if cached and all(self.store.asset(asset) for asset in cached['symbols'].values()):
+                self._default_symbols=cached['symbols'];return dict(self._default_symbols)
             symbols={}
             for rarity in RARITIES:
                 path=BUNDLED_SYMBOL_ROOT/(rarity+'.png')
@@ -34,6 +39,7 @@ class Workspace:
                 symbols[rarity]=ingest_image(
                     self.store,path.read_bytes(),trim_transparent_padding=True
                 )['id']
+            self.store.put('bundled-symbols',{'id':cache_key,'symbols':symbols})
             self._default_symbols=symbols
         return dict(self._default_symbols)
     def _with_default_symbols(self,settings):
@@ -544,10 +550,12 @@ class Workspace:
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
             if not url:raise ValidationError('This selected printing does not provide face artwork. Upload custom art.')
         refresh=bool(settings.get('refreshData') or self.global_settings().get('refreshData'))
-        # GitHub indexes resolve the branch to an exact commit and retain the
-        # directory listing's blob SHA. The raw URL is therefore immutable and
-        # its bytes are verified before normalization. Scryfall keeps its
-        # separate year/week cache policy.
+        trim_saga=origin=='Scryfall selected printing' and bool(ingest.saga_creature_trailing_rules_text(face.get('type_line',sf.get('type_line','')),face.get('oracle_text',sf.get('oracle_text',''))))
+        source_url=remote_entry.get('url') if isinstance(remote_entry,dict) else remote_entry or url
+        processed_key=stable_hash({'url':source_url,'sagaTrim':trim_saga,'version':1})
+        processed=self.store.get('processed-artwork',processed_key)
+        if processed and self.store.asset(processed['assetId']) and (remote_entry is not None or cache_is_fresh(processed.get('fetched'),time.time(),refresh)):
+            return processed['assetId'],origin,None if trim_saga else source_url
         if remote_entry is not None:
             raw,url=self.sources.github_art(remote_entry)
         else:
@@ -577,6 +585,8 @@ class Workspace:
             # The prepared pixels are now the authoritative art source for this
             # face; do not export/reload the untrimmed Scryfall URL.
             url=None
+        cached_source=self.store.cache_get(source_url)
+        self.store.put('processed-artwork',{'id':processed_key,'assetId':asset['id'],'fetched':cached_source['fetched'] if cached_source else time.time()})
         return asset['id'],origin,url
     def _meld_back(self,sf,refresh=False):
         result=sf.get('_meld_result') or {};images=result.get('image_uris') or {}
@@ -651,11 +661,49 @@ class Workspace:
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
 
+    def _preparation_key(self,c,s,index):
+        # Hash small preparation inputs only, never source image files.
+        sf=c['scryfall'];faces=ingest.face_list(sf);selected=[];templates=[]
+        source=s['source'];local=source.get('localFiles',{})
+        for f in c['faces']:
+            face=faces[min(f.get('index',0),len(faces)-1)]
+            key=index.resolve(face.get('name',sf['name']),str(face.get('oracle_id') or sf.get('oracle_id') or '').lower(),f.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id','')) if source['mode'] in {'local','github'} and not f.get('artOverride') and not f.get('selectedArtPrintingId') and ((str(face.get('oracle_id') or sf.get('oracle_id') or '').lower() or sf.get('id') or '')+'/'+face.get('name',sf['name'])) not in s.get('artDefaults',[]) else None
+            selected.append(local.get(key) if source['mode']=='local' else index.get(key))
+            group=type_group(face,sf,f.get('index',0))
+            choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
+            templates.append(self.compiler.template_identity(group,choice))
+        if c.get('tokenSpec') or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
+        settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
+        settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
+        options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
+        return stable_hash({'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')})
+
+    def _can_reuse_preparation(self,c,key,refresh):
+        for f in c['faces']:
+            comp=f.get('compiled') or {}
+            if f.get('error') or f.get('preparationKey')!=key or not cache_is_fresh(f.get('preparedAt'),time.time(),refresh):return False
+            if not comp.get('artId') or not self.store.asset(comp['artId']):return False
+        if any(not self.store.asset(asset) for asset in (c.get('_preparationSymbols') or [])):return False
+        if c.get('meldBackAsset') and not self.store.asset(c['meldBackAsset']):return False
+        for url in ['https://api.scryfall.com/cards/'+str(c['scryfall'].get('id') or ''),*[f['compiled'].get('exportArtUrl') for f in c['faces'] if f['compiled'].get('artOrigin')=='Scryfall selected printing']]:
+            cached=self.store.cache_get(url) if url else None
+            if cached and not cache_is_fresh(cached['fetched'],time.time(),refresh):return False
+        return bool(c['faces'])
+
     @timed('card.prepare')
     def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total):
         if cancel():raise ValidationError('Preparation cancelled.')
         sf=c['scryfall']
         refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
+        with timing(self.store,'prepare.cache-check'):
+            try:key=self._preparation_key(c,s,index)
+            except ValidationError:key=None
+            reusable=key is not None and self._can_reuse_preparation(c,key,refresh)
+        if reusable:
+            for f in c['faces']:
+                f['compiled']['render']=self.store.render_get(f['compiled']['renderKey'])
+                done+=1;progress(done,total,'Reused prepared '+f['name'])
+            return done
         if sf.get('id'):
             progress(done,total,'Checking cached metadata for '+c['name'])
             sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
@@ -700,7 +748,13 @@ class Workspace:
             except (ValidationError,native.BuildError,ValueError,OSError) as e:
                 self.invalidate_face(f);f['error']=str(e)
             done+=1;progress(done,total,'Prepared '+f['name'])
+        if all(f.get('compiled') and not f.get('error') for f in c['faces']):
+            try:key=self._preparation_key(c,s,index)
+            except ValidationError:return done
+            c['_preparationSymbols']=list(s['symbols'].values())
+            for f in c['faces']:f['preparationKey']=key;f['preparedAt']=time.time()
         return done
+    @timed('prepare.sources')
     def _prepare_sources(self,s,progress):
         index={}
         if s['source']['mode']=='github':
@@ -716,21 +770,38 @@ class Workspace:
             except StopIteration as finished:return finished.value
 
     def prepare_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
-        if self.deck(ident).get('pendingImport'):yield from self.resolve_metadata_steps(ident,progress,cancel)
-        d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
-        if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
-        self._apply_card_data(d,d.get('cardData',[]))
+        with timing(self.store,'prepare.load'):d=self.deck(ident)
+        if d.get('pendingImport'):
+            yield from self.resolve_metadata_steps(ident,progress,cancel)
+            d=self.deck(ident)
+        with timing(self.store,'prepare.settings'):
+            rev=d['revision'];s=self.validate_settings(d['settings'])
+            if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
+            self._apply_card_data(d,d.get('cardData',[]))
         index=self._prepare_sources(s,progress)
         yield
         total=sum(len(c['faces']) for c in d['cards']);done=0
-        for c in d['cards']:
-            done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
-            # Checkpoint preparation so cancellation/reload preserves finished faces.
-            d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
-            yield
-        if cancel():raise ValidationError('Preparation cancelled.')
+        pending=0;checkpoint_at=time.monotonic()
+        def checkpoint():
+            nonlocal rev,pending,checkpoint_at
+            with timing(self.store,'prepare.checkpoint'):
+                d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
+            pending=0;checkpoint_at=time.monotonic()
+        try:
+            for c in d['cards']:
+                pending+=1
+                done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
+                if pending>=10 or time.monotonic()-checkpoint_at>=2:checkpoint()
+                yield
+        except BaseException:
+            if pending:checkpoint()
+            raise
+        if cancel():
+            if pending:checkpoint()
+            raise ValidationError('Preparation cancelled.')
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
-        self.store.put('decks',d,rev);return self.deck(ident)
+        checkpoint()
+        with timing(self.store,'prepare.result'):return self.deck(ident)
     @timed('card.prepare-single')
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])

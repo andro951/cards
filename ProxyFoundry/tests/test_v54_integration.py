@@ -57,7 +57,7 @@ def test_prepare_host_frame_uses_its_color(env,colors,expected):
            'oracle_text':'Draw three cards, then put two cards from your hand on top of your library in any order.'}
     card=sf('Harmonized Trio // Brainstorm',layout='prepare',colors=colors,card_faces=[host,spell])
     compiled=w.compiler.compile_face(card,host,0,{},settings,art['id'])
-    assert compiled['group']=='prepare' and compiled['templateVersion']==3
+    assert compiled['group']=='prepare' and compiled['templateVersion']==5
     frames=compiled['data']['frames']
     prepare_frames=[f for f in frames if f.get('src','').startswith('/img/frames/prepare/regular/')]
     host_frames=[f for f in prepare_frames if not any('Prepare Spell' in m.get('name','') or m.get('name')=='Rules (Right Half)' for m in f.get('masks',[]))]

@@ -5,7 +5,6 @@ import copy,math,re
 from PIL import Image
 from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
 from .legacy import compiler as native,ingest
-from .images import data_uri
 from .credits import resolve_credit
 from .template_model import apply_regions, select_variant
 
@@ -2384,7 +2383,7 @@ class Compiler:
         if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
         art=self.store.asset(art_id)
         if not art:raise ValidationError('Artwork is missing.')
-        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        sem['art']='/api/assets/'+art_id;sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=str(self.store.asset_path(symbol_id))
         credit=resolve_credit(sf,face,options,settings,art_origin)
         artist=credit['display']
         sem['artist']=artist

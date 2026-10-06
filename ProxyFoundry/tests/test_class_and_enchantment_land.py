@@ -49,7 +49,7 @@ def test_cleric_class_uses_native_cardconjurer_class_frame(tmp_path):
 
     assert result['group']=='class'
     assert result['recipe']=='class'
-    assert result['templateVersion']==5
+    assert result['templateVersion']==10
     assert data['version']=='class'
     assert data['onload']=='/js/frames/versionClass.js'
     assert data['class']=={'x':0.5014,'width':0.422,'count':2}
@@ -97,7 +97,7 @@ def test_valgavoths_lair_is_land_family_with_five_color_mana_identity(tmp_path):
     assert result['group']=='land'
     assert result['recipe']=='land_five_color'
     assert data['text']['type']['text']=='Enchantment Land'
-    assert result['templateVersion']==3
+    assert result['templateVersion']==5
 
     classic=Compiler(store).compile_face(card,card,0,{'templateOverride':'normal'},settings,art,art_origin='Scryfall selected printing')
     assert classic['recipe']=='card_noncreature'

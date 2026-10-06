@@ -38,11 +38,20 @@ def ingest_image(store,raw,*,trim_transparent_padding=False):
             asset=store.asset(ident)
             if asset:return asset
             with store._image_ingest_lock:cache.pop(key,None)
-    with timing(store,'image.decode',bytes=len(raw)):im=decode_image(raw)
+    with timing(store,'image.decode',bytes=len(raw)):
+        im=decode_image(raw)
+        with Image.open(io.BytesIO(raw)) as source:
+            source_format=source.format
+            orientation=source.getexif().get(274,1)
+    original_size=im.size
     if trim_transparent_padding:im=trim_transparent_edges(im)
-    out=io.BytesIO()
-    with timing(store,'image.encode-png',width=im.width,height=im.height):im.save(out,'PNG')
-    asset=store.add_asset(out.getvalue(),'image/png',im.width,im.height)
+    mime={'PNG':'image/png','JPEG':'image/jpeg','WEBP':'image/webp'}.get(source_format)
+    if mime and orientation==1 and im.size==original_size:
+        asset=store.add_asset(raw,mime,im.width,im.height)
+    else:
+        out=io.BytesIO()
+        with timing(store,'image.encode-png',width=im.width,height=im.height):im.save(out,'PNG')
+        asset=store.add_asset(out.getvalue(),'image/png',im.width,im.height)
     if cache is not None:
         with store._image_ingest_lock:
             cache[key]=asset['id']

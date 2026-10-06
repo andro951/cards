@@ -5,8 +5,10 @@ Updated 2026-10-01. The current application is the static browser website. Doubl
 The 2026-10-02 overnight performance goal is active. Its current findings,
 ordered backlog and checkpoint record are in
 [the performance audit](../audit-notes-2026-10-02/00_README.md).
-Preparation now yields between durably saved cards so engine requests can run
-between chunks. Global UI locks and other synchronous job families are still
+Preparation now yields between cards so engine requests can run between chunks.
+Writes are batched every ten cards or two seconds, with a final save and a flush
+on cancellation/interruption. Unchanged preparation inputs and processed artwork
+are reused across restarts. Global UI locks and other synchronous job families are still
 being addressed. The measured scheduling fixture reduced menu-data waiting
 from 2.503 seconds to 0.114 seconds; this is not a measured deck speedup.
 

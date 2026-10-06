@@ -25,7 +25,7 @@ def _token_supertype_source(text):
 def _compiler_source(text):
     if text.count(_MOROPHON_WRAP_RULE)!=1:
         raise RuntimeError('Unexpected v58 Morophon compatibility rule; refusing to silently alter Card Tools.')
-    return text.replace(_MOROPHON_WRAP_RULE,'')
+    return text.replace(_MOROPHON_WRAP_RULE,'').replace('if re.match(r"^(?:https?|data):",explicit,re.I):','if re.match(r"^(?:https?|data):",explicit,re.I) or Path(explicit).is_file():')
 
 def load(name,relative,adapter=None):
     path=ROOT/relative
@@ -47,3 +47,13 @@ ingest.MAIN_TYPES.add('Card')
 deck_parser=load('pf_v58_deck','pipeline/scryfall_deck_to_cardconjurer.py')
 tokens=load('pf_v58_tokens','tools/make_copy_tokens.py',_token_supertype_source)
 image_tools=load('pf_v58_images','tools/download_scryfall_deck_images_zip.py')
+
+# Read original WebP dimensions without converting its pixels.
+_original_jpeg_size=compiler.jpeg_size
+def _jpeg_or_webp_size(raw):
+    size=_original_jpeg_size(raw)
+    if size or raw[:4]!=b'RIFF' or raw[8:12]!=b'WEBP':return size
+    import io
+    from PIL import Image
+    with Image.open(io.BytesIO(raw)) as image:return image.size
+compiler.jpeg_size=_jpeg_or_webp_size

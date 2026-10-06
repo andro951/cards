@@ -79,7 +79,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
 
     assert front['group']=='battle'
     assert front['recipe']=='m15_battle'
-    assert front['templateVersion']==4
+    assert front['templateVersion']==6
     assert front['data']['version']=='battle'
     assert front['data']['landscape'] is True
     assert (front['data']['width'],front['data']['height'])==(2814,2010)
