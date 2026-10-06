@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,downloadBlob,empty,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,downloadBlob,empty,nav} from './ui.js';
 import {pickFile} from './setup.js';
 const ordinary=['standard','legendary','land','legendary-land','basic-land'];
 const fieldNames={title:'Card name',type:'Type line',mana:'Mana cost',rules:'Rules + flavor',flavor:'Flavor text',pt:'Power / toughness',loyalty:'Starting loyalty',defense:'Defense','face2.title':'Other face · name','face2.type':'Other face · type','face2.mana':'Other face · mana','face2.rules':'Other face · rules'};
@@ -51,7 +51,8 @@ function editTemplate(input){
     try{
       const raw=JSON.parse($('#template-data').value);data=raw.data||raw;
       const payload={...template,name:$('#template-name').value.trim(),legendary:$('#template-legendary').checked,groups:$$('[name="template-groups"]:checked',host).map(e=>e.value),data,mapping:Object.fromEntries(Object.entries(mapping).filter(([slot])=>slot in data.text))};
-      $('#save-template').disabled=true;await api('/api/templates',payload);changed=false;closeModal();await showTemplates();toast('Custom template saved. Select it in a deck’s Art & setup tab.');
+      $('#save-template').disabled=true;setModalBusy(host,true);await api('/api/templates',payload);changed=false;closeModal({completed:true});await showTemplates();toast('Custom template saved. Select it in a deck’s Art & setup tab.');
     }catch(e){errorBox($('.modal-body',host),e.message);if($('#save-template'))$('#save-template').disabled=false;}
+    finally{setModalBusy(host,false);}
   };
 }

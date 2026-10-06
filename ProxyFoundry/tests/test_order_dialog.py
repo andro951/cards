@@ -73,7 +73,7 @@ def test_order_tiles_use_thumbnails_and_enlargement_uses_original(bridge_page,br
     assert all(source.endswith('/thumbnail') for source in images.evaluate_all('(items)=>items.map(image=>image.getAttribute("src"))'))
     if browser:
         page.get_by_title('Enlarge Preview card front').click()
-        assert page.locator('body > div > img').last.get_attribute('src')=='/api/assets/'+'a'*64
+        assert page.get_by_role('dialog',name='Preview card front',exact=True).locator('img').get_attribute('src')=='/api/assets/'+'a'*64
         page.get_by_role('button',name='Close image').click()
     else:
         assert page.locator('.pair-images a').first.get_attribute('href')=='/api/assets/'+'a'*64
@@ -108,4 +108,21 @@ def test_large_browser_order_search_retains_images_and_input(bridge_page):
     assert all(source.endswith('/thumbnail') for source in page.locator('#browser-pair-grid img').evaluate_all('(images)=>images.map(image=>image.getAttribute("src"))'))
     page.locator('.modal-body input').fill('No such card');assert page.locator('#browser-pair-grid article:visible').count()==0
     page.locator('.modal-body input').fill('');assert page.locator('#browser-pair-grid article:visible').count()==400
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('dismiss',['escape','x'])
+def test_browser_image_lightbox_ignores_outside_click_and_keeps_review(bridge_page,dismiss):
+    page,errors=bridge_page;mount(page)
+    script='\n'.join(line for line in (ROOT/'web/review-browser.js').read_text(encoding='utf-8').splitlines() if not line.startswith('import ')).replace('export ','')
+    page.add_script_tag(content=script)
+    page.evaluate("lightbox('a'.repeat(64),'Preview test')")
+    enlarged=page.get_by_role('dialog',name='Preview test',exact=True)
+    enlarged.dispatch_event('click')
+    assert enlarged.is_visible()
+    if dismiss=='escape':page.keyboard.press('Escape')
+    else:enlarged.get_by_role('button',name='Close image',exact=True).click()
+    enlarged.wait_for(state='detached')
+    assert not enlarged.count()
+    assert page.get_by_role('dialog',name='Review your paired order').count()==1
     assert not errors,errors

@@ -1,4 +1,4 @@
-import {$,api,attempt,toast,modal,closeModal,confirmAction,downloadBlob,uploadImage,esc,state} from '/site/ui.js';
+import {$,api,attempt,toast,modal,closeModal,setModalBusy,confirmAction,downloadBlob,uploadImage,esc,state} from '/site/ui.js';
 import {renderTemplateSource,renderTemplateModel} from '/site/render.js';
 
 const format='bulk-proxy-forge-template';
@@ -263,6 +263,8 @@ function editTemplate(original){
   });
   $('#save-template').onclick=()=>attempt(async()=>{
     if(!approved)throw new Error('Preview this template before saving.');
-    const saved=await api('/api/templates',model);closeModal();await showTemplates();toast(`${saved.name} saved.`);
+    setModalBusy(host,true);$('#save-template').disabled=true;
+    try{const saved=await api('/api/templates',model);closeModal({completed:true});await showTemplates();toast(`${saved.name} saved.`);}
+    finally{setModalBusy(host,false);if(host.isConnected)$('#save-template',host).disabled=!approved;}
   });
 }

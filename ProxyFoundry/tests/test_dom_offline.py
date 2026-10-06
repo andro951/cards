@@ -83,7 +83,7 @@ def artwork_helper(page,count=2,images=2,fallback=False):
       const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
       window.review={signature:'fixture',items:Array.from({length:count},(_,i)=>({id:'card'+i,name:'Spirit '+i,selector:{name:'Spirit '+i},image,status:'missing',key:null,reason:'Missing artwork'})),inventory:Array.from({length:images},(_,i)=>({key:'file'+i,filename:'custom_'+i+'.png',image}))};
       window.openHelper=()=>__mod_artwork_review.openArtworkHelper(review,{deckId:__fixture.deck.id,settings:{source:{mode:'local',fallback}}});
-      window.helperPromise=openHelper().then(result=>window.helperResult=result);
+      window.helperResult=undefined;window.helperPromise=openHelper().then(result=>window.helperResult=result);
     }''',{'count':count,'images':images,'fallback':fallback})
     page.locator('#artwork-counts').wait_for()
 
@@ -107,13 +107,15 @@ def test_artwork_pairing_undo_finish_and_no_rendering(dom_page):
     assert not errors,errors
 
 
-def test_artwork_cancel_resume_defaults_and_mobile(dom_page):
+def test_required_artwork_pairing_rejects_dismissal_and_supports_defaults_mobile(dom_page):
     page,errors=dom_page;artwork_helper(page,count=3,images=2,fallback=True)
     page.locator('[data-artwork-card="card0"]').click();page.locator('[data-artwork-file="file0"]').click()
-    page.get_by_role('button',name='Back to setup',exact=True).click()
-    page.wait_for_function('helperResult===null')
-    page.evaluate('()=>{window.helperResult=undefined;window.helperPromise=openHelper().then(result=>window.helperResult=result);}')
-    page.locator('[data-artwork-pair]').wait_for()
+    assert not page.locator('#modal-close').is_visible()
+    assert not page.get_by_role('button',name='Back to setup',exact=True).count()
+    page.keyboard.press('Escape')
+    page.locator('.modal-backdrop').dispatch_event('click')
+    assert page.evaluate('window.helperResult===undefined')
+    assert page.locator('[data-artwork-pair]').count()==1
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     page.screenshot(path=str(ROOT/'test-results/artwork-helper-mobile.png'))
@@ -203,7 +205,7 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     enlarged=page.get_by_role('dialog',name='Choose Only select repositories, search for your repository, and check its box.',exact=True)
     assert enlarged.is_visible()
     assert enlarged.locator('img').get_attribute('src').endswith('/site/github-token-step-1.png')
-    enlarged.get_by_role('button',name='Close',exact=True).click()
+    enlarged.get_by_role('button',name='Close image',exact=True).click()
     assert not enlarged.count()
     page.get_by_role('button',name='Back to save options',exact=True).click()
     assert page.get_by_role('button',name='Download data.json',exact=True).is_visible()
@@ -391,7 +393,8 @@ def test_setup_navigation_persists_edits_without_confirmation(dom_page):
 
 def test_artwork_refresh_does_not_reuse_stale_images_or_pairs(dom_page):
     page,errors=dom_page;artwork_helper(page,count=1,images=1)
-    page.get_by_role('button',name='Back to setup',exact=True).click()
+    page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
+    page.wait_for_function('helperResult!==undefined')
     page.evaluate('''()=>{
       window.helperResult=undefined;
       window.helperPromise=__mod_artwork_review.openArtworkHelper(review,{deckId:__fixture.deck.id,settings:{source:{mode:'github',fallback:false}},onAdd:async()=>{
@@ -687,8 +690,8 @@ def test_generate_imports_pending_github_link_and_keeps_artist(dom_page,button,f
     assert not errors,errors
 
 
-@pytest.mark.parametrize('accept',[False,True])
-def test_generate_checks_artist_before_background_metadata_finishes(dom_page,accept):
+@pytest.mark.parametrize('invalid_first',[False,True])
+def test_generate_checks_artist_before_background_metadata_finishes(dom_page,invalid_first):
     page,errors=dom_page
     page.evaluate("""()=>{
       const deck=__fixture.deck;
@@ -714,21 +717,100 @@ def test_generate_checks_artist_before_background_metadata_finishes(dom_page,acc
     page.locator('#custom-artist-all').wait_for()
     assert page.evaluate('metadataDone') is False
     assert page.evaluate('metadataCalls')==['start','pause']
-    if accept:
-        page.locator('#custom-artist-all').fill('Custom artist')
+    assert not page.locator('#modal-close').is_visible()
+    assert not page.locator('#custom-artist-cancel').count()
+    page.keyboard.press('Escape')
+    assert page.locator('#custom-artist-all').is_visible()
+    assert page.evaluate('metadataCalls')==['start','pause']
+    if invalid_first:
         page.click('#custom-artist-apply')
-    else:
-        page.click('#custom-artist-cancel')
+        page.locator('.modal-body .form-error').wait_for()
+        assert page.evaluate('metadataCalls')==['start','pause']
+    page.locator('#custom-artist-all').fill('Custom artist')
+    page.click('#custom-artist-apply')
     page.wait_for_function("metadataCalls.includes('resume')")
     assert 'prepare' not in page.evaluate('metadataCalls')
-    if accept:
-        assert page.locator('#deck-artist').input_value()=='Custom artist'
-        assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
+    assert page.locator('#deck-artist').input_value()=='Custom artist'
+    assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
     page.evaluate('metadataDone=true;delete __fixture.deck.pendingImport')
-    if accept:
-        page.wait_for_function("metadataCalls.includes('render')")
-        assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
-    else:
-        page.wait_for_function("!document.querySelector('#save-generate').disabled")
-        assert 'render' not in page.evaluate('metadataCalls')
+    page.wait_for_function("metadataCalls.includes('render')")
+    assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('dismiss',['escape','x'])
+def test_optional_dialog_ignores_outside_click_and_keeps_focus(dom_page,dismiss):
+    page,errors=dom_page
+    page.evaluate("()=>{__mod_ui.modal('Optional test','');window.dialogFocus=document.activeElement;}")
+    page.mouse.click(2,2)
+    assert page.get_by_role('dialog',name='Optional test').count()==1
+    assert page.evaluate('document.activeElement===dialogFocus')
+    if dismiss=='escape':page.keyboard.press('Escape')
+    else:page.click('#modal-close')
+    assert page.locator('.modal').count()==0
+    assert not errors,errors
+
+
+def test_required_dialog_blocks_programmatic_close_and_replacement(dom_page):
+    page,errors=dom_page
+    result=page.evaluate("""()=>{
+      const host=__mod_ui.modal('Required test','',{dismissible:false});
+      const closed=__mod_ui.closeModal();let replacement='';
+      try{__mod_ui.modal('Bypass','');}catch(error){replacement=error.message;}
+      return {closed,replacement,title:host.querySelector('h2').textContent};
+    }""")
+    assert result['closed'] is False and result['replacement']
+    assert result['title']=='Required test'
+    assert not page.locator('#modal-close').is_visible()
+    page.keyboard.press('Escape')
+    assert page.get_by_role('dialog',name='Required test').count()==1
+    page.evaluate('__mod_ui.closeModal({completed:true})')
+    assert page.locator('.modal').count()==0
+    assert not errors,errors
+
+
+def test_busy_dialog_blocks_dismissal_and_unlocks_on_failure(dom_page):
+    page,errors=dom_page
+    page.evaluate("()=>{window.busyDialog=__mod_ui.modal('Saving test','');__mod_ui.setModalBusy(busyDialog,true);}")
+    assert page.locator('#modal-close').is_disabled()
+    page.keyboard.press('Escape')
+    assert page.get_by_role('dialog',name='Saving test').count()==1
+    assert page.evaluate('__mod_ui.closeModal()') is False
+    page.evaluate('__mod_ui.setModalBusy(busyDialog,false)')
+    page.click('#modal-close')
+    assert page.locator('.modal').count()==0
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('dismiss',['escape','x'])
+def test_card_inspector_printing_picker_ignores_outside_click(dom_page,dismiss):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      const original=window.fetch;
+      window.fetch=async(path,options)=>path==='/api/printings'?{ok:true,text:async()=>JSON.stringify({data:[]})}:original(path,options);
+    }""")
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.click('#choose-printing')
+    picker=page.get_by_role('dialog',name='Select Art · Test creature',exact=True)
+    picker.wait_for();picker.dispatch_event('click')
+    assert picker.is_visible()
+    if dismiss=='escape':page.keyboard.press('Escape')
+    else:picker.get_by_role('button',name='Close picker').click()
+    picker.wait_for(state='detached')
+    assert not picker.count()
+    assert page.locator('#save-card').is_visible()
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('dismiss',['escape','x'])
+def test_confirmation_can_only_be_dismissed_explicitly(dom_page,dismiss):
+    page,errors=dom_page
+    page.evaluate("()=>{window.confirmationResult=undefined;__mod_ui.confirmAction('Confirm test','Proceed?').then(result=>window.confirmationResult=result);}")
+    assert not page.locator('#confirm-no').count()
+    page.mouse.click(2,2)
+    assert page.evaluate('confirmationResult===undefined')
+    if dismiss=='escape':page.keyboard.press('Escape')
+    else:page.click('#modal-close')
+    page.wait_for_function('confirmationResult===false')
+    assert page.locator('.modal').count()==0
     assert not errors,errors

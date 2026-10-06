@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,job,bytes,date,badge,empty,loading,thumbnail,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,job,bytes,date,badge,empty,loading,thumbnail,nav} from './ui.js';
 import {renderDecks} from './render.js';
 export function setupHelper(){
   const host=modal('Connect the browser helper','');
@@ -21,8 +21,6 @@ export function setupHelper(){
   add(body,'div','The helper never checks out or enters payment details. You review the printer preview and complete checkout yourself.','notice info');
   const footer=add(host,'footer','','modal-footer');
   const recheck=add(footer,'button','Check connection','button');recheck.id='recheck-helper';recheck.type='button';
-  const done=add(footer,'button','Done','button primary');done.id='close-helper';done.type='button';
-  $('#close-helper').onclick=closeModal;
   $('#recheck-helper').onclick=()=>{window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_PING'},location.origin);setTimeout(()=>toast(state.helper?'Print helper is connected.':'Not connected yet. Load the extension, then reload this page.',!state.helper),700);};
 }
 export async function showOrders(deckId=null){
@@ -73,7 +71,7 @@ export async function chooseOrder(preselected=[]){
   }
   $$('[data-order-deck]',host).forEach(el=>el.onchange=()=>{el.checked?selected.add(el.dataset.orderDeck):selected.delete(el.dataset.orderDeck);update();});update();
   if($('#order-generate'))$('#order-generate').onclick=()=>attempt(async()=>{const ids=[...selected];closeModal();await renderDecks(ids);await chooseOrder(ids);});
-  $('#order-plan').onclick=async()=>{try{$('#order-plan').disabled=true;const ids=[...selected];const plan=await api('/api/orders/plan',{deckIds:ids});closeModal();reviewPlan(plan,ids);}catch(e){errorBox($('.modal-body',host),e.message);update();}};
+  $('#order-plan').onclick=async()=>{try{$('#order-plan').disabled=true;setModalBusy(host,true);const ids=[...selected];const plan=await api('/api/orders/plan',{deckIds:ids});closeModal({completed:true});reviewPlan(plan,ids);}catch(e){errorBox($('.modal-body',host),e.message);update();}finally{setModalBusy(host,false);}};
 }
 function reviewPlan(plan,ids,saved=false){
   if(state.bootstrap?.browser){
@@ -107,7 +105,7 @@ function reviewPlan(plan,ids,saved=false){
 }
 function orderReady(order){
   if(state.bootstrap?.browser){
-    const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards ready to print</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><button class="button primary" id="print-cards">Print Cards <small style="display:block;font-weight:500">Open in TCGPlaytest</small></button></div>`,{footer:'<button class="button quiet" id="save-order-later">Done</button>'});
+    const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards ready to print</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><button class="button primary" id="print-cards">Print Cards <small style="display:block;font-weight:500">Open in TCGPlaytest</small></button></div>`,{footer:'<button class="button quiet" id="save-order-later">View saved orders</button>'});
     $('#print-cards',host).onclick=()=>attempt(()=>state.helper?openOrder(order.id):choosePrintPath(order));
     $('#save-order-later',host).onclick=()=>{closeModal();nav('orders');toast('Your print package is saved in this browser.');};
     return;

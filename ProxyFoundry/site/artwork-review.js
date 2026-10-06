@@ -28,7 +28,8 @@ const enlarge=(url,label)=>{
     overlay.style.maxWidth=`95vw`;overlay.style.background=`#160f09`;overlay.style.color=`#f0d7aa`;
     const image=element(`img`);image.src=url.replace(/\/thumbnail$/,``);image.alt=label;
     image.style.maxWidth=`85vw`;image.style.maxHeight=`80dvh`;image.style.objectFit=`contain`;
-    overlay.append(image,button(`Close`,()=>{overlay.close();overlay.remove();}));
+    const close=button(`×`,()=>overlay.close());close.setAttribute(`aria-label`,`Close image`);
+    overlay.append(image,close);
     overlay.addEventListener(`close`,()=>overlay.remove());
     document.body.append(overlay);overlay.showModal();
 };
@@ -57,7 +58,7 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
         let done=false,saveTimer;
         const persist=()=>sourceRecord(`pairing:${deckId}`,{signature:review.signature,pairs:[...pairs]});
         const changed=()=>{clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(error=>toast(error.message,true)),150);};
-        modal(`Match your artwork`,``,{onClose:()=>{clearTimeout(saveTimer);if(!done){persist().catch(error=>toast(error.message,true));resolve(null);}return true;}});
+        modal(`Match your artwork`,``,{dismissible:false,onClose:()=>done});
         const dialog=$(`#modal-host .modal-backdrop`);
         dialog.style.padding=`0`;
         const box=$(`.modal`,dialog),body=$(`.modal-body`,dialog);
@@ -92,7 +93,7 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
             finally{add.disabled=false;}
         });add.id=`artwork-add-images`;add.hidden=!onAdd;
         if(!onAdd)add.style.display=`none`;
-        actions.append(button(`Back to setup`,closeModal),add,finish,fallback);
+        actions.append(add,finish,fallback);
         body.append(instructions,status,warning,paired,columns);box.append(actions);
         let leftLimit=80,rightLimit=60;
         const cardNodes=new Map(),fileNodes=new Map(),pairNodes=new Map();
@@ -178,7 +179,7 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
             try{await sourceRecord(`pairing:${deckId}`,null);}
             catch(error){warning.textContent=error.message;draw();return;}
             done=true;clearTimeout(saveTimer);
-            closeModal();resolve({changes,defaults,signature:review.signature});
+            closeModal({completed:true});resolve({changes,defaults,signature:review.signature});
         };
         searchInput.oninput=()=>{search=searchInput.value;rightLimit=60;draw();};
         draw();
@@ -296,7 +297,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=
         }
 
         const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged});
-        body.append(status,button(`Not now`,finish));
+        body.append(status);
         for(const control of body.querySelectorAll(`.button`)) {
             Object.assign(control.style,{whiteSpace:`normal`,overflowWrap:`anywhere`,width:`100%`,boxSizing:`border-box`});
         }

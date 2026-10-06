@@ -9,21 +9,22 @@ measurements are retained when that test was not affected or rerun.
 | Group | Current tests | When to run |
 | --- | ---: | --- |
 | Routine | 905 | Every completed change |
-| Extended | 158 | Relevant changes or an explicit full sweep |
+| Extended | 170 | Relevant changes or an explicit full sweep |
 
 The 2026-10-06 preparation cache pass completed the routine suite with 897 passed
 and four skipped cases in 512.18 seconds. Preparation-only live-source timings,
 cache behavior, and follow-up opportunities are recorded in
 [preparation performance](PREPARATION_PERFORMANCE.md).
 
-Generate Images now pauses background metadata at a card checkpoint and checks
+Generate Images pauses background metadata at a card checkpoint and checks
 setup requirements, including custom artwork credits, before waiting for the
-remaining metadata. Both the setup and deck generation paths resume on Continue,
-Cancel, or validation failure. The offline DOM suite passed all 32 cases; the
-normal suite passed 899 cases with four skips in 513.47 seconds. Two additional
-local-server pause/cancel cases passed in the focused job suite after that normal
-run began. Browser scheduling checks also ensure paused jobs do not keep the
-worker spinning and remain cancellable.
+remaining metadata. Required credit and artwork-matching dialogs now stay open
+until valid choices are provided. The normal suite passed 901 cases with four
+skips in 506.64 seconds. Popup policies and the full inventory are documented in
+[dialog behavior](DIALOG_BEHAVIOR.md). All 49 focused browser UI cases passed (47 dialog/order cases plus two
+confirmation-dismissal cases). Browser checks cover backdrop clicks,
+Esc/X, required-step validation, replacement prevention, busy saves, nested
+printing pickers, enlarged images and order review geometry.
 
 Modern full-art tokens use the filled native rules box for any rules or flavor
 text, including a single keyword. Empty/whitespace-only tokens keep the larger

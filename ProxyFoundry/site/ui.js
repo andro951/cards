@@ -74,25 +74,73 @@ export function toast(message,error=false){
   const el=document.createElement('div');el.className='toast'+(error?' error':'');el.setAttribute('role',error?'alert':'status');el.innerHTML=`<span>${esc(message)}</span><button aria-label="Dismiss notification">×</button>`;$('#toast-host').append(el);$('button',el).onclick=()=>el.remove();setTimeout(()=>el.remove(),error?14000:6500);
 }
 export async function attempt(fn){try{return await fn()}catch(e){recordDiagnostic('caught error',e.stack||e.message);console.error(e);toast(e.message,true);return null;}}
-let lastFocus=null,modalCloser=null;
-export function closeModal(){if(modalCloser&&!modalCloser())return;$('#modal-host').replaceChildren();document.body.classList.remove('no-scroll');lastFocus?.focus?.();modalCloser=null;}
-export function modal(title,body,{size='',footer='',onClose=null}={}){
-  recordDiagnostic('dialog',title);
-  lastFocus=document.activeElement;modalCloser=onClose;$('#modal-host').innerHTML=`<div class="modal-backdrop"><section class="modal ${esc(size)}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="modal-header"><h2 id="modal-title">${esc(title)}</h2><button class="button quiet icon" id="modal-close" aria-label="Close dialog">×</button></header><div class="modal-body">${body}</div>${footer?`<footer class="modal-footer">${footer}</footer>`:''}</section></div>`;
-  document.body.classList.add('no-scroll');$('#modal-close').onclick=closeModal;
-  const el=$('.modal');$('.modal-backdrop').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal();});
-  el.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();closeModal();}
-    if(e.key==='Tab'){const nodes=$$('button,a,input,select,textarea,summary,[tabindex="0"]',el).filter(x=>!x.disabled&&x.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
-  });
-  // Focus before returning the mounted dialog. A delayed focus callback can steal
-  // typing from a field the user has already chosen (including the artist credit).
-  const first=$('input:not([type=file]):not([disabled]),textarea:not([disabled])',el)||$('#modal-close',el);
-  first?.focus({preventScroll:true});return el;
+//#region Dialog lifecycle
+let lastFocus=null,modalCloser=null,modalRequired=false,modalBusy=false;
+export function closeModal({completed=false}={}){
+  if(!completed&&(modalRequired||modalBusy))
+    return false;
+
+  if(modalCloser&&!modalCloser())
+    return false;
+
+  $('#modal-host').replaceChildren();document.body.classList.remove('no-scroll');
+  modalCloser=null;modalRequired=false;modalBusy=false;
+  lastFocus?.focus?.();
+  return true;
 }
+export function setModalBusy(host,busy){
+  if(!host?.isConnected||host!==$('#modal-host .modal'))
+    return;
+
+  modalBusy=busy;host.setAttribute('aria-busy',String(busy));
+  $('#modal-close',host).disabled=busy;
+}
+export function modal(title,body,{size='',footer='',onClose=null,dismissible=true}={}){
+  const container=$('#modal-host');
+  if($('.modal',container)&&!closeModal())
+    throw new Error('Complete the current dialog before opening another one.');
+
+  recordDiagnostic('dialog',title);
+  lastFocus=document.activeElement;modalCloser=onClose;modalRequired=!dismissible;modalBusy=false;
+  const backdrop=document.createElement('div');backdrop.className='modal-backdrop';
+  const el=document.createElement('section');el.className='modal'+(size?' '+size:'');
+  el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','modal-title');
+  const header=document.createElement('header');header.className='modal-header';
+  const heading=document.createElement('h2');heading.id='modal-title';heading.textContent=title;
+  const close=document.createElement('button');close.type='button';close.className='button quiet icon';
+  close.id='modal-close';close.textContent='×';close.setAttribute('aria-label','Close dialog');
+  close.hidden=!dismissible;
+  if(!dismissible)
+    close.style.display='none';
+
+  close.onclick=()=>closeModal();header.append(heading,close);
+  const content=document.createElement('div');content.className='modal-body';
+  //Existing callers still supply formatted content; the shared dialog owns its DOM and lifecycle.
+  content.innerHTML=body;el.append(header,content);
+  if(footer){
+    const actions=document.createElement('footer');actions.className='modal-footer';actions.innerHTML=footer;el.append(actions);
+  }
+
+  backdrop.addEventListener('mousedown',event=>{if(event.target===backdrop)event.preventDefault();});
+  backdrop.append(el);container.replaceChildren(backdrop);document.body.classList.add('no-scroll');
+  el.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeModal();}
+    if(e.key==='Tab'){const nodes=$$('button,a,input,select,textarea,summary,[tabindex="0"]',el).filter(x=>!x.disabled&&x.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(!first){e.preventDefault();return;}if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
+  });
+  //Focus synchronously so a delayed callback cannot steal typing from a selected field.
+  const first=$('input:not([type=file]):not([disabled]),textarea:not([disabled])',el)||$$('button',el).find(button=>!button.disabled&&!button.hidden);
+  if(first)
+    first.focus({preventScroll:true});
+  else{
+    el.tabIndex=-1;el.focus({preventScroll:true});
+  }
+
+  return el;
+}
+//#endregion
 export function confirmAction(title,text,label='Continue',danger=false){return new Promise(resolve=>{
-  modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button quiet" id="confirm-no">Cancel</button><button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
-  $('#confirm-no').onclick=()=>closeModal();$('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
+  modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
+  $('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
 });}
 export function errorBox(el,message){recordDiagnostic('form error',message);let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
 export function activity(kind,title,detail,done=0,total=0,owner=null){

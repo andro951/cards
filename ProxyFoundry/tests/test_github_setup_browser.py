@@ -53,7 +53,7 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     expect(page.locator('#deck-artist')).to_have_value('Deck Artist' if suffix else 'Artist stays')
     page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
     page.click('#review-artwork');page.locator('[data-artwork-card]').click();page.locator('[data-artwork-file]').click();page.click('#artwork-finish')
-    page.get_by_role('button',name='Not now',exact=True).click()
+    page.get_by_role('button',name='Close dialog',exact=True).click()
     expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved = app.ws.deck(d['id'])
     assert saved['cards'][0] != original_card
