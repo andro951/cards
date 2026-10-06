@@ -1,11 +1,11 @@
-import {ensureMetadata} from './metadata.js';
+import {ensureMetadata,pauseMetadata} from './metadata.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
 import {checkArtwork,offerDataSave} from './artwork-review.js';
 import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub} from './artwork-files.js';
-import {originalArtist,composeCredit} from './credits.js';
+import {originalArtist,composeCredit,ensureCustomArtCredits} from './credits.js';
 import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
 const symbolImage=/\.(png|jpe?g|webp|gif|svg)$/i;
@@ -478,11 +478,19 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     generating=true;
     const buttons=[$('#save-generate',root),$('#generate-deck')].filter(Boolean);
     try{
-    if(!await githubImport.ensureImported(s.githubSetupFolder))return;
-    for(const button of buttons){button.disabled=true;}
-    readSettings();
-    recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
-    mark();await persistSetup();
+    const resume=await pauseMetadata(deck.id);
+    try{
+      if(!await githubImport.ensureImported(s.githubSetupFolder))return;
+      for(const button of buttons){button.disabled=true;}
+      readSettings();
+      recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
+      mark();await persistSetup();
+      if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols before generating images.');
+      const credited=await ensureCustomArtCredits(await api('/api/decks/'+deck.id));
+      if(!credited)return;
+      deck.revision=credited.revision;deck.cards=credited.cards;s.artist=credited.settings.artist;
+      $('#deck-artist',root).value=s.artist;
+    }finally{await resume();}
     refreshMetadata(await ensureMetadata(deck.id));
     if(!await reviewArtwork())return;
     if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');

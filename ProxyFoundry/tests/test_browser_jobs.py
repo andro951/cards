@@ -158,3 +158,63 @@ def test_cancel_cleanup_failure_does_not_poison_worker_queue(tmp_path):
     assert jobs.get(ident)['state']=='cancelled'
     assert 'Cleanup failed: Cleanup fault' in jobs.get(ident)['error']
     assert jobs.get(other)['result']=={'ok':True}
+
+
+def test_paused_metadata_keeps_its_place_and_allows_foreground_work(tmp_path):
+    jobs=BrowserJobs(Store(tmp_path));steps=[]
+    def metadata(update,cancel):
+        for card in range(3):
+            steps.append(card);yield
+        return 'ready'
+    ident=jobs.start('Metadata',metadata,priority=1)['id']
+    jobs.run_pending(limit=1);jobs.pause(ident)
+    jobs.start('Save setup',lambda update,cancel:steps.append('save'))
+    assert not jobs.run_pending()
+    assert steps==[0,'save'] and jobs.get(ident)['paused']
+    jobs.resume(ident);jobs.run_pending()
+    assert steps==[0,'save',1,2] and jobs.get(ident)['result']=='ready'
+
+
+def test_paused_metadata_can_still_be_cancelled(tmp_path):
+    jobs=BrowserJobs(Store(tmp_path));closed=[]
+    def metadata(update,cancel):
+        try:
+            yield
+            raise AssertionError('Must not continue')
+        finally:closed.append(True)
+    ident=jobs.start('Metadata',metadata)['id'];jobs.run_pending(limit=1)
+    jobs.pause(ident);jobs.cancel(ident);jobs.run_pending()
+    assert closed==[True] and jobs.get(ident)['state']=='cancelled'
+
+
+def test_local_server_metadata_pause_resumes_at_next_checkpoint(tmp_path):
+    import threading
+    from foundry.jobs import Jobs
+    jobs=Jobs(Store(tmp_path));started=threading.Event();release=threading.Event();finished=threading.Event()
+    def metadata(update,cancel):
+        started.set();assert release.wait(2)
+        if cancel():raise ValueError('cancelled')
+        finished.set();return 'ready'
+    try:
+        ident=jobs.start('Metadata',metadata)['id'];assert started.wait(2)
+        jobs.pause(ident);release.set()
+        assert not finished.wait(.1)
+        jobs.resume(ident);assert finished.wait(2)
+    finally:jobs.close()
+
+
+def test_local_server_cancel_releases_paused_metadata(tmp_path):
+    import threading
+    from foundry.jobs import Jobs
+    jobs=Jobs(Store(tmp_path));started=threading.Event();release=threading.Event();finished=threading.Event()
+    def metadata(update,cancel):
+        started.set();assert release.wait(2)
+        try:
+            if cancel():raise ValueError('cancelled')
+            raise AssertionError('Must not continue')
+        finally:finished.set()
+    try:
+        ident=jobs.start('Metadata',metadata)['id'];assert started.wait(2)
+        jobs.pause(ident);release.set();assert not finished.wait(.1)
+        jobs.cancel(ident);assert finished.wait(2)
+    finally:jobs.close()

@@ -1,4 +1,4 @@
-import {startMetadata,ensureMetadata} from './metadata.js';
+import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
@@ -341,6 +341,12 @@ export async function refreshDeckProgress(id){
 }
 async function generate(d,artChecked=false){
   if(state.setupActions?.root.isConnected&&state.setupActions.deckId===d.id)return state.setupActions.generate();
+  const resume=await pauseMetadata(d.id);
+  try{
+    d=await api('/api/decks/'+d.id);
+    if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
+    d=await ensureCustomArtCredits(d);if(!d)return;
+  }finally{await resume();}
   d=await ensureMetadata(d.id);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   if(!artChecked&&!await ensureArtworkReady(d.id))return;

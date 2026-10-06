@@ -170,10 +170,12 @@ class BrowserJobs:
         while self.pending and (limit is None or steps<limit):
             #Cancelled tasks release their resources promptly; foreground chunks
             #take priority over background preparation. Equal priorities rotate.
-            ident=min(self.pending,key=lambda key:(
+            eligible=[key for key in self.pending if not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key)]
+            if not eligible:break
+            ident=min(eligible,key=lambda key:(
                 not (self.jobs[key]['cancelled'] or self.cancelled(key)),self.jobs[key]['priority']))
             self._step(ident);steps+=1
-        return bool(self.pending)
+        return any(not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key) for key in self.pending)
 
     def _step(self,ident):
         operation=self.pending.pop(ident);job=self.jobs[ident]
@@ -230,6 +232,14 @@ class BrowserJobs:
         if job['state']=='done' and 'result' not in job:
             return json.loads((self.store.home/'logs'/('job-'+ident+'.json')).read_text(encoding='utf-8'))
         return dict(job)
+
+    def pause(self,ident):
+        if ident in self.pending:self.jobs[ident]['paused']=True
+        return {'ok':True}
+
+    def resume(self,ident):
+        if ident in self.jobs:self.jobs[ident]['paused']=False
+        return {'ok':True}
 
     def cancel(self,ident):
         if ident in self.jobs:self.jobs[ident]['cancelled']=True

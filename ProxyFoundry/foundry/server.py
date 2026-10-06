@@ -670,6 +670,8 @@ class Handler(BaseHTTPRequestHandler):
             label='TIMING' if payload['stage']=='timing' else 'RUNTIME_SYMBOL'
             self.app.log.info('%s %s',label,json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
             return self.respond({'ok':True})
+        if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/pause', p): return self.respond(self.app.jobs.pause(m[1]))
+        if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/resume', p): return self.respond(self.app.jobs.resume(m[1]))
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))

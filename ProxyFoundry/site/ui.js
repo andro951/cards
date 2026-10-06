@@ -126,7 +126,7 @@ export function endActivity(message,error=false,owner=null){
   if(owner&&work.visible()!==owner)return;
   $('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
 }
-export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null,background=false}={}){
+export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null,background=false,onStarted=null}={}){
   const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal,background});
   signal=task.controller.signal;let ident=null;
   const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{},'POST',task).catch(error=>recordDiagnostic('cancel task',error.message));};
@@ -135,6 +135,7 @@ export async function job(path,data,{label='Working',onProgress=null,signal=null
     if(signal?.aborted)throw new Error('Task cancelled.');
     activity(label,'Starting…','Starting task',0,0,task);
     const result=await api(path,data,'POST',task);if(!result?.id)throw new Error('The app did not start the task.');ident=result.id;
+    if(onStarted)await onStarted(ident);
     if(signal?.aborted)cancel();
     while(true){
       await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total,task);onProgress?.(j);

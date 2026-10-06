@@ -685,3 +685,50 @@ def test_generate_imports_pending_github_link_and_keeps_artist(dom_page,button,f
         page.wait_for_function('preparedSettings.length===2')
         assert page.evaluate('importCalls')==1
     assert not errors,errors
+
+
+@pytest.mark.parametrize('accept',[False,True])
+def test_generate_checks_artist_before_background_metadata_finishes(dom_page,accept):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      const deck=__fixture.deck;
+      deck.pendingImport=true;deck.settings.artist='';
+      deck.settings.source={mode:'local',fallback:true,localFiles:{test_creature:'a'.repeat(64)}};
+      deck.settings.symbols=Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)]));
+      window.metadataCalls=[];window.metadataDone=false;const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        const reply=data=>({ok:true,text:async()=>JSON.stringify(data)});
+        if(path.endsWith('/metadata')){metadataCalls.push('start');return reply({id:'metadata-fixture'});}
+        if(path==='/api/jobs/metadata-fixture/pause'){metadataCalls.push('pause');return reply({ok:true});}
+        if(path==='/api/jobs/metadata-fixture/resume'){metadataCalls.push('resume');return reply({ok:true});}
+        if(path==='/api/jobs/metadata-fixture')return reply({state:metadataDone?'done':'running',kind:'Card metadata',message:'Still reading',done:0,total:10,result:deck});
+        if(path.endsWith('/prepare')){metadataCalls.push('prepare');return reply({id:'prepare-fixture'});}
+        if(path==='/api/jobs/prepare-fixture')return reply({state:'done',kind:'Prepare deck',result:deck});
+        if(path==='/api/render-sessions'){metadataCalls.push('render');return reply({targets:[],errors:[],cached:1});}
+        return original(path,options);
+      };
+      location.hash='#deck/'+deck.id+'/setup';
+    }""")
+    page.wait_for_function("metadataCalls.includes('start')")
+    page.click('#save-generate')
+    page.locator('#custom-artist-all').wait_for()
+    assert page.evaluate('metadataDone') is False
+    assert page.evaluate('metadataCalls')==['start','pause']
+    if accept:
+        page.locator('#custom-artist-all').fill('Custom artist')
+        page.click('#custom-artist-apply')
+    else:
+        page.click('#custom-artist-cancel')
+    page.wait_for_function("metadataCalls.includes('resume')")
+    assert 'prepare' not in page.evaluate('metadataCalls')
+    if accept:
+        assert page.locator('#deck-artist').input_value()=='Custom artist'
+        assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
+    page.evaluate('metadataDone=true;delete __fixture.deck.pendingImport')
+    if accept:
+        page.wait_for_function("metadataCalls.includes('render')")
+        assert page.evaluate('__fixture.deck.settings.artist')=='Custom artist'
+    else:
+        page.wait_for_function("!document.querySelector('#save-generate').disabled")
+        assert 'render' not in page.evaluate('metadataCalls')
+    assert not errors,errors
