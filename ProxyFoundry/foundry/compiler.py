@@ -46,7 +46,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':10,'godzilla-land':10,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':11,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
@@ -1996,7 +1996,7 @@ def _nickname_code(sem):
 
 def _nickname_bar_variant(src,code):
     if code not in 'WUBRGMAL':return None
-    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/Title|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
+    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/Title(?:Joined)?|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
     return match.group(1)+code+match.group(3) if match else None
 
 
@@ -2224,6 +2224,16 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     # Replace the detached crown only when a nickname requests that subtitle;
     # a second addon would paint a second outline across the same junction.
     frames=data.setdefault('frames',[])
+    joined_titles=[]
+    for frame in frames[:]:
+        src=str(frame.get('src',''))
+        if re.fullmatch(r'/img/frames/proxy-foundry/godzilla/Title[WUBRGMAL]\.png',src):
+            frames.remove(frame)
+            frame.update(src=src.replace('/Title','/TitleJoined'),name='Nickname Title',bounds=copy.deepcopy(_NICKNAME_TITLE_BOUNDS))
+            joined_titles.append(frame)
+    if joined_titles:
+        frames[0:0]=joined_titles
+        return True
     for index,frame in enumerate(frames):
         src=str(frame.get('src',''))
         if re.fullmatch(r'/img/frames/proxy-foundry/godzilla/Crown[WUBRGMAL]\.png',src):

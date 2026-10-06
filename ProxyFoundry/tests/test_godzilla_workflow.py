@@ -67,9 +67,9 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
     assert len(data['frames'])>=2
     assert any(item['src'].endswith(frame) and item['masks']==[] for item in data['frames'])
     if type_line=='Land':
-        assert any(item['src'].endswith('m15NicknameTitleL.png') for item in data['frames'])
+        assert any(item['src'].endswith('TitleJoinedL.png') for item in data['frames'])
     elif not colors:
-        assert any(item['src'].endswith('m15NicknameTitleC.png') for item in data['frames'])
+        assert any(item['src'].endswith('TitleJoinedA.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
     if type_line!='Land':
         assert data['frames'][1]['src'].endswith('m15PTC.png' if not colors else 'm15NicknamePTB.png')
@@ -208,8 +208,12 @@ def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp
     plain=compiler.compile_face(source,source,0,{'templateOverride':choice},settings,art)['data']
     named=compiler.compile_face(source,source,0,{'templateOverride':choice,'semanticOverrides':{'nickname':'Ghost'}},settings,art)['data']
     assert named['version']==plain['version']
-    assert named['frames'][1:]==plain['frames']
-    assert named['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
+    if choice=='godzilla-card':
+        assert named['frames'][0]['src'].endswith('TitleJoinedB.png')
+        assert named['frames'][1:]==[f for f in plain['frames'] if '/godzilla/Title' not in f['src']]
+    else:
+        assert named['frames'][1:]==plain['frames']
+    assert named['frames'][0]['src'].endswith('TitleJoinedB.png' if choice=='godzilla-card' else '/nickname/addons/m15NicknameTitleB.png')
     assert named['text']['nickname']['text']=='Ghost' and named['text']['title']['text']==source['name']
     for field in ('type','rules','pt'):
         assert named['text'][field]==plain['text'][field]
@@ -253,14 +257,14 @@ def test_dual_land_godzilla_title_and_real_name_blend_land_colors(tmp_path,nickn
     assert bars[0]['masks'][0]['name']=='Right Blend'
     assert bars[0]['bounds']==bars[1]['bounds']
     real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
-    assert len(real)==(2 if nickname and not legendary else 0)
+    assert len(real)==0
     if nickname and legendary:
         assert all('/CrownJoined' in f['src'] for f in bars)
         assert data['frames'][:2]==bars
     if nickname and not legendary:
-        assert [f['src'][-5] for f in real]==['R','B']
-        assert real[0]['masks'][0]['name']=='Right Blend'
-        assert data['frames'][:2]==real
+        assert all('/TitleJoined' in f['src'] for f in bars)
+        assert data['frames'][:2]==bars
+        assert bars[0]['bounds']['height']==pytest.approx(.1053)
 
 
 @pytest.mark.parametrize('style',['auto','godzilla-card'])
@@ -270,7 +274,7 @@ def test_dual_nonland_real_name_bar_uses_same_color_blend(tmp_path,style):
     data=Compiler(store).compile_face(source,source,0,
         {'templateOverride':style,'semanticOverrides':{'nickname':'Alternate'}},
         ws.validate_settings({}),art)['data']
-    real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
+    real=[f for f in data['frames'] if ('/godzilla/TitleJoined' if style=='godzilla-card' else '/nickname/addons/') in f['src']]
     assert [f['src'][-5] for f in real]==['R','U']
     assert real[0]['masks'][0]['name']=='Right Blend'
 
@@ -309,3 +313,14 @@ def test_normal_nickname_bar_keeps_full_width_with_mana(tmp_path,mana_cost,style
     true_name=data['text']['title']
     assert true_name['x']+true_name['width']/2==pytest.approx(.5)
     assert true_name['align']=='center'
+
+
+def test_nicknamed_nonlegendary_godzilla_uses_one_intact_joined_title(tmp_path):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['W'])
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-card','semanticOverrides':{'nickname':'Garth'}},
+        ws.validate_settings({}),art)['data']
+    assert data['frames'][0]['src']=='/img/frames/proxy-foundry/godzilla/TitleJoinedW.png'
+    assert data['frames'][0]['bounds']=={'x':.0494,'y':.0405,'width':.9014,'height':.1053}
+    assert not any('/nickname/addons/' in f['src'] or '/godzilla/TitleW.png' in f['src'] for f in data['frames'])

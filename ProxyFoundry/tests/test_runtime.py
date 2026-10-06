@@ -154,13 +154,14 @@ def test_godzilla_crown_retains_shoulders_and_removes_subtitle():
         assert output.getpixel(point)[3]==0
 
 
-def test_joined_godzilla_crown_is_the_unchanged_native_asset():
+@pytest.mark.parametrize('kind',['Crown','Title'])
+def test_joined_godzilla_crown_is_the_unchanged_native_asset(kind):
     import io
     from PIL import Image
     buffer=io.BytesIO();Image.new('RGBA',(1428,270),(90,30,20,255)).save(buffer,'PNG')
     class FakeNet:
         def fetch(self,url,**kwargs):
-            assert url.endswith('/m15NicknameCrownW.png')
+            assert url.endswith('/m15Nickname'+kind+'W.png')
             return buffer.getvalue(),'image/png',{}
-    raw,mime=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/CrownJoinedW.png')
+    raw,mime=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/'+kind+'JoinedW.png')
     assert raw==buffer.getvalue() and mime=='image/png'
