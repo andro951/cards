@@ -46,7 +46,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':9,'godzilla-land':9,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':10,'godzilla-land':10,'token-classic':2,'token-full-art':2,'token-borderless':2}
 AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=2
@@ -2013,7 +2013,9 @@ def _nickname_frame_src(code):
     return f'/img/frames/m15/nickname/m15NicknameFrame{code if code in "WUBRGMAL" else "A"}.png'
 
 def _nickname_pt_src(code):
-    return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
+    code=code if code in "WUBRGMAC" else "C"
+    if code in 'WAC':return f'/img/frames/m15/regular/m15PT{code}.png'
+    return f'/img/frames/m15/nickname/m15NicknamePT{code}.png'
 
 def _nickname_text(data,sem,group,force=False):
     text=data.setdefault('text',{})
@@ -2179,11 +2181,12 @@ def apply_full_art_text(data):
     for key in ('title','nickname','type','rules','flavor','pt'):
         field=(data.get('text') or {}).get(key)
         if isinstance(field,dict):
-            if key=='pt' and data.get('version')=='m15Nickname' and any(
-                re.fullmatch(r'/img/frames/m15/regular/m15PT[WUBRGMAC]\.png',str(frame.get('src','')))
-                for frame in data.get('frames',[]) if isinstance(frame,dict)
-            ):
-                field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
+            if key=='pt' and data.get('version')=='m15Nickname':
+                normal_pt=any(
+                    re.fullmatch(r'/img/frames/m15/regular/m15PT[WAC]\.png',str(frame.get('src','')))
+                    for frame in data.get('frames',[]) if isinstance(frame,dict)
+                )
+                field.update(color='black' if normal_pt else 'white',outlineWidth=0,shadowX=0,shadowY=0)
                 continue
             field['color']='white'
             field['outlineColor']='black'

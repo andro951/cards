@@ -72,7 +72,7 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
         assert any(item['src'].endswith('m15NicknameTitleC.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
     if type_line!='Land':
-        assert '/m15/regular/m15PT' in data['frames'][1]['src']
+        assert data['frames'][1]['src'].endswith('m15PTC.png' if not colors else 'm15NicknamePTB.png')
     assert data['text']['nickname']['text']=='Alternate Name'
     assert data['text']['title']['text']=='Test Card'
     for key in ('type','rules'):
@@ -275,20 +275,21 @@ def test_dual_nonland_real_name_bar_uses_same_color_blend(tmp_path,style):
     assert real[0]['masks'][0]['name']=='Right Blend'
 
 
-@pytest.mark.parametrize('colors,code',[(['W'],'W'),(['B'],'B'),(['U','R'],'M'),([],'C')])
+@pytest.mark.parametrize('colors,code',[(['W'],'W'),(['U'],'U'),(['B'],'B'),(['R'],'R'),(['G'],'G'),(['U','R'],'M'),([],'A'),([],'C')])
 @pytest.mark.parametrize('convert',[False,True])
-def test_godzilla_uses_normal_pt_box_with_black_unoutlined_numbers(tmp_path,colors,code,convert):
+def test_godzilla_uses_selected_pt_family_and_unoutlined_numbers(tmp_path,colors,code,convert):
     store=Store(tmp_path);ws=Workspace(store);art=image(store)
-    source=card(type_line='Legendary Creature — Human',colors=colors)
+    source=card(type_line='Legendary Artifact Creature — Human' if code=='A' else 'Legendary Creature — Human',colors=colors)
     source['flavor_name']='Alternate Name'
     result=Compiler(store).compile_face(source,source,0,{'templateOverride':'godzilla-card'},ws.validate_settings({}),art)
     if convert:
-        result=ws._apply_token_spec(result,{'output_key':'Test Card','token_key_suffix':''},art,'Token conversion',sem={**source,'types':['Creature'],'legendary':True,'nickname':'Alternate Name'})
+        result=ws._apply_token_spec(result,{'output_key':'Test Card','token_key_suffix':''},art,'Token conversion',sem={**source,'types':['Artifact','Creature'] if code=='A' else ['Creature'],'legendary':True,'nickname':'Alternate Name'})
     data=result['data']
     box=next(frame for frame in data['frames'] if 'Power/Toughness' in frame['name'])
-    assert box['src']=='/img/frames/m15/regular/m15PT'+code+'.png'
-    assert not any('m15NicknamePT' in frame['src'] for frame in data['frames'])
+    normal=code in 'WAC'
+    prefix='/img/frames/m15/regular/m15PT' if normal else '/img/frames/m15/nickname/m15NicknamePT'
+    assert box['src']==prefix+code+'.png'
     pt=data['text']['pt']
-    assert pt['color']=='black' and pt['outlineWidth']==0
+    assert pt['color']==('black' if normal else 'white') and pt['outlineWidth']==0
     assert pt['shadowX']==0 and pt['shadowY']==0
     assert data['text']['rules']['y']+data['text']['rules']['height'] < box['bounds']['y']
