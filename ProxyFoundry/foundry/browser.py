@@ -336,7 +336,7 @@ class BrowserHandler(server.Handler):
         if prepare:
             self.data()
             return self.respond(self.app.jobs.start('Prepare deck',
-                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel),priority=1))
+                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True),priority=1))
         if path == '/api/cleanup/retry':
             for queue in self.app.store.list('cleanup'):
                 queue.pop('error',None)

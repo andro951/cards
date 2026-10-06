@@ -8,8 +8,15 @@ measurements are retained when that test was not affected or rerun.
 
 | Group | Current tests | When to run |
 | --- | ---: | --- |
-| Routine | 905 | Every completed change |
-| Extended | 170 | Relevant changes or an explicit full sweep |
+| Routine | 907 | Every completed change |
+| Extended | 171 | Relevant changes or an explicit full sweep |
+
+The unchanged-deck planning pass passed 903 routine cases with four skips in
+542.28 seconds. Focused preparation/scheduling checks passed 26 cases, and the
+Chromium reload check passed for 121 prepared faces with no card processing or
+deck saves. Its isolated OPFS planning/completion time was 0.6693 seconds; it
+uses shared synthetic artwork and excludes the user's GitHub check and selected
+workspace. See [preparation performance](PREPARATION_PERFORMANCE.md).
 
 The 2026-10-06 preparation cache pass completed the routine suite with 897 passed
 and four skipped cases in 512.18 seconds. Preparation-only live-source timings,

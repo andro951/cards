@@ -678,27 +678,34 @@ class Workspace:
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
         return stable_hash({'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')})
 
-    def _can_reuse_preparation(self,c,key,refresh):
+    def _preparation_metadata_urls(self,c):
+        return ['https://api.scryfall.com/cards/'+str(c['scryfall'].get('id') or ''),*[f['compiled'].get('exportArtUrl') for f in c['faces'] if (f.get('compiled') or {}).get('artOrigin')=='Scryfall selected printing']]
+
+    def _can_reuse_preparation(self,c,key,refresh,assets=None,caches=None):
+        def available(ident):
+            if assets is None:return self.store.asset(ident)
+            if ident not in assets:assets[ident]=self.store.asset(ident)
+            return assets[ident]
         for f in c['faces']:
             comp=f.get('compiled') or {}
             if f.get('error') or f.get('preparationKey')!=key or not cache_is_fresh(f.get('preparedAt'),time.time(),refresh):return False
-            if not comp.get('artId') or not self.store.asset(comp['artId']):return False
-        if any(not self.store.asset(asset) for asset in (c.get('_preparationSymbols') or [])):return False
-        if c.get('meldBackAsset') and not self.store.asset(c['meldBackAsset']):return False
-        for url in ['https://api.scryfall.com/cards/'+str(c['scryfall'].get('id') or ''),*[f['compiled'].get('exportArtUrl') for f in c['faces'] if f['compiled'].get('artOrigin')=='Scryfall selected printing']]:
-            cached=self.store.cache_get(url) if url else None
+            if not comp.get('artId') or not available(comp['artId']):return False
+        if any(not available(asset) for asset in (c.get('_preparationSymbols') or [])):return False
+        if c.get('meldBackAsset') and not available(c['meldBackAsset']):return False
+        for url in self._preparation_metadata_urls(c):
+            cached=(caches.get(url) if caches is not None else self.store.cache_get(url)) if url else None
             if cached and not cache_is_fresh(cached['fetched'],time.time(),refresh):return False
         return bool(c['faces'])
 
     @timed('card.prepare')
-    def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total):
+    def _prepare_card_faces(self,d,c,s,index,progress,cancel,done,total,checked=False):
         if cancel():raise ValidationError('Preparation cancelled.')
         sf=c['scryfall']
         refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
         with timing(self.store,'prepare.cache-check'):
             try:key=self._preparation_key(c,s,index)
             except ValidationError:key=None
-            reusable=key is not None and self._can_reuse_preparation(c,key,refresh)
+            reusable=not checked and key is not None and self._can_reuse_preparation(c,key,refresh)
         if reusable:
             for f in c['faces']:
                 f['compiled']['render']=self.store.render_get(f['compiled']['renderKey'])
@@ -781,6 +788,27 @@ class Workspace:
         index=self._prepare_sources(s,progress)
         yield
         total=sum(len(c['faces']) for c in d['cards']);done=0
+        # Decide which cards need work before processing any of them. Shared
+        # symbols are checked once; this scan never reads or hashes image bytes.
+        changed=[];refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
+        with timing(self.store,'prepare.plan'):
+            asset_ids=set();urls=[]
+            for c in d['cards']:
+                asset_ids.update(c.get('_preparationSymbols') or [])
+                if c.get('meldBackAsset'):asset_ids.add(c['meldBackAsset'])
+                asset_ids.update(f['compiled']['artId'] for f in c['faces'] if (f.get('compiled') or {}).get('artId'))
+                urls.extend(self._preparation_metadata_urls(c))
+            assets,caches=self.store.preparation_cache(asset_ids,urls)
+            for number,c in enumerate(d['cards']):
+                if number%10==0 and cancel():raise ValidationError('Preparation cancelled.')
+                try:key=self._preparation_key(c,s,index)
+                except ValidationError:key=None
+                if key is None or not self._can_reuse_preparation(c,key,refresh,assets,caches):changed.append(c)
+                else:done+=len(c['faces'])
+        progress(done,total,'Preparation checked: '+str(done)+' faces unchanged; '+str(total-done)+' need preparation')
+        if cancel():raise ValidationError('Preparation cancelled.')
+        if not changed and d.get('status') in {'ready','prepared','attention'}:
+            return d
         pending=0;checkpoint_at=time.monotonic()
         def checkpoint():
             nonlocal rev,pending,checkpoint_at
@@ -788,9 +816,9 @@ class Workspace:
                 d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
             pending=0;checkpoint_at=time.monotonic()
         try:
-            for c in d['cards']:
+            for c in changed:
                 pending+=1
-                done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total)
+                done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=True)
                 if pending>=10 or time.monotonic()-checkpoint_at>=2:checkpoint()
                 yield
         except BaseException:

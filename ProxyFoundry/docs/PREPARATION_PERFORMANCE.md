@@ -1,5 +1,33 @@
 # Preparation caching and measurements
 
+## Unchanged-deck planning (2026-10-06)
+
+Preparation now builds a change plan before processing cards. The GitHub folder
+commit check still runs; cache metadata is read in batches, and shared asset
+files are checked once. Only cards with changed inputs, expired preparation, or
+missing required files enter the preparation loop. Render planning continues to
+queue only missing or changed output images.
+
+An unchanged prepared deck produces one preparation summary, performs no deck
+saves, and keeps its revision. Preparation completion logs only changed faces.
+The static browser job returns ID/revision/status/summary rather than serializing
+the whole compiled deck into its durable job log; the UI already reloads the
+deck separately. Full deck results remain available through the workspace and
+local HTTP API.
+
+The real Chromium/OPFS regression measured **0.6693 seconds** after browser reload
+for a synthetic deck of 121 prepared faces with shared artwork, zero card work,
+zero deck saves, one progress event, and a 169-byte result. This is an isolated
+planning/completion measurement, not a benchmark of the user's selected-folder
+workspace or its GitHub round trip. Evidence is in the ignored
+`test-results/unchanged-preparation-browser.json`.
+
+Regression coverage checks unchanged runs without processing/saves, selective
+nickname changes, GitHub changes, missing assets, freshness, cancellation,
+conflict protection, and the browser reload/compact-result path.
+
+## Earlier live-source measurements
+
 Measured 2026-10-06 against live sources on this computer. These are individual
 runs, not averages or a comparison with the previous application version.
 The card is real Fighter Class, AFR 222. No renderer was invoked and every run

@@ -106,7 +106,7 @@ class App:
             try:next(steps)
             except StopIteration as finished:return finished.value
 
-    def prepare_deck_steps(self, ident, progress=lambda *a:None, cancel=lambda:False):
+    def prepare_deck_steps(self, ident, progress=lambda *a:None, cancel=lambda:False, compact=False):
         before=self.ws.deck(ident)
         old={f.get('id'):copy.deepcopy(f.get('compiled') or {}) for c in before.get('cards',[]) for f in c.get('faces',[])}
         self.log.info('PREPARE_BEGIN deck=%s name=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
@@ -119,7 +119,9 @@ class App:
                       (result.get('summary') or {}).get('rendered',0))
         for card in result.get('cards',[]):
             for face in card.get('faces',[]):
-                self._log_face_state('PREPARE_FACE',result,card,face,old.get(face.get('id')))
+                previous=old.get(face.get('id'))
+                if previous!=face.get('compiled'):self._log_face_state('PREPARE_FACE',result,card,face,previous)
+        if compact:return {k:result.get(k) for k in ('id','revision','status','summary')}
         return result
 
     def start_render_session(self, ids, force=False):

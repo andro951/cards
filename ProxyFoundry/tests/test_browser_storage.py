@@ -621,3 +621,58 @@ def test_repeated_database_reads_keep_browser_heap_bounded(static_browser):
     import json
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     (evidence/'database-read-heap.json').write_text(json.dumps({'warmHeap':warmed,'laterHeap':later,'reads':4000,'journal':mode},indent=2),encoding='utf-8')
+
+
+def test_unchanged_preparation_plans_without_card_work_after_reload(static_browser):
+    import json
+    directory,context,origin=static_browser
+    worker=directory/'web/engine-worker.js'
+    worker.write_text(worker.read_text(encoding='utf-8').replace('initialized=true;','self.testPython=python;initialized=true;'),encoding='utf-8')
+    page=context.new_page();page.goto(origin,wait_until='domcontentloaded')
+    page.locator('#import-deck').wait_for(timeout=90000)
+    engine=next(worker for worker in page.workers if 'engine-worker' in worker.url)
+    ident=engine.evaluate('(code)=>testPython.runPython(code)', '''
+import copy,io,time
+from PIL import Image
+from foundry.domain import uid
+from foundry.artwork import ArtworkIndex
+sf={'name':'Cached Creature','layout':'normal','type_line':'Creature — Human','colors':['W'],'mana_cost':'{W}','oracle_text':'Vigilance','rarity':'common','power':'1','toughness':'1','artist':'Test'}
+raw=io.BytesIO();Image.new('RGB',(300,420),'tan').save(raw,'PNG')
+art=app.store.add_asset(raw.getvalue(),'image/png',300,420)
+deck=app.ws.new_deck('Unchanged preparation benchmark')
+card=app.ws.sources.entry(sf);card['faces'][0]['artOverride']=art['id']
+deck['cards']=[card];deck['settings']['artist']='Test'
+app.store.put('decks',deck,deck['revision'])
+deck=app.ws.prepare(deck['id'])
+assert not deck['cards'][0]['faces'][0].get('error')
+cards=[]
+for number in range(121):
+    card=copy.deepcopy(deck['cards'][0]);card['id']=uid();card['faces'][0]['id']=uid()
+    card['faces'][0]['preparationKey']=app.ws._preparation_key(card,deck['settings'],ArtworkIndex({}))
+    cards.append(card)
+deck['cards']=cards
+app.store.put('decks',deck,deck['revision'])
+deck['id']
+''')
+    page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
+    engine=next(worker for worker in page.workers if 'engine-worker' in worker.url)
+    report=json.loads(engine.evaluate('(code)=>testPython.runPython(code)', '''
+import json,time
+deck_id='''+repr(ident)+'''
+revision=app.store.get('decks',deck_id)['revision']
+def unexpected(*a,**k):raise AssertionError('Unchanged card processed')
+app.ws._prepare_card_faces=unexpected
+events=[];started=time.perf_counter()
+steps=app.prepare_deck_steps(deck_id,lambda *a:events.append(a),compact=True)
+while True:
+    try:next(steps)
+    except StopIteration as finished:
+        result=finished.value;break
+assert app.store.get('decks',deck_id)['revision']==revision
+assert len(events)==1 and events[0][0]==121
+assert 'cards' not in result and result['summary']['faces']==121
+json.dumps({'seconds':time.perf_counter()-started,'faces':121,'processed':0,'deckSaves':0,'progressEvents':len(events),'resultBytes':len(json.dumps(result)),'storage':'browser OPFS','scope':'Synthetic prepared deck with shared artwork, after reload'})
+'''))
+    assert report['seconds']<20,report
+    evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
+    (evidence/'unchanged-preparation-browser.json').write_text(json.dumps(report,indent=2),encoding='utf-8')

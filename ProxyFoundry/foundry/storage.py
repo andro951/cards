@@ -412,6 +412,23 @@ class Store:
             row = db.execute('SELECT * FROM assets WHERE id=?', (ident,)).fetchone()
         return {**dict(row), 'url': '/api/assets/' + ident} if row and path.is_file() else None
 
+    def preparation_cache(self, asset_ids, urls):
+        """Read a plan's cache records together and stat each shared file once."""
+        assets={};cached={};asset_ids=set(asset_ids);urls=set(filter(None,urls))
+        def rows(db,table,column,values):
+            values=list(values)
+            for start in range(0,len(values),500):
+                chunk=values[start:start+500]
+                yield from db.execute('SELECT * FROM '+table+' WHERE '+column+' IN ('+','.join('?' for _ in chunk)+')',chunk)
+        with self.connect() as db:
+            for row in rows(db,'http_cache','url',urls):
+                cached[row['url']]=dict(row);asset_ids.add(row['asset_id'])
+            for row in rows(db,'assets','id',asset_ids):
+                assets[row['id']]={**dict(row),'url':'/api/assets/'+row['id']}
+        exists={ident:self.asset_path(ident).is_file() for ident in asset_ids}
+        return ({ident:assets.get(ident) if exists[ident] else None for ident in asset_ids},
+                {url:row for url,row in cached.items() if exists.get(row['asset_id'])})
+
     def cache_get(self, url: str) -> dict[str, Any] | None:
         with self.connect() as db:
             row = db.execute('SELECT * FROM http_cache WHERE url=?', (url,)).fetchone()

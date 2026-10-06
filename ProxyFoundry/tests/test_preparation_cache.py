@@ -195,3 +195,30 @@ def test_cancel_flushes_completed_cards_without_per_card_saves(tmp_path,monkeypa
     assert len(saves)==1
     assert all(c['faces'][0].get('compiled') for c in saved['cards'][:2])
     assert not saved['cards'][2]['faces'][0].get('compiled')
+
+
+def test_unchanged_deck_plans_once_without_processing_or_saving(tmp_path,monkeypatch):
+    ws,deck,_,_=seeded(tmp_path);ws.prepare(deck['id'])
+    deck=ws.deck(deck['id']);deck['cards']=[{**copy.deepcopy(deck['cards'][0]),'id':str(i)} for i in range(25)]
+    ws.store.put('decks',deck,deck['revision']);revision=ws.store.get('decks',deck['id'])['revision']
+    monkeypatch.setattr(ws,'_prepare_card_faces',lambda *a,**k:pytest.fail('Unchanged card processed'))
+    original=ws.store.put
+    def put(kind,*a,**k):
+        if kind=='decks':pytest.fail('Unchanged deck saved')
+        return original(kind,*a,**k)
+    monkeypatch.setattr(ws.store,'put',put);events=[]
+    result=ws.prepare(deck['id'],progress=lambda *a:events.append(a))
+    assert result['revision']==revision and result['summary']['faces']==25
+    assert len(events)==1 and '25 faces unchanged' in events[0][2]
+
+
+def test_plan_processes_only_the_card_with_changed_options(tmp_path,monkeypatch):
+    ws,deck,_,_=seeded(tmp_path);ws.prepare(deck['id']);deck=ws.deck(deck['id'])
+    deck['cards']=[{**copy.deepcopy(deck['cards'][0]),'id':str(i)} for i in range(3)]
+    deck['cards'][1]['faces'][0]['semanticOverrides']={'nickname':'Changed'}
+    ws.store.put('decks',deck,deck['revision']);processed=[];prepare=ws._prepare_card_faces
+    def tracked(d,c,*a,**k):processed.append(c['id']);return prepare(d,c,*a,**k)
+    monkeypatch.setattr(ws,'_prepare_card_faces',tracked)
+    result=ws.prepare(deck['id'])
+    assert processed==['1']
+    assert result['cards'][1]['faces'][0]['semanticOverrides']['nickname']=='Changed'
