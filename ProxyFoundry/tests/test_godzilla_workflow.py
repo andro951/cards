@@ -293,3 +293,19 @@ def test_godzilla_uses_selected_pt_family_and_unoutlined_numbers(tmp_path,colors
     assert pt['color']==('black' if normal else 'white') and pt['outlineWidth']==0
     assert pt['shadowX']==0 and pt['shadowY']==0
     assert data['text']['rules']['y']+data['text']['rules']['height'] < box['bounds']['y']
+
+
+@pytest.mark.parametrize('mana_cost',['','{W}','{3}{W}{W}','{W}{U}{B}{R}{G}'])
+@pytest.mark.parametrize('style',['normal','auto'])
+def test_normal_nickname_bar_keeps_full_width_with_mana(tmp_path,mana_cost,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['W']);source['mana_cost']=mana_cost
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':style,'semanticOverrides':{'nickname':'Guardian'}},
+        ws.validate_settings({}),art)['data']
+    bar=data['frames'][0]['bounds']
+    assert bar['width']==pytest.approx(.9014)
+    assert bar['x']+bar['width']/2==pytest.approx(.5001)
+    true_name=data['text']['title']
+    assert true_name['x']+true_name['width']/2==pytest.approx(.5)
+    assert true_name['align']=='center'

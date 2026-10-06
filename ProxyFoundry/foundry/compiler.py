@@ -60,6 +60,11 @@ for _group in ('planeswalker','class','battle','flip','station','prepare','modal
     AUTO_TEMPLATE_VERSIONS[_group]=AUTO_TEMPLATE_VERSIONS.get(_group,1)+1
 for _choice in ('godzilla-card','godzilla-land'):
     BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
+# True-name strips use the full title geometry, independent of mana clearance.
+for _group in AUTO_TEMPLATE_VERSIONS:
+    AUTO_TEMPLATE_VERSIONS[_group]+=1
+for _choice in BUILTIN_TEMPLATE_VERSIONS:
+    BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 AUTO_TEMPLATE_VERSIONS['station']+=1
 BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=2
 
@@ -2048,9 +2053,12 @@ def _nickname_text(data,sem,group,force=False):
         'width':old.get('width',.8292),'height':old.get('height',.0543),
         'oneLine':True,'font':old.get('font','belerenb'),'size':old.get('size',.0381)}
     main=text['nickname']
+    # The native M15 title text is narrowed for mana before this overlay runs.
+    # Its physical title bar still spans the complete portrait title region.
+    title_width=.8292 if abs(main['x']-.0854)<.0001 else main['width']
     text['title']={
         'name':'Title','text':true_name,'x':main['x']+.0546,
-        'y':main['y']+main['height']+.0064,'width':max(.1,main['width']-.1092),'height':.0243,
+        'y':main['y']+main['height']+.0064,'width':max(.1,title_width-.1092),'height':.0243,
         'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
         'shadowX':.0014,'shadowY':.001,'align':'center',
     }
@@ -2227,7 +2235,7 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
             return True
     code=_nickname_code(sem)
     main=data['text']['nickname']
-    bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':main['width']+.0722,'height':main['height']+.051}
+    bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':data['text']['title']['width']+.1814,'height':main['height']+.051}
     real_name_bar={
         'name':'Nickname Title',
         'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
