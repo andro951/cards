@@ -51,7 +51,7 @@ AUTO_TEMPLATE_VERSIONS['token']=6
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=4
 for _group in ('class','saga','saga-creature'):
-    AUTO_TEMPLATE_VERSIONS[_group]+=1
+    AUTO_TEMPLATE_VERSIONS[_group]+=2
 # Real-name addon bars now follow the shared two-color transition.
 for _group in AUTO_TEMPLATE_VERSIONS:
     AUTO_TEMPLATE_VERSIONS[_group]+=1
@@ -1766,14 +1766,14 @@ _CLASS_MIN_FONT_SIZE=0.024
 _CLASS_FONT_STEP=0.0005
 
 
-def _shared_class_text_layout(texts):
+def _shared_class_text_layout(texts, start_y=_CLASS_TEXT_START_Y):
     """Balance Class separators so all ability text can share one font size."""
     if not texts:
         return {'heights':[],'size':_CLASS_ABILITY_FONT_SIZE,'required':[],'lines':[]}
 
     separator_px=max(0,len(texts)-1)*_CLASS_SEPARATOR_HEIGHT*native.CARD_HEIGHT
     available_total=int(round(
-        (_CLASS_TEXT_END_Y-_CLASS_TEXT_START_Y)*native.CARD_HEIGHT-separator_px
+        (_CLASS_TEXT_END_Y-start_y)*native.CARD_HEIGHT-separator_px
     ))
     if available_total<=0:
         raise ValidationError('Class ability region has no usable text height.')
@@ -2269,6 +2269,36 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     return True
 
 
+def reserve_structural_true_name_space(data):
+    """Reflow vertical abilities below the added strip, preserving their bottom."""
+    text=data.get('text',{})
+    offset=_NICKNAME_TITLE_BOUNDS['height']-.069
+    if data.get('class'):
+        count=data['class']['count']
+        start=_CLASS_TEXT_START_Y+offset
+        fields=[text[f'level{i}c'] for i in range(count+1)]
+        layout=_shared_class_text_layout([field['text'] for field in fields],start)
+        y=start
+        for i,(field,height) in enumerate(zip(fields,layout['heights'])):
+            inset=_CLASS_FIRST_TEXT_TOP_INSET_PX/native.CARD_HEIGHT if i==0 else 0
+            field.update(y=y+inset,height=height/native.CARD_HEIGHT-inset,size=layout['size'])
+            if i:
+                for suffix in ('a','b'):text[f'level{i}{suffix}']['y']=y-.0361
+            y+=height/native.CARD_HEIGHT+_CLASS_SEPARATOR_HEIGHT
+    elif data.get('saga'):
+        fields=[text[f'ability{i}'] for i in range(data['saga']['count'])]
+        if not fields:return
+        bottom=fields[-1]['y']+fields[-1]['height']
+        start=fields[0]['y']+offset
+        layout=native.compute_shared_saga_layout([field['text'] for field in fields],round((bottom-start)*native.CARD_HEIGHT))
+        y=start
+        for field,height in zip(fields,layout['heights']):
+            field.update(y=y,height=height/native.CARD_HEIGHT,size=layout['size'])
+            y+=height/native.CARD_HEIGHT
+        reminder=text.get('reminder')
+        if reminder:reminder['y']+=offset
+
+
 def custom_data(template,sem,other_faces=None):
     if 'visualRecipe' in template:
         from .visual_templates import compile_visual
@@ -2484,6 +2514,8 @@ class Compiler:
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
                 if choice=='token-full-art':apply_modern_token_text(data,frame_treatment_code(sem))
                 else:apply_full_art_text(data)
+        if nickname_applied and (data.get('class') or data.get('saga')):
+            reserve_structural_true_name_space(data)
         if choice.startswith('godzilla-'):
             apply_universal_frame_color_treatment(data,sem)
         full_card_art=(

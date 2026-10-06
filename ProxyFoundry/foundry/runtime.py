@@ -175,6 +175,13 @@ class Runtime:
                 # a newer CardConjurer fork pinned to an immutable commit.
                 url='https://raw.githubusercontent.com/'+self.COLORLESS_SAGA_CREATURE_REPO+'/'+self.COLORLESS_SAGA_CREATURE_COMMIT+quote(path,safe='/')
                 raw,mime,meta=self.net.fetch(url,immutable=True)
+        if path=='/js/frames/versionClass.js':
+            text=raw.decode('utf-8')
+            anchor="card.text['level' + i + 'c'].height = height || 1;"
+            if text.count(anchor)!=1:
+                raise ValidationError('Pinned Class renderer changed unexpectedly.')
+            # Keep unused levels empty across repeated native input synchronization.
+            raw=text.replace(anchor,"card.text['level' + i + 'c'].height = height || 0;").encode()
         mime={'.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.ttf':'font/ttf','.otf':'font/otf','.woff':'font/woff','.woff2':'font/woff2'}.get('.'+path.rsplit('.',1)[-1].lower(),mimetypes.guess_type(path)[0] or mime)
         with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False)}
         return raw,mime
