@@ -186,6 +186,16 @@
       await yieldToInput();
     }
   }
+  async function paintFace(watermark=false){
+    const paintFrames=window.drawFrames,paintCard=window.drawCard;
+    //Text and footer updates request redundant compositing. Paint once after all layers settle.
+    window.drawFrames=()=>{};window.drawCard=()=>{};
+    try{
+      await window.drawText();await window.bottomInfoEdited();
+      if(watermark)await window.watermarkEdited();
+    }finally{window.drawFrames=paintFrames;window.drawCard=paintCard;}
+    paintFrames();
+  }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
     clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
@@ -211,7 +221,7 @@
       // Stop the native 500ms debounce and perform its own final redraw, in order.
       S.phase='render';if(window.writingText)clearTimeout(window.writingText);
       await measureNative('native.first-draw',request.key,async()=>{
-        await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
+        await paintFace(true);
       });
       symbolRuntimeSnapshot('after-first-draw',request.key,data);
       await measureNative('native.readiness',request.key,async()=>{await scriptsSettled();await readyImages(imagesFor(window.card,usedSymbols(window.card)));await fontsReady(window.card);});
@@ -219,7 +229,7 @@
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
       if(window.__PF_PREPARE_VECTORS)await window.__PF_PREPARE_VECTORS();
       await measureNative('native.final-draw',request.key,async()=>{
-        await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
+        await paintFace();
       });
       symbolRuntimeSnapshot('after-final-draw',request.key,data);
       const errors=S.errors.filter(x=>x.phase!=='bootstrap');

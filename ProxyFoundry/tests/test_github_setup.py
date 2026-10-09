@@ -1,5 +1,6 @@
 """GitHub bundles stage a complete setup without ever changing a saved deck."""
 import copy
+import hashlib
 import io
 import json
 import os
@@ -81,6 +82,10 @@ class BundleRemote:
         self.calls.append(url)
         if url == 'https://api.github.com/repos/' + self.repo:
             return json.dumps({'default_branch': self.ref}).encode(), 'application/json', {}
+        commit=hashlib.sha1(json.dumps(self.rows,sort_keys=True).encode()+b''.join(self.images[key] for key in sorted(self.images))).hexdigest()
+        if url=='https://api.github.com/repos/'+self.repo+'/commits/'+quote(self.ref,safe=''):
+            return json.dumps({'sha':commit}).encode(),'application/json',{}
+        url=url.replace('/'+commit+'/', '/'+quote(self.ref,safe='')+'/').replace('?ref='+commit,'?ref='+quote(self.ref,safe=''))
         for path, rows in self.rows.items():
             api = 'https://api.github.com/repos/' + self.repo + '/contents/' + quote(path, safe='/') + '?ref=' + quote(self.ref, safe='')
             if url == api:
@@ -476,3 +481,47 @@ def test_empty_symbol_folder_does_not_enable_single_symbol_override(tmp_path):
     ws=workspace(tmp_path,remote)
     with pytest.raises(ValidationError,match='one-image symbol generation is no longer supported'):
         import_github_setup(ws,{'url':remote.url})
+
+
+def test_same_commit_reuses_setup_images_without_download_or_decode(tmp_path,monkeypatch):
+    remote=BundleRemote(back='icon',data={'version':1,'artist':'Deck artist','cards':[]})
+    ws=workspace(tmp_path,remote)
+    first=import_github_setup(ws,{'url':remote.url})
+    remote.calls.clear()
+    def unexpected(*args,**kwargs):raise AssertionError('An unchanged image was decoded again')
+    monkeypatch.setattr('foundry.github_setup.ingest_image',unexpected)
+    second=import_github_setup(ws,{'url':remote.url})
+    assert second==first
+    assert remote.calls==['https://api.github.com/repos/owner/repo/commits/main']
+
+def test_same_commit_repairs_missing_processed_symbol(tmp_path):
+    remote=BundleRemote();ws=workspace(tmp_path,remote)
+    first=import_github_setup(ws,{'url':remote.url})
+    ws.store.asset_path(first['settings']['symbols']['rare']).unlink()
+    second=import_github_setup(ws,{'url':remote.url})
+    assert ws.store.asset(second['settings']['symbols']['rare'])
+
+
+def test_setup_network_batch_finishes_all_fetches_before_writing(tmp_path):
+    store=Store(tmp_path);writes=[];original=store.add_asset
+    store.add_asset=lambda *a,**k:(writes.append(True),original(*a,**k))[1]
+    def transport(url):raise AssertionError('Individual transport used')
+    urls=['https://raw.githubusercontent.com/o/r/main/a.png','https://raw.githubusercontent.com/o/r/main/b.png']
+    def batch(requested):
+        assert requested==urls and not writes
+        return {url:(png(),'image/png',{}) for url in urls}
+    transport.fetch_many=batch
+    net=Network(store,transport=transport)
+    assert set(net.fetch_many_immutable(urls))==set(urls)
+    transport.fetch_many=lambda urls:(_ for _ in ()).throw(AssertionError('Cached files fetched'))
+    assert set(net.fetch_many_immutable(urls))==set(urls)
+
+
+def test_setup_failed_batch_does_not_commit_downloads(tmp_path):
+    store=Store(tmp_path)
+    def transport(url):raise AssertionError('Individual transport used')
+    def batch(urls):raise ValueError('Download failed')
+    transport.fetch_many=batch
+    url='https://raw.githubusercontent.com/o/r/main/a.png'
+    with pytest.raises(ValueError,match='Download failed'):Network(store,transport=transport).fetch_many_immutable([url])
+    assert store.cache_get(url) is None

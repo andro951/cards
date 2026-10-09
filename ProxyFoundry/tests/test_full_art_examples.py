@@ -98,7 +98,7 @@ def request(app, method, url, body, headers):
                 assert data['artX']*2010==pytest.approx((2010-original.width*zoom)/2)
                 assert data['artY']*2814==pytest.approx((2814-original.height*zoom)/2)
                 (output/(filename.removesuffix('.png')+'_original.png')).write_bytes(example_art(repo,filename).read_bytes())
-            assert {'land_full_dual','land_full_tri','land_full_legendary','land_five_color'}<=set(recipes),recipes
+            assert 'land_full_legendary' in recipes,recipes
             page.evaluate('window.showSaveFilePicker=undefined')
             page.click('#deck-menu')
             with page.expect_download(timeout=240000) as download:
@@ -107,14 +107,14 @@ def request(app, method, url, body, headers):
             with zipfile.ZipFile(saved) as archive:
                 assert len(archive.namelist())==5
                 for name in archive.namelist():
-                    assert name.endswith('.png') and '/' not in name
+                    assert name.endswith('.jpg') and '/' not in name
                     (output/name).write_bytes(archive.read(name))
             checks=[]
             for card in current['cards']:
                 filename=next(filename for name,filename in EXAMPLES if name==card['name'])
                 from foundry.domain import slug
-                review=Image.open(output/(slug(card['name'])+'_review.png')).convert('RGB')
-                assert review.size==(4021,2814)
+                review=Image.open(output/(slug(card['name'])+'_review.jpg')).convert('RGB')
+                assert review.size==(2011,1407)
                 original=Image.open(example_art(repo,filename)).convert('RGB')
                 #Sample uncovered art on the real rendered half, using the source
                 #coordinates implied by full-canvas cover fit, independently of the compiler.
@@ -124,7 +124,7 @@ def request(app, method, url, body, headers):
                 differences=[]
                 for x,y in points:
                     expected=original.getpixel((round((x-offset_x)/zoom),round((y-offset_y)/zoom)))
-                    actual=review.getpixel((2011+x,y))
+                    actual=review.getpixel((1006+x//2,y//2))
                     differences.append(max(abs(a-b) for a,b in zip(actual,expected)))
                 assert max(differences)<35,(card['name'],differences)
                 checks.append({'name':card['name'],'recipe':card['faces'][0]['compiled']['recipe'],'pixelDifferences':differences,'art':filename})

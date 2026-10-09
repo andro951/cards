@@ -6,7 +6,7 @@ from pathlib import Path,PurePosixPath
 from PIL import Image
 from .domain import *
 from .storage import Store,display_name
-from .network import Network
+from .network import Network,validate_remote_url
 from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_variants
 from .sources import Sources
 from .artwork import ArtworkIndex,build_review,face_key
@@ -16,6 +16,7 @@ from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
+from .compiler import RETIRED_BUILTINS
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -159,6 +160,8 @@ class Workspace:
         }
         s['artist']=credit_text(s.get('artist'))
         for group,choice in s.get('templateRules',{}).items():
+            choice=RETIRED_BUILTINS.get(choice,choice)
+            s['templateRules'][group]=choice
             if group not in GROUP_LABELS:raise ValidationError('Unknown template group '+str(group))
             if choice not in {t['id'] for t in BUILTINS} and not self.store.get('templates',choice):raise ValidationError('A selected custom template is missing.')
             builtin=next((t for t in BUILTINS if t['id']==choice),None)
@@ -1259,15 +1262,16 @@ class Workspace:
         raw,_,_=self.net.fetch_transient(reference_url)
         reference=decode_image(raw)
         ours=decode_image(self.store.asset_path(render['asset_id']).read_bytes())
-        if reference.size!=ours.size:
-            reference=reference.resize(ours.size,Image.Resampling.LANCZOS)
-        canvas=Image.new('RGBA',(ours.width*2+1,ours.height),(0,0,0,255))
+        size=(max(1,ours.width//2),max(1,ours.height//2))
+        reference=reference.resize(size,Image.Resampling.LANCZOS)
+        ours=ours.resize(size,Image.Resampling.LANCZOS)
+        canvas=Image.new('RGB',(size[0]*2+1,size[1]),(0,0,0))
         canvas.paste(reference,(0,0),reference)
-        canvas.paste(ours,(ours.width+1,0),ours)
-        out=io.BytesIO();canvas.save(out,'PNG');return out.getvalue()
+        canvas.paste(ours,(size[0]+1,0),ours)
+        out=io.BytesIO();canvas.save(out,'JPEG',quality=95,subsampling=0);return out.getvalue()
 
     def review_download_file(self,token,filename):
-        if not re.fullmatch(r'[-a-f0-9]{36}',str(token)) or not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:zip|png)',str(filename)):
+        if not re.fullmatch(r'[-a-f0-9]{36}',str(token)) or not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:zip|png|jpg)',str(filename)):
             raise ValidationError('Invalid review download.')
         return self.store.home/'tmp'/'review-downloads'/(token+'_'+filename)
 
@@ -1309,7 +1313,7 @@ class Workspace:
         render=self._review_render(face,d['name'])
         refresh=bool(d.get('settings',{}).get('refreshData',False))
         raw=self._review_composite(reference_url,render,refresh)
-        base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.png'
+        base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.jpg'
         token,out=self._review_download(filename)
         try:out.write_bytes(raw)
         except Exception:out.unlink(missing_ok=True);raise
@@ -1321,19 +1325,17 @@ class Workspace:
         while True:
             try:next(steps)
             except StopIteration as finished:return finished.value
-    def review_images_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
+    def _review_items(self,ident):
         d=self.deck(ident)
         if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before downloading review images.')
-        stem=slug(d['name'])[:80] or 'deck'
-        archive_name='BulkProxyForge_Review_Images_'+stem+'_'+uid()[:8]+'.zip'
-        names=set();refresh=bool(d.get('settings',{}).get('refreshData',False))
+        names=set()
         dfc_layouts={'transform','modal_dfc','double_faced_token','reversible_card'}
 
         def unique_name(face_name,sf,card_id):
-            base=slug(face_name) or 'card';name=base+'_review.png'
+            base=slug(face_name) or 'card';name=base+'_review.jpg'
             if name in names:
                 suffix=slug(str(sf.get('set',''))+'_'+str(sf.get('collector_number',''))+'_'+card_id[:8])
-                name=base+'_'+suffix+'_review.png'
+                name=base+'_'+suffix+'_review.jpg'
             names.add(name);return name
 
         items=[]
@@ -1353,6 +1355,33 @@ class Workspace:
                 back=faces[1]
                 items.append((unique_name(back.get('name',c['name']+' back'),sf,c['id']),back.get('name',c['name']),back_url,self._review_render(back,d['name'])))
 
+        return d,items
+
+    def review_plan(self,ident,card_id=None,face_id=None):
+        if card_id:
+            d=self.deck(ident)
+            c=next((c for c in d.get('cards',[]) if c['id']==card_id),None)
+            if not c:raise ValidationError('Card no longer exists.')
+            faces=c.get('faces') or []
+            face=next((f for f in faces if f.get('id')==face_id),None) if face_id else next(iter(faces),None)
+            if not face:raise ValidationError('Card face no longer exists.')
+            sf=c['scryfall'];sf_faces=sf.get('card_faces') or [sf]
+            index=min(max(int(face.get('index',0) or 0),0),len(sf_faces)-1)
+            source=sf if index==0 and (sf.get('image_uris') or {}).get('png') else sf_faces[index]
+            url=(source.get('image_uris') or {}).get('png')
+            if not url:raise ValidationError('Selected printing has no full-card image for this face.')
+            filename=(slug(face.get('name',c['name'])) or 'card')+'_review.jpg'
+            items=[(filename,face.get('name',c['name']),url,self._review_render(face,d['name']))]
+        else:
+            d,items=self._review_items(ident)
+            filename='BulkProxyForge_Review_Images_'+(slug(d['name'])[:80] or 'deck')+'_'+uid()[:8]+'.zip'
+        if not items:raise ValidationError(d['name']+': deck has no review images to export.')
+        return {'filename':filename,'items':[{'filename':name,'name':label,'reference':validate_remote_url(url),'assetId':render['asset_id']} for name,label,url,render in items]}
+
+    def review_images_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
+        d,items=self._review_items(ident)
+        refresh=bool(d.get('settings',{}).get('refreshData',False))
+        archive_name='BulkProxyForge_Review_Images_'+(slug(d['name'])[:80] or 'deck')+'_'+uid()[:8]+'.zip'
         total=len(items)
         if not total:raise ValidationError(d['name']+': deck has no review images to export.')
         token,out=self._review_download(archive_name)

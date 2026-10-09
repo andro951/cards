@@ -16,7 +16,7 @@ self.addEventListener('fetch',event=>{
   if(url.origin!==self.location.origin)return;
   if(basePath&&/^\/(site|web)\//.test(url.pathname)){event.respondWith(fetch(basePath+url.pathname+url.search));return;}
   const path=basePath&&url.pathname.startsWith(basePath+'/')?url.pathname.slice(basePath.length):url.pathname;
-  if(!dynamic.test(path)&&path!=='/workspace-io')return;
+  if(!dynamic.test(path)&&path!=='/workspace-io'&&path!=='/github-setup-fetch')return;
   event.respondWith(handle(event));
 });
 
@@ -27,6 +27,34 @@ async function handle(event){
 
 async function handleRequest(event){
   const url=new URL(event.request.url);
+  const route=basePath&&url.pathname.startsWith(basePath+'/')?url.pathname.slice(basePath.length):url.pathname;
+  if(route===`/github-setup-fetch`) {
+    const urls=await event.request.json();
+    if(event.request.method!==`POST`||!Array.isArray(urls)||urls.length>6||urls.some(value=>{
+      const remote=new URL(value);
+      return remote.protocol!==`https:`||remote.hostname!==`raw.githubusercontent.com`||remote.username||remote.password||remote.port;
+    }))
+      throw new Error(`Invalid GitHub setup batch.`);
+
+    const files=await Promise.all(urls.map(async address=>{
+      const response=await fetch(address);
+      if(!response.ok)
+        throw new Error(`HTTP ${response.status} ${address}`);
+
+      if(Number(response.headers.get(`Content-Length`))>64*1024*1024)
+        throw new Error(`GitHub setup file is too large.`);
+
+      const bytes=new Uint8Array(await response.arrayBuffer());
+      if(!bytes.length||bytes.length>64*1024*1024)
+        throw new Error(`GitHub setup file is empty or too large.`);
+
+      return {bytes,mime:response.headers.get(`Content-Type`)||`application/octet-stream`};
+    }));
+    const header=new TextEncoder().encode(JSON.stringify(files.map(file=>({size:file.bytes.length,mime:file.mime}))));
+    const size=new Uint8Array(4);new DataView(size.buffer).setUint32(0,header.length);
+    return new Response(new Blob([size,header,...files.map(file=>file.bytes)]),{headers:{'Content-Type':`application/octet-stream`}});
+  }
+
   const source=event.clientId?await self.clients.get(event.clientId):null;
   const nestedOwner=url.searchParams.get('owner')||(source?.frameType==='nested'?new URL(source.url).searchParams.get('owner'):null);
   const owned=nestedOwner&&owners.get(nestedOwner)?await self.clients.get(owners.get(nestedOwner)):null;

@@ -6,7 +6,7 @@ only after success. Failed or cancelled imports cannot half-update a deck.
 """
 from __future__ import annotations
 
-import json
+import json,re
 from pathlib import PurePosixPath
 from urllib.parse import quote
 
@@ -147,13 +147,21 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
         yield
         check_cancel()
     ref = quote(loc['ref'], safe='')
+    commit=loc['ref'].lower()
+    if not re.fullmatch(r'[0-9a-f]{40}',commit):
+        resolved=net.json('https://api.github.com/repos/'+loc['repo']+'/commits/'+ref,ttl=0)
+        commit=str(resolved.get('sha','')).lower() if isinstance(resolved,dict) else ''
+        if not re.fullmatch(r'[0-9a-f]{40}',commit):
+            raise ValidationError('GitHub did not return an exact commit for this setup.')
+    yield
+    check_cancel()
     base = 'https://github.com/' + loc['repo'] + '/tree/' + ref
     root_url = base + ('/' + quote(loc['folder'], safe='/') if loc['folder'] else '')
 
     def folder_rows(folder):
         check_cancel()
         api = 'https://api.github.com/repos/' + loc['repo'] + '/contents/'
-        rows = net.json(api + quote(folder, safe='/') + '?ref=' + ref, ttl=0)
+        rows = net.json(api + quote(folder, safe='/') + '?ref=' + commit, immutable=True)
         yield
         check_cancel()
         if not isinstance(rows, list):
@@ -263,25 +271,43 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
         nonlocal done
         check_cancel()
         progress(done, total, 'Importing ' + row['name'])
-        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + ref + '/' + quote(row['path'], safe='/')
-        raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
+        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + commit + '/' + quote(row['path'], safe='/')
+        from .domain import stable_hash
+        cache_key=stable_hash({'url':raw_url,'trim':trim_transparent_padding,'version':1})
+        cached=store.get('github-setup-images',cache_key)
+        image=store.asset(cached['assetId']) if cached else None
+        if image:
+            done+=1;progress(done,total,'Reused '+row['name']);yield
+            check_cancel()
+            return image
+        raw, _, _ = fetched[raw_url]
         check_cancel()
         try:
             image = ingest_image(store, raw, trim_transparent_padding=trim_transparent_padding)
         except ValidationError as exc:
             raise ValidationError(row['name'] + ': ' + str(exc)) from exc
+        store.put('github-setup-images',{'id':cache_key,'assetId':image['id']})
         done += 1
         progress(done, total, 'Imported ' + row['name'])
         yield
         check_cancel()
         return image
 
+    # Resolve the small manifest first, then fetch missing setup files together.
+    download_rows=([data_row] if data_row else [])+list(symbol_rows.values())+([back or icon] if back or icon else [])
+    urls=['https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(row['path'],safe='/') for row in download_rows]
+    check_cancel()
+    progress(0,total,'Downloading GitHub setup files')
+    fetched=net.fetch_many_immutable(urls)
+    yield
+    check_cancel()
+
     card_data = []
     if data_row:
         check_cancel()
         progress(done, total, 'Importing data.json')
-        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + ref + '/' + quote(data_row['path'], safe='/')
-        raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
+        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + commit + '/' + quote(data_row['path'], safe='/')
+        raw, _, _ = fetched[raw_url]
         check_cancel()
         card_data = parse_card_data_json(raw)
         deck_id = payload.get('deckId')

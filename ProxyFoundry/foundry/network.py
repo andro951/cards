@@ -117,6 +117,27 @@ class Network:
             self.misses += 1
             return body, mime, {'cache': False, 'fetchedAt': now}
 
+    def fetch_many_immutable(self,urls):
+        urls=list(dict.fromkeys(validate_remote_url(url) for url in urls))
+        result={};missing=[]
+        for url in urls:
+            old=self.store.cache_get(url)
+            if old and self.store.asset(old['asset_id']):result[url]=self.fetch(url,immutable=True)
+            else:missing.append(url)
+        if not missing:return result
+        batch=getattr(self.transport,'fetch_many',None)
+        if batch:
+            received=batch(missing)
+        else:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=min(6,len(missing))) as pool:
+                received=dict(zip(missing,pool.map(self.transport,missing)))
+        # All downloads finish before any newly fetched response is committed.
+        staged=Network(self.store,transport=lambda url:received[url])
+        for url in missing:result[url]=staged.fetch(url,immutable=True)
+        self.misses+=staged.misses
+        return result
+
     @timed('network.transient')
     def fetch_transient(self, url: str) -> tuple[bytes, str, dict[str, Any]]:
         """Fetch a remote asset without adding it to the persistent workspace cache."""

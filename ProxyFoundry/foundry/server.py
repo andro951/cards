@@ -532,7 +532,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
-        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
+        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/([A-Za-z0-9_.-]+\.(?:zip|png|jpg))', p):
             return self.file(self.app.ws.review_download_file(m[1],m[2]),filename=m[2])
         if m := re.fullmatch(r'/api/files/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
             mime='application/zip' if m[1].lower().endswith('.zip') else 'image/png'
@@ -677,6 +677,8 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/review-plan', p):
+            return self.respond(self.app.ws.review_plan(m[1],d.get('cardId'),d.get('faceId')))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|cropped-art|review-images)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))

@@ -46,6 +46,7 @@ class BrowserStore(Store):
         self.persist=persist
         self.copy_file=copy_file
         self._checkpoint_digest=None
+        self._defer_checkpoint=0
         self._render_batch=False
         self._render_rollback=[]
         self._render_cleanup=[]
@@ -53,7 +54,10 @@ class BrowserStore(Store):
         #The browser serializes requests and owns the only SQLite writer.
         #Repeated WAL opens grow the Wasm heap; a rollback journal keeps
         #transactions without that growth in the browser filesystem.
-        with super().connect() as db:db.execute('PRAGMA journal_mode=DELETE')
+        with super().connect() as db:
+            db.execute('PRAGMA journal_mode=DELETE')
+            from .render_journal import allow_shared_render_files
+            allow_shared_render_files(db)
         self.checkpoint()
 
     def copy_render_file(self,source,destination):
@@ -118,6 +122,21 @@ class BrowserStore(Store):
             self._render_rollback.clear();self._render_cleanup.clear()
             snapshot.unlink(missing_ok=True)
 
+    def batch_import_steps(self,steps):
+        # Only suppress checkpoints inside this job's chunks. Other foreground
+        # jobs retain their normal durability while this generator is suspended.
+        try:
+            while True:
+                self._defer_checkpoint+=1
+                try:
+                    try:value=next(steps)
+                    except StopIteration as finished:return finished.value
+                finally:self._defer_checkpoint-=1
+                yield value
+        finally:
+            steps.close()
+            self.checkpoint()
+
     @contextmanager
     def connect(self):
         changed=False
@@ -128,7 +147,7 @@ class BrowserStore(Store):
 
     @timed('storage.checkpoint')
     def checkpoint(self):
-        if self._render_batch:return
+        if self._render_batch or self._defer_checkpoint:return
         hasher=hashlib.sha256(self.db_path.read_bytes())
         #Committed changes can still be in SQLite's WAL while a connection is open.
         wal=Path(str(self.db_path)+'-wal')
@@ -148,11 +167,17 @@ class BrowserJobs:
     """Queue Python work; the browser's separate control plane stays responsive."""
     def __init__(self, store, publish=lambda job:None, cancelled=lambda ident:False):
         self.store=store;self.jobs={};self.pending={}
-        self.publish=publish;self.cancelled=cancelled
+        self.publish=publish;self.cancelled=cancelled;self.last_log_write={}
 
     def _publish(self,job):
-        (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
-            json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
+        now=time.monotonic()
+        terminal=job['state'] in {'done','failed','cancelled'}
+        #Progress remains live; persisting every message stalls selected-folder IO.
+        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=1:
+            (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
+                json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
+            self.last_log_write[job['id']]=now
+        if terminal:self.last_log_write.pop(job['id'],None)
         self.publish(dict(job))
 
     def start(self,kind,operation,*,priority=0):
@@ -302,7 +327,7 @@ class BrowserHandler(server.Handler):
             data=self.data()
             operation=import_github_setup_steps if path.endswith('github-import') else import_symbol_folder_steps
             return self.respond(self.app.jobs.start('Import GitHub setup' if path.endswith('github-import') else 'Import GitHub set symbols',
-                lambda update,cancel:operation(self.app.ws,data,update,cancel)))
+                lambda update,cancel:self.app.store.batch_import_steps(operation(self.app.ws,data,update,cancel))))
         if path == '/api/orders/build':
             data=self.data()
             return self.respond(self.app.jobs.start('Package paired order',
@@ -371,6 +396,9 @@ class BrowserHandler(server.Handler):
                 try:return self.app.backups.import_selected(saved,data.get('selected'),data.get('replace'),update,cancel)
                 finally:saved.unlink(missing_ok=True)
             return self.respond(self.app.jobs.start('Import from Backup',run))
+        if path == '/api/render-saves/commit':
+            from .render_journal import commit_render_saves
+            return self.respond(commit_render_saves(self.app,strict=True))
         if path == '/api/backups/export':
             data=self.data()
             include=data.get('includeRenders') is True
@@ -416,6 +444,8 @@ def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambd
     app.origin = origin
     app.runtime_origin = origin
     app.runtime.parent_origin = origin
+    from .render_journal import commit_render_saves
+    commit_render_saves(app)
     return app
 
 

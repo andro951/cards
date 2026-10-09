@@ -1,3 +1,5 @@
+import {withGenerationScreen} from './generation-progress.js';
+import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
@@ -53,20 +55,6 @@ function preparationStatus(title,message){
   const detail=document.createElement('p');detail.textContent=message;
   panel.append(heading,detail);main.append(panel);
   return detail;
-}
-function preparationComplete(deck){
-  if(state.route!=='deck'||state.activeDeck?.id!==deck.id||$('.modal')||state.dirty||document.activeElement?.matches('input,textarea,[contenteditable=true]')){
-    const notice=document.createElement('div');notice.className='toast';notice.setAttribute('role','status');
-    const message=document.createElement('span');message.textContent=deck.name+' is ready to review and print.';
-    const view=document.createElement('button');view.textContent='View deck';view.onclick=()=>{notice.remove();nav('deck/'+deck.id+'/cards');};
-    const dismiss=document.createElement('button');dismiss.textContent='×';dismiss.setAttribute('aria-label','Dismiss deck ready notification');dismiss.onclick=()=>notice.remove();
-    notice.append(message,view,dismiss);$('#toast-host').append(notice);return;
-  }
-  const host=modal('Your deck is ready','',{size:'small',footer:'<button class="button primary" id="view-ready-deck">View deck</button>',
-    onClose:()=>true});
-  const body=$('.modal-body',host);
-  const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
-  $('#view-ready-deck').onclick=()=>{closeModal();nav('deck/'+deck.id+'/cards');};
 }
 function chooseLook(manifest,includeOutside=true){
   let choosing=false;
@@ -347,6 +335,7 @@ async function generate(d,artChecked=false){
     if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
     d=await ensureCustomArtCredits(d);if(!d)return;
   }finally{await resume();}
+  const finish=async()=>{
   d=await ensureMetadata(d.id);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
   if(!artChecked&&!await ensureArtworkReady(d.id))return;
@@ -355,11 +344,15 @@ async function generate(d,artChecked=false){
   await renderDecks([d.id],{notify:false,artChecked:true});
   const finished=await api('/api/decks/'+d.id);
   if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
-  if(finished.status==='ready')preparationComplete(finished);
+  if(finished.status==='ready')nav('deck/'+finished.id+'/cards');
+  };
+  if(artChecked||d.settings.source.mode==='scryfall')
+    return withGenerationScreen(d.name,d.summary?.faces||d.cards.length,finish);
+  return finish();
 }
 function deckMenu(d){
   const permanent=true;
-  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Review images place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
+  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size JPEG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
   const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';
@@ -387,8 +380,7 @@ function deckMenu(d){
     let current=await api('/api/decks/'+d.id);
     const needsGeneration=!!current.upgradeRequired||current.status==='draft'||Number(current.summary?.rendered||0)<Number(current.summary?.faces||0);
     if(needsGeneration)throw new Error('Generate images before downloading review images.');
-    const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
-    await downloadExportFile(out);
+    await downloadReview(d.id);
   });
   $('#trash-deck').onclick=()=>{if(state.bootstrap?.browser)return attempt(()=>deleteDeck(d));return attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});};
 }
@@ -588,7 +580,7 @@ async function inspect(deck,card,index=0){
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();if(!f.compiled?.render)throw new Error('Generate images for this card before downloading its review image.');
-    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});await downloadExportFile(out);await showDeck(d.id,'cards');}finally{setBusy(false);}});
+    await downloadReview(d.id,{cardId:c.id,faceId:f.id});await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
   $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{
     syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,selectedArtPrintingId:id,artOverride:null}));

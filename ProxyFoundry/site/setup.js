@@ -1,3 +1,4 @@
+import {withGenerationScreen} from './generation-progress.js';
 import {ensureMetadata,pauseMetadata} from './metadata.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
@@ -494,7 +495,8 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     refreshMetadata(await ensureMetadata(deck.id));
     if(!await reviewArtwork())return;
     if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
-    mark();await persistSetup();await exportPairs();await onSaved(deck,true);
+    mark();await persistSetup();await exportPairs();
+    await withGenerationScreen(deck.name,deck.summary?.faces||deck.cards.length,()=>onSaved(deck,true));
     }finally{generating=false;for(const button of buttons){if(button.isConnected)button.disabled=false;}}
   }
   const actions={deckId:deck.id,root,flush:persistSetup,generate,refreshMetadata,

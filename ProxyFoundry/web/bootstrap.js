@@ -82,6 +82,7 @@ else{
     if(error.name!==`NotFoundError`)throw error;
   });
   const downloadStaging=await browserRoot.getDirectoryHandle(`bulk-proxy-forge-download-staging`,{create:true});
+  window.__pfWorkspaceDirectory=folder||browserRoot;
   const files=new WorkspaceFiles(folder||browserRoot,downloadStaging);
   const pending=new Map();
   const jobs=new Map();

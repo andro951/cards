@@ -1,4 +1,5 @@
 import {api,job,state,toast} from './ui.js';
+import {generationScreen} from './generation-progress.js';
 
 const pending=new Map();
 export function startMetadata(deck){
@@ -9,7 +10,11 @@ export function startMetadata(deck){
   const ready=new Promise(resolve=>{started=resolve;});
   const promise=job('/api/decks/'+deck.id+'/metadata',{}, {label:'Reading card details',
     onStarted:ident=>started(ident),resources:['metadata:'+deck.id],background:true,signal:controller.signal,
-    onProgress:progress=>state.setupActions?.deckId===deck.id&&state.setupActions.metadataProgress?.(progress)
+    onProgress:progress=>{
+      if(state.setupActions?.deckId===deck.id)state.setupActions.metadataProgress?.(progress);
+      const screen=generationScreen.active;
+      if(screen&&!screen.owner&&state.activeDeck?.id===deck.id)screen.update('metadata',progress.done,progress.total);
+    }
   }).then(async()=>{
     const updated=await api('/api/decks/'+deck.id);
     if(state.setupActions?.deckId===deck.id&&state.setupActions.root.isConnected)state.setupActions.refreshMetadata(updated);

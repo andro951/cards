@@ -47,6 +47,19 @@ export function missingCustomArtistFaces(deck){
   }
   return missing;
 }
+//Rebase only the explicit credit edit when background work advances the deck revision.
+async function saveCustomArtCredit(deckId,path,patch){
+  for(let attempt=0;attempt<3;attempt++){
+    const current=await api('/api/decks/'+deckId);
+    const result=await api(path,{...patch,revision:current.revision}).then(
+      deck=>({deck}),error=>({error}));
+    if(!result.error)
+      return result.deck;
+
+    if(result.error.status!==409||attempt===2)
+      throw result.error;
+  }
+}
 export function ensureCustomArtCredits(deck){
   const missing=missingCustomArtistFaces(deck);
   if(!missing.length)return Promise.resolve(deck);
@@ -66,14 +79,14 @@ export function ensureCustomArtCredits(deck){
         if($('#custom-artist-one',host).checked){
           const artist=$('#custom-artist-all',host).value.trim();
           if(!artist)throw new Error('Enter the artist name for the custom artwork.');
-          current=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{artist}});
+          current=await saveCustomArtCredit(deck.id,'/api/decks/'+deck.id+'/save',{settings:{artist}});
         }else{
           const artists=$$('[data-custom-artist]',host).map(input=>input.value.trim());
           const blank=artists.findIndex(value=>!value);
           if(blank>=0)throw new Error('Enter an artist for '+missing[blank].card.name+'.');
           for(let i=0;i<missing.length;i++){
             const item=missing[i];
-            current=await api('/api/decks/'+deck.id+'/cards/'+item.card.id,{revision:current.revision,faceId:item.face.id,artistOverride:artists[i]});
+            current=await saveCustomArtCredit(deck.id,'/api/decks/'+deck.id+'/cards/'+item.card.id,{faceId:item.face.id,artistOverride:artists[i]});
             deck=current;
           }
         }

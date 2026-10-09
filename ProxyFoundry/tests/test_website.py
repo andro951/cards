@@ -84,9 +84,9 @@ def test_static_github_setup_and_review_export_service_foreground_requests(tmp_p
         if not row['serial']:assert row['foregroundSeconds']<.75
 
 
-@pytest.mark.parametrize('stay_on_cards',[False,True,'library'],ids=['other-deck-setup','generation-search','library-to-cards'])
-def test_static_foreground_work_during_real_generation_preserves_setup_and_cancel_owner(tmp_path,stay_on_cards):
-    """Hold actual native generation while operating independent deck UI and jobs."""
+@pytest.mark.parametrize('stay_on_cards',[True,'library'],ids=['deck','library'])
+def test_static_generation_owns_fullscreen_until_cards_are_saved(tmp_path,stay_on_cards):
+    """Hold actual native generation and verify the modal survives until saving finishes."""
     from playwright.sync_api import sync_playwright,expect
     import base64,io
     from PIL import Image
@@ -158,79 +158,20 @@ def request(app,method,url,body,headers):
                 page.wait_for_function("document.querySelector('.render-frame')?.contentWindow.__testNativeHeld",timeout=120000)
                 conflict=page.evaluate("async id=>{const ui=await import('/site/ui.js');try{await ui.api('/api/decks/'+id+'/save',{name:'Must not overwrite'});return '';}catch(error){return error.message;}}",first)
                 assert 'Generate images for' in conflict and 'using this deck' in conflict
-                if stay_on_cards:
-                    page.evaluate("async id=>{location.hash='#deck/'+id+'/cards';}",first)
-                    page.locator('#card-search').wait_for(timeout=15000)
-                    page.locator('#card-search').fill('Concurrent')
-                    page.evaluate("window.originalSearch=document.querySelector('#card-search');window.originalCard=document.querySelector('[data-card]');")
-                    page.keyboard.press('ArrowLeft');caret=page.locator('#card-search').evaluate('(input)=>input.selectionStart')
-                    if stay_on_cards=='library':
-                        page.evaluate("""id=>{window.__failProgressOnce=true;const original=window.fetch;window.fetch=(path,options)=>{
-                            if(path==='/api/decks/'+id&&window.__failProgressOnce){window.__failProgressOnce=false;return Promise.resolve(new Response(JSON.stringify({error:'Test view refresh failure'}),{status:503,headers:{'Content-Type':'application/json'}}));}
-                            return original(path,options);};}""",first)
-                    page.evaluate("document.querySelector('.render-frame').contentWindow.postMessage({type:'__testReleaseNative'},location.origin)")
-                    page.wait_for_function("window.originalCard.querySelector('img')?.getAttribute('src')?.includes('/api/assets/')",timeout=90000)
-                    page.evaluate("async()=>{window.__testUI=await import('/site/ui.js');}")
-                    page.wait_for_function("!window.__testUI.work.busy",timeout=90000)
-                    assert page.evaluate('originalSearch===document.querySelector("#card-search")&&originalCard===document.querySelector("[data-card]")&&document.activeElement===originalSearch')
-                    expect(page.locator('#card-search')).to_have_value('Concurrent')
-                    assert page.locator('#card-search').evaluate('(input)=>input.selectionStart')==caret
-                    expect(page.locator('.count-label')).to_contain_text('1 rendered')
-                    expect(page.get_by_role('dialog',name='Your deck is ready')).to_have_count(0)
-                    if stay_on_cards=='library':
-                        assert page.evaluate('window.__failProgressOnce') is False
-                        expect(page.locator('#toast-host')).to_contain_text('Rendering complete')
-                    else:expect(page.locator('#toast-host')).to_contain_text('ready to review and print')
-                    expect(page.locator('#toast-host .toast')).to_have_count(1)
-                    page.wait_for_function("(()=>{const image=window.originalCard.querySelector('img');return image?.complete&&image.naturalHeight>image.naturalWidth;})()",timeout=30000)
-                    page.screenshot(path=str(ROOT/'test-results/generation-search-retained.png'),full_page=True)
-                    assert not errors,errors
-                    return
-                page.click('.topbar [data-nav=decks]');page.locator('#import-deck').wait_for(timeout=15000)
-                second=import_card();assert first!=second
-                page.click('[data-tab=setup]');page.locator('#setup-state').wait_for(timeout=60000)
-                page.fill('#deck-artist','Keep this unsaved draft')
-                expect(page.locator('#activity-kind')).to_have_text('Render deck')
-                page.evaluate("""async()=>{
-                    const ui=await import('/site/ui.js');
-                    window.__foreground=ui.job('/api/__test__/foreground-job',{}, {label:'Foreground import'})
-                        .then(()=>`done`,error=>error.message);
-                }""")
-                expect(page.locator('#activity-kind')).to_have_text('Foreground import')
-                page.click('#activity-cancel')
-                result=page.evaluate('window.__foreground')
-                assert 'cancelled' in result
-                expect(page.locator('#activity-kind')).to_have_text('Render deck')
-                assert page.evaluate("import('/site/ui.js').then(ui=>!ui.work.renderer.controller.signal.aborted)")
-                queued=page.evaluate("async()=>{const ui=await import('/site/ui.js');return (await ui.api('/api/decks/new',{name:'Queued deck'})).id;}")
-                page.evaluate("""async id=>{
-                    const render=await import('/site/render.js');
-                    window.__queued=render.renderDecks([id]).then(()=>`done`,error=>error.message);
-                }""",queued)
-                page.get_by_role('button',name='Cancel queued Generate images for deck',exact=True).click()
-                assert page.evaluate('window.__queued')=='Queued task cancelled.'
+                screen=page.locator('#generation-screen')
+                expect(screen).to_be_visible()
+                expect(screen.locator('progress')).to_have_count(1)
+                assert screen.evaluate('(dialog)=>dialog.matches(":modal")')
+                page.keyboard.press('Escape')
+                expect(screen).to_be_visible()
+                expect(page.locator('#activity')).not_to_be_visible()
                 page.evaluate("document.querySelector('.render-frame').contentWindow.postMessage({type:'__testReleaseNative'},location.origin)")
-                page.evaluate("async()=>{window.__work=(await import('/site/ui.js')).work;}")
-                page.wait_for_function("!window.__work.busy",timeout=90000)
+                screen.wait_for(state='detached',timeout=90000)
                 ready=page.evaluate("async id=>(await (await fetch('/api/decks/'+id)).json()).status",first)
                 assert ready=='ready',page.locator('body').inner_text()
-                expect(page.locator('#deck-artist')).to_have_value('Keep this unsaved draft')
-                assert page.evaluate("import('/site/ui.js').then(ui=>ui.state.activeDeck.id)")==second
-                saved=page.evaluate("async id=>{const ui=await import('/site/ui.js');await ui.state.setupActions.flush();return (await ui.api('/api/decks/'+id)).settings.artist;}",second)
-                assert saved=='Keep this unsaved draft'
                 expect(page.get_by_role('dialog',name='Your deck is ready')).to_have_count(0)
-                expect(page.locator('#toast-host')).to_contain_text('ready to review and print')
-                evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
-                page.screenshot(path=str(evidence/'foreground-during-generation.png'),full_page=True)
-                page.evaluate("""async()=>{
-                    const ui=await import('/site/ui.js');
-                    window.__restore=ui.job('/api/__test__/foreground-job',{},
-                        {label:'Backup fixture',resources:['workspace']}).then(()=>`done`,error=>error.message);
-                }""")
-                expect(page.locator('#activity-kind')).to_have_text('Backup fixture')
-                page.click('#activity-cancel')
-                assert 'cancelled' in page.evaluate('window.__restore')
-                assert page.evaluate('!window.__work.busy')
+                assert 'ready to review and print' not in page.locator('#toast-host').inner_text()
+                assert 'Rendering complete' not in page.locator('#toast-host').inner_text()
                 assert not errors,errors
             finally:browser.close()
     finally:server.shutdown();server.server_close();thread.join(timeout=5)

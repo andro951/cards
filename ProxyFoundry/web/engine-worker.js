@@ -77,10 +77,22 @@ async function start(folder){
     return {bytes:new Uint8Array(xhr.response),mime:xhr.getResponseHeader('Content-Type')||'application/octet-stream'};
   };
 
+  self.syncGithubBatch=urls=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open(`POST`,`/github-setup-fetch`,false);
+    xhr.responseType=`arraybuffer`;
+    xhr.setRequestHeader(`Content-Type`,`application/json`);
+    xhr.send(String(urls));
+    if(xhr.status!==200)
+      throw new Error(`GitHub setup download failed (HTTP ${xhr.status}).`);
+
+    return new Uint8Array(xhr.response);
+  };
+
   python.runPython(`
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
-from js import syncFetch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile
+from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile
 import base64, json, uuid
 from pathlib import Path
 from foundry.browser import create_app, request
@@ -98,6 +110,18 @@ def buffer_bytes(buffer):
 def transport(url):
     result = syncFetch(url)
     return buffer_bytes(result.bytes), str(result.mime), {}
+def transport_many(urls):
+    import struct
+    raw=buffer_bytes(syncGithubBatch(json.dumps(urls)))
+    size=struct.unpack('>I',raw[:4])[0]
+    rows=json.loads(raw[4:4+size]);offset=4+size;result={}
+    if len(rows)!=len(urls):raise ValueError('Incomplete GitHub setup batch')
+    for url,row in zip(urls,rows):
+        end=offset+row['size']
+        if end>len(raw):raise ValueError('Truncated GitHub setup batch')
+        result[url]=(raw[offset:end],row['mime'],{});offset=end
+    return result
+transport.fetch_many=transport_many
 app = create_app('/workspace', transport, str(location.origin),
     lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
     lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile)

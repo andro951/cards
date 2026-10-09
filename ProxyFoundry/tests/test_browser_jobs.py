@@ -1,3 +1,5 @@
+from pathlib import Path
+import pytest
 """Browser jobs publish durable progress without running inside start()."""
 from foundry.browser import BrowserJobs
 from foundry.storage import Store
@@ -218,3 +220,59 @@ def test_local_server_cancel_releases_paused_metadata(tmp_path):
         jobs.pause(ident);release.set();assert not finished.wait(.1)
         jobs.cancel(ident);assert finished.wait(2)
     finally:jobs.close()
+
+
+def test_progress_is_live_but_disk_log_writes_are_batched(tmp_path,monkeypatch):
+    import json
+    from pathlib import Path
+    writes=[];live=[];original=Path.write_text
+    def write(path,*args,**kwargs):
+        if path.name.startswith('job-'):writes.append(path.name)
+        return original(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'write_text',write)
+    monkeypatch.setattr('foundry.browser.time.monotonic',lambda:100)
+    jobs=BrowserJobs(Store(tmp_path),publish=lambda value:live.append(value.copy()))
+    def operation(progress,cancel):
+        for i in range(120):
+            progress(i+1,120,'Card saved');yield
+        return {'ok':True}
+    ident=jobs.start('Test',operation)['id'];jobs.run_pending()
+    assert len(writes)==2
+    assert len(live)==123 and live[-2]['done']==120
+    saved=json.loads((tmp_path/'logs'/('job-'+ident+'.json')).read_text())
+    assert saved['state']=='done' and saved['done']==120 and saved['result']=={'ok':True}
+
+
+def test_import_batch_checkpoints_once_and_foreground_remains_durable(tmp_path):
+    from foundry.browser import BrowserStore
+    snapshots=[]
+    store=BrowserStore(tmp_path,lambda path:snapshots.append(Path(path).read_bytes()))
+    snapshots.clear()
+    def operation():
+        store.put('test',{'id':'one'})
+        store.put('test',{'id':'two'})
+        yield
+        store.put('test',{'id':'three'})
+        return 'done'
+    steps=store.batch_import_steps(operation())
+    next(steps)
+    assert not snapshots
+    store.put('foreground',{'id':'saved'})
+    assert len(snapshots)==1
+    with pytest.raises(StopIteration) as finished:next(steps)
+    assert finished.value.value=='done' and len(snapshots)==2
+    assert store._defer_checkpoint==0
+
+
+def test_import_batch_cancel_restores_checkpoint_behavior(tmp_path):
+    from foundry.browser import BrowserStore
+    snapshots=[]
+    store=BrowserStore(tmp_path,lambda path:snapshots.append(True));snapshots.clear()
+    def operation():
+        store.put('cache',{'id':'download'})
+        yield
+        raise AssertionError('Cancelled generator resumed')
+    steps=store.batch_import_steps(operation());next(steps);steps.close()
+    assert len(snapshots)==1 and store._defer_checkpoint==0
+    store.put('test',{'id':'after'})
+    assert len(snapshots)==2

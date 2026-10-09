@@ -3,6 +3,26 @@ import pytest
 from foundry.runtime import Runtime
 from foundry.domain import ValidationError,CC_COMMIT,COMPAT_COMMIT
 
+
+def test_true_name_color_mask_preserves_outline_interior_and_antialiasing():
+    import io
+    from PIL import Image
+    fixture=Image.new('RGBA',(5,1))
+    fixture.putdata([(252,254,255,255),(0,0,0,255),(0,0,0,127),(126,127,128,255),(255,255,255,0)])
+    output=io.BytesIO();fixture.save(output,'PNG')
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert url.endswith('/img/frames/m15/nickname/addons/m15NicknameTitleW.png')
+            return output.getvalue(),'image/png',{}
+    runtime=Runtime(FakeNet())
+    neutral,mime=runtime.fetch('/img/frames/proxy-foundry/land-name-neutral.png')
+    mask,_=runtime.fetch('/img/frames/proxy-foundry/land-name-color-mask.png')
+    neutral=Image.open(io.BytesIO(neutral));mask=Image.open(io.BytesIO(mask))
+    assert mime=='image/png' and neutral.size==fixture.size
+    assert [neutral.getpixel((x,0))[3] for x in range(5)]==[255,255,127,255,0]
+    assert [mask.getpixel((x,0))[3] for x in range(5)]==[255,0,0,128,0]
+    assert all(neutral.getpixel((x,0))[:3]==(0,0,0) for x in range(5))
+
 def test_worker_host_preserves_controls_without_starting_native_dom_renderer():
     runtime=Runtime(None)
     runtime.fetch=lambda path:(b'<div><input id="native-choice" value="42"><script>untrusted()</script></div>','text/html')

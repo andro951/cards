@@ -7,6 +7,7 @@ from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop
 from .legacy import compiler as native,ingest
 from .credits import resolve_credit
 from .template_model import apply_regions, select_variant
+from .land_frame import apply_compact_land_header,apply_textless_land_adjustments
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -17,8 +18,10 @@ native.DUAL_PALETTE['R']=(PINLINE_RED_HEX,native.DUAL_PALETTE['R'][1])
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
- {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
- {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
+ # Soft retirement: restore this entry and remove RETIRED_BUILTINS to reconnect the rounded Temple land.
+ # {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
+ {'id':'legend-land','name':'Full-art land','description':'Compact full-art frame with independent legendary crowns and true-name bars.','legendary':True,'groups':'ordinary'}]
+RETIRED_BUILTINS={'land':'legend-land'}
 BUILTINS.extend([
  {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
  {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; a filled textbox whenever rules or flavor text is present.','legendary':True,'groups':['token']},
@@ -46,6 +49,9 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
 BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':11,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
+for _group in ('land','legendary-land','basic-land'):AUTO_TEMPLATE_VERSIONS[_group]+=6
+for _choice in ('normal','land','legend-land','godzilla-card','godzilla-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
+for _choice in ('normal','land','legend-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
 AUTO_TEMPLATE_VERSIONS['token']=7
 AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=4
@@ -68,6 +74,18 @@ for _choice in BUILTIN_TEMPLATE_VERSIONS:
     BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
 AUTO_TEMPLATE_VERSIONS['station']+=1
 BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=2
+# Refresh only this land family and saved selections of the retired family.
+for _group in ('land','legendary-land'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+# Native textless lands: basic subtitle clearance and original-dual type rim.
+for _group in ('land','basic-land'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+
+# Approved compact-land nonlegendary nickname join; refresh affected renders.
+AUTO_TEMPLATE_VERSIONS['land']+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+
+# Basic nickname crop, then addon-only overlap trim; refresh cached renders.
+AUTO_TEMPLATE_VERSIONS['basic-land']+=4
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -596,7 +614,11 @@ def apply_universal_frame_color_treatment(data,sem):
         # independently by their masks.
         crown_family=_crown_family_key(old_src)
         if crown_family:
-            if dual:
+            if len(colors)==3 and 'Land' in set(sem.get('types',[])) and '/proxy-foundry/godzilla/' in old_src:
+                if crown_family not in dualized_crown_families:
+                    rebuilt.extend(_nickname_bar_layers(frame,sem))
+                    dualized_crown_families.add(crown_family);changed=True
+            elif dual:
                 if crown_family in preserved_dual_crown_families:
                     rebuilt.append(copy.deepcopy(frame))
                 elif crown_family not in dualized_crown_families:
@@ -2009,20 +2031,93 @@ def _nickname_code(sem):
 
 def _nickname_bar_variant(src,code):
     if code not in 'WUBRGMAL':return None
-    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/Title(?:Joined)?|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
+    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/(?:Title|Crown)(?:Joined)?|proxy-foundry/compact-land/TrueName|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
     return match.group(1)+code+match.group(3) if match else None
 
 
-def _nickname_bar_layers(frame,sem):
+def _nickname_gradient_domain(data):
+    # SVG title rims use their stroked shape's object bounding box. Native
+    # pinline masks and crown blends already use full-card coordinates.
+    import xml.etree.ElementTree as ET
+    for frame in data.get('frames',[]):
+        src=str(frame.get('src',''))
+        if 'Title Bar' not in str(frame.get('name','')) or not src.startswith('data:image/svg'):continue
+        root=ET.fromstring(native.urllib.parse.unquote(src.split(',',1)[1]))
+        view=[float(v) for v in root.attrib['viewBox'].split()]
+        shape=next((node for node in root.iter() if node.get('stroke')=='url(#rim)'),None)
+        if shape is None:continue
+        bounds=frame.get('bounds',{})
+        left=bounds.get('x',0)+bounds.get('width',1)*(float(shape.get('x',0))-view[0])/view[2]
+        width=bounds.get('width',1)*float(shape.get('width',view[2]))/view[2]
+        return left,left+width
+    return 0,1
+
+
+def _nickname_card_gradient(mask,domain):
+    if domain==(0,1):return mask
+    svg=native.urllib.parse.unquote(mask.split(',',1)[1])
+    svg=svg.replace('<linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">',
+        f'<linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="{domain[0]*2010:.6f}" y1="0" x2="{domain[1]*2010:.6f}" y2="0">')
+    return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
+
+
+def _nickname_svg_rim_layers(data,frame):
+    # Reuse the title's actual paint stops, including its palette and easing.
+    # The native PNG supplies only geometry, shading, outline and interior.
+    import xml.etree.ElementTree as ET
+    for title in data.get('frames',[]):
+        src=str(title.get('src',''))
+        if 'Title Bar' not in str(title.get('name','')) or not src.startswith('data:image/svg'):continue
+        root=ET.fromstring(native.urllib.parse.unquote(src.split(',',1)[1]))
+        rim=next((node for node in root.iter() if node.get('id')=='rim'),None)
+        if rim is None:continue
+        gradient=copy.deepcopy(rim)
+        left,right=_nickname_gradient_domain(data)
+        bounds=frame['bounds']
+        gradient.attrib.update(gradientUnits='userSpaceOnUse',
+            x1=str((left-bounds['x'])/bounds['width']*1352),y1='0',
+            x2=str((right-bounds['x'])/bounds['width']*1352),y2='0')
+        svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="1352" height="221" viewBox="0 0 1352 221"><defs>{ET.tostring(gradient,encoding="unicode")}</defs><rect width="1352" height="221" fill="url(#rim)"/></svg>'
+        base=copy.deepcopy(frame)
+        base.update(src='/img/frames/proxy-foundry/land-name-neutral.png',masks=[])
+        paint=copy.deepcopy(frame)
+        paint.update(name='True-name title rim colors',
+            src='data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg),
+            ogBounds={'x':0,'y':0,'width':1,'height':1},
+            masks=[{'name':'True-name colored strip','src':'/img/frames/proxy-foundry/land-name-color-mask.png'}])
+        return [paint,base]
+    return None
+
+
+def _nickname_bar_layers(frame,sem,gradient_domain=(0,1)):
     colors=frame_treatment_colors(sem)
+    if len(colors)==3 and 'Land' in set(sem.get('types',[])):
+        layers=[]
+        for index,color in enumerate(colors):
+            layer=copy.deepcopy(frame)
+            layer['src']=_nickname_bar_variant(frame['src'],color)
+            layer['masks']=[]
+            if index:
+                start,end=(25,37.5) if index==1 else (62.5,75)
+                stops=[(0,0),(start,0)]+[(start+(end-start)*n/20,native.smoothstep(n/20)) for n in range(1,20)]+[(end,1),(100,1)]
+                body=''.join(f'<stop offset="{x}%" stop-color="white" stop-opacity="{alpha:.6f}"/>' for x,alpha in stops)
+                svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="2010" height="2814" viewBox="0 0 2010 2814"><defs><linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">{body}</linearGradient></defs><rect width="2010" height="2814" fill="url(#fade)"/></svg>'
+                layer['masks']=[{'name':'Triome Blend','src':_nickname_card_gradient('data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg),gradient_domain)}]
+            layers.insert(0,layer)
+        return layers
     if len(colors)!=2:return [frame]
     first,second=native.canonical_dual_color_order(colors)
     base=copy.deepcopy(frame);right=copy.deepcopy(frame)
     base.update(src=_nickname_bar_variant(frame['src'],first),masks=[])
     right.update(src=_nickname_bar_variant(frame['src'],second),
-                 masks=[{'src':native.dual_crown_right_blend_mask_src(),'name':'Right Blend'}])
+                 masks=[{'src':_nickname_card_gradient(native.dual_crown_right_blend_mask_src(),gradient_domain),'name':'Right Blend'}])
     # Native frame order paints the right fade over the left color.
     return [right,base]
+
+
+def _compact_land_bar_layers(frame,sem):
+    frame['src']=_nickname_bar_variant(frame['src'],_nickname_code(sem))
+    return _nickname_bar_layers(frame,sem)
 
 
 def _nickname_frame_src(code):
@@ -2267,7 +2362,26 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
         'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
         'masks':[],'bounds':bounds,
     }
-    data.setdefault('frames',[])[0:0]=_nickname_bar_layers(real_name_bar,sem)
+    layers=_nickname_bar_layers(real_name_bar,sem,_nickname_gradient_domain(data))
+    if 'Land' in set(sem.get('types',[])):
+        layers=_nickname_svg_rim_layers(data,real_name_bar) or layers
+    # This rounded land template draws its main title with an 8-unit SVG stroke.
+    # Add the matching silhouette behind the PNG strip without altering other frames.
+    if 'Land' in set(sem.get('types',[])) and any(
+        str(frame.get('src','')).startswith('data:image/svg') and 'Title Bar' in str(frame.get('name',''))
+        and 'stroke-width="8"' in native.urllib.parse.unquote(frame['src']) for frame in frames):
+        pad_x=bounds['width']*7/1352;pad_y=bounds['height']*7/221
+        # Keep the thicker outline's top inset, with slightly taller text.
+        # One-line text does not shrink to its height in the native renderer.
+        title=data['text']['title']
+        old_height=title['height']
+        title['y']+=pad_y
+        title['height']=max(.001,old_height-2*pad_y)*1.1
+        title['size']*=title['height']/old_height
+        layers.append({'name':'Land true-name outline (8 units)',
+            'src':'/img/frames/proxy-foundry/land-name-outline-8.png','masks':[],
+            'bounds':{'x':bounds['x']-pad_x,'y':bounds['y']-pad_y,'width':bounds['width']+2*pad_x,'height':bounds['height']+2*pad_y}})
+    data.setdefault('frames',[])[0:0]=layers
     return True
 
 
@@ -2354,6 +2468,7 @@ def custom_data(template,sem,other_faces=None):
 class Compiler:
     def __init__(self,store):self.store=store
     def template_identity(self,group,choice):
+        choice=RETIRED_BUILTINS.get(choice,choice)
         if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0);return 'builtin:'+choice,version,version
@@ -2388,6 +2503,7 @@ class Compiler:
         artist=credit['display']
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        choice=RETIRED_BUILTINS.get(choice,choice)
         template_key,template_version,template_cache_version=self.template_identity(group,choice)
         if choice in {x['id'] for x in BUILTINS}:
             builtin=next(x for x in BUILTINS if x['id']==choice)
@@ -2439,6 +2555,10 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
                 d0=choose_builtin(sem,'auto' if choice.startswith('godzilla-') else choice)
+                if choice=='auto' and group in {'land','legendary-land'} and 'Land' in sem.get('types',[]) and sem.get('name') not in native.ORIGINAL_DUAL_LANDS:
+                    # The old rounded land recipe stays preserved in the vendor.
+                    # Remove this routing override to restore its automatic use.
+                    d0=choose_builtin(sem,'legend-land')
                 # Saga is the highest-priority structural card treatment. Do not
                 # let another type on the same line (notably Land on Urza's Saga)
                 # win inside the preserved native recipe classifier.
@@ -2450,7 +2570,7 @@ class Compiler:
                     if group in {'standard','legendary'} and choice=='auto':
                         if sem.get('devoid'):apply_devoid_frame(data,sem)
                         apply_miracle_frame(data,sem)
-                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('layout')=='land_full_legendary' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
                     if choice=='auto' and group in {'modal-front','modal-back'}:
@@ -2518,8 +2638,14 @@ class Compiler:
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
                 if choice=='token-full-art':apply_modern_token_text(data,frame_treatment_code(sem))
                 else:apply_full_art_text(data)
+        if (choice in {'auto','legend-land'} and 'Land' in sem.get('types',[])
+                and recipe in {'land_full_legendary','land_full_dual_legendary','land_full_tri_legendary','land_five_color_legendary'}
+                and not options.get('rawCard')):
+            apply_compact_land_header(data,sem,_compact_land_bar_layers)
         if nickname_applied and (data.get('class') or data.get('saga')):
             reserve_structural_true_name_space(data)
+        if choice=='auto' and not options.get('rawCard'):
+            apply_textless_land_adjustments(data,recipe,nickname_applied)
         if choice.startswith('godzilla-'):
             apply_universal_frame_color_treatment(data,sem)
         full_card_art=(

@@ -37,9 +37,14 @@ def test_nonlegendary_choices(workspace,choice):
     assert r['data']['text']['pt']['text']=='2/3'
     assert len([f for f in r['data']['frames'] if 'Power/Toughness' in f.get('name','')])==1
     assert not any('Legend Crown' in f.get('name','') for f in r['data']['frames'])
-def test_legendary_no_invalid_land(workspace):
+def test_saved_retired_land_selection_redirects_to_crown_capable_frame(workspace):
     s,a,settings=workspace;c=sf()
-    with pytest.raises(ValidationError):Compiler(s).compile_face(c,c,0,{'templateOverride':'land'},settings,a)
+    compiler=Compiler(s)
+    redirected=compiler.compile_face(c,c,0,{'templateOverride':'land'},settings,a)
+    current=compiler.compile_face(c,c,0,{'templateOverride':'legend-land'},settings,a)
+    assert redirected['data']==current['data']
+    assert redirected['renderKey']==current['renderKey']
+    assert any('crown' in f.get('name','').lower() for f in redirected['data']['frames'])
 @pytest.mark.parametrize(('type_line','group','recipe'),[
     ('Land','land','card_noncreature'),
     ('Legendary Land','legendary-land','card_legendary'),

@@ -1,3 +1,10 @@
+export function renderWorkerCount(targets,workers,device=navigator){
+    if(!workers||targets<2)return 1;
+    const memory=device.deviceMemory||4,cores=device.hardwareConcurrency||2;
+    if(memory<=4||cores<=2)return 1;
+    return Math.min(targets,memory>=8&&cores>=4?3:2);
+}
+
 export class NativeRenderer {
     constructor({origin,basePath=``,owner=``,worker=true,diagnostic=()=>{},progress=()=>{}}){
         this.origin=origin;this.diagnostic=diagnostic;this.progress=progress;this.closed=false;

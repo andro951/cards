@@ -203,6 +203,26 @@ def test_godzilla_base_has_no_real_name_strip_without_nickname(tmp_path,choice,t
     assert not any('/nickname/addons/' in f['src'] for f in data['frames'])
 
 
+@pytest.mark.parametrize('style',['auto','land','godzilla-land'])
+def test_default_land_true_name_uses_approved_join_position(tmp_path,style):
+    store=Store(tmp_path);ws=Workspace(store)
+    source=card(name='Boros Garrison',type_line='Land',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add {R}{W}.',flavor_name='Apocalypse Resistance Camp')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':style},ws.validate_settings({}),image(store))['data']
+    title=data['text']['title'];main=data['text']['nickname']
+    original_y=main['y']+main['height']+.0064
+    if style=='godzilla-land':
+        assert title['height']==pytest.approx(.0243)
+        assert title['size']==pytest.approx(.0229)
+        return
+    from foundry.land_frame import GEOMETRY
+    assert title['y']==pytest.approx(original_y-GEOMETRY['textShift'])
+    assert title['height']==pytest.approx(.0243)
+    assert title['size']==pytest.approx(.0229)
+    assert data['frames'][0]['name']=='Compact land title cutout'
+
+
 @pytest.mark.parametrize('choice',['auto','token-classic','token-full-art','token-borderless','godzilla-card'])
 def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp_path,choice):
     store=Store(tmp_path);ws=Workspace(store);art=image(store)
@@ -327,3 +347,78 @@ def test_nicknamed_nonlegendary_godzilla_uses_one_intact_joined_title(tmp_path):
     assert data['frames'][0]['src']=='/img/frames/proxy-foundry/godzilla/TitleJoinedW.png'
     assert data['frames'][0]['bounds']=={'x':.0494,'y':.0405,'width':.9014,'height':.1053}
     assert not any('/nickname/addons/' in f['src'] or '/godzilla/TitleW.png' in f['src'] for f in data['frames'])
+
+
+@pytest.mark.parametrize('style',['auto','land','godzilla-land'])
+@pytest.mark.parametrize('legendary',[False,True])
+def test_triome_nickname_bar_matches_land_transition(tmp_path,style,legendary):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(name='Savai Triome',type_line=('Legendary ' if legendary else '')+'Land — Mountain Plains Swamp',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add {R}, {W}, or {B}.',flavor_name='The Cosmic Crossroads')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'legend-land' if style=='land' and legendary else style},ws.validate_settings({}),art)['data']
+    parts=[f for f in data['frames'] if '/compact-land/TrueName' in f['src'] or '/nickname/addons/' in f['src'] or '/godzilla/TitleJoined' in f['src'] or '/godzilla/CrownJoined' in f['src']]
+    assert len(parts)==3
+    assert [f['src'][-5] for f in parts]==['B','W','R']
+    assert all(f['bounds']==parts[0]['bounds'] for f in parts)
+    assert parts[-1]['masks']==[]
+    from urllib.parse import unquote
+    masks=[unquote(f['masks'][0]['src']) for f in parts[:2]]
+    assert '62.5%' in masks[0] and '37.5%' in masks[1]
+
+
+@pytest.mark.parametrize('colors',list(__import__('itertools').combinations('WUBRG',3)))
+def test_all_triome_bar_palettes_use_shared_order(colors):
+    from foundry.compiler import _nickname_bar_layers
+    frame={'src':'/img/frames/m15/nickname/addons/m15NicknameTitleM.png','masks':[],'bounds':{'x':.05,'y':.04,'width':.9,'height':.1}}
+    layers=_nickname_bar_layers(frame,{'types':['Land'],'land_colors':list(colors),'colors':[]})
+    assert [f['src'][-5] for f in layers]==list(reversed(colors))
+    # Three-color spells retain their existing gold treatment.
+    assert _nickname_bar_layers(frame,{'types':['Creature'],'colors':list(colors)})==[frame]
+
+
+@pytest.mark.parametrize('left,width',[(.052,.896),(.12,.7),(.02,.96)])
+def test_name_gradient_samples_title_rim_card_coordinates(left,width):
+    import copy
+    from foundry.compiler import _nickname_gradient_domain,_nickname_bar_layers
+    from foundry.legacy import compiler as native
+    from urllib.parse import unquote
+    title=copy.deepcopy(native.LAYOUTS['land_full_dual']['data']['frames'][0])
+    title['bounds'].update(x=left,width=width)
+    domain=_nickname_gradient_domain({'frames':[title]})
+    assert domain==pytest.approx((left+width*.01,left+width*.99))
+    frame={'src':'/img/frames/m15/nickname/addons/m15NicknameTitleM.png','masks':[],'bounds':{'x':.1,'width':.8}}
+    for colors in [['R','W'],['R','W','B']]:
+        layers=_nickname_bar_layers(frame,{'types':['Land'],'land_colors':colors},domain)
+        svg=unquote(layers[0]['masks'][0]['src'])
+        assert 'gradientUnits="userSpaceOnUse"' in svg
+        assert f'x1="{domain[0]*2010:.6f}"' in svg and f'x2="{domain[1]*2010:.6f}"' in svg
+
+
+@pytest.mark.parametrize('colors',[['W'],['U'],['B'],['R'],['G'],['R','W'],['R','W','B']])
+def test_retired_svg_true_name_keeps_exact_title_paint_for_reconnection(tmp_path,colors,monkeypatch):
+    import xml.etree.ElementTree as ET
+    from urllib.parse import unquote
+    from foundry.compiler import _nickname_gradient_domain
+    from foundry import compiler
+    # Preserve coverage of the dormant rounded family without selecting it in
+    # the live app. Reconnecting it should keep its approved paint matching.
+    monkeypatch.setattr(compiler,'RETIRED_BUILTINS',{})
+    monkeypatch.setattr(compiler,'BUILTINS',compiler.BUILTINS+[{'id':'land','groups':'ordinary'}])
+    store=Store(tmp_path);ws=Workspace(store)
+    source=card(name='Test Land',type_line='Land',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add '+', '.join('{'+color+'}' for color in colors)+'.',flavor_name='Alternate Land')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'land'},ws.validate_settings({}),image(store))['data']
+    title=next(f for f in data['frames'] if 'Title Bar' in f['name'])
+    paint=next(f for f in data['frames'] if f['name']=='True-name title rim colors')
+    def rim(frame):
+        return next(node for node in ET.fromstring(unquote(frame['src'].split(',',1)[1])).iter() if node.get('id')=='rim')
+    original,matched=rim(title),rim(paint)
+    assert [stop.attrib for stop in matched]==[stop.attrib for stop in original]
+    domain=_nickname_gradient_domain(data)
+    for key,expected in zip(('x1','x2'),domain):
+        assert paint['bounds']['x']+float(matched.get(key))/1352*paint['bounds']['width']==pytest.approx(expected)
+    assert matched.get('gradientUnits')=='userSpaceOnUse'
+    assert paint['ogBounds']=={'x':0,'y':0,'width':1,'height':1}
+    assert not any('/nickname/addons/' in f['src'] for f in data['frames'])

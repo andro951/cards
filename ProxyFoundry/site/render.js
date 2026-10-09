@@ -1,7 +1,8 @@
+import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {$,state,api,blobRequest,job,activity,endActivity,toast,work} from './ui.js';
 import {ensureArtworkReady} from './artwork-review.js';
-import {NativeRenderer,NativeRenderPool} from './native-render-pool.js';
+import {NativeRenderer,NativeRenderPool,renderWorkerCount} from './native-render-pool.js';
 
 function logTiming(stage,started,outcome,detail={}){
   const seconds=(performance.now()-started)/1000;
@@ -22,8 +23,8 @@ async function runRenderPlan(plan,options={}){
     const {label='Render deck',onUpdate=async()=>{},onImage=null,idleMessage='All images are already up to date',idleToast='Cached images reused. No rendering needed.',successMessage='All card images saved',successToast='Rendering complete. Your decks are ready for order review.',owner=null}=options;
     if(!owner)return work.render(task=>runRenderPlan(plan,{...options,owner:task}),{label,background:!onImage,signal:options.signal});
     const signal=owner.controller.signal;
-    const report=(title,detail,done=0)=>activity(label,title,detail,done,plan.targets.length,owner);
-    const started=performance.now();let outcome='failed',pool=null,lastUpdate=0;
+    const report=(title,detail,done=0)=>{activity(label,title,detail,done,plan.targets.length,owner);if(!onImage)generationScreen.active?.update('render',done,plan.targets.length);};
+    const started=performance.now();let outcome='failed',pool=null,lastUpdate=0,saver=null;
     try{
         if(signal.aborted)throw new Error('Rendering cancelled. Completed images are saved.');
         report('Render plan',`Pipeline ${plan.pipelineVersion||state.bootstrap.pipelineVersion||'unknown'} · ${plan.targets.length} queued · ${plan.cached} cached`);
@@ -31,7 +32,11 @@ async function runRenderPlan(plan,options={}){
         await measure('runtime.prepare',()=>job('/api/runtime/prepare',{}, {label:'Load CardConjurer',owner}));
         if(signal.aborted)throw new Error('Rendering cancelled. Completed images are saved.');
         const workers=typeof Worker==='function'&&typeof OffscreenCanvas==='function'&&typeof OffscreenCanvas.prototype.convertToBlob==='function'&&typeof createImageBitmap==='function';
-        const count=workers&&plan.targets.length>1&&(navigator.deviceMemory||8)>4&&(navigator.hardwareConcurrency||2)>1?2:1;
+        const count=renderWorkerCount(plan.targets.length,workers);
+        if(state.bootstrap.browser&&!onImage){
+            const {BrowserRenderSave}=await import('../web/render-save.js');
+            saver=await BrowserRenderSave.open(api);
+        }
         report('Starting native renderer',workers?`Starting ${count} rendering worker${count===1?'':'s'}…`:'Loading the native renderer…');
         pool=new NativeRenderPool({count,signal,createRenderer:()=>new NativeRenderer({
             origin:state.bootstrap.runtimeOrigin,basePath:window.__pfBasePath||'',owner:window.__pfOwner||'',worker:workers,
@@ -42,15 +47,18 @@ async function runRenderPlan(plan,options={}){
         await pool.run(plan.targets,{
             load:async target=>{
                 const detail=await measure('render.load-face',()=>api('/api/render-sessions/'+plan.id+'/'+target.key),{card:target.name,key:target.key});
+                target.saveTarget={key:target.key,deckId:detail.deckId,cardId:detail.cardId,faceId:detail.faceId};
                 return detail.data;
             },
-            save:(target,output)=>measure('render.save',()=>onImage?onImage(target,output.blob):blobRequest('/api/render-sessions/'+plan.id+'/'+target.key,output.blob,'image/png'),{card:target.name,key:target.key,bytes:output.blob.size}),
+            save:(target,output)=>measure('render.save',()=>onImage?onImage(target,output.blob):saver?saver.save(target.saveTarget,output):blobRequest('/api/render-sessions/'+plan.id+'/'+target.key,output.blob,'image/png'),{card:target.name,key:target.key,bytes:output.blob.size}),
             saved:async(target,output,done)=>{
                 if(signal.aborted)return;
                 report(target.name,`${onImage?'Preview ready':'PNG saved'} · ${output.width} × ${output.height}`,done);
                 if(performance.now()-lastUpdate>=2000){lastUpdate=performance.now();await onUpdate();}
             }
         });
+        if(!onImage)generationScreen.active?.update('finish');
+        await saver?.flush();
         if(plan.errors.length){endActivity('Rendered available cards; some need attention',true,owner);throw new Error(plan.errors.join('\n'));}
         outcome='ok';endActivity(successMessage,false,owner);if(successToast)toast(successToast);
     }catch(error){
@@ -59,7 +67,8 @@ async function runRenderPlan(plan,options={}){
         throw error;
     }finally{
         logTiming('render.total',started,signal.aborted?'cancelled':outcome,{cards:plan.targets.length,cached:plan.cached});
-        pool?.close();await onUpdate();
+        pool?.close();
+        try{await saver?.flush();}finally{await onUpdate();}
     }
 }
 
@@ -72,24 +81,31 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     await onUpdate(id);
   };
   const name=ids.length===1?(state.decks.find(deck=>deck.id===ids[0])?.name||(state.activeDeck?.id===ids[0]?state.activeDeck.name:'deck')):ids.length+' decks';
-  return work.render(owner=>measure('generation.total',async()=>{
+  const cards=ids.reduce((sum,id)=>sum+(state.decks.find(deck=>deck.id===id)?.summary?.faces||state.activeDeck?.summary?.faces||1),0);
+  const preparation=new Map(ids.map(id=>[id,{done:0,total:state.decks.find(deck=>deck.id===id)?.summary?.faces||1}]));
+  return withGenerationScreen(name,cards,screen=>work.render(owner=>measure('generation.total',async()=>{
+    screen.attach(owner);screen.update('prepare');
     if(prepare){
       for(const id of ids){
-        await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck',owner});await update(id);
+        await job('/api/decks/'+id+'/prepare',{}, {label:'Prepare deck',owner,onProgress:p=>{
+          preparation.set(id,{done:p.done||0,total:p.total||preparation.get(id).total});
+          const rows=[...preparation.values()];screen.update('prepare',rows.reduce((sum,row)=>sum+row.done,0),rows.reduce((sum,row)=>sum+row.total,0));
+        }});await update(id);
       }
     }
     if(owner.controller.signal.aborted)throw new Error('Generation cancelled. Completed images are saved.');
     const plan=await api('/api/render-sessions',{deckIds:ids,force});
-    return runRenderPlan(plan,{label:'Render deck',onUpdate:update,owner,successMessage:'All card images saved',successToast:notify?'Rendering complete. Your decks are ready for order review.':null,idleToast:notify?'Cached images reused. No rendering needed.':null});
-  },{decks:ids.length}).catch(error=>{endActivity(error.message,true,owner);throw error;}),{label:'Generate images for '+name,resources:ids.map(id=>'deck:'+id),signal,kind:'generation'});
+    return runRenderPlan(plan,{label:'Render deck',onUpdate:update,owner,successMessage:'All card images saved',successToast:null,idleToast:null});
+  },{decks:ids.length}).catch(error=>{endActivity(error.message,true,owner);throw error;}),{label:'Generate images for '+name,resources:ids.map(id=>'deck:'+id),signal,kind:'generation'}));
 }
 
 export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false}={}){
   if(!await ensureArtworkReady(deckId))return;
-  return work.render(async owner=>{
+  return withGenerationScreen('Card image',1,screen=>work.render(async owner=>{
+    screen.attach(owner);
     const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
-    return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:'Card rendering complete.'});
-  },{label:'Generate card image',resources:['deck:'+deckId],kind:'generation'});
+    return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:null});
+  },{label:'Generate card image',resources:['deck:'+deckId],kind:'generation'}));
 }
 
 export async function renderTemplatePreviews(deckId,group,settings,cardData,onImage,onPlan=()=>{},signal=null,choices=null){

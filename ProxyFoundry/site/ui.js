@@ -1,3 +1,4 @@
+import {generationScreen} from './generation-progress.js';
 import {recordDiagnostic,downloadBrowserDiagnostics} from './diagnostics.js';
 import {WorkCoordinator} from './work.js';
 export const $=(s,root=document)=>root.querySelector(s);
@@ -35,7 +36,7 @@ async function requestApi(path,data,method){
     recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.length} characters; ${error.message}; start=${text.slice(0,300)}; end=${text.slice(-300)}`);
     throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
   }
-  if(!r.ok){recordDiagnostic('API failure',`${path}: HTTP ${r.status}; ${result.error||'Request failed.'}`);throw new Error(result.error||'Request failed.');}return result;
+  if(!r.ok){recordDiagnostic('API failure',`${path}: HTTP ${r.status}; ${result.error||'Request failed.'}`);const error=new Error(result.error||'Request failed.');error.status=r.status;throw error;}return result;
 }
 export function showWorkspaceError(error,retry=null){
   recordDiagnostic('workspace error',error.stack||error.message);
@@ -148,6 +149,7 @@ export function activity(kind,title,detail,done=0,total=0,owner=null){
   drawActivity(kind,title,detail,done,total);
 }
 function drawActivity(kind,title,detail,done=0,total=0){
+  if(generationScreen.active){$('#activity').classList.add('hidden');return;}
   $('#activity').classList.remove('hidden');$('#activity-kind').textContent=kind;$('#activity-title').textContent=title;$('#activity-detail').textContent=detail||'';$('#activity-count').textContent=total?`${done} / ${total}`:'';
   const pct=total?Math.min(100,done/total*100):4;$('#activity-bar').style.width=pct+'%';$('.progress-track').setAttribute('aria-valuenow',Math.round(pct));
   const line=`${new Date().toLocaleTimeString()} · ${detail||title}`;
@@ -155,6 +157,7 @@ function drawActivity(kind,title,detail,done=0,total=0){
 }
 function refreshWorkActivity(){
   const panel=$('#activity');if(!panel)return;
+  if(generationScreen.active){panel.classList.add('hidden');return;}
   const task=work.visible();
   if(task){
     const p=task.progress;drawActivity(p.kind,p.title,p.detail,p.done,p.total);

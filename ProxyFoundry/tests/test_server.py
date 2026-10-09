@@ -357,16 +357,16 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     out=app.ws.review_images(deck['id'])
     assert all(store.cache_get(url) is None for url in reference)
     with zipfile.ZipFile(app.ws.review_download_file(out['download'].split('/')[3],out['filename'])) as z:
-        assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
+        assert set(z.namelist())=={'review_normal_review.jpg','review_transform_review.jpg','review_back_review.jpg'}
         assert out['count']==3
-        image=Image.open(io.BytesIO(z.read('review_normal_review.png')));image.load()
-        assert image.size==(203,141)
-        assert image.getpixel((5,5))[:3]==(220,30,30)
-        assert image.getpixel((101,5))[:3]==(0,0,0)
-        assert image.getpixel((150,5))[:3]==(240,180,20)
-        back=Image.open(io.BytesIO(z.read('review_back_review.png')));back.load()
-        assert back.getpixel((5,5))[:3]==(30,30,220)
-        assert back.getpixel((150,5))[:3]==(180,20,240)
+        image=Image.open(io.BytesIO(z.read('review_normal_review.jpg')));image.load()
+        assert image.size==(101,70)
+        assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(220,30,30)))<3
+        assert max(image.getpixel((50,5))[:3])<12
+        assert max(abs(a-b) for a,b in zip(image.getpixel((75,5))[:3],(240,180,20)))<3
+        back=Image.open(io.BytesIO(z.read('review_back_review.jpg')));back.load()
+        assert max(abs(a-b) for a,b in zip(back.getpixel((5,5))[:3],(30,30,220)))<3
+        assert max(abs(a-b) for a,b in zip(back.getpixel((75,5))[:3],(180,20,240)))<3
     app.close()
 
 
@@ -489,14 +489,14 @@ def test_review_images_export_uses_one_background_job_and_transient_fetches():
 def test_review_images_action_is_in_deck_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download review Images' in source
-    assert '/review-images' in source
+    assert 'downloadReview(d.id)' in source
     handler=source[source.index("$('#download-review-images').onclick"):source.index("$('#trash-deck').onclick")]
     assert 'needsGeneration' in handler
     assert 'await generate(current)' not in handler
     assert 'Generate images before downloading review images.' in handler
 
 
-def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
+def test_single_review_image_export_can_download_a_specific_face_jpeg(tmp_path):
     store=Store(tmp_path)
     reference={
         'https://cards.scryfall.io/png/front/review_transform.png':_review_test_png((100,140),(30,220,30,255)),
@@ -524,11 +524,11 @@ def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
     out=app.ws.review_image(deck['id'],'dfc-card','dfc-back')
     path=app.ws.review_download_file(out['download'].split('/')[3],out['filename'])
     assert not list((store.home/'orders').iterdir())
-    assert path.suffix=='.png' and out['download'].endswith('.png')
+    assert path.suffix=='.jpg' and out['download'].endswith('.jpg')
     image=Image.open(path);image.load()
-    assert image.size==(203,141)
-    assert image.getpixel((5,5))[:3]==(30,30,220)
-    assert image.getpixel((150,5))[:3]==(180,20,240)
+    assert image.size==(101,70)
+    assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(30,30,220)))<3
+    assert max(abs(a-b) for a,b in zip(image.getpixel((75,5))[:3],(180,20,240)))<3
     image.close()
     app.ws.release_review_download(out['download'].split('/')[3])
     assert not path.exists()
@@ -600,7 +600,7 @@ def test_card_inspector_actions_exist_in_source():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Generate this card' in source
     assert 'Download review image' in source
-    assert '/review-image' in source
+    assert 'downloadReview(d.id,{cardId:c.id,faceId:f.id})' in source
     inspect=source[source.index('async function inspect'):source.index('function choiceOverlay')]
     assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
     assert "job('/api/decks/'+d.id+'/prepare'" not in inspect

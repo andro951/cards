@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading,hashlib
 from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
-from PIL import Image,ImageDraw,ImageChops
+from PIL import Image,ImageDraw,ImageChops,ImageFilter
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 
 class Runtime:
@@ -117,11 +117,70 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        addon=re.fullmatch(r'/img/frames/proxy-foundry/land-addons/(TrueNameNoOuter[WUBRGMAL]|BasicTrueName[WUBRG])\.png',path)
+        if addon:
+            raw=(Path(__file__).resolve().parents[1]/'assets/land-addons'/(addon[1]+'.png')).read_bytes()
+            return raw,'image/png'
+        if path=='/img/frames/proxy-foundry/land-addons/original-dual-type.svg':
+            import xml.etree.ElementTree as ET
+            raw,_=self.fetch('/img/frames/textless/basics/type.svg')
+            svg=ET.fromstring(raw)
+            shape=next(element for element in svg.iter() if element.tag.endswith('}path'))
+            # The native type fill is inset 0.48 SVG units from the pinline.
+            # Restore the clipped native edge, with half a rendered pixel of
+            # overlap to avoid an antialiasing seam (viewBox width is 180).
+            shape.set('stroke','#ffffff');shape.set('stroke-width','1.06')
+            shape.set('stroke-linejoin','round')
+            return ET.tostring(svg),'image/svg+xml'
+        if path=='/img/frames/proxy-foundry/compact-land/lower-pinline.svg':
+            import xml.etree.ElementTree as ET
+            raw,_=self.fetch('/img/frames/m15/boxTopper/short/pinline.svg')
+            svg=ET.fromstring(raw)
+            shape=next(element for element in svg.iter() if element.tag.endswith('}path'))
+            original=shape.get('d')
+            if 'M105.672,232.739' not in original:raise ValidationError('Pinned compact land pinline changed.')
+            shape.set('d',original.split('M105.672,232.739')[0])
+            return ET.tostring(svg),'image/svg+xml'
+        compact=re.fullmatch(r'/img/frames/proxy-foundry/compact-land/(TrueName[WUBRGMAL]|Title[WUBRGMAL]|TitleCut[WUBRGMAL]|CrownOutline)\.png',path)
+        if compact:
+            raw=(Path(__file__).resolve().parents[1]/'assets/compact-land'/(compact[1]+'.png')).read_bytes()
+            with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled approved compact land header'}
+            return raw,'image/png'
         mask=re.fullmatch(r'/img/frames/proxy-foundry/masks/(class|saga|creature-saga)-pinline\.png',path)
         if mask:
             raw=(Path(__file__).resolve().parents[1]/'assets/frame-masks'/(mask[1]+'-pinline.png')).read_bytes()
             with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled pinline color mask preserving native black outlines'}
             return raw,'image/png'
+        if path in {'/img/frames/proxy-foundry/land-name-neutral.png','/img/frames/proxy-foundry/land-name-color-mask.png'}:
+            source_path='/img/frames/m15/nickname/addons/m15NicknameTitleW.png'
+            raw,_=self.fetch(source_path)
+            with Image.open(io.BytesIO(raw)) as source:
+                source=source.convert('RGBA')
+                alpha=source.getchannel('A')
+                image=Image.new('RGBA',source.size,(0,0,0,0))
+                if path.endswith('color-mask.png'):
+                    # White-strip luminance retains its antialiased/shaded edge;
+                    # black outline and translucent black interior are excluded.
+                    coverage=source.getchannel('R').point(lambda value:min(255,round(value*255/252)))
+                    alpha=ImageChops.multiply(alpha,coverage)
+                image.putalpha(alpha)
+                output=io.BytesIO();image.save(output,'PNG')
+            with self.lock:self.requested[path]={'source':source_path,'bytes':len(output.getvalue()),'adapter':'True-name geometry with independent title rim paint'}
+            return output.getvalue(),'image/png'
+        if path=='/img/frames/proxy-foundry/land-name-outline-8.png':
+            raw,_=self.fetch('/img/frames/m15/nickname/addons/m15NicknameTitleW.png')
+            with Image.open(io.BytesIO(raw)) as source:
+                # The native strip has a four-pixel black edge at 1352px wide.
+                # Match the land SVG's 8/1000 stroke, keeping its translucent fill.
+                radius=7
+                alpha=source.convert('RGBA').getchannel('A').point(lambda value:255 if value>=250 else 0)
+                alpha.paste(0,(0,0,source.width,148))
+                mask=Image.new('L',(source.width+2*radius,source.height+2*radius))
+                mask.paste(alpha,(radius,radius));mask=mask.filter(ImageFilter.MaxFilter(radius*2+1))
+                mask.paste(0,(0,0,mask.width,148+radius))
+                image=Image.new('RGBA',mask.size,(4,6,5,0));image.putalpha(mask)
+                output=io.BytesIO();image.save(output,'PNG')
+            return output.getvalue(),'image/png'
         match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|TitleJoined|Crown|CrownJoined)([WUBRGMAL])\.png',path)
         if match:
             kind,code=match.groups()

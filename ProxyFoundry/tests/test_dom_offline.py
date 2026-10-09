@@ -11,11 +11,11 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['diagnostics','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','artwork-review','render','frame-picker','setup','orders','templates','settings','deck','app']:
+    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','artwork-review','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','app']:
         text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
-        text=text.replace("await import('./ui.js')",'__mod_ui')
+        text=text.replace("await import('./ui.js')",'__mod_ui').replace('import.meta.url','document.baseURI')
         text=re.sub(r'(?m)^export[ \t]+','',text)
         out.append('const __mod_'+name.replace('-','_')+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
     return '\n'.join(out)
@@ -321,7 +321,8 @@ def test_choose_look_generates_normal_and_defers_custom(dom_page,look):
         assert all(value=='normal' for value in settings['templateRules'].values())
         assert settings['artist']=='' and not settings['allCardsTokens']
         assert page.locator('#generate-deck').is_visible()
-        page.get_by_role('dialog',name='Your deck is ready').wait_for()
+        page.wait_for_function("prematureGeneration.includes('/api/render-sessions')&&!document.querySelector('#generation-screen')")
+        assert page.get_by_role('dialog',name='Your deck is ready').count()==0
         assert page.evaluate('prematureGeneration')==['/api/decks/'+page.evaluate('__fixture.deck.id')+'/prepare','/api/render-sessions']
     else:
         page.locator('#setup-state').wait_for()
@@ -632,7 +633,7 @@ def test_generated_token_frame_changes_persist_before_regeneration(dom_page,choi
     page.get_by_role('button',name='Select '+label,exact=True).click()
     assert page.locator('#token-frame').input_value()==choice
     page.click('#save-generate')
-    page.wait_for_function('preparedFrames.length===1')
+    page.wait_for_function("preparedFrames.length===1&&!document.querySelector('#generation-screen')")
     assert page.evaluate('preparedFrames')==[choice]
     assert page.evaluate('__fixture.deck.settings.templateRules.token')==choice
     page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
@@ -813,4 +814,57 @@ def test_confirmation_can_only_be_dismissed_explicitly(dom_page,dismiss):
     else:page.click('#modal-close')
     page.wait_for_function('confirmationResult===false')
     assert page.locator('.modal').count()==0
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('per_card',[False,True])
+def test_custom_artist_prompt_rebases_background_revision(dom_page,per_card):
+    page,errors=dom_page
+    page.evaluate("""()=>{
+      const deck=structuredClone(__fixture.deck);
+      deck.settings.artist='';
+      deck.settings.source={mode:'github',githubFolder:'https://github.com/example/art'};
+      __fixture.deck=structuredClone(deck);
+      window.creditResult=null;window.creditWrites=0;
+      const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        const patch=options.body?JSON.parse(options.body):null;
+        if(patch&&(path.endsWith('/save')||path.includes('/cards/'))){
+          creditWrites++;
+          if(creditWrites===1){
+            __fixture.deck.revision++;
+            __fixture.deck.notes='Background update during save';
+          }
+          if(patch.revision!==__fixture.deck.revision)
+            return {ok:false,status:409,text:async()=>JSON.stringify({error:'This deck changed in another tab. Reload it before saving; your edits were not overwritten.'})};
+          if(patch.settings){
+            __fixture.deck.settings={...__fixture.deck.settings,...patch.settings};
+            __fixture.deck.revision++;
+            return {ok:true,status:200,text:async()=>JSON.stringify(__fixture.deck)};
+          }
+        }
+        return original(path,options);
+      };
+      __mod_credits.ensureCustomArtCredits(deck).then(value=>window.creditResult=value);
+      __fixture.deck.revision+=3;
+      __fixture.deck.settings.artist='';
+      __fixture.deck.settings.backgroundMarker='preserve me';
+    }""")
+    if per_card:
+        page.check('#custom-artist-each')
+        page.locator('[data-custom-artist]').fill('New credit')
+    else:
+        page.fill('#custom-artist-all','New credit')
+    page.click('#custom-artist-apply')
+    page.wait_for_function('creditResult!==null')
+    assert page.locator('.modal').count()==0
+    assert page.evaluate('creditWrites')==2
+    result=page.evaluate('creditResult')
+    assert result['notes']=='Background update during save'
+    assert result['settings']['backgroundMarker']=='preserve me'
+    assert result['settings']['source']['mode']=='github'
+    if per_card:
+        assert result['cards'][0]['faces'][0]['artistOverride']=='New credit'
+    else:
+        assert result['settings']['artist']=='New credit'
     assert not errors,errors

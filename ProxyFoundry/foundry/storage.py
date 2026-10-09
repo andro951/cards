@@ -323,7 +323,7 @@ class Store:
                 raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
             if kind=='decks':
                 renders=db.execute('SELECT file_path,asset_id FROM renders WHERE deck_id=?',(ident,)).fetchall()
-                tasks=[{'file':r['file_path'],'asset':r['asset_id']} for r in renders]
+                tasks=[{'file':r['file_path'] if r['file_path'].startswith('renders/') else None,'asset':r['asset_id']} for r in renders]
                 db.execute('DELETE FROM renders WHERE deck_id=?',(ident,))
             else:
                 body=json.loads(row['body'])
@@ -446,7 +446,7 @@ class Store:
         root=self.home/'renders'
         if deck_id:
             with self.connect() as db:
-                row=db.execute('SELECT file_path FROM renders WHERE deck_id=? LIMIT 1',(deck_id,)).fetchone()
+                row=db.execute("SELECT file_path FROM renders WHERE deck_id=? AND file_path LIKE 'renders/%' LIMIT 1",(deck_id,)).fetchone()
             if row:
                 return (self.home/row['file_path']).parent
         base=display_name(deck_name,'Deck')
@@ -510,6 +510,7 @@ class Store:
                         self._delete_render_asset_if_unused(ident)
 
     def remove_render_file(self,path):
+        if path.parent.parent==self.home/'assets' and not self._asset_is_render_only(path.name):return
         path.unlink(missing_ok=True)
         try:path.parent.rmdir()
         except OSError:pass
@@ -575,7 +576,7 @@ class Store:
             rows=[dict(r) for r in db.execute('SELECT * FROM renders WHERE deck_id=?',(deck_id,)).fetchall()]
             db.execute('DELETE FROM renders WHERE deck_id=?',(deck_id,))
         for row in rows:
-            path=self.home/row['file_path'];path.unlink(missing_ok=True)
+            path=self.home/row['file_path'];self.remove_render_file(path)
             try:path.parent.rmdir()
             except OSError:pass
         for ident in {row['asset_id'] for row in rows}:
