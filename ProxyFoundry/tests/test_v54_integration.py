@@ -354,7 +354,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
         'FrameU.png' in src or '/ul.png' in src or 'CrownU' in src
         for src in sources
     )
-    for effect in ('Pinline','Title','Type'):
+    for effect in ('Pinline','Type'):
         layers=[f for f in comp['data']['frames'] if effect in {
             m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)
         }]
@@ -362,6 +362,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
             'FrameL.png' in str(f.get('src','')) or '/l.png' in str(f.get('src',''))
             for f in layers
         )
+    assert '/img/frames/proxy-foundry/godzilla/TitleL.png' in sources
     assert any('Rules Fill' in f.get('name','') for f in comp['data']['frames'])
     assert any('m15CrownL' in src for src in sources)
 

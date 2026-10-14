@@ -216,11 +216,10 @@ def test_default_land_true_name_uses_approved_join_position(tmp_path,style):
         assert title['height']==pytest.approx(.0243)
         assert title['size']==pytest.approx(.0229)
         return
-    from foundry.land_frame import GEOMETRY
-    assert title['y']==pytest.approx(original_y-GEOMETRY['textShift'])
+    assert title['y']==pytest.approx(original_y)
     assert title['height']==pytest.approx(.0243)
     assert title['size']==pytest.approx(.0229)
-    assert data['frames'][0]['name']=='Compact land title cutout'
+    assert data['frames'][0]['name']=='Compact land native Godzilla joined title'
 
 
 @pytest.mark.parametrize('choice',['auto','token-classic','token-full-art','token-borderless','godzilla-card'])
@@ -357,7 +356,7 @@ def test_triome_nickname_bar_matches_land_transition(tmp_path,style,legendary):
     source.update(mana_cost='',oracle_text='{T}: Add {R}, {W}, or {B}.',flavor_name='The Cosmic Crossroads')
     source.pop('power');source.pop('toughness')
     data=Compiler(store).compile_face(source,source,0,{'templateOverride':'legend-land' if style=='land' and legendary else style},ws.validate_settings({}),art)['data']
-    parts=[f for f in data['frames'] if '/compact-land/TrueName' in f['src'] or '/nickname/addons/' in f['src'] or '/godzilla/TitleJoined' in f['src'] or '/godzilla/CrownJoined' in f['src']]
+    parts=[f for f in data['frames'] if '/compact-land/TrueName' in f['src'] or '/compact-land/CrownJoinedBlack' in f['src'] or '/nickname/addons/' in f['src'] or '/godzilla/TitleJoined' in f['src'] or '/godzilla/CrownJoined' in f['src']]
     assert len(parts)==3
     assert [f['src'][-5] for f in parts]==['B','W','R']
     assert all(f['bounds']==parts[0]['bounds'] for f in parts)

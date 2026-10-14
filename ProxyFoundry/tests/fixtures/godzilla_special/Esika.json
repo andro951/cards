@@ -1,0 +1,42 @@
+{
+  "name": "Esika, God of the Tree // The Prismatic Bridge",
+  "layout": "modal_dfc",
+  "type_line": "Legendary Creature — God // Legendary Enchantment",
+  "card_faces": [
+    {
+      "name": "Esika, God of the Tree",
+      "mana_cost": "{1}{G}{G}",
+      "type_line": "Legendary Creature — God",
+      "oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\"",
+      "colors": [
+        "G"
+      ],
+      "power": "1",
+      "toughness": "4",
+      "flavor_text": "\"I know this world, from canopy to roots.\"",
+      "artist": "Johannes Voss"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "mana_cost": "{W}{U}{B}{R}{G}",
+      "type_line": "Legendary Enchantment",
+      "oracle_text": "At the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+      "colors": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ],
+      "flavor_text": "Starnheim awaits.",
+      "artist": "Johannes Voss"
+    }
+  ],
+  "set": "khm",
+  "collector_number": "168",
+  "rarity": "mythic",
+  "artist": "Johannes Voss",
+  "frame_effects": [
+    "legendary"
+  ]
+}

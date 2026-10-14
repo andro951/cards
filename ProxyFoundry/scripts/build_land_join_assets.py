@@ -74,7 +74,11 @@ def build(fetch,destination):
     sx=.9387/crown.width;sy=.1024/crown.height
     manifest['parts']['CrownOutline']={'x':.0307-2*sx,'y':.0191-2*sy,'width':padded.width*sx,'height':padded.height*sy}
     (destination/'geometry.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
-    return manifest
+    from scripts.build_compact_land_black_title import build as build_black_title
+    build_black_title(fetch,destination)
+    from scripts.build_compact_pinline_fade import build as build_pinline_fade
+    build_pinline_fade(fetch,destination)
+    return json.loads((destination/'geometry.json').read_text(encoding='utf-8'))
 
 if __name__=='__main__':
     app=App(Store(ROOT/'test-results/name-outline-workspace'))

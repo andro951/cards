@@ -5,13 +5,21 @@ from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
 from PIL import Image,ImageDraw,ImageChops,ImageFilter
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
+from .artifact_frame import ArtifactFrameCache
+from .transform_crown import restore_crown_bevel,BEVEL_VERSION,mirror_header_png,BACK_VERSION
+from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
+from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
+from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
     COLORLESS_SAGA_CREATURE_PATH='/img/frames/saga/creature/c.png'
     COLORLESS_SAGA_CREATURE_REPO='joshbirnholz/cardconjurer'
     COLORLESS_SAGA_CREATURE_COMMIT='d3c6706692898d596ec6a5be0be44f63062c9e12'
-    def __init__(self,network):self.net=network;self.requested={};self.lock=threading.Lock()
+    def __init__(self,network):
+        self.net=network;self.requested={};self.lock=threading.Lock()
+        self.artifact_frames=None
+        self.derived_locks={}
     @staticmethod
     def path(raw):
         p=unquote(str(raw)).split('?',1)[0]
@@ -117,6 +125,99 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        tall_pw=re.fullmatch(re.escape(PW_PREFIX)+r'(FrameTall([WUBRGMAL])|Mask(Pinline|Type)Tall|textTall)\.(png|svg)',path)
+        if tall_pw:
+            if tall_pw[2]:source='/img/frames/planeswalker/nickname/planeswalkerNicknameFrame'+tall_pw[2]+'.png'
+            elif tall_pw[3]:source='/img/frames/planeswalker/regular/planeswalkerMask'+tall_pw[3]+'.png'
+            else:source='/img/frames/planeswalker/text.svg'
+            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{TALL_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch(source)
+                    raw=extend_rules_svg(original) if source.endswith('.svg') else extend_rules_png(original)
+                    asset=self.net.store.add_asset(raw,'image/svg+xml' if source.endswith('.svg') else 'image/png')
+                    self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Native planeswalker rules-box middle repeated; borders retain their pixel thickness'}
+            return raw,'image/svg+xml' if path.endswith('.svg') else 'image/png'
+        colored=re.fullmatch(r'/img/frames/proxy-foundry/transform/(TitleColored|CrownJoinedColored)([WUBRGMAL])\.png',path)
+        if colored:
+            kind,code=colored.groups();joined=kind=='CrownJoinedColored'
+            cache_key=f'derived:{CC_COMMIT}:{DFC_MATERIAL_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    header,_=self.fetch('/img/frames/proxy-foundry/godzilla/'+('CrownJoined' if joined else 'Title')+code+'.png')
+                    back,_=self.fetch('/img/frames/m15/transform/regular/back'+code+'.png')
+                    raw=color_title_png(header,back,joined_crown=joined)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Native Godzilla title geometry with colored reverse-face material'}
+            return raw,'image/png'
+        floating=re.fullmatch(r'/img/frames/proxy-foundry/transform/CrownFloatingBack([WUBRGMAL])\.png',path)
+        if floating:
+            cache_key=f'derived:{CC_COMMIT}:{BACK_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch('/img/frames/m15/transform/crowns/floating/'+floating[1].lower()+'.png')
+                    raw=mirror_header_png(original);asset=self.net.store.add_asset(raw,'image/png')
+                    self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Native floating crown with right-side circular opening'}
+            return raw,'image/png'
+        right_header=re.fullmatch(r'/img/frames/proxy-foundry/transform/(CrownJoinedBack([WUBRGMAL])|TitlePinlineBack([WUBRGMAL])|TitleOutlineBack)\.png',path)
+        if right_header:
+            if right_header[2]:source='/img/frames/proxy-foundry/transform/CrownJoined'+right_header[2]+'.png'
+            elif right_header[3]:source='/img/frames/proxy-foundry/werewolf/TitlePinline'+right_header[3]+'.png'
+            else:source='/img/frames/proxy-foundry/werewolf/TitleOutline.png'
+            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{BEVEL_VERSION}:{BACK_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch(source);raw=mirror_header_png(original)
+                    asset=self.net.store.add_asset(raw,'image/png')
+                    self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Right-side back-face marker opening; native material preserved'}
+            return raw,'image/png'
+        bevel=re.fullmatch(r'/img/frames/proxy-foundry/transform/CrownJoined([WUBRGMAL])\.png',path)
+        if bevel:
+            code=bevel[1]
+            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{BEVEL_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:
+                    raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    transform,_=self.fetch('/img/frames/m15/transform/crowns/nickname/'+code.lower()+'.png')
+                    godzilla,_=self.fetch('/img/frames/m15/nickname/m15NicknameCrown'+code+'.png')
+                    raw=restore_crown_bevel(transform,godzilla)
+                    asset=self.net.store.add_asset(raw,'image/png')
+                    self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Native Godzilla bevel on unchanged transform crown geometry'}
+            return raw,'image/png'
+        artifact_gray=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/gray-artifact/(Frame|Title|TitleJoined|Crown|CrownJoined|TitleColored|CrownJoinedColored|TransformCrownFloating(?:Back)?|TransformCrownJoined(?:Back)?)\.png',path)
+        if artifact_gray:
+            with self.lock:
+                if self.artifact_frames is None:self.artifact_frames=ArtifactFrameCache(self.net.store)
+            kind=artifact_gray[1]
+            source=('/img/frames/m15/nickname/m15NicknameFrameA.png' if kind=='Frame'
+                    else '/img/frames/proxy-foundry/transform/CrownJoinedA.png' if kind=='TransformCrownJoined'
+                    else '/img/frames/proxy-foundry/transform/CrownJoinedBackA.png' if kind=='TransformCrownJoinedBack'
+                    else '/img/frames/proxy-foundry/transform/'+kind+'A.png' if kind in {'TitleColored','CrownJoinedColored'}
+                    else '/img/frames/m15/transform/crowns/floating/a.png' if kind=='TransformCrownFloating'
+                    else '/img/frames/proxy-foundry/transform/CrownFloatingBackA.png' if kind=='TransformCrownFloatingBack'
+                    else f'/img/frames/proxy-foundry/godzilla/{kind}A.png')
+            raw,cached=self.artifact_frames.fetch(source,self.fetch)
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':cached,'adapter':'Procedural neutral artifact gray; alpha unchanged'}
+            return raw,'image/png'
         addon=re.fullmatch(r'/img/frames/proxy-foundry/land-addons/(TrueNameNoOuter[WUBRGMAL]|BasicTrueName[WUBRG])\.png',path)
         if addon:
             raw=(Path(__file__).resolve().parents[1]/'assets/land-addons'/(addon[1]+'.png')).read_bytes()
@@ -141,10 +242,28 @@ class Runtime:
             if 'M105.672,232.739' not in original:raise ValidationError('Pinned compact land pinline changed.')
             shape.set('d',original.split('M105.672,232.739')[0])
             return ET.tostring(svg),'image/svg+xml'
-        compact=re.fullmatch(r'/img/frames/proxy-foundry/compact-land/(TrueName[WUBRGMAL]|Title[WUBRGMAL]|TitleCut[WUBRGMAL]|CrownOutline)\.png',path)
+        compact=re.fullmatch(r'/img/frames/proxy-foundry/compact-land/(TrueName[WUBRGMAL]|Title[WUBRGMAL]|TitleBlack[WUBRGMAL]?|CrownJoinedBlack[WUBRGMAL]|TitleCut[WUBRGMAL]|CrownOutline|PinlineFade)\.png',path)
         if compact:
             raw=(Path(__file__).resolve().parents[1]/'assets/compact-land'/(compact[1]+'.png')).read_bytes()
             with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled approved compact land header'}
+            return raw,'image/png'
+        werewolf=re.fullmatch(r'/img/frames/proxy-foundry/werewolf/(TitlePinline[WUBRGMAL]|TitleOutline|IconRing|LowerMask)\.png',path)
+        if werewolf:
+            if werewolf[1]=='IconRing':
+                cache_key=f'derived:{CC_COMMIT}:{ICON_RING_VERSION}:{path}'
+                with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+                with asset_lock:
+                    cached=self.net.store.cache_get(cache_key)
+                    if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                    else:
+                        original=(Path(__file__).resolve().parents[1]/'assets/werewolf/IconRing.png').read_bytes()
+                        raw=neutralize_icon_surround(original)
+                        asset=self.net.store.add_asset(raw,'image/png')
+                        self.net.store.cache_put(cache_key,asset,self.net.clock())
+                with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Neutral native icon surround; shading and alpha preserved'}
+                return raw,'image/png'
+            raw=(Path(__file__).resolve().parents[1]/'assets/werewolf'/(werewolf[1]+'.png')).read_bytes()
+            with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled approved Werewolf header'}
             return raw,'image/png'
         mask=re.fullmatch(r'/img/frames/proxy-foundry/masks/(class|saga|creature-saga)-pinline\.png',path)
         if mask:
@@ -234,6 +353,7 @@ class Runtime:
                 # a newer CardConjurer fork pinned to an immutable commit.
                 url='https://raw.githubusercontent.com/'+self.COLORLESS_SAGA_CREATURE_REPO+'/'+self.COLORLESS_SAGA_CREATURE_COMMIT+quote(path,safe='/')
                 raw,mime,meta=self.net.fetch(url,immutable=True)
+        if path=='/js/frames/versionPlaneswalker.js':raw=planeswalker_renderer_script(raw)
         if path=='/js/frames/versionClass.js':
             text=raw.decode('utf-8')
             anchor="card.text['level' + i + 'c'].height = height || 1;"

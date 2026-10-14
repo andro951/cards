@@ -1,0 +1,13 @@
+{
+  "name": "Tezzeret, Cruel Captain",
+  "layout": "normal",
+  "mana_cost": "{3}",
+  "type_line": "Legendary Planeswalker — Tezzeret",
+  "oracle_text": "Whenever an artifact you control enters, put a loyalty counter on Tezzeret.\n0: Untap target artifact or creature. If it's an artifact creature, put a +1/+1 counter on it.\n−3: Search your library for an artifact card with mana value 1 or less, reveal it, put it into your hand, then shuffle.\n−7: You get an emblem with \"At the beginning of combat on your turn, put three +1/+1 counters on target artifact you control. If it's not a creature, it becomes a 0/0 Robot artifact creature.\"",
+  "loyalty": "4",
+  "colors": [],
+  "set": "eoe",
+  "collector_number": "2",
+  "rarity": "mythic",
+  "artist": "Chris Rahn"
+}

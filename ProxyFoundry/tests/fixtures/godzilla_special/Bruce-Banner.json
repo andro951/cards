@@ -1,0 +1,41 @@
+{
+  "name": "Bruce Banner // The Incredible Hulk",
+  "layout": "modal_dfc",
+  "type_line": "Legendary Creature — Human Scientist Hero // Legendary Creature — Gamma Berserker Hero",
+  "card_faces": [
+    {
+      "name": "Bruce Banner",
+      "mana_cost": "{U}",
+      "type_line": "Legendary Creature — Human Scientist Hero",
+      "oracle_text": "{X}{X}, {T}: Draw X cards. Activate only as a sorcery.\n{2}{R}{R}{G}{G}: Transform Bruce Banner. Activate only as a sorcery.",
+      "colors": [
+        "U"
+      ],
+      "power": "1",
+      "toughness": "1",
+      "flavor_text": "\"You shouldn't make me angry . . .\"",
+      "artist": "Tommy Arnold"
+    },
+    {
+      "name": "The Incredible Hulk",
+      "mana_cost": "{2}{R}{R}{G}{G}",
+      "type_line": "Legendary Creature — Gamma Berserker Hero",
+      "oracle_text": "Reach, trample\nEnrage — Whenever The Incredible Hulk is dealt damage, put a +1/+1 counter on him. If he's attacking, untap him and there is an additional combat phase after this phase.",
+      "colors": [
+        "G",
+        "R"
+      ],
+      "power": "8",
+      "toughness": "8",
+      "flavor_text": "\". . . You wouldn't like me when I'M ANGRY!!!\"",
+      "artist": "Tommy Arnold"
+    }
+  ],
+  "set": "msh",
+  "collector_number": "49",
+  "rarity": "mythic",
+  "artist": "Tommy Arnold",
+  "frame_effects": [
+    "legendary"
+  ]
+}

@@ -17,6 +17,7 @@ from .credits import credit_text,printing_artist
 from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
+from . import rules_nicknames
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -259,6 +260,7 @@ class Workspace:
         d['settings']=self._with_default_symbols(d.get('settings',{}))
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
+            nickname_rules=any(rules_nicknames.face_nicknames(c.get('scryfall',{}),c['faces']).values())
             for f in c['faces']:
                 sf=c.get('scryfall',{});sf_faces=ingest.face_list(sf)
                 sf_face=sf_faces[min(f.get('index',0),len(sf_faces)-1)] if sf_faces else sf
@@ -285,6 +287,8 @@ class Workspace:
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
                         d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
+                        d['status']='draft';d['upgradeRequired']=True
+                    elif nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
@@ -633,6 +637,7 @@ class Workspace:
         style=spec.pop('token_frame_style',None)
         if sem:
             sem=dict(sem)
+            rules_nicknames.apply_semantic(sem)
             if spec.get('nonlegendary'):sem['legendary']=False
             if spec.get('force_legendary'):sem['legendary']=True
         if sem and not spec.get('frame_color'):
@@ -679,18 +684,22 @@ class Workspace:
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
-        return stable_hash({'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')})
+        inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
+        if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['nicknameRulesVersion']=rules_nicknames.VERSION
+        return stable_hash(inputs)
 
     def _preparation_metadata_urls(self,c):
         return ['https://api.scryfall.com/cards/'+str(c['scryfall'].get('id') or ''),*[f['compiled'].get('exportArtUrl') for f in c['faces'] if (f.get('compiled') or {}).get('artOrigin')=='Scryfall selected printing']]
 
     def _can_reuse_preparation(self,c,key,refresh,assets=None,caches=None):
+        nickname_rules=any(rules_nicknames.face_nicknames(c['scryfall'],c['faces']).values())
         def available(ident):
             if assets is None:return self.store.asset(ident)
             if ident not in assets:assets[ident]=self.store.asset(ident)
             return assets[ident]
         for f in c['faces']:
             comp=f.get('compiled') or {}
+            if nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:return False
             if f.get('error') or f.get('preparationKey')!=key or not cache_is_fresh(f.get('preparedAt'),time.time(),refresh):return False
             if not comp.get('artId') or not available(comp['artId']):return False
         if any(not available(asset) for asset in (c.get('_preparationSymbols') or [])):return False
@@ -728,6 +737,7 @@ class Workspace:
                 face=sf_faces[min(f.get('index',0),len(sf_faces)-1)]
                 art_id,origin,url=self._art(sf,face,f,s,index)
                 options=copy.deepcopy(f)
+                options['faceNicknames']=rules_nicknames.face_nicknames(sf,c['faces'])
                 flavor_face=ingest.select_matching_flavor_face(flavor_sf,face,f.get('index',0))
                 overrides=options.setdefault('semanticOverrides',{})
                 if f.get('officialRulesText') is not None:
@@ -883,6 +893,7 @@ class Workspace:
         face=faces[min(face_options.get('index',0),len(faces)-1)]
         art_id,origin,_=self._art(sf,face,face_options,s,index)
         options=copy.deepcopy(face_options)
+        options['faceNicknames']=rules_nicknames.face_nicknames(sf,card['faces'],staged)
         options['semanticOverrides']=dict(options.get('semanticOverrides') or {})
         if face_options.get('officialRulesText') is not None:
             options['semanticOverrides'].setdefault('oracle_text',face_options['officialRulesText'])

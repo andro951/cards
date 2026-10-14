@@ -999,7 +999,8 @@ def test_test_deck_nickname_cases_use_expected_godzilla_frames(workspace,name,ty
     data=result['data']
     assert data['version']=='m15Nickname'
     assert data['artBounds']['height']>.9
-    assert any(frame.get('src','').endswith(f'm15NicknameFrame{code}.png')
+    body='/gray-artifact/Frame.png' if code=='A' else f'm15NicknameFrame{code}.png'
+    assert any(frame.get('src','').endswith(body)
                and frame.get('masks')==[] for frame in data['frames'])
     assert all(frame.get('masks')==[] for frame in data['frames'])
     assert data['text']['nickname']['text']==nickname
@@ -1100,6 +1101,8 @@ def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
         assert data['text']['title']['text']==face['name']
         if name in {'day','experience'}:
             assert 'type' not in data['text']
+            assert data['frames'][0]['src'].endswith('/godzilla/TitleW.png')
+            assert data['frames'][1]['name']=='Soft helper text fade'
         else:
             assert data['text']['type']['text']=='Card'
             assert 'Land' not in data['text']['type']['text']
@@ -1124,22 +1127,21 @@ def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nick
         result=Compiler(store).compile_face(card,face,index,options,selected,art)
         data=result['data']
         assert result['group']==group
-        assert data['version']=='m15Nickname'
+        assert data['version']==('modalNickname' if layout=='modal_dfc' else 'm15Nickname')
         assert data['artBounds']==FULL_ART_NONLAND_BOUNDS
         assert data['text']['rules']['text'].find('Vigilance' if index==0 else 'Add {G}')>=0
         assert data['text']['title']['text']==face['name']
-        assert not any('/transform/' in frame.get('src','') or '/modal/' in frame.get('src','') for frame in data['frames'])
-        assert all(frame.get('masks')==[] for frame in data['frames'])
+        family='/modal/' if layout=='modal_dfc' else '/transform/'
+        assert any(family in frame.get('src','') for frame in data['frames'])
         if index==0:
             assert data['text']['pt']['text']=='2/3'
         else:
             assert data['text']['pt']['text']==''
         if nickname:
             assert data['text']['nickname']['text']=='Custom '+face['name']
-            assert data['frames'][0]['name']=='Nickname Title'
         else:
             assert 'nickname' not in data['text']
-        assert any('m15NicknameFrame' in frame.get('src','') for frame in data['frames'])
+        assert any(('modal/nickname/' if layout=='modal_dfc' else 'm15NicknameFrame') in frame.get('src','') for frame in data['frames'])
     # The new override must not broaden Automatic's deliberately supported modal pairs.
     if layout=='modal_dfc':
         with pytest.raises(ValidationError,match='Approved built-in pairs'):
@@ -1159,7 +1161,18 @@ def test_day_night_helper_titles_are_centered(workspace,nickname,helper):
         assert title['align']=='center'
         assert title['x']+title['width']/2==pytest.approx(.5,abs=.001)
         assert 'type' not in data['text']
-        assert data['text']['rules']['text']==face['oracle_text']
+        reminder=data['text'].get('reminder')
+        if face['name']=='Day':
+            intro,rest=face['oracle_text'].split('\n',1)
+            assert reminder['text']=='{i}'+intro[1:-1]+'{/i}'
+            assert reminder['y']<data['text']['rules']['y']
+            assert data['text']['rules']['text']==rest
+        else:
+            assert reminder is None
+            assert data['text']['rules']['text']==face['oracle_text']
         assert data['text']['rules']['color']=='white' and data['text']['rules']['outlineWidth']>0
+        assert data['text']['rules']['align']=='center'
+        assert data['frames'][0]['src'].endswith('/godzilla/'+('TitleJoined' if nickname else 'Title')+'W.png')
+        assert data['frames'][1]['name']=='Soft helper text fade'
         assert data['setSymbolSource']=='/img/blank.png'
         assert not any('Type Bar' in f['name'] or 'Rules Fill' in f['name'] or 'Rules Border' in f['name'] for f in data['frames'])
