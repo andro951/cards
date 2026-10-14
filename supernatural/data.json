@@ -284,96 +284,132 @@
     {
       "name": "Germ",
       "oracle_id": "bb549594-35f6-4ac6-9f1f-cfb35784d99e",
-      "scryfall_url": "https://scryfall.com/card/tfdc/4/germ?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tfdc/4/germ?utm_source=api",
+      "nickname": "Shadow of Death",
+      "artist": "ChatGPT"
     },
     {
       "name": "Phyrexian Mite",
       "oracle_id": "2667d723-01c8-4ea3-ac17-cedb3b842c3b",
-      "scryfall_url": "https://scryfall.com/card/tone/11/phyrexian-mite?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tone/11/phyrexian-mite?utm_source=api",
+      "nickname": "Croatoan Infected",
+      "artist": "ChatGPT"
     },
     {
       "name": "Sephiroth, One-Winged Angel Emblem",
       "oracle_id": "e4070954-0ca7-4625-9f00-56f2db1e7cf7",
-      "scryfall_url": "https://scryfall.com/card/tfin/24/sephiroth-one-winged-angel-emblem?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tfin/24/sephiroth-one-winged-angel-emblem?utm_source=api",
+      "nickname": "Power of Purgatory",
+      "artist": "ChatGPT"
     },
     {
       "name": "Kaya the Inexorable Emblem",
       "oracle_id": "581399f0-bbb5-4924-b9dd-1266f3b2d98d",
-      "scryfall_url": "https://scryfall.com/card/tkhm/20/kaya-the-inexorable-emblem?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tkhm/20/kaya-the-inexorable-emblem?utm_source=api",
+      "nickname": "Death's Dominion",
+      "artist": "ChatGPT"
     },
     {
       "name": "Experience",
       "oracle_id": "36403fd7-dad1-4c98-b52b-1150d9d566e5",
-      "scryfall_url": "https://scryfall.com/card/ttdc/34/experience?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ttdc/34/experience?utm_source=api",
+      "nickname": "Hard-Earned Experience",
+      "artist": "ChatGPT"
     },
     {
       "name": "Day",
       "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
-      "scryfall_url": "https://scryfall.com/card/tmid/19/day-night?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tmid/19/day-night?utm_source=api",
+      "nickname": "Day",
+      "artist": "ChatGPT"
     },
     {
       "name": "Night",
       "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
-      "scryfall_url": "https://scryfall.com/card/tmid/19/day-night?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tmid/19/day-night?utm_source=api",
+      "nickname": "Full Moon",
+      "artist": "ChatGPT"
     },
     {
       "name": "Shapeshifter",
       "oracle_id": "b9ad70d0-7e71-4ec1-a39e-7d9363501322",
       "art": "106_shapeshifter.png",
-      "scryfall_url": "https://scryfall.com/card/tclb/24/shapeshifter?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tclb/24/shapeshifter?utm_source=api",
+      "nickname": "Crowley's Agent",
+      "artist": "ChatGPT"
     },
     {
       "name": "Shapeshifter",
       "oracle_id": "2bb2f9ed-6378-40c9-9170-976711919014",
       "art": "107_shapeshifter.png",
-      "scryfall_url": "https://scryfall.com/card/tclb/28/shapeshifter?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tclb/28/shapeshifter?utm_source=api",
+      "nickname": "Jefferson Starship",
+      "artist": "ChatGPT"
     },
     {
       "name": "Construct",
       "oracle_id": "ee740c48-59cd-4fcc-b4a5-fe3dde1361d5",
-      "scryfall_url": "https://scryfall.com/card/tmh2/16/construct?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tmh2/16/construct?utm_source=api",
+      "nickname": "Judah Initiative Golem",
+      "artist": "ChatGPT"
     },
     {
       "name": "Human Soldier",
       "oracle_id": "a4095286-d51b-4527-b6ce-23aa539fc23a",
-      "scryfall_url": "https://scryfall.com/card/tltr/2/human-soldier?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tltr/2/human-soldier?utm_source=api",
+      "nickname": "Wayward Hunter",
+      "artist": "ChatGPT"
     },
     {
       "name": "Angel",
       "oracle_id": "40c64f08-ab2f-4933-8e0e-d1a1c729008f",
-      "scryfall_url": "https://scryfall.com/card/tfrc/1/angel?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tfrc/1/angel?utm_source=api",
+      "nickname": "Fallen Seraph",
+      "artist": "ChatGPT"
     },
     {
       "name": "Soldier",
       "oracle_id": "eac25f12-6459-438c-a09e-93e23d2cf80d",
-      "scryfall_url": "https://scryfall.com/card/tmsh/4/soldier?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tmsh/4/soldier?utm_source=api",
+      "nickname": "Resistance Fighter",
+      "artist": "ChatGPT"
     },
     {
       "name": "Spirit",
       "oracle_id": "dc4e2134-f0c2-49aa-9ea3-ebf83af1445c",
       "art": "112_spirit.png",
-      "scryfall_url": "https://scryfall.com/card/tkhm/4/spirit?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tkhm/4/spirit?utm_source=api",
+      "nickname": "Reaper",
+      "artist": "ChatGPT"
     },
     {
       "name": "Spirit",
       "oracle_id": "6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a",
       "art": "113_spirit.png",
-      "scryfall_url": "https://scryfall.com/card/tneo/2/spirit?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tneo/2/spirit?utm_source=api",
+      "nickname": "Séance Spirit",
+      "artist": "ChatGPT"
     },
     {
       "name": "Treasure",
       "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
-      "scryfall_url": "https://scryfall.com/card/tcmm/48/treasure?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tcmm/48/treasure?utm_source=api",
+      "nickname": "Occult Relic",
+      "artist": "ChatGPT"
     },
     {
       "name": "Robot",
       "oracle_id": "0e3afe6f-c2a1-4a06-b7f7-5bcbf57c3d2c",
-      "scryfall_url": "https://scryfall.com/card/teoe/10/robot?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/teoe/10/robot?utm_source=api",
+      "nickname": "Styne Experiment",
+      "artist": "ChatGPT"
     },
     {
       "name": "Poison Counter",
       "oracle_id": "60acebe2-e1e5-478a-ab88-6a9c1409bca5",
-      "scryfall_url": "https://scryfall.com/card/tone/14/poison-counter?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tone/14/poison-counter?utm_source=api",
+      "nickname": "Croatoan Infection",
+      "artist": "ChatGPT"
     },
     {
       "name": "Cloud, Midgar Mercenary",
