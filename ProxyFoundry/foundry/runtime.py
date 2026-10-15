@@ -3,13 +3,14 @@ from __future__ import annotations
 import base64,html,io,json,mimetypes,re,threading,hashlib
 from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
+from xml.etree import ElementTree
 from PIL import Image,ImageDraw,ImageChops,ImageFilter
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 from .artifact_frame import ArtifactFrameCache
 from .transform_crown import restore_crown_bevel,BEVEL_VERSION,mirror_header_png,BACK_VERSION
 from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
 from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
-from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
+from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -38,6 +39,20 @@ class Runtime:
         url='https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/')
         raw,mime,meta=self.net.fetch(url,immutable=True)
         text=raw.decode('utf-8').replace('\r\n','\n')
+        symbol_anchor="loadManaSymbols(true, ['e', 'a']);"
+        symbol_replacement=symbol_anchor+"""
+loadManaSymbols(true, ['infinity'], [1.4, 0.65]);
+function proxyFoundryInlineSymbols(text) {
+    //Braced infinity denotes a mana cost; plain infinity is a rules glyph.
+    return text.replace(/\\{\\u221e\\}|\\u221e/g, token => token.length > 1 ? `{inf}` : `{infinity}`);
+}"""
+        token_anchor="var splitText = rawText.replace(/\\n/g, '{line}')"
+        token_replacement="var splitText = proxyFoundryInlineSymbols(rawText).replace(/\\n/g, '{line}')"
+        fit_anchor="\touterloop: while (drawingText) {"
+        fit_replacement="""\t//Calculated mana wraps belong only to the current font-size attempt.
+\tvar proxyFoundrySourceTokens = splitText.slice();
+\touterloop: while (drawingText) {
+\t\tsplitText = proxyFoundrySourceTokens.slice();"""
         loop_anchor="""		//Begin looping through words/codes
 		innerloop: for (word of splitText) {
 			var wordToWrite = word;"""
@@ -97,9 +112,9 @@ class Runtime:
 						}
 					}
 					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;"""
-        if text.count(loop_anchor)!=1 or text.count(mana_anchor)!=1:
+        if any(text.count(anchor)!=1 for anchor in (symbol_anchor,token_anchor,fit_anchor,loop_anchor,mana_anchor)):
             raise ValidationError('Pinned CardConjurer text renderer changed unexpectedly; inline mana wrapping was not patched.')
-        text=text.replace(loop_anchor,loop_replacement).replace(mana_anchor,mana_replacement)
+        text=text.replace(symbol_anchor,symbol_replacement).replace(token_anchor,token_replacement).replace(fit_anchor,fit_replacement).replace(loop_anchor,loop_replacement).replace(mana_anchor,mana_replacement)
         with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':hashlib.sha256(raw).hexdigest(),'adapter':'inline mana cluster wrapping'}
         return text.encode(),'application/javascript'
 
@@ -125,12 +140,60 @@ class Runtime:
         return text.encode(),'application/javascript'
     def fetch(self,path):
         path=self.path(path)
+        if path=='/img/manaSymbols/infinity.svg':
+            source='/img/manaSymbols/inf.svg';original,_=self.fetch(source)
+            root=ElementTree.fromstring(original)
+            circles=root.findall('.//{http://www.w3.org/2000/svg}circle')
+            if len(circles)!=1:raise ValidationError('Pinned infinity symbol changed unexpectedly.')
+            #Reuse the genuine infinity glyph, without its generic-mana disc.
+            for parent in root.iter():
+                if circles[0] in list(parent):parent.remove(circles[0])
+            root.set('width','520');root.set('height','240');root.set('viewBox','40 180 520 240')
+            raw=ElementTree.tostring(root,encoding='utf-8')
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'adapter':'Text-colored infinity glyph without a mana disc'}
+            return raw,'image/svg+xml'
+        if path=='/img/frames/proxy-foundry/emblem/frame-no-symbol.png':
+            source='/img/frames/token/regular/frameC.png'
+            cache_key=f'derived:{CC_COMMIT}:emblem-no-symbol-v1:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch(source)
+                    with Image.open(io.BytesIO(original)) as image:
+                        image=image.convert('RGBA');width,height=image.size
+                        #The plain neutral pack shares the emblem bars. Move its
+                        #lower panel down to emblem coordinates, shortening only
+                        #the uniform rules-box middle so the bottom stays fixed.
+                        top=round(.60*height);middle=round(.80*height);shift=round(.03*height)
+                        result=image.copy();result.paste((0,0,0,0),(0,top,width,middle+shift))
+                        result.paste(image.crop((0,top,width,middle)),(0,top+shift))
+                        output=io.BytesIO();result.save(output,'PNG');raw=output.getvalue()
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Neutral emblem bars and rules panel; no emblem-symbol overlay'}
+            return raw,'image/png'
+        if path==PW_PREFIX+'MaskPinlineNickname.png':
+            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{PINLINE_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    frame,_=self.fetch('/img/frames/planeswalker/nickname/planeswalkerNicknameFrameM.png')
+                    pinline,_=self.fetch('/img/frames/planeswalker/regular/planeswalkerMaskPinline.png')
+                    loyalty,_=self.fetch('/img/frames/planeswalker/maskLoyalty.png')
+                    raw=nickname_pinline_png(frame,pinline,loyalty)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Nickname-frame pinline alpha; art rails and loyalty badge excluded'}
+            return raw,'image/png'
         tall_pw=re.fullmatch(re.escape(PW_PREFIX)+r'(FrameTall([WUBRGMAL])|Mask(Pinline|Type)Tall|textTall)\.(png|svg)',path)
         if tall_pw:
             if tall_pw[2]:source='/img/frames/planeswalker/nickname/planeswalkerNicknameFrame'+tall_pw[2]+'.png'
+            elif tall_pw[3]=='Pinline':source=PW_PREFIX+'MaskPinlineNickname.png'
             elif tall_pw[3]:source='/img/frames/planeswalker/regular/planeswalkerMask'+tall_pw[3]+'.png'
             else:source='/img/frames/planeswalker/text.svg'
-            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{TALL_VERSION}:{path}'
+            cache_key=f'derived:{CC_REPO}:{CC_COMMIT}:{TALL_VERSION}{PINLINE_VERSION if tall_pw[3]=="Pinline" else ""}:{path}'
             with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
             with asset_lock:
                 cached=self.net.store.cache_get(cache_key)

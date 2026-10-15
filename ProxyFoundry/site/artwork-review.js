@@ -1,6 +1,6 @@
 import {ensureMetadata} from './metadata.js';
 import {$,api,job,modal,closeModal,thumbnail,state,toast,uploadFolder} from './ui.js';
-import {sourceRecord,mergeDataDocument,enrichDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
+import {sourceRecord,mergeCardDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
 
 const element=(tag,text=``)=>{
     const node=document.createElement(tag);
@@ -194,18 +194,44 @@ const githubGuideSnippet=(number,label)=>{
     image.onclick=()=>enlarge(image.src,label);
     return image;
 };
-export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=>{
+export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],options={})=>{
     if(!changes.length)
         return;
 
     const record=await sourceRecord(`deck:${deckId}`)||{};
-    let url=record.github||githubUrl;
+    //Reuse our last write until generation imports a newer source snapshot.
+    const sameSource=!githubUrl||record.github===githubUrl;
+    const refreshed=options.baseline&&JSON.stringify(options.baseline)!==JSON.stringify(record.sourceBaseline);
+    const baseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
+    let url=githubUrl||record.github;
     let sourceWarning=``;
-    try{if(url)githubDataLocation(url);}
+    try{if(url) {
+        const location=githubDataLocation(url);
+        url=`https://github.com/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/blob/${encodeURIComponent(location.branch)}/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
+    }}
     catch(error){url=``;sourceWarning=`Use the full GitHub folder link in Art & Setup to update data.json. You can download it now.`;}
+    const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged,sourceBaseline:options.baseline||null});
+    if(options.autoSave) {
+        if(url) {
+            const location=githubDataLocation(url),token=await githubCredential(location.repo);
+            if(token) {
+                const merged=await saveGithubData(location,token,changes,baseline,fetch,cards);
+                await rememberResult(merged);
+                return {github:url};
+            }
+        }
+        else if(record.file||record.folder) {
+            const result=await saveLocalData({...record,document:baseline},changes,cards);
+            await sourceRecord(`deck:${deckId}`,result);
+            return {local:true};
+        }
+    }
+
+    options.beforePrompt?.();
     return new Promise(resolve=>{
-        let saving=false;
-        modal(`Save artwork choices for next time?`,``,{onClose:()=>{if(saving)return false;resolve();return true;}});
+        let saving=false,finished=false;
+        const title=options.title||`Save artwork choices for next time?`;
+        modal(title,``,{onClose:()=>{if(saving)return false;if(!finished)resolve();return true;}});
         const dialog=$(`#modal-host .modal-backdrop`);
         const body=$(`.modal-body`,dialog),status=element(`p`);status.setAttribute(`role`,`status`);
         $(`.modal`,dialog).style.width=`760px`;
@@ -216,8 +242,21 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=
         Object.assign(choices.style,{display:`flex`,flexDirection:`column`,gap:`12px`});
         const intro=element(`p`,`Save a data.json to reuse these choices next time.`);intro.style.margin=`0 0 6px`;
         choices.append(intro);body.append(choices);
-        const finish=()=>{if(saving)return;closeModal();resolve();};
-        choices.append(button(`Download data.json`,()=>{if(saving)return;downloadData(enrichDataDocument(mergeDataDocument(document,changes),cards,changes));finish();}));
+        const finish=result=>{if(saving)return;finished=true;closeModal();resolve(result);};
+        choices.append(button(`Download data.json`,async()=>{
+            if(saving)return;
+            saving=true;
+            try {
+                const output=mergeCardDataDocument(record.document||document,changes,null,cards);
+                downloadData(output);
+                if(!url&&!record.file&&!record.folder)
+                    await sourceRecord(`deck:${deckId}`,{...record,document:output});
+
+                saving=false;finish({downloaded:true});
+            }
+            catch(error){status.textContent=error.message;}
+            finally{saving=false;}
+        }));
         if(url) {
             const save=button(`Update data.json on GitHub`,async()=>{
                 if(saving)return;
@@ -231,13 +270,13 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=
                         guide.focus();save.disabled=false;saving=false;return;
                     }
 
-                    const merged=await saveGithubData(location,token,changes,record.document,fetch,cards);
+                    const merged=await saveGithubData(location,token,changes,baseline,fetch,cards);
                     await rememberResult(merged);status.textContent=`Updated ${location.repo}/${location.path} on ${location.branch}.`;
                     toast(status.textContent);
                     if(!remember.checked&&!remembered)
                         await disconnectGithub(location.repo);
 
-                    saving=false;finish();
+                    saving=false;finish({github:url});
                 }
                 catch(error){status.textContent=error.message;}
                 finally{if(!remember.checked&&!remembered)await disconnectGithub(githubDataLocation(url).repo);save.disabled=false;saving=false;}
@@ -247,7 +286,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=
             Object.assign(connection.style,{display:`none`,flexDirection:`column`,gap:`18px`});
             const summary=element(`p`,`Connect ${location.repo}.`);summary.style.margin=`0`;
             const guide=element(`a`,`Open GitHub token setup ↗`);guide.className=`button`;
-            guide.href=`https://github.com/settings/personal-access-tokens/new?`+new URLSearchParams({name:`BulkProxyForge`,description:`Update data.json artwork choices`,target_name:owner,contents:`write`,expires_in:`90`});guide.target=`_blank`;guide.rel=`noopener noreferrer`;
+            guide.href=`https://github.com/settings/personal-access-tokens/new?`+new URLSearchParams({name:`BulkProxyForge`,description:`Update data.json card data`,target_name:owner,contents:`write`,expires_in:`90`});guide.target=`_blank`;guide.rel=`noopener noreferrer`;
             connection.append(summary,guide);
             const steps=element(`ol`);Object.assign(steps.style,{display:`flex`,flexDirection:`column`,gap:`20px`,paddingLeft:`24px`,margin:`0`});
             const expiration=element(`small`,`Expiration: choose 90 days. Click an image to enlarge.`);connection.append(expiration);
@@ -284,19 +323,47 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[])=
             connect.disabled=true;tokenInput.oninput=()=>{connect.disabled=!tokenInput.value.trim();};
             const forget=button(`Forget GitHub connection`,async()=>{await disconnectGithub(githubDataLocation(url).repo);remembered=false;status.textContent=`GitHub connection forgotten.`;});
             forget.style.display=`none`;
-            const back=button(`Back to save options`,()=>{if(saving)return;connection.style.display=`none`;choices.style.display=`flex`;$(`#modal-title`,dialog).textContent=`Save artwork choices for next time?`;status.textContent=``;save.focus();});
+            const back=button(`Back to save options`,()=>{if(saving)return;connection.style.display=`none`;choices.style.display=`flex`;$(`#modal-title`,dialog).textContent=title;status.textContent=``;save.focus();});
             connection.append(tokenLabel,label,once,connect,back);choices.append(save,forget);body.append(connection);
         }
         else if(record.file||record.folder) {
             const save=button(record.file?`Update existing data.json`:`Create data.json in artwork folder`,async()=>{
                 save.disabled=true;saving=true;status.textContent=`Saving data.json…`;
-                try{const result=await saveLocalData(record,changes,cards);await sourceRecord(`deck:${deckId}`,result);saving=false;finish();}
+                try{const result=await saveLocalData({...record,document:baseline},changes,cards);await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});}
                 catch(error){status.textContent=error.message;}
                 finally{save.disabled=false;saving=false;}
             });choices.append(save);
         }
 
-        const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged});
+        if(options.autoSave&&!url&&!record.file&&!record.folder) {
+            const link=element(`input`);link.type=`url`;link.placeholder=`https://github.com/owner/repo/blob/main/data.json`;
+            link.setAttribute(`aria-label`,`GitHub data.json or folder link`);
+            const label=element(`label`,`Connect a GitHub data file or project folder`);label.append(link);
+            const connect=button(`Connect GitHub`,async()=>{
+                if(saving)return;
+                try {
+                    const target=link.value.trim();githubDataLocation(target);
+                    finished=true;closeModal();
+                    resolve(offerDataSave(deckId,changes,document,target,cards,{...options,autoSave:false,beforePrompt:null,baseline:null}));
+                }
+                catch(error){status.textContent=error.message;}
+            });
+            choices.append(label,connect);
+            if(window.showOpenFilePicker) {
+                choices.append(button(`Connect a local data.json`,async()=>{
+                    if(saving)return;
+                    saving=true;
+                    try {
+                        const [file]=await window.showOpenFilePicker({types:[{description:`Card data`,accept:{'application/json': [`.json`]}}],multiple:false});
+                        const result=await saveLocalData({file},changes,cards);
+                        await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});
+                    }
+                    catch(error){if(error.name!==`AbortError`)status.textContent=error.message;}
+                    finally{saving=false;}
+                }));
+            }
+        }
+
         body.append(status);
         for(const control of body.querySelectorAll(`.button`)) {
             Object.assign(control.style,{whiteSpace:`normal`,overflowWrap:`anywhere`,width:`100%`,boxSizing:`border-box`});

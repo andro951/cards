@@ -1,14 +1,30 @@
 """Extend the native nickname frame by repeating its straight rules-box middle."""
 import io
 import xml.etree.ElementTree as ET
-from PIL import Image
+from PIL import Image,ImageChops,ImageFilter
 
 PREFIX='/img/frames/proxy-foundry/planeswalker/'
 TALL_VERSION='repeat-middle-v1'
+PINLINE_VERSION='nickname-pinline-v1'
 TALL_EXTRA=147
 TALL_SHIFT=TALL_EXTRA/2100
 SPLICE_Y=1550
 MOVE_START=900
+
+
+def nickname_pinline_png(frame_raw,pinline_raw,loyalty_raw):
+    def alpha(raw,resize=False):
+        with Image.open(io.BytesIO(raw)) as image:
+            if resize and image.size==(2010,2814):image=image.resize((1500,2100),Image.Resampling.LANCZOS)
+            if image.size!=(1500,2100):raise ValueError('Unexpected native planeswalker mask dimensions.')
+            return image.convert('RGBA').getchannel('A')
+    #The regular mask has art-window rails absent from this frame. The badge
+    #is a separate silver/black component, so it must never receive the gradient.
+    material=ImageChops.multiply(alpha(frame_raw),alpha(pinline_raw))
+    badge=alpha(loyalty_raw,resize=True).point(lambda a:255 if a else 0).filter(ImageFilter.MaxFilter(3))
+    material=ImageChops.multiply(material,ImageChops.invert(badge))
+    result=Image.new('RGBA',(1500,2100),'white');result.putalpha(material)
+    out=io.BytesIO();result.save(out,'PNG');return out.getvalue()
 
 
 def extend_rules_png(raw):

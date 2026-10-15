@@ -59,7 +59,9 @@ for _choice in ('normal','land','legend-land','godzilla-card','godzilla-land'):B
 for _choice in ('normal','land','legend-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
 AUTO_TEMPLATE_VERSIONS['token']=7
 AUTO_TEMPLATE_VERSIONS['station']=6
-AUTO_TEMPLATE_VERSIONS['helper']=5
+#Poison trackers share the Day/Night and Experience title-only treatment.
+AUTO_TEMPLATE_VERSIONS['helper']=6
+AUTO_TEMPLATE_VERSIONS['emblem']+=1
 for _group in ('class','saga','saga-creature'):
     AUTO_TEMPLATE_VERSIONS[_group]+=3
 # Real-name addon bars now follow the shared two-color transition.
@@ -607,7 +609,7 @@ def expose_native_frame_components(data,sem):
         if re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame[WUBRGMA]\.png',src):
             masks={name:f'/img/frames/planeswalker/regular/planeswalkerMask{name}.png' for name in ('Pinline','Title','Type')}
         elif re.fullmatch(r'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame[WUBRGMAL]\.png',src):
-            masks={'Pinline':'/img/frames/planeswalker/regular/planeswalkerMaskPinline.png'}
+            masks={'Pinline':'/img/frames/proxy-foundry/planeswalker/MaskPinlineNickname.png'}
         elif re.fullmatch(r'/img/frames/proxy-foundry/planeswalker/FrameTall[WUBRGMAL]\.png',src):
             masks={'Pinline':'/img/frames/proxy-foundry/planeswalker/MaskPinlineTall.png'}
         elif re.fullmatch(r'/img/frames/modal/nickname/[wubrgma][fb]\.png',src):
@@ -900,6 +902,7 @@ def semantic(sf,face,index=0):
     type_line=get('type_line')
     types=ingest.split_type_line(type_line)
     d={**types,'name':get('name'),'nickname':str(get('flavor_name','') or '').strip(),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    d['nickname']=rules_nicknames.effective_nickname(d['name'],d['nickname'])
     d['supertypes']=[word for word in str(type_line).replace('—',' - ').replace('–',' - ').partition(' - ')[0].split() if word in {'Basic','Legendary','Snow','World','Token'}]
     d['printed_type_line']=str(type_line)
     d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
@@ -1618,6 +1621,13 @@ def token_has_short_text(sem):
     return not sem.get('flavor_text') and len(rules)<=24 and not any(c in rules for c in '\n{}():')
 
 
+def center_short_token_rules(data):
+    text=data.get('text',{});rules=text.get('rules') or {}
+    content=str(rules.get('text') or '').strip()
+    if content and token_has_short_text({'oracle_text':content,'flavor_text':(text.get('flavor') or {}).get('text')}):
+        rules['align']='center'
+
+
 def configure_token_style(data,code,style,short):
     classic=style=='token-classic'
     borderless=style=='token-borderless'
@@ -1663,7 +1673,7 @@ def configure_token_style(data,code,style,short):
 
 
 def build_emblem_data(sem,artist,autofit,flags):
-    """Build an emblem using CardConjurer's complete native Emblem frame."""
+    """Use the native neutral bars without the large emblem-symbol art overlay."""
     # The preserved compiler has no Emblem recipe. Use an ordinary card only
     # for its shared metadata/text structures, then replace the whole frame and
     # every layout field that differs in CardConjurer's Emblem pack.
@@ -1675,8 +1685,8 @@ def build_emblem_data(sem,artist,autofit,flags):
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
     data.update(version='emblem',
-                frames=[{'name':'Emblem Frame','src':'/img/frames/token/emblem/frame.png','masks':[]}],
-                artBounds={'x':0.142,'y':0.0496,'width':0.716,'height':0.8548},
+                frames=[{'name':'Emblem Frame','src':'/img/frames/proxy-foundry/emblem/frame-no-symbol.png','masks':[]}],
+                artBounds=copy.deepcopy(_TOKEN_ART_BOUNDS),
                 setSymbolBounds={'x':0.9213,'y':0.7043,'width':0.12,'height':0.041,
                                  'vertical':'center','horizontal':'right'},
                 watermarkBounds={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472})
@@ -2654,15 +2664,19 @@ class Compiler:
     def __init__(self,store):self.store=store
     def template_identity(self,group,choice):
         choice=RETIRED_BUILTINS.get(choice,choice)
-        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        if choice=='auto':
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(1 if group=='token' else 0)
+            return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)
+            if group=='emblem':version+=1
             if choice=='godzilla-card' and group in {'transform-front','transform-back'}:version+=1
             if choice=='godzilla-card' and group=='transform-front':version+=1
             # Legendary backs without nicknames use the right-side reverse marker.
             if choice=='godzilla-card' and group=='transform-back':version+=1
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
-            if choice=='godzilla-card' and group=='planeswalker':version+=2
+            if choice=='godzilla-card' and group=='planeswalker':version+=3
+            if group=='token':version+=1
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
@@ -2678,9 +2692,11 @@ class Compiler:
         sem=semantic(sf,face,index)
         for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['nickname']=rules_nicknames.effective_nickname(sem['name'],sem.get('nickname'))
         sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
         for nested in ('flip_face','prepared_spell'):
             if nested in sem:
+                sem[nested]['nickname']=rules_nicknames.effective_nickname(sem[nested]['name'],sem[nested].get('nickname'))
                 if nested in options.get('nestedFlavorTexts',{}):
                     sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
                 sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
@@ -2888,7 +2904,7 @@ class Compiler:
             apply_artifact_gray(data,sem)
         unboxed_helper=group=='helper' and (
             {str(f.get('name') or '').strip() for f in sf.get('card_faces',[])}=={'Day','Night'}
-            or str(sf.get('name') or '').strip().casefold()=='experience'
+            or str(sf.get('name') or '').strip().casefold() in {'experience','poison counter'}
         )
         if unboxed_helper:
             title=(data.get('text') or {}).get('nickname' if nickname_applied else 'title')
@@ -2910,6 +2926,7 @@ class Compiler:
             if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id
         data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
+        if group=='token':center_short_token_rules(data)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit
@@ -2929,4 +2946,5 @@ class Compiler:
             warning={**warning,'warning':False,'intentionalArtWindow':True}
         result={'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
         if rule_names.active:result['nicknameRulesVersion']=rules_nicknames.VERSION
+        result['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
         return result

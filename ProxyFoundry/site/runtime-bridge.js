@@ -119,7 +119,7 @@
   function usedSymbols(data){
     const symbols=new Set();
     for(const obj of [...Object.values(data.text||{}),...Object.values(data.bottomInfo||{})]){
-      const text=String(obj?.text||'');
+      const text=window.proxyFoundryInlineSymbols(String(obj?.text||''));
       const tokens=[...text.matchAll(/\{([^{}]+)\}/g)].map(m=>m[1].toLowerCase().replaceAll('/',''));
       if(text.includes('{flavor}')||text.includes('{divider}'))tokens.push(data.version==='cartoony'?'cflavor':'bar');
       if(text.includes('{planechase}'))tokens.push('chaos');

@@ -35,11 +35,12 @@ def test_planeswalker_native_nickname_frame_keeps_every_ability(setup,name,count
         assert not any('/godzilla/Crown' in f['src'] for f in data['frames'])
     assert data['artBounds']==FULL_ART_NONLAND_BOUNDS
     rows=[text[f'ability{i}'] for i in range(count)]
-    assert rows[0]['y']==pytest.approx(.5539 if count==4 else .6239)
+    assert rows[0]['y']==pytest.approx(.569 if count==4 else .639)
     assert rows[-1]['y']+rows[-1]['height']==pytest.approx(.891)
     assert len({r['size'] for r in rows})==1
     assert all(rows[i]['y']+rows[i]['height']==pytest.approx(rows[i+1]['y']) for i in range(count-1))
     assert all(r['text'] and r['height']>0 for r in rows)
+    assert all(r['color']=='black' and r['outlineWidth']==0 for r in rows)
     assert all(r['x']+r['width']<=.9+1e-9 for r in rows)
     assert data['planeswalker']['orig_ability_textbox_width']==.72
     if count==3:
@@ -50,6 +51,8 @@ def test_planeswalker_native_nickname_frame_keeps_every_ability(setup,name,count
         assert text['type']['y']==pytest.approx(.4925)
         assert data['setSymbolBounds']['y']==pytest.approx(.5191)
     assert 'rules' not in text and 'pt' not in text
+    pinlines=[mask['src'] for f in data['frames'] for mask in f.get('masks',[]) if mask.get('name')=='Pinline']
+    assert '/img/frames/planeswalker/regular/planeswalkerMaskPinline.png' not in pinlines
     if count==4:assert rows[0]['x']==.136 and 'Whenever an artifact' in rows[0]['text']
     assert text['nickname' if nickname else 'title']['text']==('The Inventor' if nickname else sf['name'])
     cutouts=[f for f in data['frames'] if f.get('erase')]
@@ -109,3 +112,14 @@ def test_dual_color_normal_crown_keeps_planeswalker_header_position(setup):
     crowns=[f for f in data['frames'] if f['src'].endswith(('m15CrownUFloating.png','m15CrownRFloating.png'))]
     assert len(crowns)==2
     assert all(f['bounds']['y']==pytest.approx(.0077) for f in crowns)
+
+
+def test_dual_planeswalker_pinline_uses_matching_mask_and_keeps_rules_below_border(setup):
+    compiler,settings,art=setup;sf=card('Tezzeret-the-Seeker')
+    sf.update(name='Kaya the Inexorable',colors=['W','B'],mana_cost='{3}{W}{B}')
+    data=compiler.compile_face(sf,sf,0,{'templateOverride':'godzilla-card','semanticOverrides':{'nickname':'Death, the Pale Horseman'}},settings,art)['data']
+    pinlines=[f for f in data['frames'] if any(m.get('name')=='Pinline' for m in f.get('masks',[]))]
+    assert len(pinlines)==1
+    assert pinlines[0]['masks']==[{'name':'Pinline','src':'/img/frames/proxy-foundry/planeswalker/MaskPinlineNickname.png'}]
+    assert data['text']['ability0']['y']*2100>1314.41+20
+    assert all(data['text'][f'ability{i}']['color']=='black' for i in range(3))

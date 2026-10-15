@@ -263,7 +263,8 @@ def test_real_cardconjurer_roundtrip(tmp_path):
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
+@pytest.mark.parametrize('symbol_case',['mana-cluster','infinity'])
+def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,symbol_case):
     from playwright.sync_api import sync_playwright
     card={
         'object':'card','id':'33333333-3333-4333-8333-333333333333',
@@ -278,6 +279,13 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
                       'Other creatures you control of the chosen type get +1/+1.',
         'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/morophon.jpg'},
     }
+    if symbol_case=='infinity':
+        card.update(name='The Mind Stone',type_line='Legendary Artifact — Infinity Stone',
+                    colors=['W'],mana_cost='{1}{W}',power=None,toughness=None,
+                    oracle_text='Indestructible\n{T}: Add {W}.\n'
+                      '{5}{W}, {T}: Harness The Mind Stone. (Once harnessed, its \u221e ability is active.)\n'
+                      '\u221e — At the beginning of your end step, exile up to one other target nonland permanent you control, '
+                      "then return that card to the battlefield under its owner's control.")
     store=Store(tmp_path/'mana-wrap');net=Network(store);native_transport=net._transport
     def transport(url):
         if 'api.scryfall.com' in url:return json.dumps(card).encode(),'application/json',{}
@@ -305,8 +313,10 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
             current=app.ws.deck(d['id'])
             assert current['status']=='ready',{'status':current['status'],'errors':errors,'activity':page.locator('#activity-log').text_content()}
             rules=current['cards'][0]['faces'][0]['compiled']['data']['text']['rules']['text']
-            assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
-            assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+            if symbol_case=='mana-cluster':
+                assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
+                assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+            else:assert rules.count('\u221e')==2
             runtime_frame=next(frame for frame in page.frames if '/runtime/host' in frame.url)
             metrics=runtime_frame.evaluate("""() => {
               const box=window.card?.text?.rules;
@@ -322,8 +332,63 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
               }
               return {title:window.card?.text?.title?.text,right,maxX,overflow:Math.max(0,maxX-right)};
             }""")
-            assert metrics and metrics['title']=='Morophon, the Boundless',metrics
+            assert metrics and metrics['title']==card['name'],metrics
             assert metrics['overflow']<=8,metrics
+            if symbol_case=='infinity':
+                infinity=runtime_frame.evaluate("""() => {
+                  const symbol=getManaSymbol('infinity');
+                  const results=[];
+                  for(const color of ['black','white'])for(const text of ['∞','{i}∞{/i}']){
+                    const canvas=document.createElement('canvas');canvas.width=card.width;canvas.height=card.height;
+                    const context=canvas.getContext('2d');
+                    writeText({name:'Infinity probe',text,font:'mplantin',color,x:.1,y:.1,width:.2,height:.1,size:.03},context);
+                    const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let ink=0;
+                    for(let index=0;index<pixels.length;index+=4){
+                      const channels=[pixels[index],pixels[index+1],pixels[index+2]];
+                      if(pixels[index+3]>128&&channels.every(value=>color==='white'?value>200:value<60))ink++;
+                    }
+                    results.push({color,text,ink});
+                  }
+                  return {loaded:symbol.image.complete&&symbol.image.naturalWidth>0,results,
+                    normalized:proxyFoundryInlineSymbols('∞ {∞}')};
+                }""")
+                assert infinity['loaded'],infinity
+                assert infinity['normalized']=='{infinity} {inf}',infinity
+                assert all(row['ink']>100 for row in infinity['results']),infinity
+            #A larger-font trial must not leave a forced mana wrap in the final
+            #layout. Starting directly at the fitted size should give identical pixels.
+            fitting=runtime_frame.evaluate("""() => {
+              const field={name:'Rules Text',x:.086,y:.6303,width:.828,height:.2465,
+                size:.0362,font:'mplantin',color:'white',
+                text:'Affinity for Humans (This spell costs {1} less to cast for each Human you control.)\\n'+
+                  'Trample, haste\\n'+
+                  "At the beginning of your end step, if this creature attacked this turn, return it to its owner's hand. "+
+                  'If you do, create a number of 1/1 white Human Soldier creature tokens equal to its toughness.'+
+                  '{flavor}Anyone could become family. Anyone who threatened them became her problem.'};
+              const render=field=>{
+                const canvas=document.createElement('canvas');
+                canvas.width=card.width;canvas.height=card.height;
+                const draw=lineContext.fillText,commit=paragraphContext.drawImage;
+                const clear=paragraphContext.clearRect;let lines=[],words=[];
+                lineContext.fillText=function(word,...args){words.push(word);return draw.call(this,word,...args);};
+                paragraphContext.drawImage=function(...args){lines.push(words.join(''));words=[];return commit.apply(this,args);};
+                paragraphContext.clearRect=function(...args){lines=[];words=[];return clear.apply(this,args);};
+                try {
+                  writeText(field,canvas.getContext('2d'));
+                  return {pixels:canvas.toDataURL(),size:Number(lineContext.font.match(/([\\d.]+)px/)[1]),lines};
+                } finally {
+                  lineContext.fillText=draw;paragraphContext.drawImage=commit;paragraphContext.clearRect=clear;
+                }
+              };
+              const fitted=render(field),direct=render({...field,size:fitted.size/card.height});
+              const explicit=render({...field,size:fitted.size/card.height,text:field.text.replace('costs {1}','costs\\n{1}')});
+              return {same:fitted.pixels===direct.pixels,explicitBreakPreserved:explicit.pixels!==direct.pixels,
+                initialSize:scaleHeight(field.size),finalSize:fitted.size,lines:fitted.lines};
+            }""")
+            assert fitting['finalSize']<fitting['initialSize'],fitting
+            assert fitting['same'],fitting
+            assert fitting['explicitBreakPreserved'],fitting
+            assert 'less to cast' in fitting['lines'][0],fitting
             assert not errors,errors
         finally:
             page.screenshot(path=str(ROOT/'test-results/morophon-mana-wrap.png'),full_page=True)

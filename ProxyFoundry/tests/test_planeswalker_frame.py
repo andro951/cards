@@ -1,7 +1,7 @@
 import io
 import xml.etree.ElementTree as ET
 from PIL import Image,ImageDraw
-from foundry.planeswalker_frame import PREFIX,TALL_EXTRA,SPLICE_Y,MOVE_START,extend_rules_png,extend_rules_svg,renderer_script
+from foundry.planeswalker_frame import PREFIX,TALL_EXTRA,SPLICE_Y,MOVE_START,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script
 from foundry.runtime import Runtime
 from foundry.network import Network
 from foundry.storage import Store
@@ -41,11 +41,29 @@ def test_derived_frame_and_mask_are_cached_across_runtime_restarts(tmp_path):
     runtime=Runtime(Network(Store(tmp_path),transport=transport))
     paths=[PREFIX+'FrameTallU.png',PREFIX+'MaskPinlineTall.png',PREFIX+'textTall.svg']
     results=[runtime.fetch(p) for p in paths]
-    assert len(calls)==3
+    assert len(calls)==5
     def fail(url):raise AssertionError('Tall frame must use its saved local copy')
     restarted=Runtime(Network(Store(tmp_path),transport=fail))
     assert [restarted.fetch(p) for p in paths]==results
     assert all(restarted.requested[p]['cache'] for p in paths)
+
+
+def test_nickname_pinline_mask_excludes_missing_rails_and_entire_loyalty_badge():
+    frame=Image.new('RGBA',(1500,2100));pinline=Image.new('RGBA',frame.size);badge=Image.new('RGBA',frame.size)
+    ImageDraw.Draw(frame).rectangle((60,1200,1400,1250),fill=(250,220,100,255))
+    ImageDraw.Draw(frame).rectangle((1200,1850,1400,1980),fill='black')
+    draw=ImageDraw.Draw(pinline)
+    draw.rectangle((60,200,80,1250),fill='white')
+    draw.rectangle((60,1200,1400,1250),fill='white')
+    draw.rectangle((1200,1850,1400,1980),fill='white')
+    ImageDraw.Draw(badge).rectangle((1200,1850,1400,1980),fill=(255,255,255,128))
+    def png(image):
+        out=io.BytesIO();image.save(out,'PNG');return out.getvalue()
+    badge=badge.resize((2010,2814),Image.Resampling.NEAREST)
+    alpha=Image.open(io.BytesIO(nickname_pinline_png(*map(png,(frame,pinline,badge))))).getchannel('A')
+    assert alpha.getpixel((70,700))==0
+    assert alpha.getpixel((700,1220))==255
+    assert alpha.crop((1200,1850,1401,1981)).getbbox() is None
 
 
 def test_renderer_uses_matching_mask_without_changing_normal_tall_cards():

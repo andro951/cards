@@ -2,10 +2,36 @@
 import copy
 import re
 
-VERSION=1
+VERSION=2
+IDENTITY_VERSION=1
+
+#Only abbreviated first-word matches use this list. Full names and existing
+#comma/planeswalker aliases remain eligible even when they begin with a title.
+FIRST_WORD_EXCLUSIONS=frozenset('''
+a an the this that these those it its their your our his her my you they we
+and or of to from in into on at for with without by as through under over
+when whenever if during until before after while then who what where why how not
+all any each every no one two three four five six seven eight nine ten
+first second third fourth fifth last another other target
+choose create draw add gain pay sacrifice destroy exile return search counter tap untap
+white blue black red green colorless artifact battle creature enchantment instant
+land planeswalker sorcery token emblem
+angel artificer beast bird cat cleric construct demon dog dragon druid elemental
+elf equipment faerie fish giant goblin golem horror human insect knight merfolk
+rat rogue skeleton sliver snake soldier spirit vampire vehicle warrior werewolf
+wizard wolf zombie saga class curse shrine background case room basic snow world
+ancient arcane blessed brutal dark divine elder eternal fallen greater holy
+legendary living lost mighty mystic sacred shadow silent spectral wild young
+captain doctor general king lady lord master prince princess queen sir
+'''.split())
 
 
-def face_nicknames(card, saved_faces=(), staged=None):
+def effective_nickname(name,value):
+    nickname=str(value or '').strip()
+    return '' if nickname==name else nickname
+
+
+def _face_nicknames(card, saved_faces=(), staged=None):
     faces=card.get('card_faces') or [card]
     result={f['name']:str(f.get('flavor_name',card.get('flavor_name')) or '').strip() for f in faces if f.get('name')}
     for saved in saved_faces:
@@ -17,20 +43,35 @@ def face_nicknames(card, saved_faces=(), staged=None):
     return result
 
 
+def face_nicknames(card, saved_faces=(), staged=None):
+    return {name:effective_nickname(name,nick) for name,nick in _face_nicknames(card,saved_faces,staged).items()}
+
+
+def has_redundant_nickname(card,saved_faces=()):
+    return any(name==nick for name,nick in _face_nicknames(card,saved_faces).items())
+
+
 def short_names(entry):
     name=entry['name']
-    if ',' in name:return [name.split(',',1)[0].strip()]
+    aliases=[]
+    if ',' in name:aliases.append(name.split(',',1)[0].strip())
+    first=name.split()[0].rstrip(',')
+    if (first!=name and len(first)>1 and first.casefold() not in FIRST_WORD_EXCLUSIONS
+            and re.fullmatch(r"[^\W\d_][\w’'-]*",first)):
+        aliases.append(first)
     types=entry.get('types') or re.split(r'\s+[—–-]\s+',entry.get('type_line',''),maxsplit=1)[0].split()
-    if 'Planeswalker' not in types:return []
+    if 'Planeswalker' not in types:return list(dict.fromkeys(aliases))
     subtypes=entry.get('subtypes')
     if subtypes is None:
         parts=re.split(r'\s+[—–-]\s+',entry.get('type_line',''),maxsplit=1)
         subtypes=parts[1].split() if len(parts)>1 else []
-    return [s for s in subtypes if re.search(r'(?<!\w)'+re.escape(s)+r'(?!\w)',name)]
+    aliases.extend(s for s in subtypes if re.search(r'(?<!\w)'+re.escape(s)+r'(?!\w)',name))
+    return list(dict.fromkeys(aliases))
 
 
 class RulesNames:
     def __init__(self, entries):
+        entries=[{**entry,'nickname':effective_nickname(entry['name'],entry.get('nickname'))} for entry in entries]
         self.matches={};self.active=False
         # All full face names participate, including unrenamed sibling faces.
         # They protect their own names from another face's shorter alias.

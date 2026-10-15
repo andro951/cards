@@ -151,7 +151,7 @@ def test_artwork_file_merge_permissions_and_github_sha(dom_page):
       window.fetch=async()=>({ok:true,json:async()=>({stem:'spirit',id:'asset-'+(++uploads)})});
       const files=[new File(['a'],'Spirit.png'),new File(['b'],'spirit.jpg')];Object.defineProperty(files[0],'artworkPath',{value:'folder/Spirit.png'});
       const imported=await __mod_ui.uploadFolder(files,(done,total)=>progress.push([done,total]),source);window.fetch=originalFetch;
-      let shaConflict=false;try{await m.saveGithubData(location,'test',changes,original,async(url,opts)=>opts.method==='PUT'?{ok:false,status:409}:{ok:true,status:200,json:async()=>({sha:'changed',encoding:'base64',content:btoa(JSON.stringify(original))})});}catch(error){shaConflict=error.message.includes('changed on GitHub');}
+      let shaConflict=false;try{await m.saveGithubData(location,'test',changes,original,async(url,opts)=>opts.method==='PUT'?{ok:false,status:409}:{ok:true,status:200,json:async()=>({sha:'changed',encoding:'base64',content:btoa(JSON.stringify(original))})});}catch(error){shaConflict=error.message.includes('kept changing on GitHub');}
       return {local:JSON.parse(text),writes,permissions,denied,conflict,shaConflict,imported,names:source.localNames,progress,onceStored:!!onceStored,put:JSON.parse(calls[1].body),location,raw:m.githubDataLocation('https://raw.githubusercontent.com/owner/cards/main/deck/data.json')};
     }''')
     assert report['local']['cards'][0]=={'name':'Spirit','nickname':'Ghost','artist':'Me','art':'custom.png'}
@@ -162,6 +162,385 @@ def test_artwork_file_merge_permissions_and_github_sha(dom_page):
     assert report['imported']=={'spirit':'asset-1','spirit__2':'asset-2'}
     assert report['names']=={'spirit':'folder/Spirit.png','spirit__2':'spirit.jpg'}
     assert report['progress']==[[1,2],[2,2]] and report['shaConflict']
+    assert not errors,errors
+
+
+def test_github_save_refreshes_sha_and_merges_unrelated_changes_on_retry(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,location=m.githubDataLocation('https://github.com/owner/cards/tree/main/deck');
+      const before={version:1,cards:[{name:'Spirit',oracle_text:'Flying',art:'old.png'}]};
+      const calls=[];let reads=0,writes=0,saved;
+      const fetcher=async(url,opts)=>{
+        calls.push({url,cache:opts.cache,method:opts.method||'GET'});
+        if(opts.method==='PUT'){
+          writes++;saved=JSON.parse(opts.body);
+          return writes===1?{ok:false,status:409}:{ok:true,status:200};
+        }
+        reads++;
+        const current=structuredClone(before);if(reads>1)current.cards[0].art='new.png';
+        return {ok:true,status:200,json:async()=>({sha:reads===1?'stale-sha':'fresh-sha',encoding:'base64',content:btoa(JSON.stringify(current))})};
+      };
+      const result=await m.saveGithubData(location,'test-only',[{name:'Spirit',oracle_text:'Lifelink'}],before,fetcher);
+      return {calls,reads,writes,saved,result};
+    }''')
+    assert report['reads']==report['writes']==2
+    assert report['saved']['sha']=='fresh-sha'
+    assert report['result']['cards'][0]=={'name':'Spirit','oracle_text':'Lifelink','art':'new.png'}
+    reads=[call for call in report['calls'] if call['method']=='GET']
+    assert all(call['cache']=='no-store' for call in reads)
+    assert len({call['url'] for call in reads})==2
+    assert not errors,errors
+
+
+def test_github_save_retry_preserves_a_concurrent_rules_edit(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,location=m.githubDataLocation('https://github.com/owner/cards/tree/main/deck');
+      const before={version:1,cards:[{name:'Spirit',oracle_text:'Flying'}]};
+      let reads=0,writes=0,message='';
+      const fetcher=async(url,opts)=>{
+        if(opts.method==='PUT'){writes++;return {ok:false,status:409};}
+        reads++;const current=structuredClone(before);
+        if(reads>1)current.cards[0].oracle_text='Haste';
+        return {ok:true,status:200,json:async()=>({sha:'sha-'+reads,encoding:'base64',content:btoa(JSON.stringify(current))})};
+      };
+      try{await m.saveGithubData(location,'test-only',[{name:'Spirit',oracle_text:'Lifelink'}],before,fetcher);}
+      catch(error){message=error.message;}
+      return {reads,writes,message};
+    }''')
+    assert report['reads']==2 and report['writes']==1
+    assert 'rules text changed' in report['message']
+    assert not errors,errors
+
+
+def test_github_save_limits_version_retries_and_does_not_retry_other_errors(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,location=m.githubDataLocation('https://github.com/owner/cards/tree/main/deck');
+      const before={version:1,cards:[]};
+      const run=async status=>{
+        let reads=0,writes=0,message='';
+        const fetcher=async(url,opts)=>{
+          if(opts.method==='PUT'){writes++;return {ok:false,status};}
+          reads++;return {ok:true,status:200,json:async()=>({sha:'sha-'+reads,encoding:'base64',content:btoa(JSON.stringify(before))})};
+        };
+        try{await m.saveGithubData(location,'test-only',[{name:'Spirit',oracle_text:'Flying'}],before,fetcher);}
+        catch(error){message=error.message;}
+        return {reads,writes,message};
+      };
+      return {busy:await run(409),denied:await run(403)};
+    }''')
+    assert report['busy']['reads']==report['busy']['writes']==3
+    assert 'Try Save again' in report['busy']['message']
+    assert report['denied']['reads']==report['denied']['writes']==1
+    assert '(403)' in report['denied']['message']
+    assert not errors,errors
+
+
+def test_card_rules_editor_saves_data_json_to_github(dom_page):
+    page,errors=dom_page
+    page.evaluate('''async()=>{
+      const F=__fixture;
+      F.deck.cards[0].faces[0].semanticOverrides={oracle_text:'Vigilance'};
+      F.deck.settings={...F.deck.settings,dataJsonSource:{kind:'github',value:'deck/data.json'},githubSetupFolder:'https://github.com/owner/cards/tree/main/deck'};
+      window.rulesDocument={version:1,artist:'Existing Artist',cards:[{name:'Test creature',nickname:'A Hero',art:'keep.png',oracle_text:'Vigilance'}]};
+      window.rulesAttempts=0;
+      await __mod_artwork_files.rememberGithub(F.deck.id,F.deck.settings.githubSetupFolder,rulesDocument);
+      await __mod_artwork_files.connectGithub('owner/cards','test-only',false);
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(String(url).startsWith('https://api.github.com/')){
+          if(opts.method==='PUT'){
+            if(++rulesAttempts===1)return {ok:false,status:409};
+            window.rulesPut=JSON.parse(opts.body);window.rulesDocument=JSON.parse(atob(rulesPut.content));return {ok:true};
+          }
+          return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'current-sha',content:btoa(JSON.stringify(rulesDocument))})};
+        }
+        if(String(url).includes('/cards/')&&opts.body){
+          const patch=JSON.parse(opts.body);
+          if(patch.semanticOverrides){
+            F.deck.cards[0].faces[0].semanticOverrides=patch.semanticOverrides;
+          }
+        }
+        return original(url,opts);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Flying\n{T}: Draw a card.')
+    assert page.locator('#save-rules-data').count()==0
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('window.rulesPut && __fixture.deck.settings.dataJsonSource.value.startsWith("https:") && !document.querySelector(".modal")')
+    data=page.evaluate('rulesDocument')
+    assert data['artist']=='Existing Artist'
+    assert data['cards'][0]['oracle_text']=='Flying\n{T}: Draw a card.'
+    assert data['cards'][0]['nickname']=='A Hero' and data['cards'][0]['art']=='keep.png'
+    assert page.evaluate('rulesPut.sha')=='current-sha'
+    assert page.evaluate('__fixture.deck.settings.dataJsonSource.value')=='https://github.com/owner/cards/blob/main/deck/data.json'
+    assert page.evaluate('rulesPut.branch')=='main'
+    assert page.evaluate('rulesAttempts')==2
+    assert not errors,errors
+
+
+def test_card_save_offers_connection_or_download_without_a_source(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(String(url).includes('/cards/')&&opts.body){
+          const patch=JSON.parse(opts.body);
+          if(patch.semanticOverrides){
+            const face=__fixture.deck.cards[0].faces[0];
+            face.semanticOverrides=patch.semanticOverrides;face.rulesOverrideLocal=true;
+          }
+        }
+        return original(url,opts);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Flying')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.get_by_text('Connect or download data.json',exact=True).wait_for()
+    assert page.get_by_role('button',name='Connect GitHub',exact=True).is_visible()
+    assert page.get_by_label('GitHub data.json or folder link').is_visible()
+    with page.expect_download() as download:
+        page.get_by_role('button',name='Download data.json',exact=True).click()
+    data=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+    assert data['cards'][0]['oracle_text']=='Flying'
+    page.wait_for_function('!document.querySelector(".modal")')
+    page.locator('[data-card]').click()
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('!document.querySelector(".modal")')
+    assert not errors,errors
+
+
+def test_card_save_connects_github_then_uses_that_connection(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      window.rulesDocument={version:1,cards:[]};window.rulesWrites=0;
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(String(url).startsWith('https://api.github.com/')){
+          if(opts.method==='PUT'){
+            rulesWrites++;rulesDocument=JSON.parse(atob(JSON.parse(opts.body).content));return {ok:true};
+          }
+          return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'sha-'+rulesWrites,content:btoa(JSON.stringify(rulesDocument))})};
+        }
+        if(String(url).includes('/cards/')&&opts.body){
+          const patch=JSON.parse(opts.body);
+          if(patch.semanticOverrides)__fixture.deck.cards[0].faces[0].semanticOverrides=patch.semanticOverrides;
+        }
+        return original(url,opts);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Flying')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.get_by_label('GitHub data.json or folder link').fill('https://github.com/owner/cards/tree/main')
+    page.get_by_role('button',name='Connect GitHub',exact=True).click()
+    page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
+    page.get_by_label('GitHub connection token').fill('test-token')
+    page.get_by_text('Remember access to update data.json next time',exact=True).click()
+    assert page.evaluate('rulesWrites')==0
+    page.get_by_role('button',name='Connect and update data.json',exact=True).click()
+    page.wait_for_function('rulesWrites===1 && __fixture.deck.settings.dataJsonSource?.value && !document.querySelector(".modal")')
+    assert page.evaluate('__fixture.deck.settings.dataJsonSource.value')=='https://github.com/owner/cards/blob/main/data.json'
+    page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Lifelink')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('rulesWrites===2 && !document.querySelector(".modal")')
+    assert page.evaluate('rulesDocument.cards[0].oracle_text')=='Lifelink'
+    page.locator('[data-card]').click()
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('!document.querySelector(".modal")')
+    assert page.evaluate('rulesWrites')==2
+    assert not errors,errors
+
+
+def test_card_save_updates_connected_local_data_without_a_prompt(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      window.localDocument={version:1,artist:'Keep artist',cards:[{name:'Test creature',nickname:'Keep nickname',oracle_text:'Flying'}]};
+      window.localWrites=0;window.localPermissions=0;
+      const file={queryPermission:async()=> 'granted',requestPermission:async()=>{localPermissions++;return 'granted';},
+        getFile:async()=>({text:async()=>JSON.stringify(localDocument)}),
+        createWritable:async()=>({write:async text=>{localWrites++;localDocument=JSON.parse(text);},close:async()=>{},abort:async()=>{}})};
+      window.localRecord={file,document:structuredClone(localDocument)};
+      const get=IDBObjectStore.prototype.get,put=IDBObjectStore.prototype.put,key='deck:'+__fixture.deck.id;
+      IDBObjectStore.prototype.get=function(name){
+        const request=get.call(this,name);
+        if(name===key)Object.defineProperty(request,'result',{get:()=>localRecord});
+        return request;
+      };
+      IDBObjectStore.prototype.put=function(value,name){
+        if(name===key){localRecord=value;return put.call(this,{document:value.document},name);}
+        return put.call(this,value,name);
+      };
+      __fixture.deck.cards[0].faces[0].semanticOverrides={oracle_text:'Flying'};
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(String(url).includes('/cards/')&&opts.body){
+          const patch=JSON.parse(opts.body);
+          if(patch.semanticOverrides)__fixture.deck.cards[0].faces[0].semanticOverrides=patch.semanticOverrides;
+        }
+        return original(url,opts);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Vigilance')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('localWrites===1 && !document.querySelector(".modal")')
+    assert page.evaluate('localDocument.artist')=='Keep artist'
+    assert page.evaluate('localDocument.cards[0].nickname')=='Keep nickname'
+    assert page.evaluate('localDocument.cards[0].oracle_text')=='Vigilance'
+    page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('localWrites===2 && !document.querySelector(".modal")')
+    assert page.evaluate('localDocument.cards[0].oracle_text')==''
+    assert page.evaluate('localPermissions')==0
+    assert not errors,errors
+
+
+def test_card_save_keeps_failed_github_write_available_for_retry(dom_page):
+    page,errors=dom_page
+    page.evaluate('''async()=>{
+      const m=__mod_artwork_files,url='https://github.com/owner/cards/blob/main/data.json';
+      __fixture.deck.settings.dataJsonSource={kind:'github',value:url};
+      await m.rememberGithub(__fixture.deck.id,url,{version:1,cards:[]});
+      await m.connectGithub('owner/cards','test-only',false);
+      window.failRulesWrite=true;window.rulesWrites=0;
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(String(url).startsWith('https://api.github.com/')){
+          if(opts.method==='PUT'){rulesWrites++;return {ok:!failRulesWrite,status:503};}
+          return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'current',content:btoa(JSON.stringify({version:1,cards:[]}))})};
+        }
+        if(String(url).includes('/cards/')&&opts.body){
+          const patch=JSON.parse(opts.body);
+          if(patch.semanticOverrides)__fixture.deck.cards[0].faces[0].semanticOverrides=patch.semanticOverrides;
+        }
+        return original(url,opts);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#rules-override').evaluate('(el)=>{el.closest("details").open=true;}')
+    page.fill('#rules-override','Flying')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.get_by_text('GitHub could not update data.json (503). Your changes are saved in the deck.',exact=True).wait_for()
+    assert page.locator('#rules-override').input_value()=='Flying'
+    assert page.evaluate('__fixture.deck.cards[0].faces[0].semanticOverrides.oracle_text')=='Flying'
+    page.evaluate('window.failRulesWrite=false')
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('rulesWrites===2 && !document.querySelector(".modal")')
+    assert not errors,errors
+
+
+def test_card_save_retries_an_unsynced_local_edit_after_reopening(dom_page):
+    page,errors=dom_page
+    page.evaluate('''async()=>{
+      const m=__mod_artwork_files,url='https://github.com/owner/cards/blob/main/data.json';
+      __fixture.deck.settings.dataJsonSource={kind:'github',value:url};
+      const face=__fixture.deck.cards[0].faces[0];
+      face.semanticOverrides={oracle_text:'Flying'};face.rulesOverrideLocal=true;
+      window.rulesDocument={version:1,cards:[{name:'Test creature',oracle_text:'Vigilance'}]};
+      await m.rememberGithub(__fixture.deck.id,url,rulesDocument);
+      await m.connectGithub('owner/cards','test-only',false);
+      window.rulesWrites=0;const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(!String(url).startsWith('https://api.github.com/'))return original(url,opts);
+        if(opts.method==='PUT'){
+          rulesWrites++;rulesDocument=JSON.parse(atob(JSON.parse(opts.body).content));return {ok:true};
+        }
+        return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'current',content:btoa(JSON.stringify(rulesDocument))})};
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('rulesWrites===1 && !document.querySelector(".modal")')
+    assert page.evaluate('rulesDocument.cards[0].oracle_text')=='Flying'
+    page.locator('[data-card]').click()
+    page.get_by_role('button',name='Save',exact=True).click()
+    page.wait_for_function('!document.querySelector(".modal")')
+    assert page.evaluate('rulesWrites')==1
+    assert not errors,errors
+
+
+def test_rules_file_merge_detects_conflicts_and_preserves_unrelated_changes(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,before={version:1,cards:[{name:'Spirit',oracle_text:'Flying',art:'before.png'}]};
+      const changes=[{name:'Spirit',oracle_text:'Vigilance\\nLifelink'}];
+      let conflict=false;
+      try{m.mergeDataDocument({version:1,cards:[{name:'Spirit',oracle_text:'Haste'}]},changes,before);}
+      catch(error){conflict=error.message.includes('rules text');}
+      const other={version:1,cards:[{name:'Spirit',oracle_text:'Flying',art:'after.png'}]};
+      const merged=m.mergeDataDocument(other,changes,before);
+      let saved;
+      const file={queryPermission:async()=> 'granted',getFile:async()=>({text:async()=>JSON.stringify(other)}),
+        createWritable:async()=>({write:async text=>{saved=JSON.parse(text);},close:async()=>{},abort:async()=>{}})};
+      await m.saveLocalData({file,document:before},changes);
+      const reset=m.mergeDataDocument(merged,[{name:'Spirit',oracle_text:''}]);
+      return {conflict,merged,saved,reset};
+    }''')
+    assert report['conflict']
+    assert report['merged']['cards'][0]['art']=='after.png'
+    assert report['saved']['cards'][0]['oracle_text']=='Vigilance\nLifelink'
+    assert report['reset']['cards'][0]['oracle_text']==''
+    assert not errors,errors
+
+
+def test_automatic_save_tracks_its_write_and_newer_import_baselines(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,url='https://github.com/owner/cards/blob/main/data.json',id=__fixture.deck.id;
+      const baseline={version:1,cards:[{name:'Spirit',oracle_text:'Flying'}]};
+      await m.rememberGithub(id,url,baseline);await m.connectGithub('owner/cards','test-only',false);
+      let current=structuredClone(baseline),writes=0;
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(!String(url).startsWith('https://api.github.com/'))return original(url,opts);
+        if(opts.method==='PUT'){writes++;current=JSON.parse(atob(JSON.parse(opts.body).content));return {ok:true};}
+        return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'sha-'+writes,content:btoa(JSON.stringify(current))})};
+      };
+      const save=(text,before)=>__mod_artwork_review.offerDataSave(id,[{name:'Spirit',oracle_text:text}],baseline,url,[],{autoSave:true,baseline:before});
+      await save('Vigilance',baseline);
+      await save('Lifelink',baseline);
+      current.cards[0].oracle_text='Haste';
+      const newer=structuredClone(current);
+      await save('Reach',newer);
+      current.cards[0].oracle_text='Defender';
+      let conflict=false;try{await save('Trample',newer);}catch(error){conflict=error.message.includes('rules text');}
+      return {writes,conflict,current};
+    }''')
+    assert report['writes']==3 and report['conflict']
+    assert report['current']['cards'][0]['oracle_text']=='Defender'
+    assert not errors,errors
+
+
+def test_rules_save_detects_conflict_across_equivalent_selectors(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''()=>{
+      const m=__mod_artwork_files,id='11111111-1111-4111-8111-111111111111',oracle='22222222-2222-4222-8222-222222222222';
+      const cards=[{id:'one',scryfall:{id,oracle_id:oracle,name:'Spirit'},faces:[{index:0,name:'Spirit'}]}];
+      const baseline={version:1,cards:[{name:'Spirit',oracle_id:oracle,oracle_text:'Flying'}]};
+      const current={version:1,cards:[{name:'Spirit',oracle_id:oracle,oracle_text:'Haste',art:'keep.png'}]};
+      const changes=[{name:'Spirit',oracle_id:oracle,scryfall_id:id,oracle_text:'Vigilance'}];
+      let conflict=false;try{m.mergeCardDataDocument(current,changes,baseline,cards);}catch(error){conflict=error.message.includes('rules text');}
+      current.cards[0].oracle_text='Flying';
+      const result=m.mergeCardDataDocument(current,changes,baseline,cards);
+      return {conflict,result};
+    }''')
+    assert report['conflict']
+    assert len(report['result']['cards'])==1
+    assert report['result']['cards'][0]['oracle_text']=='Vigilance'
+    assert report['result']['cards'][0]['art']=='keep.png'
     assert not errors,errors
 
 
@@ -188,7 +567,7 @@ def test_artwork_github_save_ui_remember_and_one_update(dom_page):
     page.get_by_role('button',name='Update data.json on GitHub',exact=True).click()
     guide=page.get_by_role('link',name='Open GitHub token setup')
     from urllib.parse import urlparse,parse_qs
-    assert parse_qs(urlparse(guide.get_attribute('href')).query)=={'name':['BulkProxyForge'],'description':['Update data.json artwork choices'],'target_name':['owner'],'contents':['write'],'expires_in':['90']}
+    assert parse_qs(urlparse(guide.get_attribute('href')).query)=={'name':['BulkProxyForge'],'description':['Update data.json card data'],'target_name':['owner'],'contents':['write'],'expires_in':['90']}
     assert guide.get_attribute('target')=='_blank'
     assert page.locator('.modal-body ol li').count()==5
     assert page.locator('.modal-body ol img').count()==5

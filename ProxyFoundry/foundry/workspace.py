@@ -18,6 +18,8 @@ from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
 from . import rules_nicknames
+from . import github_data
+from .compiler import center_short_token_rules
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -261,6 +263,7 @@ class Workspace:
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             nickname_rules=any(rules_nicknames.face_nicknames(c.get('scryfall',{}),c['faces']).values())
+            redundant_nickname=rules_nicknames.has_redundant_nickname(c.get('scryfall',{}),c['faces'])
             for f in c['faces']:
                 sf=c.get('scryfall',{});sf_faces=ingest.face_list(sf)
                 sf_face=sf_faces[min(f.get('index',0),len(sf_faces)-1)] if sf_faces else sf
@@ -289,6 +292,8 @@ class Workspace:
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     elif nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:
+                        d['status']='draft';d['upgradeRequired']=True
+                    elif redundant_nickname and comp.get('nicknameIdentityVersion')!=rules_nicknames.IDENTITY_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
@@ -322,7 +327,7 @@ class Workspace:
     def _validated_card_data(value):
         return validate_entries(value)
 
-    def _apply_card_data(self,d,value):
+    def _apply_card_data(self,d,value,*,preparing=False):
         entries=validate_entries(value)
         if d.get('pendingImport'):
             d['cardData']=merge_entries(d.get('cardData',[]),entries);return False
@@ -330,15 +335,23 @@ class Workspace:
         if not entries:return False
         merged=merge_entries(d.get('cardData',[]),entries)
         selectors={selector_key(entry):entry for entry in merged}
+        previous_rules={selector_key(entry):entry.get('oracle_text') for entry in d.get('cardData',[])}
+        rules_imports={selector_key(entry) for entry in entries if 'oracle_text' in entry and entry['oracle_text']!=previous_rules.get(selector_key(entry))}
         dirty=False
         for card in d.get('cards',[]):
             for face in card.get('faces',[]):
                 updates=[selectors[key] for key in set(matching_keys(card,face)) if key in selectors]
                 updates.sort(key=lambda e:(bool(e.get('oracle_id') or e.get('scryfall_id')),sum(bool(e.get(k)) for k in ['oracle_id','scryfall_id','name']),bool(e.get('scryfall_id'))))
-                values={k:v for entry in updates for k,v in entry.items() if k in {'nickname','flavor_text','artist','art'}}
+                values={k:v for entry in updates for k,v in entry.items() if k in {'nickname','flavor_text','oracle_text','artist','art'}}
                 current=face.get('semanticOverrides') or {};changed=False
-                for key in ['nickname','flavor_text']:
-                    if key in values and current.get(key)!=values[key]:current={**current,key:values[key]};changed=True
+                for key in ['nickname','flavor_text','oracle_text']:
+                    if key=='oracle_text' and face.get('rulesOverrideLocal'):
+                        imported=not preparing and any(key in rules_imports for key in matching_keys(card,face))
+                        if not imported:continue
+                        face.pop('rulesOverrideLocal',None)
+                    if key=='oracle_text' and key in values and values[key]=='':
+                        if key in current:current=dict(current);current.pop(key);changed=True
+                    elif key in values and current.get(key)!=values[key]:current={**current,key:values[key]};changed=True
                 if 'artist' in values and face.get('artistOverride')!=values['artist']:face['artistOverride']=values['artist'];changed=True
                 if 'art' in values and face.get('artFilename')!=values['art']:
                     face['artFilename']=values['art'];changed=True
@@ -412,6 +425,7 @@ class Workspace:
             if patch.get('faceId'):
                 f=next((f for f in c['faces'] if f['id']==patch['faceId']),None)
                 if not f:raise ValidationError('Card face no longer exists.')
+                before_rules=(f.get('semanticOverrides') or {}).get('oracle_text','')
                 if 'acceptWarning' in patch:
                     comp=f.get('compiled') or {}
                     if not comp.get('renderKey') or not self.store.render_get(comp['renderKey']):
@@ -454,11 +468,22 @@ class Workspace:
                         f[field_name]=text;f[kind]=source;face_dirty=True
                 for k in ('artistOverride','artistCreditMode','artOverride','artFilename','templateOverride','fit','semanticOverrides'):
                     if k in patch:
+                        if k=='semanticOverrides':
+                            if not isinstance(patch[k],dict):raise ValidationError('Card text overrides must be an object.')
+                            if 'oracle_text' in patch[k]:
+                                rules=validate_entries([{**identity(c,f),'oracle_text':patch[k]['oracle_text']}])[0]['oracle_text']
+                                patch={**patch,k:{**patch[k]}}
+                                if rules:patch[k]['oracle_text']=rules
+                                else:patch[k].pop('oracle_text')
                         if k=='artOverride' and patch[k] and not self.store.asset(patch[k]):raise ValidationError('Artwork image is missing.')
                         if k=='artistOverride' and patch[k] is not None:
                             credit_text(patch[k], 'Artist credit', maximum=300)
                         if k=='artistCreditMode' and patch[k] not in {None,'inherit','printing'}:raise ValidationError('Invalid artist credit source.')
                         if f.get(k)!=patch[k]:f[k]=patch[k];face_dirty=True
+                if 'semanticOverrides' in patch:
+                    rules=(f.get('semanticOverrides') or {}).get('oracle_text','')
+                    if rules!=before_rules:
+                        f['rulesOverrideLocal']=True
                 if face_dirty:
                     self.invalidate_face(f);d['status']='draft'
         d.pop('summary',None);return self.store.put('decks',d,rev)
@@ -664,6 +689,7 @@ class Workspace:
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
         if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
         elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
+        center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
@@ -686,6 +712,7 @@ class Workspace:
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
         if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['nicknameRulesVersion']=rules_nicknames.VERSION
+        if rules_nicknames.has_redundant_nickname(sf,c['faces']):inputs['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
         return stable_hash(inputs)
 
     def _preparation_metadata_urls(self,c):
@@ -693,6 +720,7 @@ class Workspace:
 
     def _can_reuse_preparation(self,c,key,refresh,assets=None,caches=None):
         nickname_rules=any(rules_nicknames.face_nicknames(c['scryfall'],c['faces']).values())
+        redundant_nickname=rules_nicknames.has_redundant_nickname(c['scryfall'],c['faces'])
         def available(ident):
             if assets is None:return self.store.asset(ident)
             if ident not in assets:assets[ident]=self.store.asset(ident)
@@ -700,6 +728,7 @@ class Workspace:
         for f in c['faces']:
             comp=f.get('compiled') or {}
             if nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:return False
+            if redundant_nickname and comp.get('nicknameIdentityVersion')!=rules_nicknames.IDENTITY_VERSION:return False
             if f.get('error') or f.get('preparationKey')!=key or not cache_is_fresh(f.get('preparedAt'),time.time(),refresh):return False
             if not comp.get('artId') or not available(comp['artId']):return False
         if any(not available(asset) for asset in (c.get('_preparationSymbols') or [])):return False
@@ -753,12 +782,12 @@ class Workspace:
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
                 if c.get('tokenSpec'):
                     token_sem=semantic(sf,face,f.get('index',0))
-                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text'}})
+                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
                     comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem)
                 deck_token_spec=self._deck_token_spec(s,comp)
                 if deck_token_spec:
                     token_sem=semantic(sf,face,f.get('index',0))
-                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text'}})
+                    token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
                     comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False),token_sem)
                 content_key=comp['renderKey']
                 comp['contentRenderKey']=content_key
@@ -794,10 +823,15 @@ class Workspace:
         if d.get('pendingImport'):
             yield from self.resolve_metadata_steps(ident,progress,cancel)
             d=self.deck(ident)
+        if (d['settings'].get('dataJsonSource') or {}).get('kind')=='github':
+            progress(0,1,'Checking GitHub data.json')
+            with timing(self.store,'prepare.github-data'):d=github_data.refresh(self,d,cancel)
+            yield
         with timing(self.store,'prepare.settings'):
             rev=d['revision'];s=self.validate_settings(d['settings'])
             if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
-            self._apply_card_data(d,d.get('cardData',[]))
+            if (s.get('dataJsonSource') or {}).get('kind')!='github' or not d.get('githubCardDataState'):
+                self._apply_card_data(d,d.get('cardData',[]),preparing=True)
         index=self._prepare_sources(s,progress)
         yield
         total=sum(len(c['faces']) for c in d['cards']);done=0
@@ -845,7 +879,11 @@ class Workspace:
         with timing(self.store,'prepare.result'):return self.deck(ident)
     @timed('card.prepare-single')
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
-        d=self.deck(ident);rev=d['revision'];s=self.validate_settings(d['settings'])
+        d=self.deck(ident)
+        if (d['settings'].get('dataJsonSource') or {}).get('kind')=='github':
+            progress(0,1,'Checking GitHub data.json')
+            with timing(self.store,'prepare.github-data'):d=github_data.refresh(self,d,cancel)
+        rev=d['revision'];s=self.validate_settings(d['settings'])
         if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing this card.')
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
@@ -899,7 +937,7 @@ class Workspace:
             options['semanticOverrides'].setdefault('oracle_text',face_options['officialRulesText'])
         options['semanticOverrides'].setdefault('flavor_text',str(ingest.face_value(face,sf,'flavor_text','') or ''))
         if not s.get('showFlavorText',True):options['semanticOverrides']['flavor_text']=''
-        for key in ('nickname','flavor_text'):
+        for key in ('nickname','flavor_text','oracle_text'):
             if key in staged.get(face.get('name',''),{}):
                 options['semanticOverrides'][key]=staged[face['name']][key]
         targets=[];errors={};seen_previews={}

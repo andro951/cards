@@ -6,7 +6,8 @@ import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
-import {ensureArtworkReady} from './artwork-review.js';
+import {ensureArtworkReady,offerDataSave} from './artwork-review.js';
+import {dataChangesPending} from './artwork-files.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
@@ -534,6 +535,39 @@ async function inspect(deck,card,index=0){
     refreshInspector();
     return d;
   };
+  const rulesField=$(`#rules-override`,host);
+  rulesField.maxLength=20000;
+  rulesField.closest(`label`).querySelector(`small`).textContent=`Leave blank to use official rules. Save also updates your connected data.json, or offers connection and download options.`;
+  let savedRules=rulesField.value,pendingRules=false;
+  const rulesDataChange=rules=>{
+    const raw=c.scryfall.card_faces?.[f.index]||c.scryfall;
+    const change={name:raw.name||f.name,oracle_text:rules};
+    const oracleId=raw.oracle_id||c.scryfall.oracle_id;
+    if(oracleId)
+      change.oracle_id=oracleId;
+    if(c.scryfall.id)
+      change.scryfall_id=c.scryfall.id;
+
+    return change;
+  };
+  const saveRulesData=async rules=>{
+    const change=rulesDataChange(rules);
+    const source=d.settings.dataJsonSource;
+    const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:d.settings.githubSetupFolder):``;
+    const snapshot=d.githubCardDataState;
+    const baseline=source?.kind===`github`&&snapshot?{version:1,...snapshot.settings,cards:snapshot.entries}:null;
+    const result=await offerDataSave(d.id,[change],{version:1,cards:d.cardData||[]},url,d.cards,{
+      title:`Connect or download data.json`,baseline,autoSave:true,
+      beforePrompt:()=>{setBusy(false);closeModal({completed:true});}
+    });
+    if(result?.github&&source?.value!==result.github) {
+      const current=await api(`/api/decks/`+d.id);
+      syncCurrent(await api(`/api/decks/`+d.id+`/save`,{revision:current.revision,
+        settings:{...current.settings,dataJsonSource:{kind:`github`,value:result.github}}}));
+    }
+
+    if(result) {savedRules=rules;pendingRules=false;}
+  };
   const prepareCard=async()=>{
     syncCurrent(await job('/api/decks/'+d.id+'/cards/'+c.id+'/prepare',{}, {label:'Prepare card'}));
     refreshInspector();
@@ -558,7 +592,19 @@ async function inspect(deck,card,index=0){
     fit={artX:Number($('#fit-x').value)/(data.width||2010),artY:Number($('#fit-y').value)/(data.height||2814),artZoom:Number($('#fit-zoom').value)/100,artRotate:Number($('#fit-rotation').value)};
   };
   $('#reset-fit').onclick=()=>{fit={};toast('Automatic artwork fit will be applied when regenerated.');};
-  $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();closeModal({completed:true});await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');}finally{setBusy(false);}});
+  $('#save-card').textContent=`Save`;
+  $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{
+    const rules=rulesField.value;
+    pendingRules||=rules!==savedRules;
+    if(!pendingRules&&f.rulesOverrideLocal)
+      pendingRules=await dataChangesPending(d.id,[rulesDataChange(rules)],{version:1,cards:d.cardData||[]},d.cards);
+
+    await persistCard();
+    if(pendingRules)
+      await saveRulesData(rules);
+
+    closeModal({completed:true});await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');
+  }finally{setBusy(false);}});
   $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{
     await persistCard();
     await prepareCard();

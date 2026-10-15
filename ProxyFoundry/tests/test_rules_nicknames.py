@@ -42,6 +42,64 @@ def test_no_guessing_short_names_on_ordinary_cards():
     assert formatter('Brutal Cathar','Garth').format('Brutal Cathar enters. Brutal damage.')=='Garth enters. Brutal damage.'
 
 
+@pytest.mark.parametrize('nickname,short',[
+    ('Donatello Redfield, Atheist Prophet','Donatello Redfield'),
+    ('Donatello Redfield','Donatello Redfield'),
+])
+def test_loran_first_word_reference_uses_nickname_before_comma(nickname,short):
+    f=formatter('Loran of the Third Path',nickname)
+    assert f.format("When Loran enters, draw a card. Loran's ability and Loran’s power.")==f"When {short} enters, draw a card. {short}'s ability and {short}’s power."
+    assert f.format('Loran of the Third Path enters. Loran returns.')==f'{short} enters. {short} returns.'
+
+
+@pytest.mark.parametrize('word',sorted(names.FIRST_WORD_EXCLUSIONS))
+def test_generic_first_words_are_not_self_name_aliases(word):
+    first=word.capitalize();real=first+' of the Silver Path'
+    text=f'{first} enters. {real} returns.'
+    assert formatter(real,'New Identity, Alternate Title').format(text)==f'{first} enters. New Identity returns.'
+
+
+def test_first_word_fallback_keeps_longer_alias_and_full_name_priority():
+    f=formatter('Abdel Adrian, Gorion\'s Ward','John Winchester, Hunter')
+    assert f.format("Abdel Adrian, Gorion's Ward enters. Abdel Adrian returns. Abdel draws.")=='John Winchester, Hunter enters. John Winchester returns. John Winchester draws.'
+    assert f.format('Abdel Adrian, Another Title enters. Abdel the Conqueror returns.')=='Abdel Adrian, Another Title enters. Abdel the Conqueror returns.'
+
+
+def test_first_word_fallback_preserves_other_names_words_commands_and_inserted_text():
+    f=names.RulesNames([{'name':'Loran of the Third Path','nickname':'New Loran, Scholar'},
+                       {'name':"Loran, Disciple of History",'nickname':''}])
+    text="Loranian magic. Loran enters. {Loran} stays. Loran, Disciple of History stays. Search for a card named Spirit of Loran."
+    expected="Loranian magic. New Loran enters. {Loran} stays. Loran, Disciple of History stays. Search for a card named Spirit of Loran."
+    assert f.format(text)==expected
+    assert f.format(expected)==expected
+
+
+def test_first_word_fallback_handles_hyphenated_names_and_preserves_case():
+    f=formatter('Niv-Mizzet Reborn','The Archivist, Watcher')
+    assert f.format('Niv-Mizzet enters. niv-mizzet stays. Niv-Mizzet Reborn returns.')=='The Archivist enters. niv-mizzet stays. The Archivist returns.'
+
+
+def test_knight_exemplar_keeps_creature_type_words_but_replaces_full_self_name():
+    f=formatter('Knight Exemplar','Ellen Harvelle, Roadhouse Matriarch')
+    assert f.format('Other Knight creatures you control get +1/+1. Knight Exemplar has indestructible.')=='Other Knight creatures you control get +1/+1. Ellen Harvelle has indestructible.'
+
+
+def test_identical_nickname_is_inactive_and_does_not_expand_short_self_names():
+    f=formatter('Tezzeret, Cruel Captain','Tezzeret, Cruel Captain')
+    assert not f.active
+    assert f.format('Tezzeret draws. Tezzeret, Cruel Captain returns.')=='Tezzeret draws. Tezzeret, Cruel Captain returns.'
+    assert names.effective_nickname('Day','Day')==''
+    assert names.effective_nickname('Day','day')=='day'
+    assert names.effective_nickname('Day','Daybreak')=='Daybreak'
+
+
+def test_identical_face_nicknames_are_absent_for_imports_overrides_and_staging():
+    sf={'card_faces':[{'name':'Day','flavor_name':'Day'},{'name':'Night','flavor_name':'Full Moon'}]}
+    assert names.face_nicknames(sf)=={'Day':'','Night':'Full Moon'}
+    assert names.face_nicknames(sf,[{'index':1,'semanticOverrides':{'nickname':'Night'}}])=={'Day':'','Night':''}
+    assert names.face_nicknames(sf,staged={'Night':{'nickname':'Night'}})=={'Day':'','Night':''}
+
+
 def test_one_pass_does_not_replace_inserted_true_name_again():
     assert formatter('Tezzeret, Cruel Captain','Tezzeret, The Inventor').format('Tezzeret, Cruel Captain returns. Tezzeret draws.')=='Tezzeret, The Inventor returns. Tezzeret draws.'
     assert formatter('Test Card','New Test Card').format('Test Card dies. Test Card returns.')=='New Test Card dies. New Test Card returns.'
@@ -83,6 +141,67 @@ def setup(tmp_path):
 
 def fixture(name):
     return json.loads((Path(__file__).parent/'fixtures/godzilla_special'/(name+'.json')).read_text(encoding='utf-8'))
+
+
+@pytest.mark.parametrize('source',['metadata','override'])
+@pytest.mark.parametrize('kind',['helper','token','legendary','planeswalker'])
+def test_same_name_nickname_matches_unnicknamed_frame_and_rules(setup,source,kind):
+    store,settings,art=setup
+    if kind=='helper':
+        sf=json.loads((Path(__file__).parent/'fixtures/helper_cards/day.json').read_text(encoding='utf-8'))
+        face=sf['card_faces'][0]
+    elif kind=='planeswalker':
+        sf=fixture('Tezzeret-the-Seeker');face=sf
+    else:
+        sf={'name':'Angel','layout':'token' if kind=='token' else 'normal','type_line':('Token' if kind=='token' else 'Legendary')+' Creature — Angel',
+            'colors':['W'],'mana_cost':'','oracle_text':'When Angel dies, draw a card.','power':'4','toughness':'4','rarity':'common'}
+        face=sf
+    base={'templateOverride':'godzilla-card'} if kind!='helper' else {}
+    expected=Compiler(store).compile_face(sf,face,0,base,settings,art)['data']
+    options=copy.deepcopy(base)
+    if source=='metadata':face['flavor_name']=face['name']
+    else:options['semanticOverrides']={'nickname':face['name']}
+    result=Compiler(store).compile_face(sf,face,0,options,settings,art)
+    assert result['data']==expected
+    assert 'nickname' not in result['data']['text']
+    assert 'nicknameRulesVersion' not in result
+
+
+def test_loran_short_reference_in_rules_override_changes_before_layout(setup):
+    store,settings,art=setup
+    sf={'name':'Loran of the Third Path','layout':'normal','type_line':'Legendary Creature — Human Artificer',
+        'mana_cost':'{2}{W}','colors':['W'],'rarity':'rare','oracle_text':'When Loran of the Third Path enters, draw a card.',
+        'power':'2','toughness':'1','flavor_text':'Loran studies the past.'}
+    original=copy.deepcopy(sf)
+    result=Compiler(store).compile_face(sf,sf,0,{'templateOverride':'godzilla-card','semanticOverrides':{
+        'nickname':'Donatello Redfield, Atheist Prophet','oracle_text':'Vigilance\nWhen Loran enters, destroy up to one target artifact or enchantment.'}},settings,art)
+    text=result['data']['text']
+    assert 'When Donatello Redfield enters' in text['rules']['text']
+    assert text['title']['text']=='Loran of the Third Path'
+    assert text['nickname']['text']=='Donatello Redfield, Atheist Prophet'
+    assert 'Loran studies the past.' in text['rules']['text']
+    assert sf==original
+
+
+def test_same_name_cache_upgrade_is_scoped_and_only_prepares_once(tmp_path,monkeypatch):
+    from tests.test_preparation_cache import seeded
+    ws,deck,_,_=seeded(tmp_path)
+    card=deck['cards'][0]
+    card['faces'][0]['semanticOverrides']={'nickname':card['scryfall']['name']}
+    plain=copy.deepcopy(card);plain['id']='plain';plain['faces'][0]['id']='plain-face';plain['faces'][0]['semanticOverrides']={}
+    deck['cards'].append(plain);ws.store.put('decks',deck,deck['revision'])
+    ws.prepare(deck['id']);saved=ws.store.get('decks',deck['id'])
+    saved['cards'][0]['faces'][0]['compiled'].pop('nicknameIdentityVersion')
+    ws.store.put('decks',saved,saved['revision'])
+    assert ws.deck(deck['id'])['upgradeRequired']
+    calls=[];compile_face=ws.compiler.compile_face
+    def tracked(*args,**kwargs):calls.append(args[3]['semanticOverrides'].get('nickname'));return compile_face(*args,**kwargs)
+    monkeypatch.setattr(ws.compiler,'compile_face',tracked)
+    result=ws.prepare(deck['id'])
+    assert calls==[card['scryfall']['name']]
+    assert 'nickname' not in result['cards'][0]['faces'][0]['compiled']['data']['text']
+    monkeypatch.setattr(ws.compiler,'compile_face',lambda *a,**k:pytest.fail('Already normalized card recompiled'))
+    ws.prepare(deck['id'])
 
 
 @pytest.mark.parametrize('key',['Tezzeret','Tezzeret-the-Seeker'])
@@ -170,7 +289,7 @@ def test_cache_upgrade_is_scoped_to_nicknamed_cards_and_reuses_after_refresh(tmp
     assert prepared['cards'][0]['faces'][0]['compiled']['nicknameRulesVersion']==names.VERSION
     assert 'nicknameRulesVersion' not in prepared['cards'][1]['faces'][0]['compiled']
     # Simulate an older nicknamed compilation with otherwise matching inputs.
-    saved['cards'][0]['faces'][0]['compiled'].pop('nicknameRulesVersion')
+    saved['cards'][0]['faces'][0]['compiled']['nicknameRulesVersion']=names.VERSION-1
     ws.store.put('decks',saved,saved['revision'])
     assert ws.deck(deck['id'])['upgradeRequired']
     calls=[];compile_face=ws.compiler.compile_face

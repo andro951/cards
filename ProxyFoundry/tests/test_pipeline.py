@@ -520,7 +520,7 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_classic_short'
-    assert result['templateVersion']==9
+    assert result['templateVersion']==10
     assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
@@ -916,7 +916,7 @@ def test_scryfall_emblem_uses_native_emblem_frame(workspace,type_line,subtypes):
     assert result['recipe']=='emblem'
     assert data['version']=='emblem'
     assert data['frames']==[{'name':'Emblem Frame',
-                             'src':'/img/frames/token/emblem/frame.png','masks':[]}]
+                             'src':'/img/frames/proxy-foundry/emblem/frame-no-symbol.png','masks':[]}]
     assert data['text']['title']['text']=='Ajani Emblem'
     assert data['text']['type']['text']==type_line
     assert data['text']['rules']['text']==card['oracle_text']
@@ -1099,13 +1099,9 @@ def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
         data=result['data']
         assert data['frames'] and data['artBounds']==FULL_ART_NONLAND_BOUNDS
         assert data['text']['title']['text']==face['name']
-        if name in {'day','experience'}:
-            assert 'type' not in data['text']
-            assert data['frames'][0]['src'].endswith('/godzilla/TitleW.png')
-            assert data['frames'][1]['name']=='Soft helper text fade'
-        else:
-            assert data['text']['type']['text']=='Card'
-            assert 'Land' not in data['text']['type']['text']
+        assert 'type' not in data['text']
+        assert data['frames'][0]['src'].endswith('/godzilla/TitleW.png')
+        assert data['frames'][1]['name']=='Soft helper text fade'
         assert data['text']['rules']['text']
         assert data['text']['rules']['color']=='white'
         assert data['text']['rules']['outlineColor']=='black'
@@ -1149,8 +1145,8 @@ def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nick
 
 
 @pytest.mark.parametrize('nickname',[False,True])
-@pytest.mark.parametrize('helper',['day','experience'])
-def test_day_night_helper_titles_are_centered(workspace,nickname,helper):
+@pytest.mark.parametrize('helper',['day','experience','poison-counter'])
+def test_unboxed_helper_titles_are_centered(workspace,nickname,helper):
     from pathlib import Path
     store,art,settings=workspace
     card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(helper+'.json')).read_text(encoding='utf-8'))

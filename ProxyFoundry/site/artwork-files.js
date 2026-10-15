@@ -1,4 +1,5 @@
 import {downloadBlob} from './ui.js';
+import {recordDiagnostic} from './diagnostics.js';
 
 //#region Saved handles and connections
 let database;
@@ -72,10 +73,12 @@ const validateDocument=document=>{
     if(Object.hasOwn(document,`artist`)&&(typeof document.artist!==`string`||document.artist.length>300))
         throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
     for(const entry of document.cards) {
-        if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`artist`,`art`,`scryfall_url`].includes(key)))
+        if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`,`scryfall_url`].includes(key)))
             throw new Error(`The existing data.json has an invalid card entry. It was not changed.`);
         for(const [key,value] of Object.entries(entry)) {
             if(value!=null&&typeof value!==`string`)throw new Error(`The existing data.json has invalid card data. It was not changed.`);
+            if(key===`oracle_text`&&value&&(value.length>20000||/[\x00-\x08\x0b-\x1f\x7f]/.test(value)))
+                throw new Error(`The rules text is too long or contains unsupported control characters. It was not changed.`);
             if([`oracle_id`,`scryfall_id`].includes(key)&&value&&!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))
                 throw new Error(`The existing data.json has an invalid UUID. It was not changed.`);
             if(key===`scryfall_url`&&value&&!/^https:\/\/scryfall\.com\/[^\s]+$/.test(value))
@@ -105,8 +108,13 @@ export const mergeDataDocument=(original,changes,baseline=null)=>{
             throw new Error(`A card entry was removed from the original data.json. Reimport it before saving.`);
         if(position!==undefined) {
             const current=result.cards[position],old=before.get(key);
-            if(baseline&&current.art!==old?.art&&current.art!==change.art)
-                throw new Error(`An artwork mapping changed in the original data.json. Reimport it before saving.`);
+            for(const field of Object.keys(change)) {
+                if([`name`,`oracle_id`,`scryfall_id`,`scryfall_url`].includes(field))
+                    continue;
+
+                if(baseline&&current[field]!==old?.[field]&&current[field]!==change[field])
+                    throw new Error(`The ${field===`art`?`artwork mapping`:field===`oracle_text`?`rules text`:field} changed in the original data.json. Reimport it before saving.`);
+            }
 
             result.cards[position]={...current,...change};
         }
@@ -159,6 +167,7 @@ export const enrichDataDocument=(document,cards=[],changes=[])=>{
         const merged=Object.assign({},...entries,...updates,{name:identity.name});
         if(identity.oracle_id)merged.oracle_id=identity.oracle_id;
         if(identity.scryfall_id&&(!identity.oracle_id||variants.get(variant)>1))merged.scryfall_id=identity.scryfall_id;
+        else if(identity.oracle_id)delete merged.scryfall_id;
         if(url)merged.scryfall_url=url;
         result.cards.push(merged);
     }
@@ -167,6 +176,23 @@ export const enrichDataDocument=(document,cards=[],changes=[])=>{
     return result;
 };
 export const dataBlob=document=>new Blob([JSON.stringify(document,null,2)+`\n`],{type:`application/json`});
+export const mergeCardDataDocument=(original,changes,baseline=null,cards=[])=>{
+    if(!cards.length)
+        return mergeDataDocument(original,changes,baseline);
+
+    //Compare equivalent selectors before merging, including face and printing IDs.
+    const current=enrichDataDocument(original,cards);
+    const before=baseline?enrichDataDocument(baseline,cards):null;
+    const edits=enrichDataDocument({version:1,cards:changes},cards).cards.filter(entry=>
+        [`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`].some(field=>Object.hasOwn(entry,field)));
+    return mergeDataDocument(current,edits,before);
+};
+export const dataChangesPending=async(deckId,changes,document,cards=[])=>{
+    const record=await sourceRecord(`deck:${deckId}`);
+    const saved=record?.document||document;
+    const current=enrichDataDocument(saved,cards);
+    return JSON.stringify(current)!==JSON.stringify(mergeCardDataDocument(saved,changes,null,cards));
+};
 export const downloadData=document=>downloadBlob(dataBlob(document),`data.json`);
 export const saveLocalData=async(record,changes,cards=[])=>{
     const permissionHandle=record.file||record.folder;
@@ -188,7 +214,7 @@ export const saveLocalData=async(record,changes,cards=[])=>{
         original=JSON.parse(await file.text());
     }
 
-    const merged=enrichDataDocument(mergeDataDocument(original,changes,record.document),cards,changes);
+    const merged=mergeCardDataDocument(original,changes,record.document,cards);
     // Read and validate before creating a new file or opening the atomic writer.
     handle||=await record.folder.getFileHandle(`data.json`,{create:true});
     const writer=await handle.createWritable();
@@ -252,21 +278,31 @@ export const saveGithubData=async(location,token,changes,baseline=null,fetcher=f
         throw new Error(`Choose the repository’s data.json file.`);
     const url=`https://api.github.com/repos/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/contents/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
     const headers={Accept:`application/vnd.github+json`,Authorization:`Bearer ${token}`,'Content-Type':`application/json`};
-    const response=await fetcher(url+`?ref=`+encodeURIComponent(location.branch),{headers});
-    if(!response.ok&&response.status!==404)
-        throw new Error(`GitHub could not read data.json (${response.status}). Check your connection.`);
+    const requestId=`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    for(let attempt=0;attempt<3;attempt++) {
+        //A previous successful save can leave the branch URL cached with an old SHA.
+        const response=await fetcher(url+`?ref=`+encodeURIComponent(location.branch)+`&_bpf_save=${requestId}-${attempt}`,{headers,cache:`no-store`});
+        if(!response.ok&&response.status!==404)
+            throw new Error(`GitHub could not read data.json (${response.status}). Check your connection.`);
 
-    const existing=response.status===404?null:await response.json();
-    if(existing&&(!existing.sha||existing.encoding!==`base64`||typeof existing.content!==`string`))
-        throw new Error(`GitHub returned an unreadable data.json. It was not changed.`);
+        const existing=response.status===404?null:await response.json();
+        if(existing&&(!existing.sha||existing.encoding!==`base64`||typeof existing.content!==`string`))
+            throw new Error(`GitHub returned an unreadable data.json. It was not changed.`);
 
-    const original=existing?JSON.parse(decodeContent(existing.content)):{version:1,cards:[]};
-    const merged=enrichDataDocument(mergeDataDocument(original,changes,baseline),cards,changes);
-    const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge artwork mappings`,branch:location.branch,
-        content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
-    if(!update.ok)
-        throw new Error(update.status===409?`data.json changed on GitHub. Reimport it before saving.`:`GitHub could not update data.json (${update.status}). Your mappings are saved in the deck.`);
+        const original=existing?JSON.parse(decodeContent(existing.content)):{version:1,cards:[]};
+        //Recheck the edited fields on every retry; never replace a concurrent rules edit.
+        const merged=mergeCardDataDocument(original,changes,baseline,cards);
+        const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge card data`,branch:location.branch,
+            content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
+        recordDiagnostic(`GitHub data save`,JSON.stringify({repo:location.repo,path:location.path,branch:location.branch,
+            attempt:attempt+1,sha:existing?.sha||null,status:update.status||(update.ok?200:0)}));
+        if(update.ok)
+            return merged;
 
-    return merged;
+        if(update.status!==409)
+            throw new Error(`GitHub could not update data.json (${update.status}). Your changes are saved in the deck.`);
+    }
+
+    throw new Error(`data.json kept changing on GitHub during saving. Your changes are saved in the deck. Try Save again.`);
 };
 //#endregion

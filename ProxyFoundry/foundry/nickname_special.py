@@ -76,7 +76,7 @@ def apply_planeswalker(data, sem, code):
     names(data,sem,.0867,.0408 if sem.get('legendary') else .0372,.8267,.0548,.1015)
     text['type'].update(x=.0867,y=.5625-shift,width=.8267,height=.0548,size=.0324)
     text.pop('rules',None);text.pop('flavor',None);text.pop('pt',None)
-    start,end=.6239-shift,.891
+    start,end=.639-shift,.891
     # Share a font size across all rows, then distribute space according to
     # their wrapped text demand. Static rows gain the unused loyalty margin.
     for size in (.030,.029,.028,.027,.026,.025,.024,.023,.022,.021,.020,.019,.018):
@@ -93,7 +93,7 @@ def apply_planeswalker(data, sem, code):
         text[f'ability{index}']={'name':f'Ability {index+1}','text':native.italicize_dash_labels(oracle),
             'x':.18 if cost else .136,'y':y,'width':.72 if cost else .764,
             'height':h,'size':size,'fontSize':0,'font':'mplantin','noVerticalCenter':False,
-            'color':'white','outlineColor':'black','outlineWidth':.002,'shadowX':0,'shadowY':0}
+            'color':'black','outlineColor':'black','outlineWidth':0,'shadowX':0,'shadowY':0}
         shifts.append(y+h/2-native.PLANESWALKER_TALL_4_ICON_TEXT_CENTER_OFFSET-bases[index] if cost else 0)
         y+=h
     data['planeswalker']={'abilities':[c for c,_ in abilities]+['']*(4-len(abilities)),

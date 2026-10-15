@@ -1,4 +1,4 @@
-"""Render a Scryfall emblem with CardConjurer's genuine Emblem frame."""
+"""Render a Scryfall emblem without the five-point symbol overlay."""
 import io,json,os,threading
 from pathlib import Path
 import pytest
@@ -48,7 +48,7 @@ def test_scryfall_emblem_renders_with_native_frame(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
-            assert '/img/frames/token/emblem/frame.png' in app.runtime.requested
+            assert '/img/frames/proxy-foundry/emblem/frame-no-symbol.png' in app.runtime.requested
             compiled=ready['cards'][0]['faces'][0]['compiled']
             rendered=store.render_get(compiled['renderKey'])
             output=Image.open(store.asset_path(rendered['asset_id']))

@@ -111,7 +111,10 @@ def test_browser_transport_non_404_does_not_try_another_frame_source():
     assert len(calls)==1
 
 def test_creator_script_patches_inline_mana_cluster_wrapping():
-    source='''function writeText(textObject, targetContext) {
+    source='''loadManaSymbols(true, ['e', 'a']);
+function writeText(textObject, targetContext) {
+    var splitText = rawText.replace(/\\n/g, '{line}');
+\touterloop: while (drawingText) {
 		//Begin looping through words/codes
 		innerloop: for (word of splitText) {
 			var wordToWrite = word;
@@ -127,11 +130,32 @@ def test_creator_script_patches_inline_mana_cluster_wrapping():
     runtime=Runtime(FakeNet())
     raw,mime=runtime.fetch('/js/creator-23.js');text=raw.decode()
     assert mime=='application/javascript'
+    assert "loadManaSymbols(true, ['infinity'], [1.4, 0.65]);" in text
+    assert 'proxyFoundryInlineSymbols(rawText)' in text
+    assert 'token.length > 1 ? `{inf}` : `{infinity}`' in text
     assert 'proxyFoundryManaClusterWidth' in text
+    assert 'var proxyFoundrySourceTokens = splitText.slice();' in text
+    assert 'outerloop: while (drawingText) {\n\t\tsplitText = proxyFoundrySourceTokens.slice();' in text
     assert "splitText.splice(proxyFoundryWordIndex, 0, '{lns}')" in text
     assert 'currentX + manaClusterWidth >= textWidth' in text
     assert 'innerloop: for (word of splitText)' not in text
     assert runtime.diagnostic()['files']['/js/creator-23.js']['adapter']=='inline mana cluster wrapping'
+
+
+def test_rules_infinity_reuses_native_glyph_without_generic_mana_disc():
+    from xml.etree import ElementTree
+    source=b'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><g transform="translate(1,2)"><circle r="50"/><path d="M 1 2 L 3 4"/></g></svg>'
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert url.endswith('/img/manaSymbols/inf.svg')
+            return source,'image/svg+xml',{}
+    raw,mime=Runtime(FakeNet()).fetch('/img/manaSymbols/infinity.svg')
+    root=ElementTree.fromstring(raw);ns={'s':'http://www.w3.org/2000/svg'}
+    assert not root.findall('.//s:circle',ns)
+    assert root.find('.//s:path',ns).get('d')=='M 1 2 L 3 4'
+    assert root.find('s:g',ns).get('transform')=='translate(1,2)'
+    assert root.get('viewBox')=='40 180 520 240'
+    assert mime=='image/svg+xml'
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer dependency inspection')
