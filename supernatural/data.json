@@ -1168,6 +1168,19 @@
         "scryfall_id": "c46f9a07-005c-44b7-8057-b2f00b274dd6"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Construct",
+        "oracle_id": "ee740c48-59cd-4fcc-b4a5-fe3dde1361d5",
+        "scryfall_id": "a7caaf39-8f16-4f1d-bee6-a45674306319"
+      },
+      "back": {
+        "name": "Spirit",
+        "oracle_id": "6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a",
+        "scryfall_id": "ca20548f-6324-4858-adbe-87303ff1ca52"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
