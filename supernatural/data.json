@@ -1181,6 +1181,19 @@
         "scryfall_id": "ca20548f-6324-4858-adbe-87303ff1ca52"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Angel",
+        "oracle_id": "40c64f08-ab2f-4933-8e0e-d1a1c729008f",
+        "scryfall_id": "1159d02c-0291-42de-91e6-e9a49d5ed968"
+      },
+      "back": {
+        "name": "Spirit",
+        "oracle_id": "dc4e2134-f0c2-49aa-9ea3-ebf83af1445c",
+        "scryfall_id": "95694c03-2b3b-455c-8361-0799c078bf04"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": []
