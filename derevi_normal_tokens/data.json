@@ -68,6 +68,19 @@
         "scryfall_id": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
       },
       "quantity": 12
+    },
+    {
+      "front": {
+        "name": "Pilot",
+        "oracle_id": "425c9e23-3227-44a5-8e10-0cf4d0967799",
+        "scryfall_id": "be84f259-2809-48c9-9c70-861437f08c23"
+      },
+      "back": {
+        "name": "Rhino Warrior",
+        "oracle_id": "b21d35b6-1250-4716-bc65-817f875caf64",
+        "scryfall_id": "230419f9-a9f7-441d-bad7-0ed867326aa1"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": []
