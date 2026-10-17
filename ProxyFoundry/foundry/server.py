@@ -117,7 +117,7 @@ class App:
         self.log.info('PREPARE_DONE deck=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
                       self._short(ident), PIPELINE_VERSION, result.get('status'), bool(result.get('upgradeRequired')),
                       (result.get('summary') or {}).get('rendered',0))
-        for card in result.get('cards',[]):
+        for card in ([] if getattr(self.store,'generation',None) else result.get('cards',[])):
             for face in card.get('faces',[]):
                 previous=old.get(face.get('id'))
                 if previous!=face.get('compiled'):self._log_face_state('PREPARE_FACE',result,card,face,previous)
@@ -139,17 +139,7 @@ class App:
         queued=set(targets)
         self.log.info('RENDER_PLAN_DONE session=%s pipeline=%s force=%s queued=%s cached=%s errors=%s',
                       self._short(ident), PIPELINE_VERSION, bool(force), len(queued), plan['cached'], len(plan.get('errors', [])))
-        for deck_id in ids:
-            deck=self.ws.deck(deck_id)
-            for card in deck.get('cards',[]):
-                for face in card.get('faces',[]):
-                    comp=face.get('compiled') or {};key=comp.get('renderKey') or '';render=self.store.render_get(key) if key else None
-                    data=comp.get('data') or {}
-                    self.log.info('RENDER_FACE_DECISION deck=%s face=%s generation=%s key=%s cachePresent=%s cacheAsset=%s queued=%s force=%s ccVersion=%s zoom=%s x=%s y=%s',
-                                  self._short(deck_id), face.get('name'), comp.get('generationVersion') or '-', self._short(key),
-                                  bool(render), self._short(render.get('asset_id') if render else ''), key in queued, bool(force),
-                                  data.get('version','-'), data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'))
-        return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
+        return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name'],'frameGroup':stable_hash({key:t['data'].get(key) for key in ('frames','width','height','marginX','marginY','version')})} for t in targets.values()],
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION}
 
     def start_card_render_session(self, deck_id, card_id, force=False):
@@ -244,7 +234,14 @@ class App:
         missing=sorted(paths-ready)
         if not missing:return
         with self.store.render_save():
-            for path in missing:self.runtime.fetch(path)
+            if getattr(self.runtime.net.transport,'prefetch',None):
+                from .domain import CC_REPO,CC_COMMIT
+                from urllib.parse import quote
+                urls=['https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/') for path in missing if '/proxy-foundry/' not in path and not self.runtime.cached(path)]
+                for start in range(0,len(urls),6):
+                    try:self.runtime.net.prefetch_immutable(urls[start:start+6])
+                    except (ValidationError,OSError) as error:self.log.debug('Frame prefetch fallback: %s',error)
+            for path in missing:self.runtime.ensure(path)
         self._frame_assets_ready=ready|paths
 
     def transfer(self, order_id):
@@ -287,6 +284,8 @@ class App:
                 z.writestr('browser-diagnostics.json',json.dumps(browser,ensure_ascii=False,indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
+            for p in sorted((self.store.home/'logs').glob('generation-*.json'),key=lambda p:p.stat().st_mtime)[-4:]:
+                z.writestr(p.name,p.read_bytes())
             for p in sorted((self.store.home / 'logs').glob('job-*.json'), key=lambda p: p.stat().st_mtime)[-8:]:
                 # Job logs are normally UTF-8, but diagnostics must still be
                 # downloadable if an older/corrupt file contains invalid bytes.

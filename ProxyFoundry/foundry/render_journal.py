@@ -15,6 +15,60 @@ def allow_shared_render_files(db):
     db.execute('CREATE INDEX renders_deck_idx ON renders(deck_id)')
 
 
+def _validate_render_row(store,row,decks):
+    if not isinstance(row,dict):raise ValidationError('Invalid render receipt.')
+    if not all(re.fullmatch('[0-9a-f]{64}',str(row.get(k,''))) for k in ('key','hash')):
+        raise ValidationError('Invalid render receipt identifier.')
+    deck_id=row.get('deckId')
+    if not isinstance(deck_id,str):raise ValidationError('Missing render deck.')
+    if deck_id not in decks:
+        deck=store.get('decks',deck_id)
+        decks[deck_id]={(c.get('id'),f.get('id')):f for c in (deck or {}).get('cards',[]) for f in c.get('faces',[])}
+    face=decks[deck_id].get((row.get('cardId'),row.get('faceId')))
+    comp=(face or {}).get('compiled') or {}
+    if comp.get('renderKey')!=row['key']:raise ValidationError('A rendered card changed or was deleted. Generate its image again.')
+    data=comp.get('data') or {}
+    expected=[round(data['width']*(1+2*data.get('marginX',0))),round(data['height']*(1+2*data.get('marginY',0)))]
+    if [row.get('width'),row.get('height')]!=expected:raise ValidationError('Wrong render receipt dimensions.')
+    asset=store.asset_path(row['hash']);size=asset.stat().st_size
+    if size!=row.get('bytes') or not 33<=size<=64*1024*1024:raise ValidationError('Incomplete rendered PNG.')
+    with asset.open('rb') as image:header=image.read(24)
+    if header[:8]!=b'\x89PNG\r\n\x1a\n' or [int.from_bytes(header[16:20],'big'),int.from_bytes(header[20:24],'big')]!=expected:
+        raise ValidationError('Invalid rendered PNG header.')
+
+
+def _register_render_rows(store,rows):
+    if not rows:return {'registered':0}
+    cleanup=[]
+    with store.render_save():
+        with store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            for row in rows:
+                old=db.execute('SELECT * FROM renders WHERE face_id=? OR render_key=?',(row['faceId'],row['key'])).fetchall()
+                now=time.time();ident=row['hash'];rel='assets/'+ident[:2]+'/'+ident
+                db.execute('INSERT OR REPLACE INTO assets VALUES (?,?,?,?,?,?)',(ident,'image/png',row['bytes'],row['width'],row['height'],now))
+                db.execute('DELETE FROM renders WHERE face_id=? OR render_key=?',(row['faceId'],row['key']))
+                db.execute('INSERT INTO renders VALUES (?,?,?,?,?,?,?,?,?)',(row['key'],ident,row['width'],row['height'],now,row['deckId'],row['cardId'],row['faceId'],rel))
+                for previous in old:
+                    file=previous['file_path'] if previous['file_path']!=rel and previous['file_path'].startswith('renders/') else None
+                    asset=previous['asset_id'] if previous['asset_id']!=ident else None
+                    if file or asset:cleanup.append({'file':file,'asset':asset})
+            if cleanup:
+                db.execute('INSERT INTO documents VALUES (?,?,?,?,?,?,?)',('cleanup','render-'+uid(),1,json.dumps({'tasks':cleanup}),now,now,0))
+    return {'registered':len(rows)}
+
+
+def commit_render_rows(app,rows):
+    """Validate one generation manifest completely before publishing any rows."""
+    if not isinstance(rows,list) or len(rows)>10000:raise ValidationError('Invalid generated-card manifest.')
+    seen=set();decks={}
+    for row in rows:
+        _validate_render_row(app.store,row,decks)
+        if row['faceId'] in seen:raise ValidationError('A card face appears twice in the generated-card manifest.')
+        seen.add(row['faceId'])
+    return _register_render_rows(app.store,rows)
+
+
 def commit_render_saves(app,strict=False):
     store=app.store;folder=store.home/'tmp'/'render-pending'
     if not folder.is_dir():return {'registered':0}
@@ -23,26 +77,11 @@ def commit_render_saves(app,strict=False):
         try:
             if path.stat().st_size>4096:raise ValidationError('Oversized render receipt.')
             row=json.loads(path.read_text())
-            if not isinstance(row,dict):raise ValidationError('Invalid render receipt.')
-            if not all(re.fullmatch('[0-9a-f]{64}',str(row.get(k,''))) for k in ('key','hash')):
-                raise ValidationError('Invalid render receipt identifier.')
-            deck_id=row.get('deckId')
-            if not isinstance(deck_id,str):raise ValidationError('Missing render deck.')
-            if deck_id not in decks:decks[deck_id]=store.get('decks',deck_id)
-            deck=decks[deck_id]
-            face=next((f for c in (deck or {}).get('cards',[]) if c.get('id')==row.get('cardId') for f in c.get('faces',[]) if f.get('id')==row.get('faceId')),None)
-            comp=(face or {}).get('compiled') or {}
-            if comp.get('renderKey')!=row['key']:
-                obsolete.append(path);errors.append('A rendered card changed or was deleted. Generate its image again.');continue
-            data=comp.get('data') or {}
-            expected=[round(data['width']*(1+2*data.get('marginX',0))),round(data['height']*(1+2*data.get('marginY',0)))]
-            if [row.get('width'),row.get('height')]!=expected:raise ValidationError('Wrong render receipt dimensions.')
-            asset=store.asset_path(row['hash'])
-            size=asset.stat().st_size
-            if size!=row.get('bytes') or not 33<=size<=64*1024*1024:raise ValidationError('Incomplete rendered PNG.')
-            with asset.open('rb') as image:header=image.read(24)
-            if header[:8]!=b'\x89PNG\r\n\x1a\n' or [int.from_bytes(header[16:20],'big'),int.from_bytes(header[20:24],'big')]!=expected:
-                raise ValidationError('Invalid rendered PNG header.')
+            try:_validate_render_row(store,row,decks)
+            except ValidationError as error:
+                if str(error)=='A rendered card changed or was deleted. Generate its image again.':
+                    obsolete.append(path);errors.append(str(error));continue
+                raise
             receipts.append((path,row))
         except (ValueError,TypeError,KeyError,ValidationError,FileNotFoundError) as error:
             #Keep damaged receipts for diagnostics; a broken image never becomes a cache hit.
@@ -50,23 +89,7 @@ def commit_render_saves(app,strict=False):
             errors.append(str(error))
             path.rename(path.with_suffix('.rejected'))
     if receipts:
-        cleanup=[]
-        with store.render_save():
-            with store.connect() as db:
-                db.execute('BEGIN IMMEDIATE')
-                for _,row in receipts:
-                    old=db.execute('SELECT * FROM renders WHERE face_id=? OR render_key=?',(row['faceId'],row['key'])).fetchall()
-                    now=time.time();ident=row['hash'];rel='assets/'+ident[:2]+'/'+ident
-                    db.execute('INSERT OR REPLACE INTO assets VALUES (?,?,?,?,?,?)',(ident,'image/png',row['bytes'],row['width'],row['height'],now))
-                    db.execute('DELETE FROM renders WHERE face_id=? OR render_key=?',(row['faceId'],row['key']))
-                    db.execute('INSERT INTO renders VALUES (?,?,?,?,?,?,?,?,?)',(row['key'],ident,row['width'],row['height'],now,row['deckId'],row['cardId'],row['faceId'],rel))
-                    for previous in old:
-                        file=previous['file_path'] if previous['file_path']!=rel and previous['file_path'].startswith('renders/') else None
-                        asset=previous['asset_id'] if previous['asset_id']!=ident else None
-                        if file or asset:cleanup.append({'file':file,'asset':asset})
-                    registered+=1
-                if cleanup:
-                    db.execute('INSERT INTO documents VALUES (?,?,?,?,?,?,?)',('cleanup','render-'+uid(),1,json.dumps({'tasks':cleanup}),now,now,0))
+        registered=_register_render_rows(store,[row for _,row in receipts])['registered']
         #Metadata must be durable before receipts or old assets can be removed.
         for path,_ in receipts:path.unlink(missing_ok=True)
     for path in obsolete:path.unlink(missing_ok=True)

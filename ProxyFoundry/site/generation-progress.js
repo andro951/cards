@@ -42,7 +42,7 @@ export class GenerationScreen {
         this.percent=document.createElement(`p`);this.percent.textContent=`0%`;Object.assign(this.percent.style,{fontSize:`32px`,margin:`24px 0 12px`});
         this.time=document.createElement(`p`);this.time.textContent=`Estimating time remaining…`;this.time.setAttribute(`role`,`status`);this.time.style.marginBottom=`24px`;
         this.cancel=document.createElement(`button`);this.cancel.type=`button`;this.cancel.className=`button`;this.cancel.textContent=`Cancel`;
-        this.cancel.onclick=()=>{this.owner?.controller.abort();this.cancel.disabled=true;this.time.textContent=`Stopping… Completed cards will be kept.`;};
+        this.cancel.onclick=()=>{this.owner?.controller.abort();this.cancel.disabled=true;this.time.textContent=`Stopping generation…`;};
         this.dialog.addEventListener(`cancel`,event=>event.preventDefault());
         this.dialog.append(title,deck,this.bar,this.percent,this.time,this.cancel);
         document.body.append(this.dialog);this.dialog.showModal();this.cancel.disabled=true;

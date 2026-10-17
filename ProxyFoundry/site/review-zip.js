@@ -1,4 +1,4 @@
-//JPEG is already compressed. Store entries without running another compressor.
+//PNG is already compressed. Store entries without running another compressor.
 const crcTable=new Uint32Array(256);
 for(let index=0;index<256;index++) {
     let value=index;

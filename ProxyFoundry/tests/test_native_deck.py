@@ -83,7 +83,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path,use_workers):
             assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/new/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/icons/compass.svg' in app.runtime.requested
-            assert '/img/frames/m15/transform/icons/land.svg' in app.runtime.requested
+            assert '/img/frames/m15/transform/icons/land.svg' not in app.runtime.requested
             assert '/img/frames/class/w.png' in app.runtime.requested
             assert '/js/frames/versionClass.js' in app.runtime.requested
             if not use_workers:

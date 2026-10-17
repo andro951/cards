@@ -152,6 +152,11 @@ export function mountWorkspaceFiles(FS,owner) {
     return {
         setInput:(id,bytes)=>{input=bytes.length>=65536?{id,bytes}:null;},
         clearInput:()=>{input=null;},
-        copyFile:(source,destination)=>call(`copy`,source,{destination})
+        copyFile:(source,destination)=>call(`copy`,source,{destination}),
+        putAsset:(path,bytes)=>call(`put-asset`,path,{},bytes),
+        prefetchArtwork:urls=>call(`prefetch-artwork`,`assets`,{},new TextEncoder().encode(String(urls))),
+        startArtwork:urls=>call(`start-artwork`,`assets`,{},new TextEncoder().encode(String(urls))),
+        pollArtwork:id=>call(`poll-artwork`,String(id)),
+        cancelArtwork:id=>call(`cancel-artwork`,String(id))
     };
 }

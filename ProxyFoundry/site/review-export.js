@@ -14,7 +14,7 @@ export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
     };
     signal.addEventListener(`abort`,stop,{once:true});
     try {
-        activity(`Review images`,`Preparing download`,`JPEG · half-size`,0,0,task);
+        activity(`Review images`,`Preparing download`,`PNG · half-size`,0,0,task);
         if(typeof Worker!==`function`||typeof OffscreenCanvas!==`function`||typeof createImageBitmap!==`function`||!OffscreenCanvas.prototype.convertToBlob) {
             const path=cardId?`/api/decks/${deckId}/cards/${cardId}/review-image`:`/api/decks/${deckId}/review-images`;
             const output=await job(path,cardId?{faceId}:{},{label:`Review images`,owner:task});
@@ -61,7 +61,7 @@ export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
                 else
                     single=output;
 
-                done++;activity(`Review images`,item.name,`JPEG · half-size`,done,plan.items.length,task);
+                done++;activity(`Review images`,item.name,`PNG · half-size`,done,plan.items.length,task);
             }
         }));
         if(signal.aborted)
@@ -69,7 +69,7 @@ export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
 
         const blob=zip?zip.finish():single;
         downloadBlob(blob,plan.filename);
-        recordDiagnostic(`review export`,JSON.stringify({seconds:(performance.now()-started)/1000,count:done,bytes:blob.size,workers:count,format:`jpeg`,scale:.5}));
+        recordDiagnostic(`review export`,JSON.stringify({seconds:(performance.now()-started)/1000,count:done,bytes:blob.size,workers:count,format:`png`,scale:.5}));
         endActivity(`Review download ready`,false,task);
     }
     catch(error) {

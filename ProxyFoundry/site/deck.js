@@ -1,3 +1,4 @@
+import {mountDeckCards,convertToToken} from './tokens.js';
 import {withGenerationScreen} from './generation-progress.js';
 import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
@@ -188,8 +189,8 @@ export async function showDeck(id,tab='cards'){
   let d=await api('/api/decks/'+id);if(epoch!==state.routeEpoch)return;activeCardsView=null;state.activeDeck=d;state.deckTab=tab;
   let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}
   let summary=d.summary,dirty=d.status==='draft';
-  $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.status)}<span class="count-label">${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
-    <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
+  $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.printStatus||d.status)}<span class="count-label">${summary.physicalCards??summary.cards} physical cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
+    <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.physicalCards??summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
   $('.back-to-library')?.remove();
   const deckTitle=$('.page-head h1');
@@ -234,91 +235,21 @@ export async function showDeck(id,tab='cards'){
     $$('[data-issue]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,issues[+b.dataset.issue].c,issues[+b.dataset.issue].f.index||0)));
     $('#review-order').onclick=()=>attempt(()=>chooseOrder([id]));return;
   }
-  function cardsGrid(){
-    const cards=d.cards;
-    $('#deck-body').innerHTML=`${dirty?'<div class="notice info">You have saved changes to prepare. Generate images will rebuild only the affected faces and reuse unchanged PNGs.</div>':''}<div class="toolbar"><div class="filter-pills"><button data-card-filter="all" class="${v.filter==='all'?'active':''}">All cards</button><button data-card-filter="unrendered" class="${v.filter==='unrendered'?'active':''}">Not rendered</button><button data-card-filter="attention" class="${v.filter==='attention'?'active':''}">Needs review</button></div><label class="search"><input id="card-search" type="search" aria-label="Find a card" placeholder="Find a card…" value="${esc(v.query)}"></label><button class="button small" id="quick-order">Review order ↗</button></div>${cards.length?`<div class="card-grid">${cards.map(c=>{
-      const f=c.faces[0],front=thumbnail(preview(c,f)),back=thumbnail(backPreview(c,d)),done=!!f.compiled?.render;
-    const warning=c.faces.some(x=>x.error||(((x.compiled?.crop?.warning||x.compiled?.flags?.length)&&x.acceptedWarningKey!==x.compiled?.renderKey)));
-    return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span><span class="card-name-pill" title="${esc(c.name)}">${esc(c.name)}</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done||f.lastRender?.render?.url?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':f.lastRender?.render?.url?'Previous render · changes pending':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button></article>`;
-    }).join('')}</div>`:empty(d.cards.length?'No cards match':'This deck is waiting for cards',d.cards.length?'Try a different search or review filter.':'Add a card list or a Scryfall export to get started.',`<button class="button primary" id="empty-add">＋ Add cards</button>`)}<div class="subtitle-line">Hover a card to see its back. Click it to edit its artist, art, printing, quantity or template. Real double-faced cards hover to their actual reverse face.</div>`;
-    $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
-    $$('[data-hover-front]').forEach(img=>{const card=img.closest('[data-card]');if(!card)return;card.onmouseenter=()=>{img.src=img.dataset.hoverBack||img.dataset.hoverFront;};card.onmouseleave=()=>{img.src=img.dataset.hoverFront;};});
-    $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;filterCards();});
-    const attention=$('[data-card-filter="attention"]');
-    if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
-    $('.card-grid')?.style.setProperty('max-height','none');
-    $('.card-grid')?.style.setProperty('overflow','visible');
-    $('#quick-order')?.remove();
-    $('.subtitle-line', $('#deck-body'))?.remove();
-    $('#card-search').oninput=e=>{v.query=e.target.value;filterCards();};
-    if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
-  }
   const body=$('#deck-body');
-  function filterCards(){
-    const query=v.query.toLowerCase(),cards=new Map(d.cards.map(card=>[card.id,card]));
-    let visible=0;
-    for(const button of $$('[data-card]',body)){
-      const card=cards.get(button.dataset.card);
-      const matches=card&&card.name.toLowerCase().includes(query)
-        &&(v.filter!=='unrendered'||card.faces.some(face=>!face.compiled?.render))
-        &&(v.filter!=='attention'||card.faces.some(face=>face.error||((face.compiled?.crop?.warning||face.compiled?.flags?.length)&&face.acceptedWarningKey!==face.compiled?.renderKey)));
-      button.closest('.card-item').hidden=!matches;
-      if(matches)visible++;
-    }
-    for(const button of $$('[data-card-filter]',body)){
-      button.classList.toggle('active',button.dataset.cardFilter===v.filter);
-    }
-    let empty=body.querySelector('[data-no-card-matches]');
-    if(!empty&&d.cards.length){
-      empty=document.createElement('div');empty.className='empty-state';empty.dataset.noCardMatches='';
-      const heading=document.createElement('h2');heading.textContent='No cards match';
-      const detail=document.createElement('p');detail.textContent='Try a different search or review filter.';
-      empty.append(heading,detail);body.append(empty);
-    }
-    if(empty)empty.hidden=visible>0;
-  }
+  let cardGrid;
   const refresh=updated=>{
     if(!body.isConnected||epoch!==state.routeEpoch||state.dirty)return;
     d=updated;state.activeDeck=d;summary=d.summary;dirty=d.status==='draft';
-    const count=$('.count-label');if(count)count.textContent=`${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered`;
-    const badge=$('.page-head .badge');if(badge){badge.className='badge '+d.status;badge.textContent=humanStatus(d.status);}
-    const attention=$('[data-card-filter="attention"]',body);if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
-    const steps=$$('.deck-progress>span');
-    if(steps[1])steps[1].className=dirty?'current':'complete';
-    if(steps[2])steps[2].className=d.status==='ready'?'complete':!dirty?'current':'';
-    if(steps[1]?.firstElementChild)steps[1].firstElementChild.textContent=dirty?'2':'✓';
-    if(steps[2]?.firstElementChild)steps[2].firstElementChild.textContent=d.status==='ready'?'✓':'3';
-    if(!dirty)body.querySelector(':scope>.notice.info')?.remove();
-    const cards=new Map(d.cards.map(card=>[card.id,card]));
-    for(const button of $$('[data-card]',body)){
-      const card=cards.get(button.dataset.card);if(!card)continue;
-      const face=card.faces[0],front=thumbnail(preview(card,face)),back=thumbnail(backPreview(card,d)),done=!!face.compiled?.render;
-      let image=$('img',button);
-      if(front&&!image){
-        image=document.createElement('img');image.loading='lazy';image.alt=card.name;
-        $('.card-empty-symbol',button)?.remove();button.append(image);
-        button.onmouseenter=()=>{image.src=image.dataset.hoverBack||image.dataset.hoverFront;};
-        button.onmouseleave=()=>{image.src=image.dataset.hoverFront;};
-      }
-      if(image){
-        const previous=image.dataset.hoverFront;
-        image.dataset.hoverFront=front;image.dataset.hoverBack=back||'';
-        if(previous!==front||!image.getAttribute('src'))image.src=front;
-        image.classList.toggle('art-only',!done&&!face.lastRender?.render?.url);
-      }
-      let label=$('.image-label',button);
-      if(!label&&(!done||dirty)){label=document.createElement('span');label.className='image-label';button.append(label);}
-      if(label){label.hidden=done&&!dirty;label.textContent=face.error?'Needs attention':face.lastRender?.render?.url||done?'Previous render · changes pending':'Art preview · not rendered';}
-      const warning=card.faces.some(face=>face.error||((face.compiled?.crop?.warning||face.compiled?.flags?.length)&&face.acceptedWarningKey!==face.compiled?.renderKey));
-      let mark=$('.warn-pill',button);
-      if(warning&&!mark){mark=document.createElement('span');mark.className='warn-pill';mark.textContent='!';button.append(mark);}
-      if(mark)mark.hidden=!warning;
-    }
-    filterCards();
+    const count=$('.count-label');if(count)count.textContent=`${summary.physicalCards??summary.cards} physical cards · ${summary.faces} faces · ${summary.rendered} rendered`;
+    const badge=$('.page-head .badge');if(badge){badge.className='badge '+(d.printStatus||d.status);badge.textContent=humanStatus(d.printStatus||d.status);}
+    cardGrid?.refresh(updated);
+  };
+  const cardsGrid=()=>{
+    cardGrid=mountDeckCards(body,d,v,{preview,backPreview,inspect:(card,index)=>inspect(d,card,index),onChanged:()=>showDeck(id)});
   };
   activeCardsView={id,refresh};
   state.generationView={route:'deck',id,refresh:()=>refreshDeckProgress(id)};
-  cardsGrid();filterCards();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
+  cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
   if(d.pendingImport)void startMetadata(d).catch(error=>console.info('Card details task stopped',error.message));
 }
 export async function refreshDeckProgress(id){
@@ -337,11 +268,9 @@ async function generate(d,artChecked=false){
     d=await ensureCustomArtCredits(d);if(!d)return;
   }finally{await resume();}
   const finish=async()=>{
-  d=await ensureMetadata(d.id);
+  d=await ensureMetadata(d.id,d);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
-  if(!artChecked&&!await ensureArtworkReady(d.id))return;
-  d=await api('/api/decks/'+d.id);
-  d=await ensureCustomArtCredits(d);if(!d)return;
+  if(!artChecked){d=await ensureArtworkReady(d.id,{deck:d,returnDeck:true});if(!d)return;}
   await renderDecks([d.id],{notify:false,artChecked:true});
   const finished=await api('/api/decks/'+d.id);
   if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
@@ -353,7 +282,7 @@ async function generate(d,artChecked=false){
 }
 function deckMenu(d){
   const permanent=true;
-  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size JPEG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
+  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size PNG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
   const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';
@@ -643,6 +572,16 @@ async function inspect(deck,card,index=0){
   }));
   $('#remove-card').onclick=()=>attempt(async()=>{closeModal();if(!await confirmAction('Remove '+c.name+'?',`Remove all ${c.quantity} copies from this deck? Other decks are not changed.`,'Remove card',true))return;await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,remove:true});await showDeck(d.id);});
   $('#copy-token').onclick=()=>copyToken(d,c);
+  const tokenButton=document.createElement(`button`);tokenButton.className=`button quiet small`;tokenButton.type=`button`;
+  tokenButton.textContent=c.tokenSpec||d.tokens?.cardIds.includes(c.id)?`Token options`:`Convert to token`;
+  tokenButton.onclick=()=>convertToToken(d,c,()=>showDeck(d.id));
+  $('#copy-token').before(tokenButton);
+  if(d.tokens?.cardIds.includes(c.id)) {
+    const backField=$('#face-back').closest('.field');backField.style.display=`none`;
+    const note=document.createElement(`p`);note.className=`muted`;
+    note.textContent=`Assign token backs from Token faces in the deck. This card’s quantity is the imported suggestion; assigned pairings determine printed copies.`;
+    backField.after(note);
+  }
 }
 
 function choiceOverlay(title,description){

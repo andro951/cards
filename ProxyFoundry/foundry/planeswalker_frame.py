@@ -6,10 +6,86 @@ from PIL import Image,ImageChops,ImageFilter
 PREFIX='/img/frames/proxy-foundry/planeswalker/'
 TALL_VERSION='repeat-middle-v1'
 PINLINE_VERSION='nickname-pinline-v1'
+CLASSIC_PINLINE_VERSION='badge-cutout-v1'
 TALL_EXTRA=147
 TALL_SHIFT=TALL_EXTRA/2100
 SPLICE_Y=1550
 MOVE_START=900
+
+
+def pinline_without_loyalty_png(pinline_raw,loyalty_raw):
+    with Image.open(io.BytesIO(pinline_raw)) as source:
+        pinline=source.convert('RGBA')
+    with Image.open(io.BytesIO(loyalty_raw)) as source:
+        badge=source.convert('RGBA').getchannel('A').resize(pinline.size,Image.Resampling.LANCZOS)
+    badge=badge.point(lambda a:255 if a else 0).filter(ImageFilter.MaxFilter(3))
+    pinline.putalpha(ImageChops.multiply(pinline.getchannel('A'),ImageChops.invert(badge)))
+    out=io.BytesIO();pinline.save(out,'PNG');return out.getvalue()
+
+
+def fit_ability_rows(abilities,bounds):
+    """Fit one to four abilities into normalized card-space text bounds.
+
+    Bounds include the passive row's extra left margin. Cost-bearing rows
+    reserve that margin for the native badges. No frame or color is involved.
+    The browser subsequently verifies this estimate using actual font metrics.
+    """
+    from .legacy import compiler as native
+    from .domain import ValidationError
+    if not 1<=len(abilities)<=4:
+        raise ValidationError('Planeswalker frames support one to four ability rows.')
+    if bounds['width']<=.044 or bounds['height']<=0:
+        raise ValidationError('The planeswalker rules box has no usable text area.')
+    gutter=.044
+    for step in range(35,17,-1):
+        size=step/1000
+        heights=[.009+size*1.12*native.approx_tall_pw_wrapped_lines(
+            text,passive=not cost,font_size=size*(.7467 if cost else .7907)/(bounds['width']-(gutter if cost else 0)))
+            for cost,text in abilities]
+        # Keep the first cost badge clear of the type bar.
+        if abilities[0][0]:heights[0]=max(.088,heights[0])
+        if sum(heights)<=bounds['height']:break
+    else:raise ValidationError('Planeswalker abilities do not fit the rules box.')
+    spare=(bounds['height']-sum(heights))/len(abilities)
+    y=bounds['y'];rows=[]
+    for (cost,_),height in zip(abilities,heights):
+        height+=spare
+        rows.append({'x':bounds['x']+(gutter if cost else 0),'y':y,
+                     'width':bounds['width']-(gutter if cost else 0),
+                     'height':height,'size':size,'fontSize':0,'noVerticalCenter':False})
+        y+=height
+    return rows
+
+
+def layout_planeswalker_abilities(data,sem,bounds=None):
+    """Apply shared text/row/badge layout, optionally with explicit safe bounds."""
+    from .legacy import compiler as native
+    abilities=native.parse_planeswalker_abilities(sem.get('oracle_text',''))
+    # Frame-specific geometry ends here. Leave clearance below the type bar
+    # and above the bottom curve/starting-loyalty badge on each frame.
+    if bounds is None:
+        type_box=data['text']['type']
+        start=type_box['y']+type_box['height']+.0217
+        bounds={'x':.136,'y':start,'width':.764,'height':.891-start}
+    rows=fit_ability_rows(abilities,bounds)
+    # The pinned renderer has two native anchor tables. These offsets only
+    # translate our calculated row centers into its badge coordinates.
+    tall=data['version']!='planeswalkerNicknameTall' and any(v in data['version'] for v in ('Tall','Compleated'))
+    bases=({1:[.72],2:[.6391,.801],3:[.5986,.72,.8415],4:[.5986,.6796,.7605,.8415]} if tall else
+           {1:[.7467],2:[.6953,.822],3:[.6639,.7467,.8362],4:[.6505,.72,.7905,.861]})[len(abilities)]
+    adjustments=[]
+    for index in range(4):
+        active=index<len(abilities)
+        cost,oracle=abilities[index] if active else ('','')
+        row=rows[index] if active else {**rows[-1],'y':bounds['y']+bounds['height'],'height':0}
+        data['text'].setdefault(f'ability{index}',{}).update(
+            name=f'Ability {index+1}',text=native.italicize_dash_labels(oracle),font='mplantin',**row)
+        adjustments.append(row['y']+row['height']/2-native.PLANESWALKER_TALL_4_ICON_TEXT_CENTER_OFFSET-bases[index] if cost else 0)
+    data.setdefault('planeswalker',{}).update(
+        abilities=[c for c,_ in abilities]+['']*(4-len(abilities)),abilityAdjust=adjustments,
+        count=len(abilities),x=.1167,width=.8094,
+        orig_ability_textbox_x=bounds['x']+.044,orig_ability_textbox_width=bounds['width']-.044,
+        uniformAbilityText=True)
 
 
 def nickname_pinline_png(frame_raw,pinline_raw,loyalty_raw):

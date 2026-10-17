@@ -7,6 +7,8 @@ export class WorkspaceFiles {
         this.downloadStaging=downloadStaging;
         this.writers=new Map();
         this.inputBuffers=new Map();
+        this.directories=new Map();
+        this.downloads=new Map();
     }
 
     parts = path => {
@@ -19,13 +21,20 @@ export class WorkspaceFiles {
     parent = async (path,create=false) => {
         const parts=this.parts(path);
         let directory=this.directory;
+        let key=`workspace`;
         if(parts[0]===`tmp`&&parts[1]===`review-downloads`) {
             //Review exports are temporary browser files, never selected-folder order packages.
             directory=this.downloadStaging;parts.shift();
+            key=`staging`;
         }
 
         for(const part of parts.slice(0,-1)) {
-            directory=await directory.getDirectoryHandle(part,{create});
+            key+=`/`+part;
+            const entryKey=key;
+            if(!this.directories.has(key))
+                this.directories.set(key,directory.getDirectoryHandle(part,{create}).catch(error=>{this.directories.delete(entryKey);throw error;}));
+
+            directory=await this.directories.get(key);
         }
 
         return {directory,name:parts.at(-1)};
@@ -34,6 +43,12 @@ export class WorkspaceFiles {
         const {directory,name}=await this.parent(path);
         return (await directory.getFileHandle(name)).getFile();
     }
+    invalidate = path => {
+        for(const key of this.directories.keys()) {
+            if(key===`workspace/`+path||key.startsWith(`workspace/`+path+`/`))
+                this.directories.delete(key);
+        }
+    };
     close = async path => {
         const writer=this.writers.get(path);
         if(!writer)
@@ -54,8 +69,120 @@ export class WorkspaceFiles {
         return writer;
     }
 
+    putAsset = async (path,body) => {
+        if(!/^assets\/[a-f0-9]{2}\/[a-f0-9]{64}$/.test(path)||path.split(`/`)[1]!==path.split(`/`)[2].slice(0,2))
+            throw new Error(`Invalid asset path.`);
+
+        const {directory,name}=await this.parent(path,true);
+        const handle=await directory.getFileHandle(name,{create:true});
+        const writer=await handle.createWritable();
+        await (body instanceof Blob?body:new Blob([body])).stream().pipeTo(writer);
+        return {ok:true};
+    }
+
+    prefetch = async (body,signal=null) => {
+        const urls=JSON.parse(new TextDecoder().decode(body));
+        if(!Array.isArray(urls)||!urls.length||urls.length>6||urls.some(url=>typeof url!==`string`||!/^https:\/\/raw\.githubusercontent\.com\/[^/?#]+\/[^/?#]+\/[a-fA-F0-9]{40}\/[^?#]+$/.test(url)))
+            throw new Error(`Invalid immutable artwork batch.`);
+
+        const writes=new Map(),waiting=[];let buffered=0;
+        const admit=()=>{
+            while(waiting.length&&(!buffered||buffered+waiting[0].size<=48*1024*1024)) {
+                const next=waiting.shift();buffered+=next.size;next.resolve();
+            }
+        };
+        const acquire=size=>new Promise(resolve=>{waiting.push({size,resolve});admit();});
+        const results=await Promise.allSettled(urls.map(async url=>{
+            const response=await fetch(url,{redirect:`error`,signal:signal?AbortSignal.any([signal,AbortSignal.timeout(60000)]):AbortSignal.timeout(60000)});
+            if(!response.ok)
+                throw new Error(`Artwork download failed (HTTP ${response.status}).`);
+
+            const size=Number(response.headers.get(`Content-Length`));
+            if(size>64*1024*1024)
+                throw new Error(`Artwork is too large.`);
+
+            //Known bodies share a 48 MiB budget; missing length headers retain the
+            //previous limit of six simultaneous bodies. A known large file runs alone.
+            const weight=size>0?size:8*1024*1024;
+            await acquire(weight);
+            try {
+                const blob=await response.blob();
+                if(!blob.size||blob.size>64*1024*1024)
+                    throw new Error(`Artwork is empty or too large.`);
+
+                const bytes=await blob.arrayBuffer();
+                let width=null,height=null;
+                const header=new DataView(bytes);
+                if(bytes.byteLength>=33&&header.getUint32(0)===0x89504e47&&header.getUint32(4)===0x0d0a1a0a) {
+                    let plain=true;
+                    for(let offset=8;offset+12<=bytes.byteLength;) {
+                        const length=header.getUint32(offset),kind=header.getUint32(offset+4);
+                        if(length>bytes.byteLength-offset-12){plain=false;break;}
+                        if(kind===0x65584966||kind===0x6163544c)plain=false;
+                        offset+=length+12;
+                    }
+
+                    if(plain&&header.getUint32(16)*header.getUint32(20)<=48000000) {
+                        const bitmap=await createImageBitmap(blob);
+                        if(bitmap.width===header.getUint32(16)&&bitmap.height===header.getUint32(20)) {
+                            width=bitmap.width;height=bitmap.height;
+                        }
+
+                        bitmap.close();
+                    }
+                }
+
+                const id=[...new Uint8Array(await crypto.subtle.digest(`SHA-256`,bytes))].map(value=>value.toString(16).padStart(2,`0`)).join(``);
+                if(!writes.has(id))
+                    writes.set(id,this.putAsset(`assets/${id.slice(0,2)}/${id}`,blob));
+
+                await writes.get(id);
+                return {id,bytes:blob.size,mime:width?`image/png`:response.headers.get(`Content-Type`)||`application/octet-stream`,width,height};
+            }
+            finally{buffered-=weight;admit();}
+        }));
+        //Keep successful downloads when one file needs the normal per-card fallback.
+        return results.map(result=>result.status===`fulfilled`?result.value:{error:String(result.reason?.message||result.reason).slice(0,500)});
+    }
+
     //#region Filesystem requests
     execute = async (operation,path,query,body) => {
+        if(operation===`start-artwork`) {
+            const urls=JSON.parse(new TextDecoder().decode(body));
+            if(!Array.isArray(urls)||urls.length>10000)
+                throw new Error(`Invalid artwork download plan.`);
+
+            const id=crypto.randomUUID(),task={ready:[],pending:urls.length,controller:new AbortController()};
+            this.downloads.set(id,task);
+            task.finished=(async()=>{
+                for(let start=0;start<urls.length&&!task.controller.signal.aborted;start+=6) {
+                    const batch=urls.slice(start,start+6);
+                    const rows=await this.prefetch(new TextEncoder().encode(JSON.stringify(batch)),task.controller.signal);
+                    task.ready.push(...batch.map((url,index)=>({url,...rows[index]})));task.pending-=batch.length;
+                }
+            })().catch(error=>{task.error=error.message;task.pending=0;});
+            return {id};
+        }
+
+        if(operation===`poll-artwork`||operation===`cancel-artwork`) {
+            const task=this.downloads.get(path);
+            if(!task)
+                throw new Error(`Artwork download plan expired.`);
+
+            if(operation===`cancel-artwork`) {
+                task.controller.abort();this.downloads.delete(path);return {ok:true};
+            }
+
+            const result={rows:task.ready.splice(0),pending:task.pending,error:task.error};
+            if(!task.pending)this.downloads.delete(path);
+            return result;
+        }
+
+        if(operation===`put-asset`)
+            return this.putAsset(path,body);
+        if(operation===`prefetch-artwork`)
+            return this.prefetch(body);
+
         if(operation===`read`) {
             await this.close(path);
             const file=await this.file(path);
@@ -129,6 +256,7 @@ export class WorkspaceFiles {
         if(operation===`remove`) {
             await this.close(path);
             await directory.removeEntry(name);
+            this.invalidate(path);
             return {ok:true};
         }
 
@@ -153,6 +281,7 @@ export class WorkspaceFiles {
             }
             if(operation===`rename`)
                 await directory.removeEntry(name);
+            this.invalidate(path);this.invalidate(destination);
             return {ok:true};
         }
 

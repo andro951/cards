@@ -67,11 +67,63 @@ export const pickArtworkFiles=async(deckId)=>{
 
 //#region Data file merge
 const entryKey=entry=>JSON.stringify([entry.oracle_id?.toLowerCase()||``,entry.scryfall_id?.toLowerCase()||``,entry.name||``]);
+const validateTokenFields=document=>{
+    const referenceKey=face=>{
+        if(!face||typeof face!==`object`||Array.isArray(face)||typeof face.name!==`string`||!face.name.trim()||Object.keys(face).some(key=>![`name`,`oracle_id`,`scryfall_id`,`copy`].includes(key)))
+            throw new Error(`The existing data.json has an invalid token face. It was not changed.`);
+
+        for(const [key,value] of Object.entries(face)) {
+            if(typeof value!==`string`||value.length>300||/[\x00-\x1f]/.test(value)||key.endsWith(`_id`)&&!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))
+                throw new Error(`The existing data.json has an invalid token face. It was not changed.`);
+        }
+
+        return JSON.stringify([(face.oracle_id||``).toLowerCase(),(face.scryfall_id||``).toLowerCase(),face.name,face.copy||``]);
+    };
+    for(const field of [`tokenAssignments`,`tokenTreatments`]) {
+        if(!Object.hasOwn(document,field))
+            continue;
+
+        if(!Array.isArray(document[field])||document[field].length>10000)
+            throw new Error(`The existing data.json has invalid token data. It was not changed.`);
+
+        const seen=new Set();
+        for(const row of document[field]) {
+            if(!row||typeof row!==`object`||Array.isArray(row))
+                throw new Error(`Invalid token entry in data.json.`);
+
+            let key;
+            if(field===`tokenAssignments`) {
+                if(Object.keys(row).some(key=>![`front`,`back`,`quantity`].includes(key))||!Number.isInteger(row.quantity)||row.quantity<1||row.quantity>9999)
+                    throw new Error(`Invalid token quantity in data.json.`);
+
+                const front=referenceKey(row.front),back=row.back;
+                const kind=back&&Object.keys(back).length===1&&[`card-back`,`reverse`].includes(back.kind)?back.kind:null;
+                const backKey=kind||referenceKey(back);
+                if(!kind&&front===backKey)
+                    throw new Error(`A token cannot use the same face on both sides.`);
+
+                key=JSON.stringify(kind?[front,kind]:[front,backKey].sort());
+            }
+            else {
+                if(Object.keys(row).length!==2||!row.options||typeof row.options!==`object`||Array.isArray(row.options)||Object.keys(row.options).some(key=>![`nonlegendary`,`replace_creature_subtypes`,`power_toughness`,`frame_color`,`color_override`,`token_key_suffix`].includes(key)))
+                    throw new Error(`Invalid token treatment in data.json.`);
+
+                key=referenceKey(row.face);
+            }
+
+            if(seen.has(key))
+                throw new Error(`Duplicate token combination in data.json. Adjust the existing quantity.`);
+
+            seen.add(key);
+        }
+    }
+};
 const validateDocument=document=>{
-    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`].includes(key)))
+    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`].includes(key)))
         throw new Error(`The existing data.json is invalid. It was not changed.`);
     if(Object.hasOwn(document,`artist`)&&(typeof document.artist!==`string`||document.artist.length>300))
         throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
+    validateTokenFields(document);
     for(const entry of document.cards) {
         if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`,`scryfall_url`].includes(key)))
             throw new Error(`The existing data.json has an invalid card entry. It was not changed.`);
@@ -176,16 +228,37 @@ export const enrichDataDocument=(document,cards=[],changes=[])=>{
     return result;
 };
 export const dataBlob=document=>new Blob([JSON.stringify(document,null,2)+`\n`],{type:`application/json`});
-export const mergeCardDataDocument=(original,changes,baseline=null,cards=[])=>{
+export const mergeTokenData=(document,tokenData,baseline=null)=>{
+    if(!tokenData)
+        return document;
+
+    const result=structuredClone(document);
+    for(const field of [`tokenAssignments`,`tokenTreatments`]) {
+        if(!Object.hasOwn(tokenData,field))
+            continue;
+
+        if(!Array.isArray(tokenData[field]))
+            throw new Error(`Invalid saved token data.`);
+
+        if(baseline&&JSON.stringify(document[field]||[])!==JSON.stringify(baseline[field]||[])&&JSON.stringify(document[field]||[])!==JSON.stringify(tokenData[field]))
+            throw new Error(`Token assignments changed in the original data.json. Reimport it before saving.`);
+
+        result[field]=structuredClone(tokenData[field]);
+    }
+
+    validateTokenFields(result);
+    return result;
+};
+export const mergeCardDataDocument=(original,changes,baseline=null,cards=[],tokenData=null)=>{
     if(!cards.length)
-        return mergeDataDocument(original,changes,baseline);
+        return mergeTokenData(mergeDataDocument(original,changes,baseline),tokenData,baseline);
 
     //Compare equivalent selectors before merging, including face and printing IDs.
     const current=enrichDataDocument(original,cards);
     const before=baseline?enrichDataDocument(baseline,cards):null;
     const edits=enrichDataDocument({version:1,cards:changes},cards).cards.filter(entry=>
         [`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`].some(field=>Object.hasOwn(entry,field)));
-    return mergeDataDocument(current,edits,before);
+    return mergeTokenData(mergeDataDocument(current,edits,before),tokenData,baseline);
 };
 export const dataChangesPending=async(deckId,changes,document,cards=[])=>{
     const record=await sourceRecord(`deck:${deckId}`);
@@ -194,7 +267,7 @@ export const dataChangesPending=async(deckId,changes,document,cards=[])=>{
     return JSON.stringify(current)!==JSON.stringify(mergeCardDataDocument(saved,changes,null,cards));
 };
 export const downloadData=document=>downloadBlob(dataBlob(document),`data.json`);
-export const saveLocalData=async(record,changes,cards=[])=>{
+export const saveLocalData=async(record,changes,cards=[],tokenData=null)=>{
     const permissionHandle=record.file||record.folder;
     if(!permissionHandle)
         throw new Error(`This browser did not retain access to the original file or folder. Download data.json instead.`);
@@ -214,7 +287,7 @@ export const saveLocalData=async(record,changes,cards=[])=>{
         original=JSON.parse(await file.text());
     }
 
-    const merged=mergeCardDataDocument(original,changes,record.document,cards);
+    const merged=mergeCardDataDocument(original,changes,record.document,cards,tokenData);
     // Read and validate before creating a new file or opening the atomic writer.
     handle||=await record.folder.getFileHandle(`data.json`,{create:true});
     const writer=await handle.createWritable();
@@ -273,7 +346,7 @@ const encodeContent=content=>{
 
     return btoa(binary);
 };
-export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[])=>{
+export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[],tokenData=null)=>{
     if(!/^[^/]+\/[^/]+$/.test(location.repo)||!location.branch||location.path.split(`/`).at(-1)!==`data.json`||location.path.split(`/`).some(part=>!part||part===`.`||part===`..`))
         throw new Error(`Choose the repository’s data.json file.`);
     const url=`https://api.github.com/repos/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/contents/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
@@ -291,7 +364,7 @@ export const saveGithubData=async(location,token,changes,baseline=null,fetcher=f
 
         const original=existing?JSON.parse(decodeContent(existing.content)):{version:1,cards:[]};
         //Recheck the edited fields on every retry; never replace a concurrent rules edit.
-        const merged=mergeCardDataDocument(original,changes,baseline,cards);
+        const merged=mergeCardDataDocument(original,changes,baseline,cards,tokenData);
         const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge card data`,branch:location.branch,
             content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
         recordDiagnostic(`GitHub data save`,JSON.stringify({repo:location.repo,path:location.path,branch:location.branch,

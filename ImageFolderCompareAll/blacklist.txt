@@ -1,0 +1,11 @@
+# Top-level folders inside cards/ to ignore, one name per line.
+# Names are case-insensitive. Blank lines and lines starting with # are ignored.
+# Decks without a cards/ subfolder or with fewer than two ZIPs are skipped anyway.
+.git
+.github
+ArtFetcher
+ImageFolderCompare
+ImageFolderCompareAll
+ProxyFoundry
+ScryfallFullCardImageDownloader
+templates

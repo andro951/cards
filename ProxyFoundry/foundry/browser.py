@@ -42,14 +42,16 @@ class BrowserHeaders(dict):
 
 class BrowserStore(Store):
     """Persist a complete SQLite snapshot after each mutation, never after reads."""
-    def __init__(self,home,persist=lambda path:None,copy_file=None):
+    def __init__(self,home,persist=lambda path:None,copy_file=None,write_asset=None):
         self.persist=persist
         self.copy_file=copy_file
+        self.write_asset=write_asset
         self._checkpoint_digest=None
         self._defer_checkpoint=0
         self._render_batch=False
         self._render_rollback=[]
         self._render_cleanup=[]
+        self.generation=None
         super().__init__(home)
         #The browser serializes requests and owns the only SQLite writer.
         #Repeated WAL opens grow the Wasm heap; a rollback journal keeps
@@ -59,6 +61,11 @@ class BrowserStore(Store):
             from .render_journal import allow_shared_render_files
             allow_shared_render_files(db)
         self.checkpoint()
+
+    def write_asset_file(self,target,content):
+        if self.write_asset is None:return super().write_asset_file(target,content)
+        #Browser createWritable atomically publishes on close; no temporary-file copy is needed.
+        self.write_asset(str(target),content)
 
     def copy_render_file(self,source,destination):
         if self.copy_file is None:return super().copy_render_file(source,destination)
@@ -90,6 +97,10 @@ class BrowserStore(Store):
     @contextmanager
     def render_save(self):
         if self._render_batch:raise RuntimeError('A render save is already active.')
+        if self.generation:
+            #The enclosing generation already owns rollback and the only durable commit.
+            yield
+            return
         snapshot=self.home/'.render-save.sqlite3'
         with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
             source.backup(destination)
@@ -137,6 +148,51 @@ class BrowserStore(Store):
             steps.close()
             self.checkpoint()
 
+    def begin_generation(self,deck_ids):
+        if self.generation:raise ConflictError('Card generation is already running.')
+        if not isinstance(deck_ids,list) or not deck_ids or len(set(deck_ids))!=len(deck_ids):
+            raise ValidationError('Choose the decks to generate.')
+        decks=[self.get('decks',ident) for ident in deck_ids]
+        if any(not deck for deck in decks):raise ValidationError('A selected deck no longer exists.')
+        snapshot=self.home/'.generation.sqlite3'
+        with closing(sqlite3.connect(self.db_path)) as source,closing(sqlite3.connect(snapshot)) as destination:
+            source.backup(destination)
+        self.generation={'id':uid(),'deckIds':list(deck_ids),'started':time.perf_counter(),
+                         'snapshot':snapshot,'digest':self._checkpoint_digest,'timings':{},
+                         'targets':{},'readyFaces':{},'preparedDeckIds':set(),'errors':[],
+                         'faceCounts':{deck['id']:sum(len(card.get('faces',[])) for card in deck.get('cards',[])) for deck in decks}}
+        self._defer_checkpoint+=1
+        return {'id':self.generation['id']}
+
+    def require_generation(self,ident):
+        if not self.generation or self.generation['id']!=ident:raise ConflictError('This generation session is no longer active.')
+        return self.generation
+
+    def commit_generation(self,ident):
+        generation=self.require_generation(ident)
+        self._defer_checkpoint-=1
+        try:self.checkpoint()
+        except BaseException:
+            self._defer_checkpoint+=1
+            try:self.abort_generation(ident,restore_persisted=True)
+            except Exception as error:
+                if getattr(self,'timing_logger',None):self.timing_logger.warning('Generation rollback checkpoint failed: %s',error)
+            raise
+        self.generation=None
+        generation['snapshot'].unlink(missing_ok=True)
+        return generation
+
+    def abort_generation(self,ident,restore_persisted=False):
+        generation=self.require_generation(ident)
+        with closing(sqlite3.connect(generation['snapshot'])) as source,closing(sqlite3.connect(self.db_path)) as destination:
+            source.backup(destination)
+        self._defer_checkpoint-=1;self.generation=None
+        self._checkpoint_digest=generation['digest']
+        generation['snapshot'].unlink(missing_ok=True)
+        if restore_persisted:
+            self._checkpoint_digest=None
+            self.checkpoint()
+
     @contextmanager
     def connect(self):
         changed=False
@@ -173,18 +229,19 @@ class BrowserJobs:
         now=time.monotonic()
         terminal=job['state'] in {'done','failed','cancelled'}
         #Progress remains live; persisting every message stalls selected-folder IO.
-        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=1:
+        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=(5 if getattr(self.store,'generation',None) else 1):
             (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
                 json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
             self.last_log_write[job['id']]=now
         if terminal:self.last_log_write.pop(job['id'],None)
-        self.publish(dict(job))
+        self.publish({key:value for key,value in job.items() if key!='events'})
 
     def start(self,kind,operation,*,priority=0):
         if priority not in {0,1}:raise ValueError('Use foreground or background job priority.')
         ident=uid()
         job={'id':ident,'kind':kind,'state':'queued','done':0,'total':0,
              'message':'Queued','events':[],'cancelled':False,'startedAt':time.time(),'priority':priority}
+        if getattr(self.store,'generation',None):job['generationId']=self.store.generation['id']
         self.jobs[ident]=job;self.pending[ident]=operation
         self._publish(job)
         return {'id':ident}
@@ -195,12 +252,17 @@ class BrowserJobs:
         while self.pending and (limit is None or steps<limit):
             #Cancelled tasks release their resources promptly; foreground chunks
             #take priority over background preparation. Equal priorities rotate.
-            eligible=[key for key in self.pending if not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key)]
+            generation=getattr(self.store,'generation',None)
+            eligible=[key for key in self.pending if (not generation or self.jobs[key].get('generationId')==generation['id'])
+                      and (self.jobs[key].get('resumeAt',0)<=time.monotonic() or self.jobs[key]['cancelled'])
+                      and (not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key))]
             if not eligible:break
             ident=min(eligible,key=lambda key:(
                 not (self.jobs[key]['cancelled'] or self.cancelled(key)),self.jobs[key]['priority']))
             self._step(ident);steps+=1
-        return any(not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key) for key in self.pending)
+        generation=getattr(self.store,'generation',None)
+        return any((not generation or self.jobs[key].get('generationId')==generation['id'])
+                   and (not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key)) for key in self.pending)
 
     def _step(self,ident):
         operation=self.pending.pop(ident);job=self.jobs[ident]
@@ -220,7 +282,8 @@ class BrowserJobs:
             result=operation
             if isinstance(operation,GeneratorType):
                 try:
-                    next(operation)
+                    wait=next(operation)
+                    job['resumeAt']=time.monotonic()+float(wait.get('delay',0)) if isinstance(wait,dict) else 0
                 except StopIteration as finished:
                     result=finished.value
                 else:
@@ -257,6 +320,11 @@ class BrowserJobs:
         if job['state']=='done' and 'result' not in job:
             return json.loads((self.store.home/'logs'/('job-'+ident+'.json')).read_text(encoding='utf-8'))
         return dict(job)
+
+    def next_delay(self):
+        active=getattr(self.store,'generation',None)
+        eligible=[row.get('resumeAt',0) for key,row in self.jobs.items() if key in self.pending and not row.get('paused') and (not active or row.get('generationId')==active['id'])]
+        return max(0,min(eligible)-time.monotonic())*1000 if eligible else 50
 
     def pause(self,ident):
         if ident in self.pending:self.jobs[ident]['paused']=True
@@ -320,6 +388,53 @@ class BrowserHandler(server.Handler):
         else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        generation=getattr(self.app.store,'generation',None)
+        if generation:
+            prepare=any(path=='/api/decks/'+ident+'/prepare' for ident in generation['deckIds'])
+            control=bool(re.fullmatch(r'/api/jobs/[-a-f0-9]{36}/(?:cancel|pause|resume)',path))
+            if not prepare and not control and path not in {'/api/generation/commit','/api/generation/abort','/api/generation/begin',
+                                                           '/api/render-sessions','/api/runtime/prepare','/api/render-diagnostic','/api/client-error'}:
+                raise ConflictError('Card generation is running. Wait before making other workspace changes.')
+        if path=='/api/generation/begin':
+            result=self.app.store.begin_generation(self.data().get('deckIds'))
+            generation=self.app.store.generation;session=uid();generation['renderSession']=session
+            self.app.render_sessions[session]={'targets':generation['targets'],'created':time.time()}
+            return self.respond(result)
+        if path=='/api/generation/commit':
+            from .render_journal import commit_render_rows
+            data=self.data();generation=self.app.store.require_generation(data.get('id'));commit_started=time.perf_counter()
+            rows=data.get('rows',[])
+            if not isinstance(rows,list) or any(row.get('deckId') not in generation['deckIds'] for row in rows if isinstance(row,dict)):
+                raise ValidationError('The generated cards do not belong to this session.')
+            generated={row.get('key') for row in rows if isinstance(row,dict)}
+            decks=[self.app.store.get('decks',deck_id) for deck_id in generation['deckIds']]
+            cached=self.app.store.render_many((face.get('compiled') or {}).get('renderKey') for deck in decks for card in (deck or {}).get('cards',[]) for face in card.get('faces',[]) if (face.get('compiled') or {}).get('renderKey') not in generated)
+            for deck in decks:
+                for card in (deck or {}).get('cards',[]):
+                    for face in card.get('faces',[]):
+                        key=(face.get('compiled') or {}).get('renderKey')
+                        if face.get('error') or not key or (key not in generated and not cached.get(key)):
+                            raise ValidationError('Generation is incomplete. No card images were updated.')
+            registered=commit_render_rows(self.app,rows)
+            summary={'id':generation['id'],'decks':generation['deckIds'],'seconds':round(time.perf_counter()-generation['started'],4),
+                     'registered':registered['registered'],'preparationTimings':generation['timings'],'renderTimings':data.get('timings',{})}
+            self.app.store.commit_generation(generation['id'])
+            summary['seconds']=round(time.perf_counter()-generation['started'],4)
+            summary['commitSeconds']=round(time.perf_counter()-commit_started,4)
+            try:(self.app.store.home/'logs'/('generation-'+generation['id']+'.json')).write_text(json.dumps(summary,ensure_ascii=False),encoding='utf-8')
+            except OSError as error:self.app.log.warning('Generation summary could not be saved: %s',error)
+            return self.respond(registered)
+        if path=='/api/generation/abort':
+            ident=self.data().get('id');generation=self.app.store.generation
+            if not generation or generation['id']!=ident:return self.respond({'aborted':False})
+            for key,job in list(self.app.jobs.jobs.items()):
+                if job.get('generationId')==ident and key in self.app.jobs.pending:
+                    operation=self.app.jobs.pending.pop(key)
+                    if isinstance(operation,GeneratorType):operation.close()
+                    job.update(state='cancelled',cancelled=True,message='Generation cancelled.',finishedAt=time.time())
+                    self.app.jobs._publish(job)
+            self.app.store.abort_generation(ident)
+            return self.respond({'aborted':True})
         if path == '/api/setup/artwork-review':
             data=self.data()
             return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review_steps(data,u,c),priority=1))
@@ -411,6 +526,15 @@ class BrowserHandler(server.Handler):
         return super().post(path, query)
 
     def get(self, path, query):
+        if path=='/api/generation/targets':
+            generation=self.app.store.require_generation(query.get('id',[''])[0])
+            try:after=max(0,int(query.get('after',['0'])[0]))
+            except ValueError:raise ValidationError('Invalid generation cursor.')
+            targets=list(generation['targets'].values())
+            return self.respond({'id':generation['renderSession'],'targets':[{'key':row['key'],'name':row['name'],'frameGroup':row.get('frameGroup')} for row in targets[after:]],
+                                 'cursor':len(targets),'cached':sum(generation['readyFaces'].values()),
+                                 'total':sum(generation.get('faceCounts',{}).values())-sum(generation['readyFaces'].values()),
+                                 'complete':set(generation['deckIds'])<=generation['preparedDeckIds'],'errors':generation['errors']})
         match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/deletion-state',path)
         if match:
             deck=self.app.store.get('decks',match[1])
@@ -436,8 +560,8 @@ class BrowserHandler(server.Handler):
         return super().get(path, query)
 
 
-def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser',copy_file=None):
-    store = BrowserStore(Path(home),persist,copy_file)
+def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser',copy_file=None,write_asset=None):
+    store = BrowserStore(Path(home),persist,copy_file,write_asset)
     store.storage_type=storage_type
     app = server.App(store, Network(store, transport=transport),
                      jobs_factory=lambda store:BrowserJobs(store,publish,cancelled))

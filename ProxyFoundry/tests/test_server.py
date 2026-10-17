@@ -98,9 +98,10 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
     request(s,'/api/render-sessions/'+plan['id']+'/'+key,png(dims))
     for h in list(app.log.handlers): h.flush()
     log=(app.store.home/'logs/app.log').read_text(encoding='utf-8')
-    for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_FACE_DECISION','RENDER_SAVE',PIPELINE_VERSION]:
+    for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_PLAN_DONE','RENDER_SAVE',PIPELINE_VERSION]:
         assert token in log,token
-    assert 'zoom=' in log and 'newKey=' in log and 'cachePresent=' in log
+    assert 'RENDER_FACE_DECISION' not in log
+    assert 'zoom=' in log and 'newKey=' in log and 'cached=' in log
     assert 'SET_SYMBOL_GEOMETRY' in log and 'alphaGt2=' in log and 'drawExpectedPx=' in log
 
 
@@ -357,14 +358,14 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     out=app.ws.review_images(deck['id'])
     assert all(store.cache_get(url) is None for url in reference)
     with zipfile.ZipFile(app.ws.review_download_file(out['download'].split('/')[3],out['filename'])) as z:
-        assert set(z.namelist())=={'review_normal_review.jpg','review_transform_review.jpg','review_back_review.jpg'}
+        assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
         assert out['count']==3
-        image=Image.open(io.BytesIO(z.read('review_normal_review.jpg')));image.load()
+        image=Image.open(io.BytesIO(z.read('review_normal_review.png')));image.load()
         assert image.size==(101,70)
         assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(220,30,30)))<3
         assert max(image.getpixel((50,5))[:3])<12
         assert max(abs(a-b) for a,b in zip(image.getpixel((75,5))[:3],(240,180,20)))<3
-        back=Image.open(io.BytesIO(z.read('review_back_review.jpg')));back.load()
+        back=Image.open(io.BytesIO(z.read('review_back_review.png')));back.load()
         assert max(abs(a-b) for a,b in zip(back.getpixel((5,5))[:3],(30,30,220)))<3
         assert max(abs(a-b) for a,b in zip(back.getpixel((75,5))[:3],(180,20,240)))<3
     app.close()
@@ -496,7 +497,7 @@ def test_review_images_action_is_in_deck_menu():
     assert 'Generate images before downloading review images.' in handler
 
 
-def test_single_review_image_export_can_download_a_specific_face_jpeg(tmp_path):
+def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
     store=Store(tmp_path)
     reference={
         'https://cards.scryfall.io/png/front/review_transform.png':_review_test_png((100,140),(30,220,30,255)),
@@ -524,7 +525,7 @@ def test_single_review_image_export_can_download_a_specific_face_jpeg(tmp_path):
     out=app.ws.review_image(deck['id'],'dfc-card','dfc-back')
     path=app.ws.review_download_file(out['download'].split('/')[3],out['filename'])
     assert not list((store.home/'orders').iterdir())
-    assert path.suffix=='.jpg' and out['download'].endswith('.jpg')
+    assert path.suffix=='.png' and out['download'].endswith('.png')
     image=Image.open(path);image.load()
     assert image.size==(101,70)
     assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(30,30,220)))<3

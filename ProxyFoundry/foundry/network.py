@@ -4,6 +4,7 @@ from __future__ import annotations
 from .timing import timed, timing
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -116,6 +117,40 @@ class Network:
             self.store.cache_put(url, asset, now, headers)
             self.misses += 1
             return body, mime, {'cache': False, 'fetchedAt': now}
+
+    @timed('network.prefetch')
+    def prefetch_immutable(self,urls):
+        """Browser downloads land directly in the immutable asset cache, in bounded groups."""
+        urls=list(dict.fromkeys(validate_remote_url(url) for url in urls))
+        prefetch=getattr(self.transport,'prefetch',None)
+        if not prefetch:return self.fetch_many_immutable(urls)
+        if not urls:return
+        if len(urls)>6:raise ValidationError('Artwork prefetch is limited to six files.')
+        try:rows=prefetch(urls)
+        except Exception as error:raise ValidationError('Artwork prefetch failed: '+str(error)) from error
+        return self.register_prefetch(urls,rows)
+
+    def register_prefetch(self,urls,rows):
+        if not isinstance(rows,list) or len(rows)!=len(urls):raise ValidationError('Incomplete artwork prefetch.')
+        now=self.clock()
+        errors=[]
+        for row in rows:
+            if isinstance(row,dict) and row.get('error'):
+                errors.append(str(row['error']));continue
+            if not isinstance(row,dict) or not re.fullmatch('[a-f0-9]{64}',str(row.get('id',''))) or not isinstance(row.get('bytes'),int) or not 0<row['bytes']<=64*1024*1024:
+                raise ValidationError('Invalid prefetched artwork.')
+            if self.store.asset_path(row['id']).stat().st_size!=row['bytes']:raise ValidationError('Incomplete prefetched artwork.')
+        with self.store.connect() as db:
+            for row in rows:
+                if row.get('error'):continue
+                width,height=row.get('width'),row.get('height')
+                if not (row.get('mime')=='image/png' and isinstance(width,int) and isinstance(height,int) and 0<width*height<=48000000):width=height=None
+                db.execute('INSERT OR IGNORE INTO assets VALUES (?,?,?,?,?,?)',(row['id'],row.get('mime','application/octet-stream'),row['bytes'],width,height,now))
+                if width and height:db.execute('UPDATE assets SET width=?,height=? WHERE id=? AND width IS NULL',(width,height,row['id']))
+        for url,row in zip(urls,rows):
+            if not row.get('error'):self.store.cache_put(url,row,now,{})
+        self.misses+=len(rows)-len(errors)
+        if errors:raise ValidationError('Artwork prefetch failed: '+errors[0])
 
     def fetch_many_immutable(self,urls):
         urls=list(dict.fromkeys(validate_remote_url(url) for url in urls))

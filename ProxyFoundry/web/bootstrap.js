@@ -110,7 +110,9 @@ else{
     if(data.type==='job'){
       const completed=[...jobs].filter(([,job])=>['done','failed','cancelled'].includes(job.state));
       for(const [id] of completed.slice(0,Math.max(0,completed.length-19)))jobs.delete(id);
-      jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
+      jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});
+      window.dispatchEvent(new CustomEvent(`pf-job`,{detail:data.job}));
+      recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
     if(data.type==='status'){message.textContent=data.message;setEngineStatus(data.message);}
     if(data.type==='ready'){
       if(data.buildId!==buildId)failEngine('The website and card engine are different versions. Reload the page to finish updating; saved decks stay in your workspace.');

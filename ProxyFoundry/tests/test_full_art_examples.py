@@ -107,13 +107,13 @@ def request(app, method, url, body, headers):
             with zipfile.ZipFile(saved) as archive:
                 assert len(archive.namelist())==5
                 for name in archive.namelist():
-                    assert name.endswith('.jpg') and '/' not in name
+                    assert name.endswith('.png') and '/' not in name
                     (output/name).write_bytes(archive.read(name))
             checks=[]
             for card in current['cards']:
                 filename=next(filename for name,filename in EXAMPLES if name==card['name'])
                 from foundry.domain import slug
-                review=Image.open(output/(slug(card['name'])+'_review.jpg')).convert('RGB')
+                review=Image.open(output/(slug(card['name'])+'_review.png')).convert('RGB')
                 assert review.size==(2011,1407)
                 original=Image.open(example_art(repo,filename)).convert('RGB')
                 #Sample uncovered art on the real rendered half, using the source

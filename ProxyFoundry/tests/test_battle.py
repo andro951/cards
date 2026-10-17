@@ -79,7 +79,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
 
     assert front['group']=='battle'
     assert front['recipe']=='m15_battle'
-    assert front['templateVersion']==6
+    assert front['templateVersion']==7
     assert front['data']['version']=='battle'
     assert front['data']['landscape'] is True
     assert (front['data']['width'],front['data']['height'])==(2814,2010)
@@ -88,7 +88,7 @@ def test_invasion_of_ikoria_uses_native_battle_front_and_transform_back(tmp_path
     }
     assert front['data']['text']['type']['text']=='Battle — Siege'
     assert front['data']['text']['defense']['text']=='6'
-    assert front['data']['text']['reminder']['text']=='8/8'
+    assert front['data']['text']['reminder']['text']==''
     battle_frames=[f for f in front['data']['frames'] if f.get('src')=='/img/frames/m15/battle/g.png']
     assert len(battle_frames)==1
     assert battle_frames[0]['masks']==[]

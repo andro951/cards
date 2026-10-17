@@ -30,10 +30,9 @@ export function startMetadata(deck){
   pending.set(deck.id,{controller,promise,ready});
   return promise;
 }
-export async function ensureMetadata(id){
-  const deck=await api('/api/decks/'+id);
-  if(deck.pendingImport)await startMetadata(deck);
-  return api('/api/decks/'+id);
+export async function ensureMetadata(id,knownDeck=null){
+  const deck=knownDeck||await api('/api/decks/'+id);
+  return deck.pendingImport?startMetadata(deck):deck;
 }
 export async function cancelMetadata(id){
   const task=pending.get(id);

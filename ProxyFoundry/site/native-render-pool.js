@@ -60,8 +60,10 @@ export class NativeRenderer {
 }
 
 export class NativeRenderPool {
-    constructor({count=2,createRenderer,signal=null}){
+    constructor({count=2,createRenderer,signal=null,concurrentSaves=false}){
         this.signal=signal;this.failure=null;this.next=0;this.saved=0;this.saveTail=Promise.resolve();
+        this.stopped=new AbortController();
+        this.concurrentSaves=concurrentSaves;
         this.renderers=[];
         try{for(let index=0;index<Math.max(1,Math.min(4,count));index++)this.renderers.push(createRenderer());}
         catch(error){for(const renderer of this.renderers)renderer.close(error);throw error;}
@@ -71,10 +73,62 @@ export class NativeRenderPool {
     check = () => {if(this.failure)throw this.failure;};
     cancel = () => this.stop(new Error(`Rendering cancelled. Completed images are saved.`));
     stop = error => {
-        this.failure??=error;
+        if(this.failure)
+            return;
+
+        this.failure=error;this.stopped.abort(error);
         for(const renderer of this.renderers)renderer.close(this.failure);
     };
-    run = async (targets,{load,save,saved=()=>{}}) => {
+    run = async (targets,{load,save,saved=()=>{},moreTargets=null,pipeline=false}) => {
+        let refill=null,finished=!moreTargets;
+        const claim=async preferred=>{
+            while(this.next>=targets.length) {
+                this.check();
+                if(finished)
+                    return null;
+
+                if(!refill) {
+                    refill=moreTargets(this.stopped.signal).then(result=>{targets.push(...result.targets);finished=result.complete;}).finally(()=>{refill=null;});
+                }
+
+                await refill;
+            }
+
+            this.check();const index=this.next++;
+            const match=preferred?targets.findIndex((target,position)=>position>=index&&target.frameGroup===preferred):-1;
+            if(match>index)
+                [targets[index],targets[match]]=[targets[match],targets[index]];
+
+            return {...targets[index],index};
+        };
+        const take=async preferred=>{
+            const target=await claim(preferred);
+            return target?{target,data:await load(target)}:null;
+        };
+        const consumePipeline=async renderer=>{
+            let pending=Promise.resolve(),upcoming=null;
+            try {
+                await renderer.ready;
+                let current=await take();
+                while(current) {
+                    this.check();const {target,data}=current,started=performance.now();
+                    const drawing=renderer.render(target,data);
+                    upcoming=take(target.frameGroup);upcoming.catch(error=>this.stop(error));
+                    const output=await drawing;
+                    renderer.diagnostic?.({key:target.key,stage:`timing`,diagnostic:{stage:`render.native`,seconds:Number(((performance.now()-started)/1000).toFixed(4)),outcome:`ok`}});
+                    await pending;this.check();
+                    //One PNG may save while this worker draws its next face.
+                    pending=(async()=>{await save(target,output);this.saved++;await saved(target,output,this.saved);})();
+                    pending.catch(error=>this.stop(error));
+                    current=await upcoming;upcoming=null;
+                }
+
+                await pending;
+            }
+            finally {
+                await Promise.allSettled([pending,upcoming].filter(Boolean));
+            }
+        };
         const consume=async renderer=>{
             await renderer.ready;
             while(this.next<targets.length){
@@ -82,16 +136,19 @@ export class NativeRenderPool {
                 const data=await load(target);this.check();
                 const started=performance.now();const output=await renderer.render(target,data);this.check();
                 renderer.diagnostic?.({key:target.key,stage:`timing`,diagnostic:{stage:`render.native`,seconds:Number(((performance.now()-started)/1000).toFixed(4)),outcome:`ok`}});
-                //Each worker holds at most one completed PNG. Storage commits stay sequential.
-                const commit=this.saveTail.then(async()=>{
+                //Each worker holds at most one completed PNG, including while its file is saved.
+                const publish=async()=>{
                     this.check();await save(target,output);this.saved++;await saved(target,output,this.saved);
-                });
-                this.saveTail=commit;
+                };
+                const commit=this.concurrentSaves?publish():this.saveTail.then(publish);
+                if(!this.concurrentSaves)
+                    this.saveTail=commit;
+
                 await commit;
             }
         };
         try{
-            const jobs=this.renderers.map(renderer=>consume(renderer).catch(error=>{this.stop(error);throw error;}));
+            const jobs=this.renderers.map(renderer=>(pipeline?consumePipeline(renderer):consume(renderer)).catch(error=>{this.stop(error);throw error;}));
             const results=await Promise.allSettled(jobs);
             const failure=results.find(result=>result.status===`rejected`);
             if(failure)throw failure.reason;

@@ -10,7 +10,7 @@ export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const asset=id=>id?'/api/assets/'+id:'';
 export const thumbnail=url=>/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url;
-export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print',attention:'Needs attention'}[s]||s||'Draft');
+export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print','tokens-not-ready':'Tokens not ready',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export function requireDeckAvailable(id,owner=null){if(id)work.requireAvailable(['deck:'+id],owner);}
@@ -175,7 +175,15 @@ function refreshWorkActivity(){
 }
 export function endActivity(message,error=false,owner=null){
   if(owner&&work.visible()!==owner)return;
-  $('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
+  $('#activity-title').textContent=message;$('#activity-detail').textContent=error?(owner?.atomicGeneration?'Previous card images are unchanged. Details are in the activity log.':'Completed images are saved. Details are in the activity log.'):'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
+}
+function waitForJob(id,signal){
+  return new Promise(resolve=>{
+    const finish=()=>{clearTimeout(timer);window.removeEventListener(`pf-job`,updated);signal?.removeEventListener(`abort`,finish);resolve();};
+    const updated=event=>{if(event.detail.id===id)finish();};
+    const timer=setTimeout(finish,1000);
+    window.addEventListener(`pf-job`,updated);signal?.addEventListener(`abort`,finish,{once:true});
+  });
 }
 export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null,background=false,onStarted=null}={}){
   const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal,background});
@@ -189,9 +197,10 @@ export async function job(path,data,{label='Working',onProgress=null,signal=null
     if(onStarted)await onStarted(ident);
     if(signal?.aborted)cancel();
     while(true){
-      await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total,task);onProgress?.(j);
+      const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total,task);onProgress?.(j);
       if(j.state==='done'){if(!owner)endActivity('Complete',false,task);return j.result;}
       if(j.state==='failed'||j.state==='cancelled'){if(!owner)endActivity(j.message,true,task);throw new Error(j.error||j.message);}
+      await waitForJob(ident,signal);
     }
   }catch(error){if(!owner)endActivity(error.message,true,task);throw error;}
   finally{signal?.removeEventListener('abort',cancel);if(!owner)work.finish(task);}

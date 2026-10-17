@@ -70,7 +70,7 @@ def test_everflowing_well_pair_uses_real_cardconjurer_transform_assets(tmp_path)
 
     assert front['group']=='transform-front' and front['recipe']=='m15_transform_front'
     assert back['group']=='transform-back' and back['recipe']=='m15_transform_back'
-    assert front['templateVersion']==14 and back['templateVersion']==14
+    assert front['templateVersion']==14 and back['templateVersion']==15
     assert front['data']['version']=='m15TransformFront'
     assert back['data']['version']=='m15TransformFront'
 
@@ -113,7 +113,7 @@ def test_search_for_azcanta_uses_transform_enchantment_front_and_land_back(tmp_p
     back=compiler.compile_face(card,card['card_faces'][1],1,{},settings,art,art_origin='Scryfall selected printing')
     front_sources=[f.get('src','') for f in front['data']['frames']]
     back_sources=[f.get('src','') for f in back['data']['frames']]
-    assert front['templateVersion']==14 and back['templateVersion']==14
+    assert front['templateVersion']==14 and back['templateVersion']==15
     assert '/img/frames/m15/transform/regular/frontU.png' in front_sources
     assert '/img/frames/m15/transform/regular/new/backL.png' in back_sources
     for piece in ('Title','Type','Rules','Pinline'):
@@ -121,7 +121,7 @@ def test_search_for_azcanta_uses_transform_enchantment_front_and_land_back(tmp_p
     assert '/img/frames/m15/transform/crowns/regular/u.png' in front_sources
     assert '/img/frames/m15/transform/crowns/regular/new/u.png' in back_sources
     assert '/img/frames/m15/transform/icons/compass.svg' in front_sources
-    assert '/img/frames/m15/transform/icons/land.svg' in back_sources
+    assert '/img/frames/m15/transform/icons/land.svg' not in back_sources
     assert front['data']['text']['type']['text']=='Legendary Enchantment'
     assert back['data']['text']['type']['text']=='Legendary Land'
 

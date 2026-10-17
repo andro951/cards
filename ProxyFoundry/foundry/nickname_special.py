@@ -76,29 +76,14 @@ def apply_planeswalker(data, sem, code):
     names(data,sem,.0867,.0408 if sem.get('legendary') else .0372,.8267,.0548,.1015)
     text['type'].update(x=.0867,y=.5625-shift,width=.8267,height=.0548,size=.0324)
     text.pop('rules',None);text.pop('flavor',None);text.pop('pt',None)
-    start,end=.639-shift,.891
-    # Share a font size across all rows, then distribute space according to
-    # their wrapped text demand. Static rows gain the unused loyalty margin.
-    for size in (.030,.029,.028,.027,.026,.025,.024,.023,.022,.021,.020,.019,.018):
-        heights=[.009+size*1.12*native.approx_tall_pw_wrapped_lines(t,passive=not c,font_size=size*.7467/.72) for c,t in abilities]
-        if abilities[0][0]:heights[0]=max(.088,heights[0])
-        if sum(heights)<=end-start:break
-    else:raise ValidationError('Planeswalker abilities do not fit the Godzilla frame.')
-    spare=(end-start-sum(heights))/len(heights)
-    bases={1:[.7467],2:[.6953,.822],3:[.6639,.7467,.8362],4:[.6505,.72,.7905,.861]}[len(abilities)]
-    shifts=[];y=start
+    # Geometry and badge positions are assigned once, after frame selection,
+    # by planeswalker_frame.layout_planeswalker_abilities.
     for index in range(4):
         cost,oracle=abilities[index] if index<len(abilities) else ('','')
-        h=heights[index]+spare if index<len(abilities) else 0
         text[f'ability{index}']={'name':f'Ability {index+1}','text':native.italicize_dash_labels(oracle),
-            'x':.18 if cost else .136,'y':y,'width':.72 if cost else .764,
-            'height':h,'size':size,'fontSize':0,'font':'mplantin','noVerticalCenter':False,
             'color':'black','outlineColor':'black','outlineWidth':0,'shadowX':0,'shadowY':0}
-        shifts.append(y+h/2-native.PLANESWALKER_TALL_4_ICON_TEXT_CENTER_OFFSET-bases[index] if cost else 0)
-        y+=h
     data['planeswalker']={'abilities':[c for c,_ in abilities]+['']*(4-len(abilities)),
-        'abilityAdjust':shifts,'count':len(abilities),'x':.1167,'width':.8094,
-        'orig_ability_textbox_x':.18,'orig_ability_textbox_width':.72}
+        'count':len(abilities)}
     text['loyalty']={'name':'Loyalty','text':str(sem.get('loyalty') or ''),
         'x':.806,'y':.902,'width':.14,'height':.0372,'size':.0372,
         'font':'belerenbsc','oneLine':True,'align':'center','color':'white'}

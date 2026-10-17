@@ -2,17 +2,34 @@
 from __future__ import annotations
 import json,os,tempfile,time,zipfile
 from .domain import ConflictError,ValidationError,uid,stable_hash
+from .token_assignments import overview
 class Orders:
     def __init__(self,workspace):self.ws=workspace;self.store=workspace.store
     def plan(self,deck_ids,acknowledge=False):
         if not deck_ids or len(set(deck_ids))!=len(deck_ids):raise ValidationError('Select one or more different decks.')
-        physical=[];decks=[];warnings=[];issues=[]
+        physical=[];decks=[];warnings=[];issues=[];seen_issues=set()
         for ident in deck_ids:
             d=self.ws.deck(ident)
             if d.get('status')=='draft':raise ValidationError(d['name']+': prepare the latest changes before exporting.')
+            tokens=overview(d)
+            if not tokens['ready']:
+                names=', '.join(row['name'] for row in tokens['unused']+tokens['invalid'])
+                raise ValidationError(d['name']+': Tokens not ready. Unused or invalid token faces: '+names+'. Open Token Review and assign backs. Pair two different token faces to save space, or assign normal card backs to all unused faces.')
             decks.append({'id':d['id'],'name':d['name'],'revision':d['revision'],
                           'backAsset':d['settings'].get('backAsset')})
-            for c in d['cards']:
+            token_ids=set(tokens['cardIds']);by_id={c['id']:c for c in d['cards']}
+            face_owners={f['id']:c for c in d['cards'] for f in c['faces']}
+            printable=[c for c in d['cards'] if c['id'] not in token_ids]
+            for pair in tokens['assigned']:
+                source=by_id[pair['frontCardId']]
+                card={**source,'quantity':pair['quantity'],'faces':list(source['faces'])}
+                card.pop('backOverride',None);card.pop('meldBackAsset',None)
+                if pair['backKind']=='token':
+                    other=by_id[pair['backCardId']]
+                    card['faces']=[source['faces'][0],other['faces'][0]]
+                    card['name']=source['name']+' / '+other['name']
+                printable.append(card)
+            for c in printable:
                 faces=c['faces'];front=self._render(faces[0],d['name'])
                 if c.get('backOverride'):back=c['backOverride']
                 elif c.get('meldBackAsset'):back=c['meldBackAsset']
@@ -29,9 +46,12 @@ class Orders:
                         if reasons:
                             warning=d['name']+' / '+f['name']+': '+' '.join(reasons)
                             warnings.append(warning)
-                            issues.append({'deckId':d['id'],'cardId':c['id'],'faceId':f['id'],
-                                           'name':f['name'],'deckName':d['name'],'renderKey':comp['renderKey'],
-                                           'frontAsset':self._render(f,d['name']),'warning':warning})
+                            issue_key=(d['id'],f['id'],comp['renderKey'])
+                            if issue_key not in seen_issues:
+                                seen_issues.add(issue_key)
+                                issues.append({'deckId':d['id'],'cardId':face_owners[f['id']]['id'],'faceId':f['id'],
+                                               'name':f['name'],'deckName':d['name'],'renderKey':comp['renderKey'],
+                                               'frontAsset':self._render(f,d['name']),'warning':warning})
                 for copy in range(c['quantity']):
                     physical.append({'deckId':d['id'],'deckName':d['name'],'cardId':c['id'],'name':c['name'],
                         'printingId':(c.get('scryfall') or {}).get('id'),'copy':copy+1,'frontAsset':front,'backAsset':back})

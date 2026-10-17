@@ -13,6 +13,8 @@
   };
   const pendingScripts=new Set();
   const assetCacheReady=import('/site/runtime-assets.js').then(({RuntimeAssets})=>new RuntimeAssets());
+  let compositionCache=null,compositionFinal=false;
+  const compositionReady=window.__PF_WORKER_CORE?import('/site/frame-composition-cache.js').then(({FrameCompositionCache})=>{compositionCache=new FrameCompositionCache();}):Promise.resolve();
   const disposeAssets=()=>assetCacheReady.then(cache=>cache.dispose()).catch(error=>post('diagnostic',{stage:'asset-cleanup',diagnostic:{error:error.message}}));
   window.addEventListener('pagehide',disposeAssets);window.addEventListener('unload',disposeAssets);
   const baseTextEdited=window.textEdited;
@@ -66,8 +68,9 @@
   async function planeswalkerReady(data){
     if(!String(data.version).toLowerCase().includes('planeswalker'))return;
     if(!window.card?.planeswalker||typeof window.planeswalkerEdited!=='function'||typeof window.fixPlaneswalkerInputs!=='function')throw new Error('Native Planeswalker module did not initialize.');
-    const edited=window.planeswalkerEdited;
+    const edited=window.planeswalkerEdited.__pfOriginal||window.planeswalkerEdited;
     window.planeswalkerEdited=function(...args){if(window.card?.planeswalker&&String(window.card.version).toLowerCase().includes('planeswalker'))return edited.apply(this,args);};
+    window.planeswalkerEdited.__pfOriginal=edited;
     //loadCard resizes helper canvases after script initialization, clearing their first draw.
     window.fixPlaneswalkerInputs();window.resetPlaneswalkerImages();window.invertPlaneswalkerColors(true);window.planeswalkerEdited();
     await readyImages([['Planeswalker plus',window.plusIcon],['Planeswalker minus',window.minusIcon],['Planeswalker neutral',window.neutralIcon],['Planeswalker light divider',window.lightToDark],['Planeswalker dark divider',window.darkToLight],['Planeswalker text mask',window.planeswalkerTextMask]]);
@@ -78,10 +81,38 @@
   async function classReady(data){
     if(!String(data.version).toLowerCase().includes('class'))return;
     if(!window.card?.class||typeof window.classEdited!=='function'||typeof window.fixClassInputs!=='function')throw new Error('Native Class module did not initialize.');
-    const edited=window.classEdited;
+    const edited=window.classEdited.__pfOriginal||window.classEdited;
     window.classEdited=function(...args){if(window.card?.class&&String(window.card.version).toLowerCase().includes('class'))return edited.apply(this,args);};
+    window.classEdited.__pfOriginal=edited;
     await readyImages([['Class header',window.classHeader]]);
     window.fixClassInputs();window.classEdited();
+  }
+  function fitPlaneswalkerAbilityText(){
+    if(!window.card?.planeswalker?.uniformAbilityText)
+      return;
+
+    const fields=Object.entries(window.card.text).filter(([key,field])=>/^ability[0-3]$/.test(key)&&field.height>0&&field.text).map(([,field])=>field);
+    if(!fields.length)
+      return;
+
+    //Use the native renderer's actual fitting result, including inline symbols.
+    //One difficult row must lower all ability sizes together.
+    const probe=document.createElement(`canvas`);probe.width=window.cardCanvas.width;probe.height=window.cardCanvas.height;
+    const context=probe.getContext(`2d`);let size=Infinity;
+    for(const field of fields){
+      window.writeText(field,context);
+      const fitted=field.proxyFoundryTextFit;
+      if(!fitted||!Number.isFinite(fitted.size))
+        throw new Error(`Native planeswalker ability fitting did not finish.`);
+
+      size=Math.min(size,fitted.size+Number(field.fontSize||0));
+    }
+
+    for(const field of fields){
+      field.size=size/window.card.height;field.fontSize=0;
+    }
+
+    probe.width=1;probe.height=1;
   }
   async function stationReady(data){
     if(!String(data.version).toLowerCase().includes('station'))return;
@@ -101,19 +132,30 @@
   async function waitFor(fn,ms,label){const start=Date.now();while(Date.now()-start<ms){if(fn())return;await sleep(50)}throw new Error(label+' did not initialize.');}
   // Replace only script orchestration, not the native frame, text or canvas logic.
   const loadedScripts=new Map();
+  const initializedScripts=new Set();
+  const reusableScripts=new Set(['/js/frames/versionPlaneswalker.js','/js/frames/versionSaga.js','/js/frames/versionClass.js']);
   window.loadScript=function(path){
     if(!/^\/js\/[A-Za-z0-9_./-]+\.js$/.test(path)||path.split('/').includes('..'))return Promise.reject(new Error('Untrusted CardConjurer script: '+path));
     if(loadedScripts.has(path))return loadedScripts.get(path);
+    if(window.__PF_WORKER_CORE&&reusableScripts.has(path)&&initializedScripts.has(path)){
+      if(path==='/js/frames/versionPlaneswalker.js')window.resetPlaneswalkerImages(window.fixPlaneswalkerInputs(window.planeswalkerEdited));
+      if(path==='/js/frames/versionClass.js')window.fixClassInputs(window.classEdited);
+      return Promise.resolve();
+    }
     const job=timeout(new Promise((resolve,reject)=>{const el=document.createElement('script');el.src=path;el.onload=resolve;el.onerror=()=>reject(new Error('CardConjurer script failed: '+path));document.head.append(el);}),30000,path);
-    pendingScripts.add(job);job.finally(()=>{pendingScripts.delete(job);loadedScripts.delete(path);}).catch(()=>{});loadedScripts.set(path,job);return job;
+    pendingScripts.add(job);job.then(()=>initializedScripts.add(path),error=>S.errors.push({phase:S.phase,message:error.message}));job.finally(()=>{pendingScripts.delete(job);loadedScripts.delete(path);}).catch(()=>{});loadedScripts.set(path,job);return job;
   };
   const nativeTextBuffer=window.drawTextBuffer;
   window.drawTextBuffer=function(...args){if(S.active&&S.phase!=='render')return;return nativeTextBuffer?.apply(this,args);};
   //Loading one face triggers native redraw callbacks for every individual image.
   //Only compose once all inputs are ready; the final native drawing order is unchanged.
-  for(const name of ['drawFrames','drawCard','drawText']){
+  for(const name of ['drawFrames','drawCard','drawText','bottomInfoEdited']){
     const draw=window[name];
-    window[name]=function(...args){if(S.active&&S.phase!=='render')return;return draw.apply(this,args);};
+    window[name]=function(...args){
+      if(S.active&&S.phase!=='render')return;
+      if(name==='drawFrames'&&S.active&&compositionCache)return compositionCache.draw(window,()=>draw.apply(this,args),compositionFinal);
+      return draw.apply(this,args);
+    };
   }
   async function scriptsSettled(){while(pendingScripts.size)await Promise.all([...pendingScripts]);}
   function usedSymbols(data){
@@ -198,7 +240,8 @@
   }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
-    clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    clearStationState();lastSetSymbolDraw=null;compositionFinal=false;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    const initialCacheHits=compositionCache?.hits||0;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
       await measureNative('native.assets',request.key,async()=>{await (await assetCacheReady).acquire(data);await preload(data);});
@@ -217,6 +260,7 @@
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
       await measureNative('native.loaded-images',request.key,()=>readyImages(imagesFor(window.card,symbols)));
       await measureNative('native.loaded-fonts',request.key,()=>fontsReady(window.card));
+      await measureNative('native.planeswalker-text-fit',request.key,()=>fitPlaneswalkerAbilityText());
       symbolRuntimeSnapshot('after-load',request.key,data);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
       S.phase='render';if(window.writingText)clearTimeout(window.writingText);
@@ -228,6 +272,7 @@
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
       if(window.__PF_PREPARE_VECTORS)await window.__PF_PREPARE_VECTORS();
+      compositionFinal=true;
       await measureNative('native.final-draw',request.key,async()=>{
         await paintFace();
       });
@@ -238,14 +283,16 @@
       const width=Math.round(data.width*(1+2*(data.marginX||0))),height=Math.round(data.height*(1+2*(data.marginY||0)));
       if(!(canvas instanceof HTMLCanvasElement)||canvas.width!==width||canvas.height!==height)throw new Error('Native canvas dimensions do not match the saved template.');
       const blob=await measureNative('native.png-export',request.key,()=>timeout(window.__PF_WORKER_CORE?canvas.convertToBlob({type:'image/png'}):new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
+      const hits=(compositionCache?.hits||0)-initialCacheHits;
+      if(hits)post('diagnostic',{key:request.key,stage:'timing',diagnostic:{stage:'native.cached-frame-compositions',seconds:0,count:hits,outcome:'ok'}});
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
     }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();window.__PF_RELEASE_IMAGES?.();S.active=false;S.phase='idle';}
   }
   let initialized=false;
   const ready=async()=>{
-    await assetCacheReady;
+    await Promise.all([assetCacheReady,compositionReady]);
     await waitFor(()=>typeof window.loadCard==='function'&&window.cardCanvas&&window.availableFrames?.[window.selectedFrameIndex]&&window.card?.text,30000,'Native CardConjurer frame-picker bootstrap');
-    await scriptsSettled();await sleep(600);
+    await scriptsSettled();await sleep(window.__PF_WORKER_CORE?0:600);
     if(document.querySelector('#enableCollectorInfo'))document.querySelector('#enableCollectorInfo').checked=true;
     if(document.querySelector('#show-guidelines'))document.querySelector('#show-guidelines').checked=false;
     S.clearErrors();initialized=true;post('ready');

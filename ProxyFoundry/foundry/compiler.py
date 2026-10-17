@@ -13,6 +13,7 @@ from .artifact_frame import apply_artifact_gray
 from .color_indicator import apply_color_indicator
 from . import nickname_special
 from . import rules_nicknames
+from .hybrid_frame import apply_hybrid_frame_treatment
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -62,6 +63,12 @@ AUTO_TEMPLATE_VERSIONS['station']=6
 #Poison trackers share the Day/Night and Experience title-only treatment.
 AUTO_TEMPLATE_VERSIONS['helper']=6
 AUTO_TEMPLATE_VERSIONS['emblem']+=1
+AUTO_TEMPLATE_VERSIONS['battle']+=1
+AUTO_TEMPLATE_VERSIONS['transform-back']+=1
+AUTO_TEMPLATE_VERSIONS['planeswalker']+=2
+# Classic hybrid cards use neutral bars/PT and split native body/rules textures.
+for _group in ('standard','legendary'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+BUILTIN_TEMPLATE_VERSIONS['normal']+=1
 for _group in ('class','saga','saga-creature'):
     AUTO_TEMPLATE_VERSIONS[_group]+=3
 # Real-name addon bars now follow the shared two-color transition.
@@ -588,6 +595,8 @@ def _dual_crown_layers_like(frame,dual):
     return [copy.deepcopy(frame)]
 
 _CORRECTED_PINLINE_MASKS={
+    '/img/frames/planeswalker/regular/planeswalkerMaskPinline.png':'/img/frames/proxy-foundry/planeswalker/MaskPinlineRegular.png',
+    '/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png':'/img/frames/proxy-foundry/planeswalker/MaskPinlineClassicTall.png',
     '/img/frames/class/masks/maskPinlines.png':'/img/frames/proxy-foundry/masks/class-pinline.png',
     '/img/frames/saga/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/saga-pinline.png',
     '/img/frames/saga/creature/masks/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/creature-saga-pinline.png',
@@ -1176,7 +1185,10 @@ def _apply_transform_frame(data,side,sem,card):
         title['width']=0.7547
         if side=='back':title['color']='white'
     icon=_transform_icon_for(card,side)
-    if icon:data['frames'].insert(0,icon)
+    #The regular back already has its right-side transform marker. The older
+    #land badge has no matching left opening and otherwise covers the title.
+    if icon and not (side=='back' and icon['src'].endswith('/icons/land.svg')):
+        data['frames'].insert(0,icon)
     if side=='front':
         text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
                                     'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
@@ -1824,14 +1836,6 @@ def build_battle_data(sem,card,artist,autofit,flags):
         'masks':[],
     }]
 
-    reverse_pt=''
-    faces=card.get('card_faces') or []
-    if len(faces)>1:
-        power=faces[1].get('power')
-        toughness=faces[1].get('toughness')
-        if power is not None and toughness is not None:
-            reverse_pt=f'{power}/{toughness}'
-
     rules=native.italicize_dash_labels(sem.get('oracle_text',''))
     if sem.get('flavor_text'):
         rules+=('{flavor}' if rules else '')+str(sem['flavor_text'])
@@ -1874,7 +1878,8 @@ def build_battle_data(sem,card,artist,autofit,flags):
             'size':(0.0362*2100)/1500,
         },
         'reminder':{
-            'name':'Reverse PT','text':reverse_pt,
+            #The optional reverse-side PT has no reserved area in this rules box.
+            'name':'Reverse PT','text':'',
             'x':257/2100,'y':1219/1500,'width':1667/2100,'height':43/1500,
             'size':(0.0291*2100)/1500,'oneLine':True,'color':'#666',
             'align':'right','font':'belerenbsc',
@@ -2669,7 +2674,9 @@ class Compiler:
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)
-            if group=='emblem':version+=1
+            if group in {'emblem','battle'}:version+=1
+            if group=='planeswalker':version+=2
+            if group=='transform-back' and not choice.startswith('godzilla-'):version+=1
             if choice=='godzilla-card' and group in {'transform-front','transform-back'}:version+=1
             if choice=='godzilla-card' and group=='transform-front':version+=1
             # Legendary backs without nicknames use the right-side reverse marker.
@@ -2926,7 +2933,12 @@ class Compiler:
             if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id
         data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
+        if choice in {'auto','normal'} and not options.get('rawCard'):
+            apply_hybrid_frame_treatment(data,sem)
         if group=='token':center_short_token_rules(data)
+        if group=='planeswalker' and data.get('planeswalker') and (choice=='auto' or choice in BUILTIN_TEMPLATE_VERSIONS):
+            from .planeswalker_frame import layout_planeswalker_abilities
+            layout_planeswalker_abilities(data,sem)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

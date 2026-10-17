@@ -188,6 +188,17 @@ By default, enchantments use M15 Nyx framing, including enchantment creatures. U
 
 Legendary status and Nyx status are independent: a legendary enchantment uses both its Nyx treatment and the appropriate crown.
 
+### Classic hybrid mana frames
+
+For two-color costs made from one repeated hybrid pair plus optional generic/variable mana (for example `{3}{W/U}{W/U}`), follow Card Conjurer's `cardFrameProperties` / `autoM15Frame` recipe:
+
+- Title and type bars use the neutral `/img/frames/m15/regular/m15FrameL.png` with their native masks.
+- Rules and outer frame use native images of the two colors, with the existing smooth right-color blend mask. Preserve native texture and shading.
+- P/T uses `/img/frames/m15/regular/m15PTC.png` at the standard P/T bounds.
+- Pinlines and legendary crowns retain their existing two-color treatment.
+- Artifact/Vehicle body materials remain owned by their structural recipe.
+- Hybrid symbols only in rules text, ordinary colored requirements, Phyrexian-only slashes, monocolored `{2/W}` costs, and three-color costs do not trigger this recipe.
+
 ### Standard legendary crowns
 
 Every permanent whose current type line contains `Legendary` gets exactly one appropriate legendary crown unless its special layout defines another crown treatment. Nonlegendary cards do not get crowns because of rarity.

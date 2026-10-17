@@ -111,6 +111,16 @@ def refresh(workspace, deck, cancel=lambda:False):
                     updated['settings']['artDefaults']=[value for value in defaults if value!=face_key(card,face)]
             if changed:workspace.invalidate_face(face);dirty=True
     updated['cardData']=list(saved.values())
+    from . import token_assignments
+    for field in ('tokenAssignments','tokenTreatments'):
+        if field in settings and (not same_source or settings[field]!=prior.get('settings',{}).get(field)):
+            updated['settings'][field]=settings[field]
+    old_specs={c['id']:copy.deepcopy(c.get('tokenSpec')) for c in updated['cards']}
+    token_assignments.apply_treatments(updated)
+    for card in updated['cards']:
+        if old_specs[card['id']]!=card.get('tokenSpec'):
+            for face in card['faces']:workspace.invalidate_face(face)
+            dirty=True
     old_settings=prior.get('settings',{}) if same_source else {}
     artist=settings.get('artist','')
     artist_changed='artist' in settings and (not same_source or artist!=old_settings.get('artist'))

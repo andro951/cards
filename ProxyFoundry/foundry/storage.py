@@ -388,20 +388,23 @@ class Store:
         target = self.asset_path(ident)
         if not target.is_file() or target.stat().st_size!=len(content):
             target.parent.mkdir(parents=True, exist_ok=True)
-            fd, temp = tempfile.mkstemp(dir=target.parent, prefix='.upload-')
-            try:
-                with os.fdopen(fd, 'wb') as out:
-                    out.write(content); out.flush(); os.fsync(out.fileno())
-                os.replace(temp, target)
-                self.asset_written(ident,target)
-            finally:
-                if os.path.exists(temp): os.unlink(temp)
+            self.write_asset_file(target,content)
+            self.asset_written(ident,target)
         with self.connect() as db:
             db.execute('INSERT OR IGNORE INTO assets VALUES (?,?,?,?,?,?)',
                        (ident, mime, len(content), width, height, time.time()))
             if width and height:
-                db.execute('UPDATE assets SET width=?,height=?,mime=? WHERE id=?', (width, height, mime, ident))
+                db.execute('UPDATE assets SET width=?,height=?,mime=? WHERE id=? AND (width IS NOT ? OR height IS NOT ? OR mime IS NOT ?)', (width, height, mime, ident,width,height,mime))
         return self.asset(ident)
+
+    def write_asset_file(self,target,content):
+        fd,temp=tempfile.mkstemp(dir=target.parent,prefix='.upload-')
+        try:
+            with os.fdopen(fd,'wb') as out:
+                out.write(content);out.flush();os.fsync(out.fileno())
+            os.replace(temp,target)
+        finally:
+            if os.path.exists(temp):os.unlink(temp)
 
     def asset_written(self,ident,path):
         pass
@@ -523,6 +526,20 @@ class Store:
         if not path.is_file() or not self.asset_path(row['asset_id']).is_file():
             return None
         return {**dict(row),'url':'/api/assets/'+row['asset_id']}
+
+    def render_many(self,keys):
+        """Resolve shared render paths once for a complete request, including misses."""
+        keys=set(filter(None,keys));result={key:None for key in keys};exists={}
+        with self.connect() as db:
+            values=list(keys)
+            for start in range(0,len(values),500):
+                chunk=values[start:start+500]
+                for row in db.execute('SELECT * FROM renders WHERE render_key IN ('+','.join('?' for _ in chunk)+')',chunk):
+                    paths=(self.home/row['file_path'],self.asset_path(row['asset_id']))
+                    for path in paths:
+                        if path not in exists:exists[path]=path.is_file()
+                    if all(exists[path] for path in paths):result[row['render_key']]={**dict(row),'url':'/api/assets/'+row['asset_id']}
+        return result
 
     def copy_render_file(self,source,destination):
         try:os.link(source,destination)

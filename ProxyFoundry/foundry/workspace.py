@@ -3,7 +3,7 @@ from __future__ import annotations
 from .timing import timed,timing
 import base64,copy,hashlib,io,json,math,re,time,zipfile
 from pathlib import Path,PurePosixPath
-from PIL import Image
+from PIL import Image,ImageOps
 from .domain import *
 from .storage import Store,display_name
 from .network import Network,validate_remote_url
@@ -20,6 +20,7 @@ from .compiler import RETIRED_BUILTINS
 from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules
+from . import token_assignments
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -52,6 +53,7 @@ class Workspace:
         explicit=values.get('symbols') or {}
         if not isinstance(explicit,dict):
             raise ValidationError('Invalid set-symbol selection.')
+        if all(explicit.get(rarity) for rarity in RARITIES):return values
         symbols=self.default_symbols()
         for rarity in RARITIES:
             if explicit.get(rarity):
@@ -83,6 +85,7 @@ class Workspace:
         if not title:raise ValidationError('Name this saved style.')
         settings=copy.deepcopy(deck['settings'])
         settings['dataJsonSource']=None
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
         return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
     def import_style_preset(self,data):
         if not isinstance(data,dict) or data.get('format')!='bulk-proxy-forge-style' or data.get('schema')!=1:
@@ -99,6 +102,7 @@ class Workspace:
             self.store.add_asset(raw,str(entry.get('mime') or 'image/png'),image.width,image.height)
         settings=self.validate_settings(data.get('settings') or {})
         settings['dataJsonSource']=None
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
         return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
     def delete_style_preset(self,ident,revision=None):
         if self.global_settings().get('defaultStylePresetId')==ident:
@@ -107,7 +111,9 @@ class Workspace:
     def import_defaults(self):
         global_settings=self.global_settings()
         preset=self.store.get('style-presets',global_settings.get('defaultStylePresetId')) if global_settings.get('defaultStylePresetId') else None
-        return copy.deepcopy(preset['settings'] if preset else global_settings.get('defaults',{}))
+        settings=copy.deepcopy(preset['settings'] if preset else global_settings.get('defaults',{}))
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
+        return settings
     def validate_settings(self,settings):
         settings=self._with_default_symbols(settings)
         settings.pop('modificationCredit',None);settings.pop('useLandLibrary',None);settings.pop('landLibrary',None)
@@ -137,6 +143,8 @@ class Workspace:
         names=s['source'].get('localNames',{})
         if not isinstance(names,dict) or any(not isinstance(k,str) or not isinstance(v,str) or len(v)>1000 for k,v in names.items()):raise ValidationError('Invalid artwork filenames.')
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
+        s['tokenAssignments']=token_assignments.validate_assignments(s.get('tokenAssignments',[]))
+        s['tokenTreatments']=token_assignments.validate_treatments(s.get('tokenTreatments',[]))
         raw_token_options=s.get('tokenOptions') or {}
         if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')
         def token_text(key,label,maximum):
@@ -253,13 +261,16 @@ class Workspace:
             face['lastRender']['render']=self.store.render_get(previous['renderKey'])
         face.pop('compiled',None);face.pop('error',None)
 
-    def deck(self,ident):
-        d=self.store.get('decks',ident)
+    def deck(self,ident,*,document=None,renders=None):
+        d=document if document is not None else self.store.get('decks',ident)
         if d:d.pop('upgradeRequired',None)
         if not d:raise ValidationError('Deck not found. It may be in Trash.')
         # Legacy decks created before bundled defaults existed gain them on read;
         # uploaded/custom rarity IDs continue to override the matching defaults.
         d['settings']=self._with_default_symbols(d.get('settings',{}))
+        token_assignments.apply_treatments(d)
+        if renders is None:
+            renders=self.store.render_many(key for c in d['cards'] for f in c['faces'] for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             nickname_rules=any(rules_nicknames.face_nicknames(c.get('scryfall',{}),c['faces']).values())
@@ -271,7 +282,7 @@ class Workspace:
                 f['originalArtist']=printing_artist(sf,sf_face)
                 total+=1
                 if f.get('error'):errors+=1
-                comp=f.get('compiled') or {};r=self.store.render_get(comp.get('renderKey',''))
+                comp=f.get('compiled') or {};r=renders.get(comp.get('renderKey',''))
                 if not comp:
                     # A failed preparation is a review/error state, not an
                     # unprepared-change state. Keeping it out of "draft" lets
@@ -281,7 +292,7 @@ class Workspace:
                     if not f.get('error'):
                         d['status']='draft'
                 if f.get('lastRender'):
-                    f['lastRender']['render']=self.store.render_get(f['lastRender']['renderKey'])
+                    f['lastRender']['render']=renders.get(f['lastRender']['renderKey'])
                 if comp:
                     comp['render']=r
                     #Converted cards retain their source template identity. Refresh
@@ -312,11 +323,15 @@ class Workspace:
                 if ((comp.get('crop') or {}).get('warning') or comp.get('flags')) and f.get('acceptedWarningKey')!=comp.get('renderKey'):warns+=1
         d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns}
         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
+        d['tokens']=token_assignments.overview(d)
+        d['printStatus']='tokens-not-ready' if not d['tokens']['ready'] else d['status']
+        d['summary']['physicalCards']=sum(quantity(c['quantity']) for c in d['cards'] if c['id'] not in set(d['tokens']['cardIds']))+d['tokens']['physicalCount']
         return d
     def list_decks(self):
-        out=[]
-        for old in self.store.list('decks'):
-            d=self.deck(old['id']);cover=''
+        out=[];documents=self.store.list('decks')
+        renders=self.store.render_many(key for old in documents for c in old['cards'] for f in c['faces'] for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
+        for old in documents:
+            d=self.deck(old['id'],document=old,renders=renders);cover=''
             if d['cards']:
                 c=d['cards'][0];f=c['faces'][0] if c['faces'] else {};comp=f.get('compiled') or {}
                 cover=(('/api/assets/'+comp['artId']) if comp.get('artId') else '') or (c['scryfall'].get('image_uris') or {}).get('art_crop','')
@@ -399,6 +414,19 @@ class Workspace:
             new=self.validate_settings(incoming)
             front_settings_dirty=any(new.get(k)!=d['settings'].get(k) for k in FRONT_SETTINGS)
             dirty=front_settings_dirty or dirty;d['settings']=new
+            old_specs={c['id']:copy.deepcopy(c.get('tokenSpec')) for c in d['cards']}
+            token_assignments.apply_treatments(d)
+            for card in d['cards']:
+                if old_specs[card['id']]!=card.get('tokenSpec'):
+                    for face in card['faces']:self.invalidate_face(face)
+                    dirty=True
+        if 'tokenAssignments' in patch:
+            previous_pairs={token_assignments.pair_key(row) for row in d['settings'].get('tokenAssignments',[])}
+            rows=token_assignments.validate_assignments(patch['tokenAssignments'])
+            d['settings']['tokenAssignments']=rows
+            report=token_assignments.overview(d)
+            if any(token_assignments.pair_key(rows[row['index']]) not in previous_pairs for row in report['invalid']):
+                raise ValidationError('Choose existing single-sided token faces, or the actual reverse of a double-sided token.')
         if dirty:
             d['status']='draft'
             if front_settings_dirty:
@@ -415,6 +443,13 @@ class Workspace:
             d['cards']=[x for x in d['cards'] if x['id']!=card_id]
         else:
             if 'quantity' in patch:c['quantity']=quantity(patch['quantity'])
+            if 'tokenSpec' in patch:
+                c['tokenSpec']=token_assignments.validate_spec(patch['tokenSpec'])
+                rows=d['settings'].get('tokenTreatments',[])
+                ref=token_assignments.reference(c)
+                d['settings']['tokenTreatments']=[row for row in rows if token_assignments.key(row['face'])!=token_assignments.key(ref)]+[{'face':ref,'options':c['tokenSpec']}]
+                for face in c['faces']:self.invalidate_face(face)
+                d['status']='draft'
             if 'backDesignOverride' in patch and patch['backDesignOverride'] is not None:
                 resolved=self.backs.settings({'backDesign':patch['backDesignOverride'],'backAsset':patch.get('backOverride')})
                 c['backOverride']=resolved['backAsset'];c['backDesignOverride']=resolved['backDesign']
@@ -589,6 +624,11 @@ class Workspace:
         if processed and self.store.asset(processed['assetId']) and (remote_entry is not None or cache_is_fresh(processed.get('fetched'),time.time(),refresh)):
             return processed['assetId'],origin,None if trim_saga else source_url
         if remote_entry is not None:
+            cached=self.store.cache_get(source_url)
+            validated=self.store.asset(cached['asset_id']) if cached else None
+            if validated and validated['mime']=='image/png' and validated.get('width') and validated.get('height'):
+                self.store.put('processed-artwork',{'id':processed_key,'assetId':validated['id'],'fetched':time.time()})
+                return validated['id'],origin,source_url
             raw,url=self.sources.github_art(remote_entry)
         else:
             raw,_,_=self.net.fetch(url,refresh=refresh,ttl=None)
@@ -811,6 +851,40 @@ class Workspace:
             progress(0,1,'Reading GitHub artwork folder');index=self.sources.github_index(s['source']['githubFolder'],s['source'].get('ref') or None,refresh=True)
         if s['source']['mode']=='local':index=s['source'].get('localFiles',{})
         return ArtworkIndex(index,s['source'].get('localNames'))
+
+    def _github_art_urls(self,cards,settings,index):
+        if settings['source']['mode']!='github':return []
+        urls=[]
+        for card in cards:
+            sf=card['scryfall'];faces=ingest.face_list(sf)
+            for options in card['faces']:
+                if options.get('artOverride') or options.get('selectedArtPrintingId'):continue
+                face=faces[min(options.get('index',0),len(faces)-1)];name=face.get('name',sf['name'])
+                oracle=str(face.get('oracle_id') or sf.get('oracle_id') or '').lower()
+                if (oracle or sf.get('id') or '')+'/'+name in settings.get('artDefaults',[]):continue
+                key=index.resolve(name,oracle,options.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id',''))
+                entry=index[key] if key is not None else None
+                url=entry.get('url','') if isinstance(entry,dict) else ''
+                if not re.fullmatch(r'https://raw\.githubusercontent\.com/[^/]+/[^/]+/[0-9a-fA-F]{40}/.+',url):continue
+                if self.store.cache_get(url):continue
+                processed=self.store.get('processed-artwork',stable_hash({'url':url,'sagaTrim':False,'version':1}))
+                if processed and self.store.asset(processed['assetId']):continue
+                if url not in urls:urls.append(url)
+        return urls
+
+    def _prefetch_github_art_steps(self,cards,settings,index,progress,cancel,done,total):
+        urls=self._github_art_urls(cards,settings,index)
+        for start in range(0,len(urls),6):
+            if cancel():raise ValidationError('Generation cancelled.')
+            progress(done,total,'Downloading artwork for the next cards')
+            try:
+                with timing(self.store,'prepare.artwork-download-batch',files=min(6,len(urls)-start)):
+                    self.net.prefetch_immutable(urls[start:start+6])
+            except (ValidationError,OSError) as error:
+                #A failed group must retain the normal per-card error reporting/retry path.
+                logger=getattr(self.store,'timing_logger',None)
+                if logger:logger.warning('ARTWORK_PREFETCH_FAILED error=%s',error)
+            yield
     @timed('deck.prepare')
     def prepare(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.prepare_steps(ident,progress,cancel)
@@ -853,9 +927,41 @@ class Workspace:
                 if key is None or not self._can_reuse_preparation(c,key,refresh,assets,caches):changed.append(c)
                 else:done+=len(c['faces'])
         progress(done,total,'Preparation checked: '+str(done)+' faces unchanged; '+str(total-done)+' need preparation')
+        generation=getattr(self.store,'generation',None)
+        if generation:generation.setdefault('faceCounts',{})[ident]=total
+        def publish(card):
+            if not generation:return
+            for face in card['faces']:
+                comp=face.get('compiled')
+                if face.get('error') or not comp:
+                    generation['errors'].append(d['name']+' / '+face['name']+': '+str(face.get('error') or 'not prepared'))
+                    continue
+                target={'key':comp['renderKey'],'name':face['name'],'deckName':d['name'],'deckId':ident,'cardName':card['name'],'cardId':card['id'],'faceId':face['id'],'data':comp['data']}
+                data=comp['data'];target['frameGroup']=stable_hash({key:data.get(key) for key in ('frames','width','height','marginX','marginY','version')})
+                generation['readyFaces'][face['id']]=bool(comp.get('render'))
+                if not comp.get('render'):generation['targets'].setdefault(comp['renderKey'],target)
+        changed_ids={card['id'] for card in changed}
+        for card in d['cards']:
+            if card['id'] not in changed_ids:publish(card)
         if cancel():raise ValidationError('Preparation cancelled.')
         if not changed and d.get('status') in {'ready','prepared','attention'}:
+            if generation:generation['preparedDeckIds'].add(ident)
             return d
+        download=None;outstanding=set();last_download_progress=0
+        if generation and getattr(self.net.transport,'start_prefetch',None):
+            urls=self._github_art_urls(changed,s,index)
+            if urls:download=self.net.transport.start_prefetch(urls);outstanding=set(urls)
+        def poll_download():
+            nonlocal download,outstanding
+            result=self.net.transport.poll_prefetch(download)
+            rows=result.get('rows',[])
+            if rows:
+                try:self.net.register_prefetch([row['url'] for row in rows],rows)
+                except (ValidationError,OSError) as error:
+                    logger=getattr(self.store,'timing_logger',None)
+                    if logger:logger.warning('ARTWORK_PREFETCH_FAILED error=%s',error)
+                outstanding.difference_update(row['url'] for row in rows)
+            if not result.get('pending'):download=None;outstanding.clear()
         pending=0;checkpoint_at=time.monotonic()
         def checkpoint():
             nonlocal rev,pending,checkpoint_at
@@ -863,19 +969,34 @@ class Workspace:
                 d.pop('summary',None);saved=self.store.put('decks',d,rev);rev=saved['revision']
             pending=0;checkpoint_at=time.monotonic()
         try:
-            for c in changed:
+            for number,c in enumerate(changed):
+                if download:
+                    needed=set(self._github_art_urls([c],s,index))
+                    while download and needed&outstanding:
+                        if cancel():raise ValidationError('Preparation cancelled.')
+                        poll_download()
+                        if needed&outstanding:
+                            if time.monotonic()-last_download_progress>=1:
+                                progress(done,total,'Downloading upcoming artwork');last_download_progress=time.monotonic()
+                            yield {'delay':.05}
+                elif not getattr(self.net.transport,'start_prefetch',None) and number%6==0:
+                    yield from self._prefetch_github_art_steps(changed[number:number+6],s,index,progress,cancel,done,total)
                 pending+=1
                 done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=True)
-                if pending>=10 or time.monotonic()-checkpoint_at>=2:checkpoint()
+                publish(c)
+                if not getattr(self.store,'generation',None) and (pending>=10 or time.monotonic()-checkpoint_at>=2):checkpoint()
                 yield
         except BaseException:
             if pending:checkpoint()
             raise
+        finally:
+            if download:self.net.transport.cancel_prefetch(download)
         if cancel():
             if pending:checkpoint()
             raise ValidationError('Preparation cancelled.')
         d['settings']=s;d['status']='prepared';d.pop('summary',None);d.pop('upgradeRequired',None)
         checkpoint()
+        if generation:generation['preparedDeckIds'].add(ident)
         with timing(self.store,'prepare.result'):return self.deck(ident)
     @timed('card.prepare-single')
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
@@ -1133,7 +1254,7 @@ class Workspace:
                     comp=f.get('compiled')
                     if f.get('error') or not comp:
                         errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
-                    if not force and self.store.render_get(comp['renderKey']):cached+=1;continue
+                    if not force and comp.get('render'):cached+=1;continue
                     targets.setdefault(comp['renderKey'],{'key':comp['renderKey'],'name':f['name'],'deckName':d['name'],'deckId':d['id'],'cardName':c['name'],'cardId':c['id'],'faceId':f['id'],'data':comp['data']})
         return {'targets':list(targets.values()),'cached':cached,'errors':errors}
     def render_targets_for_card(self,deck_id,card_id,force=False):
@@ -1312,12 +1433,16 @@ class Workspace:
         reference=decode_image(raw)
         ours=decode_image(self.store.asset_path(render['asset_id']).read_bytes())
         size=(max(1,ours.width//2),max(1,ours.height//2))
-        reference=reference.resize(size,Image.Resampling.LANCZOS)
+        #Scryfall stores sideways Battle scans in portrait files. Match the
+        #render's orientation before sizing; never stretch reference proportions.
+        if (reference.width-reference.height)*(ours.width-ours.height)<0:
+            reference=reference.transpose(Image.Transpose.ROTATE_270 if ours.width>ours.height else Image.Transpose.ROTATE_90)
+        reference=ImageOps.contain(reference,size,Image.Resampling.LANCZOS)
         ours=ours.resize(size,Image.Resampling.LANCZOS)
         canvas=Image.new('RGB',(size[0]*2+1,size[1]),(0,0,0))
-        canvas.paste(reference,(0,0),reference)
+        canvas.paste(reference,((size[0]-reference.width)//2,(size[1]-reference.height)//2),reference)
         canvas.paste(ours,(size[0]+1,0),ours)
-        out=io.BytesIO();canvas.save(out,'JPEG',quality=95,subsampling=0);return out.getvalue()
+        out=io.BytesIO();canvas.save(out,'PNG',compress_level=3);return out.getvalue()
 
     def review_download_file(self,token,filename):
         if not re.fullmatch(r'[-a-f0-9]{36}',str(token)) or not re.fullmatch(r'[A-Za-z0-9_.-]+\.(?:zip|png|jpg)',str(filename)):
@@ -1362,7 +1487,7 @@ class Workspace:
         render=self._review_render(face,d['name'])
         refresh=bool(d.get('settings',{}).get('refreshData',False))
         raw=self._review_composite(reference_url,render,refresh)
-        base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.jpg'
+        base=slug(face.get('name',c['name'])) or 'card';filename=base+'_review.png'
         token,out=self._review_download(filename)
         try:out.write_bytes(raw)
         except Exception:out.unlink(missing_ok=True);raise
@@ -1381,10 +1506,10 @@ class Workspace:
         dfc_layouts={'transform','modal_dfc','double_faced_token','reversible_card'}
 
         def unique_name(face_name,sf,card_id):
-            base=slug(face_name) or 'card';name=base+'_review.jpg'
+            base=slug(face_name) or 'card';name=base+'_review.png'
             if name in names:
                 suffix=slug(str(sf.get('set',''))+'_'+str(sf.get('collector_number',''))+'_'+card_id[:8])
-                name=base+'_'+suffix+'_review.jpg'
+                name=base+'_'+suffix+'_review.png'
             names.add(name);return name
 
         items=[]
@@ -1419,7 +1544,7 @@ class Workspace:
             source=sf if index==0 and (sf.get('image_uris') or {}).get('png') else sf_faces[index]
             url=(source.get('image_uris') or {}).get('png')
             if not url:raise ValidationError('Selected printing has no full-card image for this face.')
-            filename=(slug(face.get('name',c['name'])) or 'card')+'_review.jpg'
+            filename=(slug(face.get('name',c['name'])) or 'card')+'_review.png'
             items=[(filename,face.get('name',c['name']),url,self._review_render(face,d['name']))]
         else:
             d,items=self._review_items(ident)

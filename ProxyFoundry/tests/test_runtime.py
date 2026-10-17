@@ -115,6 +115,7 @@ def test_creator_script_patches_inline_mana_cluster_wrapping():
 function writeText(textObject, targetContext) {
     var splitText = rawText.replace(/\\n/g, '{line}');
 \touterloop: while (drawingText) {
+\t\t\t\tdrawingText = false;
 		//Begin looping through words/codes
 		innerloop: for (word of splitText) {
 			var wordToWrite = word;
@@ -122,7 +123,11 @@ function writeText(textObject, targetContext) {
 					var manaSymbolWidth = manaSymbol.width * textSize * 0.78;
 					var manaSymbolHeight = manaSymbol.height * textSize * 0.78;
 					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;
-}'''
+    }
+var frameToAdd = JSON.parse(JSON.stringify(availableFrames[selectedFrameIndex]));
+\tvar frameElement = document.createElement('div');
+\tdocument.querySelector('#text-options').innerHTML = null;
+'''
     class FakeNet:
         def fetch(self,url,**kwargs):
             assert CC_COMMIT in url and kwargs.get('immutable') is True

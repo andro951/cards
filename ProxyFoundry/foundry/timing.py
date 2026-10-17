@@ -10,6 +10,12 @@ THRESHOLD_SECONDS=.1
 
 def record_timing(store,stage,started,outcome='ok',**details):
     seconds=time.perf_counter()-started
+    generation=getattr(store,'generation',None)
+    if generation:
+        aggregate=generation['timings'].setdefault(stage,{'count':0,'seconds':0,'max':0})
+        aggregate['count']+=1;aggregate['seconds']+=round(seconds,4);aggregate['max']=max(aggregate['max'],round(seconds,4))
+        #One summary at the final commit replaces thousands of individual log-file writes.
+        if not getattr(store,'verbose_generation_timing',False):return
     logger=getattr(store,'timing_logger',None)
     if seconds<THRESHOLD_SECONDS or logger is None:return
     payload={'at':time.time(),'stage':stage,'seconds':round(seconds,4),'outcome':outcome,**details,
@@ -36,7 +42,7 @@ def timed(stage):
         def measured(self,*args,**kwargs):
             store=getattr(self,'store',None) or getattr(getattr(self,'net',None),'store',None)
             if store is None and hasattr(self,'home'):store=self
-            if getattr(store,'timing_logger',None) is None:return operation(self,*args,**kwargs)
+            if getattr(store,'timing_logger',None) is None and not getattr(store,'generation',None):return operation(self,*args,**kwargs)
             values=signature.bind(self,*args,**kwargs).arguments
             details={}
             for key in ('url','source','kind','ident','key','art_id','art_origin','policy','refresh'):

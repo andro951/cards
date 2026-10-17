@@ -18,6 +18,10 @@ export class RequestQueue {
     pump = async () => {
         this.timer = null;
         this.pending.sort((left, right) => this.rank(left) - this.rank(right) || left.serial - right.serial);
+        //Deferred previews wake when a generation control request releases the queue.
+        if(!Number.isFinite(this.pending.length?this.rank(this.pending[0]):Infinity))
+            return;
+
         const task = this.pending.shift();
         if (!task)
             return;

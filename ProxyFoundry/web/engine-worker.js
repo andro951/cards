@@ -9,6 +9,7 @@ let workspaceMount;
 let ready;
 let owner;
 let initialized=false;
+let generationActive=false;
 let completedJobs=[];
 const foregroundJobs=new Set();
 self.publishJob=encoded=>{
@@ -45,6 +46,11 @@ async function start(folder){
   }
   workspaceMount=mountWorkspaceFiles(python.FS,owner);
   self.copyWorkspaceFile=(source,destination)=>workspaceMount.copyFile(String(source).replace('/workspace/',''),String(destination).replace('/workspace/',''));
+  self.putWorkspaceAsset=(path,bytes)=>workspaceMount.putAsset(String(path).replace('/workspace/',''),bytes);
+  self.prefetchWorkspaceArtwork=urls=>JSON.stringify(workspaceMount.prefetchArtwork(urls));
+  self.startWorkspaceArtwork=urls=>JSON.stringify(workspaceMount.startArtwork(urls));
+  self.pollWorkspaceArtwork=id=>JSON.stringify(workspaceMount.pollArtwork(id));
+  self.cancelWorkspaceArtwork=id=>JSON.stringify(workspaceMount.cancelArtwork(id));
   self.checkpointMetadata=path=>{
     const request=new XMLHttpRequest();
     request.open('POST',`/workspace-io?owner=${encodeURIComponent(owner)}&operation=checkpoint&path=workspace.sqlite3`,false);
@@ -92,7 +98,7 @@ async function start(folder){
   python.runPython(`
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
-from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile
+from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile, putWorkspaceAsset, prefetchWorkspaceArtwork,startWorkspaceArtwork,pollWorkspaceArtwork,cancelWorkspaceArtwork
 import base64, json, uuid
 from pathlib import Path
 from foundry.browser import create_app, request
@@ -122,9 +128,16 @@ def transport_many(urls):
         result[url]=(raw[offset:end],row['mime'],{});offset=end
     return result
 transport.fetch_many=transport_many
+transport.prefetch=lambda urls:json.loads(str(prefetchWorkspaceArtwork(json.dumps(urls))))
+transport.start_prefetch=lambda urls:json.loads(str(startWorkspaceArtwork(json.dumps(urls))))['id']
+transport.poll_prefetch=lambda ident:json.loads(str(pollWorkspaceArtwork(ident)))
+transport.cancel_prefetch=lambda ident:cancelWorkspaceArtwork(ident)
+def write_asset(path,content):
+    from pyodide.ffi import to_js
+    putWorkspaceAsset(str(path),to_js(content))
 app = create_app('/workspace', transport, str(location.origin),
     lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
-    lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile)
+    lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile, write_asset=write_asset)
 def browser_request(method, url, body, headers):
     global last_response
     last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
@@ -163,13 +176,14 @@ function responseBytes(value){
 const requests=new RequestQueue();
 let cleanupTimer=null;
 let jobTimer=null;
+let jobDelay=0;
 function scheduleJobs(){
   if(jobTimer!==null)return;
   //A timer turn lets foreground requests enter the queue before another chunk.
   jobTimer=setTimeout(()=>{
     jobTimer=null;
     requests.enqueue(runJobs,()=>foregroundJobs.size?0:2).then(pending=>{if(pending)scheduleJobs();});
-  },0);
+  },jobDelay);
 }
 function scheduleCleanup(){
   if(cleanupTimer!==null)return;
@@ -178,6 +192,7 @@ function scheduleCleanup(){
     requests.enqueue(async()=>{
       if(!initialized)return;
       try{
+        if(python.runPython('app.store.generation is not None'))return;
         const result=JSON.parse(python.runPython('json.dumps(app.store.cleanup_step())'));
         if(result.processed)await mount.syncfs();
         if(result.errors.length)self.postMessage({type:'cleanup-warning',message:result.errors[0]});
@@ -193,7 +208,7 @@ self.onmessage=event=>{
     ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
     return;
   }
-  requests.enqueue(()=>handle(event),requestPriority(event.data)).then(()=>{scheduleJobs();scheduleCleanup();});
+  requests.enqueue(()=>handle(event),()=>generationActive&&/\/thumbnail(?:\?|$)/.test(event.data.url)?Infinity:requestPriority(event.data)).then(()=>{scheduleJobs();scheduleCleanup();});
 };
 
 async function handle(event){
@@ -207,6 +222,8 @@ async function handle(event){
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const encoded=response.toJs({dict_converter:Object.fromEntries});
     const metadata=JSON.parse(responseText(encoded.metadata));
+    if(method==='POST'&&metadata.status<400&&url==='/api/generation/begin')generationActive=true;
+    if(method==='POST'&&url.startsWith('/api/generation/')&&url!=='/api/generation/begin')generationActive=false;
     let responseBody;
     if(encoded.jsonBody!==undefined)responseBody=responseText(encoded.jsonBody);
     else responseBody=metadata.file?new Uint8Array():responseBytes(encoded.binaryBody);
@@ -232,6 +249,7 @@ async function runJobs(){
   if(!initialized)return;
   try{
     const pending=python.runPython('app.jobs.run_pending(limit=1)');
+    jobDelay=Number(python.runPython('app.jobs.next_delay()'));
     if(!completedJobs.length)return pending;
     await mount.syncfs();
     for(const job of completedJobs){self.postMessage({type:'job',job});}

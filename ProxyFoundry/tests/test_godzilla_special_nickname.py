@@ -105,6 +105,19 @@ def test_godzilla_selection_does_not_change_classic_planeswalker(setup):
     after=compiler.compile_face(sf,sf,0,{},settings,art)['data']
     assert after==before and after['version']=='planeswalkerRegular'
 
+
+@pytest.mark.parametrize('name',['Tezzeret-the-Seeker','Tezzeret'])
+def test_classic_and_godzilla_use_the_same_fitter(setup,name):
+    from foundry.planeswalker_frame import fit_ability_rows
+    from foundry.legacy import compiler as native
+    compiler,settings,art=setup;sf=card(name)
+    for choice in ('auto','godzilla-card'):
+        data=compiler.compile_face(sf,sf,0,{'templateOverride':choice},settings,art)['data']
+        start=data['text']['type']['y']+data['text']['type']['height']+.0217
+        rows=fit_ability_rows(native.parse_planeswalker_abilities(sf['oracle_text']),
+                              {'x':.136,'y':start,'width':.764,'height':.891-start})
+        assert all(all(data['text'][f'ability{i}'][key]==value for key,value in row.items()) for i,row in enumerate(rows))
+
 def test_dual_color_normal_crown_keeps_planeswalker_header_position(setup):
     compiler,settings,art=setup;sf=card('Tezzeret-the-Seeker')
     sf.update(colors=['U','R'],mana_cost='{3}{U}{R}')

@@ -13,6 +13,7 @@ EXTENDED_MODULES={
     'test_helper_native.py',
     'test_extension.py',
     'test_github_setup_browser.py',
+    'test_generation_browser.py',
     'test_godzilla_browser.py',
     'test_modal_focus.py',
     'test_native_deck.py',
@@ -26,6 +27,7 @@ EXTENDED_MODULES={
     'test_station_native.py',
     'test_station_lands_native.py',
     'test_token_native.py',
+    'test_token_assignment_browser.py',
     'test_website.py',
 }
 EXTENDED_TESTS={

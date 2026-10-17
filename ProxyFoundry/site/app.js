@@ -27,7 +27,7 @@ function showLibrary(){
   <section class="hero-strip"><div><span class="eyebrow">FROM DECKLIST TO TABLETOP</span><h2>Make the deck yours.<br>We’ll handle the print prep.</h2><p>Keep the art from your selected Scryfall printings, bring your own, or mix both. Start with approved templates or create a style of your own.</p></div><div class="steps-compact"><div class="step-mini"><b>1</b>Import a deck</div><span class="step-arrow">→</span><div class="step-mini"><b>2</b>Art & style</div><span class="step-arrow">→</span><div class="step-mini"><b>3</b>Render & print</div></div></section>
   <div class="toolbar"><div class="filter-pills"><button data-filter="all" class="${filter==='all'?'active':''}">All decks · ${state.decks.length}</button><button data-filter="ready" class="${filter==='ready'?'active':''}">Ready to print</button><button data-filter="work" class="${filter==='work'?'active':''}">In progress</button></div><label class="search"><input id="deck-search" type="search" aria-label="Search decks" placeholder="Find a deck…" value="${esc(query)}"></label></div>
   ${decks.length?`<div class="deck-grid">${decks.map(d=>{
-    const cover=thumbnail(d.cover||'');return `<article class="deck-tile ${state.selected.has(d.id)?'selected':''}" data-deck="${d.id}"><div class="deck-cover"><a href="#deck/${d.id}" aria-label="Open ${esc(d.name)}">${cover?`<img src="${esc(cover)}" alt="" loading="lazy">`:`<span class="deck-monogram">${esc(d.name[0]?.toUpperCase()||'D')}</span>`}</a><label class="deck-select"><input type="checkbox" data-select="${d.id}" aria-label="Select ${esc(d.name)} for a print order" ${state.selected.has(d.id)?'checked':''}></label>${d.settings?.backAsset?`<img class="deck-back-thumb" src="${esc(thumbnail('/api/assets/'+d.settings.backAsset))}" alt="Deck back" loading="lazy" decoding="async">`:''}</div><div class="deck-content"><a href="#deck/${d.id}"><h3 title="${esc(d.name)}">${esc(d.name)}</h3></a><div class="deck-meta"><span>${d.summary?.cards||0} cards</span><span>${d.summary?.rendered||0}/${d.summary?.faces||0} images</span><span>${date(d.updatedAt)}</span></div><div class="deck-footer">${badge(d.status)}<a class="tile-open" href="#deck/${d.id}">Open deck ↗</a></div></div></article>`;
+    const cover=thumbnail(d.cover||'');return `<article class="deck-tile ${state.selected.has(d.id)?'selected':''}" data-deck="${d.id}"><div class="deck-cover"><a href="#deck/${d.id}" aria-label="Open ${esc(d.name)}">${cover?`<img src="${esc(cover)}" alt="" loading="lazy">`:`<span class="deck-monogram">${esc(d.name[0]?.toUpperCase()||'D')}</span>`}</a><label class="deck-select"><input type="checkbox" data-select="${d.id}" aria-label="Select ${esc(d.name)} for a print order" ${state.selected.has(d.id)?'checked':''}></label>${d.settings?.backAsset?`<img class="deck-back-thumb" src="${esc(thumbnail('/api/assets/'+d.settings.backAsset))}" alt="Deck back" loading="lazy" decoding="async">`:''}</div><div class="deck-content"><a href="#deck/${d.id}"><h3 title="${esc(d.name)}">${esc(d.name)}</h3></a><div class="deck-meta"><span>${d.summary?.physicalCards??d.summary?.cards??0} cards</span><span>${d.summary?.rendered||0}/${d.summary?.faces||0} images</span><span>${date(d.updatedAt)}</span></div><div class="deck-footer">${badge(d.printStatus||d.status)}<a class="tile-open" href="#deck/${d.id}">Open deck ↗</a></div></div></article>`;
   }).join('')}<button class="add-tile" id="add-tile"><span>＋</span>Start another deck<small>Paste a Scryfall link or decklist</small></button></div>`:'<div class="empty-state"></div>'}
   <div class="subtitle-line section-gap">Select multiple decks to combine them into one explicitly paired print order. Nothing is purchased automatically.</div>`;
   for(const id of ['import-deck','add-tile'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>importDeck());
@@ -67,7 +67,7 @@ function showLibrary(){
 }
 function matchingDecks(){
   const text=query.toLowerCase();
-  return state.decks.filter(deck=>deck.name.toLowerCase().includes(text)&&(filter==='all'||(filter==='ready'?deck.status==='ready':deck.status!=='ready')));
+  return state.decks.filter(deck=>deck.name.toLowerCase().includes(text)&&(filter==='all'||(filter==='ready'?(deck.printStatus||deck.status)==='ready':(deck.printStatus||deck.status)!=='ready')));
 }
 function filterLibrary(){
   const main=$('#main'),visible=matchingDecks(),ids=new Set(visible.map(deck=>deck.id));
@@ -93,10 +93,10 @@ export async function refreshLibraryProgress(){
   for(const tile of $$('.deck-tile')){
     const deck=decks.get(tile.dataset.deck);if(!deck)continue;
     const meta=$$('.deck-meta span',tile);
-    if(meta[0])meta[0].textContent=`${deck.summary?.cards||0} cards`;
+    if(meta[0])meta[0].textContent=`${deck.summary?.physicalCards??deck.summary?.cards??0} cards`;
     if(meta[1])meta[1].textContent=`${deck.summary?.rendered||0}/${deck.summary?.faces||0} images`;
     if(meta[2])meta[2].textContent=date(deck.updatedAt);
-    const status=$('.badge',tile);if(status){status.className='badge '+deck.status;status.textContent=humanStatus(deck.status);}
+    const status=$('.badge',tile);if(status){status.className='badge '+(deck.printStatus||deck.status);status.textContent=humanStatus(deck.printStatus||deck.status);}
     const link=$('.deck-cover a',tile),src=thumbnail(deck.cover||'');
     let image=$('img',link);
     if(src&&!image){image=document.createElement('img');image.loading='lazy';image.alt='';link.replaceChildren(image);}

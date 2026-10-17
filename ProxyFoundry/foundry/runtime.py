@@ -10,7 +10,7 @@ from .artifact_frame import ArtifactFrameCache
 from .transform_crown import restore_crown_bevel,BEVEL_VERSION,mirror_header_png,BACK_VERSION
 from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
 from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
-from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
+from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,CLASSIC_PINLINE_VERSION,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -48,6 +48,8 @@ function proxyFoundryInlineSymbols(text) {
 }"""
         token_anchor="var splitText = rawText.replace(/\\n/g, '{line}')"
         token_replacement="var splitText = proxyFoundryInlineSymbols(rawText).replace(/\\n/g, '{line}')"
+        metrics_anchor="\t\t\t\tdrawingText = false;"
+        metrics_replacement=metrics_anchor+"\n\t\t\t\ttextObject.proxyFoundryTextFit = {size: startingTextSize, height: currentY};"
         fit_anchor="\touterloop: while (drawingText) {"
         fit_replacement="""\t//Calculated mana wraps belong only to the current font-size attempt.
 \tvar proxyFoundrySourceTokens = splitText.slice();
@@ -112,9 +114,17 @@ function proxyFoundryInlineSymbols(text) {
 						}
 					}
 					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;"""
-        if any(text.count(anchor)!=1 for anchor in (symbol_anchor,token_anchor,fit_anchor,loop_anchor,mana_anchor)):
+        if any(text.count(anchor)!=1 for anchor in (symbol_anchor,token_anchor,metrics_anchor,fit_anchor,loop_anchor,mana_anchor)):
             raise ValidationError('Pinned CardConjurer text renderer changed unexpectedly; inline mana wrapping was not patched.')
-        text=text.replace(symbol_anchor,symbol_replacement).replace(token_anchor,token_replacement).replace(fit_anchor,fit_replacement).replace(loop_anchor,loop_replacement).replace(mana_anchor,mana_replacement)
+        text=text.replace(symbol_anchor,symbol_replacement).replace(token_anchor,token_replacement).replace(metrics_anchor,metrics_replacement).replace(fit_anchor,fit_replacement).replace(loop_anchor,loop_replacement).replace(mana_anchor,mana_replacement)
+        editor_anchors={
+            "var frameToAdd = JSON.parse(JSON.stringify(availableFrames[selectedFrameIndex]));":"var frameToAdd = loadingFrame || JSON.parse(JSON.stringify(availableFrames[selectedFrameIndex]));",
+            "\tvar frameElement = document.createElement('div');":"\tif (window.__PF_WORKER_CORE && window.__PF_RUNTIME?.active) return;\n\tvar frameElement = document.createElement('div');",
+            "\tdocument.querySelector('#text-options').innerHTML = null;":"\tif (window.__PF_WORKER_CORE && window.__PF_RUNTIME?.active) { selectedTextIndex = 0; var firstText = Object.values(card.text)[0]; document.querySelector('#text-editor').value = firstText.text; document.querySelector('#text-editor-font-size').value = firstText.fontSize || 0; return; }\n\tdocument.querySelector('#text-options').innerHTML = null;"
+        }
+        for anchor,replacement in editor_anchors.items():
+            if text.count(anchor)!=1:raise ValidationError('Pinned CardConjurer loading controls changed unexpectedly.')
+            text=text.replace(anchor,replacement)
         with self.lock:self.requested[path]={'url':url,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':hashlib.sha256(raw).hexdigest(),'adapter':'inline mana cluster wrapping'}
         return text.encode(),'application/javascript'
 
@@ -138,6 +148,19 @@ function proxyFoundryInlineSymbols(text) {
         text=text.replace(original,replacement)
         with self.lock:self.requested['/js/frames/versionStation.js']={'url':STATION_SCRIPT_URL,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':STATION_SCRIPT_SHA256,'adapter':'CSP-safe UI property assignment'}
         return text.encode(),'application/javascript'
+    def cached(self,path):
+        if '/proxy-foundry/' not in path:
+            for repo,commit,prefix in ((CC_REPO,CC_COMMIT,''),(COMPAT_REPO,COMPAT_COMMIT,'/public')):
+                url='https://raw.githubusercontent.com/'+repo+'/'+commit+prefix+quote(path,safe='/')
+                if self.net.store.cache_get(url):return True
+        return False
+
+    def ensure(self,path):
+        """Warm immutable files without reading their already cached bodies back into Python."""
+        path=self.path(path)
+        if self.cached(path):return
+        self.fetch(path)
+
     def fetch(self,path):
         path=self.path(path)
         if path=='/img/manaSymbols/infinity.svg':
@@ -186,6 +209,20 @@ function proxyFoundryInlineSymbols(text) {
                     raw=nickname_pinline_png(frame,pinline,loyalty)
                     asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
             with self.lock:self.requested[path]={'bytes':len(raw),'cache':bool(cached),'adapter':'Nickname-frame pinline alpha; art rails and loyalty badge excluded'}
+            return raw,'image/png'
+        if path in {PW_PREFIX+'MaskPinlineRegular.png',PW_PREFIX+'MaskPinlineClassicTall.png'}:
+            source=('/img/frames/planeswalker/regular/planeswalkerMaskPinline.png' if path.endswith('Regular.png')
+                    else '/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png')
+            cache_key=f'derived:{CC_COMMIT}:{CLASSIC_PINLINE_VERSION}:{path}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(cache_key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    pinline,_=self.fetch(source);badge,_=self.fetch('/img/frames/planeswalker/maskLoyalty.png')
+                    raw=pinline_without_loyalty_png(pinline,badge)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Native planeswalker pinline excluding the loyalty badge'}
             return raw,'image/png'
         tall_pw=re.fullmatch(re.escape(PW_PREFIX)+r'(FrameTall([WUBRGMAL])|Mask(Pinline|Type)Tall|textTall)\.(png|svg)',path)
         if tall_pw:
@@ -366,6 +403,10 @@ function proxyFoundryInlineSymbols(text) {
         match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|TitleJoined|Crown|CrownJoined)([WUBRGMAL])\.png',path)
         if match:
             kind,code=match.groups()
+            cache_key=f'derived:{CC_COMMIT}:godzilla-separated-v1:{path}'
+            store=getattr(self.net,'store',None)
+            cached=store.cache_get(cache_key) if store and not kind.endswith('Joined') else None
+            if cached:return self.net.store.asset_path(cached['asset_id']).read_bytes(),'image/png'
             source=f'/img/frames/m15/nickname/m15Nickname{kind.removesuffix("Joined")}{code}.png'
             raw,_=self.fetch(source)
             if kind.endswith('Joined'):
@@ -393,6 +434,8 @@ function proxyFoundryInlineSymbols(text) {
                 else:
                     image=image.crop((0,0,image.width,round(image.height*height/original)))
                 output=io.BytesIO();image.save(output,'PNG')
+            if store:
+                asset=store.add_asset(output.getvalue(),'image/png');store.cache_put(cache_key,asset,self.net.clock())
             with self.lock:self.requested[path]={'source':source,'bytes':len(output.getvalue()),'adapter':'Godzilla main title without real-name strip'}
             return output.getvalue(),'image/png'
         if path=='/js/creator-23.js':return self.creator_script()
