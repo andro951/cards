@@ -81,6 +81,19 @@
         "scryfall_id": "230419f9-a9f7-441d-bad7-0ed867326aa1"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Elemental",
+        "oracle_id": "982ee0fe-7985-4110-a83d-61eab53bc275",
+        "scryfall_id": "ff615495-a230-484e-a858-ead84f880bdd"
+      },
+      "back": {
+        "name": "Myr",
+        "oracle_id": "bf690282-125f-431c-a363-39f6772324c8",
+        "scryfall_id": "f32ad93f-3fd5-465c-ac6a-6f8fb57c19bd"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": []
