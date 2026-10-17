@@ -491,12 +491,28 @@
       "scryfall_url": "https://scryfall.com/card/mkc/71/loran-of-the-third-path?utm_source=api"
     },
     {
+      "name": "Argentum Armor",
+      "nickname": "Lucifer's Spear",
+      "flavor_text": "Built to wound beings who had forgotten what pain felt like.",
+      "artist": "ChatGPT",
+      "oracle_id": "d0a1f39b-cda4-4925-83f8-2161f575edfb",
+      "scryfall_url": "https://scryfall.com/card/afc/198/argentum-armor?utm_source=api"
+    },
+    {
       "name": "Embercleave",
       "nickname": "Archangel Blade",
       "flavor_text": "Even celestial blood answers to sharpened grace.",
       "artist": "ChatGPT",
       "oracle_id": "4d6120d6-fcce-40bc-9fc6-e1f5beb6c728",
       "scryfall_url": "https://scryfall.com/card/eld/120/embercleave?utm_source=api"
+    },
+    {
+      "name": "Heartseeker",
+      "nickname": "The Colt",
+      "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could.",
+      "artist": "ChatGPT",
+      "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
+      "scryfall_url": "https://scryfall.com/card/dst/124/heartseeker?utm_source=api"
     },
     {
       "name": "Shadowspear",
@@ -539,12 +555,28 @@
       "scryfall_url": "https://scryfall.com/card/fin/267/the-regalia?utm_source=api"
     },
     {
+      "name": "Arcane Signet",
+      "nickname": "Men of Letters Key",
+      "flavor_text": "One turn of the key, and a century of secrets opened.",
+      "artist": "ChatGPT",
+      "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+      "scryfall_url": "https://scryfall.com/card/frc/20/arcane-signet?utm_source=api"
+    },
+    {
       "name": "Excalibur, Sword of Eden",
       "nickname": "Michael's Lance",
       "flavor_text": "Made for archangels. Fatal to nearly everything else.",
       "artist": "ChatGPT",
       "oracle_id": "9fb6bd72-031b-40a1-83c5-8a1c82f84e12",
       "scryfall_url": "https://scryfall.com/card/acr/72/excalibur-sword-of-eden?utm_source=api"
+    },
+    {
+      "name": "Meteor Sword",
+      "nickname": "Rod of Aaron",
+      "flavor_text": "Divine power rarely arrives with instructions.",
+      "artist": "ChatGPT",
+      "oracle_id": "181965fb-e685-4b1f-9bd6-3a33bed933b2",
+      "scryfall_url": "https://scryfall.com/card/tla/258/meteor-sword?utm_source=api"
     },
     {
       "name": "Mox Amber",
@@ -571,12 +603,76 @@
       "scryfall_url": "https://scryfall.com/card/cmm/57/smothering-tithe?utm_source=api"
     },
     {
+      "name": "Sol Ring",
+      "nickname": "Ring of Death",
+      "flavor_text": "The oldest promise is the simplest: everything ends.",
+      "artist": "ChatGPT",
+      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+      "scryfall_url": "https://scryfall.com/card/frc/21/sol-ring?utm_source=api"
+    },
+    {
+      "name": "Sword of Light and Shadow",
+      "nickname": "Book of the Damned",
+      "flavor_text": "Every forbidden answer leaves another stain on the page.",
+      "artist": "ChatGPT",
+      "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
+      "scryfall_url": "https://scryfall.com/card/2xm/298/sword-of-light-and-shadow?utm_source=api"
+    },
+    {
+      "name": "Talisman of Conviction",
+      "nickname": "Ring of War",
+      "flavor_text": "Slip it on, and every disagreement remembers how to become a war.",
+      "artist": "ChatGPT",
+      "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
+      "scryfall_url": "https://scryfall.com/card/msc/217/talisman-of-conviction?utm_source=api"
+    },
+    {
+      "name": "Talisman of Hierarchy",
+      "nickname": "Ring of Pestilence",
+      "flavor_text": "Where Pestilence passed, even the air learned to sicken.",
+      "artist": "ChatGPT",
+      "oracle_id": "b693c3de-2eaf-4850-b405-e79d00adefda",
+      "scryfall_url": "https://scryfall.com/card/soc/358/talisman-of-hierarchy?utm_source=api"
+    },
+    {
+      "name": "Talisman of Indulgence",
+      "nickname": "Ring of Famine",
+      "flavor_text": "Hunger is easiest to command once it has already claimed you.",
+      "artist": "ChatGPT",
+      "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
+      "scryfall_url": "https://scryfall.com/card/frc/63/talisman-of-indulgence?utm_source=api"
+    },
+    {
       "name": "The Mind Stone",
       "nickname": "Bottled Grace",
       "flavor_text": "Even Heaven can be reduced to something small enough to steal.",
       "artist": "ChatGPT",
       "oracle_id": "b175e826-09e8-4fae-9f2e-b902f95b282d",
       "scryfall_url": "https://scryfall.com/card/msh/21/the-mind-stone?utm_source=api"
+    },
+    {
+      "name": "Thornbite Staff",
+      "nickname": "The First Blade",
+      "flavor_text": "It never asked Cain to kill. It only made killing easier.",
+      "artist": "ChatGPT",
+      "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
+      "scryfall_url": "https://scryfall.com/card/mor/145/thornbite-staff?utm_source=api"
+    },
+    {
+      "name": "Thran Dynamo",
+      "nickname": "Souls of Purgatory",
+      "flavor_text": "A million restless souls can power miracles—or monsters.",
+      "artist": "ChatGPT",
+      "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
+      "scryfall_url": "https://scryfall.com/card/cmm/415/thran-dynamo?utm_source=api"
+    },
+    {
+      "name": "Resurrection Orb",
+      "nickname": "Resurrection Charm",
+      "flavor_text": "Some protections only prove themselves after your heart stops.",
+      "artist": "ChatGPT",
+      "oracle_id": "b410f294-cbb6-4016-981f-808fd9b7bbae",
+      "scryfall_url": "https://scryfall.com/card/40k/165/resurrection-orb?utm_source=api"
     },
     {
       "name": "Stonehewer Giant",
@@ -665,6 +761,14 @@
       "artist": "ChatGPT",
       "oracle_id": "4b6377da-83e7-4519-9582-16a9c16b8faa",
       "scryfall_url": "https://scryfall.com/card/cmm/20/danitha-capashen-paragon?utm_source=api"
+    },
+    {
+      "name": "Adaptive Omnitool",
+      "nickname": "John's Journal",
+      "flavor_text": "When the boys didn’t know what they were hunting, John usually did.",
+      "artist": "ChatGPT",
+      "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
+      "scryfall_url": "https://scryfall.com/card/fdc/243/adaptive-omnitool?utm_source=api"
     },
     {
       "name": "Sephiroth, Fabled SOLDIER",
@@ -763,6 +867,22 @@
       "scryfall_url": "https://scryfall.com/card/emn/47/thalias-lancers?utm_source=api"
     },
     {
+      "name": "Viridian Longbow",
+      "nickname": "Rock-Salt Shotgun",
+      "flavor_text": "It won’t kill a ghost. It will make one reconsider the room.",
+      "artist": "ChatGPT",
+      "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
+      "scryfall_url": "https://scryfall.com/card/afc/221/viridian-longbow?utm_source=api"
+    },
+    {
+      "name": "Vorpal Sword",
+      "nickname": "Angel Blade",
+      "flavor_text": "Small enough to hide. Sharp enough to kill Heaven.",
+      "artist": "ChatGPT",
+      "oracle_id": "61bfab3f-d8f0-4ff5-9ddf-3fd605070c8f",
+      "scryfall_url": "https://scryfall.com/card/afr/124/vorpal-sword?utm_source=api"
+    },
+    {
       "name": "Helm of the Host",
       "nickname": "Loki's Hat",
       "flavor_text": "The best disguise is the one reality agrees to believe.",
@@ -795,6 +915,14 @@
       "scryfall_url": "https://scryfall.com/card/msc/587/captain-america-liberator?utm_source=api"
     },
     {
+      "name": "Maskwood Nexus",
+      "nickname": "Monster-Making Formula",
+      "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
+      "artist": "ChatGPT",
+      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
+      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
+    },
+    {
       "name": "Kelsien, the Plague",
       "nickname": "Rufus Turner, Grizzled Hunter",
       "flavor_text": "Experience is what you get when the thing trying to kill you misses.",
@@ -825,134 +953,6 @@
       "artist": "ChatGPT",
       "oracle_id": "4d6a1391-817a-4ddc-840d-886b138eeb3f",
       "scryfall_url": "https://scryfall.com/card/mh2/281/imperial-recruiter?utm_source=api"
-    },
-    {
-      "name": "Sol Ring",
-      "nickname": "Ring of Death",
-      "flavor_text": "The oldest promise is the simplest: everything ends.",
-      "artist": "ChatGPT",
-      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
-      "scryfall_url": "https://scryfall.com/card/frc/21/sol-ring?utm_source=api"
-    },
-    {
-      "name": "Viridian Longbow",
-      "nickname": "Rock-Salt Shotgun",
-      "flavor_text": "It won’t kill a ghost. It will make one reconsider the room.",
-      "artist": "ChatGPT",
-      "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
-      "scryfall_url": "https://scryfall.com/card/afc/221/viridian-longbow?utm_source=api"
-    },
-    {
-      "name": "Vorpal Sword",
-      "nickname": "Angel Blade",
-      "flavor_text": "Small enough to hide. Sharp enough to kill Heaven.",
-      "artist": "ChatGPT",
-      "oracle_id": "61bfab3f-d8f0-4ff5-9ddf-3fd605070c8f",
-      "scryfall_url": "https://scryfall.com/card/afr/124/vorpal-sword?utm_source=api"
-    },
-    {
-      "name": "Adaptive Omnitool",
-      "nickname": "John's Journal",
-      "flavor_text": "When the boys didn’t know what they were hunting, John usually did.",
-      "artist": "ChatGPT",
-      "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
-      "scryfall_url": "https://scryfall.com/card/fdc/243/adaptive-omnitool?utm_source=api"
-    },
-    {
-      "name": "Arcane Signet",
-      "nickname": "Men of Letters Key",
-      "flavor_text": "One turn of the key, and a century of secrets opened.",
-      "artist": "ChatGPT",
-      "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
-      "scryfall_url": "https://scryfall.com/card/frc/20/arcane-signet?utm_source=api"
-    },
-    {
-      "name": "Resurrection Orb",
-      "nickname": "Resurrection Charm",
-      "flavor_text": "Some protections only prove themselves after your heart stops.",
-      "artist": "ChatGPT",
-      "oracle_id": "b410f294-cbb6-4016-981f-808fd9b7bbae",
-      "scryfall_url": "https://scryfall.com/card/40k/165/resurrection-orb?utm_source=api"
-    },
-    {
-      "name": "Talisman of Conviction",
-      "nickname": "Ring of War",
-      "flavor_text": "Slip it on, and every disagreement remembers how to become a war.",
-      "artist": "ChatGPT",
-      "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
-      "scryfall_url": "https://scryfall.com/card/msc/217/talisman-of-conviction?utm_source=api"
-    },
-    {
-      "name": "Talisman of Hierarchy",
-      "nickname": "Ring of Pestilence",
-      "flavor_text": "Where Pestilence passed, even the air learned to sicken.",
-      "artist": "ChatGPT",
-      "oracle_id": "b693c3de-2eaf-4850-b405-e79d00adefda",
-      "scryfall_url": "https://scryfall.com/card/soc/358/talisman-of-hierarchy?utm_source=api"
-    },
-    {
-      "name": "Talisman of Indulgence",
-      "nickname": "Ring of Famine",
-      "flavor_text": "Hunger is easiest to command once it has already claimed you.",
-      "artist": "ChatGPT",
-      "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
-      "scryfall_url": "https://scryfall.com/card/frc/63/talisman-of-indulgence?utm_source=api"
-    },
-    {
-      "name": "Thornbite Staff",
-      "nickname": "The First Blade",
-      "flavor_text": "It never asked Cain to kill. It only made killing easier.",
-      "artist": "ChatGPT",
-      "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
-      "scryfall_url": "https://scryfall.com/card/mor/145/thornbite-staff?utm_source=api"
-    },
-    {
-      "name": "Sword of Light and Shadow",
-      "nickname": "Book of the Damned",
-      "flavor_text": "Every forbidden answer leaves another stain on the page.",
-      "artist": "ChatGPT",
-      "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
-      "scryfall_url": "https://scryfall.com/card/2xm/298/sword-of-light-and-shadow?utm_source=api"
-    },
-    {
-      "name": "Heartseeker",
-      "nickname": "The Colt",
-      "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could.",
-      "artist": "ChatGPT",
-      "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
-      "scryfall_url": "https://scryfall.com/card/dst/124/heartseeker?utm_source=api"
-    },
-    {
-      "name": "Maskwood Nexus",
-      "nickname": "Monster-Making Formula",
-      "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
-      "artist": "ChatGPT",
-      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
-      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
-    },
-    {
-      "name": "Thran Dynamo",
-      "nickname": "Souls of Purgatory",
-      "flavor_text": "A million restless souls can power miracles—or monsters.",
-      "artist": "ChatGPT",
-      "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
-      "scryfall_url": "https://scryfall.com/card/cmm/415/thran-dynamo?utm_source=api"
-    },
-    {
-      "name": "Argentum Armor",
-      "nickname": "Lucifer's Spear",
-      "flavor_text": "Built to wound beings who had forgotten what pain felt like.",
-      "artist": "ChatGPT",
-      "oracle_id": "d0a1f39b-cda4-4925-83f8-2161f575edfb",
-      "scryfall_url": "https://scryfall.com/card/afc/198/argentum-armor?utm_source=api"
-    },
-    {
-      "name": "Meteor Sword",
-      "nickname": "Rod of Aaron",
-      "flavor_text": "Divine power rarely arrives with instructions.",
-      "artist": "ChatGPT",
-      "oracle_id": "181965fb-e685-4b1f-9bd6-3a33bed933b2",
-      "scryfall_url": "https://scryfall.com/card/tla/258/meteor-sword?utm_source=api"
     }
   ],
   "tokenAssignments": [
@@ -1131,6 +1131,43 @@
         "kind": "card-back"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Day",
+        "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
+        "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
+      },
+      "back": {
+        "kind": "reverse"
+      },
+      "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Shapeshifter",
+        "oracle_id": "b9ad70d0-7e71-4ec1-a39e-7d9363501322",
+        "scryfall_id": "1186b536-e6c8-433d-a906-b29f334d619c"
+      },
+      "back": {
+        "name": "Shapeshifter",
+        "oracle_id": "2bb2f9ed-6378-40c9-9170-976711919014",
+        "scryfall_id": "ce94fb42-cde4-4637-b938-13f17793bf1f"
+      },
+      "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Germ",
+        "oracle_id": "bb549594-35f6-4ac6-9f1f-cfb35784d99e",
+        "scryfall_id": "53c05e53-84c7-4796-ae02-d778faa5afa6"
+      },
+      "back": {
+        "name": "Robot",
+        "oracle_id": "0e3afe6f-c2a1-4a06-b7f7-5bcbf57c3d2c",
+        "scryfall_id": "c46f9a07-005c-44b7-8057-b2f00b274dd6"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
