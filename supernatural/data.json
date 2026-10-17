@@ -1194,6 +1194,19 @@
         "scryfall_id": "95694c03-2b3b-455c-8361-0799c078bf04"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Phyrexian Mite",
+        "oracle_id": "2667d723-01c8-4ea3-ac17-cedb3b842c3b",
+        "scryfall_id": "96ec91a9-659a-455f-98e0-cd30b6c6c2a4"
+      },
+      "back": {
+        "name": "Human Soldier",
+        "oracle_id": "a4095286-d51b-4527-b6ce-23aa539fc23a",
+        "scryfall_id": "f6df0025-8f6a-43e1-8f07-36f18da3a485"
+      },
+      "quantity": 12
     }
   ],
   "tokenTreatments": []
