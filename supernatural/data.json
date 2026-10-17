@@ -1207,6 +1207,19 @@
         "scryfall_id": "f6df0025-8f6a-43e1-8f07-36f18da3a485"
       },
       "quantity": 12
+    },
+    {
+      "front": {
+        "name": "Soldier",
+        "oracle_id": "eac25f12-6459-438c-a09e-93e23d2cf80d",
+        "scryfall_id": "5ef2f34e-0ff2-4157-9d4a-73ecf4cd449b"
+      },
+      "back": {
+        "name": "Treasure",
+        "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+        "scryfall_id": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9"
+      },
+      "quantity": 12
     }
   ],
   "tokenTreatments": []
