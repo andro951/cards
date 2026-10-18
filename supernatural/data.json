@@ -1292,6 +1292,19 @@
         "scryfall_id": "4d3473d0-b46f-41f5-ac1e-ba217f7747d4"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Aerith Gainsborough",
+        "oracle_id": "dd9a6f6b-f9b7-4292-bc80-b7da326de032",
+        "scryfall_id": "e86328b6-ded2-41df-8b6e-4a770e7b171e"
+      },
+      "back": {
+        "name": "Danitha Capashen, Paragon",
+        "oracle_id": "4b6377da-83e7-4519-9582-16a9c16b8faa",
+        "scryfall_id": "a11f77e4-edb6-43c6-b8ca-d4f62d26d0c0"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
