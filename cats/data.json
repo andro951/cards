@@ -1,0 +1,583 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Mirri, Weatherlight Duelist",
+      "oracle_id": "60bc9cd2-2e03-4889-b1ef-fdab9a9a6d08",
+      "scryfall_url": "https://scryfall.com/card/cmm/347/mirri-weatherlight-duelist?utm_source=api"
+    },
+    {
+      "name": "Three Tree City",
+      "oracle_id": "da3b17a2-e1e1-44e9-b9b1-ae54a92037db",
+      "scryfall_url": "https://scryfall.com/card/blb/260/three-tree-city?utm_source=api"
+    },
+    {
+      "name": "Kor Haven",
+      "oracle_id": "276cece9-f9f2-46e6-ae76-daddaa2fb9ab",
+      "scryfall_url": "https://scryfall.com/card/nem/141/kor-haven?utm_source=api"
+    },
+    {
+      "name": "Labyrinth of Skophos",
+      "oracle_id": "9ec5a487-d8ed-459a-8f58-56f6e9a2dfe8",
+      "scryfall_url": "https://scryfall.com/card/mkc/272/labyrinth-of-skophos?utm_source=api"
+    },
+    {
+      "name": "Yavimaya Hollow",
+      "oracle_id": "53d6113d-acdb-4754-9641-f7991a96c7b9",
+      "scryfall_url": "https://scryfall.com/card/vma/325/yavimaya-hollow?utm_source=api"
+    },
+    {
+      "name": "Gaea's Cradle",
+      "oracle_id": "7c427c3d-ecd8-45ef-bebd-8f10f4a311db",
+      "scryfall_url": "https://scryfall.com/card/usg/321/gaeas-cradle?utm_source=api"
+    },
+    {
+      "name": "Savannah",
+      "oracle_id": "703243f0-8cb3-420f-958f-5fd4bde30293",
+      "scryfall_url": "https://scryfall.com/card/3ed/285/it/savana-(savannah)?utm_source=api"
+    },
+    {
+      "name": "Temple Garden",
+      "oracle_id": "f413a83d-a40d-434c-b20a-4c707c0527fa",
+      "scryfall_url": "https://scryfall.com/card/trk/301/temple-garden?utm_source=api"
+    },
+    {
+      "name": "Arid Mesa",
+      "oracle_id": "c5acf2a5-40f4-433d-a74d-1cb56c521464",
+      "scryfall_url": "https://scryfall.com/card/mh2/244/arid-mesa?utm_source=api"
+    },
+    {
+      "name": "Fabled Passage",
+      "oracle_id": "0c85b8f7-0bd0-4680-9ec5-d4b110460a54",
+      "scryfall_url": "https://scryfall.com/card/frc/71/fabled-passage?utm_source=api"
+    },
+    {
+      "name": "Flooded Strand",
+      "oracle_id": "f3c7af78-a77d-4134-82a2-a5ce84285a84",
+      "scryfall_url": "https://scryfall.com/card/mh3/220/flooded-strand?utm_source=api"
+    },
+    {
+      "name": "Karn's Bastion",
+      "oracle_id": "9fb8cd81-403a-4988-8f1c-b8eccf8abd9c",
+      "scryfall_url": "https://scryfall.com/card/eoc/163/karns-bastion?utm_source=api"
+    },
+    {
+      "name": "Marsh Flats",
+      "oracle_id": "dab520d0-20b4-4273-ba6b-eb07f85ea433",
+      "scryfall_url": "https://scryfall.com/card/mh2/248/marsh-flats?utm_source=api"
+    },
+    {
+      "name": "Minas Tirith",
+      "oracle_id": "7b0d7e62-0287-454a-8702-b0bfa7b41245",
+      "scryfall_url": "https://scryfall.com/card/ltr/256/minas-tirith?utm_source=api"
+    },
+    {
+      "name": "Misty Rainforest",
+      "oracle_id": "09dd85aa-47bc-4713-a9b9-8b52ff2285ed",
+      "scryfall_url": "https://scryfall.com/card/mh2/250/misty-rainforest?utm_source=api"
+    },
+    {
+      "name": "Prismatic Vista",
+      "oracle_id": "032b8a0d-491a-4a12-ab9f-689010054d5b",
+      "scryfall_url": "https://scryfall.com/card/mh1/244/prismatic-vista?utm_source=api"
+    },
+    {
+      "name": "Verdant Catacombs",
+      "oracle_id": "67d60b24-d429-4ded-90d9-06e49f28c396",
+      "scryfall_url": "https://scryfall.com/card/mh2/260/verdant-catacombs?utm_source=api"
+    },
+    {
+      "name": "Windswept Heath",
+      "oracle_id": "29737a60-3ebd-40d9-b935-c4f54b90d45d",
+      "scryfall_url": "https://scryfall.com/card/mh3/235/windswept-heath?utm_source=api"
+    },
+    {
+      "name": "Wooded Foothills",
+      "oracle_id": "6587a463-a108-4854-b6d1-944e89b8c8a4",
+      "scryfall_url": "https://scryfall.com/card/mh3/236/wooded-foothills?utm_source=api"
+    },
+    {
+      "name": "Yavimaya, Cradle of Growth",
+      "oracle_id": "8dd5f5af-d2d8-4356-8617-8381081b930c",
+      "scryfall_url": "https://scryfall.com/card/mh2/261/yavimaya-cradle-of-growth?utm_source=api"
+    },
+    {
+      "name": "Sungrass Prairie",
+      "oracle_id": "0a28dff0-2bd6-4105-b73a-b6c4735833fd",
+      "scryfall_url": "https://scryfall.com/card/msc/270/sungrass-prairie?utm_source=api"
+    },
+    {
+      "name": "Selesnya Sanctuary",
+      "oracle_id": "00ef1c55-dea1-4564-bd57-66de86cba4df",
+      "scryfall_url": "https://scryfall.com/card/clu/246/selesnya-sanctuary?utm_source=api"
+    },
+    {
+      "name": "Forest",
+      "oracle_id": "b34bb2dc-c1af-4d77-b0b3-a0fb342a5fc6",
+      "scryfall_url": "https://scryfall.com/card/trk/325/forest?utm_source=api"
+    },
+    {
+      "name": "Plains",
+      "oracle_id": "bc71ebf6-2056-41f7-be35-b2e5c34afa99",
+      "scryfall_url": "https://scryfall.com/card/trk/317/plains?utm_source=api"
+    },
+    {
+      "name": "Lush Portico",
+      "oracle_id": "d51831b1-7394-456e-a1de-6787a59f5932",
+      "scryfall_url": "https://scryfall.com/card/mkm/263/lush-portico?utm_source=api"
+    },
+    {
+      "name": "Scattered Groves",
+      "oracle_id": "3c87ea85-ca29-45a7-b5b2-758c62898b0a",
+      "scryfall_url": "https://scryfall.com/card/msc/262/scattered-groves?utm_source=api"
+    },
+    {
+      "name": "Myriad Landscape",
+      "oracle_id": "2549bc57-9ffb-4053-9f10-f2a5f792b845",
+      "scryfall_url": "https://scryfall.com/card/eoc/169/myriad-landscape?utm_source=api"
+    },
+    {
+      "name": "Arahbo, the First Fang",
+      "oracle_id": "dfec65a0-6fb6-463d-aa62-e84a427db217",
+      "scryfall_url": "https://scryfall.com/card/fdn/2/arahbo-the-first-fang?utm_source=api"
+    },
+    {
+      "name": "Bast, Panther Goddess",
+      "oracle_id": "e3233686-7703-460c-80ee-8cd37b3014ff",
+      "scryfall_url": "https://scryfall.com/card/msc/75/bast-panther-goddess?utm_source=api"
+    },
+    {
+      "name": "Brimaz, King of Oreskos",
+      "oracle_id": "49471b65-be9d-4ded-b2e5-dfc81b306b54",
+      "scryfall_url": "https://scryfall.com/card/bng/5/brimaz-king-of-oreskos?utm_source=api"
+    },
+    {
+      "name": "Jazal Goldmane",
+      "oracle_id": "609d13dc-c850-4877-8ad3-e84171b58069",
+      "scryfall_url": "https://scryfall.com/card/cmm/32/jazal-goldmane?utm_source=api"
+    },
+    {
+      "name": "Kaheera, the Orphanguard",
+      "oracle_id": "35428c77-9731-4d4d-8f75-e939a491cf86",
+      "scryfall_url": "https://scryfall.com/card/iko/224/kaheera-the-orphanguard?utm_source=api"
+    },
+    {
+      "name": "Kemba, Kha Enduring",
+      "oracle_id": "93c97e1a-bd7e-4307-8ada-58f53a887cf8",
+      "scryfall_url": "https://scryfall.com/card/one/19/kemba-kha-enduring?utm_source=api"
+    },
+    {
+      "name": "Kutzil, Malamet Exemplar",
+      "oracle_id": "3233af43-7826-4895-b67e-03c6102c2cd5",
+      "scryfall_url": "https://scryfall.com/card/lci/232/kutzil-malamet-exemplar?utm_source=api"
+    },
+    {
+      "name": "Prava of the Steel Legion",
+      "oracle_id": "4daa7b7d-e410-4bcf-b3e2-2751774bef47",
+      "scryfall_url": "https://scryfall.com/card/cmr/38/prava-of-the-steel-legion?utm_source=api"
+    },
+    {
+      "name": "Qala, Ajani's Pridemate",
+      "oracle_id": "1fc1b0d7-7f15-4d00-bc8f-e06489afd425",
+      "scryfall_url": "https://scryfall.com/card/j25/32/qala-ajanis-pridemate?utm_source=api"
+    },
+    {
+      "name": "Sovereign Okinec Ahau",
+      "oracle_id": "087b2490-e415-44e2-a674-3b5619a0fad5",
+      "scryfall_url": "https://scryfall.com/card/lci/240/sovereign-okinec-ahau?utm_source=api"
+    },
+    {
+      "name": "Tigra, Feline Fury",
+      "oracle_id": "39d993be-30ad-4756-a494-fd8808d474c9",
+      "scryfall_url": "https://scryfall.com/card/msh/191/tigra-feline-fury?utm_source=api"
+    },
+    {
+      "name": "Elven Chorus",
+      "oracle_id": "4d5df2d9-06bf-4bec-9be0-dabe75a858fb",
+      "scryfall_url": "https://scryfall.com/card/ltr/160/elven-chorus?utm_source=api"
+    },
+    {
+      "name": "Felidar Retreat",
+      "oracle_id": "16629f59-bae8-4c19-bf50-443eb0ed6856",
+      "scryfall_url": "https://scryfall.com/card/fdn/574/felidar-retreat?utm_source=api"
+    },
+    {
+      "name": "Feline Sovereign",
+      "oracle_id": "05f0feb6-6783-49fd-acf6-68b44aaff846",
+      "scryfall_url": "https://scryfall.com/card/m21/180/feline-sovereign?utm_source=api"
+    },
+    {
+      "name": "Leonin Warleader",
+      "oracle_id": "8b1351e6-165e-4ca3-96d5-4774b3176362",
+      "scryfall_url": "https://scryfall.com/card/m19/23/leonin-warleader?utm_source=api"
+    },
+    {
+      "name": "Ocelot Pride",
+      "oracle_id": "b4ce2c8f-a19c-461e-8a2e-0ec2bd3ebca3",
+      "scryfall_url": "https://scryfall.com/card/mh3/38/ocelot-pride?utm_source=api"
+    },
+    {
+      "name": "Regal Caracal",
+      "oracle_id": "aa571676-b390-4b8a-baea-4c4cd60c01f6",
+      "scryfall_url": "https://scryfall.com/card/fdn/579/regal-caracal?utm_source=api"
+    },
+    {
+      "name": "Pride Sovereign",
+      "oracle_id": "a131c32d-2b4f-4ee4-aab2-ab05ab010978",
+      "scryfall_url": "https://scryfall.com/card/hou/126/pride-sovereign?utm_source=api"
+    },
+    {
+      "name": "Qasali Slingers",
+      "oracle_id": "f763d118-3183-4604-a50c-7c3933e2185e",
+      "scryfall_url": "https://scryfall.com/card/c17/33/qasali-slingers?utm_source=api"
+    },
+    {
+      "name": "White Sun's Zenith",
+      "oracle_id": "ea4a9299-c2b3-4092-89dd-28142b203d60",
+      "scryfall_url": "https://scryfall.com/card/cmr/391/white-suns-zenith?utm_source=api"
+    },
+    {
+      "name": "Earthcraft",
+      "oracle_id": "50aa7aff-1f01-4224-9a83-01f74d703ec2",
+      "scryfall_url": "https://scryfall.com/card/tmp/222/earthcraft?utm_source=api"
+    },
+    {
+      "name": "Honor-Worn Shaku",
+      "oracle_id": "babeeaf6-0fe4-491f-bbf5-63a0568b3d6e",
+      "scryfall_url": "https://scryfall.com/card/cmm/954/honor-worn-shaku?utm_source=api"
+    },
+    {
+      "name": "Nature's Will",
+      "oracle_id": "9837287b-d821-4655-8f01-93fc6c7f0ecc",
+      "scryfall_url": "https://scryfall.com/card/chk/230/natures-will?utm_source=api"
+    },
+    {
+      "name": "Reconnaissance",
+      "oracle_id": "32599d7c-243b-447b-9d5d-e8e29830ac61",
+      "scryfall_url": "https://scryfall.com/card/exo/17/reconnaissance?utm_source=api"
+    },
+    {
+      "name": "Thaumatic Compass",
+      "oracle_id": "f9085e55-2833-41b7-9100-a35dc04dee93",
+      "scryfall_url": "https://scryfall.com/card/xln/249/thaumatic-compass-spires-of-orazca?utm_source=api"
+    },
+    {
+      "name": "Spires of Orazca",
+      "oracle_id": "f9085e55-2833-41b7-9100-a35dc04dee93",
+      "scryfall_url": "https://scryfall.com/card/xln/249/thaumatic-compass-spires-of-orazca?utm_source=api"
+    },
+    {
+      "name": "Guardian Project",
+      "oracle_id": "4f9e07ae-6341-4b46-9f77-f17ab659d266",
+      "scryfall_url": "https://scryfall.com/card/rvr/146/guardian-project?utm_source=api"
+    },
+    {
+      "name": "Caretaker's Talent",
+      "oracle_id": "c97957a2-8310-4cff-8aad-871b7901d124",
+      "scryfall_url": "https://scryfall.com/card/blb/6/caretakers-talent?utm_source=api"
+    },
+    {
+      "name": "Idol of Oblivion",
+      "oracle_id": "c232d974-9c65-4bce-b045-e5a7cc0c62e0",
+      "scryfall_url": "https://scryfall.com/card/tdc/319/idol-of-oblivion?utm_source=api"
+    },
+    {
+      "name": "Rishkar's Expertise",
+      "oracle_id": "97407cd0-2bd2-4074-94d3-4ec3d243fa78",
+      "scryfall_url": "https://scryfall.com/card/lcc/254/rishkars-expertise?utm_source=api"
+    },
+    {
+      "name": "Return of the Wildspeaker",
+      "oracle_id": "2b76f9e9-cd28-4eaf-8674-215c34263f96",
+      "scryfall_url": "https://scryfall.com/card/ecc/115/return-of-the-wildspeaker?utm_source=api"
+    },
+    {
+      "name": "Shamanic Revelation",
+      "oracle_id": "d1d171de-1c6d-4fb9-817a-9c689c709f3d",
+      "scryfall_url": "https://scryfall.com/card/ncc/311/shamanic-revelation?utm_source=api"
+    },
+    {
+      "name": "Tocasia's Welcome",
+      "oracle_id": "25c983e0-a8c9-4784-91a4-8fe04c6df882",
+      "scryfall_url": "https://scryfall.com/card/soc/181/tocasias-welcome?utm_source=api"
+    },
+    {
+      "name": "Commander's Plate",
+      "oracle_id": "cae166de-e681-40a0-83a8-3c17cf40e2fc",
+      "scryfall_url": "https://scryfall.com/card/cmr/305/commanders-plate?utm_source=api"
+    },
+    {
+      "name": "Eladamri's Call",
+      "oracle_id": "4acb6612-54e8-428d-acb6-c7259a5ad6a8",
+      "scryfall_url": "https://scryfall.com/card/mh1/197/eladamris-call?utm_source=api"
+    },
+    {
+      "name": "Chord of Calling",
+      "oracle_id": "6789a170-f2c5-4fc0-8a45-2b2361e67410",
+      "scryfall_url": "https://scryfall.com/card/rav/156/chord-of-calling?utm_source=api"
+    },
+    {
+      "name": "Anointed Procession",
+      "oracle_id": "7246d45b-2185-4cdd-981b-5419b7d52bce",
+      "scryfall_url": "https://scryfall.com/card/akh/2/anointed-procession?utm_source=api"
+    },
+    {
+      "name": "Conjurer's Mantle",
+      "oracle_id": "21b520c6-c94a-475a-a824-dd96394ea55b",
+      "scryfall_url": "https://scryfall.com/card/moc/12/conjurers-mantle?utm_source=api"
+    },
+    {
+      "name": "Growing Rites of Itlimoc",
+      "oracle_id": "ea9c459a-6047-43aa-968f-a582be4000e8",
+      "scryfall_url": "https://scryfall.com/card/lci/188/growing-rites-of-itlimoc-itlimoc-cradle-of-the-sun?utm_source=api"
+    },
+    {
+      "name": "Itlimoc, Cradle of the Sun",
+      "oracle_id": "ea9c459a-6047-43aa-968f-a582be4000e8",
+      "scryfall_url": "https://scryfall.com/card/lci/188/growing-rites-of-itlimoc-itlimoc-cradle-of-the-sun?utm_source=api"
+    },
+    {
+      "name": "Quest for Renewal",
+      "oracle_id": "cba4ab80-09e8-4868-a082-a9a3bade9571",
+      "scryfall_url": "https://scryfall.com/card/wwk/110/quest-for-renewal?utm_source=api"
+    },
+    {
+      "name": "Song of Freyalise",
+      "oracle_id": "9fe1f3ef-2c30-4ccc-9a67-5349e98e2502",
+      "scryfall_url": "https://scryfall.com/card/dom/179/song-of-freyalise?utm_source=api"
+    },
+    {
+      "name": "Springleaf Parade",
+      "oracle_id": "b1305916-53cc-4021-897e-bbefc65dce78",
+      "scryfall_url": "https://scryfall.com/card/ecc/19/springleaf-parade?utm_source=api"
+    },
+    {
+      "name": "Temur Sabertooth",
+      "oracle_id": "8bf8e846-9d10-4dbc-a379-df37bb9fb6d4",
+      "scryfall_url": "https://scryfall.com/card/ncc/315/temur-sabertooth?utm_source=api"
+    },
+    {
+      "name": "Cathars' Crusade",
+      "oracle_id": "cc65ac73-5bef-4ecb-ad8e-39199084c027",
+      "scryfall_url": "https://scryfall.com/card/c16/61/cathars-crusade?utm_source=api"
+    },
+    {
+      "name": "Ajani Unyielding",
+      "oracle_id": "8a70ddc5-bb51-45eb-96f2-8ecaecac0cc2",
+      "scryfall_url": "https://scryfall.com/card/ncc/324/ajani-unyielding?utm_source=api"
+    },
+    {
+      "name": "Ajani, Valiant Protector",
+      "oracle_id": "542423cb-fbfb-4a2f-9f6d-87b273a95e96",
+      "scryfall_url": "https://scryfall.com/card/aer/185/ajani-valiant-protector?utm_source=api"
+    },
+    {
+      "name": "Descendants' Path",
+      "oracle_id": "ba13cbdb-8043-4c1b-8a85-084c86886ac8",
+      "scryfall_url": "https://scryfall.com/card/tle/167/descendants-path?utm_source=api"
+    },
+    {
+      "name": "Finale of Devastation",
+      "oracle_id": "69872a9a-fe54-4e58-940c-89395af71acd",
+      "scryfall_url": "https://scryfall.com/card/cmm/289/finale-of-devastation?utm_source=api"
+    },
+    {
+      "name": "Herald's Horn",
+      "oracle_id": "c02c5547-b9c9-4b2d-9d12-e87bfba8f2d2",
+      "scryfall_url": "https://scryfall.com/card/lcc/304/heralds-horn?utm_source=api"
+    },
+    {
+      "name": "Invasion of Ikoria",
+      "oracle_id": "21d90735-5e04-4a8c-a546-ff26d4d5998d",
+      "scryfall_url": "https://scryfall.com/card/mom/190/invasion-of-ikoria-zilortha-apex-of-ikoria?utm_source=api"
+    },
+    {
+      "name": "Zilortha, Apex of Ikoria",
+      "oracle_id": "21d90735-5e04-4a8c-a546-ff26d4d5998d",
+      "scryfall_url": "https://scryfall.com/card/mom/190/invasion-of-ikoria-zilortha-apex-of-ikoria?utm_source=api"
+    },
+    {
+      "name": "Kindred Summons",
+      "oracle_id": "b488e75f-af9c-43e2-8aca-f269fa2c720e",
+      "scryfall_url": "https://scryfall.com/card/ecc/112/kindred-summons?utm_source=api"
+    },
+    {
+      "name": "Ajani, Mentor of Heroes",
+      "oracle_id": "a612bd38-069f-4bdc-9aa6-c172435e3841",
+      "scryfall_url": "https://scryfall.com/card/jou/145/ajani-mentor-of-heroes?utm_source=api"
+    },
+    {
+      "name": "Doubling Season",
+      "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+      "scryfall_url": "https://scryfall.com/card/fdn/216/doubling-season?utm_source=api"
+    },
+    {
+      "name": "Elspeth Resplendent",
+      "oracle_id": "24591330-d038-478f-b89d-b7b66c0b5cc3",
+      "scryfall_url": "https://scryfall.com/card/snc/11/elspeth-resplendent?utm_source=api"
+    },
+    {
+      "name": "Innkeeper's Talent",
+      "oracle_id": "915b75d1-b5e3-4aca-a54c-beaccef0a2e4",
+      "scryfall_url": "https://scryfall.com/card/blb/180/innkeepers-talent?utm_source=api"
+    },
+    {
+      "name": "Parallel Lives",
+      "oracle_id": "84dc94b2-95fb-4d53-aaa2-191cb645639f",
+      "scryfall_url": "https://scryfall.com/card/isd/199/parallel-lives?utm_source=api"
+    },
+    {
+      "name": "Mirri's Guile",
+      "oracle_id": "7f89c0ee-b914-406c-8a3f-98424a52ae14",
+      "scryfall_url": "https://scryfall.com/card/tmp/236/mirris-guile?utm_source=api"
+    },
+    {
+      "name": "Scroll Rack",
+      "oracle_id": "648bd03d-247e-4d6f-87a9-12a67688cbf5",
+      "scryfall_url": "https://scryfall.com/card/cmr/337/scroll-rack?utm_source=api"
+    },
+    {
+      "name": "Highcliff Felidar",
+      "oracle_id": "43296f8b-58d9-446e-a538-1c4921552c41",
+      "scryfall_url": "https://scryfall.com/card/gn2/1/highcliff-felidar?utm_source=api"
+    },
+    {
+      "name": "Nacatl War-Pride",
+      "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
+      "scryfall_id": "4ef863d2-1e11-41cc-90d5-008bf6234565",
+      "scryfall_url": "https://scryfall.com/card/fut/147/nacatl-war-pride?utm_source=api"
+    },
+    {
+      "name": "Scythecat Cub",
+      "oracle_id": "929117cd-caa6-402b-9d7b-1f684d75695c",
+      "scryfall_url": "https://scryfall.com/card/slz/85/scythecat-cub?utm_source=api"
+    },
+    {
+      "name": "To Arms!",
+      "oracle_id": "90c97fc4-597c-45cf-96c6-3ba9558ede0d",
+      "scryfall_url": "https://scryfall.com/card/rvr/30/to-arms!?utm_source=api"
+    },
+    {
+      "name": "Ajani's Chosen",
+      "oracle_id": "9c77eb0a-543a-41db-ba1f-aa0163837ae0",
+      "scryfall_url": "https://scryfall.com/card/soc/132/ajanis-chosen?utm_source=api"
+    },
+    {
+      "name": "Nyxbloom Ancient",
+      "oracle_id": "8b610f8f-c8dd-4eeb-bc6e-3bc706d5f63e",
+      "scryfall_url": "https://scryfall.com/card/thb/190/nyxbloom-ancient?utm_source=api"
+    },
+    {
+      "name": "Ajani Resolute",
+      "oracle_id": "0d60c095-4c6c-4618-8ef3-508f3d454efa",
+      "scryfall_url": "https://scryfall.com/card/fra/195/ajani-resolute?utm_source=api"
+    },
+    {
+      "name": "Ajani, Strength of the Pride",
+      "oracle_id": "c3974ec7-7af0-4b65-baf6-4c1c4fe8a5c4",
+      "scryfall_url": "https://scryfall.com/card/m20/2/ajani-strength-of-the-pride?utm_source=api"
+    },
+    {
+      "name": "True Conviction",
+      "oracle_id": "fc299c1c-50f3-492a-b6b8-a3664bb72ab7",
+      "scryfall_url": "https://scryfall.com/card/c14/93/true-conviction?utm_source=api"
+    },
+    {
+      "name": "Sol Ring",
+      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+      "scryfall_url": "https://scryfall.com/card/frc/21/sol-ring?utm_source=api"
+    },
+    {
+      "name": "Realmwalker",
+      "oracle_id": "b81eaa2f-0554-41c6-bdf6-d1cb73b8f56f",
+      "scryfall_url": "https://scryfall.com/card/ecc/114/realmwalker?utm_source=api"
+    },
+    {
+      "name": "Hungry Lynx",
+      "oracle_id": "a5fdc358-25de-4a5b-b965-53a01df6019c",
+      "scryfall_url": "https://scryfall.com/card/c17/31/hungry-lynx?utm_source=api"
+    },
+    {
+      "name": "Cryptolith Rite",
+      "oracle_id": "043f869d-b11c-4c0d-9591-2bf0df7bde55",
+      "scryfall_url": "https://scryfall.com/card/inr/189/cryptolith-rite?utm_source=api"
+    },
+    {
+      "name": "Cat",
+      "oracle_id": "5ae6251d-cef9-4fb7-bdcd-e870a062f042",
+      "scryfall_url": "https://scryfall.com/card/tfdn/1/cat?utm_source=api",
+      "art": "cat_1_1.png"
+    },
+    {
+      "name": "Cat Soldier",
+      "oracle_id": "53c009a1-b9b6-43d6-8543-77688fedf8ae",
+      "scryfall_url": "https://scryfall.com/card/tbng/2/cat-soldier?utm_source=api",
+      "art": "cat_soldier_1_1_vigilance.png"
+    },
+    {
+      "name": "Cat",
+      "oracle_id": "6788478d-e157-4483-be09-9edb3f841431",
+      "scryfall_url": "https://scryfall.com/card/tone/1/cat?utm_source=api",
+      "art": "cat_2_2.png"
+    },
+    {
+      "name": "Soldier",
+      "oracle_id": "eac25f12-6459-438c-a09e-93e23d2cf80d",
+      "scryfall_url": "https://scryfall.com/card/tclb/5/soldier?utm_source=api",
+      "art": "soldier_1_1.png"
+    },
+    {
+      "name": "Cat Beast",
+      "oracle_id": "8050907b-4007-4478-8ebd-25b8b2bf85c3",
+      "scryfall_url": "https://scryfall.com/card/tfdn/28/cat-beast?utm_source=api",
+      "art": "cat_beast_2_2.png"
+    },
+    {
+      "name": "Cat",
+      "oracle_id": "65742c00-2809-4085-a950-8f93845c03d2",
+      "scryfall_url": "https://scryfall.com/card/sld/27/cat?utm_source=api",
+      "art": "cat_1_1_lifelink.png"
+    },
+    {
+      "name": "Eldrazi",
+      "oracle_id": "41014a6a-0f5b-48ae-8cb8-9a89f0f0180f",
+      "scryfall_url": "https://scryfall.com/card/ttdc/1/eldrazi?utm_source=api",
+      "art": "eldrazi_10_10.png"
+    },
+    {
+      "name": "Shapeshifter",
+      "oracle_id": "fe8478ec-2af9-472b-b104-a71521a3559f",
+      "scryfall_url": "https://scryfall.com/card/tecl/1/shapeshifter?utm_source=api",
+      "art": "changeling_1_1.png"
+    },
+    {
+      "name": "Angel",
+      "oracle_id": "263fd9ed-d3dc-4a96-b731-dd8f4bb0f95a",
+      "scryfall_url": "https://scryfall.com/card/tfdc/1/angel?utm_source=api",
+      "art": "angel_3_3_flying.png"
+    },
+    {
+      "name": "Ajani's Pridemate",
+      "oracle_id": "9fcff433-c6f7-44c6-8279-04625703cb3e",
+      "scryfall_url": "https://scryfall.com/card/tfra/2/ajanis-pridemate?utm_source=api",
+      "art": "ajanis_pridemate_2_2.png"
+    },
+    {
+      "name": "Ajani Resolute Emblem",
+      "oracle_id": "ee946840-7b8f-4ce2-8e7e-704a9042e4aa",
+      "scryfall_url": "https://scryfall.com/card/tfra/16/ajani-resolute-emblem?utm_source=api"
+    },
+    {
+      "name": "Rat",
+      "oracle_id": "0d804fad-62db-4e3b-8d3c-ee62eba38569",
+      "scryfall_url": "https://scryfall.com/card/tc17/3/rat?utm_source=api",
+      "art": "rat_1_1_deathtouch.png"
+    },
+    {
+      "name": "Nacatl War-Pride",
+      "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
+      "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db",
+      "scryfall_url": "https://scryfall.com/card/plst/FUT-147/nacatl-war-pride?utm_source=api"
+    }
+  ]
+}
