@@ -1409,6 +1409,19 @@
         "scryfall_id": "27beed9c-a42e-46de-8fbc-885da337ae75"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Witch of the Moors",
+        "oracle_id": "7ad97dd9-1342-4ed4-bea9-1bb21d748e04",
+        "scryfall_id": "d9367aa0-2da2-4ed5-b52a-c52e40a00adf"
+      },
+      "back": {
+        "name": "Nahiri, Forged in Fury",
+        "oracle_id": "87966759-206a-4a2d-bf78-86f727c29972",
+        "scryfall_id": "90eb0859-d24e-4703-8930-1cd4ac1fb3b6"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
