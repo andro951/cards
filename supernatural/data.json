@@ -1422,6 +1422,19 @@
         "scryfall_id": "90eb0859-d24e-4703-8930-1cd4ac1fb3b6"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Ob Nixilis, the Ascended",
+        "oracle_id": "3a49b518-61c8-4dea-8008-c5edf8384581",
+        "scryfall_id": "a022d35a-9d24-4818-9ff3-a522cfcb178e"
+      },
+      "back": {
+        "name": "Riders of the Mark",
+        "oracle_id": "c7031047-5109-482f-b2e9-14800b9279bf",
+        "scryfall_id": "de77686e-c4c1-4d38-a05c-03eb7363fc0b"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
