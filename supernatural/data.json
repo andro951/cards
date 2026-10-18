@@ -1396,6 +1396,19 @@
         "scryfall_id": "0efda05d-01ea-4478-b075-00a31d7037f8"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Thalia's Lancers",
+        "oracle_id": "58b349ec-9987-4832-a8f3-8e92027ea75b",
+        "scryfall_id": "9930d08d-5965-4c16-a84d-43c8ccf2ad0b"
+      },
+      "back": {
+        "name": "Vona, Butcher of Magan",
+        "oracle_id": "b1c56e23-eae6-47a1-a1cd-3a2d01621768",
+        "scryfall_id": "27beed9c-a42e-46de-8fbc-885da337ae75"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
