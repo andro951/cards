@@ -1266,6 +1266,19 @@
         "scryfall_id": "f6589e02-8c84-4069-88d1-ebcc8520cae1"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Cloud, Midgar Mercenary",
+        "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+        "scryfall_id": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5"
+      },
+      "back": {
+        "name": "Puresteel Paladin",
+        "oracle_id": "74a62c7b-4753-4af2-b7a1-9a4ae8988801",
+        "scryfall_id": "d8f8a324-006d-4cb8-9816-620a603b4229"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
