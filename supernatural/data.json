@@ -1357,6 +1357,19 @@
         "scryfall_id": "adffb389-c9a3-41c4-b078-292a2bcf870d"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Archangel of Thune",
+        "oracle_id": "4f2d4538-dc1d-4c09-964b-b0d7c240fb7d",
+        "scryfall_id": "15c34447-b0f4-4fcc-b557-23c92850b31b"
+      },
+      "back": {
+        "name": "Bloodthirsty Conqueror",
+        "oracle_id": "fd505c02-c59e-476d-8e88-35da862ddc23",
+        "scryfall_id": "ce860ed4-a5bd-4347-9eab-dd716ea84db1"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
