@@ -608,6 +608,19 @@
         "scryfall_id": "255dcc91-7b3d-4b58-85f3-b21be805966e"
       },
       "quantity": 20
+    },
+    {
+      "front": {
+        "name": "Cat Beast",
+        "oracle_id": "8050907b-4007-4478-8ebd-25b8b2bf85c3",
+        "scryfall_id": "322ef76e-e0f0-48d7-a6ad-5d4c1c9ccb2e"
+      },
+      "back": {
+        "name": "Shapeshifter",
+        "oracle_id": "fe8478ec-2af9-472b-b104-a71521a3559f",
+        "scryfall_id": "c2963ce1-f9d8-437a-9489-e0913a8b8d26"
+      },
+      "quantity": 12
     }
   ],
   "tokenTreatments": []
