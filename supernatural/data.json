@@ -1331,6 +1331,19 @@
         "scryfall_id": "707e9d2e-3934-4b90-878d-4699ac1cbe89"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Astor, Bearer of Blades",
+        "oracle_id": "196962f0-6aff-4198-9e0c-eaf42aeaf147",
+        "scryfall_id": "40f3a0ba-b917-488b-adbf-60a0d3c58a56"
+      },
+      "back": {
+        "name": "Ria Ivor, Bane of Bladehold",
+        "oracle_id": "785f55bb-d47c-470c-94d4-95f69055e35f",
+        "scryfall_id": "f7531ed3-235f-4368-98a8-e4e1947c53fb"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
