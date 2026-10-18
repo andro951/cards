@@ -80,6 +80,19 @@
         "scryfall_id": "f32ad93f-3fd5-465c-ac6a-6f8fb57c19bd"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Insect",
+        "oracle_id": "c39cd31f-c4a2-4ca8-b4f9-b2e6289743bc",
+        "scryfall_id": "599b5074-86a5-4666-8cf4-3deb83c09ba0"
+      },
+      "back": {
+        "name": "Treasure",
+        "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+        "scryfall_id": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
+      },
+      "quantity": 6
     }
   ],
   "tokenTreatments": []
