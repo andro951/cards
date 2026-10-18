@@ -3,6 +3,7 @@
   "cards": [
     {
       "name": "Mirri, Weatherlight Duelist",
+      "nickname": "Bell, Queen of Sass",
       "oracle_id": "60bc9cd2-2e03-4889-b1ef-fdab9a9a6d08",
       "scryfall_url": "https://scryfall.com/card/cmm/347/mirri-weatherlight-duelist?utm_source=api"
     },
@@ -158,6 +159,7 @@
     },
     {
       "name": "Kaheera, the Orphanguard",
+      "nickname": "Mr. Finntastic",
       "oracle_id": "35428c77-9731-4d4d-8f75-e939a491cf86",
       "scryfall_url": "https://scryfall.com/card/iko/224/kaheera-the-orphanguard?utm_source=api"
     },
