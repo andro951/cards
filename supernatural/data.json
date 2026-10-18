@@ -1305,6 +1305,19 @@
         "scryfall_id": "a11f77e4-edb6-43c6-b8ca-d4f62d26d0c0"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Kelsien, the Plague",
+        "oracle_id": "5b3326a5-18c5-4d45-90e1-f6d00ca2bced",
+        "scryfall_id": "039d25d4-ce26-4ecf-bbf5-42187cf0230a"
+      },
+      "back": {
+        "name": "Knight Exemplar",
+        "oracle_id": "ecb198fc-5663-4380-b2da-ad54421e966d",
+        "scryfall_id": "8400f1a7-ebf0-49b2-a51d-3b2056c05b61"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
