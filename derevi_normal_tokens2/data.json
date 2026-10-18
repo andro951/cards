@@ -107,6 +107,19 @@
         "art_variant": "81a50251-ba7b-4f87-9d22-1d79b12cfb7d"
       },
       "quantity": 6
+    },
+    {
+      "front": {
+        "name": "Elemental",
+        "oracle_id": "982ee0fe-7985-4110-a83d-61eab53bc275",
+        "scryfall_id": "ff615495-a230-484e-a858-ead84f880bdd"
+      },
+      "back": {
+        "name": "Angel",
+        "oracle_id": "40c64f08-ab2f-4933-8e0e-d1a1c729008f",
+        "scryfall_id": "1671013a-2c15-44f0-b4bc-057eb5f727db"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": []
