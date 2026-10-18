@@ -581,5 +581,21 @@
       "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db",
       "scryfall_url": "https://scryfall.com/card/plst/FUT-147/nacatl-war-pride?utm_source=api"
     }
-  ]
+  ],
+  "tokenAssignments": [
+    {
+      "front": {
+        "name": "Cat",
+        "oracle_id": "6788478d-e157-4483-be09-9edb3f841431",
+        "scryfall_id": "11011596-4aa1-48a7-90d8-36cb7b27c711"
+      },
+      "back": {
+        "name": "Soldier",
+        "oracle_id": "eac25f12-6459-438c-a09e-93e23d2cf80d",
+        "scryfall_id": "b5000cf8-2104-4d85-95df-29efa92256f6"
+      },
+      "quantity": 20
+    }
+  ],
+  "tokenTreatments": []
 }
