@@ -1344,6 +1344,19 @@
         "scryfall_id": "f7531ed3-235f-4368-98a8-e4e1947c53fb"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Rohirrim Chargers",
+        "oracle_id": "8e638c52-e7b9-445b-adcf-77b58e06c2ba",
+        "scryfall_id": "070df7db-bee4-456b-864e-69d493f09dc2"
+      },
+      "back": {
+        "name": "Éowyn, Fearless Knight",
+        "oracle_id": "dcc349e9-399d-4f33-8131-d1801272466a",
+        "scryfall_id": "adffb389-c9a3-41c4-b078-292a2bcf870d"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
