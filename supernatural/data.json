@@ -1435,6 +1435,19 @@
         "scryfall_id": "de77686e-c4c1-4d38-a05c-03eb7363fc0b"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Avacyn, Angel of Horror",
+        "oracle_id": "4af61d45-7114-4eb4-a905-9e03caf87454",
+        "scryfall_id": "ff65f46b-0f82-49b8-93b9-7ac0243ce941"
+      },
+      "back": {
+        "name": "Vilis, Broker of Blood",
+        "oracle_id": "7c209753-121b-4859-944b-4e33f885e777",
+        "scryfall_id": "ecdf2bd9-87b9-470a-ad2e-0ebf98560f87"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
