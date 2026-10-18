@@ -1383,6 +1383,19 @@
         "scryfall_id": "845e5663-2959-44ae-b4c6-d6ea41f01d6e"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Lyra Dawnbringer",
+        "oracle_id": "592c91fc-6430-4c76-9460-65f047350f67",
+        "scryfall_id": "f9fa30b6-3a33-46fd-8b32-ac1cfa41500d"
+      },
+      "back": {
+        "name": "Stonehewer Giant",
+        "oracle_id": "b3d99ea0-d61f-4394-8913-b4057c38ff3e",
+        "scryfall_id": "0efda05d-01ea-4478-b075-00a31d7037f8"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
