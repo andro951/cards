@@ -1448,6 +1448,19 @@
         "scryfall_id": "ecdf2bd9-87b9-470a-ad2e-0ebf98560f87"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Imperial Recruiter",
+        "oracle_id": "4d6a1391-817a-4ddc-840d-886b138eeb3f",
+        "scryfall_id": "05bd329b-5707-42fc-af1c-084cc604e805"
+      },
+      "back": {
+        "name": "Isshin, Two Heavens as One",
+        "oracle_id": "65114758-9a75-43a7-96e8-0aa68faa6b24",
+        "scryfall_id": "a062a004-984e-4b62-960c-af7288f7a3e9"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
