@@ -39,7 +39,34 @@ Existing `nickname`, `flavor_text`, and `artist` fields remain supported. UUID-s
 
 The helper initially creates at most 80 card thumbnails and 60 artwork thumbnails. Search and Show more let large folders remain usable. Local paths and original extensions are retained rather than reducing every image to a card-name stem.
 
+## Alternate artwork and split quantities
+
+Select an unused image in **Match custom artwork**, choose **Select existing card**, select a card from the searchable image grid, then choose **Split copies**. The card editor also offers **Add alternate art** for cards using a custom artwork folder. Each split moves copies from the selected entry; it never adds copies to the deck. Moving all copies removes the empty original entry. Each variant has its own card tile and art positioning. The selected Scryfall printing stays the same.
+
+Version-1 documents accept a top-level `artVariants` array:
+
+```json
+{
+  "version": 1,
+  "cards": [],
+  "artVariants": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "card": {"name": "Plains", "section": "mainboard"},
+      "quantity": 1,
+      "faces": [{"name": "Plains", "art": "alternate_plains.png"}]
+    }
+  ]
+}
+```
+
+The UI creates the stable variant ID and includes available printing/Oracle IDs in `card`. Each `faces` filename is relative to the artwork folder. Double-faced cards stay together; a variant can map either or both faces. On import, alternate quantities are allocated from the source deck's existing copies and the remainder keeps the original art. A split requiring more copies than the source contains is rejected. Entries for cards absent from the current deck remain in the document.
+
+Only new or changed art variants need preparation; unchanged original entries retain their cached renders. Token face selectors use `art_variant` to distinguish different artwork for the same token. Independent edits to separate variants merge when saving a shared file; conflicting edits to the same variant require a reimport.
+
 ## Saving data.json
+
+Shared files may include token assignments for other decks. A pairing only applies when its referenced token faces are present in the current deck; a normal card with the same identity does not count as a token. Other pairings remain saved without warnings or affecting print counts. Any token face actually present still needs an applicable pairing before printing. New pairings created in the UI must use current token faces.
 
 - A retained local file handle allows updating that file after write permission is granted. A retained artwork directory allows creating `data.json` there. Browsers using ordinary file inputs cannot expose the original writable location; they offer a download.
 - Folder selection can discover a root `data.json` and retain its handle. Standalone JSON selection uses the supported browser file picker to retain the original handle.

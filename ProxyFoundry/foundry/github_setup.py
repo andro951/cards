@@ -27,7 +27,7 @@ def parse_card_data_json(raw):
 def validate_card_data_for_deck(workspace,deck_id,entries):
     from .card_data import validate_targets
     deck=workspace.deck(str(deck_id))
-    return entries if deck.get('pendingImport') else validate_targets(deck,entries)
+    return entries if deck.get('pendingImport') else validate_targets(deck,entries,allow_missing=True)
 
 
 def import_card_data_url(workspace, payload, include_document=False):
@@ -312,7 +312,7 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
         card_data = parse_card_data_json(raw)
         deck_id = payload.get('deckId')
         if deck_id and card_data:
-            validate_card_data_for_deck(workspace, deck_id, card_data)
+            card_data=validate_card_data_for_deck(workspace, deck_id, card_data)
         done += 1
         progress(done, total, 'Imported data.json')
         yield

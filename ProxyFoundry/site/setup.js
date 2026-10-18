@@ -4,7 +4,7 @@ import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
-import {checkArtwork,offerDataSave} from './artwork-review.js';
+import {checkArtwork,offerDataSave,saveArtVariantData} from './artwork-review.js';
 import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub} from './artwork-files.js';
 import {originalArtist,composeCredit,ensureCustomArtCredits} from './credits.js';
 import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
@@ -89,7 +89,7 @@ export function renderSetup(root,deck,onSaved){
   const tokenFrameLabel=document.createElement('label');tokenFrameLabel.className='field';
   const tokenFrameTitle=document.createElement('span');tokenFrameTitle.textContent='Token frame';
   const tokenFrame=document.createElement('select');tokenFrame.id='token-frame';
-  for(const [value,label] of [['auto','Automatic token frame'],['token-classic','Classic arched token'],['token-full-art','Modern full-art token'],['token-borderless','Modern borderless token'],['godzilla-card','Godzilla full art token']]){
+  for(const [value,label] of [['auto','Automatic · Modern full-art token'],['token-classic','Classic arched token'],['token-full-art','Modern full-art token'],['token-borderless','Modern borderless token'],['godzilla-card','Godzilla full art token']]){
     const option=document.createElement('option');option.value=value;option.textContent=label;tokenFrame.append(option);
   }
   tokenFrame.value=s.templateRules.token||'auto';tokenFrameLabel.append(tokenFrameTitle,tokenFrame);
@@ -224,6 +224,9 @@ export function renderSetup(root,deck,onSaved){
     };
   });
   const applyDataArtist=settings=>{
+    for(const field of [`artVariants`,`tokenAssignments`,`tokenTreatments`]) {
+      if(settings&&Object.hasOwn(settings,field))s[field]=structuredClone(settings[field]);
+    }
     if(settings&&Object.hasOwn(settings,'artist')){
       s.artist=settings.artist;$('#deck-artist',root).value=s.artist;
     }
@@ -262,8 +265,9 @@ export function renderSetup(root,deck,onSaved){
   });
   const redrawFrames=()=>{
     const host=$('#frame-choices',root);
+    const frameGroups=s.allCardsTokens?{token:deck.pendingImport?null:deck.cards.reduce((count,card)=>count+card.faces.length,0)}:groups;
     host.replaceChildren();
-    if(!Object.keys(groups).length){
+    if(!Object.keys(frameGroups).length){
       const empty=document.createElement('p');
       empty.textContent='Add cards first. Their layout groups will appear here.';
       host.append(empty);
@@ -272,7 +276,7 @@ export function renderSetup(root,deck,onSaved){
     const body=document.createElement('div');
     body.className='pair-grid';
     Object.assign(body.style,{maxHeight:'none',overflow:'visible',gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,210px),1fr))'});
-    for(const [group,count] of Object.entries(groups)){
+    for(const [group,count] of Object.entries(frameGroups)){
       const row=document.createElement('article');row.className='well';
       const layout=document.createElement('h3');
       layout.textContent=(state.bootstrap.groups[group]||group)+' · '+(count===null?'Details loading':count);
@@ -338,7 +342,11 @@ export function renderSetup(root,deck,onSaved){
   symbolGithubInput.value=s.symbolsSource?.value||'';
   (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
   $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'},result.settings);}finally{input.value='';}});
-  const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
+  const redrawTokenOptions=()=>{
+    s.allCardsTokens=$('#all-cards-tokens',root).checked;
+    $('#all-token-options',root).classList.toggle('hidden',!s.allCardsTokens);
+    redrawFrames();
+  };
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
     $$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x.dataset.mode===s.source.mode));
@@ -393,7 +401,7 @@ export function renderSetup(root,deck,onSaved){
     $('#local-art',root).hidden=true;$('#local-art',root).after(folderButton);
     folderButton.onclick=()=>attempt(async()=>{let files;try{files=await pickArtworkFiles(deck.id);}catch(error){if(error.name==='AbortError')return;throw error;}await importArtwork(files);});
   }
-  let pairedChanges=[];
+  let pairedChanges=[],variantChanges=false;
   const reviewArtwork=async()=>{
     refreshMetadata(await ensureMetadata(deck.id));
     readSettings();
@@ -404,6 +412,9 @@ export function renderSetup(root,deck,onSaved){
       await importArtwork(files);
     });
     if(!result)return false;
+    if(result.artVariants&&JSON.stringify(result.artVariants)!==JSON.stringify(s.artVariants||[])){
+      s.artVariants=result.artVariants;variantChanges=true;mark();
+    }
     s.artDefaults=result.defaults;s.artReviewSignature=result.signature;
     stagedCardData=mergeDataDocument({version:1,cards:stagedCardData},result.changes).cards;
     pairedChanges=mergeDataDocument({version:1,cards:pairedChanges},result.changes).cards;
@@ -460,7 +471,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       readSettings();
       const version=changeVersion;
       const updated=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)});
-      if(updated.revision>=deck.revision)Object.assign(deck,updated);persistedVersion=version;
+      if(updated.revision>=deck.revision){const changedCount=updated.cards.length!==deck.cards.length;Object.assign(deck,updated);if(changedCount)refreshMetadata(deck);}persistedVersion=version;
       if(state.activeDeck?.id===deck.id)state.activeDeck=deck;
       if(state.setupActions?.root===root)state.dirty=persistedVersion!==changeVersion;
       if(root.isConnected)$('#setup-state',root).textContent=state.dirty?'Saving changes…':'Changes saved';
@@ -470,6 +481,9 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     return saveQueue;
   }
   async function exportPairs(){
+    if(variantChanges){
+      Object.assign(deck,await saveArtVariantData(deck,pairedChanges));pairedChanges=[];variantChanges=false;return;
+    }
     await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'',deck.cards);pairedChanges=[];
   }
   let generating=false;

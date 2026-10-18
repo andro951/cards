@@ -76,6 +76,17 @@ def test_pairing_changes_never_invalidate_face_renders_or_preparation_keys(token
         assert [ws._preparation_key(card,result['settings'],{}) for card in result['cards']]==keys
 
 
+def test_assigned_faces_remain_available_for_multiple_distinct_tokens(token_deck):
+    ws,deck,cards=token_deck
+    rows=[assignment(cards[0],cards[1],7),assignment(cards[0],None,2),assignment(cards[1],None,3)]
+    ws.save(deck['id'],{'revision':deck['revision'],'tokenAssignments':rows})
+    result=ws.deck(deck['id'])
+    assert len(result['tokens']['faces'])==2
+    assert [face['used'] for face in result['tokens']['faces']]==[9,10]
+    assert len(result['tokens']['assigned'])==4
+    assert result['tokens']['ready']
+
+
 @pytest.mark.parametrize('count',[0,-1,10000,True,1.5,'2'])
 def test_invalid_quantities_rejected(token_deck,count):
     _,_,cards=token_deck
@@ -136,14 +147,49 @@ def test_deck_wide_treatment_is_classified_without_rendering(token_deck):
     assert len(tokens.overview(deck)['cardIds'])==4
 
 
-def test_removed_face_blocks_print_and_assignment_delete_restores_unused(token_deck):
+def test_missing_partner_is_ignored_but_present_token_still_needs_a_back(token_deck):
     ws,deck,cards=token_deck
     ws.save(deck['id'],{'revision':deck['revision'],'tokenAssignments':[assignment(cards[0],cards[1])]})
     current=ws.deck(deck['id']);ws.mutate_card(deck['id'],cards[1]['id'],{'revision':current['revision'],'remove':True})
-    report=ws.deck(deck['id'])['tokens'];assert report['invalid'] and report['unused']
+    report=ws.deck(deck['id'])['tokens'];assert not report['invalid'] and report['unused']
     with pytest.raises(ValidationError,match='Tokens not ready'):Orders(ws).plan([deck['id']])
     current=ws.deck(deck['id']);ws.save(deck['id'],{'revision':current['revision'],'tokenAssignments':[]})
     assert not ws.deck(deck['id'])['tokens']['invalid']
+
+
+def test_shared_token_assignments_do_not_block_normal_deck_or_change_print_counts(token_deck):
+    ws,deck,cards=token_deck
+    rows=[assignment(cards[0],cards[1],7),assignment(cards[2],None,8)]
+    deck['cards']=[cards[2]]
+    deck=ws.store.put('decks',deck,deck['revision'])
+    ws.save(deck['id'],{'revision':deck['revision'],'settings':{'tokenAssignments':rows}})
+    result=ws.deck(deck['id'])
+    assert result['tokens']['ready'] and result['printStatus']=='ready'
+    assert not result['tokens']['invalid'] and not result['tokens']['cardIds'] and not result['tokens']['assigned']
+    assert result['settings']['tokenAssignments']==rows
+    plan=Orders(ws).plan([deck['id']])
+    assert plan['count']==cards[2]['quantity']
+    assert {row['name'] for row in plan['cards']}=={cards[2]['name']}
+
+
+def test_shared_pairs_preserved_when_saving_subset_and_apply_when_partner_returns(token_deck):
+    ws,deck,cards=token_deck
+    original=assignment(cards[0],cards[1],2)
+    deck['settings']['tokenAssignments']=[original]
+    deck['cards']=[cards[0],cards[2]]
+    deck=ws.store.put('decks',deck,deck['revision'])
+    report=ws.deck(deck['id'])['tokens']
+    assert not report['invalid'] and report['unused']==[{'cardId':cards[0]['id'],'name':'Angel'}]
+    rows=[original,assignment(cards[0],None,3)]
+    ws.save(deck['id'],{'revision':deck['revision'],'tokenAssignments':rows})
+    saved=ws.deck(deck['id'])
+    assert saved['tokens']['ready'] and saved['settings']['tokenAssignments']==rows
+    assert Orders(ws).plan([deck['id']])['count']==3+cards[2]['quantity']
+    saved['cards'].append(cards[1]);ws.store.put('decks',saved,saved['revision'])
+    report=ws.deck(deck['id'])['tokens']
+    assert report['ready'] and len(report['assigned'])==2
+    assert {face['cardId']:face['used'] for face in report['faces']}=={cards[0]['id']:5,cards[1]['id']:2}
+    assert report['physicalCount']==5
 
 
 def test_reimported_printing_resolves_by_oracle_and_name(token_deck):
@@ -171,8 +217,7 @@ def test_saved_file_assignments_import_in_setup_and_refresh_from_github(token_de
 
 def test_existing_invalid_assignments_can_be_removed_one_at_a_time(token_deck):
     ws,deck,cards=token_deck
-    missing=copy.deepcopy(cards[1]);missing['scryfall']['id']=uid();missing['scryfall']['oracle_id']=uid();missing['scryfall']['name']='Missing'
-    rows=[assignment(cards[0],missing),assignment(missing,None)]
+    rows=[assignment(cards[3],None),{'front':tokens.reference(cards[0]),'back':{'kind':'reverse'},'quantity':1}]
     deck['settings']['tokenAssignments']=rows;ws.store.put('decks',deck,deck['revision'])
     current=ws.deck(deck['id']);assert len(current['tokens']['invalid'])==2
     ws.save(deck['id'],{'revision':current['revision'],'tokenAssignments':rows[1:]})

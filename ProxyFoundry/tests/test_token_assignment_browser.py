@@ -4,10 +4,95 @@ from pathlib import Path
 import pytest
 from PIL import Image,ImageDraw
 from test_browser_storage import static_browser
+from test_browser import browser_app
 
 pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Actual browser token assignment UI')
 ROOT=Path(__file__).resolve().parents[1]
 DECK='11111111-1111-4111-8111-111111111111'
+
+
+def test_shared_token_assignments_do_not_show_token_errors_on_normal_deck(browser_app):
+    from test_browser import sf
+    from foundry.token_assignments import reference
+    app,server,page,errors=browser_app
+    deck=app.ws.new_deck('Normal subset deck')
+    card=app.ws.sources.entry(sf(),2)
+    rows=[{'front':reference(card),'back':{'kind':'card-back'},'quantity':8},
+          {'front':{'name':'Absent token'},'back':{'kind':'card-back'},'quantity':3}]
+    deck['cards']=[card];deck['settings']['tokenAssignments']=rows
+    app.store.put('decks',deck,deck['revision'])
+    page.goto(server.origin+'/#deck/'+deck['id'])
+    page.locator('[data-card="'+card['id']+'"]').wait_for()
+    assert page.locator('[aria-label="Tokens not ready"]').count()==0
+    assert page.get_by_role('button',name='Remove invalid pairing').count()==0
+    assert page.locator('[data-deck-section]').count()==1
+    assert app.ws.deck(deck['id'])['settings']['tokenAssignments']==rows
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('first_action',['pair','convert'])
+def test_token_save_refreshes_revision_after_connecting_github(browser_app,first_action):
+    from foundry.domain import uid
+    app,server,page,errors=browser_app
+    deck=app.ws.new_deck('Token save revision')
+    deck['settings']['dataJsonSource']={'kind':'github','value':'https://github.com/owner/cards/tree/main'}
+    cards=[]
+    for name,layout in [('Angel','token'),('Germ','token'),('Ordinary','normal')]:
+        cards.append(app.ws.sources.entry({'id':uid(),'oracle_id':uid(),'name':name,'layout':layout,
+            'type_line':('Token ' if layout=='token' else '')+'Creature — Human','rarity':'common'}))
+    deck=app.store.put('decks',{**deck,'cards':cards},deck['revision'])
+    page.evaluate('''async()=>{
+        const files=await import('/site/artwork-files.js');
+        await files.connectGithub('owner/cards','test-only',false);
+        const original=window.fetch;window.testGithubDocument=null;window.testGithubWrites=0;
+        window.fetch=async(url,options={})=>{
+            if(!String(url).startsWith('https://api.github.com/'))return original(url,options);
+            if(options.method==='PUT'){
+                if(!window.testGithubWrites)await new Promise(resolve=>window.finishFirstGithubSave=resolve);
+                window.testGithubDocument=JSON.parse(atob(JSON.parse(options.body).content));window.testGithubWrites++;
+                return new Response('{}',{status:201});
+            }
+            if(!window.testGithubDocument)return new Response('{}',{status:404});
+            return new Response(JSON.stringify({sha:'sha-'+window.testGithubWrites,encoding:'base64',content:btoa(JSON.stringify(window.testGithubDocument))}),{status:200});
+        };
+    }''')
+    page.evaluate('(id)=>location.hash="#deck/"+id',deck['id'])
+    if first_action=='pair':
+        page.locator('[data-token-face="'+cards[0]['id']+'"]').click()
+        page.locator('[data-token-back="'+cards[1]['id']+'"]').click()
+        page.get_by_role('button',name='Save token',exact=True).click()
+    else:
+        page.locator('[data-card="'+cards[2]['id']+'"]').click()
+        page.get_by_role('button',name='Convert to token',exact=True).click()
+        page.get_by_role('button',name='Apply token treatment',exact=True).click()
+    page.wait_for_function('() => typeof window.finishFirstGithubSave==="function"')
+    assert page.locator('#modal-host .modal').get_attribute('aria-busy')=='true'
+    assert page.locator('#modal-close').is_disabled()
+    page.keyboard.press('Escape')
+    assert page.locator('#modal-host .modal').count()==1
+    page.evaluate('window.finishFirstGithubSave()')
+    page.locator('#modal-host .modal').wait_for(state='detached')
+    current=app.ws.deck(deck['id'])
+    assert current['settings']['dataJsonSource']['value']=='https://github.com/owner/cards/blob/main/data.json'
+    assert current['revision']==deck['revision']+2
+    assert page.evaluate("import('/site/ui.js').then(module=>module.state.activeDeck.revision)")==current['revision']
+    page.locator('[data-token-face="'+cards[1]['id']+'"]').click()
+    page.locator('[data-token-back="normal"]').click()
+    page.get_by_role('button',name='Save token',exact=True).click()
+    page.locator('#modal-host .modal').wait_for(state='detached')
+    saved=app.ws.deck(deck['id'])
+    assert len(saved['settings']['tokenAssignments'])==(2 if first_action=='pair' else 1)
+    assert page.evaluate('window.testGithubWrites')==2
+    #An actual independent edit must still reject stale token writes.
+    page.locator('[data-token-face="'+cards[0]['id']+'"]').click()
+    page.locator('[data-token-back="normal"]').click()
+    app.ws.save(deck['id'],{'revision':saved['revision'],'notes':'Changed in another tab'})
+    page.get_by_role('button',name='Save token',exact=True).click()
+    page.get_by_text('This deck changed in another tab. Reload it before saving; your edits were not overwritten.',exact=True).wait_for()
+    final=app.ws.deck(deck['id'])
+    assert final['settings']['tokenAssignments']==saved['settings']['tokenAssignments']
+    assert final['notes']=='Changed in another tab'
+    assert not errors,errors
 
 
 def test_token_grid_pairing_duplicate_edit_download_and_reload(static_browser,tmp_path):
@@ -67,10 +152,11 @@ def request(app,method,url,body,headers):
     path=tmp_path/'data.json';download.value.save_as(path);document=json.loads(path.read_text(encoding='utf-8'))
     assert len(document['tokenAssignments'])==2
     assert next(row for row in document['tokenAssignments'] if 'kind' not in row['back'])['quantity']==7
-    page.locator('[data-card-filter="all"]').click()
+    assert page.locator('[data-card-filter="all"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('[data-token-face]').count()==2
     assert page.locator('.page-head .badge').inner_text()=='Ready to print'
     assert page.locator('[data-token-pair]').count()==2
-    assert page.locator('[data-token-face="'+angel['id']+'"] .quantity-pill').inner_text()=='7 used'
+    assert page.locator('[data-token-face="'+angel['id']+'"] .quantity-pill').inner_text()=='(7)'
     page.locator('[data-token-face="'+germ['id']+'"]').click();page.locator('[data-token-back="'+angel['id']+'"]').click()
     duplicate=page.get_by_role('alertdialog',name='Duplicate token combination');assert '7 copies' in duplicate.inner_text()
     duplicate.get_by_role('button',name='Adjust quantity').click();page.get_by_role('spinbutton',name='Token quantity').fill('3')
@@ -82,7 +168,7 @@ def request(app,method,url,body,headers):
     page.get_by_role('heading',name='Save token assignments').wait_for(timeout=30000)
     page.get_by_role('button',name='Close dialog',exact=True).click()
     page.reload();page.locator('[data-token-face]').first.wait_for(timeout=90000)
-    assert page.locator('[data-token-face="'+angel['id']+'"] .quantity-pill').inner_text()=='3 used'
+    assert page.locator('[data-token-face="'+angel['id']+'"] .quantity-pill').inner_text()=='(3)'
     result=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/"+DECK+"');}")
     assert [c['faces'] for c in result['cards']]==before
     assert len(result['settings']['tokenAssignments'])==2
@@ -105,6 +191,7 @@ def request(app,method,url,body,headers):
     page.get_by_role('button',name='Apply token treatment',exact=True).click()
     page.get_by_role('heading',name='Save token assignments').wait_for(timeout=30000)
     page.get_by_role('button',name='Close dialog',exact=True).click()
+    page.locator('[data-token-face]').nth(2).wait_for()
     assert page.locator('[data-token-face]').count()==3
     assert page.locator('.page-head .badge').inner_text()=='Tokens not ready'
     page.locator('[data-card-filter="tokens"]').click();assert page.locator('[data-token-face]').count()==1
@@ -114,6 +201,27 @@ def request(app,method,url,body,headers):
     final=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/decks/"+DECK+"');}")
     assert final['tokens']['ready'] and len(final['settings']['tokenAssignments'])==3
     assert final['settings']['tokenTreatments']
+    assert page.locator('[data-card-filter="all"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('[data-token-face]').count()==3
+    ordinary=seed['cards'][2]
+    page.locator('[data-token-face="'+ordinary['id']+'"]').click()
+    assert page.locator('[data-token-back="'+angel['id']+'"]').count()==1
+    assert page.locator('[data-token-back="'+germ['id']+'"]').count()==1
+    assert page.locator('[data-token-back="'+ordinary['id']+'"]').count()==0
+    page.locator('[data-token-back="'+angel['id']+'"]').click()
+    page.get_by_role('spinbutton',name='Token quantity').fill('2')
+    page.get_by_role('button',name='Save token',exact=True).click()
+    page.get_by_role('heading',name='Save token assignments').wait_for(timeout=30000)
+    page.get_by_role('button',name='Close dialog',exact=True).click()
+    assert page.locator('[data-token-face]').count()==3
+    page.locator('[data-token-pair]').nth(3).wait_for()
+    assert page.locator('[data-token-pair]').count()==4
+    assert page.locator('[data-token-face="'+angel['id']+'"] .quantity-pill').inner_text()=='(5)'
+    assert page.locator('[data-token-face="'+ordinary['id']+'"] .quantity-pill').inner_text()=='(4)'
+    page.locator('[data-token-face="'+germ['id']+'"]').click()
+    assert page.locator('[data-token-back="'+angel['id']+'"]').count()==1
+    assert page.locator('[data-token-back="'+ordinary['id']+'"]').count()==1
+    page.get_by_role('button',name='Cancel',exact=True).click()
 
 
 def test_token_data_merge_preserves_cards_and_rejects_remote_pair_conflicts(static_browser):

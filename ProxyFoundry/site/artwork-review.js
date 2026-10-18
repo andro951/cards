@@ -1,6 +1,7 @@
 import {ensureMetadata} from './metadata.js';
-import {$,api,job,modal,closeModal,thumbnail,state,toast,uploadFolder} from './ui.js';
-import {sourceRecord,mergeCardDataDocument,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
+import {mountArtVariantPicker} from './art-variants.js';
+import {$,api,job,modal,closeModal,setModalBusy,thumbnail,state,toast,uploadFolder} from './ui.js';
+import {sourceRecord,mergeCardDataDocument,equalDataValues,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
 
 const element=(tag,text=``)=>{
     const node=document.createElement(tag);
@@ -36,10 +37,13 @@ const enlarge=(url,label)=>{
 
 //#region Pairing helper
 export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
-    let review=initial,selected=null,search=``;
+    let review=initial,selected=null,selectedArt=null,search=``;
+    let variants=structuredClone(settings.artVariants||[]);
+    const splits=[];
     const saved=await sourceRecord(`pairing:${deckId}`);
     const pairs=new Map(saved?.signature===review.signature?saved.pairs:[]);
-    const manualItems=()=>review.items.filter(item=>[`missing`,`conflict`].includes(item.status));
+    const remaining=card=>card.quantity-splits.filter(split=>split.card.id===card.id).reduce((sum,split)=>sum+split.created.quantity,0);
+    const manualItems=()=>review.items.filter(item=>[`missing`,`conflict`].includes(item.status)&&remaining(review.cards?.find(card=>card.id===item.cardId)||{quantity:1})>0);
     const files=new Map();
     const loadFiles=()=>{
         const previous=new Map(files);
@@ -68,6 +72,7 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
         const status=element(`p`);status.setAttribute(`role`,`status`);status.id=`artwork-counts`;
         const warning=element(`p`);warning.id=`artwork-warning`;warning.setAttribute(`role`,`alert`);
         const paired=element(`section`);paired.setAttribute(`aria-label`,`Paired artwork`);
+        const variantPanel=element(`section`);variantPanel.hidden=true;
         const columns=element(`div`);Object.assign(columns.style,{display:`flex`,gap:`24px`,alignItems:`flex-start`,flexWrap:`wrap`});
         const left=element(`section`),right=element(`section`);
         left.setAttribute(`aria-label`,`Cards needing artwork`);right.setAttribute(`aria-label`,`Unused artwork`);
@@ -84,6 +89,23 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
         left.append(element(`h3`,`Cards needing artwork`),leftGrid);
         right.append(element(`h3`,`Unused artwork`),searchInput,rightGrid);columns.append(left,right);
         const actions=element(`footer`);Object.assign(actions.style,{padding:`16px`,display:`flex`,gap:`12px`,flexWrap:`wrap`});
+        const cancel=button(`Cancel`,()=>{
+            done=true;clearTimeout(saveTimer);
+            closeModal({completed:true});resolve(null);
+        });cancel.id=`artwork-cancel`;
+        const selectExisting=button(`Select existing card`,()=>{
+            const displays=new Map([instructions,status,warning,paired,columns,actions].map(node=>[node,node.style.display]));
+            for(const [node] of displays)node.style.display=`none`;
+            variantPanel.hidden=false;
+            const restore=()=>{
+                variantPanel.hidden=true;
+                for(const [node,display] of displays)node.style.display=display;
+                draw();
+            };
+            mountArtVariantPicker(variantPanel,{cards:(review.cards||[]).filter(card=>remaining(card)>0).map(card=>({...card,quantity:remaining(card)})),inventory:review.inventory,variants,initialArt:files.get(selectedArt),
+                onCancel:restore,onComplete:(rows,split)=>{variants=rows;splits.push(split);selectedArt=null;restore();changed();}});
+        });
+        selectExisting.disabled=true;selectExisting.title=`Use this art as another printing of an existing card.`;
         const finish=button(`Finish`,()=>complete(false));finish.id=`artwork-finish`;
         const fallback=button(`Default Art for the rest`,()=>complete(true));fallback.id=`artwork-default-rest`;fallback.style.fontWeight=`bold`;
         const add=button(settings.source.mode===`github`?`Refresh GitHub folder`:`Add images`,async()=>{
@@ -93,12 +115,12 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
             finally{add.disabled=false;}
         });add.id=`artwork-add-images`;add.hidden=!onAdd;
         if(!onAdd)add.style.display=`none`;
-        actions.append(add,finish,fallback);
-        body.append(instructions,status,warning,paired,columns);box.append(actions);
+        actions.append(cancel,add,selectExisting,finish,fallback);
+        body.append(instructions,status,warning,paired,columns,variantPanel);box.append(actions);
         let leftLimit=80,rightLimit=60;
         const cardNodes=new Map(),fileNodes=new Map(),pairNodes=new Map();
         const selectCard=item=>{
-            selected=item.id;warning.textContent=item.reason;
+            selected=item.id;selectedArt=null;selectExisting.disabled=true;warning.textContent=item.reason;
             for(const [id,node] of cardNodes) {
                 node.style.outline=id===selected?`3px solid #ef8a23`:``;
                 node.setAttribute(`aria-pressed`,id===selected?`true`:`false`);
@@ -106,7 +128,9 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
         };
         const pairFile=file=>{
             if(!selected) {
-                warning.textContent=`Select a card on the left first.`;
+                selectedArt=file.key;selectExisting.disabled=!(review.cards||[]).some(card=>remaining(card)>0);
+                warning.textContent=`${file.filename} selected. Choose Select existing card to use it as alternate artwork.`;
+                for(const [key,node] of fileNodes)node.style.outline=key===file.key?`3px solid #ef8a23`:``;
                 return;
             }
 
@@ -114,10 +138,24 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
         };
         const draw=()=>{
             const outstanding=manualItems().filter(item=>!pairs.has(item.id));
-            const used=new Set([...review.items.filter(item=>item.key!==null&&!pairs.has(item.id)).map(item=>item.key),...pairs.values()]);
+            const used=new Set([...review.items.filter(item=>item.key!==null&&!pairs.has(item.id)).map(item=>item.key),...pairs.values(),...splits.map(split=>split.art.key)]);
             const unused=review.inventory.filter(file=>!used.has(file.key));
             status.textContent=`${outstanding.length} cards need artwork · ${unused.length} unused images · ${pairs.size} paired`;
             paired.replaceChildren();
+            for(const split of splits) {
+                const row=element(`div`);row.dataset.artVariant=split.created.id;
+                Object.assign(row.style,{display:`flex`,gap:`16px`,alignItems:`center`,flexWrap:`wrap`});
+                row.append(imageButton(split.art.image,split.art.filename,()=>enlarge(split.art.image,split.art.filename)),element(`strong`,`${split.face.name} · ${split.created.quantity} alternate-art copies`),button(`Undo alternate art`,()=>{
+                    variants=variants.filter(row=>row.id!==split.created.id);
+                    if(split.source) {
+                        const source=variants.find(row=>row.id===split.source.id);
+                        if(source)source.quantity+=split.created.quantity;
+                        else variants.push({...split.source,quantity:split.created.quantity});
+                    }
+
+                    splits.splice(splits.indexOf(split),1);draw();changed();
+                }));paired.append(row);
+            }
             for(const [id,key] of pairs) {
                 const item=review.items.find(item=>item.id===id),file=files.get(key);
                 let row=pairNodes.get(id);
@@ -173,13 +211,22 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
                 warning.textContent=`These cards don’t have custom artwork. Add images now, or choose Default Art for the rest to use their Scryfall artwork.`;
         };
         const complete=async useDefaults=>{
-            const changes=[...pairs].map(([id,key])=>({...review.items.find(item=>item.id===id).selector,art:files.get(key).filename}));
+            const changes=[];
+            for(const [id,key] of pairs) {
+                const item=review.items.find(item=>item.id===id);
+                if(item.variantId) {
+                    const row=variants.find(row=>row.id===item.variantId),face=row?.faces.find(face=>face.name===item.name);
+                    if(face)face.art=files.get(key).filename;
+                    else if(row)row.faces.push({name:item.name,art:files.get(key).filename});
+                }
+                else changes.push({...item.selector,art:files.get(key).filename});
+            }
             const defaults=review.items.filter(item=>item.status===`default`||useDefaults&&manualItems().some(row=>row.id===item.id)&&!pairs.has(item.id)).map(item=>item.id);
-            finish.disabled=true;fallback.disabled=true;
+            finish.disabled=true;fallback.disabled=true;cancel.disabled=true;
             try{await sourceRecord(`pairing:${deckId}`,null);}
-            catch(error){warning.textContent=error.message;draw();return;}
+            catch(error){warning.textContent=error.message;cancel.disabled=false;draw();return;}
             done=true;clearTimeout(saveTimer);
-            closeModal({completed:true});resolve({changes,defaults,signature:review.signature});
+            closeModal({completed:true});resolve({changes,defaults,signature:splits.length?``:review.signature,artVariants:variants});
         };
         searchInput.oninput=()=>{search=searchInput.value;rightLimit=60;draw();};
         draw();
@@ -199,29 +246,34 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         return;
 
     const record=await sourceRecord(`deck:${deckId}`)||{};
-    //Reuse our last write until generation imports a newer source snapshot.
-    const sameSource=!githubUrl||record.github===githubUrl;
-    const refreshed=options.baseline&&JSON.stringify(options.baseline)!==JSON.stringify(record.sourceBaseline);
-    const baseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
+    let sameSource=!githubUrl||record.github===githubUrl;
     let url=githubUrl||record.github;
     let sourceWarning=``;
     try{if(url) {
         const location=githubDataLocation(url);
+        sameSource||=Boolean(record.github&&equalDataValues(githubDataLocation(record.github),location));
         url=`https://github.com/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/blob/${encodeURIComponent(location.branch)}/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
     }}
     catch(error){url=``;sourceWarning=`Use the full GitHub folder link in Art & Setup to update data.json. You can download it now.`;}
-    const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged,sourceBaseline:options.baseline||null});
+    //Reuse our last write until generation imports a newer source snapshot.
+    const refreshed=options.baseline&&!equalDataValues(options.baseline,record.sourceBaseline);
+    const baseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
+    //The remote document can include pairs this deck never edited or imported.
+    const tokenBaseline=!refreshed&&sameSource&&record.tokenData||baseline;
+    const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged,
+        sourceBaseline:options.baseline||(sameSource?record.sourceBaseline:null)||null,
+        tokenData:options.tokenData?{...(!refreshed&&sameSource?record.tokenData:null),...options.tokenData}:(!refreshed&&sameSource?record.tokenData:null)||null});
     if(options.autoSave) {
         if(url) {
             const location=githubDataLocation(url),token=await githubCredential(location.repo);
             if(token) {
-                const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData);
+                const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline);
                 await rememberResult(merged);
                 return {github:url};
             }
         }
         else if(record.file||record.folder) {
-            const result=await saveLocalData({...record,document:baseline},changes,cards,options.tokenData);
+            const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData);
             await sourceRecord(`deck:${deckId}`,result);
             return {local:true};
         }
@@ -270,7 +322,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
                         guide.focus();save.disabled=false;saving=false;return;
                     }
 
-                    const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData);
+                    const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline);
                     await rememberResult(merged);status.textContent=`Updated ${location.repo}/${location.path} on ${location.branch}.`;
                     toast(status.textContent);
                     if(!remember.checked&&!remembered)
@@ -329,7 +381,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         else if(record.file||record.folder) {
             const save=button(record.file?`Update existing data.json`:`Create data.json in artwork folder`,async()=>{
                 save.disabled=true;saving=true;status.textContent=`Saving data.json…`;
-                try{const result=await saveLocalData({...record,document:baseline},changes,cards,options.tokenData);await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});}
+                try{const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData);await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});}
                 catch(error){status.textContent=error.message;}
                 finally{save.disabled=false;saving=false;}
             });choices.append(save);
@@ -384,6 +436,43 @@ export const checkArtwork=async(deck,settings=deck.settings,cardData=deck.cardDa
 
     return openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{if(onAdd)await onAdd();return load();}});
 };
+
+export const saveArtVariantData=async(deck,changes=[])=>{
+    const source=deck.settings.dataJsonSource,snapshot=deck.githubCardDataState;
+    const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder||``):source?.kind===`local`?``:deck.settings.githubSetupFolder||``;
+    const document={version:1,cards:deck.cardData||[],artVariants:deck.settings.artVariants||[]};
+    const options={autoSave:true,title:`Save alternate artwork`,baseline:snapshot?{version:1,cards:snapshot.entries,...snapshot.settings}:null,
+        tokenData:{artVariants:document.artVariants},beforePrompt:()=>closeModal({completed:true})};
+    const result=await offerDataSave(deck.id,changes,document,url,deck.cards,options).catch(error=>{
+        toast(`Saved in this deck. ${error.message}`,true);
+        return offerDataSave(deck.id,changes,document,url,deck.cards,{...options,autoSave:false});
+    });
+    if(result?.github&&result.github!==source?.value) {
+        const current=await api(`/api/decks/${deck.id}`);
+        await api(`/api/decks/${deck.id}/save`,{revision:current.revision,settings:{dataJsonSource:{kind:`github`,value:result.github}}});
+    }
+
+    return api(`/api/decks/${deck.id}`);
+};
+export const editAlternateArt=async(deck,card,face,onChanged)=>{
+    if(deck.settings.source.mode===`scryfall`) {
+        toast(`Choose a custom artwork folder in Art & setup first, then add alternate art from that folder.`,true);return;
+    }
+
+    const review=await job(`/api/setup/artwork-review`,{deckId:deck.id},{label:`Find alternate artwork`});
+    const choice=review.cards.find(item=>item.id===card.id),selected=choice.faces.find(item=>item.name===face.name);
+    const host=modal(`Add alternate art`,``,{size:`large`});
+    mountArtVariantPicker($(`.modal-body`,host),{cards:review.cards,inventory:review.inventory,variants:deck.settings.artVariants||[],initialCard:choice,initialFace:selected,
+        onCancel:()=>closeModal(),onComplete:async rows=>{
+            setModalBusy(host,true);
+            try {
+                await api(`/api/decks/${deck.id}/save`,{revision:deck.revision,artVariants:rows});
+                const updated=await saveArtVariantData(await api(`/api/decks/${deck.id}`));
+                await onChanged(updated);closeModal({completed:true});
+            }
+            finally {setModalBusy(host,false);}
+        }});
+};
 export const ensureArtworkReady=async (id,{deck:knownDeck=null,returnDeck=false}={})=>{
     const deck=await ensureMetadata(id,knownDeck);
     let updated=deck;
@@ -403,11 +492,14 @@ export const ensureArtworkReady=async (id,{deck:knownDeck=null,returnDeck=false}
         return false;
 
     if(settings.source.mode!==`scryfall`) {
+        const variantsChanged=result.artVariants&&JSON.stringify(result.artVariants)!==JSON.stringify(settings.artVariants||[]);
+        if(result.artVariants)settings.artVariants=result.artVariants;
         settings.artDefaults=result.defaults;settings.artReviewSignature=result.signature;
         const changed=result.changes.length||JSON.stringify(settings)!==JSON.stringify(deck.settings);
         const saved=changed?await api(`/api/decks/`+id+`/save`,{revision:deck.revision,settings,cardData:result.changes}):deck;
         updated=saved;
-        await offerDataSave(id,result.changes,{version:1,cards:saved.cardData||[]},settings.dataJsonSource?.kind===`github`?settings.githubSetupFolder||settings.source.githubFolder:``,saved.cards);
+        if(variantsChanged)updated=await saveArtVariantData(saved,result.changes);
+        else await offerDataSave(id,result.changes,{version:1,cards:saved.cardData||[]},settings.dataJsonSource?.kind===`github`?settings.githubSetupFolder||settings.source.githubFolder:``,saved.cards);
         if(state.activeDeck?.id===id)
             state.activeDeck=saved;
     }

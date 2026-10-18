@@ -1515,7 +1515,7 @@ def _token_frame_src(code):
 def _token_pt_src(code):
     return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
 
-def build_token_data(sem,artist,autofit,flags,style='token-classic'):
+def build_token_data(sem,artist,autofit,flags,style='token-full-art'):
     """Build tokens using the selected genuine CardConjurer token family."""
     types=set(sem.get('types',[]))
     creature='Creature' in types
@@ -1638,6 +1638,18 @@ def center_short_token_rules(data):
     content=str(rules.get('text') or '').strip()
     if content and token_has_short_text({'oracle_text':content,'flavor_text':(text.get('flavor') or {}).get('text')}):
         rules['align']='center'
+
+
+def fit_token_rules_above_pt(data):
+    text=data.get('text',{});rules=text.get('rules') or {}
+    if not str((text.get('pt') or {}).get('text') or '').strip() or not rules:return
+    for frame in data.get('frames',[]):
+        if 'Power/Toughness' not in str(frame.get('name','')):continue
+        bounds=frame.get('bounds') or _TOKEN_PT_BOUNDS
+        if rules.get('x',0)+rules.get('width',0)<=bounds['x'] or rules.get('x',0)>=bounds['x']+bounds['width']:continue
+        #Rules and flavor share the fitting box. Reserve the entire badge plus a small gap.
+        available=bounds['y']-.008-rules.get('y',0)
+        if available>0:rules['height']=min(rules.get('height',available),available)
 
 
 def configure_token_style(data,code,style,short):
@@ -2670,7 +2682,7 @@ class Compiler:
     def template_identity(self,group,choice):
         choice=RETIRED_BUILTINS.get(choice,choice)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(1 if group=='token' else 0)
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)
@@ -2683,7 +2695,7 @@ class Compiler:
             if choice=='godzilla-card' and group=='transform-back':version+=1
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
-            if group=='token':version+=1
+            if group=='token':version+=2
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
@@ -2758,7 +2770,7 @@ class Compiler:
                 d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
-                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-classic')
+                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-full-art')
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
@@ -2878,7 +2890,7 @@ class Compiler:
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
-                if choice=='token-full-art':apply_modern_token_text(data,frame_treatment_code(sem))
+                if choice in {'auto','token-full-art'}:apply_modern_token_text(data,frame_treatment_code(sem))
                 else:apply_full_art_text(data)
         if (choice in {'auto','legend-land'} and 'Land' in sem.get('types',[])
                 and recipe in {'land_full_legendary','land_full_dual_legendary','land_full_tri_legendary','land_five_color_legendary'}
@@ -2935,7 +2947,9 @@ class Compiler:
         data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
         if choice in {'auto','normal'} and not options.get('rawCard'):
             apply_hybrid_frame_treatment(data,sem)
-        if group=='token':center_short_token_rules(data)
+        if group=='token':
+            fit_token_rules_above_pt(data)
+            center_short_token_rules(data)
         if group=='planeswalker' and data.get('planeswalker') and (choice=='auto' or choice in BUILTIN_TEMPLATE_VERSIONS):
             from .planeswalker_frame import layout_planeswalker_abilities
             layout_planeswalker_abilities(data,sem)

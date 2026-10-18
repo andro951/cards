@@ -83,6 +83,14 @@ def test_csrf_and_runtime_isolation(running):
     assert request(s,'/api/bootstrap',headers={'Host':'evil.example'})[0]==403
 
 
+def test_runtime_serves_frame_composition_cache_module(running):
+    _,server=running
+    status,body,headers=request(server.runtime_server,'/site/frame-composition-cache.js',raw=True)
+    assert status==200
+    assert b'export class FrameCompositionCache' in body
+    assert 'javascript' in headers['Content-Type']
+
+
 def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
     app,s=running
     _,art,_=request(s,'/api/uploads',png(),headers={'X-Filename':'sample_card.png'})

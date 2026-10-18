@@ -1,4 +1,4 @@
-import {api,asset,thumbnail,modal,closeModal,attempt,toast,$,confirmAction,errorBox,state} from './ui.js';
+import {api,asset,thumbnail,modal,closeModal,setModalBusy,attempt,toast,$,confirmAction,errorBox,state} from './ui.js';
 import {offerDataSave} from './artwork-review.js';
 
 //#region Shared controls and persistence
@@ -26,11 +26,11 @@ const displayName=card=>card.faces[0]?.semanticOverrides?.nickname||card.scryfal
 const searchText=card=>[card.name,displayName(card),card.scryfall?.type_line,...card.faces.map(face=>[face.name,face.semanticOverrides?.nickname].join(` `))].join(` `).toLowerCase();
 const tokenData=deck=>({tokenAssignments:deck.settings.tokenAssignments||[],tokenTreatments:deck.settings.tokenTreatments||[]});
 const snapshot=deck=>deck.githubCardDataState?{version:1,cards:deck.githubCardDataState.entries,...deck.githubCardDataState.settings}:null;
-export const saveTokenData=async deck=>{
+export const saveTokenData=async(deck,{beforePrompt=null}={})=>{
     const source=deck.settings.dataJsonSource;
     const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder):``;
     const options={
-        title:`Save token assignments`,autoSave:true,baseline:snapshot(deck),tokenData:tokenData(deck)
+        title:`Save token assignments`,autoSave:true,baseline:snapshot(deck),tokenData:tokenData(deck),beforePrompt
     };
     const document={version:1,cards:deck.cardData||[],...tokenData(deck)};
     const result=await offerDataSave(deck.id,[],document,url,deck.cards,options).catch(error=>{
@@ -44,13 +44,35 @@ export const saveTokenData=async deck=>{
 
     return result;
 };
-const persist=async(deck,rows,onChanged)=>{
-    await api(`/api/decks/${deck.id}/save`,{revision:deck.revision,tokenAssignments:rows});
-    closeModal({completed:true});
-    const updated=await api(`/api/decks/${deck.id}`);
-    await onChanged(updated);
-    await saveTokenData(updated);
+const persistTokenChange=async(deck,onChanged,save)=>{
+    const existing=$(`#modal-host .modal`);
+    const host=existing||modal(`Saving token assignments`,``,{dismissible:false});
+    const controls=[...host.querySelectorAll(`button,input,select`)].map(node=>[node,node.disabled]);
+    for(const [node] of controls) {
+        node.disabled=true;
+    }
+
+    setModalBusy(host,true);
+    try {
+        await save();
+        const updated=await api(`/api/decks/${deck.id}`);
+        await saveTokenData(updated,{beforePrompt:()=>closeModal({completed:true})});
+        //Connecting the data file can save the deck again; display that revision.
+        await onChanged(await api(`/api/decks/${deck.id}`));
+        closeModal({completed:true});
+    }
+    finally {
+        setModalBusy(host,false);
+        for(const [node,disabled] of controls) {
+            node.disabled=disabled;
+        }
+
+        if(!existing&&host.isConnected)
+            closeModal({completed:true});
+    }
 };
+const persist=(deck,rows,onChanged)=>persistTokenChange(deck,onChanged,()=>
+    api(`/api/decks/${deck.id}/save`,{revision:deck.revision,tokenAssignments:rows}));
 const savedRows=deck=>{
     const rows=structuredClone(deck.settings.tokenAssignments||[]);
     for(const pair of deck.tokens.assigned) {
@@ -218,7 +240,7 @@ export const assignToken=async(deck,front,onChanged,preview,pair=null,onInspect=
             if(other.id===front.id)
                 continue;
 
-            const tile=imageTile(other,preview(other,other.faces[0]),()=>select(other),{caption:displayName(other),dataKey:`tokenBack`,dataValue:other.id});
+            const tile=imageTile(other,preview(other,other.faces[0]),()=>select(other),{quantity:`(${face.used})`,caption:displayName(other),dataKey:`tokenBack`,dataValue:other.id});
             tile.dataset.search=searchText(other);choices.append(tile);
         }
 
@@ -234,6 +256,12 @@ export const assignToken=async(deck,front,onChanged,preview,pair=null,onInspect=
 //#region Deck image grid
 export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onChanged})=>{
     let deck=initial;
+    const tokenChanged=updated=>{
+        if(view.filter===`tokens`)
+            view.filter=`all`;
+
+        return onChanged(updated);
+    };
     root.replaceChildren();
     const toolbar=element(`div`);toolbar.className=`toolbar`;
     const filters=element(`div`);filters.className=`filter-pills`;
@@ -276,7 +304,7 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
                         rows.push({front:face.reference,back:{kind:`card-back`},quantity:face.suggestedQuantity});
                     }
 
-                    await persist(deck,rows,onChanged);
+                    await persist(deck,rows,tokenChanged);
                 }));
 
             for(const row of tokens.invalid) {
@@ -302,13 +330,13 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
         }
 
         if(tokens.cardIds.length||view.filter===`tokens`) {
-            const faces=section(`Token faces`,`Counts include assigned copies on either side. Click a face to choose its back.`,`token-faces`);
+            const faces=section(`Token faces`,`Counts include assigned copies on either side. Faces can be reused in multiple pairings. Click a face to choose its back.`,`token-faces`);
             for(const face of tokens.faces) {
                 const card=byId.get(face.cardId);
                 if(!matches(card)||view.filter===`tokens`&&face.used!==0)
                     continue;
 
-                const tile=imageTile(card,preview(card,card.faces[0]),()=>assignToken(deck,card,onChanged,preview),{quantity:`${face.used} used`,caption:`${face.used} assigned · ${face.suggestedQuantity} imported`,dataKey:`tokenFace`,dataValue:card.id});
+                const tile=imageTile(card,preview(card,card.faces[0]),()=>assignToken(deck,card,tokenChanged,preview),{quantity:`(${face.used})`,caption:`${face.used} assigned · ${face.suggestedQuantity} imported`,dataKey:`tokenFace`,dataValue:card.id});
                 tile.append(button(`Edit face`,()=>inspect(card,0)));faces.items.append(tile);count++;
             }
 
@@ -324,7 +352,7 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
 
                     const back=pair.backKind===`reverse`?preview(front,front.faces[1]):other?preview(other,other.faces[0]):asset(deck.settings.backAsset);
                     const caption=`${displayName(front)} / ${pair.backKind===`reverse`?front.faces[1].name:other?displayName(other):`Normal back`}`;
-                    assigned.items.append(imageTile(front,preview(front,front.faces[0]),()=>assignToken(deck,front,onChanged,preview,pair,inspect),{back,quantity:`${pair.quantity}×`,caption,dataKey:`tokenPair`,dataValue:String(pair.index??`natural-${front.id}`)}));count++;
+                    assigned.items.append(imageTile(front,preview(front,front.faces[0]),()=>assignToken(deck,front,tokenChanged,preview,pair,inspect),{back,quantity:`${pair.quantity}×`,caption,dataKey:`tokenPair`,dataValue:String(pair.index??`natural-${front.id}`)}));count++;
                 }
 
                 if(!assigned.items.children.length)
@@ -370,8 +398,7 @@ export const convertToToken=(deck,card,onChanged)=>{
         if(fields.pt.value.trim())
             spec.power_toughness=fields.pt.value.trim();
 
-        await api(`/api/decks/${deck.id}/cards/${card.id}`,{revision:deck.revision,tokenSpec:spec});
-        closeModal({completed:true});const updated=await api(`/api/decks/${deck.id}`);await onChanged(updated);await saveTokenData(updated);
+        await persistTokenChange(deck,onChanged,()=>api(`/api/decks/${deck.id}/cards/${card.id}`,{revision:deck.revision,tokenSpec:spec}));
         toast(`Token treatment saved. Generate images to update this face.`);
     },true),button(`Cancel`,()=>closeModal()));
 };

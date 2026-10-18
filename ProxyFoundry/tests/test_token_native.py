@@ -7,12 +7,72 @@ from foundry.server import App,LocalServer
 from foundry.storage import Store
 from foundry.network import Network
 from foundry.images import ingest_image,rarity_variants
+from test_pipeline import workspace
 
 pytestmark=pytest.mark.skipif(
     os.environ.get('PF_BROWSER')!='1' or os.environ.get('PF_LIVE_CC')!='1',
     reason='Opt-in real Treasure token rendering',
 )
 ROOT=Path(__file__).resolve().parents[1]
+
+
+def test_converted_artifact_tokens_render_with_and_without_crown_and_nickname(workspace):
+    from foundry.compiler import semantic
+    from playwright.sync_api import sync_playwright
+    store,art,settings=workspace;app=App(store)
+    app.runtime_assets.update([art,*settings['symbols'].values()])
+    card={'name':'Sol Ring','type_line':'Artifact','mana_cost':'{1}',
+          'oracle_text':'{T}: Add {C}{C}.','colors':[],'rarity':'uncommon'}
+    variants=[]
+    for nickname in ('','Ring of Death'):
+        for legendary in (False,True):
+            sem=semantic(card,card);sem['nickname']=nickname
+            comp=app.ws.compiler.compile_face(card,card,0,{'semanticOverrides':{'nickname':nickname}},settings,art)
+            comp=app.ws._apply_token_spec(comp,{'force_legendary':legendary,'nonlegendary':not legendary},art,'Converted token',False,sem)
+            variants.append(comp['data'])
+    server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True)
+            try:
+                page=browser.new_page();page.goto(server.origin)
+                page.set_default_timeout(150000)
+                result=page.evaluate('''async ({origin,variants})=>{
+                    const frame=document.createElement('iframe');
+                    frame.src=origin+'/runtime/host?parent='+encodeURIComponent(location.origin)+'&worker=1';
+                    let readyResolve,pending;
+                    const ready=new Promise(resolve=>readyResolve=resolve);
+                    window.addEventListener('message',event=>{
+                        if(event.origin!==origin||event.source!==frame.contentWindow)return;
+                        const message=event.data;
+                        if(message.type==='ready')readyResolve();
+                        if(message.type==='failed')(pending||readyResolve)({error:message.error,stack:message.stack});
+                        if(message.type==='rendered')pending({blob:message.blob});
+                    });
+                    document.body.append(frame);
+                    const startup=await ready;
+                    if(startup?.error)return [startup];
+                    const results=[];
+                    for(let index=0;index<variants.length;index++){
+                        const rendered=await new Promise(resolve=>{
+                            pending=resolve;
+                            frame.contentWindow.postMessage({source:'pf-app',type:'render',key:String(index),data:variants[index]},origin);
+                        });
+                        if(rendered.error){results.push(rendered);continue;}
+                        const bitmap=await createImageBitmap(rendered.blob);
+                        results.push({width:bitmap.width,height:bitmap.height,bytes:rendered.blob.size});
+                        bitmap.close();
+                    }
+                    frame.remove();return results;
+                }''',{'origin':app.runtime_origin,'variants':variants})
+                assert len(result)==4,result
+                for rendered in result:
+                    assert 'error' not in rendered,rendered
+                    assert (rendered['width'],rendered['height'])==(2010,2814)
+                    assert rendered['bytes']>10000
+            finally:browser.close()
+    finally:server.shutdown();server.server_close();app.close()
 
 def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
     from playwright.sync_api import sync_playwright
@@ -48,7 +108,7 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
             page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
-            assert '/img/frames/token/m15/regular/a.png' in app.runtime.requested
+            assert '/img/frames/token/regular/tokenFrameARegular.png' in app.runtime.requested
             compiled=ready['cards'][0]['faces'][0]['compiled']
             assert compiled['data']['text']['pt']['text']==''
             rendered=store.render_get(compiled['renderKey'])

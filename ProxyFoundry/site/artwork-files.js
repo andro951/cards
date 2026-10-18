@@ -25,11 +25,11 @@ export const sourceRecord=async(key,value)=>{
 };
 export const rememberFile=async(deckId,handle,document,fileSource=`picked`)=>{
     const previous=await sourceRecord(`deck:${deckId}`)||{};
-    await sourceRecord(`deck:${deckId}`,{...previous,file:handle,document,github:null,fileSource});
+    await sourceRecord(`deck:${deckId}`,{...previous,file:handle,document,github:null,fileSource,tokenData:null,sourceBaseline:null});
 };
 export const rememberFolder=async(deckId,folder)=>{
     const previous=await sourceRecord(`deck:${deckId}`)||{};
-    await sourceRecord(`deck:${deckId}`,{...previous,...(previous.fileSource!==`picked`?{file:null,document:null}:{}),folder,github:null});
+    await sourceRecord(`deck:${deckId}`,{...previous,...(previous.fileSource!==`picked`?{file:null,document:null,tokenData:null,sourceBaseline:null}:{}),folder,github:null});
 };
 export const rememberGithub=async(deckId,url,document=null)=>{
     await sourceRecord(`deck:${deckId}`,{github:url,document});
@@ -67,18 +67,38 @@ export const pickArtworkFiles=async(deckId)=>{
 
 //#region Data file merge
 const entryKey=entry=>JSON.stringify([entry.oracle_id?.toLowerCase()||``,entry.scryfall_id?.toLowerCase()||``,entry.name||``]);
-const validateTokenFields=document=>{
-    const referenceKey=face=>{
-        if(!face||typeof face!==`object`||Array.isArray(face)||typeof face.name!==`string`||!face.name.trim()||Object.keys(face).some(key=>![`name`,`oracle_id`,`scryfall_id`,`copy`].includes(key)))
+const tokenReferenceKey=face=>{
+    if(!face||typeof face!==`object`||Array.isArray(face)||typeof face.name!==`string`||!face.name.trim()||Object.keys(face).some(key=>![`name`,`oracle_id`,`scryfall_id`,`copy`,`art_variant`].includes(key)))
+        throw new Error(`The existing data.json has an invalid token face. It was not changed.`);
+
+    for(const [key,value] of Object.entries(face)) {
+        if(typeof value!==`string`||value.length>300||/[\x00-\x1f]/.test(value)||(key.endsWith(`_id`)||key===`art_variant`)&&!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))
             throw new Error(`The existing data.json has an invalid token face. It was not changed.`);
+    }
 
-        for(const [key,value] of Object.entries(face)) {
-            if(typeof value!==`string`||value.length>300||/[\x00-\x1f]/.test(value)||key.endsWith(`_id`)&&!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))
-                throw new Error(`The existing data.json has an invalid token face. It was not changed.`);
-        }
+    return JSON.stringify([(face.oracle_id||``).toLowerCase(),(face.scryfall_id||``).toLowerCase(),face.name.trim(),(face.copy||``).trim(),(face.art_variant||``).toLowerCase()]);
+};
+const tokenRowKey=(field,row)=>{
+    if(field===`artVariants`)
+        return row.id;
+    if(field===`tokenTreatments`)
+        return tokenReferenceKey(row.face);
 
-        return JSON.stringify([(face.oracle_id||``).toLowerCase(),(face.scryfall_id||``).toLowerCase(),face.name,face.copy||``]);
-    };
+    const front=tokenReferenceKey(row.front);
+    return JSON.stringify(row.back.kind?[front,row.back.kind]:[front,tokenReferenceKey(row.back)].sort());
+};
+export const equalDataValues=(left,right)=>{
+    if(left===right)
+        return true;
+
+    if(!left||!right||typeof left!==`object`||typeof right!==`object`||Array.isArray(left)!==Array.isArray(right))
+        return false;
+
+    const keys=Object.keys(left);
+    return keys.length===Object.keys(right).length&&keys.every(key=>Object.hasOwn(right,key)&&equalDataValues(left[key],right[key]));
+};
+const validateTokenFields=document=>{
+    validateArtVariants(Object.hasOwn(document,`artVariants`)?document.artVariants:[]);
     for(const field of [`tokenAssignments`,`tokenTreatments`]) {
         if(!Object.hasOwn(document,field))
             continue;
@@ -96,9 +116,9 @@ const validateTokenFields=document=>{
                 if(Object.keys(row).some(key=>![`front`,`back`,`quantity`].includes(key))||!Number.isInteger(row.quantity)||row.quantity<1||row.quantity>9999)
                     throw new Error(`Invalid token quantity in data.json.`);
 
-                const front=referenceKey(row.front),back=row.back;
+                const front=tokenReferenceKey(row.front),back=row.back;
                 const kind=back&&Object.keys(back).length===1&&[`card-back`,`reverse`].includes(back.kind)?back.kind:null;
-                const backKey=kind||referenceKey(back);
+                const backKey=kind||tokenReferenceKey(back);
                 if(!kind&&front===backKey)
                     throw new Error(`A token cannot use the same face on both sides.`);
 
@@ -108,7 +128,7 @@ const validateTokenFields=document=>{
                 if(Object.keys(row).length!==2||!row.options||typeof row.options!==`object`||Array.isArray(row.options)||Object.keys(row.options).some(key=>![`nonlegendary`,`replace_creature_subtypes`,`power_toughness`,`frame_color`,`color_override`,`token_key_suffix`].includes(key)))
                     throw new Error(`Invalid token treatment in data.json.`);
 
-                key=referenceKey(row.face);
+                key=tokenReferenceKey(row.face);
             }
 
             if(seen.has(key))
@@ -118,8 +138,34 @@ const validateTokenFields=document=>{
         }
     }
 };
+export const validateArtVariants=rows=>{
+    if(!Array.isArray(rows)||rows.length>10000)
+        throw new Error(`Invalid alternate artwork in data.json.`);
+
+    const seen=new Set(),uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+    for(const row of rows) {
+        if(!row||Object.keys(row).sort().join(`,`)!==`card,faces,id,quantity`||!uuid.test(row.id)||seen.has(row.id.toLowerCase())||!Number.isInteger(row.quantity)||row.quantity<1||row.quantity>9999||!row.card?.name||!Array.isArray(row.faces)||!row.faces.length||row.faces.length>2)
+            throw new Error(`Invalid alternate artwork in data.json.`);
+
+        seen.add(row.id.toLowerCase());
+        for(const [key,value] of Object.entries(row.card)) {
+            if(![`name`,`oracle_id`,`scryfall_id`,`section`].includes(key)||typeof value!==`string`||!value.trim()||value.length>300||/[\x00-\x1f]/.test(value)||key.endsWith(`_id`)&&!uuid.test(value))
+                throw new Error(`Invalid alternate-art card reference.`);
+        }
+
+        const names=new Set();
+        for(const face of row.faces) {
+            if(!face||Object.keys(face).sort().join(`,`)!==`art,name`||typeof face.name!==`string`||!face.name.trim()||face.name.length>300||names.has(face.name)||typeof face.art!==`string`||face.art.length>1000||/[\x00-\x1f\\:]/.test(face.art)||face.art.startsWith(`/`)||face.art.split(`/`).some(part=>!part||part===`.`||part===`..`)||! /\.(png|jpe?g|webp|gif)$/i.test(face.art))
+                throw new Error(`Invalid alternate-art filename or face.`);
+
+            names.add(face.name);
+        }
+    }
+
+    return rows;
+};
 const validateDocument=document=>{
-    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`].includes(key)))
+    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`].includes(key)))
         throw new Error(`The existing data.json is invalid. It was not changed.`);
     if(Object.hasOwn(document,`artist`)&&(typeof document.artist!==`string`||document.artist.length>300))
         throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
@@ -228,37 +274,65 @@ export const enrichDataDocument=(document,cards=[],changes=[])=>{
     return result;
 };
 export const dataBlob=document=>new Blob([JSON.stringify(document,null,2)+`\n`],{type:`application/json`});
-export const mergeTokenData=(document,tokenData,baseline=null)=>{
+export const mergeTokenData=(document,tokenData,baseline=null,localBaseline=baseline)=>{
     if(!tokenData)
         return document;
 
+    validateTokenFields(document);validateTokenFields(tokenData);
+    if(baseline)
+        validateTokenFields(baseline);
+    if(localBaseline)
+        validateTokenFields(localBaseline);
+
     const result=structuredClone(document);
-    for(const field of [`tokenAssignments`,`tokenTreatments`]) {
+    for(const field of [`tokenAssignments`,`tokenTreatments`,`artVariants`]) {
         if(!Object.hasOwn(tokenData,field))
             continue;
 
         if(!Array.isArray(tokenData[field]))
             throw new Error(`Invalid saved token data.`);
 
-        if(baseline&&JSON.stringify(document[field]||[])!==JSON.stringify(baseline[field]||[])&&JSON.stringify(document[field]||[])!==JSON.stringify(tokenData[field]))
-            throw new Error(`Token assignments changed in the original data.json. Reimport it before saving.`);
+        if(!baseline) {
+            result[field]=structuredClone(tokenData[field]);
+            continue;
+        }
 
-        result[field]=structuredClone(tokenData[field]);
+        //Merge each physical pair separately; other decks can share this data.json.
+        const rows=values=>new Map((values||[]).map(row=>[tokenRowKey(field,row),row]));
+        const current=rows(document[field]),before=rows(baseline[field]),localBefore=rows(localBaseline?.[field]),desired=rows(tokenData[field]);
+        const value=row=>row&&(field===`tokenAssignments`?row.quantity:field===`artVariants`?row:row.options);
+        for(const key of new Set([...localBefore.keys(),...desired.keys()])) {
+            const old=before.get(key),next=desired.get(key),remote=current.get(key);
+            if(equalDataValues(value(localBefore.get(key)),value(next)))
+                continue;
+
+            if(!equalDataValues(value(remote),value(old))&&!equalDataValues(value(remote),value(next))) {
+                const row=next||old,label=field===`artVariants`?row.card.name:field===`tokenTreatments`?row.face.name:row.front.name+(row.back.kind?``:` / ${row.back.name}`);
+                throw new Error(`${field===`artVariants`?`Alternate artwork`:field===`tokenAssignments`?`Token assignments`:`Token treatment`} for ${label} changed in the original data.json. Reimport it before saving.`);
+            }
+
+            if(next)
+                current.set(key,structuredClone(next));
+            else
+                current.delete(key);
+        }
+
+        result[field]=[...current.values()];
     }
 
     validateTokenFields(result);
     return result;
 };
-export const mergeCardDataDocument=(original,changes,baseline=null,cards=[],tokenData=null)=>{
+export const mergeCardDataDocument=(original,changes,baseline=null,cards=[],tokenData=null,tokenBaseline=baseline)=>{
     if(!cards.length)
-        return mergeTokenData(mergeDataDocument(original,changes,baseline),tokenData,baseline);
+        return mergeTokenData(mergeDataDocument(original,changes,baseline),tokenData,baseline,tokenBaseline);
 
     //Compare equivalent selectors before merging, including face and printing IDs.
     const current=enrichDataDocument(original,cards);
     const before=baseline?enrichDataDocument(baseline,cards):null;
     const edits=enrichDataDocument({version:1,cards:changes},cards).cards.filter(entry=>
         [`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`].some(field=>Object.hasOwn(entry,field)));
-    return mergeTokenData(mergeDataDocument(current,edits,before),tokenData,baseline);
+    return mergeTokenData(mergeDataDocument(current,edits,before),tokenData,baseline,tokenBaseline);
 };
 export const dataChangesPending=async(deckId,changes,document,cards=[])=>{
     const record=await sourceRecord(`deck:${deckId}`);
@@ -287,13 +361,13 @@ export const saveLocalData=async(record,changes,cards=[],tokenData=null)=>{
         original=JSON.parse(await file.text());
     }
 
-    const merged=mergeCardDataDocument(original,changes,record.document,cards,tokenData);
+    const merged=mergeCardDataDocument(original,changes,record.document,cards,tokenData,record.tokenData||record.document);
     // Read and validate before creating a new file or opening the atomic writer.
     handle||=await record.folder.getFileHandle(`data.json`,{create:true});
     const writer=await handle.createWritable();
     try{await writer.write(JSON.stringify(merged,null,2)+`\n`);await writer.close();}
     catch(error){await writer.abort().catch(()=>{});throw error;}
-    return {...record,file:handle,document:merged};
+    return {...record,file:handle,document:merged,...(tokenData?{tokenData:{...record.tokenData,...structuredClone(tokenData)}}:{})};
 };
 //#endregion
 
@@ -346,7 +420,7 @@ const encodeContent=content=>{
 
     return btoa(binary);
 };
-export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[],tokenData=null)=>{
+export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[],tokenData=null,tokenBaseline=baseline)=>{
     if(!/^[^/]+\/[^/]+$/.test(location.repo)||!location.branch||location.path.split(`/`).at(-1)!==`data.json`||location.path.split(`/`).some(part=>!part||part===`.`||part===`..`))
         throw new Error(`Choose the repository’s data.json file.`);
     const url=`https://api.github.com/repos/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/contents/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
@@ -364,7 +438,7 @@ export const saveGithubData=async(location,token,changes,baseline=null,fetcher=f
 
         const original=existing?JSON.parse(decodeContent(existing.content)):{version:1,cards:[]};
         //Recheck the edited fields on every retry; never replace a concurrent rules edit.
-        const merged=mergeCardDataDocument(original,changes,baseline,cards,tokenData);
+        const merged=mergeCardDataDocument(original,changes,baseline,cards,tokenData,tokenBaseline);
         const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge card data`,branch:location.branch,
             content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
         recordDiagnostic(`GitHub data save`,JSON.stringify({repo:location.repo,path:location.path,branch:location.branch,

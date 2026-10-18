@@ -11,7 +11,7 @@ from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_
 from .sources import Sources
 from .artwork import ArtworkIndex,build_review,face_key
 from .card_data import validate_entries,validate_targets,matches,merge_entries,identity,matching_keys,selector_key
-from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,apply_modern_token_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds,build_token_data,configure_token_style,token_has_short_text
+from .compiler import Compiler,BUILTINS,SINGLE_SURFACE,fit_token_art,semantic,apply_nickname_treatment,apply_full_art_text,apply_modern_token_text,frame_treatment_code,full_art_nonland_placement,fit_set_symbol_to_bounds,build_token_data,configure_token_style,token_has_short_text,fit_token_rules_above_pt
 from .legacy import ingest,compiler as native,tokens
 from .credits import credit_text,printing_artist
 from .backs import Backs
@@ -21,6 +21,7 @@ from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules
 from . import token_assignments
+from . import art_variants
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -85,7 +86,7 @@ class Workspace:
         if not title:raise ValidationError('Name this saved style.')
         settings=copy.deepcopy(deck['settings'])
         settings['dataJsonSource']=None
-        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None);settings.pop('artVariants',None)
         return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
     def import_style_preset(self,data):
         if not isinstance(data,dict) or data.get('format')!='bulk-proxy-forge-style' or data.get('schema')!=1:
@@ -102,7 +103,7 @@ class Workspace:
             self.store.add_asset(raw,str(entry.get('mime') or 'image/png'),image.width,image.height)
         settings=self.validate_settings(data.get('settings') or {})
         settings['dataJsonSource']=None
-        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None);settings.pop('artVariants',None)
         return self.store.put('style-presets',{'name':title,'schema':1,'settings':settings})
     def delete_style_preset(self,ident,revision=None):
         if self.global_settings().get('defaultStylePresetId')==ident:
@@ -112,7 +113,7 @@ class Workspace:
         global_settings=self.global_settings()
         preset=self.store.get('style-presets',global_settings.get('defaultStylePresetId')) if global_settings.get('defaultStylePresetId') else None
         settings=copy.deepcopy(preset['settings'] if preset else global_settings.get('defaults',{}))
-        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None)
+        settings.pop('tokenAssignments',None);settings.pop('tokenTreatments',None);settings.pop('artVariants',None)
         return settings
     def validate_settings(self,settings):
         settings=self._with_default_symbols(settings)
@@ -145,6 +146,7 @@ class Workspace:
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
         s['tokenAssignments']=token_assignments.validate_assignments(s.get('tokenAssignments',[]))
         s['tokenTreatments']=token_assignments.validate_treatments(s.get('tokenTreatments',[]))
+        s['artVariants']=art_variants.validate(s.get('artVariants',[]))
         raw_token_options=s.get('tokenOptions') or {}
         if not isinstance(raw_token_options,dict):raise ValidationError('Token options must be an object.')
         def token_text(key,label,maximum):
@@ -192,7 +194,9 @@ class Workspace:
         if cancel():raise ValidationError('Import cancelled.')
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
-        return self.store.put('decks',{**result,'name':name,'settings':settings,'status':'draft','notes':''})
+        document={**result,'name':name,'settings':settings,'status':'draft','notes':''}
+        art_variants.apply(document,self.invalidate_face)
+        return self.store.put('decks',document)
     def create_staged(self,payload):
         supplied=payload.get('manifest')
         if not isinstance(supplied,dict):raise ValidationError('Read a deck list before choosing its look.')
@@ -248,6 +252,7 @@ class Workspace:
                     if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+fresh['quantity'])
                     else:seen[identity]=fresh;cards.append(fresh)
                 current['cards']=cards;current.pop('pendingImport',None)
+                art_variants.apply(current,self.invalidate_face)
                 current['metadataBaseRevision']=current['revision'];current.pop('summary',None)
                 try:return self.store.put('decks',current,current['revision'])
                 except ConflictError:
@@ -342,11 +347,11 @@ class Workspace:
     def _validated_card_data(value):
         return validate_entries(value)
 
-    def _apply_card_data(self,d,value,*,preparing=False):
+    def _apply_card_data(self,d,value,*,preparing=False,allow_missing=False):
         entries=validate_entries(value)
         if d.get('pendingImport'):
             d['cardData']=merge_entries(d.get('cardData',[]),entries);return False
-        entries=validate_targets(d,entries)
+        entries=validate_targets(d,entries,allow_missing=preparing or allow_missing)
         if not entries:return False
         merged=merge_entries(d.get('cardData',[]),entries)
         selectors={selector_key(entry):entry for entry in merged}
@@ -388,7 +393,7 @@ class Workspace:
     def artwork_review_steps(self,payload,progress=lambda *a:None,cancel=lambda:False):
         d=copy.deepcopy(self.deck(payload['deckId']))
         s=self.validate_settings(payload.get('settings') or d['settings']);d['settings']=s
-        self._apply_card_data(d,payload.get('cardData',[]))
+        self._apply_card_data(d,payload.get('cardData',[]),allow_missing=bool(s.get('dataJsonSource')))
         progress(0,1,'Checking artwork filenames…');yield
         if cancel():raise ValidationError('Artwork check cancelled.')
         index=self._prepare_sources(s,progress)
@@ -406,7 +411,9 @@ class Workspace:
         dirty=False;front_settings_dirty=False
         if 'name' in patch:d['name']=str(patch['name']).strip()[:200] or 'Untitled deck'
         if 'notes' in patch:d['notes']=str(patch['notes'])[:20000]
-        if 'cardData' in patch:dirty=self._apply_card_data(d,patch.get('cardData')) or dirty
+        if 'cardData' in patch:
+            source=patch.get('settings',{}).get('dataJsonSource',d['settings'].get('dataJsonSource'))
+            dirty=self._apply_card_data(d,patch.get('cardData'),allow_missing=bool(source)) or dirty
         if 'settings' in patch:
             incoming={**d['settings'],**patch['settings']}
             # Old callers sending a complete back by ID remain supported.
@@ -420,11 +427,13 @@ class Workspace:
                 if old_specs[card['id']]!=card.get('tokenSpec'):
                     for face in card['faces']:self.invalidate_face(face)
                     dirty=True
+        if 'artVariants' in patch:d['settings']['artVariants']=art_variants.validate(patch['artVariants'])
+        dirty=art_variants.apply(d,self.invalidate_face) or dirty
         if 'tokenAssignments' in patch:
             previous_pairs={token_assignments.pair_key(row) for row in d['settings'].get('tokenAssignments',[])}
             rows=token_assignments.validate_assignments(patch['tokenAssignments'])
             d['settings']['tokenAssignments']=rows
-            report=token_assignments.overview(d)
+            report=token_assignments.overview(d,strict=True)
             if any(token_assignments.pair_key(rows[row['index']]) not in previous_pairs for row in report['invalid']):
                 raise ValidationError('Choose existing single-sided token faces, or the actual reverse of a double-sided token.')
         if dirty:
@@ -440,9 +449,14 @@ class Workspace:
         rev=patch.get('revision')
         if rev is None:raise ValidationError('Reload the deck before saving this card.')
         if patch.get('remove'):
+            if c.get('artVariantId'):d['settings']['artVariants']=[row for row in d['settings'].get('artVariants',[]) if row['id']!=c['artVariantId']]
             d['cards']=[x for x in d['cards'] if x['id']!=card_id]
         else:
-            if 'quantity' in patch:c['quantity']=quantity(patch['quantity'])
+            if 'quantity' in patch:
+                c['quantity']=quantity(patch['quantity'])
+                if c.get('artVariantId'):
+                    for row in d['settings'].get('artVariants',[]):
+                        if row['id']==c['artVariantId']:row['quantity']=c['quantity']
             if 'tokenSpec' in patch:
                 c['tokenSpec']=token_assignments.validate_spec(patch['tokenSpec'])
                 rows=d['settings'].get('tokenTreatments',[])
@@ -591,12 +605,13 @@ class Workspace:
 
     @timed('art.resolve')
     def _art(self,sf,face,opts,settings,index):
+        opts=art_variants.selected_face(opts)
         if opts.get('artOverride'):return opts['artOverride'],'uploaded override',None
         name=face.get('name',sf['name']);stem=slug(name);url=None;remote_entry=None;origin=''
         if not isinstance(index,ArtworkIndex):index=ArtworkIndex(settings['source'].get('localFiles',{}) if settings['source']['mode']=='local' else index,settings['source'].get('localNames'))
         oracle=str(face.get('oracle_id') or sf.get('oracle_id') or '').lower()
         default_key=(oracle or sf.get('id') or '')+'/'+name
-        if default_key in settings.get('artDefaults',[]):
+        if not opts.get('variantArtFilename') and default_key in settings.get('artDefaults',[]):
             url=self.sources.art_url(sf,face);origin='Scryfall selected printing'
         local=settings['source'].get('localFiles',{})
         if url is not None:pass
@@ -680,7 +695,8 @@ class Workspace:
         if not settings.get('allCardsTokens'):return None
         options=settings.get('tokenOptions') or {}
         spec={'output_key':str(comp.get('name') or ''),'token_key_suffix':''}
-        style=settings.get('templateRules',{}).get('token')
+        style=settings.get('templateRules',{}).get('token','auto')
+        if style=='auto':style='token-full-art'
         if style in {'token-classic','token-full-art','token-borderless'}:spec['token_frame_style']=style
         if settings.get('templateRules',{}).get('token')=='godzilla-card':spec['force_nickname_frame']=True
         if options.get('legendaryMode','nonlegendary' if options.get('nonlegendary') else 'original')=='nonlegendary':spec['nonlegendary']=True
@@ -699,7 +715,7 @@ class Workspace:
 
     def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None):
         spec=dict(spec)
-        style=spec.pop('token_frame_style',None)
+        style=spec.pop('token_frame_style',None) or 'token-full-art'
         if sem:
             sem=dict(sem)
             rules_nicknames.apply_semantic(sem)
@@ -729,6 +745,7 @@ class Workspace:
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
         if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
         elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
+        fit_token_rules_above_pt(comp['data'])
         center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
@@ -739,9 +756,10 @@ class Workspace:
         # Hash small preparation inputs only, never source image files.
         sf=c['scryfall'];faces=ingest.face_list(sf);selected=[];templates=[]
         source=s['source'];local=source.get('localFiles',{})
-        for f in c['faces']:
+        for raw_face in c['faces']:
+            f=art_variants.selected_face(raw_face)
             face=faces[min(f.get('index',0),len(faces)-1)]
-            key=index.resolve(face.get('name',sf['name']),str(face.get('oracle_id') or sf.get('oracle_id') or '').lower(),f.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id','')) if source['mode'] in {'local','github'} and not f.get('artOverride') and not f.get('selectedArtPrintingId') and ((str(face.get('oracle_id') or sf.get('oracle_id') or '').lower() or sf.get('id') or '')+'/'+face.get('name',sf['name'])) not in s.get('artDefaults',[]) else None
+            key=index.resolve(face.get('name',sf['name']),str(face.get('oracle_id') or sf.get('oracle_id') or '').lower(),f.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id','')) if source['mode'] in {'local','github'} and not f.get('artOverride') and not f.get('selectedArtPrintingId') and (f.get('variantArtFilename') or ((str(face.get('oracle_id') or sf.get('oracle_id') or '').lower() or sf.get('id') or '')+'/'+face.get('name',sf['name'])) not in s.get('artDefaults',[])) else None
             selected.append(local.get(key) if source['mode']=='local' else index.get(key))
             group=type_group(face,sf,f.get('index',0))
             choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
@@ -751,6 +769,7 @@ class Workspace:
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
+        if c.get('tokenSpec') or s.get('allCardsTokens'):inputs['tokenConversionVersion']=4
         if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['nicknameRulesVersion']=rules_nicknames.VERSION
         if rules_nicknames.has_redundant_nickname(sf,c['faces']):inputs['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
         return stable_hash(inputs)
@@ -857,11 +876,12 @@ class Workspace:
         urls=[]
         for card in cards:
             sf=card['scryfall'];faces=ingest.face_list(sf)
-            for options in card['faces']:
+            for original_options in card['faces']:
+                options=art_variants.selected_face(original_options)
                 if options.get('artOverride') or options.get('selectedArtPrintingId'):continue
                 face=faces[min(options.get('index',0),len(faces)-1)];name=face.get('name',sf['name'])
                 oracle=str(face.get('oracle_id') or sf.get('oracle_id') or '').lower()
-                if (oracle or sf.get('id') or '')+'/'+name in settings.get('artDefaults',[]):continue
+                if not options.get('variantArtFilename') and (oracle or sf.get('id') or '')+'/'+name in settings.get('artDefaults',[]):continue
                 key=index.resolve(name,oracle,options.get('artFilename',''),len(sf.get('card_faces') or [])>1,sf.get('id',''))
                 entry=index[key] if key is not None else None
                 url=entry.get('url','') if isinstance(entry,dict) else ''
@@ -903,6 +923,7 @@ class Workspace:
             yield
         with timing(self.store,'prepare.settings'):
             rev=d['revision'];s=self.validate_settings(d['settings'])
+            art_variants.apply(d,self.invalidate_face)
             if any(not s['symbols'].get(r) for r in RARITIES):raise ValidationError('Set up all four rarity symbols before preparing the deck.')
             if (s.get('dataJsonSource') or {}).get('kind')!='github' or not d.get('githubCardDataState'):
                 self._apply_card_data(d,d.get('cardData',[]),preparing=True)

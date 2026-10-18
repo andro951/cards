@@ -286,7 +286,8 @@
       const hits=(compositionCache?.hits||0)-initialCacheHits;
       if(hits)post('diagnostic',{key:request.key,stage:'timing',diagnostic:{stage:'native.cached-frame-compositions',seconds:0,count:hits,outcome:'ok'}});
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
-    }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();window.__PF_RELEASE_IMAGES?.();S.active=false;S.phase='idle';}
+    }catch(error){error.runtimePhase=S.phase;throw error;}
+    finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();window.__PF_RELEASE_IMAGES?.();S.active=false;S.phase='idle';}
   }
   let initialized=false;
   const ready=async()=>{
@@ -304,8 +305,8 @@
     if(msg.type==='ping'){if(initialized)post('ready');return;}
     if(msg.type==='render'){
       if(!initialized){post('failed',{key:msg.key,error:'Native renderer is not initialized.'});return;}
-      render(msg).catch(err=>post('failed',{key:msg.key,error:err.message,errors:S.errors}));
+      render(msg).catch(err=>post('failed',{key:msg.key,error:err.message,stack:err.stack,phase:err.runtimePhase,errors:S.errors}));
     }
   });
-  ready().catch(e=>post('failed',{error:e.message,errors:S.errors}));
+  ready().catch(e=>post('failed',{error:e.message,stack:e.stack,phase:S.phase,errors:S.errors}));
 })();

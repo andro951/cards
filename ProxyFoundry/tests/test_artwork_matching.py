@@ -33,6 +33,15 @@ def test_token_variants_do_not_share_name_match():
     for row in rows:row['faces'][0]['artFilename']='spirit.png'
     assert not build_review({'cards':rows},settings(),ArtworkIndex({'spirit':'a'}))['needsReview']
 
+@pytest.mark.parametrize('art_field',[None,'artFilename','variantArtFilename'])
+def test_existing_card_choices_show_scryfall_images_with_custom_art(art_field):
+    row=card()
+    if art_field:row['faces'][0][art_field]='spirit.png'
+    review=build_review({'cards':[row]},settings(),ArtworkIndex({'spirit':'custom-art'}))
+    assert review['cards'][0]['faces'][0]['image']==row['scryfall']['image_uris']['normal']
+    assert review['inventory'][0]['image']=='/api/assets/custom-art/thumbnail'
+
+
 def test_duplicates_missing_mapping_and_unused_acknowledgement():
     index=ArtworkIndex({'first':'a','second':'b'},{'first':'112_spirit.png','second':'113_spirit.png'})
     with pytest.raises(ValidationError,match='Multiple'):index.resolve('Spirit')
@@ -61,6 +70,15 @@ def test_schema_ids_and_target_validation():
     with pytest.raises(ValidationError,match='not found'):validate_targets({'cards':[card(TWO)]},entries)
     with pytest.raises(ValidationError,match='multiple card variants'):validate_targets({'cards':[card(),card(TWO)]},[{'name':'Spirit','art':'spirit.png'}])
     with pytest.raises(ValidationError,match='Invalid'):parse_document(json.dumps({'version':1,'cards':[{'oracle_id':'wrong','art':'x.png'}]}).encode())
+
+
+def test_inventory_subset_keeps_exact_identity_and_ambiguity_checks():
+    entries=[{'name':'Spirit','oracle_id':ONE,'nickname':'Ghost'},
+             {'name':'Spirit','oracle_id':TWO,'nickname':'Other spirit'},
+             {'name':'Not in this deck','nickname':'Unused'}]
+    assert validate_targets({'cards':[card()]},entries,allow_missing=True)==entries[:1]
+    with pytest.raises(ValidationError,match='multiple card variants'):
+        validate_targets({'cards':[card(),card(TWO)]},[{'name':'Spirit','art':'spirit.png'},{'name':'Missing','nickname':'Unused'}],allow_missing=True)
 
 def test_workspace_review_and_save_are_atomic_and_metadata_only(tmp_path):
     def transport(url):raise AssertionError('Review fetched '+url)

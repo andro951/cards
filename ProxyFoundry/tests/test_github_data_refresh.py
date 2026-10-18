@@ -165,6 +165,15 @@ def test_local_source_is_not_polled(env):
     assert remote.calls==[]
 
 
+def test_preparation_handles_previously_saved_full_local_inventory(env):
+    ws,deck,remote=env;deck['settings']['dataJsonSource']={'kind':'local','value':'data.json'}
+    deck['cardData']=[{'name':'Angel','nickname':'Fallen Seraph'},{'name':'Marsh Flats','nickname':'Unused land'}]
+    ws.store.put('decks',deck,deck['revision'])
+    result=ws.prepare(deck['id'])
+    assert result['cards'][0]['faces'][0]['compiled']['data']['text']['nickname']['text']=='Fallen Seraph'
+    assert remote.calls==[] and len(result['cards'])==3
+
+
 def test_pinned_commit_needs_no_branch_request(env):
     ws,deck,remote=env;deck['settings']['dataJsonSource']['value']='https://github.com/owner/repo/blob/'+'a'*40+'/deck/data.json'
     ws.store.put('decks',deck,deck['revision']);ws.prepare(deck['id']);remote.calls.clear()

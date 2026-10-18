@@ -22,6 +22,14 @@ def _token_supertype_source(text):
         raise RuntimeError('Unexpected v58 supertype schema; refusing to silently alter Card Tools.')
     return text.replace(_OLD_SUPERTYPES,_NEW_SUPERTYPES)
 
+def _token_source(text):
+    text=_token_supertype_source(text)
+    anchor='    pt["name"] = "Power/Toughness"'
+    if text.count(anchor)!=1:
+        raise RuntimeError('Unexpected v58 token PT schema; refusing to silently alter Card Tools.')
+    # Noncreature donors have no PT text. Native writeText still reads every box.
+    return text.replace(anchor,'    pt.setdefault("text", "")\n'+anchor)
+
 def _compiler_source(text):
     if text.count(_MOROPHON_WRAP_RULE)!=1:
         raise RuntimeError('Unexpected v58 Morophon compatibility rule; refusing to silently alter Card Tools.')
@@ -45,7 +53,7 @@ ingest.MAIN_TYPES.add('Emblem')
 # Art Series printings use the literal type line "Card" on each image face.
 ingest.MAIN_TYPES.add('Card')
 deck_parser=load('pf_v58_deck','pipeline/scryfall_deck_to_cardconjurer.py')
-tokens=load('pf_v58_tokens','tools/make_copy_tokens.py',_token_supertype_source)
+tokens=load('pf_v58_tokens','tools/make_copy_tokens.py',_token_source)
 image_tools=load('pf_v58_images','tools/download_scryfall_deck_images_zip.py')
 
 # Read original WebP dimensions without converting its pixels.

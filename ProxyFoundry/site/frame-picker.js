@@ -7,7 +7,7 @@ export function frameChoices(group,legendary=false){
   return state.templates.filter(template=>
     (template.id==='auto'||(template.groups==='ordinary'?ordinary:Array.isArray(template.groups)&&template.groups.includes(group)))
     &&(!legendary||template.legendary)
-  ).map(template=>template.id==='godzilla-card'&&twoSidedGroups.includes(group)?{...template,name:'Godzilla full art'}:template);
+  ).map(template=>group===`token`&&template.id===`auto`?{...template,name:`Automatic · Modern full-art token`}:template.id==='godzilla-card'&&twoSidedGroups.includes(group)?{...template,name:'Godzilla full art'}:template);
 }
 
 export function framePlaceholder(settings){

@@ -467,12 +467,13 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     d=app.ws.new_deck('All token options')
     page.goto(server.origin+'/#deck/'+d['id']+'/setup')
     page.locator('#all-cards-tokens').wait_for()
-    expect(page.get_by_text('06 / DATA.JSON',exact=True)).to_be_visible()
-    expect(page.get_by_text('07 / OTHER OPTIONS',exact=True)).to_be_visible()
+    expect(page.get_by_role('heading',name='Card data & artwork mappings',exact=True)).to_be_visible()
+    expect(page.get_by_role('heading',name='Other Options',exact=True)).to_be_visible()
     expect(page.locator('#all-token-options')).to_have_class(re.compile(r'\bhidden\b'))
 
     page.check('#all-cards-tokens')
     expect(page.locator('#all-token-options')).not_to_have_class(re.compile(r'\bhidden\b'))
+    expect(page.locator('#frame-choices [data-frame-group]')).to_have_attribute('data-frame-group','token')
     page.fill('#token-power','7')
     page.fill('#token-toughness','8')
     page.fill('#token-subtypes','Illusion')
@@ -486,6 +487,50 @@ def test_browser_other_options_all_cards_tokens(browser_app):
         'power':'7','toughness':'8','subtypes':'Illusion','nonlegendary':True,'legendaryMode':'nonlegendary',
     }
     assert not errors,errors
+
+
+@pytest.mark.parametrize('enabled',[False,True])
+def test_all_token_checkbox_switches_template_choices_immediately(browser_app,enabled):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Token template choices','source':'1 A Test Creature',
+                        'settings':{'allCardsTokens':enabled,'templateRules':{'standard':'normal','token':'token-full-art'}}})
+    requests=[]
+    page.on('request',lambda request:requests.append(request.url) if '/api/render-sessions' in request.url or '/runtime/host' in request.url else None)
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    checkbox=page.locator('#all-cards-tokens')
+    checkbox.wait_for()
+    groups=page.locator('#frame-choices [data-frame-group]')
+    expect(groups).to_have_count(1)
+    expect(groups).to_have_attribute('data-frame-group','token' if enabled else 'standard')
+    checkbox.check()
+    expect(groups).to_have_count(1)
+    expect(groups).to_have_attribute('data-frame-group','token')
+    expect(page.locator('#frame-choices')).to_contain_text('Modern full-art token')
+    groups.click()
+    choices=page.locator('#modal-host button[aria-label^="Select "]')
+    labels=choices.evaluate_all('(buttons)=>buttons.map(button=>button.getAttribute("aria-label"))')
+    assert 'Select Classic arched token' in labels
+    assert 'Select Modern full-art token' in labels
+    assert 'Select Modern borderless token' in labels
+    assert set(labels)=={'Select Automatic · Modern full-art token','Select Classic arched token',
+                        'Select Modern full-art token','Select Modern borderless token',
+                        'Select Godzilla full art · non-land'}
+    page.get_by_role('button',name='Select Modern borderless token',exact=True).click()
+    expect(page.locator('#token-frame')).to_have_value('token-borderless')
+    expect(page.locator('#frame-choices')).to_contain_text('Modern borderless token')
+    checkbox.uncheck()
+    expect(groups).to_have_attribute('data-frame-group','standard')
+    expect(page.locator('#frame-choices')).to_contain_text('Classic card')
+    checkbox.check()
+    expect(groups).to_have_attribute('data-frame-group','token')
+    expect(page.locator('#frame-choices')).to_contain_text('Modern borderless token')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    settings=app.ws.deck(deck['id'])['settings']
+    assert settings['allCardsTokens'] and settings['templateRules']['token']=='token-borderless'
+    assert settings['templateRules']['standard']=='normal'
+    page.reload()
+    expect(page.locator('#frame-choices [data-frame-group]')).to_have_attribute('data-frame-group','token')
+    assert not requests and not errors,(requests,errors)
 
 
 def test_browser_data_json_section_stages_and_saves_metadata(browser_app):

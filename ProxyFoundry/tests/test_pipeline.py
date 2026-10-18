@@ -507,7 +507,7 @@ def test_doctor_who_saga_chapter_groupings_and_ability_boxes():
         assert sum(1 for i in range(4) if data['text'][f'ability{i}']['height']>0)==ability_count
 
 
-def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
+def test_classic_scryfall_creature_token_uses_real_token_frame(workspace):
     s,a,settings=workspace
     beast={
         'id':'90000000-0000-4000-8000-000000000001',
@@ -516,11 +516,11 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
         'power':'3','toughness':'3','set':'ttst','collector_number':'1',
         'artist':'Token Artist',
     }
-    result=Compiler(s).compile_face(beast,beast,0,{},settings,a,art_origin='Scryfall selected printing')
+    result=Compiler(s).compile_face(beast,beast,0,{'templateOverride':'token-classic'},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token'
     assert result['recipe']=='token_classic_short'
-    assert result['templateVersion']==10
+    assert result['templateVersion']==Compiler(s).template_identity('token','token-classic')[1]
     assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
@@ -548,7 +548,7 @@ def test_native_token_regular_keeps_its_own_broad_art_bounds(workspace):
     assert data['version']=='tokenTextless'
     assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 
-def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
+def test_classic_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
     s,a,settings=workspace
     treasure={
         'id':'90000000-0000-4000-8000-000000000002',
@@ -557,7 +557,7 @@ def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(worksp
         'colors':[],'rarity':'common','set':'ttst','collector_number':'2',
         'artist':'Token Artist',
     }
-    result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
+    result=Compiler(s).compile_face(treasure,treasure,0,{'templateOverride':'token-classic'},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token' and result['recipe']=='token_classic_rules'
     assert data['text']['pt']['text']==''
@@ -657,7 +657,7 @@ def test_deck_wide_token_options_apply_independent_overrides(workspace):
     token=ws._apply_token_spec(comp,spec,a,'Deck-wide token')
     assert token['group']=='token'
     assert token['recipe']=='Deck-wide token'
-    assert token['data']['version']=='tokenRegularM15'
+    assert token['data']['version']=='tokenRegular'
     assert token['data']['text']['pt']['text']=='7/3'
     assert token['data']['text']['type']['text']=='Creature - Illusion'
     assert 'Legendary' not in token['data']['text']['type']['text']
@@ -736,8 +736,8 @@ def test_copy_token_conversion_refits_art_to_token_bounds(workspace):
         'Deck-wide token',
     )
     data=token['data']
-    assert data['version']=='tokenRegularM15'
-    assert data['artBounds']=={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.5143}
+    assert data['version']=='tokenRegular'
+    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
     assert data['artZoom']!=pytest.approx(1.413)
     window_w=data['artBounds']['width']*data['width']
     window_h=data['artBounds']['height']*data['height']
@@ -969,7 +969,7 @@ def test_colored_or_artifact_token_nickname_keeps_selected_frame(workspace,type_
     )
     assert result['group']=='token'
     data=result['data']
-    assert data['version']=='tokenTextlessM15'
+    assert data['version']=='tokenTextless'
     assert data['frames'][0]['src'].endswith(f'/nickname/addons/m15NicknameTitle{code}.png')
     assert any('/img/frames/token/' in f.get('src','') for f in data['frames'][1:])
     assert data['text']['nickname']['text']=='Test '+name+' Nickname'
@@ -1020,7 +1020,7 @@ def test_token_nickname_preserves_selected_frame_set_symbol_bounds(workspace):
         card,card,0,{'semanticOverrides':{'nickname':'Test Spirit Nickname'}},settings,art_id
     )['data']
     plain=Compiler(store).compile_face(card,card,0,{},settings,art_id)['data']
-    assert data['version']==plain['version']=='tokenTextlessM15'
+    assert data['version']==plain['version']=='tokenTextless'
     assert data['setSymbolBounds']==plain['setSymbolBounds']
     assert data['text']['type']==plain['text']['type']
 

@@ -414,13 +414,55 @@ def test_github_data_link_returns_deck_artist_settings(tmp_path):
     assert result['document']['artist']=='Deck Artist'
 
 
-def test_data_json_nonempty_unknown_card_name_fails_atomically(tmp_path):
+def test_shared_data_json_unrelated_card_is_skipped_without_changing_source(tmp_path):
     remote=BundleRemote(data={'version':1,'cards':[{'name':'Typo Card','nickname':'Dean'}]})
     ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
     before=copy.deepcopy(ws.store.get('decks',deck['id']))
-    with pytest.raises(ValidationError,match='not found in this deck'):
-        import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    assert result['cardData']==[]
+    assert result['cardDataDocument']['cards']==[{'name':'Typo Card','nickname':'Dean'}]
     assert ws.store.get('decks',deck['id'])==before
+
+
+def test_project_inventory_imports_matching_subset_and_retains_full_document(tmp_path):
+    data={'version':1,'cards':[{'name':'A Test Creature','nickname':'Dean'},
+        {'name':'Syr Gwyn, Hero of Ashvale','nickname':'Sam'},
+        {'name':'Command Tower','art':'command_tower.png'},
+        {'name':'Arid Mesa','nickname':'Kansas Backroads'}]}
+    remote=BundleRemote(data=data);ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
+    assert result['cardData']==data['cards'][:1] and result['summary']['data']==1
+    assert result['cardDataDocument']==data
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData'],'settings':result['settings']})
+    assert len(saved['cards'])==1 and saved['cards'][0]['faces'][0]['semanticOverrides']['nickname']=='Dean'
+
+
+def test_direct_github_data_import_filters_subset_but_returns_original_document(tmp_path):
+    from foundry.github_setup import import_card_data_url
+    data={'version':1,'cards':[{'name':'A Test Creature','nickname':'Dean'},{'name':'High Market','nickname':'Roadhouse'}]}
+    remote=BundleRemote(data=data);ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    result=import_card_data_url(ws,{'url':remote.url+'/data.json','deckId':deck['id']},include_document=True)
+    assert result['cardData']==data['cards'][:1] and result['document']==data
+
+
+def test_local_data_file_supports_inventory_larger_than_the_deck(running):
+    app,server=running;deck=_deck_with_card(app.ws)
+    data={'version':1,'cards':[{'name':'A Test Creature','nickname':'Dean'},{'name':'Bloodstained Mire','nickname':"Devil's Gate"}]}
+    status,result,_=request(server,'/api/setup/card-data/file?deckId='+deck['id'],
+        json.dumps(data).encode(),headers={'Content-Type':'application/json'})
+    assert status==200 and result['cardData']==data['cards'][:1]
+
+
+def test_inventory_staged_before_metadata_loads_can_be_saved_afterward(tmp_path):
+    from foundry.github_setup import validate_card_data_for_deck
+    remote=BundleRemote();ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
+    rows=[{'name':'A Test Creature','nickname':'Dean'},{'name':'Savai Triome','nickname':'Desert'}]
+    deck['pendingImport']={'manifest':[]};deck=ws.store.put('decks',deck,deck['revision'])
+    staged=validate_card_data_for_deck(ws,deck['id'],rows);assert staged==rows
+    deck.pop('pendingImport');deck=ws.store.put('decks',deck,deck['revision'])
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':staged,'settings':{'dataJsonSource':{'kind':'local','value':'data.json'}}})
+    assert saved['cards'][0]['faces'][0]['semanticOverrides']['nickname']=='Dean'
+    assert saved['cardData']==rows[:1]
 
 
 @pytest.mark.parametrize('data,match',[

@@ -2,7 +2,7 @@
 import json,re
 from .domain import ValidationError,quantity
 
-FIELDS=('name','oracle_id','scryfall_id','copy')
+FIELDS=('name','oracle_id','scryfall_id','copy','art_variant')
 
 def reference(card):
     sf=card.get('scryfall') or {};raw=(sf.get('card_faces') or [sf])[0]
@@ -10,10 +10,11 @@ def reference(card):
     for field,value in [('oracle_id',raw.get('oracle_id') or sf.get('oracle_id')),('scryfall_id',sf.get('id'))]:
         if value:result[field]=value.lower()
     if card.get('tokenSpec') and card['name']!=sf.get('name',card['name']):result['copy']=card['name']
+    if card.get('artVariantId'):result['art_variant']=card['artVariantId']
     return result
 
 def key(ref):
-    return json.dumps([ref.get('oracle_id',''),ref.get('scryfall_id',''),ref['name'],ref.get('copy','')],ensure_ascii=False,separators=(',',':'))
+    return json.dumps([ref.get('oracle_id',''),ref.get('scryfall_id',''),ref['name'],ref.get('copy',''),ref.get('art_variant','')],ensure_ascii=False,separators=(',',':'))
 
 def validate_reference(value):
     if not isinstance(value,dict) or set(value)-set(FIELDS) or not isinstance(value.get('name'),str) or not value['name'].strip():
@@ -21,8 +22,8 @@ def validate_reference(value):
     result={}
     for field,text in value.items():
         if not isinstance(text,str) or len(text)>300 or any(ord(c)<32 for c in text):raise ValidationError('Invalid token face reference.')
-        if field.endswith('_id') and not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}',text):raise ValidationError('Invalid token face UUID.')
-        result[field]=text.lower() if field.endswith('_id') else text.strip()
+        if (field.endswith('_id') or field=='art_variant') and not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}',text):raise ValidationError('Invalid token face UUID.')
+        result[field]=text.lower() if field.endswith('_id') or field=='art_variant' else text.strip()
     return result
 
 def validate_spec(value):
@@ -72,7 +73,7 @@ def validate_treatments(value):
     return result
 
 def resolve(cards,ref):
-    candidates=[c for c in cards if reference(c)['name']==ref['name'] and reference(c).get('copy','')==ref.get('copy','')]
+    candidates=[c for c in cards if reference(c)['name']==ref['name'] and reference(c).get('copy','')==ref.get('copy','') and reference(c).get('art_variant','')==ref.get('art_variant','')]
     for field in ('scryfall_id','oracle_id'):
         if ref.get(field):
             exact=[c for c in candidates if reference(c).get(field)==ref[field]]
@@ -91,7 +92,7 @@ def apply_treatments(deck):
             for other in deck['cards']:
                 if key(reference(other))==ident:other['tokenSpec']=dict(row['options'])
 
-def overview(deck):
+def overview(deck,*,strict=False):
     settings=deck.get('settings',{});all_tokens=[c for c in deck['cards'] if is_token(c,settings)]
     unique={};suggested={}
     for card in all_tokens:
@@ -101,6 +102,9 @@ def overview(deck):
     usage={c['id']:0 for c in singles};assigned=[];invalid=[];natural_used=set();resolved_pairs=set()
     for index,row in enumerate(settings.get('tokenAssignments',[])):
         front=resolve(cards,row['front']);back=row['back'];kind=back.get('kind');other=resolve(singles,back) if not kind else None
+        #Shared data.json files can describe other decks or token treatments not used here.
+        #Direct pairing edits still require every referenced face to be a current token.
+        if not strict and (not front or not kind and not resolve(cards,back)):continue
         problem=not front or kind=='reverse' and front not in natural or kind!='reverse' and front not in singles or not kind and (not other or other is front)
         identity=tuple(sorted((front['id'],other['id']))) if front and other else (front['id'] if front else '',kind)
         if identity in resolved_pairs:problem=True

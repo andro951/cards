@@ -61,3 +61,25 @@ def test_failed_save_interrupts_wait_for_future_prepared_faces():
  await assert.rejects(()=>Promise.race([completed,new Promise((resolve,reject)=>setTimeout(()=>reject(new Error('hung waiting for preparation')),1000))]),/disk full/);
  assert.equal(cancelled,true);
  '''.replace('MODULE',module('site/native-render-pool.js')))
+
+
+def test_native_failure_preserves_original_stack_and_card_diagnostic():
+ node(r'''import assert from 'node:assert/strict';
+ const {NativeRenderer}=await import(MODULE);
+ globalThis.location={origin:'http://app'};
+ globalThis.window={addEventListener(){},removeEventListener(){}};
+ const frame={contentWindow:{postMessage(){}},setAttribute(){},remove(){}};
+ globalThis.document={createElement:()=>frame,body:{append(){}}};
+ const diagnostics=[];
+ const renderer=new NativeRenderer({origin:'http://runtime',diagnostic:message=>diagnostics.push(message)});
+ const event=data=>({origin:'http://runtime',source:frame.contentWindow,data:{source:'pf-native-runtime',...data}});
+ renderer.receive(event({type:'ready'}));
+ const promise=renderer.render({key:'ring',name:'Sol Ring'},{});
+ await Promise.resolve();
+ renderer.receive(event({type:'failed',key:'ring',error:'Missing text',stack:'writeText:3417',phase:'render'}));
+ await assert.rejects(promise,error=>error.message==='Missing text'&&error.stack==='writeText:3417');
+ assert.equal(diagnostics[0].diagnostic.card,'Sol Ring');
+ assert.equal(diagnostics[0].diagnostic.phase,'render');
+ assert.equal(diagnostics[0].diagnostic.stack,'writeText:3417');
+ renderer.close();
+ '''.replace('MODULE',module('site/native-render-pool.js')))

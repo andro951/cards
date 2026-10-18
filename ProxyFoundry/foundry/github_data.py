@@ -112,10 +112,15 @@ def refresh(workspace, deck, cancel=lambda:False):
             if changed:workspace.invalidate_face(face);dirty=True
     updated['cardData']=list(saved.values())
     from . import token_assignments
-    for field in ('tokenAssignments','tokenTreatments'):
+    for field in ('tokenAssignments','tokenTreatments','artVariants'):
         if field in settings and (not same_source or settings[field]!=prior.get('settings',{}).get(field)):
             updated['settings'][field]=settings[field]
+        elif field=='artVariants' and same_source and field in prior.get('settings',{}) and field not in settings:
+            updated['settings'][field]=[]
     old_specs={c['id']:copy.deepcopy(c.get('tokenSpec')) for c in updated['cards']}
+    from . import art_variants
+    if art_variants.apply(updated,workspace.invalidate_face):dirty=True
+    old_specs.update({c['id']:copy.deepcopy(c.get('tokenSpec')) for c in updated['cards'] if c['id'] not in old_specs})
     token_assignments.apply_treatments(updated)
     for card in updated['cards']:
         if old_specs[card['id']]!=card.get('tokenSpec'):

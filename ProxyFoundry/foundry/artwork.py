@@ -41,13 +41,15 @@ class ArtworkIndex(dict):
 
 def face_key(card,face):
     target=identity(card,face)
-    return (target['oracle_id'] or target['scryfall_id'] or card['id'])+'/'+target['name']
+    return (target['oracle_id'] or target['scryfall_id'] or card['id'])+'/'+target['name']+('/'+card['artVariantId'] if card.get('artVariantId') else '')
 
 def build_review(deck,settings,index):
     items={};defaults=set(settings.get('artDefaults') or [])
     for card in deck['cards']:
         raw_faces=card['scryfall'].get('card_faces') or [card['scryfall']]
-        for face in card['faces']:
+        for original_face in card['faces']:
+            from .art_variants import selected_face
+            face=selected_face(original_face)
             key=face_key(card,face)
             if key in items:continue
             raw=raw_faces[min(face.get('index',0),len(raw_faces)-1)]
@@ -55,11 +57,12 @@ def build_review(deck,settings,index):
             selector=identity(card,face)
             selector={k:v for k,v in selector.items() if v and (k!='scryfall_id' or not selector['oracle_id'])}
             item={'id':key,'selector':selector,'name':face['name'],'image':image.get('normal') or image.get('png') or image.get('large') or '',
+                  'cardId':card['id'],'variantId':card.get('artVariantId'),
                   'status':'missing','filename':None,'key':None,'reason':'No matching custom artwork.',
                   'explicit':bool(face.get('artFilename'))}
             if face.get('artOverride') or face.get('selectedArtPrintingId'):
                 item.update(status='override',reason='Artwork chosen for this card.')
-            elif key in defaults:
+            elif not face.get('variantArtFilename') and key in defaults:
                 item.update(status='default',reason='Scryfall artwork approved.')
             else:
                 try:
@@ -86,6 +89,10 @@ def build_review(deck,settings,index):
                            'faces':sorted(items),'source':{k:v for k,v in settings['source'].items() if k not in {'localFiles','localNames'}}})
     unresolved=[r for r in items.values() if r['status'] in {'missing','conflict'}]
     unused=[r for r in inventory if r['key'] not in used]
-    return {'items':list(items.values()),'inventory':inventory,'unused':unused,'signature':signature,
+    from .art_variants import reference
+    cards=[{'id':card['id'],'name':card['name'],'quantity':card['quantity'],'variantId':card.get('artVariantId'),
+            'source':reference(card),'faces':[{'name':f['name'],'art':f.get('variantArtFilename') or f.get('artFilename',''),
+                'image':items.get(face_key(card,f),{}).get('image','')} for f in card['faces']]} for card in deck['cards']]
+    return {'items':list(items.values()),'cards':cards,'inventory':inventory,'unused':unused,'signature':signature,
             'needsReview':bool(unresolved or unused and settings.get('artReviewSignature')!=signature),
             'missing':len(unresolved),'needed':len(items),'available':len(inventory)}

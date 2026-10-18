@@ -7,7 +7,7 @@ import {mountBackPicker} from './backs.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
-import {ensureArtworkReady,offerDataSave} from './artwork-review.js';
+import {ensureArtworkReady,offerDataSave,editAlternateArt,saveArtVariantData} from './artwork-review.js';
 import {dataChangesPending} from './artwork-files.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
@@ -523,6 +523,7 @@ async function inspect(deck,card,index=0){
   $('#reset-fit').onclick=()=>{fit={};toast('Automatic artwork fit will be applied when regenerated.');};
   $('#save-card').textContent=`Save`;
   $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{
+    const previousVariants=JSON.stringify(d.settings.artVariants||[]);
     const rules=rulesField.value;
     pendingRules||=rules!==savedRules;
     if(!pendingRules&&f.rulesOverrideLocal)
@@ -531,6 +532,8 @@ async function inspect(deck,card,index=0){
     await persistCard();
     if(pendingRules)
       await saveRulesData(rules);
+    if(previousVariants!==JSON.stringify(d.settings.artVariants||[]))
+      syncCurrent(await saveArtVariantData(d));
 
     closeModal({completed:true});await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');
   }finally{setBusy(false);}});
@@ -576,6 +579,9 @@ async function inspect(deck,card,index=0){
   tokenButton.textContent=c.tokenSpec||d.tokens?.cardIds.includes(c.id)?`Token options`:`Convert to token`;
   tokenButton.onclick=()=>convertToToken(d,c,()=>showDeck(d.id));
   $('#copy-token').before(tokenButton);
+  const alternateArt=document.createElement(`button`);alternateArt.type=`button`;alternateArt.className=`button quiet small`;alternateArt.textContent=`Add alternate art`;
+  alternateArt.onclick=()=>attempt(()=>editAlternateArt(d,c,f,()=>showDeck(d.id)));
+  $('#copy-token').before(alternateArt);
   if(d.tokens?.cardIds.includes(c.id)) {
     const backField=$('#face-back').closest('.field');backField.style.display=`none`;
     const note=document.createElement(`p`);note.className=`muted`;

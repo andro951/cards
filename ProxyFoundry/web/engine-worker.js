@@ -74,7 +74,12 @@ async function start(folder){
 
   self.syncFetch=url=>{
     const xhr=new XMLHttpRequest();
-    xhr.open('GET',url,false);
+    //Python owns response freshness; the browser must not reuse an older GitHub branch head after a save.
+    const address=new URL(url,self.location.origin);
+    if(address.hostname===`api.github.com`)
+      address.searchParams.set(`_bpf_refresh`,crypto.randomUUID());
+
+    xhr.open('GET',address.href,false);
     xhr.responseType='arraybuffer';
     xhr.setRequestHeader('Accept','application/json;q=0.9,image/*;q=0.8,*/*;q=0.7');
     xhr.send();

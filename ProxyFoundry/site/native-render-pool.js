@@ -25,8 +25,9 @@ export class NativeRenderer {
         if(message.type===`ready`){clearInterval(this.ping);clearTimeout(this.startup);this.resolveReady();return;}
         if(message.type===`diagnostic`){this.diagnostic(message);return;}
         if(message.type===`failed`){
-            this.diagnostic({key:message.key,stage:`renderer.failure`,diagnostic:{error:message.error,errors:message.errors||[]}});
+            this.diagnostic({key:message.key,stage:`renderer.failure`,diagnostic:{error:message.error,stack:message.stack,phase:message.phase,card:this.pending?.target?.name,errors:message.errors||[]}});
             const error=new Error(message.error);
+            if(message.stack)error.stack=message.stack;
             if(this.pending)this.pending.reject(error);else this.rejectReady(error);
             return;
         }

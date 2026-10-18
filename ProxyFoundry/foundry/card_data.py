@@ -60,7 +60,7 @@ def matching_keys(card,face):
     for mask in range(1,8):
         yield tuple(target[k] if mask&(1<<i) else '' for i,k in enumerate(['oracle_id','scryfall_id','name']))
 
-def validate_targets(deck,entries):
+def validate_targets(deck,entries,*,allow_missing=False):
     targets={}
     for card in deck.get('cards',[]):
         for face in card.get('faces',[]):
@@ -68,7 +68,8 @@ def validate_targets(deck,entries):
             variant=(target['oracle_id'] or target['scryfall_id'] or card['id'],target['name'])
             for key in matching_keys(card,face):targets.setdefault(key,set()).add(variant)
     missing=[e.get('name') or e.get('oracle_id') or e.get('scryfall_id') for e in entries if selector_key(e) not in targets]
-    if missing:raise ValidationError('data.json card selector(s) were not found in this deck: '+', '.join(missing[:8])+'. Names must exactly match a card face when supplied.')
+    if missing and not allow_missing:raise ValidationError('data.json card selector(s) were not found in this deck: '+', '.join(missing[:8])+'. Names must exactly match a card face when supplied.')
+    if allow_missing:entries=[entry for entry in entries if selector_key(entry) in targets]
     ambiguous=[e.get('name') or e.get('oracle_id') or e.get('scryfall_id') for e in entries if e.get('art') and len(targets[selector_key(e)])>1]
     if ambiguous:raise ValidationError('Artwork selector(s) match multiple card variants or faces: '+', '.join(ambiguous[:8])+'. Use a UUID and face name to identify each artwork mapping.')
     return entries
@@ -83,7 +84,10 @@ def parse_document(raw):
     try:value=json.loads(bytes(raw).decode('utf-8-sig'))
     except (ValueError,UnicodeError) as exc:raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
     if not isinstance(value,dict):raise ValidationError('data.json must contain a JSON object.')
-    if set(value)-{'version','cards','artist','tokenAssignments','tokenTreatments'}:raise ValidationError('data.json has unsupported top-level fields.')
+    if set(value)-{'version','cards','artist','tokenAssignments','tokenTreatments','artVariants'}:raise ValidationError('data.json has unsupported top-level fields.')
+    if 'artVariants' in value:
+        from .art_variants import validate
+        validate(value['artVariants'])
     from .token_assignments import validate_assignments,validate_treatments
     if 'tokenAssignments' in value:validate_assignments(value['tokenAssignments'])
     if 'tokenTreatments' in value:validate_treatments(value['tokenTreatments'])
@@ -96,6 +100,6 @@ def document_settings(raw):
     parse_document(raw)
     value=json.loads(bytes(raw).decode('utf-8-sig'))
     result={'artist':value['artist'].strip()} if 'artist' in value else {}
-    for field in ('tokenAssignments','tokenTreatments'):
+    for field in ('tokenAssignments','tokenTreatments','artVariants'):
         if field in value:result[field]=value[field]
     return result

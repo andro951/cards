@@ -11,7 +11,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','artwork-review','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','app']:
+    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','art-variants','artwork-review','tokens','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','app']:
         text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
@@ -521,6 +521,113 @@ def test_automatic_save_tracks_its_write_and_newer_import_baselines(dom_page):
     }''')
     assert report['writes']==3 and report['conflict']
     assert report['current']['cards'][0]['oracle_text']=='Defender'
+    assert not errors,errors
+
+
+def test_token_merge_preserves_independent_remote_changes_and_detects_real_conflicts(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''()=>{
+      const m=__mod_artwork_files;
+      const pair=(front,back,quantity)=>({front:{name:front},back:typeof back==='string'?{name:back}:back,quantity});
+      const first=pair('Angel','Germ',2),second=pair('Soldier',{kind:'card-back'},1);
+      const added=pair('Sol Ring',{kind:'card-back'},3);
+      const before={version:1,cards:[],tokenAssignments:[first,second]};
+      const remote={...before,tokenAssignments:[added,{...second,quantity:7},{quantity:2,back:first.front,front:first.back}]};
+      const local={tokenAssignments:[{...first,quantity:4},second]};
+      const merged=m.mergeTokenData(remote,local,before);
+      const reordered=m.mergeTokenData(remote,{tokenAssignments:[second,first]},before);
+      const deleted=m.mergeTokenData({...before,tokenAssignments:[first,second,added]},{tokenAssignments:[first]},before);
+      const independent=m.mergeTokenData({version:1,cards:[],tokenAssignments:[added]},
+          {tokenAssignments:[first],tokenTreatments:[]},{version:1,cards:[]});
+      let conflicts=0;
+      for(const changed of [[{...first,quantity:8},second],[second]]){
+        try{m.mergeTokenData({...before,tokenAssignments:changed},local,before);}catch(error){if(error.message.includes('Angel / Germ'))conflicts++;}
+      }
+      const treated={face:{name:'Angel'},options:{power_toughness:'2/2',nonlegendary:true}};
+      const treatments=m.mergeTokenData({version:1,cards:[],tokenTreatments:[treated,{face:{name:'Germ'},options:{power_toughness:'1/1'}}]},
+          {tokenTreatments:[{face:{name:'Angel'},options:{nonlegendary:true,power_toughness:'2/2'}}]},
+          {version:1,cards:[],tokenTreatments:[treated]});
+      return {merged,reordered,deleted,independent,conflicts,treatments,remote};
+    }''')
+    by_front={row['front']['name']:row for row in report['merged']['tokenAssignments']}
+    assert by_front['Angel']['quantity']==4
+    assert by_front['Soldier']['quantity']==7 and by_front['Sol Ring']['quantity']==3
+    assert report['reordered']['tokenAssignments']==report['remote']['tokenAssignments']
+    assert [row['front']['name'] for row in report['deleted']['tokenAssignments']]==['Angel','Sol Ring']
+    assert len(report['independent']['tokenAssignments'])==2 and report['conflicts']==2
+    assert len(report['treatments']['tokenTreatments'])==2
+    assert report['remote']['tokenAssignments'][-1]['quantity']==2
+    assert not errors,errors
+
+
+def test_alternate_art_metadata_merges_independent_variants_and_protects_edits(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''()=>{
+      const m=__mod_artwork_files;
+      const first={id:'11111111-1111-4111-8111-111111111111',card:{name:'Plains'},quantity:1,faces:[{name:'Plains',art:'first.png'}]};
+      const other={...first,id:'22222222-2222-4222-8222-222222222222',faces:[{name:'Plains',art:'second.png'}]};
+      const before={version:1,cards:[],artVariants:[first]};
+      const remote={...before,artVariants:[first,other]};
+      const merged=m.mergeTokenData(remote,{artVariants:[{...first,quantity:2}]},before);
+      let conflict=false;try{m.mergeTokenData({...remote,artVariants:[{...first,quantity:3},other]},{artVariants:[{...first,quantity:2}]},before);}catch(error){conflict=error.message.includes('Alternate artwork');}
+      let invalid=false;try{m.validateArtVariants([{...first,faces:[{name:'Plains',art:'../bad.png'}]}]);}catch(error){invalid=true;}
+      const tokens=m.mergeTokenData({version:1,cards:[]},{tokenAssignments:[{front:{name:'Angel'},back:{name:'Angel',art_variant:first.id},quantity:2}]});
+      return {merged,conflict,invalid,tokens};
+    }''')
+    assert [row['quantity'] for row in report['merged']['artVariants']]==[2,1]
+    assert report['conflict'] and report['invalid']
+    assert report['tokens']['tokenAssignments'][0]['back']['art_variant']
+    assert not errors,errors
+
+
+def test_token_save_retries_merge_without_losing_other_decks_assignments(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files;
+      const baseline={version:1,cards:[]};
+      const local={tokenAssignments:[{front:{name:'Angel'},back:{name:'Germ'},quantity:4}],tokenTreatments:[]};
+      let current={...baseline,tokenAssignments:[{front:{name:'Sol Ring'},back:{kind:'card-back'},quantity:1}]},writes=0;
+      const fetcher=async(url,options)=>{
+        if(options.method!=='PUT')return {ok:true,json:async()=>({sha:'sha-'+writes,encoding:'base64',content:btoa(JSON.stringify(current))})};
+        writes++;
+        if(writes===1){current.tokenAssignments[0].quantity=6;return {ok:false,status:409};}
+        current=JSON.parse(atob(JSON.parse(options.body).content));return {ok:true};
+      };
+      const result=await m.saveGithubData({repo:'owner/cards',branch:'main',path:'data.json'},'test-only',[],baseline,fetcher,[],local);
+      return {result,writes};
+    }''')
+    assert report['writes']==2
+    assert {row['front']['name']:row['quantity'] for row in report['result']['tokenAssignments']}=={'Sol Ring':6,'Angel':4}
+    assert not errors,errors
+
+
+def test_token_saves_recognize_earlier_write_despite_snapshot_property_order(dom_page):
+    page,errors=dom_page
+    report=page.evaluate('''async()=>{
+      const m=__mod_artwork_files,url='https://github.com/owner/cards/blob/main/data.json',id=__fixture.deck.id;
+      const baseline={version:1,artist:'Test',cards:[],tokenAssignments:[]};
+      await m.rememberGithub(id,url,baseline);await m.connectGithub('owner/cards','test-only',false);
+      let current={...structuredClone(baseline),tokenAssignments:[{front:{name:'Sol Ring'},back:{kind:'card-back'},quantity:1}]},writes=0;
+      const original=window.fetch;
+      window.fetch=async(url,opts={})=>{
+        if(!String(url).startsWith('https://api.github.com/'))return original(url,opts);
+        if(opts.method==='PUT'){writes++;current=JSON.parse(atob(JSON.parse(opts.body).content));return {ok:true};}
+        return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'sha-'+writes,content:btoa(JSON.stringify(current))})};
+      };
+      const save=(quantity,before)=>__mod_artwork_review.offerDataSave(id,[],baseline,url,[],{autoSave:true,baseline:before,
+        tokenData:{tokenAssignments:[{front:{name:'Angel'},back:{name:'Germ'},quantity}],tokenTreatments:[]}});
+      await save(2,baseline);
+      const reordered={tokenAssignments:[],cards:[],artist:'Test',version:1};
+      await save(4,reordered);
+      const folder='https://github.com/owner/cards/tree/main';
+      await __mod_artwork_review.offerDataSave(id,[{name:'Spirit',oracle_text:'Flying'}],baseline,folder,[],{autoSave:true});
+      await save(6,reordered);
+      current.tokenAssignments.find(row=>row.front.name==='Angel').quantity=9;
+      let conflict=false;try{await save(7,baseline);}catch(error){conflict=error.message.includes('changed in the original');}
+      return {writes,conflict,current};
+    }''')
+    assert report['writes']==4 and report['conflict']
+    assert {row['front']['name']:row['quantity'] for row in report['current']['tokenAssignments']}=={'Sol Ring':1,'Angel':9}
     assert not errors,errors
 
 
