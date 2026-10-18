@@ -1,0 +1,44 @@
+{
+  "baseline": "d9e78e9",
+  "revision": "d9e78e9559a55111a9913b4472cfc032432a18a7",
+  "note": "Warm same-byte inputs through actual static browser engine. Python operation timers exclude startup and request body transfer. Bounded cache retains IDs only; all returned normalized PNG hashes match. No deck throughput claim.",
+  "sourceBytes": 7042974,
+  "trials": [
+    {
+      "seconds": 27.747999999999998,
+      "baseline": true,
+      "asset": "8ce283cd3b3b68d2faca3afa5e01129da02f78eb4dc08b1063732234f61dfeab",
+      "width": 2010,
+      "height": 2814,
+      "bytes": 4968742,
+      "repeats": 8
+    },
+    {
+      "seconds": 0.33899999999999864,
+      "baseline": false,
+      "asset": "8ce283cd3b3b68d2faca3afa5e01129da02f78eb4dc08b1063732234f61dfeab",
+      "width": 2010,
+      "height": 2814,
+      "bytes": 4968742,
+      "repeats": 8
+    },
+    {
+      "seconds": 0.3208000000000055,
+      "baseline": false,
+      "asset": "8ce283cd3b3b68d2faca3afa5e01129da02f78eb4dc08b1063732234f61dfeab",
+      "width": 2010,
+      "height": 2814,
+      "bytes": 4968742,
+      "repeats": 8
+    },
+    {
+      "seconds": 26.5563,
+      "baseline": true,
+      "asset": "8ce283cd3b3b68d2faca3afa5e01129da02f78eb4dc08b1063732234f61dfeab",
+      "width": 2010,
+      "height": 2814,
+      "bytes": 4968742,
+      "repeats": 8
+    }
+  ]
+}

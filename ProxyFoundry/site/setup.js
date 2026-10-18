@@ -1,12 +1,14 @@
+import {withGenerationScreen} from './generation-progress.js';
+import {ensureMetadata,pauseMetadata} from './metadata.js';
+import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox} from './ui.js';
-import {originalArtist,composeCredit} from './credits.js';
-import {frameChoices,openFramePicker} from './frame-picker.js';
-import {renderTemplatePreviews} from './render.js';
+import {checkArtwork,offerDataSave} from './artwork-review.js';
+import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub} from './artwork-files.js';
+import {originalArtist,composeCredit,ensureCustomArtCredits} from './credits.js';
+import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
-let activeSetupPreview=null;
-export async function cancelSetupPreviews(){if(activeSetupPreview)await activeSetupPreview();}
 const symbolImage=/\.(png|jpe?g|webp|gif|svg)$/i;
 export function symbolFolderFiles(files){
   const found={},unexpected=[];
@@ -28,9 +30,10 @@ export function templateOptions(group,legendary=false,value='auto'){
   return state.templates.filter(t=>t.id==='auto'||(t.groups==='ordinary'?ordinary: Array.isArray(t.groups)&&t.groups.includes(group))&&(!legendary||t.legendary)).map(t=>`<option value="${esc(t.id)}" ${t.id===value?'selected':''}>${esc(t.name)}</option>`).join('');
 }
 export function renderSetup(root,deck,onSaved){
-  const s=structuredClone(deck.settings),groups={};let stagedCardData=[],dataJsonImportNote='';
+  const s=structuredClone(deck.settings),groups={};let stagedCardData=structuredClone(deck.cardData||[]),dataJsonImportNote='';
   s.dataJsonSource=s.dataJsonSource&&typeof s.dataJsonSource==='object'?structuredClone(s.dataJsonSource):null;s.source={mode:'scryfall',githubFolder:'',ref:'',fallback:false,localFiles:{},...s.source};s.symbols={...s.symbols};s.templateRules={...s.templateRules};s.allCardsTokens=Boolean(s.allCardsTokens);s.tokenOptions={power:'',toughness:'',subtypes:'',nonlegendary:false,...s.tokenOptions};
   for(const c of deck.cards)for(const f of c.faces){const g=f.group||f.compiled?.group||'standard';groups[g]=(groups[g]||0)+1;}
+  if(deck.pendingImport){for(const key of Object.keys(groups))delete groups[key];for(const group of ['standard','legendary','land','legendary-land','basic-land','token','saga'])groups[group]=null;}
   root.innerHTML=githubSetupSection(s.githubSetupFolder||'')+`<fieldset class="setup-fields" id="setup-fields" aria-label="Deck setup"><div class="setup-columns"><div>
     <section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / ARTWORK</span><h2>Choose where the art comes from</h2><p>Your Scryfall deck’s exact printing is kept—not replaced with a random version.</p></div></div>
       <div class="source-choices"><button class="choice ${s.source.mode==='scryfall'?'selected':''}" data-mode="scryfall"><span class="choice-symbol">▧</span><b>Scryfall printing</b><span>Use the art already selected in your deck.</span></button><button class="choice ${s.source.mode==='github'?'selected':''}" data-mode="github"><span class="choice-symbol">⌘</span><b>GitHub folder</b><span>Paste a folder link. No local repository needed.</span></button><button class="choice ${s.source.mode==='local'?'selected':''}" data-mode="local"><span class="choice-symbol">▱</span><b>Computer folder</b><span>Choose your artwork directly from this device.</span></button></div>
@@ -64,7 +67,7 @@ export function renderSetup(root,deck,onSaved){
         <label class="check-line"><input type="checkbox" id="token-nonlegendary" ${s.tokenOptions.nonlegendary?'checked':''}><span>Make nonlegendary<small>Removes Legendary from the supertype when it is present.</small></span></label>
       </div>
     </section>
-  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Saved settings · changes stay local</span><button class="button" id="save-setup">Save changes</button><button class="button primary" id="save-generate">Save & generate images →</button></div></fieldset>`;
+  </div></div><div class="setup-save"><span class="save-status" id="setup-state">Changes saved</span><button class="button primary" id="save-generate">Generate images</button></div></fieldset>`;
   $('#disable-autofit',root).closest('details').remove();
   for(const id of ['deck-name','deck-notes','reuse-style','flavor-policy','refresh-data'])$('#'+id,root).closest('label').remove();
   $('.credit-preview',root)?.remove();
@@ -86,7 +89,7 @@ export function renderSetup(root,deck,onSaved){
   const tokenFrameLabel=document.createElement('label');tokenFrameLabel.className='field';
   const tokenFrameTitle=document.createElement('span');tokenFrameTitle.textContent='Token frame';
   const tokenFrame=document.createElement('select');tokenFrame.id='token-frame';
-  for(const [value,label] of [['auto','Automatic token frame'],['godzilla-card','Godzilla full art token']]){
+  for(const [value,label] of [['auto','Automatic token frame'],['token-classic','Classic arched token'],['token-full-art','Modern full-art token'],['token-borderless','Modern borderless token'],['godzilla-card','Godzilla full art token']]){
     const option=document.createElement('option');option.value=value;option.textContent=label;tokenFrame.append(option);
   }
   tokenFrame.value=s.templateRules.token||'auto';tokenFrameLabel.append(tokenFrameTitle,tokenFrame);
@@ -119,12 +122,28 @@ export function renderSetup(root,deck,onSaved){
   const columns=$('.setup-columns',root);
   const panels=$$('.setup-columns > div > section',root);
   columns.replaceChildren(...panels);
-  columns.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));align-items:start;gap:16px';
-  if(Object.keys(groups).length)$('#frame-choices',root).closest('section').style.gridColumn='1 / -1';
+  Object.assign(columns.style,{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,max(420px,calc((100% - 20px)/2))),1fr))',alignItems:'start',gap:'20px'});
+  for(const panel of panels){
+    panel.style.margin='0';
+    panel.style.minWidth='0';
+    panel.style.scrollMarginBottom='120px';
+  }
+
+  for(const panel of [sourcePanel,$('#frame-choices',root).closest('section'),artistPanel,otherPanel]){
+    panel.style.gridColumn='1 / -1';
+  }
+
+  artistPanel.querySelector('h2').textContent='Card Details';
+  otherPanel.querySelector('.eyebrow').textContent='06 / OTHER OPTIONS';
+  otherPanel.querySelector('.panel-head p').remove();
+  Object.assign($('.setup-save',root).style,{bottom:'0',marginTop:'20px'});
+  $('#setup-fields',root).style.paddingBottom='24px';
   const byCard=document.createElement('button');byCard.type='button';byCard.className='button small';byCard.textContent='Specify artist by card';
   $('#deck-artist',root).closest('label').after(byCard);
   const importedData=$('#data-json-section',root);
   artistPanel.append(importedData);
+  importedData.querySelector('.eyebrow').remove();
+  Object.assign(importedData.style,{background:'none',boxShadow:'none',border:'none',borderTop:'1px solid var(--line)',borderRadius:'0',padding:'20px 0 0',margin:'20px 0 0'});
   const localDataButton=document.createElement('button');
   localDataButton.type='button';
   localDataButton.id='open-card-data';
@@ -153,20 +172,29 @@ export function renderSetup(root,deck,onSaved){
   dataStatus.hidden=true;
   $('#data-json-section',root).append(dataStatus);
   $('#data-json-section .panel-head p',root).remove();
-  $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
+  $('#data-json-section h2',root).textContent='Card data & artwork mappings';
+  $('#data-json-section .well code',root).textContent=JSON.stringify({version:1,artist:'Deck Artist',cards:[{name:'Sol Ring',nickname:'The Colt',flavor_text:'Custom flavor text.',artist:'Artist Name'}]},null,2);
   $('#data-json-section .well code',root).style.whiteSpace='pre-wrap';
+  const formatHelp=document.createElement('details');
+  const formatTitle=document.createElement('summary');
+  formatTitle.textContent='Format help';
+  formatHelp.append(formatTitle,$('#data-json-section .well',root));
+  formatHelp.style.marginTop='20px';
   $('#data-json-file',root).closest('label').style.display='none';
   linkDataButton.style.display='none';
   const dataModes=document.createElement('div');dataModes.className='source-choices';
   const computerMode=document.createElement('button');computerMode.type='button';computerMode.className='choice selected';computerMode.textContent='From Computer';
   const githubMode=document.createElement('button');githubMode.type='button';githubMode.className='choice';githubMode.textContent='From GitHub';
   dataModes.append(computerMode,githubMode);$('#data-json-section .panel-head',root).after(dataModes);
+  importedData.append(formatHelp);
   urlLabel.style.display='none';
   computerMode.onclick=()=>{computerMode.classList.add('selected');githubMode.classList.remove('selected');localDataButton.style.display='';urlLabel.style.display='none';};
   githubMode.onclick=()=>{githubMode.classList.add('selected');computerMode.classList.remove('selected');localDataButton.style.display='none';urlLabel.style.display='';};
   dataUrl.addEventListener('change',()=>{if(dataUrl.value.trim())linkDataButton.click();});
-  const mark=()=>{state.dirty=true;$('#setup-state',root).textContent='Unsaved changes';};
+  let changeVersion=0,persistedVersion=0,saveTimer=null,saveQueue=Promise.resolve();
+  const mark=()=>{changeVersion++;state.dirty=true;$('#setup-state',root).textContent='Saving changes…';clearTimeout(saveTimer);saveTimer=setTimeout(()=>attempt(()=>persistSetup()),400);};
   byCard.onclick=()=>attempt(async()=>{
+    refreshMetadata(await ensureMetadata(deck.id));
     s.artist=$('#deck-artist',root).value.trim();
     const previews=await api('/api/setup/custom-art-previews',{deckId:deck.id,settings:s});
     const host=modal('Artist credits by card','',{size:'large',footer:'<button class="button primary" id="save-artists">Apply credits</button>'});
@@ -192,36 +220,46 @@ export function renderSetup(root,deck,onSaved){
         if(!entry){entry={name};stagedCardData.push(entry);}
         entry.artist=input.value.trim();
       }
-      closeModal();mark();toast('Artist credits staged. Save changes to apply.');
+      closeModal();mark();toast('Artist credits imported.');
     };
   });
-  const stageCardData=(entries,source)=>{
+  const applyDataArtist=settings=>{
+    if(settings&&Object.hasOwn(settings,'artist')){
+      s.artist=settings.artist;$('#deck-artist',root).value=s.artist;
+    }
+  };
+  const stageCardData=(entries,source,settings)=>{
+    applyDataArtist(settings);
+    pairedChanges=[];
+    s.artReviewSignature='';
     stagedCardData=structuredClone(entries);
     s.dataJsonSource=source;
     dataJsonImportNote='';
-    dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' staged. Save changes to apply.';
+    dataStatus.textContent=(source?.kind==='github'?'GitHub data.json: ':'Local data.json: ')+entries.length+' nonempty card entr'+(entries.length===1?'y':'ies')+' imported.';
     dataStatus.hidden=false;
     redrawDataJsonStatus();
+    (source?.kind==='github'?githubMode:computerMode).onclick();
     mark();
   };
-  localDataButton.onclick=()=>$('#data-json-file',root).click();
+  localDataButton.onclick=()=>attempt(async()=>{
+    if(!window.showOpenFilePicker){$('#data-json-file',root).click();return;}
+    let handle;
+    try{[handle]=await window.showOpenFilePicker({types:[{description:'Card data',accept:{'application/json':['.json']}}],multiple:false});}
+    catch(error){if(error.name==='AbortError')return;throw error;}
+    const file=await handle.getFile();
+    const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');
+    await rememberFile(deck.id,handle,JSON.parse(await file.text()));
+    stageCardData(result.cardData,{kind:'local',value:file.name},result.settings);
+  });
   linkDataButton.onclick=()=>attempt(async()=>{
     if(!dataUrl.value.trim())throw new Error('Paste a GitHub data.json file link.');
     linkDataButton.disabled=true;
     try{
       const result=await api('/api/setup/card-data/github',{deckId:deck.id,url:dataUrl.value.trim()});
-      stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()});
+      stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()},result.settings);
+      await rememberGithub(deck.id,dataUrl.value.trim(),result.document||{version:1,cards:result.cardData});
     }finally{linkDataButton.disabled=false;}
   });
-  let previewQueue=Promise.resolve(),previewCancelled=false;
-  const previewController=new AbortController();
-  const cancelPreviews=async()=>{
-    previewCancelled=true;previewController.abort();
-    await previewQueue.catch(()=>{});
-    if(activeSetupPreview===cancelPreviews)activeSetupPreview=null;
-  };
-  activeSetupPreview=cancelPreviews;
-  const previewCache=new Map();
   const redrawFrames=()=>{
     const host=$('#frame-choices',root);
     host.replaceChildren();
@@ -233,29 +271,17 @@ export function renderSetup(root,deck,onSaved){
     }
     const body=document.createElement('div');
     body.className='pair-grid';
+    Object.assign(body.style,{maxHeight:'none',overflow:'visible',gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,210px),1fr))'});
     for(const [group,count] of Object.entries(groups)){
       const row=document.createElement('article');row.className='well';
       const layout=document.createElement('h3');
-      layout.textContent=(state.bootstrap.groups[group]||group)+' · '+count;
+      layout.textContent=(state.bootstrap.groups[group]||group)+' · '+(count===null?'Details loading':count);
       const selected=s.templateRules[group]||'auto';
       const picture=document.createElement('img');
       picture.alt='Current '+(state.bootstrap.groups[group]||group)+' frame preview';
       picture.style.cssText='height:220px;max-width:100%;object-fit:contain;display:block;margin:12px auto';
-      const current=deck.cards.flatMap(card=>card.faces).find(face=>face.group===group&&face.compiled?.render?.url);
-      if(current && selected==='auto')picture.src=current.compiled.render.url;
-      else if(state.bootstrap.browser){
-        const loading=document.createElement('p');loading.textContent='Building preview…';loading.className='muted';
-        row.append(loading);
-        const key=group+':'+selected;
-        if(previewCache.has(key)){picture.src=previewCache.get(key);loading.remove();}
-        else previewQueue=previewQueue.then(async()=>{
-          if(!row.isConnected||previewCancelled||state.busy)return;
-          await renderTemplatePreviews(deck.id,group,s,stagedCardData,(target,blob)=>{
-            const url=URL.createObjectURL(blob);previewCache.set(key,url);
-            if(row.isConnected){picture.src=url;loading.remove();}
-          },()=>{},previewController.signal,[selected]);
-        }).catch(error=>{if(row.isConnected)loading.textContent=error.message;});
-      }else picture.alt='Render this deck to see the selected frame.';
+      picture.src=framePlaceholder(s);
+      picture.alt='Card back placeholder for '+(state.bootstrap.groups[group]||group);
       const button=document.createElement('button');
       button.type='button';
       button.className='button small';
@@ -263,10 +289,9 @@ export function renderSetup(root,deck,onSaved){
       button.textContent='Change Frame';
       button.onclick=()=>attempt(async()=>{
         readSettings();
-        await cancelPreviews();
-        openFramePicker(deck,group,s,stagedCardData,selected,(choice,blob)=>{
+        openFramePicker(deck,group,s,stagedCardData,selected,choice=>{
           s.templateRules[group]=choice;
-          if(blob)previewCache.set(group+':'+choice,URL.createObjectURL(blob));
+          if(group==='token')tokenFrame.value=choice;
           redrawFrames();
           mark();
         });
@@ -276,12 +301,25 @@ export function renderSetup(root,deck,onSaved){
     }
     host.append(body);
   };
+  const metadataStatus=document.createElement('p');metadataStatus.setAttribute('role','status');metadataStatus.id='deck-metadata-status';
+  metadataStatus.textContent='Reading card details in the background. You can choose your art and options now. Images will be generated after you finish your choices.';
+  metadataStatus.hidden=!deck.pendingImport;
+  $('.setup-columns',root).before(metadataStatus);
+  function refreshMetadata(updated){
+    deck.cards=updated.cards;deck.revision=Math.max(deck.revision,updated.revision);delete deck.pendingImport;
+    for(const group of Object.keys(groups))delete groups[group];
+    for(const card of deck.cards){
+      for(const face of card.faces){const group=face.group||'standard';groups[group]=(groups[group]||0)+1;}
+    }
+    redrawFrames();metadataStatus.textContent='Card details are ready. Images start when you choose Generate Images.';
+  }
   redrawFrames();
-  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;redrawSymbols();mark();}));};
+  tokenFrame.addEventListener('input',()=>{s.templateRules.token=tokenFrame.value;redrawFrames();});
+  const redrawSymbols=()=>{$('#symbol-grid',root).innerHTML=rarities.map(r=>`<button class="symbol-upload ${s.symbols[r]?'has-image':''}" data-symbol="${r}" aria-label="Upload ${r} set symbol">${s.symbols[r]?`<img src="${asset(s.symbols[r])}" alt="${r} set symbol">`:'<span class="symbol-empty">◇</span>'}<small>${r}</small></button>`).join('');$$('[data-symbol]',root).forEach(b=>b.onclick=()=>attempt(async()=>{const f=await pickFile('image/*,.svg');if(!f)return;b.disabled=true;const a=await uploadImage(f,{symbol:true});s.symbols[b.dataset.symbol]=a.id;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();}));};
   const backPicker=mountBackPicker($('#back-designer',root),s,choice=>{
-    s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;mark();
+    s.backAsset=choice.backAsset;s.backDesign=choice.backDesign;redrawFrames();mark();
   },{onBusy:busy=>{
-    for(const id of ['save-setup','save-generate'])$('#'+id,root).disabled=busy;
+    for(const id of ['save-generate','generate-deck'])($('#'+id,root)||$('#'+id)).disabled=busy;
   },allowNone:true});
   const redrawBack=()=>backPicker.set(s);
   function creditPreview(){
@@ -296,7 +334,10 @@ export function renderSetup(root,deck,onSaved){
   $$('input:not([type=file]),textarea,select',$('#setup-fields',root)).forEach(el=>el.addEventListener('input',mark));
   const redrawDataJsonStatus=()=>{const status=$('#data-json-status',root);if(!status)return;status.textContent=s.dataJsonSource?.value||dataJsonImportNote||'';status.hidden=!status.textContent;};
   redrawDataJsonStatus();
-  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'});}finally{input.value='';}});
+  (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
+  symbolGithubInput.value=s.symbolsSource?.value||'';
+  (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'},result.settings);}finally{input.value='';}});
   const redrawTokenOptions=()=>$('#all-token-options',root).classList.toggle('hidden',!$('#all-cards-tokens',root).checked);
   $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
   function redrawSource(){
@@ -306,31 +347,75 @@ export function renderSetup(root,deck,onSaved){
   }
   $$('[data-mode]',root).forEach(b=>b.onclick=()=>{s.source.mode=b.dataset.mode;redrawSource();mark();});
   const githubImport=mountGithubSetupImport($('#github-setup',root),{
-    isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#symbol-folder-button:disabled,#save-setup:disabled,#save-generate:disabled',root),
+    isBusy:()=>backPicker.isBusy()||!!$('.symbol-upload:disabled,#symbol-folder-button:disabled,#save-generate:disabled',root),
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;},
     deckId:deck.id,
-    onImport:(patch,cardData,hasDataJson)=>{
+    onImport:async(patch,cardData,hasDataJson,document)=>{
+      applyDataArtist(patch);
+      pairedChanges=[];s.artDefaults=[];s.artReviewSignature='';
+      await rememberGithub(deck.id,patch.githubSetupFolder,document||{version:1,cards:cardData||[]});
       if(hasDataJson){
         stagedCardData=structuredClone(cardData||[]);
         s.dataJsonSource=patch.dataJsonSource||null;
         dataJsonImportNote='';
-        dataStatus.textContent='1-click GitHub data.json: '+stagedCardData.length+' nonempty card entries staged. Save changes to apply.';
+        dataStatus.textContent='1-click GitHub data.json: '+stagedCardData.length+' card entries imported.';
       }else if(!stagedCardData.length){
         s.dataJsonSource=null;
         dataJsonImportNote='No data.json found in the GitHub project root.';
       }
       redrawDataJsonStatus();
+      (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
+      s.symbolsSource=patch.symbolsSource||null;
+      symbolGithubInput.value=s.symbolsSource?.value||'';
+      (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
       s.source={...s.source,...patch.source};s.symbols=patch.symbols;s.backAsset=patch.backAsset;s.backDesign=patch.backDesign;s.githubSetupFolder=patch.githubSetupFolder;
       $('#github-folder',root).value=s.source.githubFolder;
       $('#art-fallback',root).checked=s.source.fallback;$('#local-count',root).textContent='0 images saved for this deck.';
-      redrawSource();redrawSymbols();redrawBack();mark();
+      redrawSource();redrawSymbols();redrawBack();redrawFrames();mark();await persistSetup(true);
     }
   });
-  $('#local-art',root).onchange=()=>attempt(async()=>{const files=$('#local-art',root).files;if(!files.length)return;const b=$('#save-generate',root),saveButton=$('#save-setup',root);b.disabled=true;saveButton.disabled=true;try{s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;});$('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();}finally{b.disabled=false;saveButton.disabled=false;}});
+  let importingArtwork=false;
+  const importArtwork=async files=>{
+    if(!files?.length)return;
+    if(importingArtwork)throw new Error('Artwork import is already running.');
+    importingArtwork=true;
+    try{
+    const data=[...files].find(file=>(file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name)==='data.json');
+    if(data){const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,JSON.parse(await data.text()),'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'},result.settings);}
+    s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;},s.source);
+    s.artDefaults=[];s.artReviewSignature='';
+    $('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();
+    }finally{importingArtwork=false;}
+  };
+  $('#local-art',root).onchange=()=>attempt(()=>importArtwork($('#local-art',root).files));
+  if(window.showDirectoryPicker){
+    const folderButton=document.createElement('button');folderButton.type='button';folderButton.className='button';folderButton.textContent='Choose artwork folder';
+    $('#local-art',root).hidden=true;$('#local-art',root).after(folderButton);
+    folderButton.onclick=()=>attempt(async()=>{let files;try{files=await pickArtworkFiles(deck.id);}catch(error){if(error.name==='AbortError')return;throw error;}await importArtwork(files);});
+  }
+  let pairedChanges=[];
+  const reviewArtwork=async()=>{
+    refreshMetadata(await ensureMetadata(deck.id));
+    readSettings();
+    const result=await checkArtwork(deck,s,stagedCardData,async()=>{
+      if(s.source.mode==='github')return;
+      const files=await pickArtworkFiles(deck.id);
+      if(!files)throw new Error('Return to setup to add images in this browser.');
+      await importArtwork(files);
+    });
+    if(!result)return false;
+    s.artDefaults=result.defaults;s.artReviewSignature=result.signature;
+    stagedCardData=mergeDataDocument({version:1,cards:stagedCardData},result.changes).cards;
+    pairedChanges=mergeDataDocument({version:1,cards:pairedChanges},result.changes).cards;
+    if(result.changes.length)mark();
+    return true;
+  };
+  const reviewButton=document.createElement('button');reviewButton.type='button';reviewButton.className='button';reviewButton.textContent='Match custom artwork';reviewButton.id='review-artwork';
+  $('#local-count',root).closest('section').append(reviewButton);reviewButton.onclick=()=>attempt(async()=>{if(await reviewArtwork()){mark();await persistSetup();await exportPairs();}});
   $('#symbol-folder-button',root).onclick=()=>$('#symbol-folder',root).click();
 $('#symbol-folder',root).onchange=()=>attempt(async()=>{
   const input=$('#symbol-folder',root),files=input.files;if(!files.length)return;
-  const button=$('#symbol-folder-button',root),save=$('#save-setup',root),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
+  const button=$('#symbol-folder-button',root),save=$('#generate-deck'),render=$('#save-generate',root),status=$('#symbol-folder-status',root);
   button.disabled=true;save.disabled=true;render.disabled=true;
   try{
     const selected=symbolFolderFiles(files),next={};let done=0;
@@ -338,7 +423,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       status.textContent=`Uploading set symbols ${done+1} / 4 · ${selected[rarity].name}`;
       next[rarity]=(await uploadImage(selected[rarity],{symbol:true})).id;done++;
     }
-    s.symbols=next;redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
+    s.symbols=next;s.symbolsSource=null;symbolComputer.click();redrawSymbols();mark();status.textContent='Loaded common, uncommon, rare, and mythic symbols from the selected folder.';
   }finally{
     input.value='';button.disabled=false;save.disabled=false;render.disabled=false;
   }
@@ -348,7 +433,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     symbolGithubImport.disabled=true;
     try{
       const result=await job('/api/setup/symbols/github',{url},{label:'Import set symbols'});
-      s.symbols=result.symbols;redrawSymbols();mark();toast('Four rarity symbols imported.');
+      s.symbols=result.symbols;s.symbolsSource={kind:'github',value:url};symbolGithub.click();redrawSymbols();mark();toast('Four rarity symbols imported.');
     }finally{symbolGithubImport.disabled=false;}
   });
   function readSettings(){
@@ -363,16 +448,61 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       nonlegendary:$('#token-legendary-mode',root).value==='nonlegendary',
       legendaryMode:$('#token-legendary-mode',root).value
     };
-    s.templateRules.token=$('#token-frame',root).value;
   }
-  async function save(generate){
-    await cancelPreviews();
-    if(githubImport.isBusy())throw new Error('Wait for the GitHub setup import to finish.');
-    if(backPicker.isBusy())throw new Error('Wait for the back image to finish processing.');
-    readSettings();
-    if(generate&&!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
-    $('#save-setup',root).disabled=true;$('#save-generate',root).disabled=true;
-    try{const d=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:s,cardData:stagedCardData});state.dirty=false;toast('Deck setup saved.');await onSaved(d,generate);}finally{if($('#save-setup',root))$('#save-setup',root).disabled=false;if($('#save-generate',root))$('#save-generate',root).disabled=false;}
+  function persistSetup(importComplete=false){
+    clearTimeout(saveTimer);
+    const operation=async()=>{
+      if(persistedVersion===changeVersion)return deck;
+      if(githubImport.isBusy()&&!importComplete){saveTimer=setTimeout(()=>attempt(()=>persistSetup()),400);return deck;}
+      if(importingArtwork||backPicker.isBusy()){
+        await new Promise(resolve=>setTimeout(resolve,100));return operation();
+      }
+      readSettings();
+      const version=changeVersion;
+      const updated=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)});
+      if(updated.revision>=deck.revision)Object.assign(deck,updated);persistedVersion=version;
+      if(state.activeDeck?.id===deck.id)state.activeDeck=deck;
+      if(state.setupActions?.root===root)state.dirty=persistedVersion!==changeVersion;
+      if(root.isConnected)$('#setup-state',root).textContent=state.dirty?'Saving changes…':'Changes saved';
+      return deck;
+    };
+    saveQueue=saveQueue.catch(error=>console.error("Previous setup save failed",error)).then(operation).catch(error=>{if(root.isConnected)$('#setup-state',root).textContent='Could not save changes: '+error.message;throw error;});
+    return saveQueue;
   }
-  $('#save-setup',root).onclick=()=>attempt(()=>save(false));$('#save-generate',root).onclick=()=>attempt(()=>save(true));
+  async function exportPairs(){
+    await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'',deck.cards);pairedChanges=[];
+  }
+  let generating=false;
+  async function generate(){
+    if(generating)return;
+    if(importingArtwork||githubImport.isBusy()||backPicker.isBusy())throw new Error('An import is still finishing. Its progress is shown in Art & Setup.');
+    generating=true;
+    const buttons=[$('#save-generate',root),$('#generate-deck')].filter(Boolean);
+    try{
+    const resume=await pauseMetadata(deck.id);
+    try{
+      if(!await githubImport.ensureImported(s.githubSetupFolder))return;
+      for(const button of buttons){button.disabled=true;}
+      readSettings();
+      recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
+      mark();await persistSetup();
+      if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols before generating images.');
+      const credited=await ensureCustomArtCredits(await api('/api/decks/'+deck.id));
+      if(!credited)return;
+      deck.revision=credited.revision;deck.cards=credited.cards;s.artist=credited.settings.artist;
+      $('#deck-artist',root).value=s.artist;
+    }finally{await resume();}
+    refreshMetadata(await ensureMetadata(deck.id));
+    if(!await reviewArtwork())return;
+    if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols individually, upload a correctly named four-image folder, or use Generate four from one image.');
+    mark();await persistSetup();await exportPairs();
+    await withGenerationScreen(deck.name,deck.summary?.faces||deck.cards.length,()=>onSaved(deck,true));
+    }finally{generating=false;for(const button of buttons){if(button.isConnected)button.disabled=false;}}
+  }
+  const actions={deckId:deck.id,root,flush:persistSetup,generate,refreshMetadata,
+    metadataProgress:progress=>{metadataStatus.textContent=progress.message+(progress.total?' · '+progress.done+' / '+progress.total:'');},
+    metadataError:error=>{metadataStatus.textContent='Card details could not finish: '+error.message+' Generate Images will retry.';}
+  };state.setupActions=actions;
+  $('#save-generate',root).onclick=()=>attempt(generate);
+  return actions;
 }

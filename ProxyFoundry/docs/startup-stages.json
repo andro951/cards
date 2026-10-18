@@ -1,0 +1,504 @@
+{
+  "revision": "de4e47c743976067e90b75cd256894fad13bfe3e",
+  "note": "Fresh browser contexts and warm reloads; shared browser process may retain CDN HTTP cache. No import or generation. Local static bundle transport.",
+  "trials": [
+    {
+      "base": "/",
+      "repeat": 0,
+      "warm": false,
+      "seconds": 7.20839129993692,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.6742999999523165,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.4012000000476837,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.13209999990463256,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.7487999999523163,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 5.078100000143051,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 0,
+      "warm": true,
+      "seconds": 5.356112800072879,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.458399999856949,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.2694000000953674,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.1407000000476837,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.82,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.799099999904633,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 1,
+      "warm": false,
+      "seconds": 6.864046100061387,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.565699999809265,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.5249000000953674,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12219999980926513,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.7929000000953674,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 5.116599999904633,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 1,
+      "warm": true,
+      "seconds": 5.140106899896637,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.3954000000953672,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.25820000004768373,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12870000004768373,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.7177999999523164,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.6075,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 2,
+      "warm": false,
+      "seconds": 6.60653409990482,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.454200000047684,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.4037000000476837,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.15370000004768372,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.7135999999046325,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.834,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/",
+      "repeat": 2,
+      "warm": true,
+      "seconds": 5.699609400006011,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.6588999998569487,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.2847000000476837,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-fetch",
+          "seconds": 0.1065,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.164,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.8807999999523164,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 5.1237999999523165,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 0,
+      "warm": false,
+      "seconds": 6.958250800147653,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.5207999999523163,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.43809999990463255,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12879999995231628,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.7589000000953674,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.967799999952316,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 0,
+      "warm": true,
+      "seconds": 5.209861599840224,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.3627999999523164,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.2561000001430511,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.13659999990463256,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.775,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.636299999952317,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 1,
+      "warm": false,
+      "seconds": 7.112275299848989,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.7630999999046324,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.49760000014305117,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.13590000009536743,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.8465,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 5.362700000047684,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 1,
+      "warm": true,
+      "seconds": 5.02865090011619,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.3427999999523164,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.2605,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12040000009536743,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.6677999999523163,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.490700000047684,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 2,
+      "warm": false,
+      "seconds": 6.65634260000661,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.5535999999046326,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.4025,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12340000009536743,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.734,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.914599999904633,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "base": "/cards/",
+      "repeat": 2,
+      "warm": true,
+      "seconds": 5.016123800072819,
+      "stages": [
+        {
+          "type": "startup-timing",
+          "stage": "pyodide",
+          "seconds": 2.2985,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "pillow",
+          "seconds": 0.25740000009536745,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "bundle-unpack",
+          "seconds": 0.12759999990463256,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "python-app-init",
+          "seconds": 1.705,
+          "storageType": "browser"
+        },
+        {
+          "type": "startup-timing",
+          "stage": "engine-total",
+          "seconds": 4.4907999999523165,
+          "storageType": "browser",
+          "outcome": "ok",
+          "lastStage": "ready"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

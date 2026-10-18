@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .backup import Backups
+from .timing import timed,timing
 from .compiler import BUILTINS
 from .domain import ValidationError, ConflictError, uid, slug, GROUP_LABELS, PIPELINE_VERSION, validate_template, stable_hash
 from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
@@ -37,10 +38,10 @@ MAX_BODY = 64 * 1024 ** 2
 
 
 class App:
-    def __init__(self, store=None, network=None):
+    def __init__(self, store=None, network=None, *, jobs_factory=Jobs):
         self.store = store or Store()
         self.ws = Workspace(self.store, network)
-        self.jobs = Jobs(self.store)
+        self.jobs = jobs_factory(self.store)
         self.orders = Orders(self.ws)
         self.tools = CardTools(self.ws)
         self.runtime = Runtime(self.ws.net)
@@ -57,6 +58,7 @@ class App:
         from logging.handlers import RotatingFileHandler
         handler = RotatingFileHandler(self.store.home / 'logs' / 'app.log', maxBytes=2 * 1024 ** 2, backupCount=2, encoding='utf-8')
         self.log.addHandler(handler)
+        self.store.timing_logger=self.log
         self.log.info('APP_START app=1.3.0 pipeline=%s root=%s workspace=%s', PIPELINE_VERSION, ROOT, self.store.home)
 
     @staticmethod
@@ -99,18 +101,27 @@ class App:
                 self.log.warning('SET_SYMBOL_GEOMETRY_FAILED face=%s key=%s error=%s',face.get('name'),self._short(key),str(exc)[:500])
 
     def prepare_deck(self, ident, progress=lambda *a:None, cancel=lambda:False):
+        steps=self.prepare_deck_steps(ident,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def prepare_deck_steps(self, ident, progress=lambda *a:None, cancel=lambda:False, compact=False):
         before=self.ws.deck(ident)
         old={f.get('id'):copy.deepcopy(f.get('compiled') or {}) for c in before.get('cards',[]) for f in c.get('faces',[])}
         self.log.info('PREPARE_BEGIN deck=%s name=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
                       self._short(ident), before.get('name'), PIPELINE_VERSION, before.get('status'),
                       bool(before.get('upgradeRequired')), (before.get('summary') or {}).get('rendered',0))
-        result=self.ws.prepare(ident, progress, cancel)
+        with timing(self.store,'deck.prepare',ident=ident):
+            result=yield from self.ws.prepare_steps(ident, progress, cancel)
         self.log.info('PREPARE_DONE deck=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
                       self._short(ident), PIPELINE_VERSION, result.get('status'), bool(result.get('upgradeRequired')),
                       (result.get('summary') or {}).get('rendered',0))
-        for card in result.get('cards',[]):
+        for card in ([] if getattr(self.store,'generation',None) else result.get('cards',[])):
             for face in card.get('faces',[]):
-                self._log_face_state('PREPARE_FACE',result,card,face,old.get(face.get('id')))
+                previous=old.get(face.get('id'))
+                if previous!=face.get('compiled'):self._log_face_state('PREPARE_FACE',result,card,face,previous)
+        if compact:return {k:result.get(k) for k in ('id','revision','status','summary')}
         return result
 
     def start_render_session(self, ids, force=False):
@@ -128,17 +139,7 @@ class App:
         queued=set(targets)
         self.log.info('RENDER_PLAN_DONE session=%s pipeline=%s force=%s queued=%s cached=%s errors=%s',
                       self._short(ident), PIPELINE_VERSION, bool(force), len(queued), plan['cached'], len(plan.get('errors', [])))
-        for deck_id in ids:
-            deck=self.ws.deck(deck_id)
-            for card in deck.get('cards',[]):
-                for face in card.get('faces',[]):
-                    comp=face.get('compiled') or {};key=comp.get('renderKey') or '';render=self.store.render_get(key) if key else None
-                    data=comp.get('data') or {}
-                    self.log.info('RENDER_FACE_DECISION deck=%s face=%s generation=%s key=%s cachePresent=%s cacheAsset=%s queued=%s force=%s ccVersion=%s zoom=%s x=%s y=%s',
-                                  self._short(deck_id), face.get('name'), comp.get('generationVersion') or '-', self._short(key),
-                                  bool(render), self._short(render.get('asset_id') if render else ''), key in queued, bool(force),
-                                  data.get('version','-'), data.get('setSymbolZoom','-'), data.get('setSymbolX','-'), data.get('setSymbolY','-'))
-        return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name']} for t in targets.values()],
+        return {'id': ident, 'targets': [{'key': t['key'], 'name': t['name'],'frameGroup':stable_hash({key:t['data'].get(key) for key in ('frames','width','height','marginX','marginY','version')})} for t in targets.values()],
                 'cached': plan['cached'], 'errors': plan.get('errors', []), 'force': bool(force), 'pipelineVersion': PIPELINE_VERSION}
 
     def start_card_render_session(self, deck_id, card_id, force=False):
@@ -199,13 +200,15 @@ class App:
         return {'id':ident,'targets':[{'key':key,'name':item['name']} for key,item in targets.items()],
                 'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
 
-    def start_template_model_session(self, model):
-        preview=self.ws.preview_template_model(model)
-        key=stable_hash({'templateModelPreview':preview['data']})
+    def start_template_model_session(self, model, progress=lambda *a:None, cancel=lambda:False):
+        previews=self.ws.preview_template_models(model,progress,cancel)
+        targets={}
+        for index,preview in enumerate(previews):
+            key=stable_hash({'templateModelPreview':preview['data'],'case':index})
+            targets[key]={'key':key,'name':preview['sample'],'data':preview['data'],'preview':True}
         ident=uid()
-        with self.lock:self.render_sessions[ident]={'targets':{key:{'key':key,'name':preview['sample'],
-            'data':preview['data'],'preview':True}},'created':time.time()}
-        return {'id':ident,'targets':[{'key':key,'name':preview['sample']}],
+        with self.lock:self.render_sessions[ident]={'targets':targets,'created':time.time()}
+        return {'id':ident,'targets':[{'key':key,'name':target['name']} for key,target in targets.items()],
                 'cached':0,'errors':[],'pipelineVersion':PIPELINE_VERSION}
 
     def target(self, session, key):
@@ -216,6 +219,30 @@ class App:
             t = s['targets'].get(key)
             if not t: raise ValidationError('This image is not part of the render session.')
             return t
+
+    @timed('render.frame-assets')
+    def frame_assets(self, data):
+        """Checkpoint cold native frame downloads together, only during generation."""
+        if self.store.storage_type not in {'browser','selected-folder'}:return
+        paths=set()
+        for frame in data.get('frames',[]):
+            for layer in [frame,*frame.get('masks',[])]:
+                path=layer.get('src','')
+                if path.startswith('/img/'):
+                    paths.add(self.runtime.path(path))
+        ready=getattr(self,'_frame_assets_ready',set())
+        missing=sorted(paths-ready)
+        if not missing:return
+        with self.store.render_save():
+            if getattr(self.runtime.net.transport,'prefetch',None):
+                from .domain import CC_REPO,CC_COMMIT
+                from urllib.parse import quote
+                urls=['https://raw.githubusercontent.com/'+CC_REPO+'/'+CC_COMMIT+quote(path,safe='/') for path in missing if '/proxy-foundry/' not in path and not self.runtime.cached(path)]
+                for start in range(0,len(urls),6):
+                    try:self.runtime.net.prefetch_immutable(urls[start:start+6])
+                    except (ValidationError,OSError) as error:self.log.debug('Frame prefetch fallback: %s',error)
+            for path in missing:self.runtime.ensure(path)
+        self._frame_assets_ready=ready|paths
 
     def transfer(self, order_id):
         d = self.store.get('orders', order_id)
@@ -247,14 +274,18 @@ class App:
 
     def diagnostic_data(self):
         return {'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'runtime': self.runtime.diagnostic(),
-                'workspace': {k: v for k, v in self.store.stats().items() if k != 'home'}}
+                'workspace': {**{k: v for k, v in self.store.stats().items() if k != 'home'},'storageType':self.store.storage_type}}
 
-    def diagnostic_zip(self):
+    def diagnostic_zip(self, browser=None):
         b = io.BytesIO()
         with zipfile.ZipFile(b, 'w', zipfile.ZIP_DEFLATED) as z:
             z.writestr('diagnostics.json', json.dumps(self.diagnostic_data(), indent=2))
+            if isinstance(browser,dict):
+                z.writestr('browser-diagnostics.json',json.dumps(browser,ensure_ascii=False,indent=2))
             for p in (self.store.home / 'logs').glob('*.log'):
                 z.writestr(p.name, p.read_text(encoding='utf-8', errors='replace')[-150000:])
+            for p in sorted((self.store.home/'logs').glob('generation-*.json'),key=lambda p:p.stat().st_mtime)[-4:]:
+                z.writestr(p.name,p.read_bytes())
             for p in sorted((self.store.home / 'logs').glob('job-*.json'), key=lambda p: p.stat().st_mtime)[-8:]:
                 # Job logs are normally UTF-8, but diagnostics must still be
                 # downloadable if an older/corrupt file contains invalid bytes.
@@ -429,6 +460,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.file(ROOT / 'site' / name)
         if p == '/api/bootstrap':
             return self.respond({'version': '1.3.0', 'pipelineVersion': PIPELINE_VERSION, 'csrf': self.app.csrf, 'runtimeOrigin': self.app.runtime_origin,
+                                 'storageType':self.app.store.storage_type,
                                  'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
@@ -471,15 +503,36 @@ class Handler(BaseHTTPRequestHandler):
                               (deck.get('summary') or {}).get('rendered',0), (deck.get('summary') or {}).get('faces',0), ','.join(generations))
             return self.respond(deck)
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})', p): return self.respond(self.app.jobs.get(m[1]))
+        if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})/thumbnail', p):
+            a=self.app.store.asset(m[1])
+            if not a or not a['mime'].startswith('image/'):raise FileNotFoundError('Image not found.')
+            try:width=int(q.get('width',['420'])[0])
+            except ValueError as exc:raise ValidationError('Choose a supported thumbnail size.') from exc
+            if width not in {240,420,840}:raise ValidationError('Choose a supported thumbnail size.')
+            saved=self.app.store.home/'runtime'/'thumbnails'/(m[1]+'-'+str(width)+'.png')
+            if not saved.is_file():
+                from PIL import Image
+                saved.parent.mkdir(parents=True,exist_ok=True)
+                with Image.open(self.app.store.asset_path(m[1])) as image:
+                    image.thumbnail((width,int(width*1.4)),Image.Resampling.LANCZOS)
+                    pending=saved.with_suffix('.tmp')
+                    try:
+                        image.convert('RGBA').save(pending,'PNG');pending.replace(saved)
+                    finally:pending.unlink(missing_ok=True)
+            return self.file(saved,'image/png')
         if m := re.fullmatch(r'/api/assets/([0-9a-f]{64})', p):
             a = self.app.store.asset(m[1])
             if not a or not a['mime'].startswith('image/'): raise FileNotFoundError('Image not found.')
             return self.file(self.app.store.asset_path(m[1]), a['mime'])
         if m := re.fullmatch(r'/api/render-sessions/([-a-f0-9]{36})/([a-f0-9]{64})', p):
-            return self.respond(self.app.target(m[1], m[2]))
+            target=self.app.target(m[1], m[2])
+            self.app.frame_assets(target['data'])
+            return self.respond(target)
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
             self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/([A-Za-z0-9_.-]+\.(?:zip|png|jpg))', p):
+            return self.file(self.app.ws.review_download_file(m[1],m[2]),filename=m[2])
         if m := re.fullmatch(r'/api/files/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
             mime='application/zip' if m[1].lower().endswith('.zip') else 'image/png'
             return self.file(self.app.store.home / 'orders' / m[1], mime, m[1])
@@ -508,11 +561,15 @@ class Handler(BaseHTTPRequestHandler):
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):
+        if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/delete', p):
+            return self.respond(self.app.ws.release_review_download(m[1]))
         if p == '/api/setup/card-data/file':
             deck_ids = q.get('deckId', [])
             if len(deck_ids) != 1: raise ValidationError('Choose a deck before importing data.json.')
-            entries = parse_card_data_json(self.body(2 * 1024 * 1024))
-            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries)})
+            raw=self.body(2 * 1024 * 1024)
+            entries = parse_card_data_json(raw)
+            from .card_data import document_settings
+            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries),'settings':document_settings(raw)})
         if p == '/api/uploads':
             raw = self.body()
             kinds = q.get('kind', [])
@@ -549,9 +606,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(self.app.jobs.start('Restore workspace backup', restore))
         d = self.data()
         if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
+        if p == '/api/setup/artwork-review':
+            return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review(d,u,c)))
         if p == '/api/setup/custom-art-previews':
             return self.respond(self.app.ws.custom_art_previews(d['deckId'],d['settings']))
-        if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck', lambda u, c: self.app.ws.create(d, u, c)))
+        if p == '/api/decks/manifest': return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(d.get('source',''),d.get('includeOutside',True),cancel=c)))
+        if p == '/api/decks/import': return self.respond(self.app.jobs.start('Import deck',lambda u,c:self.app.ws.create_staged(d) if 'manifest' in d else self.app.ws.create(d,u,c)))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',p):
+            ident=m[1];return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.ws.resolve_metadata(ident,u,c)))
         if p == '/api/decks/new': return self.respond(self.app.ws.new_deck(d.get('name', 'Untitled deck')))
         if p == '/api/settings': return self.respond(self.app.ws.set_global_settings(d))
         if p == '/api/images/delete-all': return self.respond(self.app.store.clear_renders())
@@ -573,7 +635,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/setup/symbols/github':
             return self.respond(self.app.jobs.start('Import GitHub set symbols', lambda u, c: import_symbol_folder(self.app.ws, d, u, c)))
         if p == '/api/setup/card-data/github':
-            return self.respond({'cardData': import_card_data_url(self.app.ws, d)})
+            return self.respond(import_card_data_url(self.app.ws, d, include_document=True))
         if p == '/api/svg/validate':
             raw = base64.b64decode(d.get('base64', ''), validate=True)
             return self.respond({'svg': sanitize_svg(raw).decode('utf-8')})
@@ -584,7 +646,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/render-sessions/template-source':
             return self.respond(self.app.start_template_source_session(d.get('entries')))
         if p == '/api/render-sessions/template-model':
-            return self.respond(self.app.start_template_model_session(d.get('model')))
+            return self.respond(self.app.jobs.start('Validate template layouts',lambda update,cancel:self.app.start_template_model_session(d.get('model'),update,cancel)))
         if p == '/api/runtime/prepare': return self.respond(self.app.jobs.start('Load CardConjurer', self.app.runtime.prepare))
         if p == '/api/orders/plan':
             plan = self.app.orders.plan(d.get('deckIds', []))
@@ -600,14 +662,22 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/cardconjurer/export': return self.send_bytes(self.app.ws.export_cc(d.get('deckIds', [])), 'application/json', filename='BulkProxyForge_Cards.cardconjurer')
         if p == '/api/client-error':
             self.app.log.error('Browser: %s', str(d.get('error', ''))[:8000]); return self.respond({'ok': True})
+        if p == '/api/diagnostics.zip':
+            return self.send_bytes(self.app.diagnostic_zip(d.get('browser')), 'application/zip', filename='BulkProxyForge_Diagnostics.zip')
         if p == '/api/render-diagnostic':
             diag=d.get('diagnostic') if isinstance(d.get('diagnostic'),dict) else {}
+            if d.get('stage')=='timing':diag={**diag,'storageType':self.app.store.storage_type}
             payload={'key':str(d.get('key') or '')[:64],'stage':str(d.get('stage') or '')[:80],'diagnostic':diag}
-            self.app.log.info('RUNTIME_SYMBOL %s',json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
+            label='TIMING' if payload['stage']=='timing' else 'RUNTIME_SYMBOL'
+            self.app.log.info('%s %s',label,json.dumps(payload,ensure_ascii=False,separators=(',',':'))[:16000])
             return self.respond({'ok':True})
+        if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/pause', p): return self.respond(self.app.jobs.pause(m[1]))
+        if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/resume', p): return self.respond(self.app.jobs.resume(m[1]))
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/review-plan', p):
+            return self.respond(self.app.ws.review_plan(m[1],d.get('cardId'),d.get('faceId')))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|cropped-art|review-images)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))
@@ -632,10 +702,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def runtime_get(self, p, q):
         if p == '/runtime/host':
-            return self.send_bytes(self.app.runtime.host(), 'text/html; charset=utf-8', headers={'Content-Security-Policy':
+            return self.send_bytes(self.app.runtime.host(worker=q.get('worker')==['1']), 'text/html; charset=utf-8', headers={'Content-Security-Policy':
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors " + self.app.origin})
         if p == '/runtime/fonts.css': return self.send_bytes(self.app.runtime.fonts_css(), 'text/css')
-        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js'):
+        if p in ('/site/runtime-hooks.js', '/site/runtime-bridge.js', '/site/runtime-assets.js', '/site/runtime-worker-host.js', '/site/native-render-worker.js'):
             return self.file(ROOT / p.lstrip('/'), 'application/javascript')
         if m := re.fullmatch(r'/api/assets/([a-f0-9]{64})', p):
             if m[1] not in self.app.runtime_assets: raise PermissionError('That image is not part of an active render session.')

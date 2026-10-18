@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .domain import ConflictError, ValidationError, uid, validate_template, quantity
 from .images import decode_image
+from .template_model import validate_model
 
 MAX_BACKUP_BYTES = 2 * 1024 ** 3
 MAX_MEMBERS = 25000
@@ -37,6 +38,13 @@ class Backups:
         self.store = workspace.store
 
     def export(self, progress=lambda *a: None, cancel=lambda: False, include_renders=True):
+        steps=self.export_steps(progress,cancel,include_renders)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def export_steps(self, progress=lambda *a: None, cancel=lambda: False, include_renders=True):
+        if cancel():raise ValidationError('Backup cancelled.')
         docs = {kind: self.store.list(kind) + self.store.list(kind, deleted=True)
                 for kind in ('decks', 'templates', 'style-presets')}
         docs['settings'] = [self.ws.global_settings()]
@@ -67,18 +75,19 @@ class Backups:
         dest = self.store.home / 'backups' / name
         partial = dest.with_suffix('.partial')
         try:
-            with zipfile.ZipFile(partial, 'w', zipfile.ZIP_DEFLATED, compresslevel=3, allowZip64=True) as z:
+            with self.store.pin_assets(a['id'] for a in assets),zipfile.ZipFile(partial, 'w', zipfile.ZIP_DEFLATED, compresslevel=3, allowZip64=True) as z:
                 z.writestr('workspace.json', json.dumps(manifest, ensure_ascii=False, allow_nan=False))
                 for i, a in enumerate(assets):
                     if cancel(): raise ValidationError('Backup cancelled.')
                     z.write(self.store.asset_path(a['id']), 'assets/' + a['id'] + '.png')
                     progress(i + 1, len(assets), 'Saving workspace image ' + str(i + 1))
+                    yield
+            if cancel():raise ValidationError('Backup cancelled.')
             partial.replace(dest)
             return {'filename': name, 'download': '/api/backups/' + name,
                     'bytes': dest.stat().st_size, 'decks': len(docs['decks'])}
-        except Exception:
+        finally:
             partial.unlink(missing_ok=True)
-            raise
 
     def catalog(self, path: Path):
         try:
@@ -130,7 +139,9 @@ class Backups:
             for item in objects[kind]:
                 if self.store.get(kind,item['id'],include_deleted=True) and item['id'] not in confirmed:
                     raise ConflictError('You already have '+str(item.get('name') or 'this item')+'. Confirm replacement before importing.')
-        for item in objects['templates']:validate_template(item.get('data',{}))
+        for item in objects['templates']:
+            if item.get('schemaVersion') in {2,3}:item.update(validate_model(item))
+            else:validate_template(item.get('data',{}))
         for item in objects['style-presets']:
             if not isinstance(item.get('settings'),dict):raise ValidationError('Backup contains an invalid style.')
         for deck in objects['decks']:
@@ -205,7 +216,9 @@ class Backups:
             if len(docs['decks']) > 1000 or len(docs['templates']) > 1000:
                 raise ValidationError('Backup contains too many decks or templates.')
             templates = docs['templates']
-            for t in templates: validate_template(t.get('data', {}))
+            for t in templates:
+                if t.get('schemaVersion') in {2,3}:t.update(validate_model(t))
+                else:validate_template(t.get('data',{}))
             for d in docs['decks']:
                 if not isinstance(d.get('cards'), list) or len(d['cards']) > 10000:
                     raise ValidationError('Backup card list is invalid.')

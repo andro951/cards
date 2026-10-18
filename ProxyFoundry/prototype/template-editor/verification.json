@@ -1,0 +1,18 @@
+{
+  "cachedRenderMilliseconds": [
+    13.599999904632568,
+    11.099999904632568,
+    11.300000190734863,
+    14.800000190734863,
+    12.399999618530273,
+    13.300000190734863,
+    11.700000286102295,
+    14.400000095367432
+  ],
+  "medianMilliseconds": 12.849999904632568,
+  "status": "Preview ready \u00b7 301 ms",
+  "nodeTests": 18,
+  "browserTests": 12,
+  "nativeAssetsVerified": 41,
+  "measurement": "Eight warm text-only redraws with an unchanged frame composite, 1000x1400, headless Chromium on this machine. Image/geometry edits rebuild the composite."
+}

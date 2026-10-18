@@ -19,7 +19,7 @@ def test_cardconjurer_conversion_discards_card_specific_media(tmp_path):
     source['watermarkSource']='https://cards.scryfall.io/watermark.png'
     source['text']['title']['text']='Specific card name'
     converted=convert_cardconjurer(source,'Reusable','standard')
-    assert converted['schemaVersion']==2
+    assert converted['schemaVersion']==3
     assert 'artSource' not in converted['data']
     assert 'setSymbolSource' not in converted['data']
     assert converted['data']['watermarkOpacity']==0

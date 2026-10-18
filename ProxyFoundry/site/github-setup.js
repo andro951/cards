@@ -1,5 +1,5 @@
 /* A GitHub bundle populates the setup draft; saving still uses deck revisions. */
-import {$,esc,state,job,toast} from './ui.js';
+import {$,esc,state,job,toast,requireDeckAvailable} from './ui.js';
 
 export function githubSetupSection(folder=''){
   return `<section class="panel github-setup" id="github-setup" aria-labelledby="github-setup-title">
@@ -31,34 +31,41 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
     status.className='notice '+kind;status.textContent=text;
   }
   async function run(){
-    if(importing)return;
-    if(state.busy||isBusy()){message('Wait for the current upload or task to finish before importing.');return;}
+    if(importing)return false;
+    if(isBusy()){message('Wait for the current upload to finish before importing.');return false;}
+    try{requireDeckAvailable(deckId);}catch(error){message(error.message);return false;}
     const url=input.value.trim();
-    if(!url){message('Paste the GitHub project folder link first.','error');input.focus();return;}
+    if(!url){message('Paste the GitHub project folder link first.','error');input.focus();return false;}
     const wasDirty=state.dirty;
     let applied=false;
-    importing=true;state.busy=true;state.dirty=true;
+    importing=true;state.dirty=true;
     button.disabled=true;input.disabled=true;button.textContent='Importing…';onBusy(true);
     warnings.replaceChildren();message('Reading GitHub project folder…');
     try{
-      const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',onProgress:j=>{if(host.isConnected)message(j.message);}});
-      // A navigation during the job must not apply the result to a different deck.
-      if(!host.isConnected)return;
-      onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'));applied=true;input.value=result.settings.githubSetupFolder;
+      const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',resources:deckId?['deck:'+deckId]:[],onProgress:j=>{if(host.isConnected)message(j.message);}});
+      // The callback is bound to the importing deck, even after navigation.
+      await onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'),result.cardDataDocument);applied=true;input.value=result.settings.githubSetupFolder;
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?', plus data.json':'';
-      message(`Imported ${art}, ${symbols}, and ${back}${data}. Review below, then save your setup.`,'success');
+      message(`Imported ${art}, ${symbols}, and ${back}${data}. Your setup is saved.`,'success');
       for(const text of result.warnings||[]){const note=document.createElement('div');note.className='notice';note.textContent=text;warnings.append(note);}
-      toast('GitHub setup imported. Review below, then save.');
+      toast('GitHub setup imported and saved.');
+      return true;
     }catch(error){
       if(host.isConnected)message(error.message+' Your setup was not changed.','error');
+      else toast(error.message,true);
+      return false;
     }finally{
-      importing=false;state.busy=false;
+      importing=false;
       if(host.isConnected){if(!applied)state.dirty=wasDirty;button.disabled=false;input.disabled=false;button.textContent='1-click import';onBusy(false);}
     }
   }
   button.onclick=run;
   input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();run();}});
-  return {isBusy:()=>importing};
+  return {isBusy:()=>importing,ensureImported:async folder=>{
+    const url=input.value.trim();
+    if(!url||url.replace(/\/$/,'')===String(folder||'').trim().replace(/\/$/,''))return true;
+    return run();
+  }};
 }

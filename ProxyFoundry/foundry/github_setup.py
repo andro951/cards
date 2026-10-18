@@ -6,7 +6,7 @@ only after success. Failed or cancelled imports cannot half-update a deck.
 """
 from __future__ import annotations
 
-import json
+import json,re
 from pathlib import PurePosixPath
 from urllib.parse import quote
 
@@ -20,84 +20,17 @@ DATA_JSON_MAX_CARDS = 10000
 
 
 def parse_card_data_json(raw):
-    """Validate the optional v1 nickname/flavor metadata file."""
-    if not isinstance(raw, (bytes, bytearray)) or len(raw) > DATA_JSON_MAX_BYTES:
-        raise ValidationError('data.json must be a UTF-8 JSON file no larger than 2 MB.')
-    try:
-        value = json.loads(bytes(raw).decode('utf-8-sig'))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
-    if not isinstance(value, dict):
-        raise ValidationError('data.json must contain a JSON object.')
-    unknown_root = set(value) - {'version', 'cards'}
-    if unknown_root:
-        raise ValidationError('data.json has unsupported top-level field(s): ' + ', '.join(sorted(unknown_root)) + '.')
-    if value.get('version') != 1:
-        raise ValidationError('data.json version must be 1.')
-    cards = value.get('cards')
-    if not isinstance(cards, list):
-        raise ValidationError('data.json cards must be an array.')
-    if len(cards) > DATA_JSON_MAX_CARDS:
-        raise ValidationError('data.json may contain at most 10,000 card entries.')
-
-    def clean(item, key, label, maximum, *, multiline=False, required=False):
-        raw_value = item.get(key, '')
-        if raw_value is None:
-            raw_value = ''
-        if not isinstance(raw_value, str):
-            raise ValidationError(label + ' must be text.')
-        text = raw_value.strip()
-        if required and not text:
-            raise ValidationError(label + ' is required.')
-        if len(text) > maximum:
-            raise ValidationError(label + ' is too long.')
-        allowed = {'\n', '\t'} if multiline else set()
-        if any((ord(ch) < 32 and ch not in allowed) or ord(ch) == 127 for ch in text):
-            raise ValidationError(label + ' contains unsupported control characters.')
-        return text
-
-    result = []
-    seen = set()
-    allowed_keys = {'name', 'nickname', 'flavor_text', 'artist'}
-    for index, item in enumerate(cards, 1):
-        if not isinstance(item, dict):
-            raise ValidationError(f'data.json card entry {index} must be an object.')
-        unknown = set(item) - allowed_keys
-        if unknown:
-            raise ValidationError(
-                f'data.json card entry {index} has unsupported field(s): ' + ', '.join(sorted(unknown)) + '.'
-            )
-        name = clean(item, 'name', f'data.json card entry {index} name', 300, required=True)
-        nickname = clean(item, 'nickname', f'data.json nickname for {name}', 300)
-        flavor = clean(item, 'flavor_text', f'data.json flavor_text for {name}', 20000, multiline=True)
-        artist = clean(item, 'artist', f'data.json artist for {name}', 300)
-        if not nickname and not flavor and not artist:
-            continue
-        if name in seen:
-            raise ValidationError('data.json contains more than one nonempty entry for ' + name + '.')
-        seen.add(name)
-        entry = {'name': name}
-        if nickname:
-            entry['nickname'] = nickname
-        if flavor:
-            entry['flavor_text'] = flavor
-        if artist:
-            entry['artist'] = artist
-        result.append(entry)
-    return result
+    from .card_data import parse_document
+    return parse_document(raw)
 
 
-def validate_card_data_for_deck(workspace, deck_id, entries):
-    deck = workspace.deck(str(deck_id))
-    names = {str(face.get('name') or '') for card in deck.get('cards', []) for face in card.get('faces', [])}
-    missing = [entry['name'] for entry in entries if entry['name'] not in names]
-    if missing:
-        preview = ', '.join(missing[:8]) + ('…' if len(missing) > 8 else '')
-        raise ValidationError('data.json card name(s) were not found in this deck: ' + preview + '. Names must exactly match a card face.')
-    return entries
+def validate_card_data_for_deck(workspace,deck_id,entries):
+    from .card_data import validate_targets
+    deck=workspace.deck(str(deck_id))
+    return entries if deck.get('pendingImport') else validate_targets(deck,entries)
 
 
-def import_card_data_url(workspace, payload):
+def import_card_data_url(workspace, payload, include_document=False):
     url = str(payload.get('url') or '').strip()
     if len(url) > 4096:
         raise ValidationError('The GitHub data.json link is too long.')
@@ -109,11 +42,23 @@ def import_card_data_url(workspace, payload):
     raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + quote(loc['ref'], safe='') + '/' + quote(loc['folder'], safe='/')
     raw, _, _ = workspace.net.fetch(raw_url, refresh=True, ttl=0)
     entries = parse_card_data_json(raw)
-    return validate_card_data_for_deck(workspace, payload['deckId'], entries)
+    entries=validate_card_data_for_deck(workspace, payload['deckId'], entries)
+    from .card_data import document_settings
+    return {'cardData':entries,'document':json.loads(raw.decode('utf-8-sig')),'settings':document_settings(raw)} if include_document else entries
 
 
 def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
+    steps=import_symbol_folder_steps(workspace,payload,progress,cancel)
+    while True:
+        try:next(steps)
+        except StopIteration as finished:return finished.value
+
+
+def import_symbol_folder_steps(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Import four rarity images from a public GitHub folder."""
+    def check_cancel():
+        if cancel():raise ValidationError('Set-symbol import cancelled.')
+    check_cancel()
     url=payload.get('url')
     if not isinstance(url,str) or not url.strip() or len(url)>4096:
         raise ValidationError('Paste a public GitHub set-symbol folder link.')
@@ -123,11 +68,15 @@ def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=la
         if not isinstance(repo,dict) or not isinstance(repo.get('default_branch'),str):
             raise ValidationError('GitHub did not return the repository default branch.')
         loc=github_location(url,repo['default_branch'])
+        yield
+        check_cancel()
     if not loc['folder']:
         raise ValidationError('Choose the folder containing four rarity images.')
     ref=quote(loc['ref'],safe='')
     api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+ref
     rows=workspace.net.json(api,ttl=0)
+    yield
+    check_cancel()
     if not isinstance(rows,list) or len(rows)>=1000:
         raise ValidationError('That GitHub link must be a small image folder.')
     found={}
@@ -155,11 +104,20 @@ def import_symbol_folder(workspace, payload, progress=lambda *a: None, cancel=la
         raw_url='https://raw.githubusercontent.com/'+loc['repo']+'/'+ref+'/'+quote(path,safe='/')
         raw,_,_=workspace.net.fetch(raw_url,refresh=True,ttl=0)
         result[rarity]=ingest_image(workspace.store,raw,trim_transparent_padding=True)['id']
+        yield
+        check_cancel()
     progress(4,4,'Four rarity symbols imported')
     return {'symbols':result}
 
 
 def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
+    steps=import_github_setup_steps(workspace,payload,progress,cancel)
+    while True:
+        try:next(steps)
+        except StopIteration as finished:return finished.value
+
+
+def import_github_setup_steps(workspace, payload, progress=lambda *a: None, cancel=lambda: False):
     """Return a complete source/symbol/back settings patch, never a saved deck.
 
     Canonical set_symbols/ wins over the legacy set_symbol/ alias and the
@@ -186,14 +144,26 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         if not isinstance(repo, dict) or not isinstance(repo.get('default_branch'), str):
             raise ValidationError('GitHub did not return the repository default branch.')
         loc = github_location(url, repo['default_branch'])
+        yield
+        check_cancel()
     ref = quote(loc['ref'], safe='')
+    commit=loc['ref'].lower()
+    if not re.fullmatch(r'[0-9a-f]{40}',commit):
+        resolved=net.json('https://api.github.com/repos/'+loc['repo']+'/commits/'+ref,ttl=0)
+        commit=str(resolved.get('sha','')).lower() if isinstance(resolved,dict) else ''
+        if not re.fullmatch(r'[0-9a-f]{40}',commit):
+            raise ValidationError('GitHub did not return an exact commit for this setup.')
+    yield
+    check_cancel()
     base = 'https://github.com/' + loc['repo'] + '/tree/' + ref
     root_url = base + ('/' + quote(loc['folder'], safe='/') if loc['folder'] else '')
 
     def folder_rows(folder):
         check_cancel()
         api = 'https://api.github.com/repos/' + loc['repo'] + '/contents/'
-        rows = net.json(api + quote(folder, safe='/') + '?ref=' + ref, ttl=0)
+        rows = net.json(api + quote(folder, safe='/') + '?ref=' + commit, immutable=True)
+        yield
+        check_cancel()
         if not isinstance(rows, list):
             raise ValidationError('That GitHub link is a file, not a project folder.')
         # The Contents API's directory limit must never look like a complete bundle.
@@ -248,7 +218,16 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             raise ValidationError(row['name'] + ': export SVG to PNG for GitHub setup import, or upload it individually below.')
         return row
 
-    rows = folder_rows(loc['folder'])
+    rows = yield from folder_rows(loc['folder'])
+    if PurePosixPath(loc['folder']).name.lower()=='art' and not named_folder(rows,'art'):
+        parent=str(PurePosixPath(loc['folder']).parent)
+        if parent=='.':parent=''
+        parent_rows=yield from folder_rows(parent)
+        if named_folder(parent_rows,'art')==loc['folder']:
+            loc={**loc,'folder':parent}
+            rows=parent_rows
+            root_url=base+('/'+quote(parent,safe='/') if parent else '')
+            warnings.append('The link points to the art folder. Imported setup from its parent project folder: '+root_url)
     data_row = named_file(rows, 'data.json')
     art_folder = named_folder(rows, 'art')
     # Do not fetch every art image here; the normal generation path stays live.
@@ -260,7 +239,7 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         if candidate is None:
             continue
         progress(0, 0, 'Checking the four rarity symbols')
-        contents = folder_rows(candidate)
+        contents = yield from folder_rows(candidate)
         image_rows = [r for items in contents.values() for r in items
                       if PurePosixPath(r['name'].lower()).suffix in IMAGE_EXTENSIONS]
         if not image_rows:
@@ -292,23 +271,43 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
         nonlocal done
         check_cancel()
         progress(done, total, 'Importing ' + row['name'])
-        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + ref + '/' + quote(row['path'], safe='/')
-        raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
+        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + commit + '/' + quote(row['path'], safe='/')
+        from .domain import stable_hash
+        cache_key=stable_hash({'url':raw_url,'trim':trim_transparent_padding,'version':1})
+        cached=store.get('github-setup-images',cache_key)
+        image=store.asset(cached['assetId']) if cached else None
+        if image:
+            done+=1;progress(done,total,'Reused '+row['name']);yield
+            check_cancel()
+            return image
+        raw, _, _ = fetched[raw_url]
         check_cancel()
         try:
             image = ingest_image(store, raw, trim_transparent_padding=trim_transparent_padding)
         except ValidationError as exc:
             raise ValidationError(row['name'] + ': ' + str(exc)) from exc
+        store.put('github-setup-images',{'id':cache_key,'assetId':image['id']})
         done += 1
         progress(done, total, 'Imported ' + row['name'])
+        yield
+        check_cancel()
         return image
+
+    # Resolve the small manifest first, then fetch missing setup files together.
+    download_rows=([data_row] if data_row else [])+list(symbol_rows.values())+([back or icon] if back or icon else [])
+    urls=['https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(row['path'],safe='/') for row in download_rows]
+    check_cancel()
+    progress(0,total,'Downloading GitHub setup files')
+    fetched=net.fetch_many_immutable(urls)
+    yield
+    check_cancel()
 
     card_data = []
     if data_row:
         check_cancel()
         progress(done, total, 'Importing data.json')
-        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + ref + '/' + quote(data_row['path'], safe='/')
-        raw, _, _ = net.fetch(raw_url, refresh=True, ttl=0)
+        raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + commit + '/' + quote(data_row['path'], safe='/')
+        raw, _, _ = fetched[raw_url]
         check_cancel()
         card_data = parse_card_data_json(raw)
         deck_id = payload.get('deckId')
@@ -316,19 +315,27 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
             validate_card_data_for_deck(workspace, deck_id, card_data)
         done += 1
         progress(done, total, 'Imported data.json')
+        yield
+        check_cancel()
 
     if symbol_rows:
-        symbols = {r: download(row, trim_transparent_padding=True)['id'] for r, row in symbol_rows.items()}
+        symbols = {}
+        for rarity,row in symbol_rows.items():
+            image=yield from download(row,trim_transparent_padding=True)
+            symbols[rarity]=image['id']
     else:
         symbols = workspace.default_symbols()
     if back:
-        back_settings = {'backAsset': download(back, trim_transparent_padding=True)['id'], 'backDesign': {'mode': 'custom'}}
+        image=yield from download(back,trim_transparent_padding=True)
+        back_settings = {'backAsset': image['id'], 'backDesign': {'mode': 'custom'}}
     elif icon:
-        output = workspace.backs.icon(download(icon)['id'])
+        image=yield from download(icon)
+        output = workspace.backs.icon(image['id'])
         warnings.extend(output['placement'].get('warnings', []))
         back_settings = {'backAsset': output['id'], 'backDesign': output['design']}
     else:
         back_settings = workspace.backs.settings({'backDesign': {'mode': 'default'}})
+    yield
     check_cancel()
     source = {'mode': 'github' if art_folder else 'scryfall',
               'githubFolder': base + '/' + quote(art_folder, safe='/') if art_folder else '',
@@ -339,9 +346,13 @@ def import_github_setup(workspace, payload, progress=lambda *a: None, cancel=lam
                'back': back_settings['backDesign']['mode']}
     if data_row:
         summary['data'] = len(card_data)
+    from .card_data import document_settings
     return {'settings': {'source': source, 'symbols': symbols, **back_settings,
+                         **(document_settings(raw) if data_row else {}),
                          'githubSetupFolder': root_url,
+                         'symbolsSource': {'kind':'github','value':base+'/'+quote(symbol_folder,safe='/')} if symbol_rows else None,
                          'dataJsonSource': {'kind':'github','value':data_row['path']} if data_row else None},
             'cardData': card_data,
+            'cardDataDocument': json.loads(raw.decode('utf-8-sig')) if data_row else None,
             'summary': summary,
             'warnings': warnings}

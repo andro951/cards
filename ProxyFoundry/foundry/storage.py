@@ -1,6 +1,7 @@
 """Transactional local workspace, immutable asset store and HTTP cache metadata."""
 from __future__ import annotations
 
+from .timing import timed
 import hashlib
 import json
 import os
@@ -10,6 +11,8 @@ import sqlite3
 import string
 import tempfile
 import time
+import threading
+from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
@@ -192,6 +195,9 @@ def display_name(text: str, fallback='item') -> str:
 
 class Store:
     def __init__(self, home: Path | None = None):
+        self.storage_type='local-folder'
+        self._image_ingest_cache=OrderedDict();self._image_ingest_lock=threading.RLock()
+        self._asset_pins={};self._deferred_asset_deletes=set()
         self.home = Path(home or default_home()).resolve()
         self.home.mkdir(parents=True, exist_ok=True)
         for name in ('assets', 'renders', 'runtime', 'orders', 'logs', 'backups', 'tmp'):
@@ -253,6 +259,7 @@ class Store:
         return [{**json.loads(r['body']), 'id': r['id'], 'revision': r['rev'],
                  'createdAt': r['created'], 'updatedAt': r['updated'], 'deleted': bool(r['deleted'])} for r in rows]
 
+    @timed('storage.document')
     def put(self, kind: str, data: dict[str, Any], expected: int | None = None) -> dict[str, Any]:
         ident = data.get('id') or uid()
         now = time.time()
@@ -284,16 +291,84 @@ class Store:
             if not row:raise ValidationError('That item no longer exists.')
             if expected is not None and expected!=row['rev']:
                 raise ConflictError('This deck changed in another tab. Reload before deleting it.')
+            if kind == 'decks' and self._blocking_orders(db, ident):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
             db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))
         if kind == 'decks':
             self.clear_deck_renders(ident)
         return {'id':ident,'permanent':True}
+
+    @staticmethod
+    def _blocking_orders(db, ident):
+        rows=db.execute("SELECT id,body FROM documents WHERE kind='orders' AND deleted=0 AND EXISTS (SELECT 1 FROM json_each(documents.body,'$.decks') WHERE json_extract(value,'$.id')=?)",(ident,)).fetchall()
+        return [{'id':r['id'],'decks':json.loads(r['body']).get('decks',[])} for r in rows]
+
+    def blocking_orders(self, ident):
+        with self.connect() as db:
+            return self._blocking_orders(db,ident)
+
+    def begin_delete(self, kind, ident, expected=None):
+        """Commit logical deletion and a durable file cleanup queue together."""
+        if kind not in {'decks','orders'}:
+            raise ValidationError('Unsupported deletion.')
+        queue_id=kind+'-'+ident
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute('SELECT rev,body FROM documents WHERE kind=? AND id=?',(kind,ident)).fetchone()
+            if not row:
+                return {'id':ident,'permanent':True}
+            if expected is not None and expected!=row['rev']:
+                raise ConflictError('This item changed. Reload before deleting it.')
+            if kind=='decks' and self._blocking_orders(db,ident):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
+            if kind=='decks':
+                renders=db.execute('SELECT file_path,asset_id FROM renders WHERE deck_id=?',(ident,)).fetchall()
+                tasks=[{'file':r['file_path'] if r['file_path'].startswith('renders/') else None,'asset':r['asset_id']} for r in renders]
+                db.execute('DELETE FROM renders WHERE deck_id=?',(ident,))
+            else:
+                body=json.loads(row['body'])
+                assets={c.get(key) for c in body.get('cards',[]) for key in ('frontAsset','backAsset')}
+                tasks=[{'file':'orders/'+ident+'.zip'}]+[{'asset':a} for a in assets if a]
+            now=time.time()
+            db.execute('INSERT OR REPLACE INTO documents VALUES (?,?,?,?,?,?,?)',
+                       ('cleanup',queue_id,1,json.dumps({'tasks':tasks}),now,now,0))
+            db.execute('DELETE FROM documents WHERE kind=? AND id=?',(kind,ident))
+        return {'id':ident,'permanent':True}
+
+    def cleanup_step(self, limit=4):
+        queues=self.list('cleanup')
+        queue=next((q for q in queues if not q.get('error')),None)
+        if not queue:
+            return {'pending':len(queues),'errors':[q['error'] for q in queues if q.get('error')]}
+        tasks=queue['tasks']
+        try:
+            for task in tasks[:limit]:
+                if task.get('file'):
+                    path=(self.home/task['file']).resolve()
+                    if not any(root.resolve() in path.parents for root in (self.home/'renders',self.home/'orders')):
+                        raise ValidationError('Invalid cleanup path.')
+                    path.unlink(missing_ok=True)
+                if task.get('asset'):
+                    self._delete_render_asset_if_unused(task['asset'])
+            queue['tasks']=tasks[limit:]
+            if queue['tasks']:
+                self.put('cleanup',queue,queue['revision'])
+            else:
+                with self.connect() as db:
+                    db.execute("DELETE FROM documents WHERE kind='cleanup' AND id=?",(queue['id'],))
+        except (OSError,ValidationError) as exc:
+            queue['error']=str(exc)
+            self.put('cleanup',queue,queue['revision'])
+        remaining=self.list('cleanup')
+        return {'processed':True,'pending':len(remaining),'errors':[q['error'] for q in remaining if q.get('error')]}
 
     def purge_trash(self, kind: str) -> dict[str, Any]:
         ids=[]
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             ids=[r[0] for r in db.execute('SELECT id FROM documents WHERE kind=? AND deleted=1',(kind,)).fetchall()]
+            if kind=='decks' and any(self._blocking_orders(db,ident) for ident in ids):
+                raise ValidationError('A print order uses this deck. Delete the print order before deleting this deck.')
             db.execute('DELETE FROM documents WHERE kind=? AND deleted=1',(kind,))
         if kind == 'decks':
             for ident in ids:
@@ -305,32 +380,57 @@ class Store:
             raise ValidationError('Invalid asset identifier.')
         return self.home / 'assets' / ident[:2] / ident
 
+    @timed('storage.asset')
     def add_asset(self, content: bytes, mime: str, width: int | None = None, height: int | None = None) -> dict[str, Any]:
         if not content:
             raise ValidationError('The uploaded file is empty.')
         ident = hashlib.sha256(content).hexdigest()
         target = self.asset_path(ident)
-        if not target.is_file():
+        if not target.is_file() or target.stat().st_size!=len(content):
             target.parent.mkdir(parents=True, exist_ok=True)
-            fd, temp = tempfile.mkstemp(dir=target.parent, prefix='.upload-')
-            try:
-                with os.fdopen(fd, 'wb') as out:
-                    out.write(content); out.flush(); os.fsync(out.fileno())
-                os.replace(temp, target)
-            finally:
-                if os.path.exists(temp): os.unlink(temp)
+            self.write_asset_file(target,content)
+            self.asset_written(ident,target)
         with self.connect() as db:
             db.execute('INSERT OR IGNORE INTO assets VALUES (?,?,?,?,?,?)',
                        (ident, mime, len(content), width, height, time.time()))
             if width and height:
-                db.execute('UPDATE assets SET width=?,height=?,mime=? WHERE id=?', (width, height, mime, ident))
+                db.execute('UPDATE assets SET width=?,height=?,mime=? WHERE id=? AND (width IS NOT ? OR height IS NOT ? OR mime IS NOT ?)', (width, height, mime, ident,width,height,mime))
         return self.asset(ident)
+
+    def write_asset_file(self,target,content):
+        fd,temp=tempfile.mkstemp(dir=target.parent,prefix='.upload-')
+        try:
+            with os.fdopen(fd,'wb') as out:
+                out.write(content);out.flush();os.fsync(out.fileno())
+            os.replace(temp,target)
+        finally:
+            if os.path.exists(temp):os.unlink(temp)
+
+    def asset_written(self,ident,path):
+        pass
 
     def asset(self, ident: str) -> dict[str, Any] | None:
         path = self.asset_path(ident)
         with self.connect() as db:
             row = db.execute('SELECT * FROM assets WHERE id=?', (ident,)).fetchone()
         return {**dict(row), 'url': '/api/assets/' + ident} if row and path.is_file() else None
+
+    def preparation_cache(self, asset_ids, urls):
+        """Read a plan's cache records together and stat each shared file once."""
+        assets={};cached={};asset_ids=set(asset_ids);urls=set(filter(None,urls))
+        def rows(db,table,column,values):
+            values=list(values)
+            for start in range(0,len(values),500):
+                chunk=values[start:start+500]
+                yield from db.execute('SELECT * FROM '+table+' WHERE '+column+' IN ('+','.join('?' for _ in chunk)+')',chunk)
+        with self.connect() as db:
+            for row in rows(db,'http_cache','url',urls):
+                cached[row['url']]=dict(row);asset_ids.add(row['asset_id'])
+            for row in rows(db,'assets','id',asset_ids):
+                assets[row['id']]={**dict(row),'url':'/api/assets/'+row['id']}
+        exists={ident:self.asset_path(ident).is_file() for ident in asset_ids}
+        return ({ident:assets.get(ident) if exists[ident] else None for ident in asset_ids},
+                {url:row for url,row in cached.items() if exists.get(row['asset_id'])})
 
     def cache_get(self, url: str) -> dict[str, Any] | None:
         with self.connect() as db:
@@ -349,7 +449,7 @@ class Store:
         root=self.home/'renders'
         if deck_id:
             with self.connect() as db:
-                row=db.execute('SELECT file_path FROM renders WHERE deck_id=? LIMIT 1',(deck_id,)).fetchone()
+                row=db.execute("SELECT file_path FROM renders WHERE deck_id=? AND file_path LIKE 'renders/%' LIMIT 1",(deck_id,)).fetchone()
             if row:
                 return (self.home/row['file_path']).parent
         base=display_name(deck_name,'Deck')
@@ -382,14 +482,39 @@ class Store:
                 return False
             if db.execute('SELECT 1 FROM http_cache WHERE asset_id=? LIMIT 1',(ident,)).fetchone():
                 return False
+            if db.execute("SELECT 1 FROM documents WHERE kind<>'cleanup' AND instr(body,?)>0 LIMIT 1",(ident,)).fetchone():
+                return False
         return True
 
     def _delete_render_asset_if_unused(self, ident: str) -> None:
+        if self._asset_pins.get(ident):
+            self._deferred_asset_deletes.add(ident)
+            return
         if not ident or not re.fullmatch(r'[0-9a-f]{64}',str(ident)) or not self._asset_is_render_only(ident):
             return
         with self.connect() as db:
             db.execute('DELETE FROM assets WHERE id=?',(ident,))
-        path=self.asset_path(ident);path.unlink(missing_ok=True)
+        self.remove_render_file(self.asset_path(ident))
+
+    @contextmanager
+    def pin_assets(self,idents):
+        """Keep immutable snapshot inputs alive across cooperative export turns."""
+        idents=set(idents)
+        for ident in idents:self._asset_pins[ident]=self._asset_pins.get(ident,0)+1
+        try:yield
+        finally:
+            for ident in idents:
+                count=self._asset_pins[ident]-1
+                if count:self._asset_pins[ident]=count
+                else:
+                    self._asset_pins.pop(ident)
+                    if ident in self._deferred_asset_deletes:
+                        self._deferred_asset_deletes.remove(ident)
+                        self._delete_render_asset_if_unused(ident)
+
+    def remove_render_file(self,path):
+        if path.parent.parent==self.home/'assets' and not self._asset_is_render_only(path.name):return
+        path.unlink(missing_ok=True)
         try:path.parent.rmdir()
         except OSError:pass
 
@@ -402,6 +527,37 @@ class Store:
             return None
         return {**dict(row),'url':'/api/assets/'+row['asset_id']}
 
+    def render_many(self,keys):
+        """Resolve shared render paths once for a complete request, including misses."""
+        keys=set(filter(None,keys));result={key:None for key in keys};exists={}
+        with self.connect() as db:
+            values=list(keys)
+            for start in range(0,len(values),500):
+                chunk=values[start:start+500]
+                for row in db.execute('SELECT * FROM renders WHERE render_key IN ('+','.join('?' for _ in chunk)+')',chunk):
+                    paths=(self.home/row['file_path'],self.asset_path(row['asset_id']))
+                    for path in paths:
+                        if path not in exists:exists[path]=path.is_file()
+                    if all(exists[path] for path in paths):result[row['render_key']]={**dict(row),'url':'/api/assets/'+row['asset_id']}
+        return result
+
+    def copy_render_file(self,source,destination):
+        try:os.link(source,destination)
+        except (OSError, AttributeError):shutil.copy2(source,destination)
+
+    @contextmanager
+    def render_save(self):
+        yield
+
+    def write_render_file(self,source,output,previous_source=None):
+        temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
+        try:
+            self.copy_render_file(source,temp)
+            os.replace(temp,output)
+        finally:temp.unlink(missing_ok=True)
+        return output
+
+    @timed('storage.render')
     def render_put(self, key: str, asset: dict[str, Any], *, deck_id: str | None = None, card_id: str | None = None,
                    face_id: str | None = None, deck_name='Deck', face_name='Card') -> dict[str, Any]:
         if not asset.get('width') or not asset.get('height'):
@@ -415,13 +571,8 @@ class Store:
         output=self._render_file(deck_id,deck_name,face_id,face_name)
         output.parent.mkdir(parents=True,exist_ok=True)
         source=self.asset_path(asset['id'])
-        temp=output.with_name('.'+output.name+'.'+uid()+'.tmp')
-        try:
-            try:os.link(source,temp)
-            except (OSError, AttributeError):shutil.copy2(source,temp)
-            os.replace(temp,output)
-        finally:
-            temp.unlink(missing_ok=True)
+        previous_source=self.asset_path(old['asset_id']) if old and self.home/old['file_path']==output else None
+        output=self.write_render_file(source,output,previous_source)
         rel=str(output.relative_to(self.home)).replace('\\','/')
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -432,9 +583,7 @@ class Store:
         if old:
             old_path=self.home/old['file_path']
             if old_path!=output:
-                old_path.unlink(missing_ok=True)
-                try:old_path.parent.rmdir()
-                except OSError:pass
+                self.remove_render_file(old_path)
             if old['asset_id']!=asset['id']:
                 self._delete_render_asset_if_unused(old['asset_id'])
         return self.render_get(key)
@@ -444,7 +593,7 @@ class Store:
             rows=[dict(r) for r in db.execute('SELECT * FROM renders WHERE deck_id=?',(deck_id,)).fetchall()]
             db.execute('DELETE FROM renders WHERE deck_id=?',(deck_id,))
         for row in rows:
-            path=self.home/row['file_path'];path.unlink(missing_ok=True)
+            path=self.home/row['file_path'];self.remove_render_file(path)
             try:path.parent.rmdir()
             except OSError:pass
         for ident in {row['asset_id'] for row in rows}:

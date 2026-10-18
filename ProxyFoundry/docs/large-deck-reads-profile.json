@@ -1,0 +1,161 @@
+{
+  "revision": "89230fe1e202dfdf33c282fba6cb16ba075f2c4a",
+  "at": 1790945688.4705055,
+  "storageType": "browser",
+  "headless": false,
+  "cooperative": false,
+  "startupSeconds": 15.776422100141644,
+  "note": "Actual static browser worker with 400 synthetic faces, minimal compilation metadata and absent render records. No native drawing or real saved PNGs. Measured while independent verification browsers were active; not an end-to-end deck benchmark.",
+  "trials": [
+    {
+      "rows": [
+        {
+          "url": "/api/templates",
+          "seconds": 0.005,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.005100000143051148,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.0050999999046325685,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.36560000014305116,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.7855999999046326,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.6547000000476837,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.4679000000953674,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.5077000000476837,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.407,
+          "bytes": 586
+        }
+      ],
+      "cancelledState": "cancelled"
+    },
+    {
+      "rows": [
+        {
+          "url": "/api/templates",
+          "seconds": 0.0066999998092651366,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.0035,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.0036000001430511477,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.297,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.5031999998092651,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.386,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.43559999990463255,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.33560000014305114,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.32859999990463257,
+          "bytes": 586
+        }
+      ],
+      "cancelledState": "cancelled"
+    },
+    {
+      "rows": [
+        {
+          "url": "/api/templates",
+          "seconds": 0.005900000095367432,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.0038999998569488525,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/templates",
+          "seconds": 0.0037000000476837156,
+          "bytes": 1531
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.2727999999523163,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.3632000000476837,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks/03fc8fd2-c3bf-4509-a01d-a838cb6d09cf",
+          "seconds": 0.37340000009536745,
+          "bytes": 209853
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.311,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.21879999995231628,
+          "bytes": 586
+        },
+        {
+          "url": "/api/decks",
+          "seconds": 0.3643999998569489,
+          "bytes": 586
+        }
+      ],
+      "cancelledState": "cancelled"
+    }
+  ]
+}

@@ -43,7 +43,8 @@ def records():
       {'name':'Summon: Bahamut','layout':'saga','rarity':'mythic','type_line':'Enchantment Creature — Saga Dragon','colors':[],'mana_cost':'{9}','power':'9','toughness':'9','oracle_text':'(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II — Destroy up to one target nonland permanent.\nIII — Draw two cards.\nIV — Mega Flare — This creature deals damage equal to the total mana value of other permanents you control to each opponent.\nFlying'},
     ]
     return [{**base,**d,'id':f'11111111-1111-4111-8111-{i:012d}','oracle_id':f'22222222-2222-4222-8222-{i:012d}','collector_number':str(i)} for i,d in enumerate(defs,1)]
-def test_real_native_deck_and_dfc_pairing(tmp_path):
+@pytest.mark.parametrize('use_workers',[False,True],ids=['dom-fallback','parallel-workers'])
+def test_real_native_deck_and_dfc_pairing(tmp_path,use_workers):
     from playwright.sync_api import sync_playwright
     s=Store(tmp_path/'workspace');net=Network(s);transport=net._transport;byid={c['id']:c for c in records()};art=artwork()
     def remote(url):
@@ -57,8 +58,11 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
     assert not errors,errors
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     with sync_playwright() as p:
-        browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1050});browser_errors=[];page.on('pageerror',lambda e:browser_errors.append(str(e)))
+        #Headless Chromium delays canvas export on this host; use the actual desktop rendering mode.
+        browser=p.chromium.launch(headless=os.name!='nt');page=browser.new_page(viewport={'width':1440,'height':1050});browser_errors=[];page.on('pageerror',lambda e:browser_errors.append(str(e)))
         try:
+            #This test inspects live native DOM controls. Exercise the supported DOM fallback.
+            if not use_workers:page.add_init_script('window.OffscreenCanvas=undefined;')
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
             page.evaluate("""() => {
               const originalRemove=HTMLIFrameElement.prototype.remove;
@@ -73,25 +77,28 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             assert ready['status']=='ready',{'status':ready['status'],'activity':page.locator('#activity-log').text_content(),'errors':browser_errors}
             assert ready['summary']['rendered']==19
             assert '/img/frames/saga/creature/c.png' in app.runtime.requested, 'Colorless Saga creature frame was not exercised by the native renderer'
-            assert '/img/frames/saga/sagaMaskPinline.png' in app.runtime.requested, 'Dual-color Saga gradient pinline mask was not exercised by the native renderer'
+            assert '/img/frames/proxy-foundry/masks/saga-pinline.png' in app.runtime.requested, 'Dual-color Saga gradient pinline mask was not exercised by the native renderer'
             assert '/img/frames/m15/transform/regular/frontA.png' in app.runtime.requested
             assert '/img/frames/m15/transform/regular/new/backL.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/crowns/regular/new/u.png' in app.runtime.requested
             assert '/img/frames/m15/transform/icons/compass.svg' in app.runtime.requested
-            assert '/img/frames/m15/transform/icons/land.svg' in app.runtime.requested
+            assert '/img/frames/m15/transform/icons/land.svg' not in app.runtime.requested
             assert '/img/frames/class/w.png' in app.runtime.requested
             assert '/js/frames/versionClass.js' in app.runtime.requested
-            runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
-            saga_state=runtime_frame.evaluate("""() => ({
-              title: window.card?.text?.title?.text,
-              groups: [0,1,2,3].map(i=>Number(document.querySelector('#saga-chapters-'+i)?.value||0)),
-              count: Number(window.card?.saga?.count||0),
-              heights: [0,1,2,3].map(i=>Number(document.querySelector('#saga-height-'+i)?.value||0))
-            })""")
-            assert saga_state['title']=='Summon: Bahamut',saga_state
-            assert saga_state['groups']==[2,1,1,0],saga_state
-            assert saga_state['count']==3 and all(x>0 for x in saga_state['heights'][:3]) and saga_state['heights'][3]==0,saga_state
+            if not use_workers:
+                runtime_frame=next(f for f in page.frames if '/runtime/host' in f.url)
+                saga_state=runtime_frame.evaluate("""() => ({
+                  title: window.card?.text?.title?.text,
+                  groups: [0,1,2,3].map(i=>Number(document.querySelector('#saga-chapters-'+i)?.value||0)),
+                  count: Number(window.card?.saga?.count||0),
+                  heights: [0,1,2,3].map(i=>Number(document.querySelector('#saga-height-'+i)?.value||0))
+                })""")
+                assert saga_state['title']=='Summon: Bahamut',saga_state
+                assert saga_state['groups']==[2,1,1,0],saga_state
+                assert saga_state['count']==3 and all(x>0 for x in saga_state['heights'][:3]) and saga_state['heights'][3]==0,saga_state
+            else:
+                assert len([frame for frame in page.frames if 'worker=1' in frame.url])==2
             for c in ready['cards']:
                 for f in c['faces']:
                     comp=f['compiled'];assert comp['data']['infoArtist']==comp['credit']['originalArtist']+' (Scryfall) • Art © respective rights holders'
@@ -103,7 +110,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path):
             dual_frames=dual_saga['faces'][0]['compiled']['data']['frames']
             gradient=next(f for f in dual_frames if 'Gradient Saga Pinline' in f.get('name',''))
             assert gradient['src'].startswith('data:image/svg+xml;utf8,')
-            assert gradient['masks']==[{'src':'/img/frames/saga/sagaMaskPinline.png','name':'Pinline'}]
+            assert gradient['masks']==[{'src':'/img/frames/proxy-foundry/masks/saga-pinline.png','name':'Pinline'}]
             tassels=[f for f in dual_frames if any(m.get('name') in {'Saga Tassel 1','Saga Tassel 2'} for m in f.get('masks',[]))]
             assert len(tassels)==2
             by_tassel={f['masks'][0]['name']:f for f in tassels}

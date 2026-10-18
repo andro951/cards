@@ -1,12 +1,13 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,date,nav,confirmAction,saveApiFile} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,humanStatus,date,thumbnail,nav,confirmAction,saveApiFile,showWorkspaceError} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
 import {showSettings,showHelp} from './settings.js';
 import {renderDecks} from './render.js';
+import {visibleDecks,resumeDeletions} from './deletion.js';
 
-export async function refreshLibrary(){
-  state.decks=await api('/api/decks');state.templates=await api('/api/templates');
+export async function refreshLibrary({templates=true}={}){
+  state.decks=visibleDecks(await api('/api/decks'));if(templates)state.templates=await api('/api/templates');
   $('#nav-count').textContent=state.decks.length||'';
   for(const id of [...state.selected])if(!state.decks.some(d=>d.id===id))state.selected.delete(id);
 }
@@ -15,25 +16,25 @@ function selectTray(){
   if(!ids.length){tray.classList.add('hidden');return;}
   const count=state.decks.filter(d=>state.selected.has(d.id)).reduce((s,d)=>s+(d.summary?.cards||0),0);
   tray.classList.remove('hidden');tray.innerHTML=`<strong>${ids.length} deck${ids.length===1?'s':''} · ${count} cards</strong><button class="button quiet small" id="clear-selection">Clear</button><button class="button small" id="render-selected">Generate images</button><button class="button primary small" id="order-selected">Review & Print</button>`;
-  $('#clear-selection').onclick=()=>{state.selected.clear();showLibrary();};
-  $('#render-selected').onclick=()=>attempt(async()=>{await renderDecks(ids,{onUpdate:async()=>{await refreshLibrary();if(state.route==='decks')showLibrary();}});});
+  $('#clear-selection').onclick=()=>{state.selected.clear();filterLibrary();selectTray();};
+  $('#render-selected').onclick=()=>attempt(async()=>{await renderDecks(ids);});
   $('#order-selected').onclick=()=>attempt(()=>chooseOrder(ids));
 }
 let filter='all',query='';
 function showLibrary(){
-  const decks=state.decks.filter(d=>d.name.toLowerCase().includes(query.toLowerCase())&&(filter==='all'||(filter==='ready'?d.status==='ready':d.status!=='ready')));
+  const decks=state.decks;
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">YOUR NEXT GAME STARTS HERE</span><h1>Deck library</h1><p>A home for your decks, your artwork, and the cards you’re ready to print.</p></div><div class="actions"><button class="button" id="new-empty">New blank deck</button><button class="button primary" id="import-deck">＋ Import deck</button></div></div>
   <section class="hero-strip"><div><span class="eyebrow">FROM DECKLIST TO TABLETOP</span><h2>Make the deck yours.<br>We’ll handle the print prep.</h2><p>Keep the art from your selected Scryfall printings, bring your own, or mix both. Start with approved templates or create a style of your own.</p></div><div class="steps-compact"><div class="step-mini"><b>1</b>Import a deck</div><span class="step-arrow">→</span><div class="step-mini"><b>2</b>Art & style</div><span class="step-arrow">→</span><div class="step-mini"><b>3</b>Render & print</div></div></section>
   <div class="toolbar"><div class="filter-pills"><button data-filter="all" class="${filter==='all'?'active':''}">All decks · ${state.decks.length}</button><button data-filter="ready" class="${filter==='ready'?'active':''}">Ready to print</button><button data-filter="work" class="${filter==='work'?'active':''}">In progress</button></div><label class="search"><input id="deck-search" type="search" aria-label="Search decks" placeholder="Find a deck…" value="${esc(query)}"></label></div>
   ${decks.length?`<div class="deck-grid">${decks.map(d=>{
-    const cover=d.cover||'';return `<article class="deck-tile ${state.selected.has(d.id)?'selected':''}" data-deck="${d.id}"><div class="deck-cover"><a href="#deck/${d.id}" aria-label="Open ${esc(d.name)}">${cover?`<img src="${esc(cover)}" alt="" loading="lazy">`:`<span class="deck-monogram">${esc(d.name[0]?.toUpperCase()||'D')}</span>`}</a><label class="deck-select"><input type="checkbox" data-select="${d.id}" aria-label="Select ${esc(d.name)} for a print order" ${state.selected.has(d.id)?'checked':''}></label>${d.settings?.backAsset?`<img class="deck-back-thumb" src="/api/assets/${esc(d.settings.backAsset)}" alt="Deck back">`:''}</div><div class="deck-content"><a href="#deck/${d.id}"><h3 title="${esc(d.name)}">${esc(d.name)}</h3></a><div class="deck-meta"><span>${d.summary?.cards||0} cards</span><span>${d.summary?.rendered||0}/${d.summary?.faces||0} images</span><span>${date(d.updatedAt)}</span></div><div class="deck-footer">${badge(d.status)}<a class="tile-open" href="#deck/${d.id}">Open deck ↗</a></div></div></article>`;
+    const cover=thumbnail(d.cover||'');return `<article class="deck-tile ${state.selected.has(d.id)?'selected':''}" data-deck="${d.id}"><div class="deck-cover"><a href="#deck/${d.id}" aria-label="Open ${esc(d.name)}">${cover?`<img src="${esc(cover)}" alt="" loading="lazy">`:`<span class="deck-monogram">${esc(d.name[0]?.toUpperCase()||'D')}</span>`}</a><label class="deck-select"><input type="checkbox" data-select="${d.id}" aria-label="Select ${esc(d.name)} for a print order" ${state.selected.has(d.id)?'checked':''}></label>${d.settings?.backAsset?`<img class="deck-back-thumb" src="${esc(thumbnail('/api/assets/'+d.settings.backAsset))}" alt="Deck back" loading="lazy" decoding="async">`:''}</div><div class="deck-content"><a href="#deck/${d.id}"><h3 title="${esc(d.name)}">${esc(d.name)}</h3></a><div class="deck-meta"><span>${d.summary?.physicalCards??d.summary?.cards??0} cards</span><span>${d.summary?.rendered||0}/${d.summary?.faces||0} images</span><span>${date(d.updatedAt)}</span></div><div class="deck-footer">${badge(d.printStatus||d.status)}<a class="tile-open" href="#deck/${d.id}">Open deck ↗</a></div></div></article>`;
   }).join('')}<button class="add-tile" id="add-tile"><span>＋</span>Start another deck<small>Paste a Scryfall link or decklist</small></button></div>`:'<div class="empty-state"></div>'}
   <div class="subtitle-line section-gap">Select multiple decks to combine them into one explicitly paired print order. Nothing is purchased automatically.</div>`;
   for(const id of ['import-deck','add-tile'])if($('#'+id))$('#'+id).onclick=()=>attempt(()=>importDeck());
   $('#new-empty').onclick=()=>attempt(async()=>{const d=await api('/api/decks/new',{});nav('deck/'+d.id+'/setup');});
-  $$('[data-filter]').forEach(el=>el.onclick=()=>{filter=el.dataset.filter;showLibrary()});
-  $('#deck-search').oninput=e=>{query=e.target.value;const pos=e.target.selectionStart;showLibrary();$('#deck-search').focus();try{$('#deck-search').setSelectionRange(pos,pos)}catch{}};
-  $$('[data-select]').forEach(el=>el.onchange=()=>{el.checked?state.selected.add(el.dataset.select):state.selected.delete(el.dataset.select);el.closest('.deck-tile').classList.toggle('selected',el.checked);selectTray();});
+  $$('[data-filter]').forEach(el=>el.onclick=()=>{filter=el.dataset.filter;filterLibrary()});
+  $('#deck-search').oninput=e=>{query=e.target.value;filterLibrary();};
+  $$('[data-select]').forEach(el=>el.onchange=()=>{el.checked?state.selected.add(el.dataset.select):state.selected.delete(el.dataset.select);el.closest('.deck-tile').classList.toggle('selected',el.checked);filterLibrary();selectTray();});
   $('#new-empty').remove();
   $('.hero-strip')?.remove();
   $('.page-head .eyebrow')?.remove();
@@ -46,9 +47,9 @@ function showLibrary(){
   const all=$('[data-filter="all"]');if(all)all.textContent='All Decks';
   const work=$('[data-filter="work"]');if(work)work.textContent='Needs Preparation';
   const selectAll=document.createElement('button');selectAll.type='button';selectAll.className='button quiet small';
-  const allVisible=decks.length>0&&decks.every(deck=>state.selected.has(deck.id));
-  selectAll.textContent=allVisible?'Deselect All':'Select All';selectAll.disabled=!decks.length;
-  selectAll.onclick=()=>{for(const deck of decks)allVisible?state.selected.delete(deck.id):state.selected.add(deck.id);showLibrary();};
+  const visible=matchingDecks(),allVisible=visible.length>0&&visible.every(deck=>state.selected.has(deck.id));
+  selectAll.id='select-visible-decks';selectAll.textContent=allVisible?'Deselect All':'Select All';selectAll.disabled=!visible.length;
+  selectAll.onclick=()=>{const visible=matchingDecks(),all=visible.length>0&&visible.every(deck=>state.selected.has(deck.id));for(const deck of visible)all?state.selected.delete(deck.id):state.selected.add(deck.id);filterLibrary();selectTray();};
   $('#deck-search').style.paddingLeft='40px';
   const deckActions=document.createElement('div');deckActions.setAttribute('role','group');deckActions.setAttribute('aria-label','Deck library actions');
   deckActions.style.display='flex';deckActions.style.alignItems='center';deckActions.style.justifyContent='flex-end';deckActions.style.flexWrap='wrap';deckActions.style.gap='10px';deckActions.style.flex='1 1 520px';
@@ -61,7 +62,47 @@ function showLibrary(){
     tile.style.cursor='pointer';
     tile.onclick=event=>{if(event.target.closest('.deck-select'))return;const ident=tile.dataset.deck;nav('deck/'+ident);};
   }
-  selectTray();
+  filterLibrary();selectTray();
+  state.generationView={route:'decks',refresh:refreshLibraryProgress};
+}
+function matchingDecks(){
+  const text=query.toLowerCase();
+  return state.decks.filter(deck=>deck.name.toLowerCase().includes(text)&&(filter==='all'||(filter==='ready'?(deck.printStatus||deck.status)==='ready':(deck.printStatus||deck.status)!=='ready')));
+}
+function filterLibrary(){
+  const main=$('#main'),visible=matchingDecks(),ids=new Set(visible.map(deck=>deck.id));
+  for(const tile of $$('.deck-tile',main)){
+    tile.hidden=!ids.has(tile.dataset.deck);tile.classList.toggle('selected',state.selected.has(tile.dataset.deck));
+    const check=$('[data-select]',tile);if(check)check.checked=state.selected.has(tile.dataset.deck);
+  }
+  for(const button of $$('[data-filter]',main)){
+    button.classList.toggle('active',button.dataset.filter===filter);
+  }
+  const select=$('#select-visible-decks');
+  if(select){select.disabled=!visible.length;select.textContent=visible.length&&visible.every(deck=>state.selected.has(deck.id))?'Deselect All':'Select All';}
+  let empty=$('.empty-state',main);
+  if(!empty){empty=document.createElement('div');empty.className='empty-state';empty.style.padding='42px 20px';main.append(empty);}
+  if(!empty.firstElementChild){const message=document.createElement('p');message.style.margin='0 auto';empty.append(message);}
+  empty.firstElementChild.textContent=state.decks.length?'No decks match your search.':'No decks yet. Add a deck to get started.';empty.hidden=visible.length>0;
+}
+export async function refreshLibraryProgress(){
+  //Image progress does not change templates or the collection's input controls.
+  await refreshLibrary({templates:false});
+  if(state.route!=='decks'||!$('#deck-search'))return;
+  const decks=new Map(state.decks.map(deck=>[deck.id,deck]));
+  for(const tile of $$('.deck-tile')){
+    const deck=decks.get(tile.dataset.deck);if(!deck)continue;
+    const meta=$$('.deck-meta span',tile);
+    if(meta[0])meta[0].textContent=`${deck.summary?.physicalCards??deck.summary?.cards??0} cards`;
+    if(meta[1])meta[1].textContent=`${deck.summary?.rendered||0}/${deck.summary?.faces||0} images`;
+    if(meta[2])meta[2].textContent=date(deck.updatedAt);
+    const status=$('.badge',tile);if(status){status.className='badge '+(deck.printStatus||deck.status);status.textContent=humanStatus(deck.printStatus||deck.status);}
+    const link=$('.deck-cover a',tile),src=thumbnail(deck.cover||'');
+    let image=$('img',link);
+    if(src&&!image){image=document.createElement('img');image.loading='lazy';image.alt='';link.replaceChildren(image);}
+    if(image&&image.getAttribute('src')!==src)image.src=src;
+  }
+  filterLibrary();selectTray();
 }
 function mountNavigation(){
   $('.sidebar').hidden=true;$('.sidebar').style.display='none';
@@ -81,7 +122,7 @@ function mountNavigation(){
     settings:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.5 2.2 1.7.7 1.9-1.2 2.8 2.8-1.2 1.9.7 1.7L22 10v4l-2.2.5-.7 1.7 1.2 1.9-2.8 2.8-1.9-1.2-1.7.7L14 22h-4l-.5-2.2-1.7-.7-1.9 1.2-2.8-2.8 1.2-1.9-.7-1.7L2 14v-4l2.2-.5.7-1.7-1.2-1.9 2.8-2.8 1.9 1.2 1.7-.7z"/></svg>',
   };
   const items=[['decks','Deck Library','#decks'],['templates','Templates','#templates'],
-               ['settings','Settings','#settings'],['discord','Discord','https://discord.com/']];
+               ['settings','Settings','#settings'],['discord','Discord','https://discord.gg/au2rCSbG2B']];
   for(const [key,title,href] of items){
     const link=document.createElement('a');link.href=href;link.title=title;link.setAttribute('aria-label',title);
     link.dataset.nav=key;link.className='button quiet icon';link.style.fontSize='21px';
@@ -97,25 +138,59 @@ function mountNavigation(){
 }
 let routeCounter=0,lastHash=location.hash||'#decks';
 export async function route(){
-  if(state.dirty&&location.hash!==lastHash&&!window.confirm('Leave without saving your setup changes?')){history.replaceState(null,'',lastHash);return;}
-  state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
-  $('#selection-tray').classList.add('hidden');$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===(name==='deck'?'decks':name)));
+  if(state.setupActions?.root.isConnected){
+    try{await state.setupActions.flush();}
+    catch(error){history.replaceState(null,'',lastHash);toast(error.message,true);return;}
+    state.setupActions=null;
+  }
+  state.generationView=null;state.dirty=false;lastHash=location.hash||'#decks';const current=++routeCounter;const [name='decks',id,tab]=lastHash.slice(1).split('/');state.route=name;
+  state.routeEpoch=current;state.deckTab=tab||'cards';state.routeDeck=id||null;
+  $('#selection-tray').classList.add('hidden');
+  for(const link of $$('[data-nav]')){
+    const selected=link.dataset.nav===(name==='deck'?'decks':name);
+    link.classList.toggle('active',selected);
+    if(selected)link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+    link.style.background=selected?'linear-gradient(#48250f,#2b180d)':'';
+    link.style.borderColor=selected?'var(--accent)':'';
+    link.style.color=selected?'var(--accent2)':'';
+    link.style.boxShadow=selected?'0 0 12px #f47a2038, inset 0 0 0 1px #7a431f':'';
+  }
   document.title=`${{decks:'Deck Library',deck:'Deck',templates:'Templates',orders:'Print Orders',settings:'Settings'}[name]||'Bulk Proxy Forge'} · Bulk Proxy Forge`;
+  if(name==='decks'&&state.immediateLibrary){
+    state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';return;
+  }
   $('#main').innerHTML=loading();
   try{
-    await refreshLibrary();if(current!==routeCounter)return;
+    if(name!=='orders')await refreshLibrary();if(current!==routeCounter)return;
     if(name==='deck'&&id)await showDeck(id,tab||'cards');
     else if(name==='templates')await (state.bootstrap?.browser?(await import('/web/templates-browser.js')).showTemplates():showTemplates());
-    else if(name==='orders')await showOrders();
+    else if(name==='orders')await showOrders(id);
     else if(name==='settings')await (state.bootstrap?.browser?(await import('/web/settings-browser.js')).showSettings():showSettings());
     else if(name==='help')await showHelp();
     else{state.route='decks';showLibrary();}
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}</div><button class="button" id="retry-page">Retry</button>`;$('#retry-page').onclick=()=>route();}
+  }catch(e){if(current===routeCounter)showWorkspaceError(e,()=>route());}
+}
+function placeNotifications(){
+  const host=$('#toast-host'),activity=$('#activity');
+  if(!host||!activity)return;
+  const position=()=>{
+    const bounds=activity.getBoundingClientRect();
+    host.style.top='auto';
+    host.style.bottom=(bounds.height?window.innerHeight-bounds.top+12:24)+'px';
+  };
+  position();
+  new ResizeObserver(position).observe(activity);
+  window.addEventListener('resize',position);
 }
 async function boot(){
   try{
     const data=await api('/api/bootstrap');state.csrf=data.csrf;state.bootstrap=data;
     mountNavigation();
+    placeNotifications();
+    resumeDeletions();
+    window.addEventListener('pf-library-deletion',()=>{state.immediateLibrary=false;showLibrary();$('#nav-count').textContent=state.decks.length||'';});
+    window.addEventListener('pf-deletion-failed',()=>{if(state.route==='decks')void route();});
     window.addEventListener('hashchange',route);
     window.addEventListener('message',e=>{
       if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;
@@ -138,7 +213,7 @@ async function boot(){
     document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a&&state.dirty){e.preventDefault();nav(a.getAttribute('href').slice(1));}});
     await route();
     window.dispatchEvent(new Event('pf-ui-ready'));
-  }catch(e){$('#main').innerHTML=`<div class="notice error">${esc(e.message)}\nReload this page to reopen your workspace.</div>`;window.dispatchEvent(new CustomEvent('pf-ui-error',{detail:e.message}));}
+  }catch(e){showWorkspaceError(e,()=>location.reload());window.dispatchEvent(new CustomEvent('pf-ui-error',{detail:e.message}));}
 }
 window.addEventListener('error',e=>{if(state.csrf)api('/api/client-error',{error:e.message+'\n'+(e.error?.stack||'')}).catch(()=>{});});
 boot();

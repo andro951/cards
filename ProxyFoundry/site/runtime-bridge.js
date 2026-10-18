@@ -2,7 +2,21 @@
 (() => {
   'use strict';
   const S=window.__PF_RUNTIME,post=S.post,sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  //Sharp italic glyph corners can extend miter outlines into adjacent frame borders.
+  const nativeStrokeText=CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText=function(...args){
+    if(!S.active)return nativeStrokeText.apply(this,args);
+    const join=this.lineJoin;
+    this.lineJoin='round';
+    try{return nativeStrokeText.apply(this,args);}
+    finally{this.lineJoin=join;}
+  };
   const pendingScripts=new Set();
+  const assetCacheReady=import('/site/runtime-assets.js').then(({RuntimeAssets})=>new RuntimeAssets());
+  let compositionCache=null,compositionFinal=false;
+  const compositionReady=window.__PF_WORKER_CORE?import('/site/frame-composition-cache.js').then(({FrameCompositionCache})=>{compositionCache=new FrameCompositionCache();}):Promise.resolve();
+  const disposeAssets=()=>assetCacheReady.then(cache=>cache.dispose()).catch(error=>post('diagnostic',{stage:'asset-cleanup',diagnostic:{error:error.message}}));
+  window.addEventListener('pagehide',disposeAssets);window.addEventListener('unload',disposeAssets);
   const baseTextEdited=window.textEdited;
   // Instrument the genuine canvas draw call so diagnostics record the exact
   // destination rectangle CardConjurer actually used for the set symbol.
@@ -41,7 +55,7 @@
     // from the newly loaded card, then let the genuine Saga renderer redraw.
     window.fixSagaInputs();
     await readyImages([['Saga chapter',window.sagaChapter],['Saga divider',window.sagaDivider]]);
-    window.fixSagaInputs();window.sagaEdited();await sleep(40);window.sagaEdited();
+    window.fixSagaInputs();window.sagaEdited();
     const expected=(data.saga?.abilities||[]).map(Number);
     const actual=(window.card.saga?.abilities||[]).map(Number);
     if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error('Native Saga changed the saved chapter grouping.');
@@ -50,6 +64,55 @@
       const input=document.querySelector('#saga-chapters-'+i);
       if(!input||Number(input.value)!==Number(expected[i]||0))throw new Error('Native Saga controls did not synchronize chapter '+(i+1)+'.');
     }
+  }
+  async function planeswalkerReady(data){
+    if(!String(data.version).toLowerCase().includes('planeswalker'))return;
+    if(!window.card?.planeswalker||typeof window.planeswalkerEdited!=='function'||typeof window.fixPlaneswalkerInputs!=='function')throw new Error('Native Planeswalker module did not initialize.');
+    const edited=window.planeswalkerEdited.__pfOriginal||window.planeswalkerEdited;
+    window.planeswalkerEdited=function(...args){if(window.card?.planeswalker&&String(window.card.version).toLowerCase().includes('planeswalker'))return edited.apply(this,args);};
+    window.planeswalkerEdited.__pfOriginal=edited;
+    //loadCard resizes helper canvases after script initialization, clearing their first draw.
+    window.fixPlaneswalkerInputs();window.resetPlaneswalkerImages();window.invertPlaneswalkerColors(true);window.planeswalkerEdited();
+    await readyImages([['Planeswalker plus',window.plusIcon],['Planeswalker minus',window.minusIcon],['Planeswalker neutral',window.neutralIcon],['Planeswalker light divider',window.lightToDark],['Planeswalker dark divider',window.darkToLight],['Planeswalker text mask',window.planeswalkerTextMask]]);
+    window.fixPlaneswalkerInputs();window.planeswalkerEdited();
+    if(JSON.stringify(window.card.planeswalker.abilities.map(String))!==JSON.stringify(data.planeswalker.abilities.map(String)))throw new Error('Native Planeswalker changed the saved loyalty costs.');
+    if(Number(window.card.planeswalker.count)!==Number(data.planeswalker.count))throw new Error('Native Planeswalker changed the saved ability count.');
+  }
+  async function classReady(data){
+    if(!String(data.version).toLowerCase().includes('class'))return;
+    if(!window.card?.class||typeof window.classEdited!=='function'||typeof window.fixClassInputs!=='function')throw new Error('Native Class module did not initialize.');
+    const edited=window.classEdited.__pfOriginal||window.classEdited;
+    window.classEdited=function(...args){if(window.card?.class&&String(window.card.version).toLowerCase().includes('class'))return edited.apply(this,args);};
+    window.classEdited.__pfOriginal=edited;
+    await readyImages([['Class header',window.classHeader]]);
+    window.fixClassInputs();window.classEdited();
+  }
+  function fitPlaneswalkerAbilityText(){
+    if(!window.card?.planeswalker?.uniformAbilityText)
+      return;
+
+    const fields=Object.entries(window.card.text).filter(([key,field])=>/^ability[0-3]$/.test(key)&&field.height>0&&field.text).map(([,field])=>field);
+    if(!fields.length)
+      return;
+
+    //Use the native renderer's actual fitting result, including inline symbols.
+    //One difficult row must lower all ability sizes together.
+    const probe=document.createElement(`canvas`);probe.width=window.cardCanvas.width;probe.height=window.cardCanvas.height;
+    const context=probe.getContext(`2d`);let size=Infinity;
+    for(const field of fields){
+      window.writeText(field,context);
+      const fitted=field.proxyFoundryTextFit;
+      if(!fitted||!Number.isFinite(fitted.size))
+        throw new Error(`Native planeswalker ability fitting did not finish.`);
+
+      size=Math.min(size,fitted.size+Number(field.fontSize||0));
+    }
+
+    for(const field of fields){
+      field.size=size/window.card.height;field.fontSize=0;
+    }
+
+    probe.width=1;probe.height=1;
   }
   async function stationReady(data){
     if(!String(data.version).toLowerCase().includes('station'))return;
@@ -69,19 +132,36 @@
   async function waitFor(fn,ms,label){const start=Date.now();while(Date.now()-start<ms){if(fn())return;await sleep(50)}throw new Error(label+' did not initialize.');}
   // Replace only script orchestration, not the native frame, text or canvas logic.
   const loadedScripts=new Map();
+  const initializedScripts=new Set();
+  const reusableScripts=new Set(['/js/frames/versionPlaneswalker.js','/js/frames/versionSaga.js','/js/frames/versionClass.js']);
   window.loadScript=function(path){
     if(!/^\/js\/[A-Za-z0-9_./-]+\.js$/.test(path)||path.split('/').includes('..'))return Promise.reject(new Error('Untrusted CardConjurer script: '+path));
     if(loadedScripts.has(path))return loadedScripts.get(path);
+    if(window.__PF_WORKER_CORE&&reusableScripts.has(path)&&initializedScripts.has(path)){
+      if(path==='/js/frames/versionPlaneswalker.js')window.resetPlaneswalkerImages(window.fixPlaneswalkerInputs(window.planeswalkerEdited));
+      if(path==='/js/frames/versionClass.js')window.fixClassInputs(window.classEdited);
+      return Promise.resolve();
+    }
     const job=timeout(new Promise((resolve,reject)=>{const el=document.createElement('script');el.src=path;el.onload=resolve;el.onerror=()=>reject(new Error('CardConjurer script failed: '+path));document.head.append(el);}),30000,path);
-    pendingScripts.add(job);job.finally(()=>{pendingScripts.delete(job);loadedScripts.delete(path);}).catch(()=>{});loadedScripts.set(path,job);return job;
+    pendingScripts.add(job);job.then(()=>initializedScripts.add(path),error=>S.errors.push({phase:S.phase,message:error.message}));job.finally(()=>{pendingScripts.delete(job);loadedScripts.delete(path);}).catch(()=>{});loadedScripts.set(path,job);return job;
   };
   const nativeTextBuffer=window.drawTextBuffer;
   window.drawTextBuffer=function(...args){if(S.active&&S.phase!=='render')return;return nativeTextBuffer?.apply(this,args);};
+  //Loading one face triggers native redraw callbacks for every individual image.
+  //Only compose once all inputs are ready; the final native drawing order is unchanged.
+  for(const name of ['drawFrames','drawCard','drawText','bottomInfoEdited']){
+    const draw=window[name];
+    window[name]=function(...args){
+      if(S.active&&S.phase!=='render')return;
+      if(name==='drawFrames'&&S.active&&compositionCache)return compositionCache.draw(window,()=>draw.apply(this,args),compositionFinal);
+      return draw.apply(this,args);
+    };
+  }
   async function scriptsSettled(){while(pendingScripts.size)await Promise.all([...pendingScripts]);}
   function usedSymbols(data){
     const symbols=new Set();
     for(const obj of [...Object.values(data.text||{}),...Object.values(data.bottomInfo||{})]){
-      const text=String(obj?.text||'');
+      const text=window.proxyFoundryInlineSymbols(String(obj?.text||''));
       const tokens=[...text.matchAll(/\{([^{}]+)\}/g)].map(m=>m[1].toLowerCase().replaceAll('/',''));
       if(text.includes('{flavor}')||text.includes('{divider}'))tokens.push(data.version==='cartoony'?'cflavor':'bar');
       if(text.includes('{planechase}'))tokens.push('chaos');
@@ -117,7 +197,8 @@
     const paths=new Set([data.artSource,data.setSymbolSource,data.watermarkSource,'/img/black.png','/img/blank.png','/img/frames/cornerCutout.png']);
     for(const f of data.frames||[]){paths.add(f.src);for(const m of f.masks||[])paths.add(m.src);}
     const imgs=[...paths].filter(Boolean).map(path=>{const img=new Image();img.crossOrigin='anonymous';img.src=path;return [String(path).slice(0,130),img];});
-    await readyImages(imgs);
+    try{await readyImages(imgs);}
+    finally{if(window.__PF_WORKER_CORE)for(const [,img] of imgs)img.dispose();}
   }
   function symbolRuntimeSnapshot(stage,key,data){
     const image=window.setSymbol,card=window.card||{},cw=Number(card.width||data.width||0),ch=Number(card.height||data.height||0);
@@ -127,6 +208,7 @@
   }
   async function fontsReady(data){
     const families=new Set(['belerenb','belerenbsc','mplantin','mplantini','gothammedium']);
+    if(String(data.version).toLowerCase().includes('saga'))families.add('plantinsemibold');
     for(const obj of [...Object.values(data.text||{}),...Object.values(data.bottomInfo||{})]){
       if(obj.font)families.add(obj.font);
       for(const m of String(obj.text||'').matchAll(/\{font([^{}]+)\}/g))if(!/^(size|color)/.test(m[1]))families.add(m[1]);
@@ -134,52 +216,91 @@
     await timeout(Promise.all([...families].map(async f=>{const list=await document.fonts.load('16px "'+String(f).replace(/["\\]/g,'')+'"');if(!list.length)throw new Error('No CardConjurer font definition for '+f+'.');})),30000,'CardConjurer fonts');
     await timeout(document.fonts.ready,30000,'Font decoding');
   }
+  const yieldToInput=()=>window.scheduler?.yield?window.scheduler.yield():sleep(0);
+  async function measureNative(stage,key,operation){
+    const started=performance.now();let outcome='failed';
+    try{
+      const result=await operation();outcome='ok';return result;
+    }finally{
+      const seconds=(performance.now()-started)/1000;
+      if(seconds>=.1)post('diagnostic',{key,stage:'timing',diagnostic:{stage,seconds:Number(seconds.toFixed(4)),outcome}});
+      //Let foreground browser events run between stages without changing native drawing order.
+      await yieldToInput();
+    }
+  }
+  async function paintFace(watermark=false){
+    const paintFrames=window.drawFrames,paintCard=window.drawCard;
+    //Text and footer updates request redundant compositing. Paint once after all layers settle.
+    window.drawFrames=()=>{};window.drawCard=()=>{};
+    try{
+      await window.drawText();await window.bottomInfoEdited();
+      if(watermark)await window.watermarkEdited();
+    }finally{window.drawFrames=paintFrames;window.drawCard=paintCard;}
+    paintFrames();
+  }
   async function render(request){
     if(S.active)throw new Error('Another face is still rendering.');
-    clearStationState();lastSetSymbolDraw=null;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    clearStationState();lastSetSymbolDraw=null;compositionFinal=false;S.active=true;S.clearErrors();S.phase='assets';const data=structuredClone(request.data);const storageKey='__pf_'+request.key;
+    const initialCacheHits=compositionCache?.hits||0;
     try{
       post('progress',{key:request.key,message:'Checking art, frames, masks and fonts…'});
-      await preload(data);await fontsReady(data);
+      await measureNative('native.assets',request.key,async()=>{await (await assetCacheReady).acquire(data);await preload(data);});
+      await measureNative('native.fonts',request.key,()=>fontsReady(data));
       // Structural scripts run through native loadCard only after it assigns the new card.
       if(window.writingText)clearTimeout(window.writingText);
       let symbols=usedSymbols(data);for(const sym of symbols)S.requireImage(sym.image);
-      await readyImages(symbols.map(s=>['symbol '+s.name,s.image]));
+      await measureNative('native.symbols',request.key,()=>readyImages(symbols.map(s=>['symbol '+s.name,s.image])));
       S.phase='load';localStorage.setItem(storageKey,JSON.stringify(data));
+      if(window.__PF_WORKER_CORE)for(const frame of window.card.frames||[]){frame.image?.dispose();for(const mask of frame.masks||[])mask.image?.dispose();}
       post('progress',{key:request.key,message:'CardConjurer is loading the saved face…'});
-      await window.loadCard(storageKey);await scriptsSettled();
-      await sagaReady(data);await stationReady(data);
+      await measureNative('native.load-and-scripts',request.key,async()=>{
+        await window.loadCard(storageKey);await scriptsSettled();
+        await sagaReady(data);await planeswalkerReady(data);await classReady(data);await stationReady(data);
+      });
       symbols=usedSymbols(window.card);for(const sym of symbols)S.requireImage(sym.image);
-      await readyImages(imagesFor(window.card,symbols));await fontsReady(window.card);
+      await measureNative('native.loaded-images',request.key,()=>readyImages(imagesFor(window.card,symbols)));
+      await measureNative('native.loaded-fonts',request.key,()=>fontsReady(window.card));
+      await measureNative('native.planeswalker-text-fit',request.key,()=>fitPlaneswalkerAbilityText());
       symbolRuntimeSnapshot('after-load',request.key,data);
       // Stop the native 500ms debounce and perform its own final redraw, in order.
       S.phase='render';if(window.writingText)clearTimeout(window.writingText);
-      await window.drawText();await window.bottomInfoEdited();await window.watermarkEdited();window.drawFrames();window.drawCard();
+      await measureNative('native.first-draw',request.key,async()=>{
+        await paintFace(true);
+      });
       symbolRuntimeSnapshot('after-first-draw',request.key,data);
-      await sleep(550);
+      await measureNative('native.readiness',request.key,async()=>{await scriptsSettled();await readyImages(imagesFor(window.card,usedSymbols(window.card)));await fontsReady(window.card);});
       if(window.writingText)clearTimeout(window.writingText);
       if(window.card?.station&&String(window.card.version).toLowerCase().includes('station'))window.stationEdited();
-      await window.drawText();await window.bottomInfoEdited();window.drawFrames();window.drawCard();
+      if(window.__PF_PREPARE_VECTORS)await window.__PF_PREPARE_VECTORS();
+      compositionFinal=true;
+      await measureNative('native.final-draw',request.key,async()=>{
+        await paintFace();
+      });
       symbolRuntimeSnapshot('after-final-draw',request.key,data);
       const errors=S.errors.filter(x=>x.phase!=='bootstrap');
       if(errors.length)throw new Error(errors[0].message);
       const canvas=window.cardCanvas;
       const width=Math.round(data.width*(1+2*(data.marginX||0))),height=Math.round(data.height*(1+2*(data.marginY||0)));
       if(!(canvas instanceof HTMLCanvasElement)||canvas.width!==width||canvas.height!==height)throw new Error('Native canvas dimensions do not match the saved template.');
-      const blob=await timeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export');
+      const blob=await measureNative('native.png-export',request.key,()=>timeout(window.__PF_WORKER_CORE?canvas.convertToBlob({type:'image/png'}):new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG export returned no image.')),'image/png')),20000,'PNG export'));
+      const hits=(compositionCache?.hits||0)-initialCacheHits;
+      if(hits)post('diagnostic',{key:request.key,stage:'timing',diagnostic:{stage:'native.cached-frame-compositions',seconds:0,count:hits,outcome:'ok'}});
       post('rendered',{key:request.key,blob,width,height,renderer:'CardConjurer native cardCanvas'});
-    }finally{localStorage.removeItem(storageKey);S.active=false;S.phase='idle';}
+    }finally{localStorage.removeItem(storageKey);(await assetCacheReady).release();window.__PF_RELEASE_IMAGES?.();S.active=false;S.phase='idle';}
   }
   let initialized=false;
   const ready=async()=>{
+    await Promise.all([assetCacheReady,compositionReady]);
     await waitFor(()=>typeof window.loadCard==='function'&&window.cardCanvas&&window.availableFrames?.[window.selectedFrameIndex]&&window.card?.text,30000,'Native CardConjurer frame-picker bootstrap');
-    await scriptsSettled();await sleep(600);
+    await scriptsSettled();await sleep(window.__PF_WORKER_CORE?0:600);
     if(document.querySelector('#enableCollectorInfo'))document.querySelector('#enableCollectorInfo').checked=true;
     if(document.querySelector('#show-guidelines'))document.querySelector('#show-guidelines').checked=false;
     S.clearErrors();initialized=true;post('ready');
   };
   window.addEventListener('message',e=>{
-    if(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)||e.data?.source!=='pf-app')return;
+    if((!window.__PF_WORKER_CORE&&(e.source!==parent||e.origin!==(window.__PF_PARENT_ORIGIN||location.origin)))||e.data?.source!=='pf-app')return;
     const msg=e.data;
+    if(msg.type==='dispose'){disposeAssets();return;}
     if(msg.type==='ping'){if(initialized)post('ready');return;}
     if(msg.type==='render'){
       if(!initialized){post('failed',{key:msg.key,error:'Native renderer is not initialized.'});return;}

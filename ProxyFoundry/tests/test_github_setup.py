@@ -1,5 +1,6 @@
 """GitHub bundles stage a complete setup without ever changing a saved deck."""
 import copy
+import hashlib
 import io
 import json
 import os
@@ -81,6 +82,10 @@ class BundleRemote:
         self.calls.append(url)
         if url == 'https://api.github.com/repos/' + self.repo:
             return json.dumps({'default_branch': self.ref}).encode(), 'application/json', {}
+        commit=hashlib.sha1(json.dumps(self.rows,sort_keys=True).encode()+b''.join(self.images[key] for key in sorted(self.images))).hexdigest()
+        if url=='https://api.github.com/repos/'+self.repo+'/commits/'+quote(self.ref,safe=''):
+            return json.dumps({'sha':commit}).encode(),'application/json',{}
+        url=url.replace('/'+commit+'/', '/'+quote(self.ref,safe='')+'/').replace('?ref='+commit,'?ref='+quote(self.ref,safe=''))
         for path, rows in self.rows.items():
             api = 'https://api.github.com/repos/' + self.repo + '/contents/' + quote(path, safe='/') + '?ref=' + quote(self.ref, safe='')
             if url == api:
@@ -112,6 +117,20 @@ def test_four_symbols_live_art_and_icon_are_staged(tmp_path):
     assert ws.store.get('decks', deck['id']) == before
     assert not any('/art/' in url or 'scryfall' in url for url in remote.calls)
     assert s['githubSetupFolder'] == remote.url
+    assert s['symbolsSource']['kind']=='github'
+
+
+def test_art_subfolder_link_imports_parent_symbols_back_and_card_data(tmp_path):
+    remote=BundleRemote(back='icon',data={'version':1,'cards':[{'name':'Sol Ring','nickname':'The Colt'}]})
+    ws=workspace(tmp_path,remote)
+    result=import_github_setup(ws,{'url':remote.url+'/art'})
+    assert result['settings']['githubSetupFolder']==remote.url
+    assert result['settings']['source']['githubFolder']==remote.url+'/art'
+    assert result['summary']=={'art':'github','symbols':'folder','back':'icon','data':1}
+    assert result['cardData']==[{'name':'Sol Ring','nickname':'The Colt'}]
+    assert len(set(result['settings']['symbols'].values()))==4
+    assert result['warnings'] and 'parent project folder' in result['warnings'][0]
+    assert not any('raw.githubusercontent.com' in url and '/art/' in url for url in remote.calls)
 
 
 def test_direct_github_symbol_folder_import(tmp_path):
@@ -336,22 +355,25 @@ def _deck_with_card(ws, name='A Test Creature'):
 
 
 def test_optional_data_json_is_staged_then_applied_on_save(tmp_path):
-    data={'version':1,'cards':[
-        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'},
+    data={'version':1,'artist':'Deck Artist','cards':[
+        {'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.','artist':'Card Artist'},
         {'name':'Ignored completely','nickname':'','flavor_text':''},
     ]}
     remote=BundleRemote(data=data)
     ws=workspace(tmp_path,remote);deck=_deck_with_card(ws)
     before=copy.deepcopy(ws.store.get('decks',deck['id']))
     result=import_github_setup(ws,{'url':remote.url,'deckId':deck['id']})
-    assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.'}]
+    assert result['cardData']==[{'name':'A Test Creature','nickname':'Dean Winchester','flavor_text':'Saving people, hunting things.','artist':'Card Artist'}]
+    assert result['settings']['artist']=='Deck Artist'
     assert result['summary']['data']==1
     assert result['settings']['dataJsonSource']=={'kind':'github','value':remote.child('data.json')}
     assert ws.store.get('decks',deck['id'])==before
-    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
+    saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData'],'settings':result['settings']})
+    assert saved['settings']['artist']=='Deck Artist'
     face=saved['cards'][0]['faces'][0]
     assert face['semanticOverrides']['nickname']=='Dean Winchester'
     assert face['semanticOverrides']['flavor_text']=='Saving people, hunting things.'
+    assert face['artistOverride']=='Card Artist'
     assert saved['status']=='draft'
 
 
@@ -365,6 +387,31 @@ def test_data_json_merges_fields_without_clearing_existing_overrides(tmp_path):
     saved=ws.save(deck['id'],{'revision':deck['revision'],'cardData':result['cardData']})
     overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides=={'oracle_text':'Keep me','flavor_text':'Existing flavor','nickname':'Dean'}
+
+
+@pytest.mark.parametrize('artist',[None,42,{},'x'*301])
+def test_invalid_deck_artist_is_rejected(artist):
+    from foundry.card_data import parse_document
+    with pytest.raises(ValidationError,match='artist must be text'):
+        parse_document(json.dumps({'version':1,'artist':artist,'cards':[]}).encode())
+
+
+@pytest.mark.parametrize('fields,settings',[({},{}),({'artist':'  Deck Artist  '},{'artist':'Deck Artist'}),({'artist':''},{'artist':''})])
+def test_local_data_file_returns_deck_artist_settings(running,fields,settings):
+    app,server=running
+    deck=app.ws.new_deck('Local artist')
+    status,result,_=request(server,'/api/setup/card-data/file?deckId='+deck['id'],
+        json.dumps({'version':1,'cards':[],**fields}).encode(),headers={'Content-Type':'application/json'})
+    assert status==200 and result=={'cardData':[],'settings':settings}
+
+
+def test_github_data_link_returns_deck_artist_settings(tmp_path):
+    from foundry.github_setup import import_card_data_url
+    remote=BundleRemote(data={'version':1,'artist':'Deck Artist','cards':[]})
+    ws=workspace(tmp_path,remote);deck=ws.new_deck('Linked artist')
+    result=import_card_data_url(ws,{'url':remote.url+'/data.json','deckId':deck['id']},include_document=True)
+    assert result['settings']=={'artist':'Deck Artist'}
+    assert result['document']['artist']=='Deck Artist'
 
 
 def test_data_json_nonempty_unknown_card_name_fails_atomically(tmp_path):
@@ -434,3 +481,47 @@ def test_empty_symbol_folder_does_not_enable_single_symbol_override(tmp_path):
     ws=workspace(tmp_path,remote)
     with pytest.raises(ValidationError,match='one-image symbol generation is no longer supported'):
         import_github_setup(ws,{'url':remote.url})
+
+
+def test_same_commit_reuses_setup_images_without_download_or_decode(tmp_path,monkeypatch):
+    remote=BundleRemote(back='icon',data={'version':1,'artist':'Deck artist','cards':[]})
+    ws=workspace(tmp_path,remote)
+    first=import_github_setup(ws,{'url':remote.url})
+    remote.calls.clear()
+    def unexpected(*args,**kwargs):raise AssertionError('An unchanged image was decoded again')
+    monkeypatch.setattr('foundry.github_setup.ingest_image',unexpected)
+    second=import_github_setup(ws,{'url':remote.url})
+    assert second==first
+    assert remote.calls==['https://api.github.com/repos/owner/repo/commits/main']
+
+def test_same_commit_repairs_missing_processed_symbol(tmp_path):
+    remote=BundleRemote();ws=workspace(tmp_path,remote)
+    first=import_github_setup(ws,{'url':remote.url})
+    ws.store.asset_path(first['settings']['symbols']['rare']).unlink()
+    second=import_github_setup(ws,{'url':remote.url})
+    assert ws.store.asset(second['settings']['symbols']['rare'])
+
+
+def test_setup_network_batch_finishes_all_fetches_before_writing(tmp_path):
+    store=Store(tmp_path);writes=[];original=store.add_asset
+    store.add_asset=lambda *a,**k:(writes.append(True),original(*a,**k))[1]
+    def transport(url):raise AssertionError('Individual transport used')
+    urls=['https://raw.githubusercontent.com/o/r/main/a.png','https://raw.githubusercontent.com/o/r/main/b.png']
+    def batch(requested):
+        assert requested==urls and not writes
+        return {url:(png(),'image/png',{}) for url in urls}
+    transport.fetch_many=batch
+    net=Network(store,transport=transport)
+    assert set(net.fetch_many_immutable(urls))==set(urls)
+    transport.fetch_many=lambda urls:(_ for _ in ()).throw(AssertionError('Cached files fetched'))
+    assert set(net.fetch_many_immutable(urls))==set(urls)
+
+
+def test_setup_failed_batch_does_not_commit_downloads(tmp_path):
+    store=Store(tmp_path)
+    def transport(url):raise AssertionError('Individual transport used')
+    def batch(urls):raise ValueError('Download failed')
+    transport.fetch_many=batch
+    url='https://raw.githubusercontent.com/o/r/main/a.png'
+    with pytest.raises(ValueError,match='Download failed'):Network(store,transport=transport).fetch_many_immutable([url])
+    assert store.cache_get(url) is None

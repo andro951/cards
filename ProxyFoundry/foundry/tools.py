@@ -50,7 +50,7 @@ class CardTools:
         except (RuntimeError,ValueError) as exc:raise ValidationError(str(exc)) from exc
         if not entries:raise ValidationError('No downloadable printing images in this export.')
         if len(entries)>10000:raise ValidationError('Split exports larger than 10,000 faces.')
-        dest=self.store.home/'orders'/('originals-'+uid()+'.zip');tmp=dest.with_suffix('.partial');used=set()
+        archive_name='originals-'+uid()+'.zip';token,dest=self.ws._review_download(archive_name);tmp=dest.with_suffix('.partial');used=set()
         try:
             with zipfile.ZipFile(tmp,'w',zipfile.ZIP_STORED) as z:
                 for i,(name,url) in enumerate(entries):
@@ -59,5 +59,5 @@ class CardTools:
                     raw,mime,_=self.ws.net.fetch(url,refresh=refresh);decode_image(raw)
                     filename=image_tools.uniquify_filename(image_tools.snake_slug(name),used);z.writestr(filename,raw)
             os.replace(tmp,dest);progress(len(entries),len(entries),'Original printing images saved')
-            return {'count':len(entries),'bytes':dest.stat().st_size,'download':'/api/files/'+dest.name,'filename':dest.name}
+            return self.ws._review_download_result(token,archive_name,dest,len(entries))
         except Exception:tmp.unlink(missing_ok=True);dest.unlink(missing_ok=True);raise

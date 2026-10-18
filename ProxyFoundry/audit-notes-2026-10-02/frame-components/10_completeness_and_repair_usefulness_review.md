@@ -1,0 +1,3 @@
+# Repair usefulness and limits
+Useful for repair: identifies exact missing adapters, final-pass ordering and unsupported source families, distinguishes declared native capabilities from actual builder output, and gives a scoped sequence. All recognized groups are accounted for in the matrix.
+Limits: this is source/compile coverage, not rendered pixel correctness. Live packs may differ from pinned runtime versions. No claim that every crown fits every card geometry, that every upstream URL is bundled, or that custom templates all satisfy the contract. Do the requested fixes and native render regression checks only after authorization.

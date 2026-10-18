@@ -1,6 +1,7 @@
-import io
+import io,hashlib
 from pathlib import Path
 from PIL import Image
+import pytest
 
 from foundry.domain import SCHEMA_VERSION
 from foundry.images import ingest_image
@@ -9,6 +10,18 @@ from foundry.storage import Store
 
 def png(color):
     out=io.BytesIO();Image.new('RGB',(100,140),color).save(out,'PNG');return out.getvalue()
+
+
+@pytest.mark.parametrize('record_exists',[False,True])
+def test_asset_retry_repairs_an_incomplete_file(tmp_path,record_exists):
+    store=Store(tmp_path);raw=png('#123456');ident=hashlib.sha256(raw).hexdigest()
+    if record_exists:store.add_asset(raw,'image/png',100,140)
+    target=store.asset_path(ident);target.parent.mkdir(parents=True,exist_ok=True)
+    target.write_bytes(raw[:32])
+    recovered=store.add_asset(raw,'image/png',100,140)
+    assert recovered['id']==ident and recovered['size']==len(raw)
+    assert [recovered['width'],recovered['height']]==[100,140]
+    assert target.read_bytes()==raw
 
 
 def test_one_current_render_per_face_and_human_readable_path(tmp_path):
@@ -45,3 +58,23 @@ def test_render_storage_is_fresh_schema_without_migration_code():
     assert 'ALTER TABLE' not in source
     settings=(Path(__file__).resolve().parents[1]/'site/settings.js').read_text(encoding='utf-8')
     assert 'Delete All Images' in settings and '/api/images/delete-all' in settings
+
+
+def test_browser_copy_failure_preserves_previous_render_and_metadata(tmp_path):
+    import shutil
+    from foundry.browser import BrowserStore
+    store=BrowserStore(tmp_path,copy_file=shutil.copy2)
+    first=ingest_image(store,png('#112233'))
+    previous=store.render_put('1'*64,first,face_id='face',face_name='Card')
+    output=store.home/previous['file_path'];saved=output.read_bytes()
+    second=ingest_image(store,png('#445566'))
+    def interrupted(source,destination):
+        Path(destination).write_bytes(Path(source).read_bytes()[:32])
+        raise OSError('Interrupted browser copy')
+    store.copy_file=interrupted
+    with pytest.raises(OSError,match='Interrupted browser copy'):
+        store.render_put('2'*64,second,face_id='face',face_name='Card')
+    assert output.read_bytes()==saved
+    assert store.render_get('1'*64)['asset_id']==first['id']
+    assert store.render_get('2'*64) is None
+    assert not list((store.home/'renders').rglob('*.tmp'))

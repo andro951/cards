@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+diff/
+new/
+removed/
+.image-compare-*/
+last-run.txt

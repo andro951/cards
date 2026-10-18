@@ -3,6 +3,37 @@ import pytest
 from foundry.runtime import Runtime
 from foundry.domain import ValidationError,CC_COMMIT,COMPAT_COMMIT
 
+
+def test_true_name_color_mask_preserves_outline_interior_and_antialiasing():
+    import io
+    from PIL import Image
+    fixture=Image.new('RGBA',(5,1))
+    fixture.putdata([(252,254,255,255),(0,0,0,255),(0,0,0,127),(126,127,128,255),(255,255,255,0)])
+    output=io.BytesIO();fixture.save(output,'PNG')
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert url.endswith('/img/frames/m15/nickname/addons/m15NicknameTitleW.png')
+            return output.getvalue(),'image/png',{}
+    runtime=Runtime(FakeNet())
+    neutral,mime=runtime.fetch('/img/frames/proxy-foundry/land-name-neutral.png')
+    mask,_=runtime.fetch('/img/frames/proxy-foundry/land-name-color-mask.png')
+    neutral=Image.open(io.BytesIO(neutral));mask=Image.open(io.BytesIO(mask))
+    assert mime=='image/png' and neutral.size==fixture.size
+    assert [neutral.getpixel((x,0))[3] for x in range(5)]==[255,255,127,255,0]
+    assert [mask.getpixel((x,0))[3] for x in range(5)]==[255,0,0,128,0]
+    assert all(neutral.getpixel((x,0))[:3]==(0,0,0) for x in range(5))
+
+def test_worker_host_preserves_controls_without_starting_native_dom_renderer():
+    runtime=Runtime(None)
+    runtime.fetch=lambda path:(b'<div><input id="native-choice" value="42"><script>untrusted()</script></div>','text/html')
+    runtime.parent_origin='http://127.0.0.1:1234'
+    worker=runtime.host(worker=True).decode()
+    legacy=runtime.host().decode()
+    assert 'id="native-choice" value="42"' in worker
+    assert worker.count('<script')==1 and '/site/runtime-worker-host.js' in worker
+    assert '/js/creator-23.js' not in worker and 'untrusted()' not in worker
+    assert '/js/creator-23.js' in legacy and '/site/runtime-bridge.js' in legacy
+
 def test_absolute_native_host_alias_is_resolved_to_pinned_path():
     assert Runtime.upstream_alias('https://cardconjurer.app/img/blank.png')=='/img/blank.png'
     assert Runtime.upstream_alias('https://www.cardconjurer.com/img/frames/a.png?cache=2')=='/img/frames/a.png'
@@ -80,7 +111,11 @@ def test_browser_transport_non_404_does_not_try_another_frame_source():
     assert len(calls)==1
 
 def test_creator_script_patches_inline_mana_cluster_wrapping():
-    source='''function writeText(textObject, targetContext) {
+    source='''loadManaSymbols(true, ['e', 'a']);
+function writeText(textObject, targetContext) {
+    var splitText = rawText.replace(/\\n/g, '{line}');
+\touterloop: while (drawingText) {
+\t\t\t\tdrawingText = false;
 		//Begin looping through words/codes
 		innerloop: for (word of splitText) {
 			var wordToWrite = word;
@@ -88,7 +123,11 @@ def test_creator_script_patches_inline_mana_cluster_wrapping():
 					var manaSymbolWidth = manaSymbol.width * textSize * 0.78;
 					var manaSymbolHeight = manaSymbol.height * textSize * 0.78;
 					var manaSymbolX = currentX + canvasMargin + manaSymbolSpacing;
-}'''
+    }
+var frameToAdd = JSON.parse(JSON.stringify(availableFrames[selectedFrameIndex]));
+\tvar frameElement = document.createElement('div');
+\tdocument.querySelector('#text-options').innerHTML = null;
+'''
     class FakeNet:
         def fetch(self,url,**kwargs):
             assert CC_COMMIT in url and kwargs.get('immutable') is True
@@ -96,11 +135,32 @@ def test_creator_script_patches_inline_mana_cluster_wrapping():
     runtime=Runtime(FakeNet())
     raw,mime=runtime.fetch('/js/creator-23.js');text=raw.decode()
     assert mime=='application/javascript'
+    assert "loadManaSymbols(true, ['infinity'], [1.4, 0.65]);" in text
+    assert 'proxyFoundryInlineSymbols(rawText)' in text
+    assert 'token.length > 1 ? `{inf}` : `{infinity}`' in text
     assert 'proxyFoundryManaClusterWidth' in text
+    assert 'var proxyFoundrySourceTokens = splitText.slice();' in text
+    assert 'outerloop: while (drawingText) {\n\t\tsplitText = proxyFoundrySourceTokens.slice();' in text
     assert "splitText.splice(proxyFoundryWordIndex, 0, '{lns}')" in text
     assert 'currentX + manaClusterWidth >= textWidth' in text
     assert 'innerloop: for (word of splitText)' not in text
     assert runtime.diagnostic()['files']['/js/creator-23.js']['adapter']=='inline mana cluster wrapping'
+
+
+def test_rules_infinity_reuses_native_glyph_without_generic_mana_disc():
+    from xml.etree import ElementTree
+    source=b'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><g transform="translate(1,2)"><circle r="50"/><path d="M 1 2 L 3 4"/></g></svg>'
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert url.endswith('/img/manaSymbols/inf.svg')
+            return source,'image/svg+xml',{}
+    raw,mime=Runtime(FakeNet()).fetch('/img/manaSymbols/infinity.svg')
+    root=ElementTree.fromstring(raw);ns={'s':'http://www.w3.org/2000/svg'}
+    assert not root.findall('.//s:circle',ns)
+    assert root.find('.//s:path',ns).get('d')=='M 1 2 L 3 4'
+    assert root.find('s:g',ns).get('transform')=='translate(1,2)'
+    assert root.get('viewBox')=='40 180 520 240'
+    assert mime=='image/svg+xml'
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer dependency inspection')
@@ -110,3 +170,82 @@ def test_colorless_saga_creature_gap_asset_exists_at_pinned_commit():
     with urllib.request.urlopen(request,timeout=30) as response:
         assert response.status==200
         assert response.read(8)==b'\x89PNG\r\n\x1a\n'
+
+
+@pytest.mark.parametrize('kind,height,original',[('Title',.069,.1053)])
+def test_godzilla_main_title_is_cropped_from_pinned_asset(kind,height,original):
+    import io
+    from PIL import Image
+    source=Image.new('RGBA',(60,100))
+    source.putdata([(x,y,0,255) for y in range(100) for x in range(60)])
+    buffer=io.BytesIO();source.save(buffer,'PNG');calls=[]
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            calls.append(url)
+            assert CC_COMMIT in url and kwargs.get('immutable') is True
+            assert url.endswith(f'/img/frames/m15/nickname/m15Nickname{kind}B.png')
+            return buffer.getvalue(),'image/png',{}
+    runtime=Runtime(FakeNet())
+    path=f'/img/frames/proxy-foundry/godzilla/{kind}B.png'
+    raw,mime=runtime.fetch(path)
+    output=Image.open(io.BytesIO(raw))
+    assert mime=='image/png' and len(calls)==1
+    expected=source.crop((0,0,60,round(100*height/original)))
+    assert output.size==expected.size and output.tobytes()==expected.tobytes()
+    assert runtime.diagnostic()['files'][path]['source'].endswith(f'm15Nickname{kind}B.png')
+
+
+def test_godzilla_crown_retains_shoulders_and_removes_subtitle():
+    import io
+    from PIL import Image
+    source=Image.new('RGBA',(1428,270),(200,40,30,255))
+    source.putpixel((80,222),(0,0,0,255))
+    source.putpixel((1348,222),(0,0,0,255))
+    buffer=io.BytesIO();source.save(buffer,'PNG')
+    class FakeNet:
+        def fetch(self,url,**kwargs):return buffer.getvalue(),'image/png',{}
+    raw,_=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/CrownR.png')
+    output=Image.open(io.BytesIO(raw))
+    assert output.size==source.size
+    assert output.getpixel((714,194))==(0,0,0,255)
+    for point in [(80,222),(1348,222),(714,100)]:
+        assert output.getpixel(point)==source.getpixel(point)
+    for point in [(714,200),(714,260),(80,240),(1348,240)]:
+        assert output.getpixel(point)[3]==0
+
+
+@pytest.mark.parametrize('kind',['Crown','Title'])
+def test_joined_godzilla_crown_is_the_unchanged_native_asset(kind):
+    import io
+    from PIL import Image
+    buffer=io.BytesIO();Image.new('RGBA',(1428,270),(90,30,20,255)).save(buffer,'PNG')
+    class FakeNet:
+        def fetch(self,url,**kwargs):
+            assert url.endswith('/m15Nickname'+kind+'W.png')
+            return buffer.getvalue(),'image/png',{}
+    raw,mime=Runtime(FakeNet()).fetch('/img/frames/proxy-foundry/godzilla/'+kind+'JoinedW.png')
+    assert raw==buffer.getvalue() and mime=='image/png'
+
+
+@pytest.mark.parametrize('kind,size',[('class',(2010,2814)),('saga',(1500,2100)),('creature-saga',(2010,2814))])
+def test_bundled_pinline_masks_load_without_network(kind,size):
+    import io
+    from PIL import Image
+    class NoNetwork:
+        def fetch(self,*args,**kwargs):raise AssertionError('Bundled mask must not fetch upstream')
+    raw,mime=Runtime(NoNetwork()).fetch('/img/frames/proxy-foundry/masks/'+kind+'-pinline.png')
+    mask=Image.open(io.BytesIO(raw)).convert('RGBA')
+    assert mime=='image/png' and mask.size==size
+    assert mask.getpixel((0,0))[3]==0
+    alpha=mask.getchannel('A')
+    assert alpha.getextrema()==(0,255)
+    assert sum(alpha.histogram()[1:])>1000
+
+
+@pytest.mark.parametrize('kind,black,gold',[('class',(151,135),(165,120)),('saga',(111,233),(123,90)),('creature-saga',(149,311),(142,120))])
+def test_corrected_pinline_masks_exclude_native_black_outline(kind,black,gold):
+    from pathlib import Path
+    from PIL import Image
+    mask=Image.open(Path(__file__).resolve().parents[1]/'assets/frame-masks'/(kind+'-pinline.png')).convert('RGBA')
+    assert mask.getpixel(black)[3]==0
+    assert mask.getpixel(gold)[3]==255

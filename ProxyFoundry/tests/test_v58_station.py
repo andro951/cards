@@ -3,7 +3,7 @@ import copy, io, json
 from pathlib import Path
 import pytest
 from PIL import Image
-from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds, apply_station_underframe_policy
+from foundry.compiler import Compiler, semantic, fit_set_symbol_to_bounds, apply_station_underframe_policy, apply_station_textbox_transparency
 from foundry.domain import ValidationError, GENERATION_VERSION
 from foundry.images import ingest_image, data_uri
 from foundry.legacy import compiler as native
@@ -88,11 +88,11 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
 
     for art in (landscape,portrait):
         custom=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder');data=custom['data']
-        inner_w=data['width']-160;inner_h=data['height']-160
+        inner_w=data['width'];inner_h=data['height']
         expected_zoom=max(inner_w/art['width'],inner_h/art['height'])
         scaled_w=art['width']*expected_zoom;scaled_h=art['height']*expected_zoom
-        expected_x=80 if scaled_w<=inner_w+1e-9 else (data['width']-scaled_w)/2
-        expected_y=80 if scaled_h<=inner_h+1e-9 else (data['height']-scaled_h)/2
+        expected_x=0 if scaled_w<=inner_w+1e-9 else (data['width']-scaled_w)/2
+        expected_y=0 if scaled_h<=inner_h+1e-9 else (data['height']-scaled_h)/2
         assert data['artX']*data['width']==pytest.approx(expected_x)
         assert data['artY']*data['height']==pytest.approx(expected_y)
         assert data['artZoom']==pytest.approx(expected_zoom)
@@ -100,8 +100,8 @@ def test_scryfall_station_uses_art_window_but_custom_art_uses_full_art_placement
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in data['frames'])
 
     manual=comp.compile_face(c,c,0,{'fit':{'artX':.1,'artY':.2,'artZoom':1.2,'artRotate':0}},settings,landscape['id'],art_origin='uploaded override')
-    assert manual['data']['artBounds']['x']*manual['data']['width']==pytest.approx(80)
-    assert manual['data']['artBounds']['height']*manual['data']['height']==pytest.approx(manual['data']['height']-160)
+    assert manual['data']['artBounds']['x']*manual['data']['width']==pytest.approx(0)
+    assert manual['data']['artBounds']['height']*manual['data']['height']==pytest.approx(manual['data']['height'])
     assert (manual['data']['artX'],manual['data']['artY'],manual['data']['artZoom'])==(.1,.2,1.2)
     assert manual['crop']['warning'] and not manual['crop'].get('intentionalArtWindow')
 
@@ -118,6 +118,19 @@ def test_station_underframe_policy_depends_on_art_source_not_card_color(env):
 
         custom=comp.compile_face(c,c,0,{},settings,landscape['id'],art_origin='computer folder')
         assert not any(any(mask.get('name')=='Frame' for mask in frame.get('masks',[])) for frame in custom['data']['frames'])
+
+
+@pytest.mark.parametrize('colors',[[],['W'],['U','R']])
+def test_custom_station_has_one_translucent_textbox_above_cutout(env,colors):
+    _,comp,art,_,settings=env;c=card(colors=colors)
+    data=comp.compile_face(c,c,0,{},settings,art['id'],art_origin='GitHub folder')['data']
+    frames=data['frames'];rules=[f for f in frames if any(m.get('name')=='Rules' for m in f.get('masks',[]))]
+    assert len(rules)==2 and rules[0]['name']=='Station Textbox'
+    assert rules[1]['name']=='Station Textbox Cutout' and rules[1]['erase']
+    assert frames.index(rules[0])<frames.index(rules[1])
+    before=copy.deepcopy(data)
+    assert not apply_station_textbox_transparency(data,semantic(c,c),'GitHub folder')
+    assert data==before
 
 def test_compiler_parity_untouched_station_state(env):
     s,comp,a,_,settings=env;c=card(tiers=2)
@@ -150,7 +163,7 @@ def test_no_homemade_station_badge_functions():
 
 @pytest.mark.parametrize('name,color',[('adagia','W'),('susur','B')])
 @pytest.mark.parametrize('origin',['Scryfall selected printing','GitHub folder'])
-def test_station_planet_uses_land_overlay_and_native_tiers(env,name,color,origin):
+def test_station_planet_uses_normal_station_overlay_and_native_tiers(env,name,color,origin):
     _,comp,art,_,settings=env
     c=json.loads((Path(__file__).parent/'fixtures/station_lands'/(name+'.json')).read_text(encoding='utf-8'))
     result=comp.compile_face(c,c,0,{},settings,art['id'],art_origin=origin)
@@ -162,11 +175,11 @@ def test_station_planet_uses_land_overlay_and_native_tiers(env,name,color,origin
     assert 'rules' not in data['text']
     assert data['station']['badgeValues']==['','','12+']
     assert data['text']['ability2']['text'] in c['oracle_text']
-    assert any(f['src']=='/img/frames/station/L.png' and not f['masks'] for f in data['frames'])
-    assert not any(f['src']=='/img/frames/station/a.png' and not f['masks'] for f in data['frames'])
+    assert any(f['src']=='/img/frames/station/a.png' and not f['masks'] for f in data['frames'])
+    assert not any(f['src']=='/img/frames/station/L.png' for f in data['frames'])
     assert any(f['src']==f'/img/frames/station/{color.lower()}.png' for f in data['frames'])
     underframes=[f for f in data['frames'] if any(m['name']=='Frame' for m in f['masks'])]
     if origin=='Scryfall selected printing':
-        assert len(underframes)==1 and underframes[0]['src']=='/img/frames/m15/regular/m15FrameL.png'
+        assert len(underframes)==1 and underframes[0]['src']=='/img/frames/m15/regular/m15FrameA.png'
     else:
         assert not underframes

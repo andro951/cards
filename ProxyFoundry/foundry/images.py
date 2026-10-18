@@ -1,8 +1,9 @@
 """Image validation and opt-in rarity treatment; never generate substitute artwork."""
 from __future__ import annotations
-import base64,io,re,xml.etree.ElementTree as ET
+import base64,hashlib,io,re,xml.etree.ElementTree as ET
 from PIL import Image,ImageOps,UnidentifiedImageError
 from .domain import ValidationError,RARITIES
+from .timing import timing
 MAX_PIXELS=48_000_000
 MAX_BYTES=64*1024*1024
 TRANSPARENT_EDGE_ALPHA_THRESHOLD=2
@@ -26,10 +27,53 @@ def trim_transparent_edges(im):
     return im.crop(bbox)
 
 def ingest_image(store,raw,*,trim_transparent_padding=False):
-    im=decode_image(raw)
+    if not raw or len(raw)>MAX_BYTES:raise ValidationError('Choose an image smaller than 64 MB.')
+    cache=getattr(store,'_image_ingest_cache',None)
+    key=(hashlib.sha256(raw).digest(),bool(trim_transparent_padding)) if cache is not None else None
+    if cache is not None:
+        with store._image_ingest_lock:
+            ident=cache.pop(key,None)
+            if ident:cache[key]=ident
+        if ident:
+            asset=store.asset(ident)
+            if asset:return asset
+            with store._image_ingest_lock:cache.pop(key,None)
+    with timing(store,'image.decode',bytes=len(raw)):
+        im=decode_image(raw)
+        with Image.open(io.BytesIO(raw)) as source:
+            source_format=source.format
+            orientation=source.getexif().get(274,1)
+    original_size=im.size
     if trim_transparent_padding:im=trim_transparent_edges(im)
-    out=io.BytesIO();im.save(out,'PNG')
-    return store.add_asset(out.getvalue(),'image/png',im.width,im.height)
+    mime={'PNG':'image/png','JPEG':'image/jpeg','WEBP':'image/webp'}.get(source_format)
+    if mime and orientation==1 and im.size==original_size:
+        asset=store.add_asset(raw,mime,im.width,im.height)
+    else:
+        out=io.BytesIO()
+        with timing(store,'image.encode-png',width=im.width,height=im.height):im.save(out,'PNG')
+        asset=store.add_asset(out.getvalue(),'image/png',im.width,im.height)
+    if cache is not None:
+        with store._image_ingest_lock:
+            cache[key]=asset['id']
+            while len(cache)>128:cache.popitem(last=False)
+    return asset
+
+def ingest_render_png(store,raw,expected_size):
+    """Validate native canvas PNGs without recompressing their existing pixels."""
+    if not raw or len(raw)>MAX_BYTES:raise ValidationError('Choose an image smaller than 64 MB.')
+    with timing(store,'render.validate-png',bytes=len(raw)):
+        try:
+            with Image.open(io.BytesIO(raw)) as im:
+                if im.format!='PNG':raise ValidationError('The native renderer must return a PNG image.')
+                if im.width*im.height>MAX_PIXELS:raise ValidationError('Image exceeds the 48 megapixel limit.')
+                if list(im.size)!=list(expected_size):raise ValidationError('Rendered canvas size did not match its template. Nothing was marked ready.')
+                im.verify()
+            #Verify chunk integrity and decode the pixels before accepting the file.
+            with Image.open(io.BytesIO(raw)) as im:im.load()
+        except ValidationError:raise
+        except (UnidentifiedImageError,OSError,ValueError,SyntaxError) as exc:
+            raise ValidationError('The native renderer returned an invalid PNG image.') from exc
+    return store.add_asset(raw,'image/png',*expected_size)
 
 def data_uri(store,asset_id):
     a=store.asset(asset_id)

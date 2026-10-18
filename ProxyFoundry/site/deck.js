@@ -1,10 +1,19 @@
+import {mountDeckCards,convertToToken} from './tokens.js';
+import {withGenerationScreen} from './generation-progress.js';
+import {downloadReview} from './review-export.js';
+import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
+import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,job,loading,empty,badge,asset,nav,confirmAction,uploadImage,downloadPost,downloadBlob,saveApiFile} from './ui.js';
-import {renderSetup,templateOptions,pickFile,rarities,cancelSetupPreviews} from './setup.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
+import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
+import {ensureArtworkReady,offerDataSave} from './artwork-review.js';
+import {dataChangesPending} from './artwork-files.js';
 import {chooseOrder,setupHelper} from './orders.js';
 import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js';
 const views=new Map();
+let activeCardsView=null;
+window.addEventListener('hashchange',()=>{activeCardsView=null;});
 async function prepareDeckSource(source){
   const text=source.trim();
   if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(text)){
@@ -49,14 +58,7 @@ function preparationStatus(title,message){
   panel.append(heading,detail);main.append(panel);
   return detail;
 }
-function preparationComplete(deck){
-  const host=modal('Your deck is ready','',{size:'small',footer:'<button class="button primary" id="view-ready-deck">View deck</button>',
-    onClose:()=>{nav('deck/'+deck.id+'/cards');return true;}});
-  const body=$('.modal-body',host);
-  const message=document.createElement('p');message.textContent=`All images for ${deck.name} are finished. Your deck is ready to review and print.`;body.append(message);
-  $('#view-ready-deck').onclick=closeModal;
-}
-function chooseLook(source){
+function chooseLook(manifest,includeOutside=true){
   let choosing=false;
   const host=modal('Choose Look','',{size:'large'});
   const body=$('.modal-body',host);
@@ -76,26 +78,17 @@ function chooseLook(source){
       if(choosing)return;
       choosing=true;
       closeModal();
-      const status=preparationStatus(value==='normal'?'Preparing your deck':'Reading your deck list',
-        value==='normal'?"We're preparing your deck for you. This may take several minutes. We'll tell you when it's ready.":
-          'We’re gathering the card details needed for Art & Setup. Images will be generated after you finish your choices.');
+      const status=preparationStatus('Opening your deck',
+        value==='normal'?'We’re preparing your deck, then generating its images with the normal artwork and frames. We’ll tell you when it’s ready.':'Opening Art & Setup. Card details will load in the background while you choose your options.');
+      const epoch=state.routeEpoch;
       let deck=null;
       try{
-        const prepared=await prepareDeckSource(source);
-        deck=await job('/api/decks/import',{source:prepared,includeOutside:true},{label:'Import deck'});
-        if(value==='custom'){nav('deck/'+deck.id+'/setup');return;}
-        const templateRules={...deck.settings.templateRules};
-        for(const group of ['standard','legendary','land','legendary-land','basic-land'])templateRules[group]='normal';
-        await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{templateRules}});
-        const minutes=Math.max(1,Math.ceil((deck.summary?.faces||deck.summary?.cards||60)*0.3));
-        status.textContent=`We're preparing your deck for you. This will take approximately ${minutes} ${minutes===1?'minute':'minutes'}. We'll tell you when it's ready.`;
-        await renderDecks([deck.id]);
-        const finished=await api('/api/decks/'+deck.id);
-        if(finished.status!=='ready')throw new Error('Some cards still need attention. Open the deck to review the activity log.');
-        status.textContent='All card images are finished.';
-        preparationComplete(finished);
+        deck=await job('/api/decks/import',{manifest,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
+        if(epoch===state.routeEpoch)nav('deck/'+deck.id+(value==='normal'?'/cards':'/setup'));
+        else toast(deck.name+' was imported. Open it from Deck Library when you’re ready.');
+        if(value==='normal')await generate(deck);
       }catch(error){
-        $('#activity')?.classList.add('hidden');
+        if(epoch!==state.routeEpoch){toast(error.message,true);return;}
         status.textContent='We could not finish preparing this deck.';
         const notice=document.createElement('div');notice.className='notice error';notice.setAttribute('role','alert');notice.textContent=error.message;status.after(notice);
         const next=document.createElement('button');next.type='button';next.className='button primary';
@@ -107,7 +100,6 @@ function chooseLook(source){
   }
 }
 function addNewDeck(){
-  if(state.busy)throw new Error('Wait for the current task to finish.');
   const host=modal('Add New Deck','',{footer:'<button class="button primary" id="do-import" disabled>Add deck</button>'});
   const body=$('.modal-body',host),addButton=$('#do-import');
   const intro=document.createElement('p');intro.className='muted';intro.textContent="Give us your deck link from a website like Scryfall, MTGGoldfish, or Archidekt, and we'll get the full deck for you.";body.append(intro);
@@ -127,7 +119,11 @@ function addNewDeck(){
   const fileLabel=document.createElement('label');fileLabel.className='field';
   const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
   const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
-  fileLabel.append(fileTitle,file);advanced.append(fileLabel);body.append(advanced);
+  fileLabel.append(fileTitle,file);advanced.append(fileLabel);
+  const outsideLabel=document.createElement('label');outsideLabel.className='check-line';
+  const outside=document.createElement('input');outside.type='checkbox';outside.checked=true;outside.id='import-outside';
+  const outsideText=document.createElement('span');outsideText.textContent='Include Outside the Game cards';
+  outsideLabel.append(outside,outsideText);advanced.append(outsideLabel);body.append(advanced);
   const updateButton=()=>{addButton.disabled=!(link.value.trim()||sourceText.value.trim());addButton.style.filter=addButton.disabled?'grayscale(1)':'';helperNotice.classList.add('hidden');};
   link.oninput=()=>{sourceText.value='';file.value='';updateButton();};
   sourceText.oninput=()=>{link.value='';file.value='';updateButton();};
@@ -143,14 +139,21 @@ function addNewDeck(){
     if(source.startsWith('{')){
       try{JSON.parse(source);}catch{errorBox(body,'The JSON export is not valid.');return;}
     }
-    closeModal();chooseLook(source);
+    const includeOutside=outside.checked;addButton.disabled=true;addButton.textContent='Reading deck list…';setModalBusy(host,true);
+    try{
+      const prepared=await prepareDeckSource(source);
+      const manifest=await job('/api/decks/manifest',{source:prepared,includeOutside},{label:'Read deck list'});
+      if(!host.isConnected)return;
+      closeModal({completed:true});chooseLook(manifest,includeOutside);
+    }catch(error){if(host.isConnected)errorBox(body,error.message);}
+    finally{setModalBusy(host,false);addButton.textContent='Add deck';if(addButton.isConnected)updateButton();}
   };
   updateButton();
 }
 export async function importDeck(existing=null){
   if(!existing)return addNewDeck();
-  if(state.busy)throw new Error('Wait for the current task or cancel it before importing another deck.');
-  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside"><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
+  requireDeckAvailable(existing.id);
+  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside" checked><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
   $('#do-import').onclick=async()=>{
     let source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
@@ -167,7 +170,8 @@ export async function importDeck(existing=null){
   };
 }
 function preview(c,f){
-  return f.compiled?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
+  if(c.metadataSource&&!f.compiled&&!f.lastRender)return '';
+  return f.compiled?.render?.url||f.lastRender?.render?.url||(f.compiled?.artId?asset(f.compiled.artId):null)||f.selectedArtUrl||(c.scryfall.card_faces?.[f.index]?.image_uris?.art_crop)||c.scryfall.image_uris?.art_crop||'';
 }
 function backPreview(c,d){
   if(c.backOverride)return asset(c.backOverride);
@@ -179,13 +183,14 @@ const hasPhysicalReverse=c=>c.faces.length===2||Boolean(c.meldBackAsset||c.scryf
 const physicalReverseName=c=>c.faces.length===2?c.faces[1].name:(c.scryfall?._meld_result?.name||'Meld reverse');
 
 export async function showDeck(id,tab='cards'){
+  const epoch=state.routeEpoch;
   if(tab==='review')tab='cards';
   const oldScroll=$('.card-grid')?.scrollTop||0;
-  const d=await api('/api/decks/'+id);state.activeDeck=d;
+  let d=await api('/api/decks/'+id);if(epoch!==state.routeEpoch)return;activeCardsView=null;state.activeDeck=d;state.deckTab=tab;
   let v=views.get(id);if(!v){v={query:'',filter:'all'};views.set(id,v);}
-  const summary=d.summary,dirty=d.status==='draft';
-  $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.status)}<span class="count-label">${summary.cards} cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
-    <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
+  let summary=d.summary,dirty=d.status==='draft';
+  $('#main').innerHTML=`<a class="back-to-library" href="#decks">← All decks</a><div class="page-head"><div><span class="eyebrow">DECK STUDIO</span><h1>${esc(d.name)}</h1><div class="actions" style="margin-top:12px">${badge(d.printStatus||d.status)}<span class="count-label">${summary.physicalCards??summary.cards} physical cards · ${summary.faces} faces · ${summary.rendered} rendered</span></div><div class="deck-progress"><span class="complete"><b>✓</b>Import</span><span class="${dirty?'current':'complete'}"><b>${dirty?'2':'✓'}</b>Art & style</span><span class="${d.status==='ready'?'complete':!dirty?'current':''}"><b>${d.status==='ready'?'✓':'3'}</b>Generate images</span><span><b>4</b>Review & print</span></div></div><div class="actions"><button class="button" id="deck-menu">More ▾</button><button class="button" id="add-cards">＋ Add cards</button><button class="button primary" id="generate-deck">Generate images</button></div></div>
+    <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.physicalCards??summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
   $('.back-to-library')?.remove();
   const deckTitle=$('.page-head h1');
@@ -212,10 +217,12 @@ export async function showDeck(id,tab='cards'){
   $('#generate-deck').onclick=()=>attempt(()=>generate(d));
   $('#deck-menu').onclick=()=>deckMenu(d);
   if(tab==='setup'){
-    renderSetup($('#deck-body'),d,async(updated,generateNow)=>{
-      if(generateNow){history.replaceState(null,'','#deck/'+id);await showDeck(id,'cards');await generate(updated);}
+    const setup=renderSetup($('#deck-body'),d,async(updated,generateNow)=>{
+      if(generateNow){history.replaceState(null,'','#deck/'+id);await showDeck(id,'cards');await generate(updated,true);}
       else await showDeck(id,'setup');
-    });return;
+    });$('#generate-deck').onclick=()=>attempt(setup.generate);
+    if(d.pendingImport)void startMetadata(d).catch(error=>console.info('Card details task stopped',error.message));
+    return;
   }
   if(tab==='review'){
     const issues=d.cards.flatMap(c=>c.faces.flatMap(f=>{
@@ -228,85 +235,92 @@ export async function showDeck(id,tab='cards'){
     $$('[data-issue]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,issues[+b.dataset.issue].c,issues[+b.dataset.issue].f.index||0)));
     $('#review-order').onclick=()=>attempt(()=>chooseOrder([id]));return;
   }
-  function cardsGrid(){
-    let cards=d.cards.filter(c=>c.name.toLowerCase().includes(v.query.toLowerCase()));
-    if(v.filter==='attention')cards=cards.filter(c=>c.faces.some(f=>f.error||(((f.compiled?.crop?.warning||f.compiled?.flags?.length)&&f.acceptedWarningKey!==f.compiled?.renderKey))));
-    if(v.filter==='unrendered')cards=cards.filter(c=>c.faces.some(f=>!f.compiled?.render));
-    $('#deck-body').innerHTML=`${dirty?'<div class="notice info">You have saved changes to prepare. Generate images will rebuild only the affected faces and reuse unchanged PNGs.</div>':''}<div class="toolbar"><div class="filter-pills"><button data-card-filter="all" class="${v.filter==='all'?'active':''}">All cards</button><button data-card-filter="unrendered" class="${v.filter==='unrendered'?'active':''}">Not rendered</button><button data-card-filter="attention" class="${v.filter==='attention'?'active':''}">Needs review</button></div><label class="search"><input id="card-search" type="search" aria-label="Find a card" placeholder="Find a card…" value="${esc(v.query)}"></label><button class="button small" id="quick-order">Review order ↗</button></div>${cards.length?`<div class="card-grid">${cards.map(c=>{
-      const f=c.faces[0],front=preview(c,f),back=backPreview(c,d),done=!!f.compiled?.render;
-    const warning=c.faces.some(x=>x.error||(((x.compiled?.crop?.warning||x.compiled?.flags?.length)&&x.acceptedWarningKey!==x.compiled?.renderKey)));
-    return `<article class="card-item"><button class="card-image" data-card="${c.id}" aria-label="Edit ${esc(c.name)}"><span class="quantity-pill">${c.quantity}×</span><span class="card-name-pill" title="${esc(c.name)}">${esc(c.name)}</span>${warning?'<span class="warn-pill">!</span>':''}${front?`<img src="${esc(front)}" data-hover-front="${esc(front)}" ${back?`data-hover-back="${esc(back)}"`:''} class="${done?'':'art-only'}" loading="lazy" alt="${esc(c.name)}">`:'<span class="card-empty-symbol">▱</span>'}${!done?`<span class="image-label">${f.error?'Needs attention':'Art preview · not rendered'}</span>`:dirty?'<span class="image-label">Previous render · changes pending</span>':''}</button></article>`;
-    }).join('')}</div>`:empty(d.cards.length?'No cards match':'This deck is waiting for cards',d.cards.length?'Try a different search or review filter.':'Add a card list or a Scryfall export to get started.',`<button class="button primary" id="empty-add">＋ Add cards</button>`)}<div class="subtitle-line">Hover a card to see its back. Click it to edit its artist, art, printing, quantity or template. Real double-faced cards hover to their actual reverse face.</div>`;
-    $$('[data-card]').forEach(b=>b.onclick=()=>attempt(()=>inspect(d,d.cards.find(c=>c.id===b.dataset.card),0)));
-    $$('[data-hover-back]').forEach(img=>{const card=img.closest('[data-card]'),front=img.dataset.hoverFront,back=img.dataset.hoverBack;if(!card||!front||!back)return;card.onmouseenter=()=>{img.src=back;};card.onmouseleave=()=>{img.src=front;};});
-    $$('[data-card-filter]').forEach(b=>b.onclick=()=>{v.filter=b.dataset.cardFilter;cardsGrid();});
-    const attention=$('[data-card-filter="attention"]');
-    if(attention)attention.textContent=`Needs Review${summary.warnings+summary.errors?` · ${summary.warnings+summary.errors}`:''}`;
-    $('.card-grid')?.style.setProperty('max-height','none');
-    $('.card-grid')?.style.setProperty('overflow','visible');
-    $('#quick-order')?.remove();
-    $('.subtitle-line', $('#deck-body'))?.remove();
-    $('#card-search').oninput=e=>{v.query=e.target.value;const start=e.target.selectionStart??v.query.length,end=e.target.selectionEnd??start;cardsGrid();const search=$('#card-search');search.focus();try{search.setSelectionRange(start,end)}catch{}};
-    if($('#empty-add'))$('#empty-add').onclick=()=>attempt(()=>importDeck(d));
-  }
+  const body=$('#deck-body');
+  let cardGrid;
+  const refresh=updated=>{
+    if(!body.isConnected||epoch!==state.routeEpoch||state.dirty)return;
+    d=updated;state.activeDeck=d;summary=d.summary;dirty=d.status==='draft';
+    const count=$('.count-label');if(count)count.textContent=`${summary.physicalCards??summary.cards} physical cards · ${summary.faces} faces · ${summary.rendered} rendered`;
+    const badge=$('.page-head .badge');if(badge){badge.className='badge '+(d.printStatus||d.status);badge.textContent=humanStatus(d.printStatus||d.status);}
+    cardGrid?.refresh(updated);
+  };
+  const cardsGrid=()=>{
+    cardGrid=mountDeckCards(body,d,v,{preview,backPreview,inspect:(card,index)=>inspect(d,card,index),onChanged:()=>showDeck(id)});
+  };
+  activeCardsView={id,refresh};
+  state.generationView={route:'deck',id,refresh:()=>refreshDeckProgress(id)};
   cardsGrid();if($('.card-grid'))$('.card-grid').scrollTop=oldScroll;
+  if(d.pendingImport)void startMetadata(d).catch(error=>console.info('Card details task stopped',error.message));
 }
-async function generate(d){
-  await cancelSetupPreviews();
-  if(state.dirty)throw new Error('Save the setup changes before generating images.');
+export async function refreshDeckProgress(id){
+  if(state.route!=='deck'||state.activeDeck?.id!==id||state.deckTab!=='cards'||state.dirty)return;
+  const view=activeCardsView,epoch=state.routeEpoch;
+  if(view?.id!==id)return;
+  const updated=await api('/api/decks/'+id);
+  if(epoch===state.routeEpoch&&activeCardsView===view)view.refresh(updated);
+}
+async function generate(d,artChecked=false){
+  if(state.setupActions?.root.isConnected&&state.setupActions.deckId===d.id)return state.setupActions.generate();
+  const resume=await pauseMetadata(d.id);
+  try{
+    d=await api('/api/decks/'+d.id);
+    if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
+    d=await ensureCustomArtCredits(d);if(!d)return;
+  }finally{await resume();}
+  const finish=async()=>{
+  d=await ensureMetadata(d.id,d);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
-  d=await ensureCustomArtCredits(d);if(!d)return;
-  await renderDecks([d.id],{force:!!d.upgradeRequired,onUpdate:async()=>{if(state.route==='deck'&&state.activeDeck?.id===d.id)await showDeck(d.id,'cards');}});
+  if(!artChecked){d=await ensureArtworkReady(d.id,{deck:d,returnDeck:true});if(!d)return;}
+  await renderDecks([d.id],{notify:false,artChecked:true});
   const finished=await api('/api/decks/'+d.id);
-  if(finished.status==='ready')preparationComplete(finished);
+  if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
+  if(finished.status==='ready')nav('deck/'+finished.id+'/cards');
+  };
+  if(artChecked||d.settings.source.mode==='scryfall')
+    return withGenerationScreen(d.name,d.summary?.faces||d.cards.length,finish);
+  return finish();
 }
 function deckMenu(d){
   const permanent=true;
-  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Review images place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
+  modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size PNG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
-  const saveStyle=$('#use-as-defaults');saveStyle.textContent='Save Style for Later';
+  const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';
   saveStyle.onclick=()=>{
-    const host=modal('Save Style for Later','',{footer:'<button class="button primary" id="save-style-preset">Save style</button>'});
+    const host=modal('Create reusable style','',{footer:'<button class="button primary" id="save-style-preset">Create style</button>'});
     const label=document.createElement('label');label.className='field';
     const title=document.createElement('span');title.textContent='Style name';
     const input=document.createElement('input');input.maxLength=200;input.placeholder='My deck style';
     label.append(title,input);$('.modal-body',host).append(label);input.focus();
     $('#save-style-preset').onclick=()=>attempt(async()=>{
       const name=input.value.trim();if(!name){errorBox($('.modal-body',host),'Name this style first.');return;}
-      await api('/api/style-presets/from-deck',{deckId:d.id,name});closeModal();toast('Style saved. Manage it in Settings.');
+      setModalBusy(host,true);
+      try{await api('/api/style-presets/from-deck',{deckId:d.id,name});closeModal({completed:true});toast('Style saved. Manage it in Settings.');}
+      finally{setModalBusy(host,false);}
     });
   };
   $('.modal-body p.muted')?.remove();
   $('#duplicate-deck').onclick=()=>attempt(async()=>{const copy=await api('/api/decks/'+d.id+'/duplicate',{});closeModal();nav('deck/'+copy.id);});
   $('#deck-image-zip').onclick=()=>attempt(async()=>{closeModal();await chooseOrder([d.id]);});
   $('#download-cc').onclick=()=>attempt(()=>downloadPost('/api/cardconjurer/export',{deckIds:[d.id]},d.name+'.cardconjurer'));
-  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Originals.zip',out.bytes);else location.href=out.download;});
-  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Cropped_Art.zip',out.bytes);else location.href=out.download;});
+  $('#download-originals').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/originals',{}, {label:'Original printing images'});await downloadExportFile(out);});
+  $('#download-cropped-art').onclick=()=>attempt(async()=>{closeModal();const out=await job('/api/decks/'+d.id+'/cropped-art',{}, {label:'Cropped art'});await downloadExportFile(out);});
   $('#download-review-images').onclick=()=>attempt(async()=>{
     closeModal();
     let current=await api('/api/decks/'+d.id);
     const needsGeneration=!!current.upgradeRequired||current.status==='draft'||Number(current.summary?.rendered||0)<Number(current.summary?.faces||0);
-    if(needsGeneration){
-      await generate(current);
-      current=await api('/api/decks/'+d.id);
-      if(Number(current.summary?.rendered||0)<Number(current.summary?.faces||0)){
-        throw new Error('Some card images could not be generated. Fix those cards before downloading review images.');
-      }
-    }
-    const out=await job('/api/decks/'+d.id+'/review-images',{}, {label:'Review images'});
-    if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review_Images.zip',out.bytes);else location.href=out.download;
+    if(needsGeneration)throw new Error('Generate images before downloading review images.');
+    await downloadReview(d.id);
   });
-  $('#trash-deck').onclick=()=>attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});
+  $('#trash-deck').onclick=()=>{if(state.bootstrap?.browser)return attempt(()=>deleteDeck(d));return attempt(async()=>{closeModal();const title=permanent?'Delete this deck permanently?':'Move this deck to Trash?',detail=permanent?d.name+' will be deleted immediately and cannot be restored. Shared artwork and render caches are kept.':d.name+' and its saved setup can be restored later.',label=permanent?'Delete permanently':'Move to Trash';if(!await confirmAction(title,detail,label,true))return;await api('/api/decks/'+d.id+'/delete',{revision:d.revision});state.selected.delete(d.id);nav('decks');toast(permanent?'Deck permanently deleted.':'Deck moved to Trash.');});};
 }
 async function inspectMeldReverse(deck,card){
   let d=await api('/api/decks/'+deck.id);let c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed in another tab.');
   if(!c.scryfall?._meld_result){closeModal();return inspect(d,c,0);}
   let backOverride=c.backOverride,backDesignOverride=c.backDesignOverride||null;
   const result=c.scryfall._meld_result,src=backPreview(c,d),name=physicalReverseName(c);
-  modal(name,`<div class="inspector"><div class="inspector-preview">${src?`<img src="${esc(src)}" id="inspector-image" alt="${esc(name)}">`:'<div class="card-image">Generate this card to build the physical meld reverse preview.</div>'}<button class="button quiet wide" id="inspect-flip">Edit front face ↻</button><div class="subtitle-line">Physical meld reverse</div></div><div><h3>Card details</h3><div class="notice info">This is this card’s printed half of <b>${esc(result.name||'the meld result')}</b>. It is paired with the other meld card. A custom back override replaces only this physical card’s reverse; it does not change the other meld half.</div><div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">Use actual meld reverse</button></div><small id="face-back-state">${backOverride?'Individual back selected':c.meldBackAsset?'Using actual meld reverse':'Generate this card to create the actual meld reverse'}</small><div id="face-back-picker" class="hidden"></div></div></div></div>`,{size:'large',footer:`<span class="footer-hint">The meld reverse is a physical back, not a separately generated CardConjurer face.</span><button class="button quiet" id="cancel-card">Cancel</button><button class="button primary" id="save-card">Save reverse</button>`});
+  modal(name,`<div class="inspector"><div class="inspector-preview">${src?`<img src="${esc(src)}" id="inspector-image" alt="${esc(name)}">`:'<div class="card-image">Generate this card to build the physical meld reverse preview.</div>'}<button class="button quiet wide" id="inspect-flip">Edit front face ↻</button><div class="subtitle-line">Physical meld reverse</div></div><div><h3>Card details</h3><div class="notice info">This is this card’s printed half of <b>${esc(result.name||'the meld result')}</b>. It is paired with the other meld card. A custom back override replaces only this physical card’s reverse; it does not change the other meld half.</div><div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">Use actual meld reverse</button></div><small id="face-back-state">${backOverride?'Individual back selected':c.meldBackAsset?'Using actual meld reverse':'Generate this card to create the actual meld reverse'}</small><div id="face-back-picker" class="hidden"></div></div></div></div>`,{size:'large',footer:`<span class="footer-hint">The meld reverse is a physical back, not a separately generated CardConjurer face.</span><button class="button primary" id="save-card">Done</button>`});
   const setBackState=text=>{const el=$('#face-back-state');if(el)el.textContent=text;};
-  $('#cancel-card').onclick=closeModal;
   $('#inspect-flip').onclick=()=>{closeModal();attempt(()=>inspect(d,c,0));};
   $('#face-back').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;backOverride=(await uploadImage(file,{back:true})).id;backDesignOverride={mode:'custom'};$('#face-back-picker').classList.add('hidden');setBackState('Custom back: '+file.name);if($('#inspector-image'))$('#inspector-image').src=asset(backOverride);});
   $('#clear-face-back').onclick=()=>{backOverride=null;backDesignOverride=null;$('#face-back-picker').classList.add('hidden');setBackState(c.meldBackAsset?'Actual meld reverse will be used':'Generate this card to create the actual meld reverse');if($('#inspector-image')&&c.meldBackAsset)$('#inspector-image').src=asset(c.meldBackAsset);};
@@ -319,11 +333,11 @@ async function inspectMeldReverse(deck,card){
     },{onBusy:busy=>$('#save-card').disabled=busy});
   };
   $('#save-card').onclick=()=>attempt(async()=>{
-    $('#save-card').disabled=true;
+    $('#save-card').disabled=true;setModalBusy(host,true);
     try{
       d=await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,backOverride:backOverride||null,backDesignOverride});
-      closeModal();await showDeck(d.id,'cards');toast('Meld reverse saved.');
-    }finally{if($('#save-card'))$('#save-card').disabled=false;}
+      closeModal({completed:true});await showDeck(d.id,'cards');toast('Meld reverse saved.');
+    }finally{setModalBusy(host,false);if($('#save-card'))$('#save-card').disabled=false;}
   });
 }
 
@@ -342,10 +356,10 @@ async function inspect(deck,card,index=0){
     if(f.error)parts.push(`<div class="notice error">${esc(f.error)}</div>`);
     return parts.join('');
   };
-  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${hasPhysicalReverse(c)?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line" id="inspector-status">${esc(comp?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.')}</div><div id="inspector-notices">${renderNotice()}</div></div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Artwork</span><button class="button" id="choose-printing">Select Art</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
+  const host=modal(f.name,`<div class="inspector"><div class="inspector-preview">${preview(c,f)?`<img src="${esc(preview(c,f))}" id="inspector-image" alt="${esc(f.name)}">`:'<div class="card-image">No artwork yet</div>'}${hasPhysicalReverse(c)?`<button class="button quiet wide" id="inspect-flip">Edit ${index===0?'reverse':'front'} face ↻</button>`:''}<div class="subtitle-line" id="inspector-status">${esc(comp?.render?'CardConjurer render':f.lastRender?.render?'Previous render; generate images to apply your changes.':'Artwork preview; generate this card for the full card image.')}</div><div id="inspector-notices">${renderNotice()}</div></div><div><h3>Card details</h3><div class="field-row"><label class="field"><span>Quantity</span><input id="card-qty" type="number" min="1" max="9999" step="1" value="${c.quantity}"></label><div class="field"><span>Artwork</span><button class="button" id="choose-printing">Select Art</button></div></div>${creditFields(d,c,f)}<label class="field"><span>Template for this face</span><select id="face-template"><option value="">Use deck rule</option>${templateOptions(group,legendary,f.templateOverride||'auto')}</select><small>Layout: ${esc(state.bootstrap.groups[group]||group)}. Incompatible choices are hidden.</small></label>
   <div class="field"><span>Custom artwork override</span><div class="actions"><button class="button small" id="face-art">Upload art</button><button class="button quiet small" id="clear-face-art">Use deck artwork source</button></div><small id="face-art-state">${artOverride?'Individual custom artwork selected':esc(comp?.artOrigin||'Using deck source')}</small>${artShapeHint}</div>
   <div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">${hasPhysicalReverse(c)?'Use actual reverse':'Use deck back'}</button></div><small id="face-back-state">${backOverride?'Individual back selected':hasPhysicalReverse(c)?'Paired with '+esc(physicalReverseName(c)):'Using deck default back'}</small><div id="face-back-picker" class="hidden"></div></div>
-  <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Nickname / reskin name <small>optional</small></span><input id="nickname-override" value="${esc(f.semanticOverrides?.nickname??c.scryfall.flavor_name??'')}" placeholder="Use Scryfall flavor name, if any"><small>When nonblank, automatically uses the Godzilla-style alternate-name treatment while the real card name stays underneath.</small></label><label class="field"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details><div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="cancel-card">Cancel</button><button class="button quiet" id="download-review-image">Download review image</button><button class="button" id="generate-card">Generate this card</button><button class="button primary" id="save-card">Save card</button>`});
+  <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Nickname / reskin name <small>optional</small></span><input id="nickname-override" value="${esc(f.semanticOverrides?.nickname??c.scryfall.flavor_name??'')}" placeholder="Use Scryfall flavor name, if any"><small>When nonblank, automatically uses the Godzilla-style alternate-name treatment while the real card name stays underneath.</small></label><label class="field"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details><div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="download-review-image">Download review image</button><button class="button" id="generate-card">Generate this card</button><button class="button primary" id="save-card">Done</button>`});
   let selectedSide=index===1?'back':'front';
   const large=$('#inspector-image',host);
   let setSide=()=>{};
@@ -416,19 +430,19 @@ async function inspect(deck,card,index=0){
   };
   const refreshInspector=()=>{
     setSide(selectedSide);
-    if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':'Artwork preview; generate this card for the full card image.';
+    if($('#inspector-status'))$('#inspector-status').textContent=f.compiled?.render?'CardConjurer render':f.lastRender?.render?'Previous render; generate images to apply your changes.':'Artwork preview; generate this card for the full card image.';
     if($('#inspector-notices'))$('#inspector-notices').innerHTML=renderNotice();
     renderWarning();
   };
   renderWarning();
   const largeImage=$('#inspector-image',host);
   if(largeImage){largeImage.style.cursor='zoom-in';largeImage.onclick=()=>{
-    const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:10001;background:#0b0c0ef5;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;touch-action:pan-x pan-y pinch-zoom';
+    const overlay=document.createElement('dialog');overlay.setAttribute('aria-label','Enlarged '+largeImage.alt);overlay.style.cssText='width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;border:0;position:fixed;inset:0;z-index:10001;background:#0b0c0ef5;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;touch-action:pan-x pan-y pinch-zoom';
     const image=document.createElement('img');image.src=largeImage.src;image.alt=largeImage.alt;image.style.cssText='max-width:100%;max-height:100%;object-fit:contain;touch-action:pan-x pan-y pinch-zoom';
-    const close=document.createElement('button');close.type='button';close.className='button quiet icon';close.textContent='×';close.setAttribute('aria-label','Close enlarged card');close.style.cssText='position:fixed;right:18px;top:18px;z-index:1';close.onclick=()=>overlay.remove();
-    overlay.onclick=event=>{if(event.target===overlay)overlay.remove();};overlay.append(image,close);document.body.append(overlay);
+    const close=document.createElement('button');close.type='button';close.className='button quiet icon';close.textContent='×';close.setAttribute('aria-label','Close enlarged card');close.style.cssText='position:fixed;right:18px;top:18px;z-index:1';close.onclick=()=>overlay.close();
+    overlay.addEventListener('close',()=>overlay.remove());overlay.append(image,close);document.body.append(overlay);overlay.showModal();
   };}
-  const setBusy=busy=>['cancel-card','download-review-image','generate-card','save-card'].forEach(id=>{const el=$('#'+id);if(el)el.disabled=busy;});
+  const setBusy=busy=>{setModalBusy(host,busy);['download-review-image','generate-card','save-card'].forEach(id=>{const el=$('#'+id,host);if(el)el.disabled=busy;});};
   const cardRenderMatchesCache=card=>{
     const faces=card?.faces||[];
     return faces.length>0 && faces.every(face=>!face.error && face.compiled?.renderKey && face.compiled?.render);
@@ -450,6 +464,39 @@ async function inspect(deck,card,index=0){
     refreshInspector();
     return d;
   };
+  const rulesField=$(`#rules-override`,host);
+  rulesField.maxLength=20000;
+  rulesField.closest(`label`).querySelector(`small`).textContent=`Leave blank to use official rules. Save also updates your connected data.json, or offers connection and download options.`;
+  let savedRules=rulesField.value,pendingRules=false;
+  const rulesDataChange=rules=>{
+    const raw=c.scryfall.card_faces?.[f.index]||c.scryfall;
+    const change={name:raw.name||f.name,oracle_text:rules};
+    const oracleId=raw.oracle_id||c.scryfall.oracle_id;
+    if(oracleId)
+      change.oracle_id=oracleId;
+    if(c.scryfall.id)
+      change.scryfall_id=c.scryfall.id;
+
+    return change;
+  };
+  const saveRulesData=async rules=>{
+    const change=rulesDataChange(rules);
+    const source=d.settings.dataJsonSource;
+    const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:d.settings.githubSetupFolder):``;
+    const snapshot=d.githubCardDataState;
+    const baseline=source?.kind===`github`&&snapshot?{version:1,...snapshot.settings,cards:snapshot.entries}:null;
+    const result=await offerDataSave(d.id,[change],{version:1,cards:d.cardData||[]},url,d.cards,{
+      title:`Connect or download data.json`,baseline,autoSave:true,
+      beforePrompt:()=>{setBusy(false);closeModal({completed:true});}
+    });
+    if(result?.github&&source?.value!==result.github) {
+      const current=await api(`/api/decks/`+d.id);
+      syncCurrent(await api(`/api/decks/`+d.id+`/save`,{revision:current.revision,
+        settings:{...current.settings,dataJsonSource:{kind:`github`,value:result.github}}}));
+    }
+
+    if(result) {savedRules=rules;pendingRules=false;}
+  };
   const prepareCard=async()=>{
     syncCurrent(await job('/api/decks/'+d.id+'/cards/'+c.id+'/prepare',{}, {label:'Prepare card'}));
     refreshInspector();
@@ -459,7 +506,6 @@ async function inspect(deck,card,index=0){
     if(d.status!=='draft')return d;
     return prepareCard();
   };
-  $('#cancel-card').onclick=closeModal;
   $('#face-art').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;artOverride=(await uploadImage(file)).id;fit={};$('#face-art-state').textContent='Custom art: '+file.name;if($('#inspector-image'))$('#inspector-image').src=asset(artOverride);creditControls.refresh();});
   $('#clear-face-art').onclick=()=>{artOverride=null;fit={};$('#face-art-state').textContent='Using deck source after regeneration';creditControls.refresh();};
   $('#face-back').onclick=()=>attempt(async()=>{const file=await pickFile();if(!file)return;backOverride=(await uploadImage(file,{back:true})).id;backDesignOverride={mode:'custom'};$('#face-back-picker').classList.add('hidden');$('#face-back-state').textContent='Custom back: '+file.name;});
@@ -475,13 +521,25 @@ async function inspect(deck,card,index=0){
     fit={artX:Number($('#fit-x').value)/(data.width||2010),artY:Number($('#fit-y').value)/(data.height||2814),artZoom:Number($('#fit-zoom').value)/100,artRotate:Number($('#fit-rotation').value)};
   };
   $('#reset-fit').onclick=()=>{fit={};toast('Automatic artwork fit will be applied when regenerated.');};
-  $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();closeModal();await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');}finally{setBusy(false);}});
+  $('#save-card').textContent=`Save`;
+  $('#save-card').onclick=()=>attempt(async()=>{setBusy(true);try{
+    const rules=rulesField.value;
+    pendingRules||=rules!==savedRules;
+    if(!pendingRules&&f.rulesOverrideLocal)
+      pendingRules=await dataChangesPending(d.id,[rulesDataChange(rules)],{version:1,cards:d.cardData||[]},d.cards);
+
+    await persistCard();
+    if(pendingRules)
+      await saveRulesData(rules);
+
+    closeModal({completed:true});await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');
+  }finally{setBusy(false);}});
   $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{
     await persistCard();
     await prepareCard();
     syncCurrent(await api('/api/decks/'+d.id));
     refreshInspector();
-    let force=!!d.upgradeRequired;
+    let force=false;
     if(!force && cardRenderMatchesCache(c)){
       const ok=await confirmAction(
         'This card already matches the cached render.',
@@ -496,8 +554,8 @@ async function inspect(deck,card,index=0){
     refreshInspector();
     await showDeck(d.id,'cards');
   }finally{setBusy(false);}});
-  $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{const force=!!d.upgradeRequired;await persistCard();await prepareIfNeeded();if(!f.compiled?.render){await renderCard(d.id,c.id,{force});syncCurrent(await api('/api/decks/'+d.id));refreshInspector();}
-    const out=await job('/api/decks/'+d.id+'/cards/'+c.id+'/review-image',{faceId:f.id},{label:'Review image'});if(state.bootstrap?.browser)await saveApiFile(out.download,out.filename||'BulkProxyForge_Review.png',out.bytes);else location.href=out.download;await showDeck(d.id,'cards');}finally{setBusy(false);}});
+  $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();if(!f.compiled?.render)throw new Error('Generate images for this card before downloading its review image.');
+    await downloadReview(d.id,{cardId:c.id,faceId:f.id});await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
   $('#choose-printing').onclick=()=>attempt(()=>chooseArt(d,c,f,async id=>{
     syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,selectedArtPrintingId:id,artOverride:null}));
@@ -514,13 +572,36 @@ async function inspect(deck,card,index=0){
   }));
   $('#remove-card').onclick=()=>attempt(async()=>{closeModal();if(!await confirmAction('Remove '+c.name+'?',`Remove all ${c.quantity} copies from this deck? Other decks are not changed.`,'Remove card',true))return;await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,remove:true});await showDeck(d.id);});
   $('#copy-token').onclick=()=>copyToken(d,c);
+  const tokenButton=document.createElement(`button`);tokenButton.className=`button quiet small`;tokenButton.type=`button`;
+  tokenButton.textContent=c.tokenSpec||d.tokens?.cardIds.includes(c.id)?`Token options`:`Convert to token`;
+  tokenButton.onclick=()=>convertToToken(d,c,()=>showDeck(d.id));
+  $('#copy-token').before(tokenButton);
+  if(d.tokens?.cardIds.includes(c.id)) {
+    const backField=$('#face-back').closest('.field');backField.style.display=`none`;
+    const note=document.createElement(`p`);note.className=`muted`;
+    note.textContent=`Assign token backs from Token faces in the deck. This card’s quantity is the imported suggestion; assigned pairings determine printed copies.`;
+    backField.after(note);
+  }
 }
 
 function choiceOverlay(title,description){
-  const overlay=document.createElement('div');overlay.className='modal-backdrop';overlay.style.zIndex='10002';
-  overlay.innerHTML=`<section class="modal large" role="dialog" aria-modal="true"><header class="modal-header"><h2>${esc(title)}</h2><button class="button quiet icon" aria-label="Close picker">×</button></header><div class="modal-body"><p class="muted">${esc(description)}</p><div class="choice-content"></div></div></section>`;
-  overlay.querySelector('button').onclick=()=>overlay.remove();overlay.onclick=event=>{if(event.target===overlay)overlay.remove();};
-  document.body.append(overlay);return {overlay,content:overlay.querySelector('.choice-content')};
+  const overlay=document.createElement('dialog');overlay.className='modal-backdrop';
+  overlay.setAttribute('aria-label',title);
+  Object.assign(overlay.style,{zIndex:'10002',width:'100vw',height:'100dvh',maxWidth:'none',maxHeight:'none',margin:'0',border:'0',boxSizing:'border-box'});
+  const box=document.createElement('section');box.className='modal large';
+  const header=document.createElement('header');header.className='modal-header';
+  const heading=document.createElement('h2');heading.textContent=title;
+  const close=document.createElement('button');close.type='button';close.className='button quiet icon';close.textContent='×';close.setAttribute('aria-label','Close picker');
+  const body=document.createElement('div');body.className='modal-body';
+  const intro=document.createElement('p');intro.className='muted';intro.textContent=description;
+  const content=document.createElement('div');content.className='choice-content';
+  let busy=false;
+  const setBusy=value=>{busy=value;close.disabled=value;overlay.setAttribute('aria-busy',String(value));};
+  close.onclick=()=>overlay.close();
+  overlay.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+  overlay.addEventListener('close',()=>overlay.remove());
+  header.append(heading,close);body.append(intro,content);box.append(header,body);overlay.append(box);
+  document.body.append(overlay);overlay.showModal();return {overlay,content,setBusy};
 }
 async function printingChoices(deck,card,face,content,draw){
   let next=null;const seen=new Set();
@@ -544,13 +625,12 @@ async function printingChoices(deck,card,face,content,draw){
   while(next)await load();
 }
 async function chooseArt(deck,card,face,apply){
-  const {overlay,content}=choiceOverlay('Select Art · '+face.name,'Choose artwork from an official Scryfall printing. This changes only the image and its artist credit; the card’s imported printing and rarity stay the same.');
+  const {overlay,content,setBusy}=choiceOverlay('Select Art · '+face.name,'Choose artwork from an official Scryfall printing. This changes only the image and its artist credit; the card’s imported printing and rarity stay the same.');
   let selected=face.selectedArtPrintingId||card.scryfall.id;
   const footer=document.createElement('footer');footer.className='modal-footer';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='button quiet';cancel.textContent='Cancel';cancel.onclick=()=>overlay.remove();
   const confirm=document.createElement('button');confirm.type='button';confirm.className='button primary';confirm.textContent='OK';
-  confirm.onclick=()=>attempt(async()=>{confirm.disabled=true;try{await apply(selected);overlay.remove();toast('Artwork selected. Generate this card to update the render.');}finally{confirm.disabled=false;}});
-  footer.append(cancel,confirm);overlay.querySelector('.modal').append(footer);
+  confirm.onclick=()=>attempt(async()=>{confirm.disabled=true;setBusy(true);try{await apply(selected);overlay.close();toast('Artwork selected. Generate this card to update the render.');}finally{setBusy(false);confirm.disabled=false;}});
+  footer.append(confirm);overlay.querySelector('.modal').append(footer);
   try{
     await printingChoices(deck,card,face,content,(grid,sf,candidate)=>{
       const url=candidate.image_uris?.art_crop||sf.image_uris?.art_crop||candidate.image_uris?.normal||sf.image_uris?.normal;
@@ -565,9 +645,9 @@ async function chooseArt(deck,card,face,apply){
 }
 async function chooseOfficialText(deck,card,face,kind,apply){
   const rules=kind==='rules',label=rules?'rules':'flavor';
-  const {overlay,content}=choiceOverlay('Choose official '+label+' text · '+face.name,'Current Oracle text is suggested. A typed override remains separate and takes priority until you clear it.');
+  const {overlay,content,setBusy}=choiceOverlay('Choose official '+label+' text · '+face.name,'Current Oracle text is suggested. A typed override remains separate and takes priority until you clear it.');
   const suggested=document.createElement('button');suggested.type='button';suggested.className='button primary section-gap';suggested.textContent='Use current '+(rules?'Oracle':'printing flavor')+' text (suggested)';
-  suggested.onclick=()=>attempt(async()=>{await apply(null);overlay.remove();});content.append(suggested);
+  suggested.onclick=()=>attempt(async()=>{setBusy(true);try{await apply(null);overlay.close();}finally{setBusy(false);}});content.append(suggested);
   const seen=new Set();
   try{
     await printingChoices(deck,card,face,content,(grid,sf,candidate)=>{
@@ -575,7 +655,7 @@ async function chooseOfficialText(deck,card,face,kind,apply){
         const value=String(candidate[field]||sf[field]||'').trim();if(!value||seen.has(field+'\n'+value))continue;seen.add(field+'\n'+value);
         const b=document.createElement('button');b.type='button';b.className='printing-option';b.style.textAlign='left';
         b.innerHTML=`<strong>${esc(field==='printed_text'?'Printed wording':field==='oracle_text'?'Oracle wording':'Flavor text')}</strong><small>${esc((sf.set||'').toUpperCase())} · ${esc(sf.collector_number||'')}</small><p style="white-space:pre-wrap">${esc(value)}</p>`;
-        b.onclick=()=>attempt(async()=>{b.disabled=true;try{await apply({printingId:sf.id,field});overlay.remove();toast('Official '+label+' text selected.');}finally{b.disabled=false;}});
+        b.onclick=()=>attempt(async()=>{b.disabled=true;setBusy(true);try{await apply({printingId:sf.id,field});overlay.close();toast('Official '+label+' text selected.');}finally{setBusy(false);b.disabled=false;}});
         grid.append(b);
       }
     });
@@ -583,5 +663,6 @@ async function chooseOfficialText(deck,card,face,kind,apply){
 }
 function copyToken(d,c){
   const host=modal('Copy token · '+c.name,`<p class="muted" style="margin-bottom:18px">Uses the preserved Card Tools token layout. Prepare the source card before creating a token.</p><label class="check-line"><input id="token-nonlegendary" type="checkbox" checked><span>Make it nonlegendary</span></label><label class="field"><span>Creature subtype override <small>optional</small></span><input id="token-subtypes" placeholder="e.g. Illusion"></label><label class="field"><span>Power / toughness <small>optional</small></span><input id="token-pt" placeholder="e.g. 0/1"></label><label class="field"><span>Frame color</span><select id="token-color"><option value="">Use source color</option>${['W','U','B','R','G','M','A','L'].map(x=>`<option>${x}</option>`).join('')}</select></label>`,{size:'small',footer:'<button class="button primary" id="make-token">Add copy token</button>'});
-  $('#make-token').onclick=async()=>{try{const spec={nonlegendary:$('#token-nonlegendary').checked};if($('#token-subtypes').value)spec.replace_creature_subtypes=$('#token-subtypes').value.split(/[, ]+/).filter(Boolean);if($('#token-pt').value)spec.power_toughness=$('#token-pt').value;if($('#token-color').value)spec.frame_color=$('#token-color').value;await api('/api/decks/'+d.id+'/cards/'+c.id+'/token',{revision:d.revision,spec});closeModal();await showDeck(d.id);toast('Copy token added.');}catch(e){errorBox($('.modal-body',host),e.message);}};
+  $('#make-token').onclick=async()=>{try{const spec={nonlegendary:$('#token-nonlegendary').checked};if($('#token-subtypes').value)spec.replace_creature_subtypes=$('#token-subtypes').value.split(/[, ]+/).filter(Boolean);if($('#token-pt').value)spec.power_toughness=$('#token-pt').value;if($('#token-color').value)spec.frame_color=$('#token-color').value;setModalBusy(host,true);await api('/api/decks/'+d.id+'/cards/'+c.id+'/token',{revision:d.revision,spec});closeModal({completed:true});await showDeck(d.id);toast('Copy token added.');}catch(e){errorBox($('.modal-body',host),e.message);}finally{setModalBusy(host,false);}};
 }
+window.addEventListener('pf-deck-metadata',event=>{void refreshDeckProgress(event.detail.id).catch(error=>toast(error.message,true));});

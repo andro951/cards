@@ -1,5 +1,6 @@
-import {$,api,attempt,toast,modal,closeModal,confirmAction,job,bytes,downloadBlob} from '/site/ui.js';
+import {$,api,attempt,toast,modal,closeModal,confirmAction,job,bytes,downloadBlob,state,work} from '/site/ui.js';
 import {savedFolder,chooseFolder,useFolder,useBrowserStorage,containsWorkspace,copyWorkspace} from './storage-choice.js';
+import {diagnosticZipRequest} from '/site/diagnostics.js';
 
 function element(tag,text='',className=''){
   const node=document.createElement(tag);
@@ -18,7 +19,7 @@ function panel(title){
   return section;
 }
 async function download(path,name){
-  const response=await fetch(path);
+  const response=path==='/api/diagnostics.zip'?await diagnosticZipRequest(state.csrf):await fetch(path);
   if(!response.ok)throw new Error((await response.json()).error||'Download failed.');
   downloadBlob(await response.blob(),name);
 }
@@ -29,19 +30,18 @@ function chooseFile(accept){
     input.click();
   });
 }
-async function waitJob(id){
-  while(true){
-    const result=await api('/api/jobs/'+id);
-    if(result.state==='done')return result.result;
-    if(result.state==='failed'||result.state==='cancelled')throw new Error(result.error||result.message);
-    await new Promise(resolve=>setTimeout(resolve,400));
-  }
+async function changeWorkspace(operation){
+  const task=work.begin({label:'Move workspace',resources:['workspace']});
+  try{return await operation();}
+  finally{work.finish(task);}
 }
 
 export async function showSettings(){
+  const epoch=state.routeEpoch;
   const [settings,stats,styles,estimate,folder,storage]=await Promise.all([
     api('/api/settings'),api('/api/stats'),api('/api/style-presets'),api('/api/backups/estimate'),
     savedFolder(),navigator.storage.estimate()]);
+  if(epoch!==state.routeEpoch)return;
   const main=$('#main');main.replaceChildren();
   const heading=element('div','','page-head');heading.append(element('h1','Settings'));main.append(heading);
 
@@ -50,6 +50,7 @@ export async function showSettings(){
   locationPanel.append(element('p',`Using ${bytes(storage.usage||0)} of ${bytes(storage.quota||0)} available browser storage.`, 'muted'));
   const locationActions=element('div','','actions section-gap');
   locationActions.append(button('Choose a different location',async()=>{
+    const changed=await changeWorkspace(async()=>{
     const target=await chooseFolder();
     if(folder?.isSameEntry&&await folder.isSameEntry(target))return;
     const occupied=await containsWorkspace(target);
@@ -62,9 +63,12 @@ export async function showSettings(){
       const source=folder||await navigator.storage.getDirectory();
       await copyWorkspace(source,target);
     }
-    await useFolder(target);location.reload();
+    await useFolder(target);return true;
+    });
+    if(changed)location.reload();
   }));
-  if(folder)locationActions.append(button('Save in browser storage',async()=>{
+  if(folder)locationActions.append(button('Use browser storage',async()=>{
+    const changed=await changeWorkspace(async()=>{
     const target=await navigator.storage.getDirectory();
     const occupied=await containsWorkspace(target);
     if(occupied){
@@ -73,7 +77,9 @@ export async function showSettings(){
         'Open browser workspace'))return;
     }
     else await copyWorkspace(folder,target);
-    await useBrowserStorage();location.reload();
+    await useBrowserStorage();return true;
+    });
+    if(changed)location.reload();
   },'button quiet'));
   locationPanel.append(locationActions);main.append(locationPanel);
 
@@ -185,7 +191,8 @@ async function importBackup(){
         replace.push(entry.id);
       }
     }
-    const started=await api('/api/backups/import-selected',{token:catalog.token,selected,replace});
-    await waitJob(started.id);closeModal();toast('Selected backup items imported.');await showSettings();
+    const epoch=state.routeEpoch;closeModal();
+    await job('/api/backups/import-selected',{token:catalog.token,selected,replace},{label:'Import from backup'});
+    toast('Selected backup items imported.');if(epoch===state.routeEpoch)await showSettings();
   });
 }

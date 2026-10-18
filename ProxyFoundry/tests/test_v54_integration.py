@@ -57,18 +57,16 @@ def test_prepare_host_frame_uses_its_color(env,colors,expected):
            'oracle_text':'Draw three cards, then put two cards from your hand on top of your library in any order.'}
     card=sf('Harmonized Trio // Brainstorm',layout='prepare',colors=colors,card_faces=[host,spell])
     compiled=w.compiler.compile_face(card,host,0,{},settings,art['id'])
-    assert compiled['group']=='prepare' and compiled['templateVersion']==2
+    assert compiled['group']=='prepare' and compiled['templateVersion']==5
     frames=compiled['data']['frames']
     prepare_frames=[f for f in frames if f.get('src','').startswith('/img/frames/prepare/regular/')]
-    assert len(prepare_frames)==(6 if len(colors)==2 else 8)
-    if len(colors)==2:
-        # Both native pinline masks become the existing two-color gradient.
-        assert all(f['src'].endswith('/m.png') for f in prepare_frames)
-        gradients=[f for f in frames if f.get('src','').startswith('data:image/svg+xml')
-                   and any('pinline' in m.get('name','').lower() for m in f.get('masks',[]))]
-        assert len(gradients)==2
-    else:
-        assert all(f['src']==f'/img/frames/prepare/regular/{expected}.png' for f in prepare_frames)
+    host_frames=[f for f in prepare_frames if not any('Prepare Spell' in m.get('name','') or m.get('name')=='Rules (Right Half)' for m in f.get('masks',[]))]
+    spell_frames=[f for f in prepare_frames if f not in host_frames]
+    assert spell_frames and all(f['src']=='/img/frames/prepare/regular/u.png' for f in spell_frames)
+    assert all(f['src']==f'/img/frames/prepare/regular/{expected}.png' for f in host_frames)
+    gradients=[f for f in frames if f.get('src','').startswith('data:image/svg+xml')
+               and any('pinline' in m.get('name','').lower() for m in f.get('masks',[]))]
+    assert len(gradients)==(1 if len(colors)==2 else 0)
     assert any(f.get('src')==f'/img/frames/m15/regular/m15PT{expected.upper()}.png' for f in frames)
     assert compiled['data']['text']['title']['text']=='Harmonized Trio'
 
@@ -356,7 +354,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
         'FrameU.png' in src or '/ul.png' in src or 'CrownU' in src
         for src in sources
     )
-    for effect in ('Pinline','Title','Type'):
+    for effect in ('Pinline','Type'):
         layers=[f for f in comp['data']['frames'] if effect in {
             m.get('name') for m in f.get('masks',[]) if isinstance(m,dict)
         }]
@@ -364,6 +362,7 @@ def test_academy_ruins_uses_neutral_legendary_land_treatment(env):
             'FrameL.png' in str(f.get('src','')) or '/l.png' in str(f.get('src',''))
             for f in layers
         )
+    assert '/img/frames/proxy-foundry/godzilla/TitleL.png' in sources
     assert any('Rules Fill' in f.get('name','') for f in comp['data']['frames'])
     assert any('m15CrownL' in src for src in sources)
 
@@ -408,17 +407,15 @@ def test_artist_credit_mode_survives_style_defaults_duplicate_and_backup(env):
     assert restored['cards'][0]['faces'][0]['artistCreditMode']=='printing'
 
 
-def test_missing_generation_metadata_forces_once_then_reuses(env):
+def test_missing_compilation_prepares_once_then_reuses(env):
     w,c,a,s=env
     d=w.create({'source':[{'id':c['id']}],'settings':s})
     before=w.deck(d['id'])
-    assert before['upgradeRequired']
-    force=bool(before['upgradeRequired'])
+    assert before['status']=='draft' and not before.get('upgradeRequired')
     prepared=w.prepare(d['id'])
     comp=prepared['cards'][0]['faces'][0]['compiled']
     assert comp['generationVersion']==GENERATION_VERSION
-    w.store.render_put(comp['renderKey'],a)
-    first=w.render_targets([d['id']],force=force)
+    first=w.render_targets([d['id']])
     assert first['cached']==0 and len(first['targets'])==1
     dims=(comp['data']['width'],comp['data']['height'])
     w.save_render(comp['renderKey'],png(dims),dims)

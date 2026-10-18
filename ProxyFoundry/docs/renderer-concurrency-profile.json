@@ -1,0 +1,2186 @@
+{
+  "revision": "dcb449b3c81dbe446f3c8d83e60c92a335d2b1be",
+  "at": 1790934835.4638007,
+  "note": "Warm native rendering only. Every iframe primed with every face. No save throughput claim. Canvas bytes estimate pixel surfaces, not total renderer/GPU memory. JS heap is not native canvas memory.",
+  "trials": [
+    {
+      "count": 1,
+      "seconds": 6.049799999952317,
+      "faces": 7,
+      "maxTimerGapMs": 987,
+      "maxLongTaskMs": 331,
+      "longTaskMs": 2683,
+      "tasks": [
+        {
+          "milliseconds": 275,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 239,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 122,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 132,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 68,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 52,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 92,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 297,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 226,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 93,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 83,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 90,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 201,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 331,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 50,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 209,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 52,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 334431980,
+      "usedJsHeapBytes": 212569634,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    },
+    {
+      "count": 2,
+      "seconds": 5.872700000047684,
+      "faces": 7,
+      "maxTimerGapMs": 912.7999999523163,
+      "maxLongTaskMs": 354,
+      "longTaskMs": 2305,
+      "tasks": [
+        {
+          "milliseconds": 354,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 104,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 122,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 87,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 54,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 90,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 275,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 77,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 94,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 146,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 80,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 338,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 342,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 668863960,
+      "usedJsHeapBytes": 214922015,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    },
+    {
+      "count": 3,
+      "seconds": 7.010899999856949,
+      "faces": 7,
+      "maxTimerGapMs": 912.9000000953674,
+      "maxLongTaskMs": 401,
+      "longTaskMs": 3409,
+      "tasks": [
+        {
+          "milliseconds": 359,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 109,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 159,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 194,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 84,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 151,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 146,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 67,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 52,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 91,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 190,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 293,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 65,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 64,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 157,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 64,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 109,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 172,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 79,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 64,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 149,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 401,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 190,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 1003295940,
+      "usedJsHeapBytes": 216927481,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    },
+    {
+      "count": 3,
+      "seconds": 7.187899999856949,
+      "faces": 7,
+      "maxTimerGapMs": 931.2000000476837,
+      "maxLongTaskMs": 367,
+      "longTaskMs": 3874,
+      "tasks": [
+        {
+          "milliseconds": 367,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 263,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 204,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 79,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 140,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 118,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 78,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 93,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 114,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 277,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 231,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 113,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 169,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 64,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 289,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 92,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 78,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 159,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 96,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 63,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 220,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 349,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 218,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 1003295940,
+      "usedJsHeapBytes": 74635673,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    },
+    {
+      "count": 2,
+      "seconds": 6.6085,
+      "faces": 7,
+      "maxTimerGapMs": 857,
+      "maxLongTaskMs": 367,
+      "longTaskMs": 3015,
+      "tasks": [
+        {
+          "milliseconds": 352,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 190,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 121,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 237,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 68,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 101,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 68,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 51,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 90,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 133,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 277,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 233,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 92,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 60,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 89,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 105,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 367,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 239,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ],
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 668863960,
+      "usedJsHeapBytes": 72950073,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    },
+    {
+      "count": 1,
+      "seconds": 6.1489000000953675,
+      "faces": 7,
+      "maxTimerGapMs": 1004,
+      "maxLongTaskMs": 328,
+      "longTaskMs": 2385,
+      "tasks": [
+        {
+          "milliseconds": 277,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 138,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 117,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 70,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 69,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 71,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 89,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 292,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 224,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 94,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 106,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 94,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 98,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 328,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        },
+        {
+          "milliseconds": 318,
+          "attribution": [
+            {
+              "containerType": "iframe",
+              "containerSrc": "/runtime/host?parent=http%3A%2F%2F127.0.0.1%3A51589&owner=e794cfe8-4a1f-40ff-850a-1d66fc3ad794"
+            }
+          ]
+        }
+      ],
+      "canvases": [
+        [
+          {
+            "width": 1005,
+            "height": 1407
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2350,
+            "height": 640
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          },
+          {
+            "width": 2010,
+            "height": 2814
+          }
+        ]
+      ],
+      "canvasPixelBytes": 334431980,
+      "usedJsHeapBytes": 71552332,
+      "images": [
+        {
+          "name": "Verdant Test",
+          "key": "43e8941ae80466cbf13adb3241a08635d1ccdd5171abc0c86e345b4d2b4a7382",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Triome Test",
+          "key": "e80e39da956ca1959e20056a1798e0d6f40390ed5091b96f050580ea85f32fe4",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Chronicle Test",
+          "key": "f7b92b2ed740a805b3a76b09eeb142213a73c9e2fc1c6dd77673ec0e89bd5ccb",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Walker Test",
+          "key": "f1b5aac3a2f3f1b7c72a856d62d03165647f752ccb70746e1d7ac996055e5bf2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Station Test",
+          "key": "c5e77f2a08865284f72d7b7f486164d956bc0a0d3c6117630a244a3ffa98ad4a",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Godzilla Profile",
+          "key": "bdac6d458a5d958bb8e05e1bca1f704f6d24e62a5bb1dba3b2fc5bd73e698ab2",
+          "pixelsIdentical": true
+        },
+        {
+          "name": "Prepare Profile",
+          "key": "53c906615b36003e3545f7b5bbde70b9a5f648d1bad74f8c40b314ddf3b240f2",
+          "pixelsIdentical": true
+        }
+      ]
+    }
+  ],
+  "workerCompatibility": {
+    "loaded": false,
+    "error": "ReferenceError: window is not defined",
+    "documentAvailable": false,
+    "windowAvailable": false,
+    "offscreenCanvasAvailable": true
+  }
+}

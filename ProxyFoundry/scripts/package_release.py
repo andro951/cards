@@ -4,8 +4,8 @@ import hashlib
 import json
 import zipfile
 ROOT=Path(__file__).resolve().parents[1]
-EXCLUDED={'.git','.venv','__pycache__','.pytest_cache','workspace','_work','.cache','node_modules','checkpoints','test-results'}
-EXTENSIONS={'.py','.pyw','.js','.html','.css','.md','.txt','.json','.ini','.bat','.svg'}
+EXCLUDED={'.git','.venv','__pycache__','.pytest_cache','workspace','_work','.cache','node_modules','checkpoints','test-results','dist'}
+EXTENSIONS={'.py','.pyw','.js','.mjs','.html','.css','.md','.txt','.json','.ini','.bat','.svg'}
 
 BACK_FILES={'assets/backs/forge_default.png','assets/backs/forge_blank.png'}
 SYMBOL_FILES={f'assets/symbols/{rarity}.png' for rarity in ('common','uncommon','rare','mythic')}
@@ -26,9 +26,12 @@ def build(destination):
     for name in BACK_FILES:
         assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==back_manifest['files'][Path(name).name]['sha256']
     assert all(p.suffix.lower() not in {'.ttf','.otf','.woff','.woff2','.pem','.crx'} for p in files)
-    manifest={'application':'Bulk Proxy Forge','version':'1.3.0','files':{str(p.relative_to(ROOT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+    manifest={'application':'Bulk Proxy Forge','version':'2.0.0','files':{}}
     with zipfile.ZipFile(destination,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
-        for p in files:z.write(p,Path('BulkProxyForge')/p.relative_to(ROOT))
+        for p in files:
+            name=p.relative_to(ROOT).as_posix();raw=p.read_bytes()
+            manifest['files'][name]=hashlib.sha256(raw).hexdigest()
+            z.writestr('BulkProxyForge/'+name,raw)
         z.writestr('BulkProxyForge/RELEASE_MANIFEST.json',json.dumps(manifest,indent=2))
     with zipfile.ZipFile(destination) as z:assert z.testzip() is None
     return manifest

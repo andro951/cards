@@ -4,18 +4,30 @@ Pyodide runs this module in a dedicated Web Worker. No HTTP server is started.
 """
 from __future__ import annotations
 
+from .timing import timed
 import json
+import hashlib
 import mimetypes
 import re
+import sqlite3
+from contextlib import contextmanager,closing
 import time
 import traceback
 import urllib.parse
 from pathlib import Path
+from types import GeneratorType
 
 from .domain import ConflictError, ValidationError, uid
 from .network import Network
+from .github_setup import import_github_setup_steps,import_symbol_folder_steps
 from .storage import Store
 from . import server
+
+
+def browser_error(exc):
+    if isinstance(exc,OSError) and exc.errno==51:
+        return 'Workspace storage is full. Completed images are saved. Free space or remove unused decks, or export a backup and move to a workspace folder, then retry.'
+    return str(exc)
 
 
 class BrowserHeaders(dict):
@@ -28,43 +40,307 @@ class BrowserHeaders(dict):
         return super().get(str(key).lower(), default)
 
 
-class BrowserJobs:
-    def __init__(self, store):
-        self.store = store
-        self.jobs = {}
+class BrowserStore(Store):
+    """Persist a complete SQLite snapshot after each mutation, never after reads."""
+    def __init__(self,home,persist=lambda path:None,copy_file=None,write_asset=None):
+        self.persist=persist
+        self.copy_file=copy_file
+        self.write_asset=write_asset
+        self._checkpoint_digest=None
+        self._defer_checkpoint=0
+        self._render_batch=False
+        self._render_rollback=[]
+        self._render_cleanup=[]
+        self.generation=None
+        super().__init__(home)
+        #The browser serializes requests and owns the only SQLite writer.
+        #Repeated WAL opens grow the Wasm heap; a rollback journal keeps
+        #transactions without that growth in the browser filesystem.
+        with super().connect() as db:
+            db.execute('PRAGMA journal_mode=DELETE')
+            from .render_journal import allow_shared_render_files
+            allow_shared_render_files(db)
+        self.checkpoint()
 
-    def start(self, kind, operation):
-        ident = uid()
-        job = {'id': ident, 'kind': kind, 'state': 'running', 'done': 0,
-               'total': 0, 'message': 'Starting', 'events': [], 'cancelled': False}
-        self.jobs[ident] = job
+    def write_asset_file(self,target,content):
+        if self.write_asset is None:return super().write_asset_file(target,content)
+        #Browser createWritable atomically publishes on close; no temporary-file copy is needed.
+        self.write_asset(str(target),content)
 
-        def update(done, total, message):
-            job.update(done=done, total=total, message=str(message))
-            job['events'].append({'at': time.time(), 'done': done, 'total': total,
-                                  'message': str(message)})
+    def copy_render_file(self,source,destination):
+        if self.copy_file is None:return super().copy_render_file(source,destination)
+        self.copy_file(str(source),str(destination))
 
+    def write_render_file(self,source,output,previous_source=None):
+        if self.copy_file is None:super().write_render_file(source,output,previous_source)
+        else:
+            #The prior file must survive a reload before the new metadata checkpoint.
+            if previous_source:
+                original=output
+                while output.exists():output=original.with_name(original.stem+' ('+uid()[:8]+')'+original.suffix)
+                previous_source=None
+            self.copy_render_file(source,output)
+        if self._render_batch:
+            self._render_rollback.append(lambda:self.copy_render_file(previous_source,output) if previous_source else output.unlink(missing_ok=True))
+        return output
+
+    def remove_render_file(self,path):
+        if self._render_batch:self._render_cleanup.append(path)
+        else:super().remove_render_file(path)
+
+    def asset_written(self,ident,path):
+        if not self._render_batch:return
+        with closing(sqlite3.connect(self.home/'.render-save.sqlite3')) as previous:
+            existed=previous.execute('SELECT 1 FROM assets WHERE id=?',(ident,)).fetchone()
+        if not existed:self._render_rollback.append(lambda:self.remove_render_file(path))
+
+    @contextmanager
+    def render_save(self):
+        if self._render_batch:raise RuntimeError('A render save is already active.')
+        if self.generation:
+            #The enclosing generation already owns rollback and the only durable commit.
+            yield
+            return
+        snapshot=self.home/'.render-save.sqlite3'
+        with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
+            source.backup(destination)
+        self._render_batch=True
         try:
-            job['result'] = operation(update, lambda: job['cancelled'])
-            job.update(state='done', message='Complete')
+            yield
+            self._render_batch=False
+            self.checkpoint()
+        except BaseException:
+            self._render_batch=False
+            with closing(sqlite3.connect(snapshot)) as source, closing(sqlite3.connect(self.db_path)) as destination:
+                source.backup(destination)
+            for restore in reversed(self._render_rollback):
+                try:restore()
+                except Exception as error:
+                    if getattr(self,'timing_logger',None):self.timing_logger.warning('Render file rollback failed: %s',error)
+            self._checkpoint_digest=None
+            #Retry the prior metadata state if persistence failed after accepting a write.
+            try:self.checkpoint()
+            except Exception as error:
+                if getattr(self,'timing_logger',None):self.timing_logger.warning('Render rollback checkpoint failed: %s',error)
+            raise
+        else:
+            for path in self._render_cleanup:
+                try:super().remove_render_file(path)
+                except Exception as error:
+                    if getattr(self,'timing_logger',None):self.timing_logger.warning('Obsolete render file cleanup failed: %s',error)
+        finally:
+            self._render_batch=False
+            self._render_rollback.clear();self._render_cleanup.clear()
+            snapshot.unlink(missing_ok=True)
+
+    def batch_import_steps(self,steps):
+        # Only suppress checkpoints inside this job's chunks. Other foreground
+        # jobs retain their normal durability while this generator is suspended.
+        try:
+            while True:
+                self._defer_checkpoint+=1
+                try:
+                    try:value=next(steps)
+                    except StopIteration as finished:return finished.value
+                finally:self._defer_checkpoint-=1
+                yield value
+        finally:
+            steps.close()
+            self.checkpoint()
+
+    def begin_generation(self,deck_ids):
+        if self.generation:raise ConflictError('Card generation is already running.')
+        if not isinstance(deck_ids,list) or not deck_ids or len(set(deck_ids))!=len(deck_ids):
+            raise ValidationError('Choose the decks to generate.')
+        decks=[self.get('decks',ident) for ident in deck_ids]
+        if any(not deck for deck in decks):raise ValidationError('A selected deck no longer exists.')
+        snapshot=self.home/'.generation.sqlite3'
+        with closing(sqlite3.connect(self.db_path)) as source,closing(sqlite3.connect(snapshot)) as destination:
+            source.backup(destination)
+        self.generation={'id':uid(),'deckIds':list(deck_ids),'started':time.perf_counter(),
+                         'snapshot':snapshot,'digest':self._checkpoint_digest,'timings':{},
+                         'targets':{},'readyFaces':{},'preparedDeckIds':set(),'errors':[],
+                         'faceCounts':{deck['id']:sum(len(card.get('faces',[])) for card in deck.get('cards',[])) for deck in decks}}
+        self._defer_checkpoint+=1
+        return {'id':self.generation['id']}
+
+    def require_generation(self,ident):
+        if not self.generation or self.generation['id']!=ident:raise ConflictError('This generation session is no longer active.')
+        return self.generation
+
+    def commit_generation(self,ident):
+        generation=self.require_generation(ident)
+        self._defer_checkpoint-=1
+        try:self.checkpoint()
+        except BaseException:
+            self._defer_checkpoint+=1
+            try:self.abort_generation(ident,restore_persisted=True)
+            except Exception as error:
+                if getattr(self,'timing_logger',None):self.timing_logger.warning('Generation rollback checkpoint failed: %s',error)
+            raise
+        self.generation=None
+        generation['snapshot'].unlink(missing_ok=True)
+        return generation
+
+    def abort_generation(self,ident,restore_persisted=False):
+        generation=self.require_generation(ident)
+        with closing(sqlite3.connect(generation['snapshot'])) as source,closing(sqlite3.connect(self.db_path)) as destination:
+            source.backup(destination)
+        self._defer_checkpoint-=1;self.generation=None
+        self._checkpoint_digest=generation['digest']
+        generation['snapshot'].unlink(missing_ok=True)
+        if restore_persisted:
+            self._checkpoint_digest=None
+            self.checkpoint()
+
+    @contextmanager
+    def connect(self):
+        changed=False
+        with super().connect() as db:
+            yield db
+            changed=db.total_changes>0
+        if changed:self.checkpoint()
+
+    @timed('storage.checkpoint')
+    def checkpoint(self):
+        if self._render_batch or self._defer_checkpoint:return
+        hasher=hashlib.sha256(self.db_path.read_bytes())
+        #Committed changes can still be in SQLite's WAL while a connection is open.
+        wal=Path(str(self.db_path)+'-wal')
+        if wal.is_file():hasher.update(wal.read_bytes())
+        digest=hasher.digest()
+        if digest==self._checkpoint_digest:return
+        snapshot=self.home/'.checkpoint.sqlite3'
+        try:
+            with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(snapshot)) as destination:
+                source.backup(destination)
+            self.persist(str(snapshot))
+            self._checkpoint_digest=digest
+        finally:snapshot.unlink(missing_ok=True)
+
+
+class BrowserJobs:
+    """Queue Python work; the browser's separate control plane stays responsive."""
+    def __init__(self, store, publish=lambda job:None, cancelled=lambda ident:False):
+        self.store=store;self.jobs={};self.pending={}
+        self.publish=publish;self.cancelled=cancelled;self.last_log_write={}
+
+    def _publish(self,job):
+        now=time.monotonic()
+        terminal=job['state'] in {'done','failed','cancelled'}
+        #Progress remains live; persisting every message stalls selected-folder IO.
+        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=(5 if getattr(self.store,'generation',None) else 1):
+            (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
+                json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
+            self.last_log_write[job['id']]=now
+        if terminal:self.last_log_write.pop(job['id'],None)
+        self.publish({key:value for key,value in job.items() if key!='events'})
+
+    def start(self,kind,operation,*,priority=0):
+        if priority not in {0,1}:raise ValueError('Use foreground or background job priority.')
+        ident=uid()
+        job={'id':ident,'kind':kind,'state':'queued','done':0,'total':0,
+             'message':'Queued','events':[],'cancelled':False,'startedAt':time.time(),'priority':priority}
+        if getattr(self.store,'generation',None):job['generationId']=self.store.generation['id']
+        self.jobs[ident]=job;self.pending[ident]=operation
+        self._publish(job)
+        return {'id':ident}
+
+    def run_pending(self,limit=None):
+        """Run bounded safe chunks; the worker yields to requests between calls."""
+        steps=0
+        while self.pending and (limit is None or steps<limit):
+            #Cancelled tasks release their resources promptly; foreground chunks
+            #take priority over background preparation. Equal priorities rotate.
+            generation=getattr(self.store,'generation',None)
+            eligible=[key for key in self.pending if (not generation or self.jobs[key].get('generationId')==generation['id'])
+                      and (self.jobs[key].get('resumeAt',0)<=time.monotonic() or self.jobs[key]['cancelled'])
+                      and (not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key))]
+            if not eligible:break
+            ident=min(eligible,key=lambda key:(
+                not (self.jobs[key]['cancelled'] or self.cancelled(key)),self.jobs[key]['priority']))
+            self._step(ident);steps+=1
+        generation=getattr(self.store,'generation',None)
+        return any((not generation or self.jobs[key].get('generationId')==generation['id'])
+                   and (not self.jobs[key].get('paused') or self.jobs[key]['cancelled'] or self.cancelled(key)) for key in self.pending)
+
+    def _step(self,ident):
+        operation=self.pending.pop(ident);job=self.jobs[ident]
+        def cancel():
+            job['cancelled']=job['cancelled'] or self.cancelled(ident)
+            return job['cancelled']
+        def update(done,total,message):
+            job.update(done=done,total=total,message=str(message))
+            job['events'].append({'at':time.time(),'done':done,'total':total,'message':str(message)})
+            job['events']=job['events'][-200:]
+            self._publish(job)
+        try:
+            if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+            if job['state']=='queued':
+                job.update(state='running',message='Starting');self._publish(job)
+                operation=operation(update,cancel)
+            result=operation
+            if isinstance(operation,GeneratorType):
+                try:
+                    wait=next(operation)
+                    job['resumeAt']=time.monotonic()+float(wait.get('delay',0)) if isinstance(wait,dict) else 0
+                except StopIteration as finished:
+                    result=finished.value
+                else:
+                    if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+                    #Reinsert at the end so other queued jobs also get a turn.
+                    self.pending[ident]=operation
+                    return
+            if cancel():raise ValidationError('Task cancelled. Completed work is saved.')
+            job.update(state='done',result=result,message='Complete')
         except Exception as exc:
-            job.update(state='failed', message=str(exc), error=str(exc),
-                       trace=traceback.format_exc())
-        job['finishedAt'] = time.time()
-        return {'id': ident}
+            job.update(state='cancelled' if job['cancelled'] else 'failed',
+                       error=browser_error(exc),message=browser_error(exc),trace=traceback.format_exc())
+            if isinstance(operation,GeneratorType):
+                try:operation.close()
+                except Exception as cleanup_error:
+                    job['error']+=' Cleanup failed: '+browser_error(cleanup_error)
+                    job['message']=job['error']
+                    job['trace']+='\n'+traceback.format_exc()
+        finally:
+            if ident not in self.pending:
+                job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
+                completed=[key for key,row in self.jobs.items() if row['state'] in {'done','failed','cancelled'}]
+                for key in completed[:-20]:self.jobs.pop(key)
 
-    def get(self, ident):
+    def get(self,ident):
         if ident not in self.jobs:
-            raise ValidationError('This job belongs to an earlier browser session.')
-        return dict(self.jobs[ident])
+            saved=self.store.home/'logs'/('job-'+ident+'.json')
+            if not saved.is_file():raise ValidationError('This task belongs to an earlier browser session. Completed images are saved.')
+            job=json.loads(saved.read_text(encoding='utf-8'))
+            if job['state'] in {'running','queued'}:
+                job.update(state='failed',message='Task interrupted by browser reload. Completed work is saved.',error='Task interrupted by browser reload. Completed work is saved.')
+            return job
+        job=self.jobs[ident]
+        if job['state']=='done' and 'result' not in job:
+            return json.loads((self.store.home/'logs'/('job-'+ident+'.json')).read_text(encoding='utf-8'))
+        return dict(job)
 
-    def cancel(self, ident):
-        if ident in self.jobs:
-            self.jobs[ident]['cancelled'] = True
-        return {'ok': True}
+    def next_delay(self):
+        active=getattr(self.store,'generation',None)
+        eligible=[row.get('resumeAt',0) for key,row in self.jobs.items() if key in self.pending and not row.get('paused') and (not active or row.get('generationId')==active['id'])]
+        return max(0,min(eligible)-time.monotonic())*1000 if eligible else 50
+
+    def pause(self,ident):
+        if ident in self.pending:self.jobs[ident]['paused']=True
+        return {'ok':True}
+
+    def resume(self,ident):
+        if ident in self.jobs:self.jobs[ident]['paused']=False
+        return {'ok':True}
+
+    def cancel(self,ident):
+        if ident in self.jobs:self.jobs[ident]['cancelled']=True
+        return {'ok':True}
 
     def close(self):
-        pass
+        for job in self.jobs.values():
+            if job['state'] in {'running','queued'}:job['cancelled']=True
 
 
 class BrowserHandler(server.Handler):
@@ -106,9 +382,113 @@ class BrowserHandler(server.Handler):
                 content=source.read(count)
             return self.send_bytes(content,kind,206,filename=filename,headers={
                 'Accept-Ranges':'bytes','Content-Range':f'bytes {start}-{start+len(content)-1}/{size}'})
-        self.send_bytes(path.read_bytes(),kind,filename=filename)
+        if self.app.store.home in path.parents:
+            self.send_bytes(b'',kind,filename=filename)
+            self.response['file']=path.relative_to(self.app.store.home).as_posix()
+        else:self.send_bytes(path.read_bytes(),kind,filename=filename)
 
     def post(self, path, query):
+        generation=getattr(self.app.store,'generation',None)
+        if generation:
+            prepare=any(path=='/api/decks/'+ident+'/prepare' for ident in generation['deckIds'])
+            control=bool(re.fullmatch(r'/api/jobs/[-a-f0-9]{36}/(?:cancel|pause|resume)',path))
+            if not prepare and not control and path not in {'/api/generation/commit','/api/generation/abort','/api/generation/begin',
+                                                           '/api/render-sessions','/api/runtime/prepare','/api/render-diagnostic','/api/client-error'}:
+                raise ConflictError('Card generation is running. Wait before making other workspace changes.')
+        if path=='/api/generation/begin':
+            result=self.app.store.begin_generation(self.data().get('deckIds'))
+            generation=self.app.store.generation;session=uid();generation['renderSession']=session
+            self.app.render_sessions[session]={'targets':generation['targets'],'created':time.time()}
+            return self.respond(result)
+        if path=='/api/generation/commit':
+            from .render_journal import commit_render_rows
+            data=self.data();generation=self.app.store.require_generation(data.get('id'));commit_started=time.perf_counter()
+            rows=data.get('rows',[])
+            if not isinstance(rows,list) or any(row.get('deckId') not in generation['deckIds'] for row in rows if isinstance(row,dict)):
+                raise ValidationError('The generated cards do not belong to this session.')
+            generated={row.get('key') for row in rows if isinstance(row,dict)}
+            decks=[self.app.store.get('decks',deck_id) for deck_id in generation['deckIds']]
+            cached=self.app.store.render_many((face.get('compiled') or {}).get('renderKey') for deck in decks for card in (deck or {}).get('cards',[]) for face in card.get('faces',[]) if (face.get('compiled') or {}).get('renderKey') not in generated)
+            for deck in decks:
+                for card in (deck or {}).get('cards',[]):
+                    for face in card.get('faces',[]):
+                        key=(face.get('compiled') or {}).get('renderKey')
+                        if face.get('error') or not key or (key not in generated and not cached.get(key)):
+                            raise ValidationError('Generation is incomplete. No card images were updated.')
+            registered=commit_render_rows(self.app,rows)
+            summary={'id':generation['id'],'decks':generation['deckIds'],'seconds':round(time.perf_counter()-generation['started'],4),
+                     'registered':registered['registered'],'preparationTimings':generation['timings'],'renderTimings':data.get('timings',{})}
+            self.app.store.commit_generation(generation['id'])
+            summary['seconds']=round(time.perf_counter()-generation['started'],4)
+            summary['commitSeconds']=round(time.perf_counter()-commit_started,4)
+            try:(self.app.store.home/'logs'/('generation-'+generation['id']+'.json')).write_text(json.dumps(summary,ensure_ascii=False),encoding='utf-8')
+            except OSError as error:self.app.log.warning('Generation summary could not be saved: %s',error)
+            return self.respond(registered)
+        if path=='/api/generation/abort':
+            ident=self.data().get('id');generation=self.app.store.generation
+            if not generation or generation['id']!=ident:return self.respond({'aborted':False})
+            for key,job in list(self.app.jobs.jobs.items()):
+                if job.get('generationId')==ident and key in self.app.jobs.pending:
+                    operation=self.app.jobs.pending.pop(key)
+                    if isinstance(operation,GeneratorType):operation.close()
+                    job.update(state='cancelled',cancelled=True,message='Generation cancelled.',finishedAt=time.time())
+                    self.app.jobs._publish(job)
+            self.app.store.abort_generation(ident)
+            return self.respond({'aborted':True})
+        if path == '/api/setup/artwork-review':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review_steps(data,u,c),priority=1))
+        if path in {'/api/setup/github-import','/api/setup/symbols/github'}:
+            data=self.data()
+            operation=import_github_setup_steps if path.endswith('github-import') else import_symbol_folder_steps
+            return self.respond(self.app.jobs.start('Import GitHub setup' if path.endswith('github-import') else 'Import GitHub set symbols',
+                lambda update,cancel:self.app.store.batch_import_steps(operation(self.app.ws,data,update,cancel))))
+        if path == '/api/orders/build':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Package paired order',
+                lambda update,cancel:self.app.orders.build_steps(data.get('deckIds',[]),bool(data.get('acknowledge')),update,cancel)))
+        export=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(originals|cropped-art|review-images)',path)
+        if export:
+            self.data()
+            operation={'originals':self.app.ws.original_images_steps,'cropped-art':self.app.ws.cropped_art_steps,'review-images':self.app.ws.review_images_steps}[export[2]]
+            return self.respond(self.app.jobs.start('Export deck images',
+                lambda update,cancel:operation(export[1],update,cancel)))
+        if path == '/api/decks/manifest':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(data.get('source',''),data.get('includeOutside',True),cancel=c)))
+        metadata=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',path)
+        if metadata:
+            self.data()
+            return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.ws.resolve_metadata_steps(metadata[1],u,c),priority=1))
+        if path == '/api/decks/import':
+            data=self.data()
+            return self.respond(self.app.jobs.start('Import deck',
+                lambda update,cancel:self.app.ws.create_staged(data) if 'manifest' in data else self.app.ws.create_steps(data,update,cancel)))
+        add=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/add',path)
+        if add:
+            data=self.data()
+            return self.respond(self.app.jobs.start('Add cards',
+                lambda update,cancel:self.app.ws.add_cards_steps(add[1],data,update,cancel)))
+        if path == '/api/runtime/prepare':
+            self.data()
+            return self.respond(self.app.jobs.start('Load CardConjurer',self.app.runtime.prepare_steps,priority=1))
+        prepare=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/prepare',path)
+        if prepare:
+            self.data()
+            return self.respond(self.app.jobs.start('Prepare deck',
+                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True),priority=1))
+        if path == '/api/cleanup/retry':
+            for queue in self.app.store.list('cleanup'):
+                queue.pop('error',None)
+                self.app.store.put('cleanup',queue,queue['revision'])
+            return self.respond({'ok':True})
+        match=re.fullmatch(r'/api/orders/([-a-f0-9]{36})/delete',path)
+        if match:
+            data=self.data()
+            result=self.app.store.begin_delete('orders',match[1],data.get('revision'))
+            with self.app.lock:
+                self.app.transfers={k:v for k,v in self.app.transfers.items() if v.get('order')!=match[1]}
+            return self.respond(result)
         if path == '/api/backups/inspect':
             if len(self._body)>2*1024**3:raise ValidationError('Backup upload limit is 2 GB.')
             token=uid()
@@ -131,25 +511,48 @@ class BrowserHandler(server.Handler):
                 try:return self.app.backups.import_selected(saved,data.get('selected'),data.get('replace'),update,cancel)
                 finally:saved.unlink(missing_ok=True)
             return self.respond(self.app.jobs.start('Import from Backup',run))
+        if path == '/api/render-saves/commit':
+            from .render_journal import commit_render_saves
+            return self.respond(commit_render_saves(self.app,strict=True))
         if path == '/api/backups/export':
             data=self.data()
             include=data.get('includeRenders') is True
             return self.respond(self.app.jobs.start('Export workspace backup',
-                lambda update,cancel:self.app.backups.export(update,cancel,include_renders=include)))
+                lambda update,cancel:self.app.backups.export_steps(update,cancel,include_renders=include)))
         match = re.fullmatch(r'/api/decks/([-a-f0-9]{36})/delete', path)
         if match:
             data = self.data()
-            return self.respond(self.app.store.purge('decks', match[1], data.get('revision')))
+            return self.respond(self.app.store.begin_delete('decks', match[1], data.get('revision')))
         return super().post(path, query)
 
     def get(self, path, query):
+        if path=='/api/generation/targets':
+            generation=self.app.store.require_generation(query.get('id',[''])[0])
+            try:after=max(0,int(query.get('after',['0'])[0]))
+            except ValueError:raise ValidationError('Invalid generation cursor.')
+            targets=list(generation['targets'].values())
+            return self.respond({'id':generation['renderSession'],'targets':[{'key':row['key'],'name':row['name'],'frameGroup':row.get('frameGroup')} for row in targets[after:]],
+                                 'cursor':len(targets),'cached':sum(generation['readyFaces'].values()),
+                                 'total':sum(generation.get('faceCounts',{}).values())-sum(generation['readyFaces'].values()),
+                                 'complete':set(generation['deckIds'])<=generation['preparedDeckIds'],'errors':generation['errors']})
+        match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/deletion-state',path)
+        if match:
+            deck=self.app.store.get('decks',match[1])
+            return self.respond({'deleted':not bool(deck),'revision':deck.get('revision') if deck else None})
+        match=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/orders',path)
+        if match:
+            return self.respond(self.app.store.blocking_orders(match[1]))
         if path == '/api/backups/estimate':
             stats=self.app.store.stats()
             base=max(0,stats['assetBytes']-stats['renderBytes'])
             return self.respond({'withoutRenders':base+1024*1024,
                                  'withRenders':stats['assetBytes']+1024*1024})
         if path == '/api/bootstrap':
+            with self.app.store.connect() as db:
+                db.execute("INSERT OR IGNORE INTO meta VALUES ('workspace_id',?)",(uid(),))
+                workspace_id=db.execute("SELECT value FROM meta WHERE key='workspace_id'").fetchone()[0]
             self.respond({'version':'2.0.0','browser':True,'pipelineVersion':server.PIPELINE_VERSION,
+                          'workspaceId':workspace_id,'storageType':self.app.store.storage_type,
                           'csrf':self.app.csrf,'runtimeOrigin':self.app.runtime_origin,
                           'groups':server.GROUP_LABELS,'settings':self.app.ws.global_settings(),
                           'stats':self.app.store.stats(),'backs':self.app.ws.backs.catalog()})
@@ -157,16 +560,20 @@ class BrowserHandler(server.Handler):
         return super().get(path, query)
 
 
-def create_app(home, transport, origin):
-    server.Jobs = BrowserJobs
-    store = Store(Path(home))
-    app = server.App(store, Network(store, transport=transport))
+def create_app(home, transport, origin, publish=lambda job:None, cancelled=lambda ident:False, persist=lambda path:None,storage_type='browser',copy_file=None,write_asset=None):
+    store = BrowserStore(Path(home),persist,copy_file,write_asset)
+    store.storage_type=storage_type
+    app = server.App(store, Network(store, transport=transport),
+                     jobs_factory=lambda store:BrowserJobs(store,publish,cancelled))
     app.origin = origin
     app.runtime_origin = origin
     app.runtime.parent_origin = origin
+    from .render_journal import commit_render_saves
+    commit_render_saves(app)
     return app
 
 
+@timed('api.request')
 def request(app, method, url, body=b'', headers=None):
     parsed = urllib.parse.urlsplit(url)
     path = urllib.parse.unquote(parsed.path)
@@ -187,6 +594,8 @@ def request(app, method, url, body=b'', headers=None):
         handler.respond({'error': str(exc)}, 400)
     except FileNotFoundError as exc:
         handler.respond({'error': str(exc)}, 404)
+    except OSError as exc:
+        handler.respond({'error': browser_error(exc)}, 507 if exc.errno==51 else 500)
     except Exception as exc:
         app.log.exception('Browser request failed: %s', path)
         handler.respond({'error': str(exc)}, 500)

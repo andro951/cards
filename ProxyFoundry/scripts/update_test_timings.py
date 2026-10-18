@@ -57,6 +57,7 @@ def main():
         present={'tests/'+case.get('classname','').removeprefix('tests.').replace('.','/')+'.py::'+case.get('name','')
                  for case in root.findall('.//testcase') if case.get('classname','').startswith('tests.')}
         rows={nodeid:row for nodeid,row in rows.items() if nodeid in present}
+    for nodeid,row in rows.items():row['group']=group_for_nodeid(nodeid)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     with args.output.open('w',newline='',encoding='utf-8') as target:
         writer=csv.DictWriter(target,fieldnames=FIELDS,lineterminator='\n')

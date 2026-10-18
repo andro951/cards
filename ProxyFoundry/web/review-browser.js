@@ -1,4 +1,4 @@
-import {$,api,attempt,modal,closeModal,job,asset,bytes,toast} from '/site/ui.js';
+import {$,api,attempt,modal,closeModal,setModalBusy,job,asset,thumbnail,bytes,toast} from '/site/ui.js';
 
 function node(tag,text='',className=''){
   const item=document.createElement(tag);
@@ -14,7 +14,7 @@ function action(label,callback,className='button'){
 }
 function imageButton(id,label,callback){
   const button=node('button','','card-image');button.type='button';button.title='Enlarge '+label;
-  const image=node('img');image.src=asset(id);image.alt=label;image.loading='lazy';button.append(image);
+  const image=node('img');image.src=thumbnail(asset(id));image.alt=label;image.loading='lazy';image.decoding='async';button.append(image);
   button.onclick=callback;return button;
 }
 function maximize(host){
@@ -22,14 +22,15 @@ function maximize(host){
   const overlay=host.closest('.modal-backdrop');overlay.style.padding='10px';
 }
 function lightbox(id,label){
-  const overlay=node('div','','');
-  overlay.style.cssText='position:fixed;inset:0;z-index:100;background:#0b0c0ef5;display:flex;align-items:center;justify-content:center;padding:12px;cursor:zoom-out';
+  const overlay=node('dialog','','');
+  overlay.setAttribute('aria-label',label);
+  overlay.style.cssText='position:fixed;inset:0;z-index:100;background:#0b0c0ef5;display:flex;align-items:center;justify-content:center;padding:12px;margin:auto;width:100vw;height:100dvh;max-width:none;max-height:none;border:0';
   const image=node('img');image.src=asset(id);image.alt=label;
   image.style.cssText='max-width:100%;max-height:100%;object-fit:contain';
-  const close=action('×',()=>overlay.remove(),'button quiet icon');
+  const close=action('×',()=>overlay.close(),'button quiet icon');
   close.setAttribute('aria-label','Close image');
   close.style.cssText='position:absolute;right:22px;top:18px;font-size:28px;z-index:1';
-  overlay.append(image,close);overlay.onclick=event=>{if(event.target===overlay)overlay.remove();};document.body.append(overlay);
+  overlay.append(image,close);overlay.addEventListener('close',()=>overlay.remove());document.body.append(overlay);overlay.showModal();
 }
 
 export function showReview(initial,ids,saved,orderReady,openOrder){
@@ -46,7 +47,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       if(!unique.has(key))unique.set(key,{...card,quantity:0});
       unique.get(key).quantity++;
     }
-    return [...unique.values()].filter(card=>(card.name+' '+card.deckName).toLowerCase().includes(query.toLowerCase()));
+    return [...unique.values()];
   }
   async function accept(issue){
     const deck=await api('/api/decks/'+issue.deckId);
@@ -57,17 +58,24 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
     draw();
   }
   function focus(issue){
-    const cover=node('div');
+    const cover=node('dialog');cover.setAttribute('aria-label',issue.name);
     cover.style.cssText='position:fixed;inset:0;z-index:100;background:#101217;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px';
     cover.append(node('h2',issue.name));
     const image=node('img');image.src=asset(issue.frontAsset);image.alt=issue.name+' rendered card';
     image.style.cssText='max-width:min(85vw,650px);max-height:75vh;object-fit:contain';cover.append(image);
     cover.append(node('p',issue.warning,'notice'));
     const controls=node('div','','actions');
-    controls.append(action('Back to review',()=>cover.remove()),action('It Looks Fine',async()=>{
-      await accept(issue);cover.remove();
-    },'button primary'));
-    cover.append(controls);document.body.append(cover);
+    let accepting=false;
+    const close=action('×',()=>cover.close(),'button quiet icon');close.setAttribute('aria-label','Close review card');
+    const approve=action('It Looks Fine',async()=>{
+      accepting=true;close.disabled=true;approve.disabled=true;
+      try{await accept(issue);cover.close();}
+      finally{accepting=false;close.disabled=false;approve.disabled=false;}
+    },'button primary');
+    controls.append(close,approve);
+    cover.addEventListener('cancel',event=>{if(accepting)event.preventDefault();});
+    cover.addEventListener('close',()=>cover.remove());
+    cover.append(controls);document.body.append(cover);cover.showModal();
   }
   function warningSection(){
     if(!plan.issues?.length)return null;
@@ -109,12 +117,13 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
     const header=node('div','','toolbar section-gap');
     header.append(node('h2','Front & Back'));
     const search=node('input');search.type='search';search.placeholder='Find a card';search.value=query;
-    search.oninput=()=>{query=search.value;drawGrid();};header.append(search);body.append(header);
+    search.oninput=()=>{query=search.value;filterGrid();};header.append(search);body.append(header);
     const grid=node('div','','pair-grid');grid.id='browser-pair-grid';body.append(grid);
     function drawGrid(){
       grid.replaceChildren();
       for(const card of cards()){
         const tile=node('article','','well');
+        tile.dataset.search=(card.name+' '+card.deckName).toLowerCase();
         const pair=node('div','','pair-images');
         pair.append(imageButton(card.frontAsset,card.name+' front',()=>lightbox(card.frontAsset,card.name+' front')));
         if(!defaultBacks.has(card.backAsset)){
@@ -125,15 +134,22 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
         tile.append(pair,node('b',`${card.quantity}× ${card.name}`),node('small',card.deckName));grid.append(tile);
       }
     }
-    drawGrid();
+    function filterGrid(){
+      const text=query.toLowerCase();
+      for(const tile of grid.children)tile.hidden=!tile.dataset.search.includes(text);
+    }
+    drawGrid();filterGrid();
     if(saved){
       const download=node('a','Download ZIP','button');download.href='/api/orders/'+plan.id+'/download';download.download='';footer.append(download);
       footer.append(action('Open in TCGPlaytest',()=>openOrder(plan.id),'button primary'));
     }else{
       const build=action('Build paired ZIP',async()=>{
         if(plan.issues?.length)throw new Error('Review each warning before building the ZIP.');
-        const out=await job('/api/orders/build',{deckIds:[...ids]},{label:'Build paired order'});
-        closeModal();orderReady(out);
+        build.disabled=true;setModalBusy(host,true);
+        try{
+          const out=await job('/api/orders/build',{deckIds:[...ids]},{label:'Build paired order'});
+          setModalBusy(host,false);closeModal();orderReady(out);
+        }finally{setModalBusy(host,false);build.disabled=Boolean(plan.issues?.length);}
       },'button primary');
       build.disabled=Boolean(plan.issues?.length);footer.append(build);
     }

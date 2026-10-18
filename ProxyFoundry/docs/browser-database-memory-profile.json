@@ -1,0 +1,53 @@
+{
+  "baseline": "33809be",
+  "storage": "browser",
+  "note": "Heap capacity is Wasm linear memory, not process RAM. DELETE follows WAL in the same worker, so freed capacity cannot shrink.",
+  "isolatedStages": [
+    {
+      "name": "load raw",
+      "heap": 78970880
+    },
+    {
+      "name": "copy bytes",
+      "heap": 94765056
+    },
+    {
+      "name": "Pillow decode",
+      "heap": 113770496
+    },
+    {
+      "name": "full GC",
+      "heap": 113770496
+    },
+    {
+      "name": "database reads WAL",
+      "heap": 196739072
+    },
+    {
+      "name": "switch DELETE",
+      "heap": 196739072
+    },
+    {
+      "name": "database reads DELETE",
+      "heap": 196739072
+    },
+    {
+      "name": "database reads DELETE again",
+      "heap": 196739072
+    },
+    {
+      "name": "checkpoint",
+      "heap": 196739072
+    },
+    {
+      "name": "response",
+      "heap": 196739072
+    }
+  ],
+  "freshDeleteRegression": {
+    "warmHeap": 78970880,
+    "laterHeap": 78970880,
+    "reads": 4000,
+    "journal": "delete"
+  }
+}

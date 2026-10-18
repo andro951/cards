@@ -20,6 +20,21 @@
       "name": "Spirit",
       "nickname": "Test Spirit Nickname",
       "flavor_text": "Test flavor text for the Spirit token."
+    },
+    {
+      "name": "Spirit",
+      "oracle_id": "6a7a9dff-ff9e-4005-a17f-6ea0c11c1d5a",
+      "art": "113_ghosty.png"
+    },
+    {
+      "name": "Shapeshifter",
+      "oracle_id": "b9ad70d0-7e71-4ec1-a39e-7d9363501322",
+      "art": "106_shapeshifter.png"
+    },
+    {
+      "name": "Shapeshifter",
+      "oracle_id": "2bb2f9ed-6378-40c9-9170-976711919014",
+      "art": "107_shapeshifter.png"
     }
   ]
 }

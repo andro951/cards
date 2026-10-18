@@ -1,4 +1,5 @@
 from __future__ import annotations
+from foundry.domain import ValidationError
 import io,json,threading,urllib.request,urllib.error,zipfile,time
 from pathlib import Path
 import pytest
@@ -97,14 +98,21 @@ def test_render_diagnostics_log_pipeline_cache_and_symbol_geometry(running):
     request(s,'/api/render-sessions/'+plan['id']+'/'+key,png(dims))
     for h in list(app.log.handlers): h.flush()
     log=(app.store.home/'logs/app.log').read_text(encoding='utf-8')
-    for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_FACE_DECISION','RENDER_SAVE',PIPELINE_VERSION]:
+    for token in ['APP_START','DECK_OPEN','PREPARE_BEGIN','PREPARE_FACE','RENDER_PLAN_BEGIN','RENDER_PLAN_DONE','RENDER_SAVE',PIPELINE_VERSION]:
         assert token in log,token
-    assert 'zoom=' in log and 'newKey=' in log and 'cachePresent=' in log
+    assert 'RENDER_FACE_DECISION' not in log
+    assert 'zoom=' in log and 'newKey=' in log and 'cached=' in log
     assert 'SET_SYMBOL_GEOMETRY' in log and 'alphaGt2=' in log and 'drawExpectedPx=' in log
 
 
 def test_diagnostics_download_routes_return_real_files(running):
     app,s=running
+    browser={'entries':[{'kind':'error notification','detail':'Delete failed: generation owns deck'}],'previousSession':{'entries':[{'detail':'Previous error'}]}}
+    status,combined,_=request(s,'/api/diagnostics.zip',{'browser':browser},raw=True)
+    assert status==200
+    with zipfile.ZipFile(io.BytesIO(combined)) as archive:
+        assert json.loads(archive.read('browser-diagnostics.json'))==browser
+        assert 'app.log' in archive.namelist()
     # Simulate a legacy/corrupt job log containing a byte that Windows cp1252
     # cannot decode. Diagnostics should sanitize it instead of failing.
     bad=app.store.home/'logs'/'job-legacy-corrupt.json'
@@ -159,7 +167,9 @@ def test_runtime_symbol_source_instrumentation():
     render=(root/'site/render.js').read_text(encoding='utf-8')
     for token in ['lastSetSymbolDraw','image===window.setSymbol','after-load','after-first-draw','after-final-draw','expectedDraw']:
         assert token in bridge
-    assert "m.type==='diagnostic'" in render and '/api/render-diagnostic' in render
+    pool=(root/'site/native-render-pool.js').read_text(encoding='utf-8')
+    assert "message.type===`diagnostic`" in pool and 'this.diagnostic(message)' in pool
+    assert '/api/render-diagnostic' in render
 
 
 def test_import_prepare_render_order_roundtrip(running):
@@ -240,8 +250,8 @@ def test_trash_ui_and_missing_generation_contracts():
         assert token in settings
     assert 'id=\"save-settings\"' not in settings and "$('#save-settings')" not in settings
     assert 'Delete deck permanently' in deck
-    assert 'before.upgradeRequired' in render
-    assert 'download-diagnostics' in settings and '/api/diagnostics.zip' in settings and 'downloadBlob' in settings
+    assert 'force=force||' not in render
+    assert 'download-diagnostics' in settings and 'diagnosticZipRequest(state.csrf)' in settings and 'downloadBlob' in settings
 
 
 def test_template_validation_and_seed(running):
@@ -347,17 +357,17 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     assert app.ws.deck(deck['id'])['status']=='ready'
     out=app.ws.review_images(deck['id'])
     assert all(store.cache_get(url) is None for url in reference)
-    with zipfile.ZipFile(store.home/'orders'/out['filename']) as z:
+    with zipfile.ZipFile(app.ws.review_download_file(out['download'].split('/')[3],out['filename'])) as z:
         assert set(z.namelist())=={'review_normal_review.png','review_transform_review.png','review_back_review.png'}
         assert out['count']==3
         image=Image.open(io.BytesIO(z.read('review_normal_review.png')));image.load()
-        assert image.size==(203,141)
-        assert image.getpixel((5,5))[:3]==(220,30,30)
-        assert image.getpixel((101,5))[:3]==(0,0,0)
-        assert image.getpixel((150,5))[:3]==(240,180,20)
+        assert image.size==(101,70)
+        assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(220,30,30)))<3
+        assert max(image.getpixel((50,5))[:3])<12
+        assert max(abs(a-b) for a,b in zip(image.getpixel((75,5))[:3],(240,180,20)))<3
         back=Image.open(io.BytesIO(z.read('review_back_review.png')));back.load()
-        assert back.getpixel((5,5))[:3]==(30,30,220)
-        assert back.getpixel((150,5))[:3]==(180,20,240)
+        assert max(abs(a-b) for a,b in zip(back.getpixel((5,5))[:3],(30,30,220)))<3
+        assert max(abs(a-b) for a,b in zip(back.getpixel((75,5))[:3],(180,20,240)))<3
     app.close()
 
 
@@ -438,7 +448,7 @@ def test_cropped_art_export_downloads_scryfall_art_crop_bytes_unchanged(tmp_path
     ws.deck=lambda ident: deck
 
     out=ws.cropped_art('deck')
-    with zipfile.ZipFile(store.home/'orders'/out['filename']) as archive:
+    with zipfile.ZipFile(ws.review_download_file(out['download'].split('/')[3],out['filename'])) as archive:
         assert archive.namelist()==['Card One.jpg','Bruce Banner.jpg','Hulk.jpg']
         assert archive.read('Card One.jpg')==urls['https://cards.scryfall.io/art_crop/front/a/a/card_one.jpg']
         assert archive.read('Bruce Banner.jpg')==urls['https://cards.scryfall.io/art_crop/front/b/b/banner.jpg']
@@ -480,12 +490,11 @@ def test_review_images_export_uses_one_background_job_and_transient_fetches():
 def test_review_images_action_is_in_deck_menu():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Download review Images' in source
-    assert '/review-images' in source
+    assert 'downloadReview(d.id)' in source
     handler=source[source.index("$('#download-review-images').onclick"):source.index("$('#trash-deck').onclick")]
     assert 'needsGeneration' in handler
-    assert "await generate(current)" in handler
-    assert handler.index("await generate(current)") < handler.index("/review-images")
-    assert 'Some card images could not be generated.' in handler
+    assert 'await generate(current)' not in handler
+    assert 'Generate images before downloading review images.' in handler
 
 
 def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
@@ -514,12 +523,17 @@ def test_single_review_image_export_can_download_a_specific_face_png(tmp_path):
         f['compiled']={'renderKey':key,'render':render,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version}
     deck['status']='prepared';deck=store.put('decks',deck,deck['revision'])
     out=app.ws.review_image(deck['id'],'dfc-card','dfc-back')
-    path=store.home/'orders'/out['filename']
+    path=app.ws.review_download_file(out['download'].split('/')[3],out['filename'])
+    assert not list((store.home/'orders').iterdir())
     assert path.suffix=='.png' and out['download'].endswith('.png')
     image=Image.open(path);image.load()
-    assert image.size==(203,141)
-    assert image.getpixel((5,5))[:3]==(30,30,220)
-    assert image.getpixel((150,5))[:3]==(180,20,240)
+    assert image.size==(101,70)
+    assert max(abs(a-b) for a,b in zip(image.getpixel((5,5))[:3],(30,30,220)))<3
+    assert max(abs(a-b) for a,b in zip(image.getpixel((75,5))[:3],(180,20,240)))<3
+    image.close()
+    app.ws.release_review_download(out['download'].split('/')[3])
+    assert not path.exists()
+    assert not store.list('orders')
     app.close()
 
 
@@ -587,7 +601,7 @@ def test_card_inspector_actions_exist_in_source():
     source=(Path(__file__).resolve().parents[1]/'site/deck.js').read_text(encoding='utf-8')
     assert 'Generate this card' in source
     assert 'Download review image' in source
-    assert '/review-image' in source
+    assert 'downloadReview(d.id,{cardId:c.id,faceId:f.id})' in source
     inspect=source[source.index('async function inspect'):source.index('function choiceOverlay')]
     assert "'/api/decks/'+d.id+'/cards/'+c.id+'/prepare'" in inspect
     assert "job('/api/decks/'+d.id+'/prepare'" not in inspect
@@ -607,3 +621,48 @@ def test_card_inspector_actions_exist_in_source():
     render=(Path(__file__).resolve().parents[1]/'site/render.js').read_text(encoding='utf-8')
     assert '/api/render-sessions/card' in render
 
+
+
+
+def test_grid_thumbnail_is_bounded_cached_and_preserves_print_image(running):
+    app,server=running
+    original=png((2010,2814),'#224466');asset=ingest_image(app.store,original)
+    path='/api/assets/'+asset['id'];stored=app.store.asset_path(asset['id']).read_bytes()
+    status,body,_=request(server,path+'/thumbnail',raw=True)
+    assert status==200
+    with Image.open(io.BytesIO(body)) as image:assert image.size==(420,588)
+    saved=app.store.home/'runtime'/'thumbnails'/(asset['id']+'-420.png');modified=saved.stat().st_mtime_ns
+    assert request(server,path+'/thumbnail',raw=True)[1]==body and saved.stat().st_mtime_ns==modified
+    assert request(server,path,raw=True)[1]==stored
+    assert request(server,path+'/thumbnail?width=wrong')[0]==400
+    assert request(server,path+'/thumbnail?width=8192')[0]==400
+
+
+def test_review_download_http_and_browser_adapter_cleanup_are_separate_from_orders(running):
+    from foundry.browser import request as browser_request
+    app,server=running
+    first,path=app.ws._review_download('card_review.png');path.write_bytes(b'PNG-CONTENT')
+    second,other=app.ws._review_download('review_images.zip');other.write_bytes(b'ZIP-CONTENT')
+    url='/api/review-downloads/'+first+'/card_review.png'
+    response=browser_request(app,'GET',url)
+    assert response['body']==b'' and response['file']==path.relative_to(app.store.home).as_posix()
+    status,body,headers=request(server,url,raw=True)
+    assert status==200 and body==b'PNG-CONTENT'
+    assert headers['Content-Type']=='image/png' and 'card_review.png' in headers['Content-Disposition']
+    status,result,_=request(server,'/api/review-downloads/'+first+'/delete',{})
+    assert status==200 and result=={'ok':True}
+    assert not path.exists() and other.read_bytes()==b'ZIP-CONTENT'
+    assert request(server,url,raw=True)[0]==404
+    assert not list((app.store.home/'orders').iterdir()) and not app.store.list('orders')
+    response=browser_request(app,'POST','/api/review-downloads/'+second+'/delete',b'{}')
+    assert response['status']==200 and not other.exists()
+
+
+def test_abandoned_review_downloads_expire_without_deleting_active_exports(tmp_path):
+    import os
+    app=App(Store(tmp_path));token,old=app.ws._review_download('old_review.png');old.write_bytes(b'old')
+    os.utime(old,(time.time()-90000,time.time()-90000))
+    _,active=app.ws._review_download('active_review.png');active.write_bytes(b'active')
+    assert not old.exists() and active.exists()
+    with pytest.raises(ValidationError):app.ws.release_review_download('../orders')
+    app.close()

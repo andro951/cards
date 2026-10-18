@@ -1,24 +1,33 @@
 """One source of truth for the routine and extended pytest groups."""
 
 EXTENDED_MODULES={
+    'test_full_art_examples.py',
+    'test_frame_components_native.py',
     'test_art_series_native.py',
     'test_batch_bridge.py',
     'test_browser.py',
+    'test_browser_storage.py',
     'test_dom_offline.py',
     'test_downloads_browser.py',
     'test_emblem_native.py',
     'test_helper_native.py',
     'test_extension.py',
     'test_github_setup_browser.py',
+    'test_generation_browser.py',
     'test_godzilla_browser.py',
     'test_modal_focus.py',
     'test_native_deck.py',
+    'test_native_concurrency.py',
+    'test_native_workers_browser.py',
+    'test_native_readiness.py',
+    'test_native_task_yields.py',
     'test_order_dialog.py',
     'test_print_bridge.py',
     'test_prepare_native.py',
     'test_station_native.py',
     'test_station_lands_native.py',
     'test_token_native.py',
+    'test_token_assignment_browser.py',
     'test_website.py',
 }
 EXTENDED_TESTS={

@@ -16,7 +16,7 @@ SCHEMA_VERSION=2
 STATION_SCRIPT_URL='https://raw.githubusercontent.com/joshbirnholz/cardconjurer/d3c6706692898d596ec6a5be0be44f63062c9e12/js/frames/versionStation.js'
 STATION_SCRIPT_SHA256='481c2be522fc10089e75aa6281aace9e88e345868330948dd64705edb9314c21'
 # Bump PIPELINE_VERSION only when a common compiler/renderer change can alter many card outputs.
-PIPELINE_VERSION='card-tools-v58/credits-v2/pipeline-v28'
+PIPELINE_VERSION='card-tools-v58/credits-v2/pipeline-v35'
 # Backward-compatible name used by saved compiled faces and older callers.
 GENERATION_VERSION=PIPELINE_VERSION
 class ValidationError(ValueError): pass
@@ -29,6 +29,24 @@ def slug(text):
     text=unicodedata.normalize('NFKD',str(text))
     text=''.join(c for c in text if not unicodedata.combining(c)).replace('Æ','AE').replace('æ','ae').replace('Œ','OE').replace('œ','oe')
     return re.sub(r'[^A-Za-z0-9]+','_',re.sub(r"['’]",'',text)).strip('_').lower()
+
+def matching_art_key(index,name):
+    """Resolve artwork names without guessing typos or partial card names."""
+    target=slug(name)
+    if target in index:return target
+    compact=target.replace('_','')
+    if not compact:return None
+    matches=[]
+    for key in index:
+        normalized=slug(key)
+        # Numbered exports retain their original keys, so real card names that
+        # start with numbers and explicit exact matches remain authoritative.
+        unnumbered=re.sub(r'^\d+_','',normalized)
+        if compact in {normalized.replace('_',''),unnumbered.replace('_','')}:
+            matches.append(key)
+    if len(matches)>1:
+        raise ValidationError('Multiple custom artwork files match '+str(name)+': '+', '.join(sorted(matches))+'. Rename one to '+target+'.png or select an artwork override.')
+    return matches[0] if matches else None
 def quantity(value):
     try: n=int(value)
     except (ValueError,TypeError,OverflowError) as e: raise ValidationError('Quantity must be a whole number.') from e

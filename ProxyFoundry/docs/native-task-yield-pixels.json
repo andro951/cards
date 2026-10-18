@@ -1,0 +1,7852 @@
+{
+  "baseline": [
+    {
+      "name": "Verdant Test",
+      "round": 0,
+      "seconds": 4.241200000047684,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.3922,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.6721,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3092,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2566,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0067,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0138,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0057,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5809,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 0,
+      "seconds": 1.2279000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1858,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.1714,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0832,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0303,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0045,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.7484,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 0,
+      "seconds": 2.1435999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.1997,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.1725,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1732,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0203,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0046,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5653,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 0,
+      "seconds": 2.769600000143051,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.5182,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2887,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6372,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 0,
+      "seconds": 4.4228999998569485,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 3.1261,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.5108,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.11,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0262,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0073,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6374,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 0,
+      "seconds": 2.9705,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.241,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1468,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0153,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0108,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5523,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 0,
+      "seconds": 3.482699999809265,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.6575,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1554,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0031,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0205,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0066,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6365,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 0,
+      "seconds": 2.6696000001430513,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.8749,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1687,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.044,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0094,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5696,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 0,
+      "seconds": 1.9567000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.6085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.1597,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.8188,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.018,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0248,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3239,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 0,
+      "seconds": 2.1865,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.446,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.3797,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0157,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0064,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3362,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 0,
+      "seconds": 1.9212999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.3476,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0616,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0225,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4779,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 0,
+      "seconds": 2.6665999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.8124,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2813,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0105,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.553,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 0,
+      "seconds": 1.9716999998092652,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.8739,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2964,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0134,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0068,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.7769,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 0,
+      "seconds": 2.236300000190735,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.6166,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3307,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.7605,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0902,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0843,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.351,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 0,
+      "seconds": 1.1165999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3743,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1349,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0158,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0039,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5836,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 0,
+      "seconds": 0.9352999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2238,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1553,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0082,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5375,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 0,
+      "seconds": 0.6275,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0374,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0748,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0231,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0042,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4847,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 0,
+      "seconds": 2.852399999856949,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.2469,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3205,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2676,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 0,
+      "seconds": 2.2477000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 1.4375,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.3181,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2409,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0177,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2257,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 0,
+      "seconds": 3.7946000001430513,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.7588,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 2.4879,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.187,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0835,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2728,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 0,
+      "seconds": 1.0610999999046327,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5799,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0459,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.019,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0064,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4062,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 0,
+      "seconds": 3.137899999856949,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 2.1698,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2919,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0813,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0092,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5824,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-0-21.png"
+    },
+    {
+      "name": "Verdant Test",
+      "round": 1,
+      "seconds": 1.1512000000476836,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2934,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2199,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0091,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0039,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6218,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 1,
+      "seconds": 0.5515,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0349,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0742,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0286,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0036,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.407,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 1,
+      "seconds": 0.7225,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1346,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1456,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0202,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0064,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4116,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 1,
+      "seconds": 0.961,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1462,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2713,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0069,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0038,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5288,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 1,
+      "seconds": 0.9953999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2193,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0035,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1105,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0162,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0089,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.6328,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 1,
+      "seconds": 1.4250999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5595,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1372,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0109,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0089,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.7041,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 1,
+      "seconds": 0.7931000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1464,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0135,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5401,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 1,
+      "seconds": 0.8746000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0286,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1583,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0281,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0108,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.645,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 1,
+      "seconds": 0.54,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0725,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1593,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0147,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0044,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2864,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 1,
+      "seconds": 0.45960000014305114,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0515,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1031,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0159,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2798,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 1,
+      "seconds": 0.48129999995231626,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1112,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0606,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0175,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0056,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2827,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 1,
+      "seconds": 1.123800000190735,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.218,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2737,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0057,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.616,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 1,
+      "seconds": 1.1839000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0551,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2853,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0119,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.8216,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 1,
+      "seconds": 0.6467000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0665,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2358,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.079,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0213,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2417,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 1,
+      "seconds": 0.7335,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0465,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.132,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0121,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0052,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5337,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 1,
+      "seconds": 0.6952000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0374,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1637,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0153,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0061,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4685,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 1,
+      "seconds": 0.5785,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0346,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0724,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0018,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0229,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0036,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4404,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 1,
+      "seconds": 0.9367000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2479,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3674,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0136,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2992,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 1,
+      "seconds": 0.6857000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2226,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0185,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0057,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2365,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 1,
+      "seconds": 1.6707999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2139,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.9179,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1522,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0007,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.1262,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2557,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 1,
+      "seconds": 0.447,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0653,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0433,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.018,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0042,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3131,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 1,
+      "seconds": 1.155800000190735,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3218,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3034,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0008,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0489,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0098,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4684,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\baseline-1-21.png"
+    }
+  ],
+  "yield-stages": [
+    {
+      "name": "Verdant Test",
+      "round": 0,
+      "seconds": 1.6985,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4314,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0641,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0236,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2305,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0117,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.7141,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 0,
+      "seconds": 0.462,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0474,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0116,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0743,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0321,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.239,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 0,
+      "seconds": 0.7624000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1306,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.134,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0165,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0037,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.292,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 0,
+      "seconds": 1.2627999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3987,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0202,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.28,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0033,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0106,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0045,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3078,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 0,
+      "seconds": 1.0170999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2474,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0313,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1131,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0232,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0064,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4237,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 0,
+      "seconds": 1.1787999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4704,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1384,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0104,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.01,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4075,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 0,
+      "seconds": 0.8897999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2093,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1483,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0163,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0049,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3365,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 0,
+      "seconds": 0.9945,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1676,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0427,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0015,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0098,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.362,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 0,
+      "seconds": 0.6816000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0791,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0144,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.306,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0129,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0081,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2583,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 0,
+      "seconds": 0.7502999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0549,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.399,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0133,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2726,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 0,
+      "seconds": 0.6022000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1212,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.061,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0201,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2354,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 0,
+      "seconds": 1.4863999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5406,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2739,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3645,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 0,
+      "seconds": 1.1834000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0837,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.285,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0134,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0074,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4955,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 0,
+      "seconds": 0.668,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0637,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0211,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2188,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0782,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.218,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 0,
+      "seconds": 0.7278000001907349,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0472,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1305,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0048,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3325,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 0,
+      "seconds": 0.76,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0478,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1621,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0088,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0071,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.368,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 0,
+      "seconds": 0.6459000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0337,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0872,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0269,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2708,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 0,
+      "seconds": 1.1032999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2345,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.5431,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0172,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0054,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2985,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 0,
+      "seconds": 0.7887999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2328,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2652,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0174,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0051,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2522,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 0,
+      "seconds": 2.0677000000476835,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.23,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.2506,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.1719,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0908,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2721,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 0,
+      "seconds": 0.6091999998092651,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.072,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0508,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0141,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0033,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2288,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 0,
+      "seconds": 1.2332000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3311,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3103,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0652,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0099,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3593,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-0-21.png"
+    },
+    {
+      "name": "Verdant Test",
+      "round": 1,
+      "seconds": 1.3177000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3857,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2503,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0088,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0014,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3795,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 1,
+      "seconds": 0.48539999985694887,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0303,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0756,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0244,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2405,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 1,
+      "seconds": 0.8667999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1541,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.135,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0207,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0033,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2866,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 1,
+      "seconds": 0.9286999998092651,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1668,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2728,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0063,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0058,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3128,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 1,
+      "seconds": 0.9830999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2361,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1096,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0076,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4303,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 1,
+      "seconds": 1.1541000001430513,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4603,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.138,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0095,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.012,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.4017,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 1,
+      "seconds": 0.6947000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0884,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1476,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0115,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0047,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3275,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 1,
+      "seconds": 0.8312999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0243,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1588,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0243,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0113,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3719,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 1,
+      "seconds": 0.5421000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.073,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2031,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.01,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2312,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 1,
+      "seconds": 0.5706000001430511,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0524,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1888,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0152,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0069,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2682,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 1,
+      "seconds": 0.5828999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1239,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0621,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0148,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0072,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2385,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 1,
+      "seconds": 1.1134000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2439,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2722,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0068,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0061,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3455,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 1,
+      "seconds": 1.077899999856949,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0491,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2752,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0084,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0065,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.5231,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 1,
+      "seconds": 0.6080999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0639,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1737,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0471,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0224,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.241,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 1,
+      "seconds": 0.6197999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0489,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1293,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0101,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0044,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3127,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 1,
+      "seconds": 0.6872999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0415,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1688,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0124,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0059,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3548,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 1,
+      "seconds": 0.5599000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0758,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0758,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0218,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2529,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 1,
+      "seconds": 0.986,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2966,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3767,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0116,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0058,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.254,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 1,
+      "seconds": 0.7555,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2218,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2628,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0049,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2494,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 1,
+      "seconds": 1.6813999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2192,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.0445,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0883,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0757,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2484,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 1,
+      "seconds": 0.656,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.069,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.044,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0187,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0009,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3062,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 1,
+      "seconds": 1.0885999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2322,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2884,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0438,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0102,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.359,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-stages-1-21.png"
+    }
+  ],
+  "yield-timer": [
+    {
+      "name": "Verdant Test",
+      "round": 0,
+      "seconds": 1.4222999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4041,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0708,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0316,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2303,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.013,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0035,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2597,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 0,
+      "seconds": 0.6250999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0449,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0151,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0746,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.025,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0046,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2321,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 0,
+      "seconds": 0.804,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1523,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0162,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1552,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0167,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0045,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2311,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 0,
+      "seconds": 1.2461999998092652,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3457,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0386,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2845,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0116,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.185,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 0,
+      "seconds": 0.9717999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2435,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0386,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1095,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.024,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0071,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2206,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 0,
+      "seconds": 1.3531999998092652,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5161,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1318,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0152,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0106,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2463,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 0,
+      "seconds": 0.9805999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2325,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1416,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0178,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0048,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2513,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 0,
+      "seconds": 1.0602999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1831,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1632,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.048,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0105,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2292,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 0,
+      "seconds": 0.6034000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0864,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0169,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2211,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0133,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2468,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 0,
+      "seconds": 0.8537000000476838,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0506,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.385,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0146,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0052,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2138,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 0,
+      "seconds": 0.6369000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1224,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0604,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0233,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0106,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.203,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 0,
+      "seconds": 1.4527999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.4398,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2635,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0136,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0058,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2686,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 0,
+      "seconds": 1.0674000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1126,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.3038,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0165,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0057,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2411,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 0,
+      "seconds": 0.731,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.067,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0296,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2533,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0898,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0504,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2321,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 0,
+      "seconds": 0.7921999998092651,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0526,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.127,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0151,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0088,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2249,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 0,
+      "seconds": 0.7797000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0385,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1719,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0127,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0087,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2264,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 0,
+      "seconds": 0.6659000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0346,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.071,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0235,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0038,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2494,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 0,
+      "seconds": 1.1377999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2895,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.5684,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0115,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0079,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2536,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 0,
+      "seconds": 0.7717999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2291,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0214,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2319,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0159,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0073,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2596,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 0,
+      "seconds": 2.2324000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2084,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.2112,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.3731,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0796,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3474,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 0,
+      "seconds": 0.6542999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0731,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0443,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.02,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0079,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2328,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 0,
+      "seconds": 1.3574000000953674,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.3,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.286,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0772,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0456,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2554,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-0-21.png"
+    },
+    {
+      "name": "Verdant Test",
+      "round": 1,
+      "seconds": 1.0825,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1599,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2239,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0068,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2434,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-0.png"
+    },
+    {
+      "name": "Triome Test",
+      "round": 1,
+      "seconds": 0.6017999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0299,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0724,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0244,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0043,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.241,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-1.png"
+    },
+    {
+      "name": "Legendary Grove Test",
+      "round": 1,
+      "seconds": 0.837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1305,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1371,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0156,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0083,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2657,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-2.png"
+    },
+    {
+      "name": "Construct Test",
+      "round": 1,
+      "seconds": 1.04,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.1483,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2637,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0099,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0055,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2173,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-3.png"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "round": 1,
+      "seconds": 0.99,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2521,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1111,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0192,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0069,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2771,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-4.png"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "round": 1,
+      "seconds": 1.3447999999523164,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.5377,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1381,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0137,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0082,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2494,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-5.png"
+    },
+    {
+      "name": "The Everflowing Well",
+      "round": 1,
+      "seconds": 0.8790999999046326,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.103,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1437,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0155,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2146,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-6.png"
+    },
+    {
+      "name": "The Myriad Pools",
+      "round": 1,
+      "seconds": 0.9062999999523162,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.025,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1551,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0379,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2361,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-7.png"
+    },
+    {
+      "name": "Chronicle Test",
+      "round": 1,
+      "seconds": 0.6112999999523163,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0775,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1864,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0114,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0085,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2544,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-8.png"
+    },
+    {
+      "name": "Walker Test",
+      "round": 1,
+      "seconds": 0.5384000000953675,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0512,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1929,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0114,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0057,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2522,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-9.png"
+    },
+    {
+      "name": "Budoka Gardener",
+      "round": 1,
+      "seconds": 0.6893999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.123,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0567,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0152,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0077,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2294,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-10.png"
+    },
+    {
+      "name": "Vehicle Test",
+      "round": 1,
+      "seconds": 1.1332000000476836,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2524,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.276,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0046,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2607,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-11.png"
+    },
+    {
+      "name": "Iron Man, Titan of Innovation",
+      "round": 1,
+      "seconds": 1.0775,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0456,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2858,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0219,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0099,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0065,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2803,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-12.png"
+    },
+    {
+      "name": "Cleric Class",
+      "round": 1,
+      "seconds": 0.6338999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0633,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1816,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0461,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0254,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2832,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-13.png"
+    },
+    {
+      "name": "Search for Azcanta",
+      "round": 1,
+      "seconds": 0.7840999999046325,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0469,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1257,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0126,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0045,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.256,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-14.png"
+    },
+    {
+      "name": "Azcanta, the Sunken Ruin",
+      "round": 1,
+      "seconds": 0.9188999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0417,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.1591,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.011,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0005,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0053,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2418,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-15.png"
+    },
+    {
+      "name": "Valgavoth's Lair",
+      "round": 1,
+      "seconds": 0.6276000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0351,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.0736,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.022,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0056,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2249,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-16.png"
+    },
+    {
+      "name": "Binding Test",
+      "round": 1,
+      "seconds": 0.8948999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2577,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.358,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0136,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.006,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2529,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-17.png"
+    },
+    {
+      "name": "Summon: Bahamut",
+      "round": 1,
+      "seconds": 0.7458999998569489,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2284,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.234,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0004,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0129,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0047,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2608,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-18.png"
+    },
+    {
+      "name": "Station Test",
+      "round": 1,
+      "seconds": 1.7477000000476837,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2462,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 1.0485,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0872,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0829,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2586,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-19.png"
+    },
+    {
+      "name": "Godzilla Profile",
+      "round": 1,
+      "seconds": 0.6608999998569488,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.0666,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.051,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.017,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0037,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.3008,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-20.png"
+    },
+    {
+      "name": "Prepare Profile",
+      "round": 1,
+      "seconds": 1.3256000001430512,
+      "stages": [
+        {
+          "stage": "native.assets",
+          "seconds": 0.2813,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.fonts",
+          "seconds": 0.0002,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.symbols",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.load-and-scripts",
+          "seconds": 0.2956,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-images",
+          "seconds": 0,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.loaded-fonts",
+          "seconds": 0.0001,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.first-draw",
+          "seconds": 0.0531,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.readiness",
+          "seconds": 0.0003,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.final-draw",
+          "seconds": 0.0421,
+          "outcome": "ok"
+        },
+        {
+          "stage": "native.png-export",
+          "seconds": 0.2506,
+          "outcome": "ok"
+        }
+      ],
+      "pixelsIdentical": true,
+      "png": "D:\\Program Files\\JS Dev\\cards\\ProxyFoundry\\test-results\\native-task-yields\\yield-timer-1-21.png"
+    }
+  ],
+  "frame-cache-persistence": [
+    {
+      "batched": false,
+      "repeat": 0,
+      "seconds": 1.8600999999999885,
+      "checkpoints": 20,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 139264
+    },
+    {
+      "batched": true,
+      "repeat": 0,
+      "seconds": 1.4723999999999933,
+      "checkpoints": 1,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 147456
+    },
+    {
+      "batched": false,
+      "repeat": 1,
+      "seconds": 1.8262000000000285,
+      "checkpoints": 20,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 155648
+    },
+    {
+      "batched": true,
+      "repeat": 1,
+      "seconds": 1.487700000000018,
+      "checkpoints": 1,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 159744
+    },
+    {
+      "batched": false,
+      "repeat": 2,
+      "seconds": 1.7977999999999952,
+      "checkpoints": 20,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 159744
+    },
+    {
+      "batched": true,
+      "repeat": 2,
+      "seconds": 1.4954999999999927,
+      "checkpoints": 1,
+      "files": 10,
+      "bytes": 7733217,
+      "databaseBytes": 172032
+    }
+  ]
+}

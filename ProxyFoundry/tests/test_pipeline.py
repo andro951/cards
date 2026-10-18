@@ -37,9 +37,14 @@ def test_nonlegendary_choices(workspace,choice):
     assert r['data']['text']['pt']['text']=='2/3'
     assert len([f for f in r['data']['frames'] if 'Power/Toughness' in f.get('name','')])==1
     assert not any('Legend Crown' in f.get('name','') for f in r['data']['frames'])
-def test_legendary_no_invalid_land(workspace):
+def test_saved_retired_land_selection_redirects_to_crown_capable_frame(workspace):
     s,a,settings=workspace;c=sf()
-    with pytest.raises(ValidationError):Compiler(s).compile_face(c,c,0,{'templateOverride':'land'},settings,a)
+    compiler=Compiler(s)
+    redirected=compiler.compile_face(c,c,0,{'templateOverride':'land'},settings,a)
+    current=compiler.compile_face(c,c,0,{'templateOverride':'legend-land'},settings,a)
+    assert redirected['data']==current['data']
+    assert redirected['renderKey']==current['renderKey']
+    assert any('crown' in f.get('name','').lower() for f in redirected['data']['frames'])
 @pytest.mark.parametrize(('type_line','group','recipe'),[
     ('Land','land','card_noncreature'),
     ('Legendary Land','legendary-land','card_legendary'),
@@ -132,7 +137,7 @@ def test_tall_planeswalker_custom_art_uses_shared_full_art_area(workspace):
     )
     assert result['recipe']=='planeswalker_tall_4'
     assert result['data']['artBounds']==FULL_ART_NONLAND_BOUNDS
-    expected_zoom=max((native.CARD_WIDTH-160)/art['width'],(native.CARD_HEIGHT-160)/art['height'])
+    expected_zoom=max(native.CARD_WIDTH/art['width'],native.CARD_HEIGHT/art['height'])
     assert result['data']['artZoom']==pytest.approx(expected_zoom)
     assert result['data']['artX']*native.CARD_WIDTH==pytest.approx((native.CARD_WIDTH-art['width']*expected_zoom)/2)
     assert not result['crop'].get('intentionalArtWindow')
@@ -197,7 +202,7 @@ def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace)
     for card in (urza_card,might_card):
         comp=card['faces'][0]['compiled']
         assert comp['recipe']=='m15_meld_front'
-        assert comp['templateVersion']==4
+        assert comp['templateVersion']==6
         icons=[f for f in comp['data']['frames'] if f.get('name')=='Meld']
         assert icons==[{'name':'Meld','src':'/img/frames/m15/transform/icons/hammer.png','masks':[],'bounds':{'x':0.0594,'y':0.0505,'width':0.0734,'height':0.0524}}]
         assert comp['data']['text']['title']['x']==0.16
@@ -258,29 +263,29 @@ def test_custom_colorless_clara_covers_full_art_nonland_area_and_centers_overflo
 
     assert scryfall['recipe']=='colorless_creature_legendary'
     assert scryfall['data']['artBounds']=={'x':0.0767,'y':0.1129,'width':0.8476,'height':0.4429}
-    expected_zoom=1850/1024
+    expected_zoom=2010/1024
     expected_height=1536*expected_zoom
     assert data['artZoom']==pytest.approx(expected_zoom)
-    assert data['artX']*data['width']==pytest.approx(80)
+    assert data['artX']*data['width']==pytest.approx(0)
     assert data['artY']*data['height']==pytest.approx((2814-expected_height)/2)
-    assert data['artBounds']['x']*data['width']==pytest.approx(80)
-    assert data['artBounds']['y']*data['height']==pytest.approx(80)
-    assert data['artBounds']['width']*data['width']==pytest.approx(1850)
-    assert data['artBounds']['height']*data['height']==pytest.approx(2654)
+    assert data['artBounds']['x']*data['width']==pytest.approx(0)
+    assert data['artBounds']['y']*data['height']==pytest.approx(0)
+    assert data['artBounds']['width']*data['width']==pytest.approx(2010)
+    assert data['artBounds']['height']*data['height']==pytest.approx(2814)
 
 
 def test_full_art_nonland_centers_only_the_axis_that_overflows():
     from foundry.compiler import full_art_nonland_placement
     portrait=full_art_nonland_placement({'width':1024,'height':1536})
-    pzoom=1850/1024
-    assert portrait['artX']*2010==pytest.approx(80)
+    pzoom=2010/1024
+    assert portrait['artX']*2010==pytest.approx(0)
     assert portrait['artY']*2814==pytest.approx((2814-1536*pzoom)/2)
     assert portrait['artZoom']==pytest.approx(pzoom)
 
     landscape=full_art_nonland_placement({'width':1536,'height':1024})
-    lzoom=2654/1024
+    lzoom=2814/1024
     assert landscape['artX']*2010==pytest.approx((2010-1536*lzoom)/2)
-    assert landscape['artY']*2814==pytest.approx(80)
+    assert landscape['artY']*2814==pytest.approx(0)
     assert landscape['artZoom']==pytest.approx(lzoom)
 
 def test_urzas_saga_uses_saga_recipe_instead_of_enchantment_land_recipe(workspace):
@@ -328,8 +333,8 @@ def test_morophon_no_longer_forces_wubrg_onto_a_new_line(workspace):
 
 
 @pytest.mark.parametrize('type_line,colors,expected_mask',[
-    ('Enchantment — Saga',['U','G'],'/img/frames/saga/sagaMaskPinline.png'),
-    ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/saga/creature/masks/sagaMaskPinline.png'),
+    ('Enchantment — Saga',['U','G'],'/img/frames/proxy-foundry/masks/saga-pinline.png'),
+    ('Enchantment Creature — Saga Dragon',['U','R'],'/img/frames/proxy-foundry/masks/creature-saga-pinline.png'),
 ])
 def test_dual_color_sagas_use_standard_eased_gradient_pinline(workspace,type_line,colors,expected_mask):
     s,a,settings=workspace
@@ -514,19 +519,18 @@ def test_normal_scryfall_creature_token_uses_real_token_frame(workspace):
     result=Compiler(s).compile_face(beast,beast,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='token'
-    assert result['recipe']=='token_regular'
-    assert result['templateVersion']==3
-    assert data['version']=='tokenRegular'
+    assert result['recipe']=='token_classic_short'
+    assert result['templateVersion']==10
+    assert data['version']=='tokenTextlessM15'
     assert data['text']['title']['text']=='Beast'
     assert data['text']['type']['text']=='Token Creature — Beast'
     assert data['text']['pt']['text']=='3/3'
     token=[f for f in data['frames'] if f.get('name')=='Green Token Frame']
-    assert token and all(f['src']=='/img/frames/token/regular/tokenFrameGRegular.png' for f in token)
-    assert any(any(mask.get('name')=='Border' for mask in f.get('masks',[])) for f in token)
-    assert {m['name'] for frame in token for m in frame['masks']}=={'Pinline','Title','Type','Rules','Border','Bevel'}
+    assert token and all(f['src']=='/img/frames/token/m15/textless/g.png' for f in token)
+    assert all(not f['masks'] for f in token), 'The complete native token frame must remain intact.'
     pt=[f for f in data['frames'] if 'Power/Toughness' in f.get('name','')]
     assert len(pt)==1 and pt[0]['src']=='/img/frames/m15/regular/m15PTG.png'
-    assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
+    assert data['artBounds']=={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.6843}
 
 
 
@@ -540,8 +544,8 @@ def test_native_token_regular_keeps_its_own_broad_art_bounds(workspace):
         'power':'3','toughness':'3','set':'ttst','collector_number':'9',
         'artist':'Token Artist',
     }
-    data=Compiler(s).compile_face(beast,beast,0,{},settings,a)['data']
-    assert data['version']=='tokenRegular'
+    data=Compiler(s).compile_face(beast,beast,0,{'templateOverride':'token-full-art'},settings,a)['data']
+    assert data['version']=='tokenTextless'
     assert data['artBounds']=={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 
 def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(workspace):
@@ -555,11 +559,11 @@ def test_normal_scryfall_noncreature_token_keeps_rules_and_artifact_frame(worksp
     }
     result=Compiler(s).compile_face(treasure,treasure,0,{},settings,a,art_origin='Scryfall selected printing')
     data=result['data']
-    assert result['group']=='token' and result['recipe']=='token_regular'
+    assert result['group']=='token' and result['recipe']=='token_classic_rules'
     assert data['text']['pt']['text']==''
     assert all(isinstance(field['text'],str) for field in data['text'].values())
     assert data['text']['rules']['text']=='{T}, Sacrifice this artifact: Add one mana of any color.'
-    assert any(f.get('src')=='/img/frames/token/regular/tokenFrameARegular.png' for f in data['frames'])
+    assert any(f.get('src')=='/img/frames/token/m15/regular/a.png' for f in data['frames'])
     assert not any('Power/Toughness' in f.get('name','') for f in data['frames'])
 
 
@@ -580,6 +584,55 @@ def test_two_color_legendary_token_still_gets_universal_dual_crown_and_pinline(w
     crowns=[f for f in data['frames'] if 'Legend Crown' in f.get('name','') and 'Outline' not in f.get('name','') and 'Border' not in f.get('name','') and 'Cutout' not in f.get('name','')]
     assert len(crowns)==2
     assert crowns[0]['masks'][0]['name']=='Right Blend'
+
+
+@pytest.mark.parametrize('style',['token-classic','token-full-art','token-borderless'])
+@pytest.mark.parametrize('rules,flavor,short',[
+    ('','',True),('Flying','',True),
+    ('Flying, vigilance, lifelink','',False),
+    ('{T}, Sacrifice this token: Add one mana of any color.','',False),
+    ('Flying','A bird in the hand.',False),('Flying\nVigilance','',False),
+    ('','A bird in the hand.',False),('   ','',True),
+])
+def test_token_styles_preserve_text_and_choose_matching_geometry(workspace,style,rules,flavor,short):
+    if style=='token-full-art':short=not (rules.strip() or flavor.strip())
+    s,a,settings=workspace
+    card={**sf('Token Creature — Bird',['U']),'layout':'token','oracle_text':rules,'flavor_text':flavor}
+    result=Compiler(s).compile_face(card,card,0,{'templateOverride':style},settings,a)
+    data=result['data'];text=data['text']
+    assert rules.strip() in text['rules']['text']
+    assert flavor in text['rules']['text']
+    assert text['pt']['text']=='2/3'
+    assert text['type']['y']==(0.8196 if short or style=='token-borderless' else 0.65)
+    assert data['setSymbolBounds']['y']==(0.8439 if short or style=='token-borderless' else 0.6743)
+    sources=[f['src'] for f in data['frames']]
+    assert any('/img/frames/token/' in f['src'] and not f['masks'] for f in data['frames'])
+    if style=='token-classic':
+        assert f'/img/frames/token/m15/{"textless" if short else "regular"}/u.png' in sources
+        assert text['title']['color']=='#fde367'
+        assert text['rules']['color']=='black' and text['rules']['outlineWidth']==0
+    elif style=='token-full-art':
+        assert data['version']==('tokenTextless' if short else 'tokenRegular')
+        assert ('/img/frames/token/textless/tokenFrameUTextless.png' if short else '/img/frames/token/regular/tokenFrameURegular.png') in sources
+        assert text['title']['color']=='white' and text['title']['outlineWidth']==0
+        assert all(field['color']=='black' and field['outlineWidth']==0 for key,field in text.items() if key not in {'title','nickname'})
+    else:
+        assert text['rules']['color']=='white' and text['rules']['outlineWidth']>0
+    if style=='token-borderless':
+        assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
+        assert '/img/frames/token/textless-borderless/tokenFrameUTextless.png' in sources
+        assert text['rules']['oneLine']==short
+
+
+@pytest.mark.parametrize('style',['token-classic','token-full-art','token-borderless'])
+def test_token_styles_only_support_tokens_and_offer_matching_seeds(workspace,style):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace
+    with pytest.raises(ValidationError,match='does not support'):
+        Compiler(s).compile_face(sf(),sf(),0,{'templateOverride':style},settings,a)
+    seed=Workspace(s).template_seed(style)
+    assert seed['version'].startswith('token')
+    assert seed['text']['rules']['text']=='Flying'
 
 
 def test_deck_wide_token_options_apply_independent_overrides(workspace):
@@ -628,6 +681,36 @@ def test_deck_wide_token_power_and_toughness_are_independent(workspace):
     assert 'power_toughness' not in ws._deck_token_spec(no_pt_override,comp)
 
 
+@pytest.mark.parametrize('style,version',[
+    ('token-classic','tokenTextlessM15'),('token-full-art','tokenRegular'),('token-borderless','tokenTextlessBorderless'),
+])
+def test_deck_wide_token_conversion_uses_selected_family(workspace,style,version):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace;ws=Workspace(s);card=sf('Creature — Bird',['U'])
+    card['oracle_text']='Flying'
+    comp=Compiler(s).compile_face(card,card,0,{},settings,a)
+    configured={**settings,'allCardsTokens':True,'templateRules':{'token':style}}
+    token=ws._apply_token_spec(comp,ws._deck_token_spec(configured,comp),a,'Deck-wide token',sem=semantic(card,card))
+    assert token['data']['version']==version
+    assert token['data']['text']['rules']['text']=='Flying'
+    assert token['data']['text']['pt']['text']=='2/3'
+
+
+def test_old_converted_modern_token_with_rules_requires_preparation(workspace):
+    from foundry.workspace import Workspace
+    s,a,settings=workspace;ws=Workspace(s);card=sf('Creature — Bird',['U'])
+    card['oracle_text']='Flying'
+    comp=Compiler(s).compile_face(card,card,0,{},settings,a)
+    original_group=comp['group']
+    token=ws._apply_token_spec(comp,{'token_frame_style':'token-full-art'},a,'Deck-wide token',sem=semantic(card,card))
+    token['data']['version']='tokenTextless'
+    deck=ws.new_deck('Old converted token')
+    deck.update(status='prepared',cards=[{'id':'card','name':card['name'],'quantity':1,'scryfall':card,
+        'faces':[{'id':'face','name':card['name'],'group':original_group,'compiled':token}]}])
+    s.put('decks',deck,deck['revision'])
+    assert ws.deck(deck['id'])['status']=='draft'
+
+
 def test_deck_wide_token_setting_is_front_affecting(workspace):
     from foundry.workspace import Workspace
     s,_,_=workspace
@@ -671,25 +754,6 @@ def test_semantic_uses_scryfall_flavor_name_as_nickname():
     assert sem['name']==card['name']
 
 
-def _assert_full_nickname_pack(data,code,legendary=False):
-    color={'W':'White','U':'Blue','B':'Black','R':'Red','G':'Green','M':'Multicolored','A':'Artifact','L':'Land'}[code]
-    assert data['version']=='m15Nickname'
-    assert data['artBounds']=={'x':0,'y':0,'width':1,'height':0.9224}
-    assert data['setSymbolBounds']['x']==pytest.approx(.9213)
-    assert data['setSymbolBounds']['y']==pytest.approx(.59142)
-    assert data['setSymbolBounds']['width']==pytest.approx(.12)
-    assert data['setSymbolBounds']['height']==pytest.approx(.041)
-    assert data['setSymbolBounds']['vertical']=='center' and data['setSymbolBounds']['horizontal']=='right'
-    assert data['frames'][0]=={'name':color+' Frame','src':f'/img/frames/m15/nickname/m15NicknameFrame{code}.png','masks':[]}
-    expected_second=(color+' Crown',f'/img/frames/m15/nickname/m15NicknameCrown{code}.png') if legendary else (color+' Title',f'/img/frames/m15/nickname/m15NicknameTitle{code}.png')
-    assert data['frames'][1]['name']==expected_second[0]
-    assert data['frames'][1]['src']==expected_second[1]
-    assert data['frames'][1]['masks']==[]
-    assert all('/img/frames/m15/regular/m15Frame' not in str(frame.get('src','')) for frame in data['frames'])
-    for key in ('nickname','title','type','rules','pt'):
-        assert data['text'][key]['color']=='white'
-
-
 def test_nickname_ordinary_keeps_automatic_frame(workspace):
     s,a,settings=workspace
     card=sf('Creature — Human',['R'])
@@ -710,7 +774,7 @@ def test_nickname_legendary_keeps_automatic_frame(workspace):
     data=Compiler(s).compile_face(card,card,0,{},settings,a)['data']
     assert data['version']=='m15Regular'
     assert any('/img/frames/m15/regular/' in frame.get('src','') for frame in data['frames'])
-    assert any('m15NicknameCrownU.png' in frame.get('src','') for frame in data['frames'])
+    assert '/nickname/addons/m15NicknameTitleU.png' in data['frames'][0]['src']
     assert not any('m15NicknameFrame' in frame.get('src','') for frame in data['frames'])
 
 
@@ -727,13 +791,14 @@ def test_nickname_special_groups_preserve_structural_frame_and_add_only_overlay(
         }
         sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':False}
         assert apply_nickname_treatment(data,sem,group)
-        assert data['frames'][0]['src']=='/keep/me.png'
+        assert data['frames'][0]['name']=='Nickname Title'
+        assert data['frames'][1]['src']=='/keep/me.png'
         assert any(f.get('name')=='Nickname Title' for f in data['frames'])
         assert data['text']['nickname']['text']=='Reskin'
         assert data['text']['title']['text']=='Underlying'
 
 
-def test_colorless_token_nickname_uses_complete_neutral_frame():
+def test_colorless_token_nickname_keeps_selected_neutral_frame():
     data={
         'width':2010,'height':2814,'version':'tokenRegular',
         'frames':[{'name':'Colorless Token Frame','src':'/img/frames/token/regular/frameC.png','masks':[]}],
@@ -746,12 +811,13 @@ def test_colorless_token_nickname_uses_complete_neutral_frame():
     }
     sem={'name':'Spirit','nickname':'Test Spirit','colors':[],'types':['Creature'],'subtypes':['Spirit'],'legendary':False}
     assert apply_nickname_treatment(data,sem,'token')
-    assert data['version']=='m15Nickname'
-    assert data['frames'][0]['src'].endswith('m15NicknameFrameA.png')
-    assert any(f.get('src','').endswith('m15NicknameTitleA.png') for f in data['frames'])
+    assert data['version']=='tokenRegular'
+    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleC.png')
+    assert data['frames'][1]['src']=='/img/frames/token/regular/frameC.png'
     assert all(f.get('masks')==[] for f in data['frames'])
-    for key in ('nickname','title','type','rules','pt'):
-        assert data['text'][key]['color']=='white'
+    assert data['text']['nickname']['text']=='Test Spirit'
+    assert data['text']['title']['text']=='Spirit'
+
 
 
 
@@ -787,7 +853,7 @@ def test_nickname_colorless_keeps_chosen_frame_without_crashing():
     assert any(f.get('src','').endswith('m15NicknameTitleC.png') for f in data['frames'])
 
 
-def test_planeswalker_nickname_uses_native_planeswalker_nickname_pack():
+def test_planeswalker_nickname_keeps_selected_frame():
     data={
         'width':2010,'height':2814,'version':'planeswalker',
         'frames':[{'name':'Blue PW','src':'/img/frames/planeswalker/regular/planeswalkerFrameU.png','masks':[{'name':'Title','src':'/mask.png'}]}],
@@ -795,12 +861,13 @@ def test_planeswalker_nickname_uses_native_planeswalker_nickname_pack():
     }
     sem={'name':'Underlying','nickname':'Reskin','colors':['U'],'types':['Planeswalker'],'subtypes':[],'legendary':True}
     assert apply_nickname_treatment(data,sem,'planeswalker')
-    assert data['version']=='planeswalkerNickname'
-    assert data['frames'][0]['src']=='/img/frames/planeswalker/nickname/planeswalkerNicknameFrameU.png'
+    assert data['version']=='planeswalker'
+    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleU.png')
+    assert data['frames'][1]['src']=='/img/frames/planeswalker/regular/planeswalkerFrameU.png'
     assert not any(f.get('name')=='Nickname Crown' for f in data['frames'])
 
 
-def test_modal_nickname_uses_native_modal_nickname_pack():
+def test_modal_nickname_keeps_selected_frame():
     data={
         'width':2010,'height':2814,'version':'modalFront',
         'frames':[
@@ -811,10 +878,11 @@ def test_modal_nickname_uses_native_modal_nickname_pack():
     }
     sem={'name':'Underlying','nickname':'Reskin','colors':['G'],'types':['Creature'],'subtypes':[],'legendary':True}
     assert apply_nickname_treatment(data,sem,'modal-front')
-    assert data['version']=='modalNickname'
-    assert data['frames'][0]['src']=='/img/frames/modal/nickname/gf.png'
-    assert data['frames'][1]['src']=='/img/frames/modal/nickname/ub.png'
-    assert data['text']['nickname']['x']==pytest.approx(.1614)
+    assert data['version']=='modalFront'
+    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleG.png')
+    assert data['frames'][1]['src']=='/img/frames/modal/regular/g.png'
+    assert data['frames'][2]['src']=='/img/frames/modal/regular/back/u.png'
+    assert data['text']['nickname']['x']==pytest.approx(.0854)
 
 
 def test_scryfall_token_supertype_is_supported_by_adapter(workspace):
@@ -848,7 +916,7 @@ def test_scryfall_emblem_uses_native_emblem_frame(workspace,type_line,subtypes):
     assert result['recipe']=='emblem'
     assert data['version']=='emblem'
     assert data['frames']==[{'name':'Emblem Frame',
-                             'src':'/img/frames/token/emblem/frame.png','masks':[]}]
+                             'src':'/img/frames/proxy-foundry/emblem/frame-no-symbol.png','masks':[]}]
     assert data['text']['title']['text']=='Ajani Emblem'
     assert data['text']['type']['text']==type_line
     assert data['text']['rules']['text']==card['oracle_text']
@@ -892,7 +960,7 @@ def test_copy_token_type_parser_preserves_token_supertype():
     ('Token Artifact Creature — Construct','Construct',[],'A'),
     ('Token Creature — Spirit','Spirit',['B'],'B'),
 ])
-def test_colored_or_artifact_token_nickname_uses_full_godzilla_pack(workspace,type_line,name,colors,code):
+def test_colored_or_artifact_token_nickname_keeps_selected_frame(workspace,type_line,name,colors,code):
     store,art_id,settings=workspace
     card=sf(type_line,colors)
     card.update(layout='token',name=name,mana_cost='',oracle_text='',power='1',toughness='1')
@@ -901,9 +969,11 @@ def test_colored_or_artifact_token_nickname_uses_full_godzilla_pack(workspace,ty
     )
     assert result['group']=='token'
     data=result['data']
-    _assert_full_nickname_pack(data,code)
+    assert data['version']=='tokenTextlessM15'
+    assert data['frames'][0]['src'].endswith(f'/nickname/addons/m15NicknameTitle{code}.png')
+    assert any('/img/frames/token/' in f.get('src','') for f in data['frames'][1:])
     assert data['text']['nickname']['text']=='Test '+name+' Nickname'
-    assert all('/img/frames/token/regular/' not in str(frame.get('src','')) for frame in data['frames'])
+
 
 
 @pytest.mark.parametrize('name,type_line,colors,nickname,code,legendary',[
@@ -929,7 +999,8 @@ def test_test_deck_nickname_cases_use_expected_godzilla_frames(workspace,name,ty
     data=result['data']
     assert data['version']=='m15Nickname'
     assert data['artBounds']['height']>.9
-    assert any(frame.get('src','').endswith(f'm15NicknameFrame{code}.png')
+    body='/gray-artifact/Frame.png' if code=='A' else f'm15NicknameFrame{code}.png'
+    assert any(frame.get('src','').endswith(body)
                and frame.get('masks')==[] for frame in data['frames'])
     assert all(frame.get('masks')==[] for frame in data['frames'])
     assert data['text']['nickname']['text']==nickname
@@ -941,17 +1012,18 @@ def test_test_deck_nickname_cases_use_expected_godzilla_frames(workspace,name,ty
         assert all('/img/frames/token/' not in str(frame.get('src','')) for frame in data['frames'])
 
 
-def test_token_nickname_refits_set_symbol_to_m15nickname_type_bar(workspace):
+def test_token_nickname_preserves_selected_frame_set_symbol_bounds(workspace):
     store,art_id,settings=workspace
     card=sf('Token Creature — Spirit',['B'])
     card.update(layout='token',name='Spirit',mana_cost='',oracle_text='',power='1',toughness='1')
     data=Compiler(store).compile_face(
         card,card,0,{'semanticOverrides':{'nickname':'Test Spirit Nickname'}},settings,art_id
     )['data']
-    assert data['version']=='m15Nickname'
-    assert data['setSymbolBounds']['y']==pytest.approx(0.59142)
-    assert data['setSymbolY'] < 0.65
-    assert data['text']['type']['width'] < 0.8292
+    plain=Compiler(store).compile_face(card,card,0,{},settings,art_id)['data']
+    assert data['version']==plain['version']=='tokenTextlessM15'
+    assert data['setSymbolBounds']==plain['setSymbolBounds']
+    assert data['text']['type']==plain['text']['type']
+
 
 
 @pytest.mark.parametrize('name',['experience','poison-counter','day'])
@@ -965,7 +1037,7 @@ def test_scryfall_helper_cards_use_complete_printing_images(workspace,name):
     for index,face in enumerate(card.get('card_faces') or [card]):
         assert type_group(face,card,index)=='helper'
         assert sources.art_url(card,face)==face['image_uris']['png']
-        result=Compiler(store).compile_face(card,face,index,{},settings,art)
+        result=Compiler(store).compile_face(card,face,index,{},settings,art,art_origin='Scryfall selected printing')
         assert result['group']=='helper' and result['recipe']=='helper_scan'
         data=result['data']
         assert data['frames']==[]
@@ -973,3 +1045,130 @@ def test_scryfall_helper_cards_use_complete_printing_images(workspace,name):
         assert all(field['text']=='' for field in data['bottomInfo'].values())
         assert data['setSymbolSource']=='/img/blank.png'
         assert data['infoArtist']=='' and data['infoNote']==''
+
+
+@pytest.mark.parametrize('choice,type_line,oracle',[('godzilla-card','Creature — Human','Vigilance'),('godzilla-land','Land','{T}: Add {W}.'),('auto','Basic Land — Plains','{T}: Add {W}.'),('auto','Land','{T}: Add {W} or {B}.'),('auto','Land','{T}: Add {W}, {B}, or {R}.'),('auto','Legendary Land','{T}: Add {B}.'),('auto','Land','{T}: Add one mana of any color.')])
+def test_full_art_frames_fit_the_complete_card_canvas(workspace,choice,type_line,oracle):
+    store,_,settings=workspace
+    raw=io.BytesIO();Image.new('RGB',(2010,2814),'#486275').save(raw,'PNG');art=ingest_image(store,raw.getvalue())
+    card=sf(type_line,[]);card.update(oracle_text=oracle)
+    if 'Land' in type_line:card.update(mana_cost='',power=None,toughness=None)
+    compiled=Compiler(store).compile_face(card,card,0,{'templateOverride':choice},settings,art['id'])
+    data=compiled['data']
+    assert data['artBounds']=={'x':0,'y':0,'width':1,'height':1}
+    assert (data['artX'],data['artY'],data['artZoom'])==pytest.approx((0,0,1))
+
+
+def test_full_art_fit_preserves_explicit_manual_placement(workspace):
+    store,art,settings=workspace;card=sf()
+    fit={'artX':-.15,'artY':.02,'artZoom':2.4,'artRotate':3}
+    result=Compiler(store).compile_face(card,card,0,{'templateOverride':'godzilla-card','fit':fit},settings,art)
+    assert {key:result['data'][key] for key in fit}==fit
+
+
+def test_nickname_overlay_is_topmost_for_legendary_and_regular_structural_cards():
+    for legendary in [False,True]:
+        for group in ['saga','saga-creature','class','station','prepare','transform-front','transform-back','flip','meld','prototype','adventure','standard','land']:
+            original=[{'name':'Covering frame','src':'/keep/me.png','masks':[]}]
+            data={'width':2010,'height':2814,'version':group,'frames':original.copy(),
+                  'text':{'title':{'text':'Original'}}}
+            sem={'name':'Original','nickname':'Reskin','colors':['U'],'types':['Enchantment'],'subtypes':[], 'legendary':legendary}
+            assert apply_nickname_treatment(data,sem,group)
+            assert data['frames'][0]['name']=='Nickname Title'
+            assert data['frames'][1:]==original
+
+
+def test_compiled_saga_nickname_strip_remains_above_structural_frames(workspace):
+    store,art,settings=workspace
+    card=sf('Enchantment — Saga',['U'])
+    card.update(name='Underlying Saga',flavor_name='Reskinned Saga',oracle_text='I — Draw a card.\nII — Scry 2.\nIII — Draw two cards.')
+    data=Compiler(store).compile_face(card,card,0,{},settings,art)['data']
+    assert data['frames'][0]['name']=='Nickname Title'
+    assert 'm15NicknameTitleU.png' in data['frames'][0]['src']
+    assert any('saga' in frame.get('src','').lower() for frame in data['frames'][1:])
+
+
+@pytest.mark.parametrize('name',['experience','poison-counter','day'])
+def test_custom_helper_art_has_full_card_bounds_and_face_text(workspace,name):
+    from pathlib import Path
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(name+'.json')).read_text(encoding='utf-8'))
+    for index,face in enumerate(card.get('card_faces') or [card]):
+        result=Compiler(store).compile_face(card,face,index,{},settings,art,art_origin='GitHub folder')
+        assert result['recipe']=='helper_full_art'
+        data=result['data']
+        assert data['frames'] and data['artBounds']==FULL_ART_NONLAND_BOUNDS
+        assert data['text']['title']['text']==face['name']
+        assert 'type' not in data['text']
+        assert data['frames'][0]['src'].endswith('/godzilla/TitleW.png')
+        assert data['frames'][1]['name']=='Soft helper text fade'
+        assert data['text']['rules']['text']
+        assert data['text']['rules']['color']=='white'
+        assert data['text']['rules']['outlineColor']=='black'
+        assert data['text']['pt']['text']==''
+        assert data['infoArtist'] and data['infoNote']==CARD_FOOTER_NOTE
+
+
+@pytest.mark.parametrize('layout',['transform','modal_dfc','double_faced_token','reversible_card'])
+@pytest.mark.parametrize('nickname',[False,True])
+def test_godzilla_two_sided_faces_use_independent_full_art(workspace,layout,nickname):
+    store,art,settings=workspace
+    front={**sf('Legendary Creature — Human',['G']),'name':'Front Creature'}
+    back={'name':'Back Land','type_line':'Land','mana_cost':'','colors':[],'oracle_text':'{T}: Add {G}.','artist':'Other Artist'}
+    card={**front,'name':'Front Creature // Back Land','layout':layout,'card_faces':[front,back]}
+    for index,face in enumerate(card['card_faces']):
+        group=('modal-' if layout=='modal_dfc' else 'transform-')+('back' if index else 'front')
+        selected={**settings,'templateRules':{group:'godzilla-card'}}
+        options={'semanticOverrides':{'nickname':'Custom '+face['name']}} if nickname else {}
+        result=Compiler(store).compile_face(card,face,index,options,selected,art)
+        data=result['data']
+        assert result['group']==group
+        assert data['version']==('modalNickname' if layout=='modal_dfc' else 'm15Nickname')
+        assert data['artBounds']==FULL_ART_NONLAND_BOUNDS
+        assert data['text']['rules']['text'].find('Vigilance' if index==0 else 'Add {G}')>=0
+        assert data['text']['title']['text']==face['name']
+        family='/modal/' if layout=='modal_dfc' else '/transform/'
+        assert any(family in frame.get('src','') for frame in data['frames'])
+        if index==0:
+            assert data['text']['pt']['text']=='2/3'
+        else:
+            assert data['text']['pt']['text']==''
+        if nickname:
+            assert data['text']['nickname']['text']=='Custom '+face['name']
+        else:
+            assert 'nickname' not in data['text']
+        assert any(('modal/nickname/' if layout=='modal_dfc' else 'm15NicknameFrame') in frame.get('src','') for frame in data['frames'])
+    # The new override must not broaden Automatic's deliberately supported modal pairs.
+    if layout=='modal_dfc':
+        with pytest.raises(ValidationError,match='Approved built-in pairs'):
+            Compiler(store).compile_face(card,front,0,{},settings,art)
+
+
+@pytest.mark.parametrize('nickname',[False,True])
+@pytest.mark.parametrize('helper',['day','experience','poison-counter'])
+def test_unboxed_helper_titles_are_centered(workspace,nickname,helper):
+    from pathlib import Path
+    store,art,settings=workspace
+    card=json.loads((Path(__file__).parent/'fixtures/helper_cards'/(helper+'.json')).read_text(encoding='utf-8'))
+    for index,face in enumerate(card.get('card_faces') or [card]):
+        options={'semanticOverrides':{'nickname':'Custom '+face['name']}} if nickname else {}
+        data=Compiler(store).compile_face(card,face,index,options,settings,art,art_origin='GitHub folder')['data']
+        title=data['text']['nickname' if nickname else 'title']
+        assert title['align']=='center'
+        assert title['x']+title['width']/2==pytest.approx(.5,abs=.001)
+        assert 'type' not in data['text']
+        reminder=data['text'].get('reminder')
+        if face['name']=='Day':
+            intro,rest=face['oracle_text'].split('\n',1)
+            assert reminder['text']=='{i}'+intro[1:-1]+'{/i}'
+            assert reminder['y']<data['text']['rules']['y']
+            assert data['text']['rules']['text']==rest
+        else:
+            assert reminder is None
+            assert data['text']['rules']['text']==face['oracle_text']
+        assert data['text']['rules']['color']=='white' and data['text']['rules']['outlineWidth']>0
+        assert data['text']['rules']['align']=='center'
+        assert data['frames'][0]['src'].endswith('/godzilla/'+('TitleJoined' if nickname else 'Title')+'W.png')
+        assert data['frames'][1]['name']=='Soft helper text fade'
+        assert data['setSymbolSource']=='/img/blank.png'
+        assert not any('Type Bar' in f['name'] or 'Rules Fill' in f['name'] or 'Rules Border' in f['name'] for f in data['frames'])

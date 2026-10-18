@@ -42,7 +42,8 @@ def test_native_station_full_compact_two_tier_and_sequence(tmp_path):
       'settings':{'symbols':rarity_variants(s,sym['id']),'backAsset':a['id']}})
     evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
     with sync_playwright() as p:
-        browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1500,'height':1040});errors=[]
+        # Match the desktop renderer on Windows; hidden headless canvas exports can stall native scripts.
+        browser=p.chromium.launch(headless=os.name!='nt');page=browser.new_page(viewport={'width':1500,'height':1040});errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         # Observe actual native draw calls, without altering their inputs/results.
         page.add_init_script('''(() => {

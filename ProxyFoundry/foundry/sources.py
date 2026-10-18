@@ -1,11 +1,13 @@
 """Exact-printing Scryfall imports and explicit GitHub art folders."""
 from __future__ import annotations
+from .timing import timed,timing
 import hashlib,json,re
 from urllib.parse import quote,urlsplit
-from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group
+from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group,stable_hash
 from .legacy import deck_parser,ingest
 class Sources:
     def __init__(self,network):self.net=network
+    @timed('scryfall.resolve')
     def resolve_card(self,source,refresh=False):
         source=str(source).strip()
         try:parsed=ingest.parse_scryfall_source(source)
@@ -36,6 +38,18 @@ class Sources:
         meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
         return {**d,'_meld_proxy':True,'_meld_result':meld_result}
     def import_deck(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.import_deck_steps(source,include_outside,refresh,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+
+    def import_deck_steps(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+        with timing(self.net.store,'deck.import',source=source[:300] if isinstance(source,str) else '[Scryfall export]',refresh=refresh):
+            return (yield from self._import_deck_steps(source,include_outside,refresh,progress,cancel))
+
+    @timed('deck.list.fetch')
+    def read_deck_manifest(self,source,include_outside=True,refresh=False,cancel=lambda:False,*,include_digests=False):
+        if cancel():raise ValidationError('Import cancelled.')
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
             text=source.strip()
@@ -66,16 +80,32 @@ class Sources:
                 if not isinstance(row,dict):raise ValidationError('Deck source returned an invalid card row.')
                 section=str(row.get('section') or 'mainboard')
                 if not include_outside and section not in {'mainboard','commanders'}:continue
-                manifest.append({'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
+                manifest.append({'name':str(row.get('name') or ''), 'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
         elif isinstance(source,list):
             manifest=[]
             for r in source:
                 if not isinstance(r,dict):raise ValidationError('Card import rows must be objects.')
-                manifest.append({'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
+                manifest.append({'name':str(r.get('name') or ''), 'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
         elif isinstance(source,str):manifest=parse_deck_text(source,include_outside)
         else:raise ValidationError('Upload a Scryfall export, paste a public deck link or card names.')
         if not manifest:raise ValidationError('No cards were supplied.')
         if sum(r['quantity'] for r in manifest)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
+        for row in manifest:
+            key=str(row.get('source') or '').strip()
+            if not key:raise ValidationError('Every deck row needs a card name or printing identifier.')
+            try:ingest.parse_scryfall_source(key)
+            except ingest.DataError as exc:raise ValidationError(str(exc)) from exc
+            row['source']=key
+            row['name']=str(row.get('name') or digests.get(key,{}).get('name') or key)
+        listing={'name':str(title),'rows':manifest,'importedSource':original}
+        if include_digests:listing['digests']=digests
+        return listing
+
+    def _import_deck_steps(self,source,include_outside,refresh,progress,cancel):
+        listing=self.read_deck_manifest(source,include_outside,refresh,cancel,include_digests=True)
+        title=listing['name'];manifest=listing['rows'];original=listing['importedSource'];digests=listing['digests']
+        #No deck is published until all rows are resolved; cached metadata is durable.
+        yield
         seen={};cards=[];resolved={}
         for i,row in enumerate(manifest):
             if cancel():raise ValidationError('Import cancelled.')
@@ -83,10 +113,14 @@ class Sources:
             key=str(row['source'])
             sf=resolved.setdefault(key,self.resolve_card(key,refresh)) if key not in resolved else resolved[key]
             identity=(sf['id'],row['section'])
-            if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity']);continue
-            entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
-            entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
-            seen[identity]=entry;cards.append(entry)
+            if identity in seen:seen[identity]['quantity']=quantity(seen[identity]['quantity']+row['quantity'])
+            else:
+                entry=self.entry(sf,row['quantity'],row['section']);entry['digest']=digests.get(sf['id'],{})
+                entry['sourceIsExact']=bool(re.fullmatch(r'[0-9a-fA-F-]{36}',key) or re.fullmatch(r'[A-Za-z0-9]+:[A-Za-z0-9★†-]+',key) or key.startswith('https://'))
+                seen[identity]=entry;cards.append(entry)
+            progress(i+1,len(manifest),'Resolved selected printing '+sf['name'])
+            yield
+        if cancel():raise ValidationError('Import cancelled.')
         progress(len(manifest),len(manifest),'Selected printings imported')
         return {'name':str(title),'cards':cards,'importedSource':original}
     def entry(self,sf,count=1,section='mainboard'):
@@ -105,21 +139,17 @@ class Sources:
     def git_blob_sha(raw):
         return hashlib.sha1(b'blob '+str(len(raw)).encode('ascii')+b'\0'+raw).hexdigest()
     def github_art(self,entry):
-        # Production indexes carry the Git blob SHA plus a raw URL pinned to the
-        # exact commit that produced the directory listing. String entries remain
-        # accepted for old callers/tests, but cannot provide the integrity check.
         if isinstance(entry,str):
             raw,_,_=self.net.fetch(entry,refresh=True,ttl=0)
             return raw,entry
-        if not isinstance(entry,dict):
+        if not isinstance(entry,dict) or not isinstance(entry.get('url'),str):
             raise ValidationError('GitHub artwork index entry is invalid.')
-        url=entry.get('url');expected=str(entry.get('blobSha') or '').lower()
-        if not isinstance(url,str) or not re.fullmatch(r'[0-9a-f]{40}',expected):
-            raise ValidationError('GitHub artwork index entry is invalid.')
+        url=entry['url']
+        if not re.fullmatch(r'https://raw\.githubusercontent\.com/[^/]+/[^/]+/[0-9a-fA-F]{40}/.+',url):
+            raise ValidationError('GitHub artwork must use an exact commit URL.')
         raw,_,_=self.net.fetch(url,immutable=True)
-        if self.git_blob_sha(raw)!=expected:
-            raise ValidationError('GitHub returned artwork bytes that did not match the folder listing. Generate again after GitHub finishes updating.')
         return raw,url
+    @timed('github.index')
     def github_index(self,url,branch=None,refresh=False):
         loc=github_location(url,branch)
         if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0 if refresh else 600).get('default_branch','main')
@@ -131,18 +161,32 @@ class Sources:
             commit=str(resolved.get('sha','')).lower() if isinstance(resolved,dict) else ''
             if not re.fullmatch(r'[0-9a-f]{40}',commit):
                 raise ValidationError('GitHub did not return an exact commit for the artwork folder.')
+        store=getattr(self.net,'store',None)
+        cache_id=stable_hash({'repo':loc['repo'],'folder':loc['folder'],'ref':requested,'version':2})
+        previous=store.get('github-art-index',cache_id) if store else None
+        if previous and previous.get('commit')==commit:return previous['index']
+        unchanged={}
+        if previous:
+            try:
+                comparison=self.net.json('https://api.github.com/repos/'+loc['repo']+'/compare/'+previous['commit']+'...'+commit,immutable=True)
+                files=comparison.get('files')
+                # GitHub caps comparison files at 300; a capped or diverged
+                # comparison cannot prove which of our assets are unchanged.
+                if comparison.get('status')=='ahead' and isinstance(files,list) and len(files)<300 and all(isinstance(f,dict) and f.get('filename') and f.get('status') in {'added','modified','removed','renamed','copied','changed','unchanged'} for f in files):
+                    changed={path for f in files for path in (f['filename'],f.get('previous_filename')) if path}
+                    unchanged={e['path']:e for e in previous['index'].values() if e.get('path') not in changed}
+            except (ValidationError,OSError):pass
         api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+commit
-        rows=self.net.json(api,ttl=0 if refresh else 600)
+        rows=self.net.json(api,immutable=True)
         if not isinstance(rows,list):raise ValidationError('That GitHub link is a file, not an artwork folder.')
         index={}
         for r in rows:
             if r.get('type')=='file' and re.search(r'\.(png|jpe?g|webp|gif)$',r.get('name',''),re.I):
-                stem=slug(r['name'].rsplit('.',1)[0])
-                if stem in index:raise ValidationError('Ambiguous filenames in GitHub folder: '+r['name'])
-                blob=str(r.get('sha') or '').lower()
-                if not re.fullmatch(r'[0-9a-f]{40}',blob):
-                    raise ValidationError('GitHub did not return a blob SHA for '+r['name']+'.')
-                index[stem]={'url':'https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(r['path'],safe='/'),'blobSha':blob}
+                stem=slug(r['name'].rsplit('.',1)[0]);base=stem;number=1
+                while stem in index:
+                    number+=1;stem=base+'__'+str(number)
+                index[stem]=unchanged.get(r['path']) or {'url':'https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(r['path'],safe='/'),'path':r['path'],'commit':commit,'filename':r['name']}
+        if store:store.put('github-art-index',{'id':cache_id,'commit':commit,'index':index})
         return index
     def printings(self,name,refresh=False,next_page=None):
         url=next_page or 'https://api.scryfall.com/cards/search?unique=prints&order=released&q='+quote('!"'+name.replace('"','')+'" game:paper')
@@ -150,6 +194,7 @@ class Sources:
         d=self.net.json(url,refresh=refresh)
         return {'data':d.get('data',[]),'has_more':d.get('has_more',False),'next_page':d.get('next_page')}
 
+    @timed('scryfall.flavor')
     def flavor_source(self,sf,policy='auto',source_exact=True,refresh=False):
         if policy=='resolved' or policy=='auto' and source_exact:return sf
         name=str(sf.get('name','')).replace('\\','\\\\').replace('"','\\"')

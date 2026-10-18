@@ -2,3 +2,6 @@
 doctor_who/CardConjurer_Bulk.zip
 derevi/art.zip
 *.zip
+
+# Generated card exports inside each deck folder.
+/*/cards/

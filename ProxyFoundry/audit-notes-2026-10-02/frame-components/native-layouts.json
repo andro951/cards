@@ -1,0 +1,1010 @@
+{
+  "creature": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Blue Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTU.png",
+        "masks": []
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "creature_legendary": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Multicolored Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "card_noncreature": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Blue Frame",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "card_legendary": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Multicolored Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTM.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/m15/regular/m15FrameM.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "nyx_enchantment": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Green Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameGNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_full_basic": {
+    "version": "eoeBasics",
+    "frames": [
+      {
+        "name": "Forest Symbol",
+        "src": "/img/frames/textless/eoe/symbols/forest.png",
+        "masks": []
+      },
+      {
+        "name": "Green Frame",
+        "src": "/img/frames/textless/eoe/g.png",
+        "masks": [
+          "No Border"
+        ]
+      },
+      {
+        "name": "Green Frame",
+        "src": "/img/frames/textless/eoe/g.png",
+        "masks": [
+          "Pinlines"
+        ]
+      },
+      {
+        "name": "White Frame",
+        "src": "/img/frames/textless/eoe/w.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_full_dual": {
+    "version": "genericShowcase",
+    "frames": [
+      {
+        "name": "Temple Title Bar",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Temple Type Bar",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Temple Rules Border",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_full_tri": {
+    "version": "genericShowcase",
+    "frames": [
+      {
+        "name": "Naya Title Bar",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Naya Type Bar",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Naya Rules Border",
+        "src": "inline artwork",
+        "masks": []
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_full_legendary": {
+    "version": "genericShowcase",
+    "frames": [
+      {
+        "name": "Legend Crown Outline",
+        "src": "/img/frames/m15/crowns/m15CrownFloatingOutline.png",
+        "masks": []
+      },
+      {
+        "name": "Red Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownRFloating.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Lower Cutout",
+        "src": "/img/black.png",
+        "masks": []
+      },
+      {
+        "name": "Neutral Land Generic Showcase Title",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Red Compact Pinline",
+        "src": "/img/frames/m15/boxTopper/short/rl.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Neutral Compact Land Type",
+        "src": "/img/frames/m15/boxTopper/short/l.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Red Compact Rules",
+        "src": "/img/frames/m15/boxTopper/short/rl.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "saga_praetor_back": {
+    "version": "saga/version",
+    "frames": [
+      {
+        "name": "White DFC Saga Frame",
+        "src": "/img/frames/saga/dfc/w.png",
+        "masks": []
+      }
+    ]
+  },
+  "nyx_creature": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Blue Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTU.png",
+        "masks": []
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Blue Nyx Frame",
+        "src": "/img/frames/m15/nyx/m15FrameUNyx.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_basic_compact": {
+    "version": "genericShowcase",
+    "frames": [
+      {
+        "name": "G Compact Pinline",
+        "src": "/img/frames/m15/boxTopper/short/gl.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Neutral Land Title",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Neutral Compact Land Type",
+        "src": "/img/frames/m15/boxTopper/short/l.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "G Compact Rules",
+        "src": "/img/frames/m15/boxTopper/short/gl.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "land_five_color": {
+    "version": "genericShowcase",
+    "frames": [
+      {
+        "name": "Multicolored Pinline",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameM.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Neutral Land Title",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Neutral Land Type",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Rules",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameM.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Land Frame",
+        "src": "/img/frames/m15/genericShowcase/m15GenericShowcaseFrameL.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "modal_dfc_front": {
+    "version": "modalRegular",
+    "frames": [
+      {
+        "name": "Green Legend Crown",
+        "src": "/img/frames/modal/crowns/regular/g.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/frames/modal/crowns/regular/cover.svg",
+        "masks": []
+      },
+      {
+        "name": "Green Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTG.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame (Front)",
+        "src": "/img/frames/modal/regular/m.png",
+        "masks": [
+          "Flipside"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "MDFC Arrow"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Green Frame (Front)",
+        "src": "/img/frames/modal/regular/g.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "modal_dfc_back": {
+    "version": "modalRegular",
+    "frames": [
+      {
+        "name": "Multicolored Legend Crown",
+        "src": "/img/frames/modal/crowns/regular/m.png",
+        "masks": []
+      },
+      {
+        "name": "Legend Crown Border Cover",
+        "src": "/img/frames/modal/crowns/regular/cover.svg",
+        "masks": []
+      },
+      {
+        "name": "Green Frame (Back)",
+        "src": "/img/frames/modal/regular/back/g.png",
+        "masks": [
+          "Flipside"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "MDFC Arrow"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Multicolored Frame (Back)",
+        "src": "/img/frames/modal/regular/back/m.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "eldrazi_legendary_creature": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Colorless Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownC.png",
+        "masks": []
+      },
+      {
+        "name": "Colorless Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTC.png",
+        "masks": []
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Eldrazi Frame",
+        "src": "/img/frames/m15/regular/eldrazi.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "artifact_creature_blue_pinline": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Artifact Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownA.png",
+        "masks": []
+      },
+      {
+        "name": "Artifact Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTA.png",
+        "masks": []
+      },
+      {
+        "name": "Blue Pinline",
+        "src": "/img/frames/m15/regular/m15FrameU.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "tardis_legendary_creature": {
+    "version": "tardis",
+    "frames": [
+      {
+        "name": "Multicolored Legendary Crown",
+        "src": "/img/frames/tardis/crowns/m.png",
+        "masks": []
+      },
+      {
+        "name": "Power/Toughness",
+        "src": "/img/frames/tardis/pt.png",
+        "masks": []
+      },
+      {
+        "name": "Multicolored Frame",
+        "src": "/img/frames/tardis/m.png",
+        "masks": []
+      }
+    ]
+  },
+  "legendary_vehicle": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "Artifact Legend Crown",
+        "src": "/img/frames/m15/crowns/m15CrownA.png",
+        "masks": []
+      },
+      {
+        "name": "Vehicle Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTV.png",
+        "masks": []
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Vehicle Frame",
+        "src": "/img/frames/m15/regular/m15FrameV.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "artifact_white_pinline": {
+    "version": "m15Regular",
+    "frames": [
+      {
+        "name": "White Pinline",
+        "src": "/img/frames/m15/regular/m15FrameW.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Artifact Frame",
+        "src": "/img/frames/m15/regular/m15FrameA.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  },
+  "AETHERSPARK_APPROVED_DATA": {
+    "version": "planeswalkerTall",
+    "frames": [
+      {
+        "name": "Artifact Frame Base",
+        "src": "/img/frames/planeswalker/tall/planeswalkerTallA.png",
+        "masks": []
+      },
+      {
+        "name": "Artifact Frame Opacity Boost",
+        "src": "/img/frames/planeswalker/tall/planeswalkerTallA.png",
+        "masks": []
+      }
+    ]
+  },
+  "PREPARE_APPROVED_DATA": {
+    "version": "prepare",
+    "frames": [
+      {
+        "name": "Black Power/Toughness",
+        "src": "/img/frames/m15/regular/m15PTB.png",
+        "masks": []
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Pinline"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Type"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Title"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Prepare Spell"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Prepare Spell Pinline"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Rules"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Frame"
+        ]
+      },
+      {
+        "name": "Black Prepare Frame",
+        "src": "/img/frames/prepare/regular/b.png",
+        "masks": [
+          "Border"
+        ]
+      }
+    ]
+  }
+}

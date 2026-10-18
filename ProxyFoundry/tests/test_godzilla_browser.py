@@ -1,5 +1,4 @@
 import json
-import hashlib
 import os
 import threading
 from pathlib import Path
@@ -25,13 +24,13 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
     page.locator('#open-card-data').wait_for()
 
+    page.evaluate('window.showOpenFilePicker=undefined')
     local={'version':1,'cards':[{'name':'A Test Creature','nickname':'Local name'}]}
     with page.expect_file_chooser() as chooser:
         page.click('#open-card-data')
     chooser.value.set_files({'name':'data.json','mimeType':'application/json',
                             'buffer':json.dumps(local).encode()})
-    expect(page.locator('#card-data-status')).to_contain_text('1 nonempty card entry staged')
-    assert not app.ws.deck(deck['id'])['cards'][0]['faces'][0].get('semanticOverrides')
+    expect(page.locator('#card-data-status')).to_contain_text('1 nonempty card entry imported')
 
     original=app.ws.net.transport
     def transport(url):
@@ -44,7 +43,7 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.locator('#data-json-section').get_by_role('button',name='From GitHub',exact=True).click()
     page.fill('#card-data-url','https://github.com/owner/repo/blob/main/data.json')
     page.locator('#card-data-url').press('Tab')
-    expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry staged')
+    expect(page.locator('#card-data-status')).to_contain_text('GitHub data.json: 1 nonempty card entry imported')
     assert not errors,errors
 
     page.click('[data-frame-group=standard]')
@@ -53,61 +52,78 @@ def test_art_setup_stages_local_and_github_data_and_opens_frame_picker(browser_a
     page.click('#modal-close')
     expect(page.locator('#activity')).to_be_hidden(timeout=60000)
 
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     values=app.ws.deck(deck['id'])['cards'][0]['faces'][0]['semanticOverrides']
     assert values['nickname']=='GitHub name'
     assert values['flavor_text']=='Linked flavor'
 
 
-@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_native_frame_picker_renders_and_selects_godzilla(tmp_path):
-    store=Store(tmp_path/'native-picker')
-    network=Network(store)
-    remote=network._transport
-    def transport(url):
-        if 'api.scryfall.com' in url:
-            return json.dumps(sf()).encode(),'application/json',{}
-        if 'cards.scryfall.io' in url:
-            return png(),'image/png',{}
-        return remote(url)
-    network.transport=transport
-    app=App(store,network)
-    server=LocalServer(app)
+@pytest.mark.parametrize('group,style,title',[('standard','godzilla-card','Godzilla full art · non-land'),('land','godzilla-land','Godzilla full art · land'),('basic-land','godzilla-land','Godzilla full art · land')],ids=['nonland','land','basic-land'])
+def test_setup_and_frame_picker_use_static_backs_without_generating(browser_app,group,style,title):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Static frame choice','source':'1 A Test Creature'})
+    if group in {'land','basic-land'}:
+        deck['cards'][0]['scryfall'].update(type_line='Basic Land — Mountain' if group=='basic-land' else 'Land',colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
+        app.ws.store.put('decks',deck,deck['revision'])
+    requests=[]
+    page.on('request',lambda request:requests.append(request.url) if any(path in request.url for path in ['/api/render-sessions','/api/runtime/prepare','/runtime/host']) else None)
+    page.evaluate("import('/site/ui.js').then(m=>{m.state.bootstrap.browser=true})")
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    back=app.ws.deck(deck['id'])['settings']['backAsset']
+    expect(page.locator('#frame-choices img')).to_have_attribute('src','/api/assets/'+back)
+    page.click('[data-frame-group='+group+']')
+    images=page.locator('#modal-host img')
+    assert images.count()>1
+    assert all(src=='/api/assets/'+back for src in images.evaluate_all('(images)=>images.map(image=>image.getAttribute("src"))'))
+    choice=page.get_by_role('button',name='Select '+title,exact=True)
+    expect(choice).to_be_enabled()
+    output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+    page.locator('#modal-host .modal').screenshot(path=str(output/('static-frame-picker-'+group+'.png')))
+    choice.locator('img').click()
+    expect(page.locator('#modal-host')).to_be_empty()
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
+    assert app.ws.deck(deck['id'])['settings']['templateRules'][group]==style
+    assert not requests and not page.locator('iframe.render-frame').count()
+    assert not page.evaluate("import('/site/ui.js').then(m=>m.state.busy)")
+    assert not errors,errors
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in noncreature Godzilla rendering')
+def test_native_noncreature_godzilla_frames_render_without_missing_text(tmp_path):
+    store=Store(tmp_path/'noncreature-nickname');app=App(store,Network(store));server=LocalServer(app)
     threading.Thread(target=server.serve_forever,daemon=True).start()
-    deck=app.ws.create({'name':'Native picker','source':'1 A Test Creature'})
+    art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Noncreature Godzilla')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'test_artifact':art,'test_land':art,'test_mountain':art}},'artist':'Fixture Artist'})
+    cards=[]
+    for i,(name,types,style) in enumerate([('Test Artifact','Legendary Artifact — Equipment','godzilla-card'),('Test Land','Land','godzilla-land'),('Test Mountain','Basic Land — Mountain','godzilla-land')]):
+        source={'name':name,'layout':'normal','type_line':types,'colors':['B'] if i==0 else [],
+                'mana_cost':'{B}' if i==0 else '', 'oracle_text':'Equipped creature gets +1/+1.\nEquip {1}' if i==0 else ('{T}: Add {R}.' if i==2 else '{T}: Add {B}.'),
+                'rarity':'common','artist':'Fixture Artist'}
+        if i==1:source['flavor_name']='Renamed Land'
+        cards.append({'id':'card-'+str(i),'name':name,'quantity':1,'scryfall':source,
+                      'faces':[{'id':'face-'+str(i),'name':name,'index':0,'templateOverride':style}]})
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
     with sync_playwright() as playwright:
-        browser=playwright.chromium.launch(headless=True)
-        page=browser.new_page(viewport={'width':1440,'height':1000})
-        errors=[]
-        page.on('pageerror',lambda error:errors.append(str(error)))
+        browser=playwright.chromium.launch(headless=True);page=browser.new_page()
         try:
-            page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
-            page.click('[data-frame-group=standard]')
-            page.locator('#modal-host img:visible').first.wait_for(timeout=240000)
-            page.locator('#activity').wait_for(state='hidden',timeout=240000)
-            assert page.locator('#modal-host img:visible').count()>=2
-            page.wait_for_function("Array.from(document.querySelectorAll('#modal-host img')).filter(image=>image.offsetWidth>0).filter(image=>image.complete&&image.naturalWidth>0).length>=2",timeout=240000)
-            images=page.locator('#modal-host img:visible')
-            hashes=[hashlib.sha256(images.nth(index).screenshot()).hexdigest() for index in range(images.count())]
-            assert len(set(hashes))>=2,'Frame choices rendered identical PNGs.'
-            godzilla=page.locator('#modal-host button[aria-label="Select Godzilla full art · non-land"]')
-            expect(godzilla).to_be_enabled(timeout=240000)
-            output=Path(__file__).resolve().parents[1]/'test-results'
-            output.mkdir(exist_ok=True)
-            page.locator('#modal-host img:visible').first.screenshot(path=str(output/'godzilla-frame-preview.png'))
-            godzilla.click()
-            page.click('#save-setup')
-            expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
-            assert app.ws.deck(deck['id'])['settings']['templateRules']['standard']=='godzilla-card'
-            assert not errors,errors
-        finally:
-            browser.close()
-            server.shutdown();server.server_close();app.close()
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id'])
+            assert current['status']=='ready',page.locator('#activity-log').text_content()
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            for entry in current['cards']:
+                compiled=entry['faces'][0]['compiled'];assert compiled['data']['text']['pt']['text']==''
+                assert all(isinstance(field['text'],str) for field in compiled['data']['text'].values())
+                render=store.render_get(compiled['renderKey']);assert render
+                picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
+                picture.save(output/(entry['name'].replace(' ','_')+'_godzilla.png'))
+        finally:browser.close();server.shutdown();server.server_close();app.close()
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_path):
+def test_native_black_and_colorless_nickname_tokens_keep_selected_frame(tmp_path):
     store=Store(tmp_path/'native-tokens')
     network=Network(store)
     app=App(store,network)
@@ -148,8 +164,9 @@ def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_pat
             for card_entry in current['cards']:
                 compiled=card_entry['faces'][0]['compiled']
                 frames=compiled['data']['frames']
-                assert any('m15NicknameFrame' in frame['src'] for frame in frames)
-                assert all(frame.get('masks')==[] for frame in frames)
+                assert frames[0]['src'].startswith('/img/frames/m15/nickname/addons/')
+                assert any('/img/frames/token/' in frame['src'] for frame in frames[1:])
+                assert not any('m15NicknameFrame' in frame['src'] for frame in frames)
                 render=store.render_get(compiled['renderKey'])
                 assert render
                 picture=Image.open(store.asset_path(render['asset_id']))
@@ -158,3 +175,94 @@ def test_native_black_and_colorless_nickname_tokens_have_complete_frames(tmp_pat
         finally:
             browser.close()
             server.shutdown();server.server_close();app.close()
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in genuine outlined italic rendering')
+def test_native_nickname_and_flavor_outlines_use_round_joins(tmp_path):
+    store=Store(tmp_path/'italic-outlines');app=App(store,Network(store));server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id'];deck=app.ws.new_deck('Italic outlines')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'spirit':art,'construct':art,'syr_gwyn':art}},'artist':'Fixture Artist'})
+    cards=[]
+    for index,(name,types,style) in enumerate([('Spirit','Token Creature — Spirit','token-full-art'),('Construct','Token Artifact Creature — Construct','token-full-art'),('Syr Gwyn','Legendary Creature — Human Knight','godzilla-card')]):
+        source={'name':name,'layout':'token' if index<2 else 'normal','type_line':types,'colors':['W'] if index==0 else ([] if index==1 else ['W','B','R']),
+                'mana_cost':'' if index<2 else '{3}{R}{W}{B}','oracle_text':'Flying' if index==0 else 'Vigilance',
+                'flavor_text':'Spirit and Construct share a sharp italic corner.','flavor_name':'Test '+name+' Nickname','rarity':'common','power':'1','toughness':'1','artist':'Fixture Artist'}
+        cards.append({'id':'card-'+str(index),'name':name,'quantity':1,'scryfall':source,'faces':[{'id':'face-'+str(index),'name':name,'index':0,'templateOverride':style}]})
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':cards},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=False);page=browser.new_page();errors=[]
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        page.add_init_script("""(()=>{
+          const original=CanvasRenderingContext2D.prototype.strokeText;window.__outlineJoins=[];
+          CanvasRenderingContext2D.prototype.strokeText=function(text,...args){
+            if(window.__PF_RUNTIME?.active)parent.postMessage({type:'outline-test',text:String(text),join:this.lineJoin,font:this.font},window.__PF_PARENT_ORIGIN);
+            return original.call(this,text,...args);
+          };
+          window.addEventListener('message',event=>{if(event.data?.type==='outline-test')window.__outlineJoins.push(event.data);});
+        })();""")
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id']);assert current['status']=='ready',page.locator('#activity-log').text_content()
+            joins=page.evaluate('window.__outlineJoins')
+            assert joins and all(item['join']=='round' for item in joins),joins
+            assert any('Spirit' in item['text'] for item in joins) and any('Construct' in item['text'] for item in joins)
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            (output/'round-outline-evidence.json').write_text(json.dumps(joins),encoding='utf-8')
+            for entry in current['cards']:
+                render=store.render_get(entry['faces'][0]['compiled']['renderKey']);picture=Image.open(store.asset_path(render['asset_id']))
+                picture.save(output/(entry['name'].replace(' ','_')+'_round_outlines.png'))
+            assert not errors,errors
+        finally:browser.close();server.shutdown();server.server_close();app.close()
+
+
+@pytest.mark.parametrize('layout,group',[('transform','transform-front'),('modal_dfc','modal-back')])
+def test_two_sided_godzilla_selection_saves_without_rendering(browser_app,layout,group):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Two-sided frames','source':'1 A Test Creature'})
+    front={**sf(),'name':'Front Creature'}
+    back={'name':'Back Land','type_line':'Land','oracle_text':'{T}: Add {G}.','colors':[],'mana_cost':''}
+    deck['cards'][0]['scryfall'].update(name='Front Creature // Back Land',layout=layout,card_faces=[front,back])
+    deck['cards'][0]['faces']=[{'id':'front-face','index':0,'name':front['name']},{'id':'back-face','index':1,'name':back['name']}]
+    app.ws.store.put('decks',deck,deck['revision'])
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.locator('[data-frame-group='+group+']').click()
+    expect(page.get_by_role('button',name='Select Godzilla full art',exact=True)).to_be_enabled()
+    expect(page.locator('#modal-host')).to_contain_text('without the usual two-sided icons')
+    page.get_by_role('button',name='Select Godzilla full art',exact=True).click()
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    assert app.ws.deck(deck['id'])['settings']['templateRules'][group]=='godzilla-card'
+    assert not app.jobs.jobs
+    assert not errors,errors
+
+
+@pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer two-sided rendering')
+def test_native_godzilla_two_sided_creature_and_land(tmp_path):
+    store=Store(tmp_path/'two-sided');app=App(store,Network(store));server=LocalServer(app)
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    art=ingest_image(store,png((1000,1400),'#597586'))['id']
+    deck=app.ws.new_deck('Godzilla two-sided')
+    settings=app.ws.validate_settings({'source':{'mode':'local','localFiles':{'front_creature':art,'back_land':art}},'artist':'Fixture Artist',
+        'templateRules':{'modal-front':'godzilla-card','modal-back':'godzilla-card'}})
+    front={**sf(),'name':'Front Creature','flavor_name':'Creature Nickname'}
+    back={'name':'Back Land','type_line':'Land','oracle_text':'{T}: Add {G}.','colors':[],'mana_cost':''}
+    source={**front,'name':'Front Creature // Back Land','layout':'modal_dfc','card_faces':[front,back]}
+    for key in ('id','oracle_id','flavor_name'):
+        source.pop(key,None)
+    card={'id':'two-sided-card','name':source['name'],'quantity':1,'scryfall':source,
+        'faces':[{'id':'front','name':front['name'],'index':0},{'id':'back','name':back['name'],'index':1}]}
+    app.ws.store.put('decks',{**deck,'settings':settings,'cards':[card]},deck['revision'])
+    with sync_playwright() as playwright:
+        browser=playwright.chromium.launch(headless=True);page=browser.new_page()
+        try:
+            page.goto(server.origin+'/#deck/'+deck['id']);page.click('#generate-deck')
+            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            current=app.ws.deck(deck['id'])
+            assert current['status']=='ready',page.locator('#activity-log').text_content()
+            output=Path(__file__).resolve().parents[1]/'test-results';output.mkdir(exist_ok=True)
+            for face in current['cards'][0]['faces']:
+                compiled=face['compiled'];assert compiled['data']['version']=='m15Nickname'
+                render=store.render_get(compiled['renderKey']);assert render
+                picture=Image.open(store.asset_path(render['asset_id']));picture.thumbnail((603,844))
+                picture.save(output/('godzilla-dfc-'+face['id']+'.png'))
+        finally:browser.close();server.shutdown();server.server_close();app.close()

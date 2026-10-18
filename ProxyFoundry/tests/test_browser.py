@@ -52,13 +52,13 @@ def test_browser_import_setup_edit_template_and_mobile(browser_app):
     app,server,page,errors=browser_app
     d=app.ws.create({'name':'Browser deck','source':'2 A Test Creature'})
     page.goto(server.origin+'/#deck/'+d['id']+'/setup')
-    page.locator('#save-setup').wait_for()
+    page.locator('#setup-state').wait_for()
     assert page.locator('.page-head h1').inner_text()=='Browser deck'
     expect(page.locator('.symbol-upload img')).to_have_count(4)
     with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'back.png','mimeType':'image/png','buffer':png((300,420))})
     expect(page.locator('#back-designer [data-back-preview]')).to_have_count(1)
-    page.fill('#deck-artist','Deck Artist');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.fill('#deck-artist','Deck Artist');page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     page.click('[data-tab=cards]');page.locator('[data-card]').first.click();page.fill('#card-qty','3');page.click('#save-card')
     expect(page.locator('.quantity-pill')).to_have_text('3×')
     page.locator('.topbar a[data-nav=templates]').click();page.click('#new-template');page.fill('#template-name','Browser frame');page.click('#save-template')
@@ -90,6 +90,7 @@ def test_browser_card_inspector_art_and_text_controls(browser_app):
     expect(page.get_by_role('dialog').last).to_contain_text('suggested')
     page.get_by_role('dialog').last.get_by_role('button',name='Use current Oracle text').click()
     page.click('#save-card')
+    expect(page.locator('#save-card')).to_have_count(0)
     saved=app.ws.deck(deck['id'])
     assert saved['cards'][0]['scryfall']['rarity']=='rare'
     assert saved['cards'][0]['faces'][0]['selectedArtPrintingId']==saved['cards'][0]['scryfall']['id']
@@ -126,7 +127,7 @@ def test_new_deck_import_stays_simple_and_chooses_look_afterward(browser_app):
     assert not app.store.list('decks'),'Add deck must not start the import before a look is chosen.'
     page.get_by_role('button',name='Customize Look').click()
     expect(page.get_by_role('status')).to_contain_text('Images will be generated after you finish your choices.')
-    page.locator('#save-setup').wait_for(timeout=30000)
+    page.locator('#setup-state').wait_for(timeout=30000)
     assert not errors,errors
 
 def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
@@ -136,11 +137,16 @@ def test_normal_look_uses_classic_frames_for_every_ordinary_group(browser_app):
     page.locator('.modal-body textarea').fill('1 A Test Creature')
     page.click('#do-import')
     page.get_by_role('button',name='Normal Look').wait_for(timeout=5000)
-    page.route('**/api/decks/*/prepare',lambda route:route.fulfill(status=503,content_type='application/json',body='{"error":"Render stopped after settings check"}'))
-    page.get_by_role('button',name='Normal Look').click()
-    page.locator('.modal').wait_for(state='hidden',timeout=30000)
-    expect(page.locator('#main [role=status]')).to_contain_text('Preparing your deck',timeout=30000)
-    expect(page.locator('#main [role=alert]')).to_contain_text('Render stopped after settings check',timeout=30000)
+    generation=[]
+    page.on('request',lambda request:generation.append(request.url) if '/prepare' in request.url or '/render-sessions' in request.url else None)
+    page.route('**/api/render-sessions',lambda route:route.fulfill(json={'targets':[],'errors':[],'cached':1}))
+    with page.expect_request('**/api/render-sessions',timeout=30000):
+        page.get_by_role('button',name='Normal Look').click()
+    page.locator('#card-search').wait_for(timeout=30000)
+    assert page.locator('#save-setup').count()==0
+    assert page.url.endswith('/cards')
+    assert page.locator('#generate-deck').is_visible()
+    assert any('/prepare' in url for url in generation) and any('/render-sessions' in url for url in generation),generation
     decks=app.store.list('decks')
     assert len(decks)==1
     assert all(decks[0]['settings']['templateRules'][group]=='normal' for group in ('standard','legendary','land','legendary-land','basic-land'))
@@ -158,7 +164,7 @@ def test_browser_symbol_folder_upload(browser_app,tmp_path):
     chooser.value.set_files(str(folder))
     expect(page.locator('.symbol-upload img')).to_have_count(4,timeout=15000)
     expect(page.locator('#symbol-folder-status')).to_contain_text('Loaded common, uncommon, rare, and mythic')
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);assert set(saved['settings']['symbols'])=={'common','uncommon','rare','mythic'}
     assert len(set(saved['settings']['symbols'].values()))==4
     bad=tmp_path/'bad-symbols';bad.mkdir()
@@ -196,7 +202,7 @@ def test_browser_card_hover_shows_assigned_back_without_flip_button(browser_app)
     assert page.locator('.flip-button').count()==0
     expect(card.locator('.card-name-pill')).to_have_text('A Test Creature')
     assert card.locator('h3,.card-credit,.card-item-footer').count()==0
-    card.hover();expect(img).to_have_attribute('src','/api/assets/'+back['id'])
+    card.hover();expect(img).to_have_attribute('src','/api/assets/'+back['id']+'/thumbnail')
     card.dispatch_event('mouseleave');expect(img).to_have_attribute('src',front)
     assert not errors,errors
 
@@ -243,6 +249,8 @@ def test_real_cardconjurer_roundtrip(tmp_path):
             assert im.size==(2010,2814)
             assert len(im.resize((100,140)).getcolors(14000) or [])>80,'Native output is unexpectedly blank or flat'
             before=len(app.runtime.requested)
+            page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
+            page.get_by_role('button',name='View deck',exact=True).click()
             page.click('#generate-deck');page.wait_for_timeout(2500)
             assert len(app.runtime.requested)==before,'Unchanged front was not reused from render cache'
             (ROOT/'test-results').mkdir(exist_ok=True)
@@ -255,7 +263,8 @@ def test_real_cardconjurer_roundtrip(tmp_path):
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
+@pytest.mark.parametrize('symbol_case',['mana-cluster','infinity'])
+def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,symbol_case):
     from playwright.sync_api import sync_playwright
     card={
         'object':'card','id':'33333333-3333-4333-8333-333333333333',
@@ -270,6 +279,13 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
                       'Other creatures you control of the chosen type get +1/+1.',
         'image_uris':{'art_crop':'https://cards.scryfall.io/art_crop/front/a/b/morophon.jpg'},
     }
+    if symbol_case=='infinity':
+        card.update(name='The Mind Stone',type_line='Legendary Artifact — Infinity Stone',
+                    colors=['W'],mana_cost='{1}{W}',power=None,toughness=None,
+                    oracle_text='Indestructible\n{T}: Add {W}.\n'
+                      '{5}{W}, {T}: Harness The Mind Stone. (Once harnessed, its \u221e ability is active.)\n'
+                      '\u221e — At the beginning of your end step, exile up to one other target nonland permanent you control, '
+                      "then return that card to the battlefield under its owner's control.")
     store=Store(tmp_path/'mana-wrap');net=Network(store);native_transport=net._transport
     def transport(url):
         if 'api.scryfall.com' in url:return json.dumps(card).encode(),'application/json',{}
@@ -283,6 +299,8 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         try:
+            #The overflow probe reads native canvas pixels directly in the iframe.
+            page.add_init_script('window.OffscreenCanvas=undefined;')
             page.goto(server.origin+'/#deck/'+d['id']);page.locator('#generate-deck').wait_for()
             page.evaluate("""() => {
               const originalRemove=HTMLIFrameElement.prototype.remove;
@@ -295,8 +313,10 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
             current=app.ws.deck(d['id'])
             assert current['status']=='ready',{'status':current['status'],'errors':errors,'activity':page.locator('#activity-log').text_content()}
             rules=current['cards'][0]['faces'][0]['compiled']['data']['text']['rules']['text']
-            assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
-            assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+            if symbol_case=='mana-cluster':
+                assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
+                assert 'cost\n{W}{U}{B}{R}{G}' not in rules
+            else:assert rules.count('\u221e')==2
             runtime_frame=next(frame for frame in page.frames if '/runtime/host' in frame.url)
             metrics=runtime_frame.evaluate("""() => {
               const box=window.card?.text?.rules;
@@ -312,8 +332,63 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path):
               }
               return {title:window.card?.text?.title?.text,right,maxX,overflow:Math.max(0,maxX-right)};
             }""")
-            assert metrics and metrics['title']=='Morophon, the Boundless',metrics
+            assert metrics and metrics['title']==card['name'],metrics
             assert metrics['overflow']<=8,metrics
+            if symbol_case=='infinity':
+                infinity=runtime_frame.evaluate("""() => {
+                  const symbol=getManaSymbol('infinity');
+                  const results=[];
+                  for(const color of ['black','white'])for(const text of ['∞','{i}∞{/i}']){
+                    const canvas=document.createElement('canvas');canvas.width=card.width;canvas.height=card.height;
+                    const context=canvas.getContext('2d');
+                    writeText({name:'Infinity probe',text,font:'mplantin',color,x:.1,y:.1,width:.2,height:.1,size:.03},context);
+                    const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let ink=0;
+                    for(let index=0;index<pixels.length;index+=4){
+                      const channels=[pixels[index],pixels[index+1],pixels[index+2]];
+                      if(pixels[index+3]>128&&channels.every(value=>color==='white'?value>200:value<60))ink++;
+                    }
+                    results.push({color,text,ink});
+                  }
+                  return {loaded:symbol.image.complete&&symbol.image.naturalWidth>0,results,
+                    normalized:proxyFoundryInlineSymbols('∞ {∞}')};
+                }""")
+                assert infinity['loaded'],infinity
+                assert infinity['normalized']=='{infinity} {inf}',infinity
+                assert all(row['ink']>100 for row in infinity['results']),infinity
+            #A larger-font trial must not leave a forced mana wrap in the final
+            #layout. Starting directly at the fitted size should give identical pixels.
+            fitting=runtime_frame.evaluate("""() => {
+              const field={name:'Rules Text',x:.086,y:.6303,width:.828,height:.2465,
+                size:.0362,font:'mplantin',color:'white',
+                text:'Affinity for Humans (This spell costs {1} less to cast for each Human you control.)\\n'+
+                  'Trample, haste\\n'+
+                  "At the beginning of your end step, if this creature attacked this turn, return it to its owner's hand. "+
+                  'If you do, create a number of 1/1 white Human Soldier creature tokens equal to its toughness.'+
+                  '{flavor}Anyone could become family. Anyone who threatened them became her problem.'};
+              const render=field=>{
+                const canvas=document.createElement('canvas');
+                canvas.width=card.width;canvas.height=card.height;
+                const draw=lineContext.fillText,commit=paragraphContext.drawImage;
+                const clear=paragraphContext.clearRect;let lines=[],words=[];
+                lineContext.fillText=function(word,...args){words.push(word);return draw.call(this,word,...args);};
+                paragraphContext.drawImage=function(...args){lines.push(words.join(''));words=[];return commit.apply(this,args);};
+                paragraphContext.clearRect=function(...args){lines=[];words=[];return clear.apply(this,args);};
+                try {
+                  writeText(field,canvas.getContext('2d'));
+                  return {pixels:canvas.toDataURL(),size:Number(lineContext.font.match(/([\\d.]+)px/)[1]),lines};
+                } finally {
+                  lineContext.fillText=draw;paragraphContext.drawImage=commit;paragraphContext.clearRect=clear;
+                }
+              };
+              const fitted=render(field),direct=render({...field,size:fitted.size/card.height});
+              const explicit=render({...field,size:fitted.size/card.height,text:field.text.replace('costs {1}','costs\\n{1}')});
+              return {same:fitted.pixels===direct.pixels,explicitBreakPreserved:explicit.pixels!==direct.pixels,
+                initialSize:scaleHeight(field.size),finalSize:fitted.size,lines:fitted.lines};
+            }""")
+            assert fitting['finalSize']<fitting['initialSize'],fitting
+            assert fitting['same'],fitting
+            assert fitting['explicitBreakPreserved'],fitting
+            assert 'less to cast' in fitting['lines'][0],fitting
             assert not errors,errors
         finally:
             page.screenshot(path=str(ROOT/'test-results/morophon-mana-wrap.png'),full_page=True)
@@ -351,7 +426,7 @@ def test_browser_deck_artist_previews(browser_app):
     assert page.locator('#scryfall-credit-preview,#custom-credit-preview').count()==0
     assert page.locator('#deck-modification').count()==0
     assert page.locator('#use-land-library').count()==0
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     current=app.ws.deck(d['id'])
     assert current['settings']['artist']=='My Custom Artist'
     assert 'modificationCredit' not in current['settings']
@@ -371,16 +446,16 @@ def test_browser_default_icon_full_back_and_reload(browser_app):
     before=page.locator('[data-back-preview]').get_attribute('src')
     page.check('[data-back-guide]');expect(page.locator('.back-icon-guide')).to_be_visible()
     assert page.locator('[data-back-preview]').get_attribute('src')==before
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);assert saved['settings']['backDesign']['mode']=='icon'
     icon_id=saved['settings']['backAsset']
     page.reload();expect(page.locator('[data-back-action=icon]')).to_have_attribute('aria-pressed','true')
     with page.expect_file_chooser() as chooser:page.click('[data-back-action=custom]')
     chooser.value.set_files({'name':'whole_back.png','mimeType':'image/png','buffer':png((300,420))})
     expect(page.locator('[data-back-action=custom]')).to_have_attribute('aria-pressed','true')
-    page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert app.ws.deck(d['id'])['settings']['backAsset']!=icon_id
-    page.click('[data-back-action=default]');page.click('#save-setup');expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.click('[data-back-action=default]');page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'");expect(page.locator('#setup-state')).to_have_text('Changes saved')
     assert app.ws.deck(d['id'])['settings']['backAsset']==app.ws.backs.builtin('default')['id']
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
@@ -402,8 +477,8 @@ def test_browser_other_options_all_cards_tokens(browser_app):
     page.fill('#token-toughness','8')
     page.fill('#token-subtypes','Illusion')
     page.select_option('#token-legendary-mode','nonlegendary')
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
 
     saved=app.ws.deck(d['id'])['settings']
     assert saved['allCardsTokens'] is True
@@ -422,10 +497,110 @@ def test_browser_data_json_section_stages_and_saves_metadata(browser_app):
     payload={'version':1,'cards':[{'name':'A Test Creature','nickname':'Test Nickname','flavor_text':'Test flavor text.'}]}
     page.locator('#data-json-file').set_input_files({'name':'data.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
     expect(page.locator('#data-json-status')).to_have_text('data.json')
-    assert not app.ws.deck(d['id'])['cards'][0]['faces'][0].get('semanticOverrides')
-    page.click('#save-setup')
-    expect(page.locator('#setup-state')).to_have_text('Saved settings · changes stay local')
+    page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
+    expect(page.locator('#setup-state')).to_have_text('Changes saved')
     saved=app.ws.deck(d['id']);overrides=saved['cards'][0]['faces'][0]['semanticOverrides']
     assert overrides['nickname']=='Test Nickname'
     assert overrides['flavor_text']=='Test flavor text.'
     assert not errors,errors
+
+
+@pytest.mark.parametrize('width,height',[(1440,1050),(390,844)])
+def test_setup_sections_flow_without_gaps_or_hidden_controls(browser_app,width,height):
+    app,server,page,errors=browser_app
+    deck=app.ws.create({'name':'Setup layout','source':'1 A Test Creature'})
+    page.set_viewport_size({'width':width,'height':height})
+    page.goto(server.origin+'/#deck/'+deck['id']+'/setup')
+    page.locator('#setup-state').wait_for()
+    geometry=page.evaluate("""() => {
+        const grid=document.querySelector('.setup-columns');
+        const panels=[...grid.children];
+        const rect=element=>{const r=element.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,bottom:r.bottom};};
+        return {grid:rect(grid),panels:panels.map(rect),dataParent:document.querySelector('#data-json-section').parentElement===panels[4]};
+    }""")
+    assert len(geometry['panels'])==6
+    art,frames,symbols,back,details,options=geometry['panels']
+    for panel in [art,frames,details,options]:
+        assert abs(panel['width']-geometry['grid']['width'])<2
+    assert geometry['dataParent']
+    assert 18<=options['y']-details['bottom']<=22
+    if width>800:
+        assert abs(symbols['y']-back['y'])<2
+        assert abs(symbols['width']*2+20-geometry['grid']['width'])<2
+        assert back['x']>symbols['x']+symbols['width']
+        assert 18<=details['y']-max(symbols['bottom'],back['bottom'])<=22
+    else:
+        assert back['y']>symbols['bottom']
+    expect(page.get_by_role('heading',name='Card Details',exact=True)).to_be_visible()
+    help=page.locator('#data-json-section details')
+    assert not help.evaluate('(element)=>element.open')
+    expect(help.locator('code')).to_be_hidden()
+    assert page.locator('#data-json-section .eyebrow').count()==0
+    page.locator('#deck-artist').fill('Layout Artist')
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    assert app.ws.deck(deck['id'])['settings']['artist']=='Layout Artist'
+    help.locator('summary').click()
+    expect(help.locator('code')).to_be_visible()
+    help.locator('summary').click()
+    page.locator('#all-cards-tokens').check()
+    page.locator('#token-legendary-mode').scroll_into_view_if_needed()
+    assert page.locator('#token-legendary-mode').evaluate("""element=>{
+        const r=element.getBoundingClientRect();
+        return r.bottom<document.querySelector('.setup-save').getBoundingClientRect().top;
+    }""")
+    page.locator('#all-cards-tokens').uncheck()
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    assert not app.jobs.jobs,'Opening setup and format help must not generate cards.'
+    expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+    page.locator('#all-cards-tokens').scroll_into_view_if_needed()
+    page.screenshot(path=str(ROOT/'test-results'/f'setup-layout-details-{width}.png'))
+    page.locator('#symbol-grid').scroll_into_view_if_needed()
+    page.screenshot(path=str(ROOT/'test-results'/f'setup-layout-{width}.png'))
+    assert not errors,errors
+
+
+
+def test_staged_custom_import_opens_setup_before_metadata_and_keeps_edits(browser_app):
+    app,server,page,errors=browser_app
+    released=threading.Event();started=threading.Event();calls=[]
+    original=app.ws.net.transport
+    def fetch(url):
+        calls.append(url)
+        if 'api.scryfall.com/cards/' in url:
+            started.set();assert released.wait(20),'Test did not release background metadata.'
+        return original(url)
+    app.ws.net.transport=fetch
+    requests=[];page.on('request',lambda request:requests.append(request.url))
+    try:
+        page.click('#import-deck');page.locator('.modal-body summary').click()
+        page.locator('.modal-body textarea').fill('1 A Test Creature')
+        page.click('#do-import')
+        expect(page.get_by_role('button',name='Customize Look',exact=True)).to_be_visible(timeout=5000)
+        assert not started.is_set() and not calls,'Choose Look must not resolve card metadata.'
+        page.get_by_role('button',name='Customize Look',exact=True).click()
+        page.locator('#deck-artist').wait_for(timeout=5000)
+        assert started.wait(5)
+        expect(page.locator('#deck-metadata-status')).to_be_visible()
+        page.locator('#deck-artist').fill('Artist while loading')
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=5000)
+        page.click('[data-frame-group=legendary]')
+        page.get_by_role('button',name='Select Godzilla full art · non-land',exact=True).click()
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=5000)
+        page.locator('#show-flavor-text').uncheck()
+        page.locator('#deck-artist').focus()
+        released.set()
+        expect(page.locator('#deck-metadata-status')).to_contain_text('Card details are ready',timeout=15000)
+        expect(page.locator('#deck-artist')).to_be_focused()
+        expect(page.locator('#deck-artist')).to_have_value('Artist while loading')
+        expect(page.locator('#show-flavor-text')).not_to_be_checked()
+        expect(page.locator('#setup-state')).to_have_text('Changes saved',timeout=10000)
+        deck=app.ws.store.list('decks')[0]
+        assert deck['settings']['artist']=='Artist while loading'
+        assert deck['settings']['templateRules']['legendary']=='godzilla-card'
+        assert not deck.get('pendingImport')
+        page.click('[data-tab=cards]');page.locator('#card-search').wait_for()
+        assert not any('/api.scryfall.com/' not in url and 'cards.scryfall.io/' in url for url in requests)
+        assert not any('/api/render-sessions' in url or '/api/runtime/prepare' in url for url in requests)
+        assert not any('compiled' in face for card in deck['cards'] for face in card['faces'])
+        assert not errors,errors
+    finally:released.set()

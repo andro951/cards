@@ -22,9 +22,7 @@ async function preference(key,value){
 
 export async function savedFolder(){
   const folder=await preference('workspaceFolder');
-  if(!folder)return null;
-  if(await folder.queryPermission({mode:'readwrite'})==='granted')return folder;
-  return null;
+  return folder||null;
 }
 
 export async function chooseFolder(){

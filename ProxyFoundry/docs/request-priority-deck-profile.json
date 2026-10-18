@@ -1,0 +1,48 @@
+{
+  "deckId": "33d0bd8f-e37e-4a57-a908-74802b34f00e",
+  "summary": {
+    "cards": 100,
+    "faces": 100,
+    "rendered": 100,
+    "errors": 0,
+    "warnings": 0
+  },
+  "saved": 100,
+  "interactions": [
+    {
+      "action": "settings",
+      "seconds": 0.4120203999336809
+    },
+    {
+      "action": "templates",
+      "seconds": 1.0430298000574112
+    },
+    {
+      "action": "library",
+      "seconds": 0.8941651000641286
+    },
+    {
+      "action": "open import",
+      "seconds": 0.09276539995335042
+    },
+    {
+      "action": "import deck metadata",
+      "seconds": 2.234833399998024
+    },
+    {
+      "action": "return to cards",
+      "seconds": 0.5715020999778062
+    }
+  ],
+  "requestedImages": 100,
+  "storage": {
+    "quota": 11570117246,
+    "usage": 832699006,
+    "usageDetails": {
+      "fileSystem": 832693429,
+      "indexedDB": 1623,
+      "serviceWorkerRegistrations": 3954
+    }
+  },
+  "scope": "100 fresh face identities using four public-deck printings. Actual concurrent metadata import, stable search/focus and saved-output reload passed. Not 100 unique artworks."
+}

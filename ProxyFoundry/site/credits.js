@@ -19,8 +19,11 @@ export function artworkKind(deck, card, face, artOverride) {
   if(face.selectedArtPrintingId)return 'scryfall';
   const source=deck.settings.source||{},mode=source.mode||'scryfall';
   const sfFace=card.scryfall.card_faces?.[face.index||0]||card.scryfall;
+  const identity=(sfFace.oracle_id||card.scryfall.oracle_id||card.scryfall.id||card.id)+'/'+(sfFace.name||face.name);
+  if(deck.settings.artDefaults?.includes(identity))return 'scryfall';
   if(mode==='scryfall')return 'scryfall';
   if(mode==='local'&&source.localFiles?.[stem(face.name||sfFace.name)])return 'custom';
+  if(mode==='local'&&Object.entries(source.localNames||{}).some(([key,filename])=>source.localFiles?.[key]&&(filename===face.artFilename||String(filename).toLowerCase().includes(String(sfFace.oracle_id||card.scryfall.oracle_id||'invalid-uuid').toLowerCase())||stem(filename.replace(/\.[^.]+$/,'').replace(/^\d+_/,''))===stem(face.name||sfFace.name))))return 'custom';
   if(mode==='local'&&source.fallback!==false)return 'scryfall';
   if(deck.status!=='draft'&&face.compiled?.artOrigin)return face.compiled.artOrigin==='Scryfall selected printing'?'scryfall':'custom';
   return 'pending';
@@ -44,6 +47,19 @@ export function missingCustomArtistFaces(deck){
   }
   return missing;
 }
+//Rebase only the explicit credit edit when background work advances the deck revision.
+async function saveCustomArtCredit(deckId,path,patch){
+  for(let attempt=0;attempt<3;attempt++){
+    const current=await api('/api/decks/'+deckId);
+    const result=await api(path,{...patch,revision:current.revision}).then(
+      deck=>({deck}),error=>({error}));
+    if(!result.error)
+      return result.deck;
+
+    if(result.error.status!==409||attempt===2)
+      throw result.error;
+  }
+}
 export function ensureCustomArtCredits(deck){
   const missing=missingCustomArtistFaces(deck);
   if(!missing.length)return Promise.resolve(deck);
@@ -53,10 +69,9 @@ export function ensureCustomArtCredits(deck){
       const faceLabel=item.card.faces?.length>1&&item.face.name!==item.card.name?' · '+item.face.name:'';
       return `<label class="field"><span>${esc(item.card.name+faceLabel)}</span><input maxlength="300" data-custom-artist="${i}" placeholder="Artist name"></label>`;
     }).join('');
-    const host=modal('Credit the custom artwork',`<p class="muted">Bulk Proxy Forge cannot determine who created a custom image from the image itself, so it will not assume the selected printing’s illustrator. Choose how you want to credit the custom artwork before generating.</p><label class="check-line"><input type="radio" name="custom-artist-mode" id="custom-artist-one" value="one" checked><span>One artist for all custom artwork<small>Saved as this deck’s custom-art artist. Scryfall fallback images still keep their real printing artist.</small></span></label><div id="custom-artist-one-fields"><label class="field"><span>Artist name</span><input id="custom-artist-all" maxlength="300" placeholder="Artist name"></label></div><label class="check-line"><input type="radio" name="custom-artist-mode" id="custom-artist-each" value="each"><span>Specify the artist for each card<small>Useful when the custom images came from different artists.</small></span></label><div id="custom-artist-each-fields" class="hidden"><div class="stack">${rows}</div></div><div class="notice info">These credits apply only when custom artwork is actually used. If a card falls back to Scryfall artwork, its selected printing artist remains authoritative. You can also cancel and use the advanced per-card “Use original printing artist” option when that attribution is appropriate.</div>`,{size:'large',footer:'<button class="button quiet" id="custom-artist-cancel">Cancel</button><button class="button primary" id="custom-artist-apply">Save artist credits & continue</button>',onClose:()=>{if(!completed)resolve(null);return true;}});
+    const host=modal('Credit the custom artwork',`<p class="muted">Bulk Proxy Forge cannot determine who created a custom image from the image itself, so it will not assume the selected printing’s illustrator. Choose how you want to credit the custom artwork before generating.</p><label class="check-line"><input type="radio" name="custom-artist-mode" id="custom-artist-one" value="one" checked><span>One artist for all custom artwork<small>Saved as this deck’s custom-art artist. Scryfall fallback images still keep their real printing artist.</small></span></label><div id="custom-artist-one-fields"><label class="field"><span>Artist name</span><input id="custom-artist-all" maxlength="300" placeholder="Artist name"></label></div><label class="check-line"><input type="radio" name="custom-artist-mode" id="custom-artist-each" value="each"><span>Specify the artist for each card<small>Useful when the custom images came from different artists.</small></span></label><div id="custom-artist-each-fields" class="hidden"><div class="stack">${rows}</div></div><div class="notice info">These credits apply only when custom artwork is actually used. If a card falls back to Scryfall artwork, its selected printing artist remains authoritative.</div>`,{size:'large',dismissible:false,footer:'<button class="button primary" id="custom-artist-apply">Continue</button>',onClose:()=>completed});
     const refresh=()=>{const each=$('#custom-artist-each',host).checked;$('#custom-artist-one-fields',host).classList.toggle('hidden',each);$('#custom-artist-each-fields',host).classList.toggle('hidden',!each);};
     $$('input[name="custom-artist-mode"]',host).forEach(x=>x.onchange=refresh);refresh();
-    $('#custom-artist-cancel',host).onclick=closeModal;
     $('#custom-artist-apply',host).onclick=async()=>{
       const button=$('#custom-artist-apply',host);button.disabled=true;
       try{
@@ -64,17 +79,18 @@ export function ensureCustomArtCredits(deck){
         if($('#custom-artist-one',host).checked){
           const artist=$('#custom-artist-all',host).value.trim();
           if(!artist)throw new Error('Enter the artist name for the custom artwork.');
-          current=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:{artist}});
+          current=await saveCustomArtCredit(deck.id,'/api/decks/'+deck.id+'/save',{settings:{artist}});
         }else{
           const artists=$$('[data-custom-artist]',host).map(input=>input.value.trim());
           const blank=artists.findIndex(value=>!value);
           if(blank>=0)throw new Error('Enter an artist for '+missing[blank].card.name+'.');
           for(let i=0;i<missing.length;i++){
             const item=missing[i];
-            current=await api('/api/decks/'+deck.id+'/cards/'+item.card.id,{revision:current.revision,faceId:item.face.id,artistOverride:artists[i]});
+            current=await saveCustomArtCredit(deck.id,'/api/decks/'+deck.id+'/cards/'+item.card.id,{faceId:item.face.id,artistOverride:artists[i]});
+            deck=current;
           }
         }
-        completed=true;closeModal();resolve(current);
+        completed=true;closeModal({completed:true});resolve(current);
       }catch(e){errorBox($('.modal-body',host),e.message);button.disabled=false;}
     };
   });

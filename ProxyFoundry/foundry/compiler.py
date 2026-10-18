@@ -1,12 +1,19 @@
 """Adapter over unchanged v58 templates. Overrides are opt-in, never automatic guesses."""
 from __future__ import annotations
+from .timing import timed
 import copy,math,re
 from PIL import Image
 from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop_metrics,render_key,RARITIES,GENERATION_VERSION,PIPELINE_VERSION,stable_hash
 from .legacy import compiler as native,ingest
-from .images import data_uri
 from .credits import resolve_credit
-from .template_model import apply_regions
+from .template_model import apply_regions, select_variant
+from .land_frame import apply_compact_land_header,apply_textless_land_adjustments
+from . import werewolf_frame
+from .artifact_frame import apply_artifact_gray
+from .color_indicator import apply_color_indicator
+from . import nickname_special
+from . import rules_nicknames
+from .hybrid_frame import apply_hybrid_frame_treatment
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -17,12 +24,18 @@ native.DUAL_PALETTE['R']=(PINLINE_RED_HEX,native.DUAL_PALETTE['R'][1])
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
- {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
- {'id':'legend-land','name':'Crowned full art','description':'Existing legendary-land frame; crown removed for nonlegendary cards.','legendary':True,'groups':'ordinary'}]
+ # Soft retirement: restore this entry and remove RETIRED_BUILTINS to reconnect the rounded Temple land.
+ # {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
+ {'id':'legend-land','name':'Full-art land','description':'Compact full-art frame with independent legendary crowns and true-name bars.','legendary':True,'groups':'ordinary'}]
+RETIRED_BUILTINS={'land':'legend-land'}
 BUILTINS.extend([
- {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Complete alternate-name frame for cards and tokens.','legendary':True,'groups':['standard','legendary','token']},
+ {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
+ {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; a filled textbox whenever rules or flavor text is present.','legendary':True,'groups':['token']},
+ {'id':'token-borderless','name':'Modern borderless token','description':'Edge-to-edge artwork with outlined rules text and the modern token bars.','legendary':True,'groups':['token']},
+ {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Native alternate-name frames for cards, tokens, planeswalkers and double-faced cards.','legendary':True,'groups':['standard','legendary','token','planeswalker','transform-front','transform-back','modal-front','modal-back']},
  {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
 ])
+GODZILLA_DFC_GROUPS={'transform-front','transform-back','modal-front','modal-back'}
 SINGLE_SURFACE={'adventure','split','flip','room','prepare'}
 APPROVED_MODAL_DFC_PAIRS={
     ('Esika, God of the Tree','The Prismatic Bridge'),
@@ -41,7 +54,93 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':1,'godzilla-land':1}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':12,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
+for _group in ('land','legendary-land','basic-land'):AUTO_TEMPLATE_VERSIONS[_group]+=6
+for _choice in ('normal','land','legend-land','godzilla-card','godzilla-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
+for _choice in ('normal','land','legend-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
+AUTO_TEMPLATE_VERSIONS['token']=7
+AUTO_TEMPLATE_VERSIONS['station']=6
+#Poison trackers share the Day/Night and Experience title-only treatment.
+AUTO_TEMPLATE_VERSIONS['helper']=6
+AUTO_TEMPLATE_VERSIONS['emblem']+=1
+AUTO_TEMPLATE_VERSIONS['battle']+=1
+AUTO_TEMPLATE_VERSIONS['transform-back']+=1
+AUTO_TEMPLATE_VERSIONS['planeswalker']+=2
+# Classic hybrid cards use neutral bars/PT and split native body/rules textures.
+for _group in ('standard','legendary'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+BUILTIN_TEMPLATE_VERSIONS['normal']+=1
+for _group in ('class','saga','saga-creature'):
+    AUTO_TEMPLATE_VERSIONS[_group]+=3
+# Real-name addon bars now follow the shared two-color transition.
+for _group in AUTO_TEMPLATE_VERSIONS:
+    AUTO_TEMPLATE_VERSIONS[_group]+=1
+for _choice in BUILTIN_TEMPLATE_VERSIONS:
+    if not _choice.startswith('godzilla-'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
+# Refresh affected caches after exposing native color components.
+for _group in ('planeswalker','class','battle','flip','station','prepare','modal-front','modal-back'):
+    AUTO_TEMPLATE_VERSIONS[_group]=AUTO_TEMPLATE_VERSIONS.get(_group,1)+1
+for _choice in ('godzilla-card','godzilla-land'):
+    BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
+# True-name strips use the full title geometry, independent of mana clearance.
+for _group in AUTO_TEMPLATE_VERSIONS:
+    AUTO_TEMPLATE_VERSIONS[_group]+=1
+for _choice in BUILTIN_TEMPLATE_VERSIONS:
+    BUILTIN_TEMPLATE_VERSIONS[_choice]+=1
+AUTO_TEMPLATE_VERSIONS['station']+=1
+BUILTIN_TEMPLATE_VERSIONS['token-full-art']+=2
+# Refresh only this land family and saved selections of the retired family.
+for _group in ('land','legendary-land'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+# Native textless lands: basic subtitle clearance and original-dual type rim.
+for _group in ('land','basic-land'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+
+# Approved compact-land nonlegendary nickname join; refresh affected renders.
+AUTO_TEMPLATE_VERSIONS['land']+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+# Native material alpha also applies to recolored compact pinlines, in every
+# color count/header state. Invalidate stale renders using the old opaque fill.
+for _group in ('land','legendary-land'):AUTO_TEMPLATE_VERSIONS[_group]+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+
+# Basic nickname crop, then addon-only overlap trim; refresh cached renders.
+AUTO_TEMPLATE_VERSIONS['basic-land']+=4
+
+# Compact lands fit rules/flavor inside their visible panel, with native
+# pinline opacity and complete Godzilla title objects.
+for _group in ('land','legendary-land'):AUTO_TEMPLATE_VERSIONS[_group]+=7
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=7
+# Legendary lands without nicknames use the native Godzilla title under the
+# approved normal crown. Refresh only this automatic family and land selection.
+AUTO_TEMPLATE_VERSIONS['legendary-land']+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+# All compact lands retain the same native type/pinline material as legendary
+# lands; the nonlegendary solid-paint override is retired.
+AUTO_TEMPLATE_VERSIONS['land']+=1
+BUILTIN_TEMPLATE_VERSIONS['legend-land']+=1
+
+# Refresh the Godzilla selection so cached artifact renders acquire the new
+# neutral-gray material. Classic frames and land selections retain their keys.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Face color indicators now reserve space on the Godzilla type line.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Shared transform fronts and the native recessed color-indicator surround.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Joined transform crowns retain the native Godzilla material bevels.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Modern arrow-marked transform backs reserve a right-side icon opening.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Remove the reused red fringe from transform icon surrounds.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Consistent Godzilla title material, colored backs and circle-aware crowns.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Reverse-title bevels receive the same colored material as their centers.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Align the standalone DFC true-name text with its native strip.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Nicknamed legendary Werewolves now share the circle-compatible joined crown.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
+# Werewolf backs retain their native left-side moon in every header state.
+BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+=1
 
 # The visible M15 type bar centers about six pixels above CardConjurer's
 # type-text box center. Keep the symbol centered on the artwork, not the text box.
@@ -149,18 +248,9 @@ def fit_set_symbol_to_bounds(data,symbol,recipe=None):
 # Compatibility name for older tests/importers; behavior is now frame-agnostic.
 align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 
-# Full-art non-land cards use an inset card opening, not the land/full-canvas
-# center-crop geometry. The treatment is intentionally pixel-defined so the
-# result is stable across frame families: 80 px in from the top/left/right,
-# width-fit the source art, and top-align it. Any excess height falls below the
-# card and is naturally clipped by the canvas/frame.
-FULL_ART_NONLAND_INSET_PX=80
-FULL_ART_NONLAND_BOUNDS={
-    'x':FULL_ART_NONLAND_INSET_PX/native.CARD_WIDTH,
-    'y':FULL_ART_NONLAND_INSET_PX/native.CARD_HEIGHT,
-    'width':(native.CARD_WIDTH-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_WIDTH,
-    'height':(native.CARD_HEIGHT-2*FULL_ART_NONLAND_INSET_PX)/native.CARD_HEIGHT,
-}
+# Full-card artwork is composed before frame/text overlays. Bounds describe
+# the card canvas, never the shorter fitting window supplied by a frame pack.
+FULL_ART_NONLAND_BOUNDS={'x':0,'y':0,'width':1,'height':1}
 
 def _is_custom_art_origin(art_origin):
     return str(art_origin or '')!='Scryfall selected printing'
@@ -177,7 +267,7 @@ def apply_station_underframe_policy(data,sem,art_origin):
 
     Custom Station art is full-bleed, so the ordinary M15 Frame component must
     not sit behind the transparent portion of the Station overlay. Scryfall art
-    keeps a complete underframe: land for Planets, artifact for Spacecraft.
+    keeps the complete artifact underframe used by the native Station recipe.
     """
     frames=data.get('frames',[])
     components=[frame for frame in frames if _station_frame_component(frame)]
@@ -186,14 +276,13 @@ def apply_station_underframe_policy(data,sem,art_origin):
         data['frames']=[frame for frame in frames if not _station_frame_component(frame)]
         return True
     for frame in components:
-        land='Land' in sem.get('types',[])
-        frame['src']='/img/frames/m15/regular/m15Frame'+('L' if land else 'A')+'.png'
-        frame['name']='Land Frame' if land else 'Artifact Frame'
+        frame['src']='/img/frames/m15/regular/m15FrameA.png'
+        frame['name']='Artifact Frame'
     return True
 
 
 def build_station_land_data(sem,artist,autofit,flags,art_origin):
-    """Reuse native Station geometry with its land overlay and land accents."""
+    """Reuse the normal native Station frame and geometry for Station lands."""
     donor=copy.deepcopy(sem)
     # The preserved Spacecraft recipe requires donor PT, cleared below for lands.
     donor.update(types=['Artifact'],subtypes=['Spacecraft'],layout='station',
@@ -204,12 +293,37 @@ def build_station_land_data(sem,artist,autofit,flags,art_origin):
         raise ValidationError(str(exc)) from exc
     data['text']['type']['text']=sem['printed_type_line']
     data['text']['pt']['text']=''
-    for frame in data['frames']:
-        if native._is_station_base_overlay(frame):
-            frame.update(src='/img/frames/station/L.png',name='Station Land Frame')
     apply_station_underframe_policy(data,sem,art_origin)
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return sem,data,'station'
+
+
+def apply_station_textbox_transparency(data,sem,art_origin):
+    """Replace the custom-art textbox instead of stacking translucent frame fills."""
+    if not _is_custom_art_origin(art_origin):return False
+    if any(frame.get('name')=='Station Textbox Cutout' for frame in data.get('frames',[]) if isinstance(frame,dict)):return False
+    frames=[]
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):frames.append(frame);continue
+        src=str(frame.get('src',''))
+        if src.startswith(('/img/frames/station/','/img/frames/m15/regular/')) and frame.get('masks'):
+            masks=[mask for mask in frame['masks'] if mask.get('name')!='Rules']
+            if not masks:continue
+            frame=copy.deepcopy(frame);frame['masks']=masks
+        frames.append(frame)
+    base=next((i for i,frame in enumerate(frames) if isinstance(frame,dict) and frame.get('src')=='/img/frames/station/a.png' and not frame.get('masks')),None)
+    if base is None:return False
+    mask={'name':'Rules','src':'/img/frames/m15/regular/m15MaskRules.png'}
+    code=frame_treatment_code(sem)
+    source=_frame_effect_source('/img/frames/station/a.png',code)
+    #Frames draw bottom-to-top. Clear only the frame canvas, then draw the
+    #upstream textbox once at its native alpha; Station badges draw separately.
+    frames[base:base]=[
+        {'name':'Station Textbox','src':source,'masks':[copy.deepcopy(mask)]},
+        {'name':'Station Textbox Cutout','src':'/img/black.png','masks':[copy.deepcopy(mask)],'erase':True},
+    ]
+    data['frames']=frames
+    return True
 
 
 def apply_prepare_frame_color(data,sem):
@@ -228,7 +342,7 @@ def apply_prepare_frame_color(data,sem):
             frame['name']=f'{native.COLOR_NAMES[body]} Prepare Frame'
     return True
 
-_FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)'}
+_FRAME_BOX_MASKS={'Title','Type','Rules','Text','Text (Right)','Prepare Spell','Prepare Spell Type/Title','Rules (Right Half)'}
 _FRAME_PINLINE_MASK='Pinline'
 
 def frame_treatment_colors(sem):
@@ -253,6 +367,13 @@ def frame_treatment_code(sem):
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
+    match=re.fullmatch(r'/img/frames/token/m15/(regular|textless)/[wubrgmal]\.png',src)
+    if match:return f'/img/frames/token/m15/{match.group(1)}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
+    match=re.fullmatch(r'/img/frames/token/(regular|textless|textless-borderless)/(?:tokenFrame[WUBRGMAL](?:Regular|Textless)|frameC)\.png',src)
+    if match:
+        family=match.group(1)
+        filename='frameC.png' if code=='C' else f'tokenFrame{code}{"Regular" if family=="regular" else "Textless"}.png'
+        return f'/img/frames/token/{family}/{filename}'
 
     # Prepare uses one native color image with different masks for its bars,
     # rules, and body. The body remains owned by the structural recipe.
@@ -285,10 +406,25 @@ def _frame_effect_source(src,code):
         return f'/img/frames/saga/creature/{code.lower()}.png' if code in 'WUBRGMAL' else src
 
     # Full-art land and planeswalker families.
+    if re.fullmatch(r'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame[WUBRGMAL]\.png',src):
+        return f'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame{"L" if code=="C" else code}.png'
+    if re.fullmatch(r'/img/frames/proxy-foundry/planeswalker/FrameTall[WUBRGMAL]\.png',src):
+        return f'/img/frames/proxy-foundry/planeswalker/FrameTall{"L" if code=="C" else code}.png'
+    if re.fullmatch(r'/img/frames/modal/nickname/[wubrgma][fb]\.png',src):
+        return f'/img/frames/modal/nickname/{("A" if code=="C" else code).lower()}{src[-5]}.png'
     if re.fullmatch(r'/img/frames/m15/genericShowcase/m15GenericShowcaseFrame[WUBRGMALC]\.png',src):
         return f'/img/frames/m15/genericShowcase/m15GenericShowcaseFrame{code}.png' if code in 'WUBRGMALC' else src
     if re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame[WUBRGMA]\.png',src):
         return f'/img/frames/planeswalker/regular/planeswalkerFrame{code}.png' if code in 'WUBRGMA' else src
+    if re.fullmatch(r'/img/frames/planeswalker/tall/planeswalkerTall[WUBRGMA]\.png',src):
+        return f'/img/frames/planeswalker/tall/planeswalkerTall{code}.png' if code in 'WUBRGMA' else src
+    for family in ('station','m15/flip','modal/regular','modal/regular/back'):
+        if re.fullmatch(r'/img/frames/'+family+r'/[wubrgmalc]\.png',src):
+            # Station has a neutral artifact asset, not a separate land/void variant.
+            target='A' if family=='station' and code in 'LC' else code
+            return f'/img/frames/{family}/{target.lower()}.png' if target in 'WUBRGMALC' else src
+    if re.fullmatch(r'/img/frames/m15/nickname/m15NicknameFrame[WUBRGMAL]\.png',src):
+        return f'/img/frames/m15/nickname/m15NicknameFrame{code}.png' if code in 'WUBRGMAL' else src
 
     # Compact full-art-land accents.
     m=re.fullmatch(r'/img/frames/m15/boxTopper/short/([wubrgmal]{1,2})\.png',src)
@@ -313,8 +449,10 @@ def _crown_color_variant(src,code):
     one-off decorative crowns. Only complete legendary-crown color families
     belong here.
     """
-    if code not in 'WUBRGMALC':return None
+    if not code or code not in 'WUBRGMALC':return None
     src=str(src or '')
+    generated=re.fullmatch(r'(/img/frames/proxy-foundry/godzilla/Crown(?:Joined)?)([WUBRGMAL])(\.png)',src)
+    if generated and code in 'WUBRGMAL':return generated.group(1)+code+generated.group(3)
     lower=code.lower()
     lowered=src.lower()
 
@@ -409,7 +547,14 @@ def _dual_crown_layers_like(frame,dual):
 
     # Academy-Ruins/full-art floating crown: use the exact old floating helper.
     if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',src):
-        return native.build_floating_land_crown_layers([first,second])
+        layers=native.build_floating_land_crown_layers([first,second])
+        # A planeswalker places this native crown higher than the land recipe.
+        # Keep the caller's position when expanding it into two color layers.
+        dy=float((frame.get('bounds') or {}).get('y',.0191))-.0191
+        if dy:
+            for layer in layers:
+                if isinstance(layer.get('bounds'),dict):layer['bounds']['y']+=dy
+        return layers
 
     # Preserve the alternate floating geometry/assets if a custom frame uses it.
     m=re.fullmatch(r'/img/frames/m15/crowns/m15Crown([WUBRGMALC])FloatingAlt\.png',src)
@@ -449,6 +594,57 @@ def _dual_crown_layers_like(frame,dual):
 
     return [copy.deepcopy(frame)]
 
+_CORRECTED_PINLINE_MASKS={
+    '/img/frames/planeswalker/regular/planeswalkerMaskPinline.png':'/img/frames/proxy-foundry/planeswalker/MaskPinlineRegular.png',
+    '/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png':'/img/frames/proxy-foundry/planeswalker/MaskPinlineClassicTall.png',
+    '/img/frames/class/masks/maskPinlines.png':'/img/frames/proxy-foundry/masks/class-pinline.png',
+    '/img/frames/saga/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/saga-pinline.png',
+    '/img/frames/saga/creature/masks/sagaMaskPinline.png':'/img/frames/proxy-foundry/masks/creature-saga-pinline.png',
+}
+
+
+def expose_native_frame_components(data,sem):
+    """Keep complete bases; expose only native overlays that need another color."""
+    colors=frame_treatment_colors(sem);code=frame_treatment_code(sem)
+    rebuilt=[]
+    # Only overlays ABOVE this base can supply its visible components.
+    existing=set()
+    for frame in data.get('frames',[]):
+        if isinstance(frame,dict):existing.update(m.get('src') for m in frame.get('masks',[]) if isinstance(m,dict))
+        src=str(frame.get('src','')) if isinstance(frame,dict) else ''
+        masks={}
+        if not isinstance(frame,dict) or frame.get('masks'):
+            rebuilt.append(frame);continue
+        if re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame[WUBRGMA]\.png',src):
+            masks={name:f'/img/frames/planeswalker/regular/planeswalkerMask{name}.png' for name in ('Pinline','Title','Type')}
+        elif re.fullmatch(r'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame[WUBRGMAL]\.png',src):
+            masks={'Pinline':'/img/frames/proxy-foundry/planeswalker/MaskPinlineNickname.png'}
+        elif re.fullmatch(r'/img/frames/proxy-foundry/planeswalker/FrameTall[WUBRGMAL]\.png',src):
+            masks={'Pinline':'/img/frames/proxy-foundry/planeswalker/MaskPinlineTall.png'}
+        elif re.fullmatch(r'/img/frames/modal/nickname/[wubrgma][fb]\.png',src):
+            masks={'Pinline':'/img/frames/modal/nickname/pinline.svg'}
+        elif re.fullmatch(r'/img/frames/planeswalker/tall/planeswalkerTall[WUBRGMA]\.png',src):
+            masks={'Pinline':'/img/frames/planeswalker/tall/planeswalkerTallMaskPinline.png','Title':'/img/frames/planeswalker/regular/planeswalkerMaskTitle.png','Type':'/img/frames/planeswalker/tall/planeswalkerTallMaskType.png'}
+        elif re.fullmatch(r'/img/frames/class/[wubrgmal]\.png',src):
+            masks={name:f'/img/frames/class/masks/mask{("Pinlines" if name=="Pinline" else name)}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/battle/[wubrgmalc]\.png',src):
+            masks={name:f'/img/frames/m15/battle/mask{name}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/flip/[wubrgmalc]\.png',src):
+            masks={'Pinline':'/img/frames/m15/flip/pinline.svg'}
+        elif re.fullmatch(r'/img/frames/station/[wubrgmalc]\.png',src):
+            masks={name:f'/img/frames/m15/regular/m15Mask{name}.png' for name in ('Pinline','Title','Type','Rules')}
+        elif re.fullmatch(r'/img/frames/m15/nickname/m15NicknameFrame[WUBRGMAL]\.png',src):
+            masks={'Pinline':'/img/frames/m15/regular/m15MaskPinlineSuper.png','Type':'/img/frames/m15/regular/m15MaskType.png','Rules':'/img/frames/m15/regular/m15MaskRules.png'}
+        for name,mask_src in masks.items():
+            mask_src=_CORRECTED_PINLINE_MASKS.get(mask_src,mask_src)
+            if mask_src in existing:continue
+            if not (name=='Pinline' and len(colors)==2) and _frame_effect_source(src,code)==src:continue
+            layer=copy.deepcopy(frame);layer['name']=name+' Color Overlay';layer['masks']=[{'name':name,'src':mask_src}]
+            rebuilt.append(layer);existing.add(mask_src)
+        rebuilt.append(frame)
+    data['frames']=rebuilt
+
+
 def apply_universal_frame_color_treatment(data,sem):
     """Apply the five shared color effects once, after structural frame selection.
 
@@ -467,7 +663,13 @@ def apply_universal_frame_color_treatment(data,sem):
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
     dual=native.canonical_dual_color_order(colors) if len(colors)==2 else []
-    if not code and not dual:return False
+    if not code and not dual and not frame_treatment_code(sem.get('prepared_spell',{})):return False
+
+    for frame in data.get('frames',[]):
+        if not isinstance(frame,dict):continue
+        for mask in frame.get('masks',[]):
+            if isinstance(mask,dict):mask['src']=_CORRECTED_PINLINE_MASKS.get(mask.get('src'),mask.get('src'))
+    expose_native_frame_components(data,sem)
 
     source_frames=data.get('frames',[])
     preserved_dual_crown_families=_old_dual_crown_families(source_frames) if dual else set()
@@ -477,13 +679,22 @@ def apply_universal_frame_color_treatment(data,sem):
             rebuilt.append(frame);continue
 
         old_src=str(frame.get('src',''))
+        effect_sem=sem.get('prepared_spell',sem) if any('Prepare Spell' in str(m.get('name','')) or m.get('name')=='Rules (Right Half)' for m in frame.get('masks',[]) if isinstance(m,dict)) else sem
+        effect_colors=frame_treatment_colors(effect_sem)
+        effect_code=frame_treatment_code(effect_sem)
+        if effect_sem is not sem and not effect_code:effect_code='A'
+        effect_dual=native.canonical_dual_color_order(effect_colors) if len(effect_colors)==2 else []
 
         # A card can contain multiple independent crown components. Process
         # each native color family independently, just as pinlines are handled
         # independently by their masks.
         crown_family=_crown_family_key(old_src)
         if crown_family:
-            if dual:
+            if len(colors)==3 and 'Land' in set(sem.get('types',[])) and '/proxy-foundry/godzilla/' in old_src:
+                if crown_family not in dualized_crown_families:
+                    rebuilt.extend(_nickname_bar_layers(frame,sem))
+                    dualized_crown_families.add(crown_family);changed=True
+            elif dual:
                 if crown_family in preserved_dual_crown_families:
                     rebuilt.append(copy.deepcopy(frame))
                 elif crown_family not in dualized_crown_families:
@@ -535,7 +746,7 @@ def apply_universal_frame_color_treatment(data,sem):
             layer=copy.deepcopy(frame)
             layer['masks']=boxes
             old=str(layer.get('src',''))
-            layer['src']=_frame_effect_source(old,code)
+            layer['src']=_frame_effect_source(old,effect_code)
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
@@ -544,13 +755,13 @@ def apply_universal_frame_color_treatment(data,sem):
             layer=copy.deepcopy(frame)
             layer['masks']=pin
             old=str(layer.get('src',''))
-            if dual:
-                first,second=dual
+            if effect_dual:
+                first,second=effect_dual
                 layer['src']=native.dual_gradient_fill_src(first,second)
-                saga=any('/saga/' in str(mask.get('src','')) for mask in pin)
+                saga=any('/saga/' in str(mask.get('src','')) or str(mask.get('src','')).endswith(('masks/saga-pinline.png','masks/creature-saga-pinline.png')) for mask in pin)
                 layer['name']=f"{native.COLOR_NAMES[first]}/{native.COLOR_NAMES[second]} Gradient "+('Saga Pinline' if saga else 'Pinline')
             else:
-                layer['src']=_frame_effect_source(old,code)
+                layer['src']=_frame_effect_source(old,effect_code)
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
@@ -593,25 +804,12 @@ def apply_miracle_frame(data,sem):
     return True
 
 def full_art_nonland_placement(art):
-    """Cover the 80px-inset full-art area and center only overflowing axes."""
-    iw=float(art.get('width') or 0)
-    ih=float(art.get('height') or 0)
-    if iw<=0 or ih<=0:raise ValidationError('Artwork dimensions are missing.')
-    inset=FULL_ART_NONLAND_INSET_PX
-    inner_w=native.CARD_WIDTH-2*inset
-    inner_h=native.CARD_HEIGHT-2*inset
-    zoom=max(inner_w/iw,inner_h/ih)
-    scaled_w=iw*zoom
-    scaled_h=ih*zoom
-    x=inset if scaled_w<=inner_w+1e-9 else (native.CARD_WIDTH-scaled_w)/2
-    y=inset if scaled_h<=inner_h+1e-9 else (native.CARD_HEIGHT-scaled_h)/2
-    return {
-        'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS),
-        'artX':x/native.CARD_WIDTH,
-        'artY':y/native.CARD_HEIGHT,
-        'artZoom':zoom,
-        'artRotate':'0',
-    }
+    """Cover the full card and center only overflowing source axes."""
+    data={'width':native.CARD_WIDTH,'height':native.CARD_HEIGHT,
+          'artBounds':copy.deepcopy(FULL_ART_NONLAND_BOUNDS)}
+    cover_art_window(data,art)
+    return {key:data[key] for key in ('artBounds','artX','artY','artZoom','artRotate')}
+
 
 _SOURCE_AWARE_FULL_ART_RECIPES={'colorless_creature','colorless_creature_legendary'}
 
@@ -630,7 +828,7 @@ def apply_source_aware_art_placement(data,art,sem,recipe,group,art_origin,autofi
     its native CardConjurer placement for every supported family, including
     tall-textbox Planeswalkers.
 
-    Custom artwork uses the common 80px-inset full-art region and the same
+    Custom artwork uses the full card canvas and the same
     centered-overflow placement math across all supported frame families.
     """
     if raw_card or not source_aware_art_family(sem,recipe,group):return None
@@ -713,6 +911,7 @@ def semantic(sf,face,index=0):
     type_line=get('type_line')
     types=ingest.split_type_line(type_line)
     d={**types,'name':get('name'),'nickname':str(get('flavor_name','') or '').strip(),'mana_cost':get('mana_cost'),'oracle_text':get('oracle_text'),'colors':get('colors',[]),'keywords':get('keywords',[]),'rarity':sf.get('rarity','common'),'flavor_text':normalize_scryfall_inline_italics(get('flavor_text'))}
+    d['nickname']=rules_nicknames.effective_nickname(d['name'],d['nickname'])
     d['supertypes']=[word for word in str(type_line).replace('—',' - ').replace('–',' - ').partition(' - ')[0].split() if word in {'Basic','Legendary','Snow','World','Token'}]
     d['printed_type_line']=str(type_line)
     d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
@@ -733,7 +932,10 @@ def semantic(sf,face,index=0):
     if sf.get('layout')=='prepare':
         faces=sf.get('card_faces',[])
         if len(faces)!=2:raise ValidationError('Prepare cards need the host and prepared spell.')
-        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[]},faces[1]);d['scryfall_layout']='prepare'
+        # Prepared spells have their own colors, independent of the host.
+        spell=faces[1]
+        spell_colors=spell.get('colors',spell.get('color_indicator',[c for c in 'WUBRG' if re.search(r'\{[^}]*'+c+r'[^}]*\}',str(spell.get('mana_cost','')))]))
+        d['prepared_spell']=semantic({**sf,'layout':'normal','card_faces':[],'colors':spell_colors},spell);d['scryfall_layout']='prepare'
     if sf.get('layout')=='flip':
         faces=sf.get('card_faces',[])
         if len(faces)!=2:raise ValidationError('Flip cards need the upright and rotated lower face.')
@@ -983,7 +1185,10 @@ def _apply_transform_frame(data,side,sem,card):
         title['width']=0.7547
         if side=='back':title['color']='white'
     icon=_transform_icon_for(card,side)
-    if icon:data['frames'].insert(0,icon)
+    #The regular back already has its right-side transform marker. The older
+    #land badge has no matching left opening and otherwise covers the title.
+    if icon and not (side=='back' and icon['src'].endswith('/icons/land.svg')):
+        data['frames'].insert(0,icon)
     if side=='front':
         text.setdefault('reminder',{'name':'Reverse PT','text':'','x':0.086,'y':0.842,'width':0.838,'height':0.0362,
                                     'size':0.0291,'oneLine':True,'color':'#666','align':'right','font':'belerenbsc'})
@@ -1261,14 +1466,6 @@ def _battle_frame_code(sem):
     return 'C'
 
 
-_TOKEN_REGULAR_MASKS=[
-    {'src':'/img/frames/token/tokenMaskRegularPinline.png','name':'Pinline'},
-    {'src':'/img/frames/m15/regular/m15MaskTitle.png','name':'Title'},
-    {'src':'/img/frames/token/tokenMaskRegularType.png','name':'Type'},
-    {'src':'/img/frames/token/tokenMaskRegularRules.png','name':'Rules'},
-    {'src':'/img/frames/m15/regular/m15MaskBorder.png','name':'Border'},
-    {'src':'/img/frames/token/regular/bevel.svg','name':'Bevel'},
-]
 _TOKEN_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
 _TOKEN_ART_BOUNDS={'x':0.04,'y':0.0286,'width':0.92,'height':0.8953}
 _TOKEN_M15_ART_WINDOW_BOUNDS={'x':0.0767,'y':0.1248,'width':0.8476,'height':0.5143}
@@ -1277,10 +1474,12 @@ _TOKEN_WATERMARK_BOUNDS={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472}
 
 def fit_token_art(data,art_local_path,autofit=True):
     """Fit token artwork to the visible art window for the active token frame."""
+    version=str(data.get('version') or '')
     bounds=(
-        _TOKEN_M15_ART_WINDOW_BOUNDS
-        if str(data.get('version') or '')=='tokenRegularM15'
-        else _TOKEN_ART_BOUNDS
+        _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
+        {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
+        {'x':0,'y':0,'width':1,'height':1} if version=='tokenTextlessBorderless' else
+        _TOKEN_ART_BOUNDS
     )
     data['artBounds']=copy.deepcopy(bounds)
     if autofit:
@@ -1316,8 +1515,8 @@ def _token_frame_src(code):
 def _token_pt_src(code):
     return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
 
-def build_token_data(sem,artist,autofit,flags):
-    """Build normal Scryfall tokens with CardConjurer's genuine Token Regular pack."""
+def build_token_data(sem,artist,autofit,flags,style='token-classic'):
+    """Build tokens using the selected genuine CardConjurer token family."""
     types=set(sem.get('types',[]))
     creature='Creature' in types
     base=copy.deepcopy(sem)
@@ -1380,7 +1579,7 @@ def build_token_data(sem,artist,autofit,flags):
     frames.append({
         'name':f'{cname} Token Frame',
         'src':_token_frame_src(code),
-        'masks':copy.deepcopy(_TOKEN_REGULAR_MASKS),
+        'masks':[],
     })
     data['frames']=frames
     data['version']='tokenRegular'
@@ -1421,12 +1620,72 @@ def build_token_data(sem,artist,autofit,flags):
         'oneLine':True,'align':'center',
     })
 
+    short=token_has_short_text(sem)
+    configure_token_style(data,code,style,short)
     fit_token_art(data,sem['art_local_path'],autofit)
-    return base,data,'token_regular'
+    return base,data,('token_regular' if style=='token-full-art' and data['version']=='tokenRegular' else style.replace('-','_')+('_short' if short else '_rules'))
+
+
+def token_has_short_text(sem):
+    # Only compact plain keywords qualify. Activated abilities, reminder text,
+    # multiple lines and flavor always retain the larger rules area.
+    rules=str(sem.get('oracle_text') or '').strip()
+    return not sem.get('flavor_text') and len(rules)<=24 and not any(c in rules for c in '\n{}():')
+
+
+def center_short_token_rules(data):
+    text=data.get('text',{});rules=text.get('rules') or {}
+    content=str(rules.get('text') or '').strip()
+    if content and token_has_short_text({'oracle_text':content,'flavor_text':(text.get('flavor') or {}).get('text')}):
+        rules['align']='center'
+
+
+def configure_token_style(data,code,style,short):
+    classic=style=='token-classic'
+    borderless=style=='token-borderless'
+    large_art=short or borderless
+    #Black body text needs the filled native textbox even for one keyword.
+    if style=='token-full-art':large_art=not str(data['text']['rules'].get('text') or '').strip()
+    family='textless' if large_art else 'regular'
+    frame=next(f for f in reversed(data['frames']) if str(f.get('src','')).startswith('/img/frames/token/'))
+    if not classic and not large_art:frame['src']=_token_frame_src(code)
+    pinline='/img/frames/token/tokenMaskRegularPinline.png'
+    if classic:
+        frame['src']=f'/img/frames/token/m15/{family}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
+        pinline=f'/img/frames/token/m15/{family}/pinline.svg'
+    elif large_art:
+        folder='textless-borderless' if borderless else 'textless'
+        frame['src']=f'/img/frames/token/{folder}/'+('frameC.png' if code=='C' else f'tokenFrame{code}Textless.png')
+        pinline='/img/frames/token/tokenMaskTextlessPinline.png'
+    # These packs contain complete textured frames. Combining their editor
+    # masks cuts out much of that texture; keep the whole image as the base.
+    # Only multicolor tokens need a separate pinline layer for the shared dual
+    # gradient treatment. It sits above the complete native multicolor frame.
+    frame['masks']=[]
+    if code=='M':
+        data['frames'].insert(data['frames'].index(frame),{
+            'name':'Token Pinline','src':frame['src'],
+            'masks':[{'src':pinline,'name':'Pinline'}],
+        })
+    data['version']=('tokenTextlessM15' if large_art else 'tokenRegularM15') if classic else ('tokenTextlessBorderless' if borderless else 'tokenTextless' if large_art else 'tokenRegular')
+    text=data['text']
+    if large_art:
+        text['type']['y']=0.8196
+        data['setSymbolBounds']['y']=0.8439
+        data['watermarkBounds']={'x':-1,'y':-1,'width':0.0007,'height':0.0005}
+        text['rules'].update(x=0.086,y=0.875,width=0.65,height=0.043,size=0.026,oneLine=True,align='center')
+        if borderless and not short:
+            text['rules'].update(y=0.62,width=0.828,height=0.18,size=0.0324,oneLine=False,align='left')
+    if classic:
+        for field in text.values():
+            field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
+        text['title']['color']='#fde367'
+    elif style=='token-full-art':apply_modern_token_text(data,code)
+    else:apply_full_art_text(data)
 
 
 def build_emblem_data(sem,artist,autofit,flags):
-    """Build an emblem using CardConjurer's complete native Emblem frame."""
+    """Use the native neutral bars without the large emblem-symbol art overlay."""
     # The preserved compiler has no Emblem recipe. Use an ordinary card only
     # for its shared metadata/text structures, then replace the whole frame and
     # every layout field that differs in CardConjurer's Emblem pack.
@@ -1438,8 +1697,8 @@ def build_emblem_data(sem,artist,autofit,flags):
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
     data.update(version='emblem',
-                frames=[{'name':'Emblem Frame','src':'/img/frames/token/emblem/frame.png','masks':[]}],
-                artBounds={'x':0.142,'y':0.0496,'width':0.716,'height':0.8548},
+                frames=[{'name':'Emblem Frame','src':'/img/frames/proxy-foundry/emblem/frame-no-symbol.png','masks':[]}],
+                artBounds=copy.deepcopy(_TOKEN_ART_BOUNDS),
                 setSymbolBounds={'x':0.9213,'y':0.7043,'width':0.12,'height':0.041,
                                  'vertical':'center','horizontal':'right'},
                 watermarkBounds={'x':0.5,'y':0.8177,'width':0.75,'height':0.1472})
@@ -1458,6 +1717,69 @@ def build_emblem_data(sem,artist,autofit,flags):
                          size=0.0372,font='belerenbsc',oneLine=True,align='center')
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return sem,data,'emblem'
+
+
+def build_custom_helper_data(sem,artist,autofit,flags):
+    """Put helper titles and rules over custom full-card artwork."""
+    # Reuse the approved floating bars and rules panel from the full-art land
+    # recipe, while preserving the helper's actual Card type and face text.
+    donor=copy.deepcopy(sem)
+    donor.update(types=['Land'],subtypes=[],legendary=False,colors=[],
+                 land_colors=[],layout='land_full_single')
+    try:
+        data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
+    except native.BuildError as exc:
+        raise ValidationError(str(exc)) from exc
+    data['text']['type']['text']=str(sem.get('printed_type_line') or 'Card')
+    data['text']['mana']['text']=''
+    data['text'].setdefault('pt',{})['text']=''
+    data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+    apply_full_art_text(data)
+    if autofit:native.auto_fit(data,sem['art_local_path'])
+    return sem,data,'helper_full_art'
+
+
+def apply_unboxed_helper_treatment(data,sem,nickname):
+    """Use the native Godzilla title and readable text over softly shaded art."""
+    bounds=copy.deepcopy(_NICKNAME_TITLE_BOUNDS)
+    bounds['height']=.1053 if nickname else .069
+    svg='''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2100">
+      <defs><linearGradient id="helperFade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="black" stop-opacity="0"/>
+        <stop offset="0.12" stop-color="black" stop-opacity="0.45"/>
+        <stop offset="0.30" stop-color="black" stop-opacity="0"/>
+        <stop offset="0.54" stop-color="black" stop-opacity="0"/>
+        <stop offset="0.69" stop-color="black" stop-opacity="0.66"/>
+        <stop offset="0.90" stop-color="black" stop-opacity="0.84"/>
+        <stop offset="1" stop-color="black" stop-opacity="0.84"/>
+      </linearGradient></defs><rect width="1500" height="2100" fill="url(#helperFade)"/>
+    </svg>'''
+    data['frames']=[
+        {'name':'Godzilla helper title','src':'/img/frames/proxy-foundry/godzilla/'+('TitleJoined' if nickname else 'Title')+'W.png',
+         'masks':[],'bounds':bounds},
+        {'name':'Soft helper text fade','src':'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg),'masks':[]},
+    ]
+    fields=data['text'];fields.pop('type',None)
+    main=fields['nickname' if nickname else 'title']
+    main.update(x=.0854,y=.0522,width=.8292,height=.0543,size=.0381,
+                font='belerenb',align='center',color='white',outlineColor='black',
+                outlineWidth=.0015,shadowX=0,shadowY=0)
+    if nickname:
+        fields['title'].update(x=.14,y=.1129,width=.72,height=.0243,size=.0229,
+                               font='mplantini',align='center',outlineWidth=.0015,shadowX=0,shadowY=0)
+    rules=fields['rules']
+    rules.update(x=.086,y=.665,width=.828,height=.25,size=.0305,font='mplantin',
+                 align='center',color='white',outlineColor='black',outlineWidth=.0015,
+                 shadowX=0,shadowY=0)
+    text=str(rules.get('text') or '')
+    # Day's introductory reminder is separate from its two main rules.
+    if sem.get('name') in {'Day','Night'} and text.startswith('('):
+        reminder,separator,rest=text.partition('\n')
+        if separator and reminder.endswith(')'):
+            rules['text']=rest
+            fields['reminder']={**rules,'name':'Day/night reminder',
+                'text':'{i}'+reminder[1:-1]+'{/i}',
+                'y':.163 if nickname else .125,'height':.13,'size':.0255}
 
 
 def build_art_series_data(sem,artist,flags,recipe='art_series_scan'):
@@ -1514,14 +1836,6 @@ def build_battle_data(sem,card,artist,autofit,flags):
         'masks':[],
     }]
 
-    reverse_pt=''
-    faces=card.get('card_faces') or []
-    if len(faces)>1:
-        power=faces[1].get('power')
-        toughness=faces[1].get('toughness')
-        if power is not None and toughness is not None:
-            reverse_pt=f'{power}/{toughness}'
-
     rules=native.italicize_dash_labels(sem.get('oracle_text',''))
     if sem.get('flavor_text'):
         rules+=('{flavor}' if rules else '')+str(sem['flavor_text'])
@@ -1564,7 +1878,8 @@ def build_battle_data(sem,card,artist,autofit,flags):
             'size':(0.0362*2100)/1500,
         },
         'reminder':{
-            'name':'Reverse PT','text':reverse_pt,
+            #The optional reverse-side PT has no reserved area in this rules box.
+            'name':'Reverse PT','text':'',
             'x':257/2100,'y':1219/1500,'width':1667/2100,'height':43/1500,
             'size':(0.0291*2100)/1500,'oneLine':True,'color':'#666',
             'align':'right','font':'belerenbsc',
@@ -1595,14 +1910,14 @@ _CLASS_MIN_FONT_SIZE=0.024
 _CLASS_FONT_STEP=0.0005
 
 
-def _shared_class_text_layout(texts):
+def _shared_class_text_layout(texts, start_y=_CLASS_TEXT_START_Y):
     """Balance Class separators so all ability text can share one font size."""
     if not texts:
         return {'heights':[],'size':_CLASS_ABILITY_FONT_SIZE,'required':[],'lines':[]}
 
     separator_px=max(0,len(texts)-1)*_CLASS_SEPARATOR_HEIGHT*native.CARD_HEIGHT
     available_total=int(round(
-        (_CLASS_TEXT_END_Y-_CLASS_TEXT_START_Y)*native.CARD_HEIGHT-separator_px
+        (_CLASS_TEXT_END_Y-start_y)*native.CARD_HEIGHT-separator_px
     ))
     if available_total<=0:
         raise ValidationError('Class ability region has no usable text height.')
@@ -1828,7 +2143,7 @@ def apply_approved_modal_dfc_semantics(data,sem,sf,index):
 _NICKNAME_TITLE_BOUNDS={'x':0.0494,'y':0.0405,'width':0.9014,'height':0.1053}
 _NICKNAME_CROWN_BOUNDS={'x':0.024,'y':0.0172,'width':0.952,'height':0.1286}
 _NICKNAME_PT_BOUNDS={'x':0.7573,'y':0.8848,'width':0.188,'height':0.0733}
-_NICKNAME_ART_BOUNDS={'x':0,'y':0,'width':1,'height':0.9224}
+_NICKNAME_ART_BOUNDS=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
 _NICKNAME_SYMBOL_BOUNDS={'x':0.9213,'y':0.591,'width':0.12,'height':0.041,'vertical':'center','horizontal':'right'}
 _NICKNAME_WATERMARK_BOUNDS={'x':0.5,'y':0.7762,'width':0.75,'height':0.2305}
 
@@ -1837,17 +2152,96 @@ def _nickname_code(sem):
     if code and code in 'WUBRGMAL':return code
     return 'C'
 
-def _nickname_title_src(code,complete=False):
-    if code=='C':
-        return ('/img/frames/m15/nickname/m15NicknameTitleA.png' if complete
-                else '/img/frames/m15/nickname/addons/m15NicknameTitleC.png')
-    return f'/img/frames/m15/nickname/m15NicknameTitle{code}.png'
+def _nickname_bar_variant(src,code):
+    if code not in 'WUBRGMAL':return None
+    match=re.fullmatch(r'(/img/frames/(?:proxy-foundry/godzilla/(?:Title|Crown)(?:Joined)?|proxy-foundry/compact-land/TrueName|m15/nickname/addons/m15NicknameTitle))([WUBRGMAL])(\.png)',str(src or ''))
+    return match.group(1)+code+match.group(3) if match else None
 
-def _nickname_crown_src(code,complete=False):
-    if code=='C':
-        return ('/img/frames/m15/nickname/m15NicknameCrownA.png' if complete
-                else '/img/frames/m15/nickname/smooth/c.png')
-    return f'/img/frames/m15/nickname/m15NicknameCrown{code}.png'
+
+def _nickname_gradient_domain(data):
+    # SVG title rims use their stroked shape's object bounding box. Native
+    # pinline masks and crown blends already use full-card coordinates.
+    import xml.etree.ElementTree as ET
+    for frame in data.get('frames',[]):
+        src=str(frame.get('src',''))
+        if 'Title Bar' not in str(frame.get('name','')) or not src.startswith('data:image/svg'):continue
+        root=ET.fromstring(native.urllib.parse.unquote(src.split(',',1)[1]))
+        view=[float(v) for v in root.attrib['viewBox'].split()]
+        shape=next((node for node in root.iter() if node.get('stroke')=='url(#rim)'),None)
+        if shape is None:continue
+        bounds=frame.get('bounds',{})
+        left=bounds.get('x',0)+bounds.get('width',1)*(float(shape.get('x',0))-view[0])/view[2]
+        width=bounds.get('width',1)*float(shape.get('width',view[2]))/view[2]
+        return left,left+width
+    return 0,1
+
+
+def _nickname_card_gradient(mask,domain):
+    if domain==(0,1):return mask
+    svg=native.urllib.parse.unquote(mask.split(',',1)[1])
+    svg=svg.replace('<linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">',
+        f'<linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="{domain[0]*2010:.6f}" y1="0" x2="{domain[1]*2010:.6f}" y2="0">')
+    return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
+
+
+def _nickname_svg_rim_layers(data,frame):
+    # Reuse the title's actual paint stops, including its palette and easing.
+    # The native PNG supplies only geometry, shading, outline and interior.
+    import xml.etree.ElementTree as ET
+    for title in data.get('frames',[]):
+        src=str(title.get('src',''))
+        if 'Title Bar' not in str(title.get('name','')) or not src.startswith('data:image/svg'):continue
+        root=ET.fromstring(native.urllib.parse.unquote(src.split(',',1)[1]))
+        rim=next((node for node in root.iter() if node.get('id')=='rim'),None)
+        if rim is None:continue
+        gradient=copy.deepcopy(rim)
+        left,right=_nickname_gradient_domain(data)
+        bounds=frame['bounds']
+        gradient.attrib.update(gradientUnits='userSpaceOnUse',
+            x1=str((left-bounds['x'])/bounds['width']*1352),y1='0',
+            x2=str((right-bounds['x'])/bounds['width']*1352),y2='0')
+        svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="1352" height="221" viewBox="0 0 1352 221"><defs>{ET.tostring(gradient,encoding="unicode")}</defs><rect width="1352" height="221" fill="url(#rim)"/></svg>'
+        base=copy.deepcopy(frame)
+        base.update(src='/img/frames/proxy-foundry/land-name-neutral.png',masks=[])
+        paint=copy.deepcopy(frame)
+        paint.update(name='True-name title rim colors',
+            src='data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg),
+            ogBounds={'x':0,'y':0,'width':1,'height':1},
+            masks=[{'name':'True-name colored strip','src':'/img/frames/proxy-foundry/land-name-color-mask.png'}])
+        return [paint,base]
+    return None
+
+
+def _nickname_bar_layers(frame,sem,gradient_domain=(0,1)):
+    colors=frame_treatment_colors(sem)
+    if len(colors)==3 and 'Land' in set(sem.get('types',[])):
+        layers=[]
+        for index,color in enumerate(colors):
+            layer=copy.deepcopy(frame)
+            layer['src']=_nickname_bar_variant(frame['src'],color)
+            layer['masks']=[]
+            if index:
+                start,end=(25,37.5) if index==1 else (62.5,75)
+                stops=[(0,0),(start,0)]+[(start+(end-start)*n/20,native.smoothstep(n/20)) for n in range(1,20)]+[(end,1),(100,1)]
+                body=''.join(f'<stop offset="{x}%" stop-color="white" stop-opacity="{alpha:.6f}"/>' for x,alpha in stops)
+                svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="2010" height="2814" viewBox="0 0 2010 2814"><defs><linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">{body}</linearGradient></defs><rect width="2010" height="2814" fill="url(#fade)"/></svg>'
+                layer['masks']=[{'name':'Triome Blend','src':_nickname_card_gradient('data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg),gradient_domain)}]
+            layers.insert(0,layer)
+        return layers
+    if len(colors)!=2:return [frame]
+    first,second=native.canonical_dual_color_order(colors)
+    base=copy.deepcopy(frame);right=copy.deepcopy(frame)
+    base.update(src=_nickname_bar_variant(frame['src'],first),masks=[])
+    right.update(src=_nickname_bar_variant(frame['src'],second),
+                 masks=[{'src':_nickname_card_gradient(native.dual_crown_right_blend_mask_src(),gradient_domain),'name':'Right Blend'}])
+    # Native frame order paints the right fade over the left color.
+    return [right,base]
+
+
+def _compact_land_bar_layers(frame,sem):
+    frame['src']=_nickname_bar_variant(frame['src'],_nickname_code(sem))
+    return _nickname_bar_layers(frame,sem)
+
 
 def _nickname_frame_src(code):
     # The pinned pack has no C body image. Its complete neutral A body pairs
@@ -1855,7 +2249,9 @@ def _nickname_frame_src(code):
     return f'/img/frames/m15/nickname/m15NicknameFrame{code if code in "WUBRGMAL" else "A"}.png'
 
 def _nickname_pt_src(code):
-    return f'/img/frames/m15/nickname/m15NicknamePT{code if code in "WUBRGMAC" else "C"}.png'
+    code=code if code in "WUBRGMAC" else "C"
+    if code in 'WAC':return f'/img/frames/m15/regular/m15PT{code}.png'
+    return f'/img/frames/m15/nickname/m15NicknamePT{code}.png'
 
 def _nickname_text(data,sem,group,force=False):
     text=data.setdefault('text',{})
@@ -1882,35 +2278,127 @@ def _nickname_text(data,sem,group,force=False):
         }
         return True
 
-    # Standard portrait nickname typography. Special card families keep all of
-    # their own type/rules/chapter/loyalty/helper-strip geometry.
-    nickname_x=.0854;nickname_w=.8292
-    if group=='transform-front' or group in {'modal-front','modal-back'}:
-        nickname_x=.1614;nickname_w=.7534
-    elif group=='planeswalker':
-        nickname_x=.0867;nickname_w=.8267
-    nickname_y=.0372 if group=='planeswalker' else .0522
-    title_y=.1015 if group=='planeswalker' else .1129
-    text['nickname']={
-        'name':'Nickname','text':nickname,'x':nickname_x,'y':nickname_y,
-        'width':nickname_w,'height':.0548 if group=='planeswalker' else .0543,
-        'oneLine':True,'font':'belerenb','size':.0381,'color':'white',
-        'shadowX':.0014,'shadowY':.001,
-    }
+    old=text.get('title') if isinstance(text.get('title'),dict) else {}
+    text['nickname']={**old,'name':'Nickname','text':nickname,
+        'x':old.get('x',.0854),'y':old.get('y',.0522),
+        'width':old.get('width',.8292),'height':old.get('height',.0543),
+        'oneLine':True,'font':old.get('font','belerenb'),'size':old.get('size',.0381)}
+    main=text['nickname']
+    # The native M15 title text is narrowed for mana before this overlay runs.
+    # Its physical title bar still spans the complete portrait title region.
+    title_width=.8292 if abs(main['x']-.0854)<.0001 else main['width']
     text['title']={
-        'name':'Title','text':true_name if nickname!=true_name else '', 'x':.14,'y':title_y,'width':.72,'height':.0243,
+        'name':'Title','text':true_name,'x':main['x']+.0546,
+        'y':main['y']+main['height']+.0064,'width':max(.1,title_width-.1092),'height':.0243,
         'oneLine':True,'font':'mplantini','size':.0229,'color':'white',
         'shadowX':.0014,'shadowY':.001,'align':'center',
     }
     return True
 
 
-def _apply_full_m15_nickname_pack(data,sem,refit=False):
-    """Replace the current structural frame with CardConjurer's M15Nickname pack.
+def build_godzilla_dfc_data(sem,artist,autofit):
+    """Use ordinary portrait geometry for an explicitly selected DFC frame.
+
+    Each face keeps its own text and stats; the Godzilla body replaces the
+    special DFC shell. The shared transform header is assembled afterward.
+    """
+    seed=copy.deepcopy(sem)
+    for key in ('parent_name','face_index','scryfall_layout'):
+        seed.pop(key,None)
+    creature='Creature' in seed.get('types',[])
+    seed['layout']=('creature_legendary' if seed.get('legendary') else 'creature') if creature else ('card_legendary' if seed.get('legendary') else 'card_noncreature')
+    if 'Land' in seed.get('types',[]) or not seed.get('colors'):
+        seed['frame_color']='M'
+    try:
+        data=native.build_one(seed,{'artist':artist},autofit)['data']
+    except native.BuildError as error:
+        raise ValidationError(str(error)) from error
+    return seed,data,'godzilla_dfc'
+
+
+def apply_godzilla_transform_header(data,sem,group,card,artist,autofit,flags):
+    if group not in {'transform-front','transform-back'}:return
+    side='back' if group=='transform-back' else 'front'
+    icon=_transform_icon_for(card,side)
+    if (side=='back' and sem.get('legendary') and not str(sem.get('nickname') or '').strip()
+            and not werewolf_frame.is_sun_moon_werewolf(card)):
+        icon={'name':'Down Arrow','src':'/img/frames/m15/transform/icons/downArrow.png',
+              'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    if icon is None:
+        icon={'name':'Down Arrow','src':'/img/frames/m15/transform/icons/downArrow.png',
+              'masks':[],'bounds':copy.deepcopy(_TRANSFORM_ICON['bounds'])}
+    elif icon['src'].endswith('/default.png'):icon['name']='Up Arrow'
+    right_icon=side=='back' and icon['name']=='Down Arrow'
+    if right_icon:
+        icon['bounds']['x']=1-icon['bounds']['x']-icon['bounds']['width']
+    nickname=bool(str(sem.get('nickname') or '').strip())
+    seed=copy.deepcopy(sem);seed.pop('nickname',None)
+    if (not set(seed.get('types',[])) <= {'Creature','Artifact','Enchantment','Land'}
+            or set(seed.get('subtypes',[])) & {'Saga','Class','Case','Room','Vehicle','Spacecraft'}):
+        # Only borrow portrait title/type geometry. The actual face's full-art
+        # rules, stats and semantic data remain those of the Godzilla compiler.
+        seed.update(types=['Creature'],subtypes=[],power='0',toughness='0')
+    if not seed.get('colors'):
+        # The preserved classic compiler accepts only W/U/B/R/G/M seed colors.
+        seed['frame_color']='M'
+    _,normal,_=build_transform_data(seed,group,card,artist,autofit,flags)
+    apply_universal_frame_color_treatment(normal,seed)
+    if not sem.get('colors') and 'Land' not in sem.get('types',[]):
+        for frame in normal['frames']:
+            if any(m.get('name') in {'Title','Type'} for m in frame.get('masks',[])):
+                frame['src']='/img/frames/m15/transform/regular/'+('frontA.png' if side=='front' else 'new/backA.png')
+    fills=werewolf_frame.bar_fills(normal,side=='front',right_icon=right_icon)
+    colors=frame_treatment_colors(sem)
+    codes=native.canonical_dual_color_order(colors) if len(colors)==2 else [frame_treatment_code(sem)]
+    if sem.get('legendary') and not nickname:
+        crowns=[]
+        for index,code in enumerate(codes):
+            code=code if code in 'WUBRGMAL' else 'A'
+            frame={'name':'Circle-compatible floating transform crown',
+                   'src':('/img/frames/proxy-foundry/transform/CrownFloatingBack'+code+'.png' if right_icon
+                          else '/img/frames/m15/transform/crowns/floating/'+code.lower()+'.png'),
+                   'bounds':{'x':.0307,'y':.0191,'width':.9387,'height':.1024},'masks':[]}
+            if index:frame['masks']=[{'name':'Right Blend','src':native.dual_crown_right_blend_mask_src()}]
+            crowns.insert(0,frame)
+        werewolf_frame.apply_header(data,normal,sem,icon,crowns,[],front=side=='front')
+        return
+    if sem.get('legendary'):
+        # Native joined transform crowns have the round icon opening already;
+        # no separately overlaid real-name strip or manually trimmed shoulders.
+        for frame in data['frames']:
+            crown=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/CrownJoined([WUBRGMAL])\.png',str(frame.get('src','')))
+            if crown:frame['src']='/img/frames/proxy-foundry/transform/CrownJoined'+('Back' if right_icon else '')+crown[1]+'.png'
+        body_index=next(i for i,f in enumerate(data['frames']) if '/nickname/m15NicknameFrame' in f['src'])
+        data['frames'][body_index:body_index]=fills
+        data['frames'][0:0]=werewolf_frame.icon_layers(icon)
+        werewolf_frame.reserve_icon_space(data,'nickname',icon)
+        color='black' if side=='back' and _nickname_code(sem) in 'WAC' else 'white'
+        for key in ('nickname','type'):
+            data['text'][key].update(color=color,outlineWidth=0,shadowX=0,shadowY=0)
+        data['text']['nickname'].update(color='white',outlineColor='black',outlineWidth=.0025)
+        data['text']['title'].update(outlineColor='black',outlineWidth=.0025,shadowX=0,shadowY=0)
+        return
+    rim=[]
+    for index,code in enumerate(codes):
+        layer={'name':'Reflected Werewolf title pinline',
+               'src':('/img/frames/proxy-foundry/transform/TitlePinlineBack' if right_icon else werewolf_frame.PREFIX+'TitlePinline')+(code if code in 'WUBRGMAL' else 'L')+'.png','masks':[]}
+        if index:layer['masks']=[{'name':'Right Blend','src':native.dual_crown_right_blend_mask_src()}]
+        rim.insert(0,layer)
+    addon=[]
+    if str(sem.get('nickname') or '').strip():
+        code=_nickname_code(sem)
+        addon=_nickname_bar_layers({'name':'Werewolf true-name strip',
+            'src':'/img/frames/m15/nickname/addons/m15NicknameTitle'+(code if code in 'WUBRGMAL' else 'L')+'.png',
+            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS)},sem)
+    werewolf_frame.apply_header(data,normal,sem,icon,rim,addon,front=side=='front')
+
+
+def _apply_godzilla_frame(data,sem,refit=False):
+    """Build the Godzilla frame without the optional real-name addon.
 
     The pack has complete W/U/B/R/G/M/A/L frames. Colorless uses its
     neutral A body and title because the pinned pack has no C body.
-    It is deliberately mask-free here: one full Frame plus Title/Crown and P/T.
+    Use a complete Frame plus Title/Crown and P/T, blending dual-color bars.
     """
     code=_nickname_code(sem)
     frame_src=_nickname_frame_src(code)
@@ -1923,18 +2411,18 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
     frames=[
         {'name':f'{color_name} Frame','src':frame_src,'masks':[]},
     ]
-    if legendary:
-        frames.append({
-            'name':f'{color_name} Crown','src':_nickname_crown_src(code,True),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS),
-        })
-    else:
-        frames.append({
-            'name':f'{color_name} Title','src':_nickname_title_src(code,True),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
-        })
+    kind='Crown' if legendary else 'Title'
+    title_bounds=copy.deepcopy(_NICKNAME_CROWN_BOUNDS if legendary else _NICKNAME_TITLE_BOUNDS)
+    title_bounds['height']=.1286 if legendary else .069
+    main_bar={
+        'name':f'{color_name} {kind}',
+        'src':f'/img/frames/proxy-foundry/godzilla/{kind}{code if code in "WUBRGMAL" else "A"}.png',
+        'masks':[],'bounds':title_bounds,
+    }
+    frames[0:0]=_nickname_bar_layers(main_bar,sem) if kind=='Title' else [main_bar]
     if pt_text:
-        frames.append({
+        # CardConjurer draws the first frame last, above the other frame layers.
+        frames.insert(0,{
             'name':f'{color_name} Power/Toughness','src':_nickname_pt_src(code),
             'masks':[],'bounds':copy.deepcopy(_NICKNAME_PT_BOUNDS),
         })
@@ -1952,9 +2440,14 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
     typ=text.setdefault('type',{})
     rules=text.setdefault('rules',{})
     pt=text.setdefault('pt',{})
+    if 'text' not in typ:
+        typ['text']=native.get_type_info(sem)['normalized']
+    if 'text' not in rules:
+        rules['text']=native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else '')
+    rules.setdefault('font','mplantin')
 
     mana.update({
-        'name':'Mana Cost','y':.0613,'width':.9292,'height':71/2100,
+        'name':'Mana Cost','text':str(sem.get('mana_cost') or ''),'y':.0613,'width':.9292,'height':71/2100,
         'oneLine':True,'size':71/1638,'align':'right','shadowX':-.001,
         'shadowY':.0029,'manaCost':True,'manaSpacing':0,
     })
@@ -1975,52 +2468,31 @@ def _apply_full_m15_nickname_pack(data,sem,refit=False):
         'oneLine':True,'font':'belerenb','size':.0324,'color':'white',
         'shadowX':.0014,'shadowY':.001,
     })
+    # Rules and flavor share this box; keep both above the visible P/T overlay.
+    rules_height=_NICKNAME_PT_BOUNDS['y']-.6303-.008 if pt_text else .2875
     rules.update({
-        'name':'Rules Text','x':.086,'y':.6303,'width':.828,'height':.2875,
+        'name':'Rules Text','x':.086,'y':.6303,'width':.828,'height':rules_height,
         'size':.0362,'color':'white','shadowX':.0014,'shadowY':.001,
     })
     pt.update({
-        'name':'Power/Toughness','x':.7928,'y':.902,'width':.1367,
+        'name':'Power/Toughness','text':pt_text,'x':.7928,'y':.902,'width':.1367,
         'height':.0372,'size':.0372,'font':'belerenbsc',
         'oneLine':True,'align':'center','color':'white',
     })
 
+    text['title']=copy.deepcopy(text.pop('nickname'))
+    text['title'].update(name='Title',text=str(sem.get('name') or ''))
     if refit:native.auto_fit(data,sem['art_local_path'])
     return True
 
 
-def _force_token_text_white(data):
-    """Token nickname fallback must remain legible over the dark token boxes."""
-    text=data.get('text') or {}
-    for key in ('nickname','title','type','rules','pt'):
-        field=text.get(key)
-        if isinstance(field,dict):field['color']='white'
-
-
-def _apply_planeswalker_nickname_frame(data):
-    changed=False
-    for frame in data.get('frames',[]):
-        if not isinstance(frame,dict):continue
-        src=str(frame.get('src') or '')
-        m=re.fullmatch(r'/img/frames/planeswalker/regular/planeswalkerFrame([WUBRGMA])\.png',src)
-        if not m:continue
-        frame['src']=f'/img/frames/planeswalker/nickname/planeswalkerNicknameFrame{m.group(1)}.png'
-        changed=True
-    if changed:data['version']='planeswalkerNickname'
-    return changed
-
-def _apply_modal_nickname_frame(data):
-    changed=False
-    for frame in data.get('frames',[]):
-        if not isinstance(frame,dict):continue
-        src=str(frame.get('src') or '')
-        m=re.fullmatch(r'/img/frames/modal/regular/(back/)?([wubrgma])\.png',src)
-        if not m:continue
-        side='b' if m.group(1) else 'f'
-        frame['src']=f'/img/frames/modal/nickname/{m.group(2)}{side}.png'
-        changed=True
-    if changed:data['version']='modalNickname'
-    return changed
+def apply_modern_token_text(data,code):
+    name_color='black' if code=='W' else 'white'
+    for key,field in data['text'].items():
+        # The true name sits on the dark nickname addon, not the token's
+        # white title surface. Only the main name uses the token color rule.
+        color='white' if key=='title' and 'nickname' in data['text'] else name_color if key in {'title','nickname'} else 'black'
+        field.update(color=color,outlineWidth=0,shadowX=0,shadowY=0)
 
 
 def apply_full_art_text(data):
@@ -2028,6 +2500,13 @@ def apply_full_art_text(data):
     for key in ('title','nickname','type','rules','flavor','pt'):
         field=(data.get('text') or {}).get(key)
         if isinstance(field,dict):
+            if key=='pt' and data.get('version')=='m15Nickname':
+                normal_pt=any(
+                    re.fullmatch(r'/img/frames/m15/regular/m15PT[WAC]\.png',str(frame.get('src','')))
+                    for frame in data.get('frames',[]) if isinstance(frame,dict)
+                )
+                field.update(color='black' if normal_pt else 'white',outlineWidth=0,shadowX=0,shadowY=0)
+                continue
             field['color']='white'
             field['outlineColor']='black'
             field['outlineWidth']=.0035
@@ -2045,66 +2524,138 @@ def reserve_nickname_mana_space(data,sem):
 
 
 def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame=False):
-    """Apply complete nickname frames where supported, preserving special layouts."""
-    nickname=str(sem.get('nickname') or '').strip()
-    if not nickname and not force:return False
-    effective_sem=sem
-    if force and not nickname:
-        effective_sem={**sem,'nickname':str(sem.get('name') or '')}
-    # A nickname alone adds the two-name treatment to the chosen ordinary
-    # frame. Only the explicit Godzilla choice replaces that frame outright.
-    # Tokens retain their complete nickname pack because their native frame
-    # needs the matching full title/body assets.
-    if full_frame or group=='token':
-        if _apply_full_m15_nickname_pack(data,effective_sem,refit):
-            if force and not nickname:(data.get('text') or {}).get('title',{})['text']=''
-            return True
-    if not _nickname_text(data,effective_sem,group):return False
-    if group=='token':_force_token_text_white(data)
-
-    # Battle has no rotatable nickname frame asset in CardConjurer. Its native
-    # Battle frame stays intact; only the two-name text treatment is applied.
+    """Choose the Godzilla base independently, then overlay an actual nickname."""
+    if full_frame or force:
+        _apply_godzilla_frame(data,sem,refit)
+    if not str(sem.get('nickname') or '').strip():return False
+    if not _nickname_text(data,sem,group):return False
+    # Battle is landscape and keeps its existing two-name typography.
     if group=='battle':return True
-
-    # These two structural families have real CardConjurer nickname packs.
-    if group=='planeswalker' and _apply_planeswalker_nickname_frame(data):
-        return True
-    if group in {'modal-front','modal-back'} and _apply_modal_nickname_frame(data):
-        return True
-
-    code=_nickname_code(sem)
-    legendary=bool(sem.get('legendary'))
+    # The native legendary crown already contains its correctly joined subtitle.
+    # Replace the detached crown only when a nickname requests that subtitle;
+    # a second addon would paint a second outline across the same junction.
     frames=data.setdefault('frames',[])
-    if legendary:
-        frames.append({
-            'name':'Nickname Crown','src':_nickname_crown_src(code),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
-            if code!='C' else {'x':0,'y':0,'width':1,'height':1},
-        })
-    else:
-        frames.append({
-            'name':'Nickname Title','src':_nickname_title_src(code),
-            'masks':[],'bounds':copy.deepcopy(_NICKNAME_TITLE_BOUNDS),
-        })
+    joined_titles=[]
+    for frame in frames[:]:
+        src=str(frame.get('src',''))
+        if re.fullmatch(r'/img/frames/proxy-foundry/godzilla/Title[WUBRGMAL]\.png',src):
+            frames.remove(frame)
+            frame.update(src=src.replace('/Title','/TitleJoined'),name='Nickname Title',bounds=copy.deepcopy(_NICKNAME_TITLE_BOUNDS))
+            joined_titles.append(frame)
+    if joined_titles:
+        frames[0:0]=joined_titles
+        return True
+    for index,frame in enumerate(frames):
+        src=str(frame.get('src',''))
+        if re.fullmatch(r'/img/frames/proxy-foundry/godzilla/Crown[WUBRGMAL]\.png',src):
+            joined=frames.pop(index)
+            joined['src']=src.replace('/Crown','/CrownJoined')
+            joined['name']='Nickname Title'
+            joined['bounds']=copy.deepcopy(_NICKNAME_CROWN_BOUNDS)
+            frames.insert(0,joined)
+            return True
+    code=_nickname_code(sem)
+    main=data['text']['nickname']
+    bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':data['text']['title']['width']+.1814,'height':main['height']+.051}
+    real_name_bar={
+        'name':'Nickname Title',
+        'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
+        'masks':[],'bounds':bounds,
+    }
+    layers=_nickname_bar_layers(real_name_bar,sem,_nickname_gradient_domain(data))
+    if 'Land' in set(sem.get('types',[])):
+        layers=_nickname_svg_rim_layers(data,real_name_bar) or layers
+    # This rounded land template draws its main title with an 8-unit SVG stroke.
+    # Add the matching silhouette behind the PNG strip without altering other frames.
+    if 'Land' in set(sem.get('types',[])) and any(
+        str(frame.get('src','')).startswith('data:image/svg') and 'Title Bar' in str(frame.get('name',''))
+        and 'stroke-width="8"' in native.urllib.parse.unquote(frame['src']) for frame in frames):
+        pad_x=bounds['width']*7/1352;pad_y=bounds['height']*7/221
+        # Keep the thicker outline's top inset, with slightly taller text.
+        # One-line text does not shrink to its height in the native renderer.
+        title=data['text']['title']
+        old_height=title['height']
+        title['y']+=pad_y
+        title['height']=max(.001,old_height-2*pad_y)*1.1
+        title['size']*=title['height']/old_height
+        layers.append({'name':'Land true-name outline (8 units)',
+            'src':'/img/frames/proxy-foundry/land-name-outline-8.png','masks':[],
+            'bounds':{'x':bounds['x']-pad_x,'y':bounds['y']-pad_y,'width':bounds['width']+2*pad_x,'height':bounds['height']+2*pad_y}})
+    data.setdefault('frames',[])[0:0]=layers
     return True
 
 
+def reserve_structural_true_name_space(data):
+    """Reflow vertical abilities below the added strip, preserving their bottom."""
+    text=data.get('text',{})
+    # Text rendering already provides padding above the first visible line.
+    # Reserve the subtitle text height, without adding its frame padding again.
+    offset=text['title']['height']
+    if data.get('class'):
+        count=data['class']['count']
+        start=_CLASS_TEXT_START_Y+offset
+        fields=[text[f'level{i}c'] for i in range(count+1)]
+        layout=_shared_class_text_layout([field['text'] for field in fields],start)
+        y=start
+        for i,(field,height) in enumerate(zip(fields,layout['heights'])):
+            inset=_CLASS_FIRST_TEXT_TOP_INSET_PX/native.CARD_HEIGHT if i==0 else 0
+            field.update(y=y+inset,height=height/native.CARD_HEIGHT-inset,size=layout['size'])
+            if i:
+                for suffix in ('a','b'):text[f'level{i}{suffix}']['y']=y-.0361
+            y+=height/native.CARD_HEIGHT+_CLASS_SEPARATOR_HEIGHT
+    elif data.get('saga'):
+        fields=[text[f'ability{i}'] for i in range(data['saga']['count'])]
+        if not fields:return
+        bottom=fields[-1]['y']+fields[-1]['height']
+        start=fields[0]['y']+offset
+        layout=native.compute_shared_saga_layout([field['text'] for field in fields],round((bottom-start)*native.CARD_HEIGHT))
+        y=start
+        for field,height in zip(fields,layout['heights']):
+            field.update(y=y,height=height/native.CARD_HEIGHT,size=layout['size'])
+            y+=height/native.CARD_HEIGHT
+        reminder=text.get('reminder')
+        if reminder:reminder['y']+=offset
+
+
 def custom_data(template,sem,other_faces=None):
+    if 'visualRecipe' in template:
+        from .visual_templates import compile_visual
+        return compile_visual(template,sem)
+    template=select_variant(template,sem,sem.get('_template_group','standard')) if template.get('schemaVersion') in {2,3} else template
     d=copy.deepcopy(template['data'])
-    if template.get('schemaVersion')==2:
+    if template.get('schemaVersion') in {2,3}:
         try:
-            reference=native.build_one(copy.deepcopy(choose_builtin(sem,'auto')),
-                                       {'artist':sem.get('artist','')},False)['data']
+            if sem.get('_template_group')=='station' and 'Land' in sem.get('types',[]):
+                reference=build_station_land_data(sem,sem.get('artist',''),False,[],'Scryfall selected printing')[1]
+            elif sem.get('_template_group')=='token':
+                reference=build_token_data(sem,sem.get('artist',''),False,[],template.get('layoutMetadata',{}).get('tokenStyle','token-classic'))[1]
+            else:
+                reference=native.build_one(copy.deepcopy(choose_builtin(sem,'auto')),
+                                           {'artist':sem.get('artist','')},False)['data']
         except native.BuildError as exc:
-            raise ValidationError('This card needs a structural template with its own dynamic regions.') from exc
-        apply_regions(d,reference,template['regions'])
-    values={'title':sem['name'],'type':native.get_type_info(sem)['normalized'],'mana':sem.get('mana_cost',''),
+            if any(region['geometry']=='native' for region in template['regions'].values()):
+                raise ValidationError('This card needs fixed geometry or a compatible native structural layout.') from exc
+            reference=copy.deepcopy(d)
+        bindings={region['field'].removeprefix('native:') for region in template['regions'].values()}
+        missing=[slot for slot,box in reference.get('text',{}).items()
+                 if box.get('text') and slot not in bindings and slot not in {'flavor'}]
+        if missing:raise ValidationError('Map these native text regions before using this layout: '+', '.join(missing))
+        apply_regions(d,reference,template['regions'],sem)
+        if isinstance(reference.get('station'),dict):
+            station=d.setdefault('station',{})
+            for key in ('abilityCount','badgeValues','disableFirstAbility'):
+                station[key]=copy.deepcopy(reference['station'][key])
+    try:normalized_type=native.get_type_info(sem)['normalized']
+    except native.BuildError:normalized_type=sem.get('printed_type_line') or ' '.join(sem.get('types') or [])
+    values={'title':sem['name'],'type':normalized_type,'mana':sem.get('mana_cost',''),
       'rules':native.italicize_dash_labels(sem.get('oracle_text',''))+('{flavor}'+sem['flavor_text'] if sem.get('flavor_text') else ''),
       'flavor':sem.get('flavor_text',''),'pt':str(sem['power'])+'/'+str(sem['toughness']) if sem.get('power') is not None and sem.get('toughness') is not None else '',
       'loyalty':sem.get('loyalty',''),'defense':sem.get('defense','')}
+    if any(region.get('field')=='flavor' for region in template.get('regions',{}).values()):
+        values['rules']=native.italicize_dash_labels(sem.get('oracle_text',''))
     for i,line in enumerate(sem.get('oracle_text','').splitlines(),1):values['line'+str(i)]=line
     mapping=({slot:region['field'] for slot,region in template['regions'].items()}
-             if template.get('schemaVersion')==2 else (template.get('mapping') or {k:k for k in values}))
+             if template.get('schemaVersion') in {2,3} else (template.get('mapping') or {k:k for k in values}))
     for slot,field in mapping.items():
         if slot not in d['text']:continue
         if field in values:d['text'][slot]['text']=str(values[field])
@@ -2117,9 +2668,23 @@ def custom_data(template,sem,other_faces=None):
 class Compiler:
     def __init__(self,store):self.store=store
     def template_identity(self,group,choice):
-        if choice=='auto':return 'auto:'+group,AUTO_TEMPLATE_VERSIONS.get(group,1),AUTO_TEMPLATE_VERSIONS.get(group,1)
+        choice=RETIRED_BUILTINS.get(choice,choice)
+        if choice=='auto':
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(1 if group=='token' else 0)
+            return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice];return 'builtin:'+choice,version,version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)
+            if group in {'emblem','battle'}:version+=1
+            if group=='planeswalker':version+=2
+            if group=='transform-back' and not choice.startswith('godzilla-'):version+=1
+            if choice=='godzilla-card' and group in {'transform-front','transform-back'}:version+=1
+            if choice=='godzilla-card' and group=='transform-front':version+=1
+            # Legendary backs without nicknames use the right-side reverse marker.
+            if choice=='godzilla-card' and group=='transform-back':version+=1
+            if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
+            if choice=='godzilla-card' and group=='planeswalker':version+=3
+            if group=='token':version+=1
+            return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
         # Custom template data is already embedded in compiled CardConjurer data,
@@ -2127,47 +2692,63 @@ class Compiler:
         # stays at baseline v1 to avoid redundant cache invalidation.
         fingerprint=stable_hash({'data':t.get('data'),'mapping':t.get('mapping',{}),'regions':t.get('regions',{}),
                                  'schemaVersion':t.get('schemaVersion',1),'baseGroup':t.get('baseGroup'),
-                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary'))})
+                                 'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{}),'visualRecipe':t.get('visualRecipe')})
         return 'custom:'+choice,fingerprint,1
+    @timed('card.compile')
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
         sem=semantic(sf,face,index)
         for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
+        sem['nickname']=rules_nicknames.effective_nickname(sem['name'],sem.get('nickname'))
         sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
         for nested in ('flip_face','prepared_spell'):
             if nested in sem:
+                sem[nested]['nickname']=rules_nicknames.effective_nickname(sem[nested]['name'],sem[nested].get('nickname'))
                 if nested in options.get('nestedFlavorTexts',{}):
                     sem[nested]['flavor_text']=options['nestedFlavorTexts'][nested]
                 sem[nested]['flavor_text']=normalize_scryfall_inline_italics(sem[nested].get('flavor_text'))
+        rule_names=rules_nicknames.apply_semantic(sem,sf,options.get('faceNicknames'))
         symbols=settings.get('symbols',{})
         if any(not symbols.get(r) or not self.store.asset(symbols[r]) for r in RARITIES):raise ValidationError('Provide four rarity symbols, or generate four treatments from one symbol.')
         symbol_id=symbols.get(sem.get('rarity','common'))
         if not symbol_id:raise ValidationError('Unsupported rarity. Set a common/uncommon/rare/mythic override.')
         art=self.store.asset(art_id)
         if not art:raise ValidationError('Artwork is missing.')
-        sem['art']=data_uri(self.store,art_id);sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=data_uri(self.store,symbol_id)
+        sem['art']='/api/assets/'+art_id;sem['art_local_path']=str(self.store.asset_path(art_id));sem['set_symbol_source']=str(self.store.asset_path(symbol_id))
         credit=resolve_credit(sf,face,options,settings,art_origin)
         artist=credit['display']
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        choice=RETIRED_BUILTINS.get(choice,choice)
         template_key,template_version,template_cache_version=self.template_identity(group,choice)
         if choice in {x['id'] for x in BUILTINS}:
             builtin=next(x for x in BUILTINS if x['id']==choice)
             if choice!='auto' and builtin['groups']!='ordinary' and group not in builtin['groups']:
                 raise ValidationError('This template does not support '+group+'.')
-            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card'}:
+            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card','token-classic','token-full-art','token-borderless'}:
                 raise ValidationError('Choose automatic or a custom template for '+group+'.')
-            if choice=='godzilla-card' and group!='token' and 'Land' in sem.get('types',[]):
+            if choice=='godzilla-card' and group!='token' and group not in GODZILLA_DFC_GROUPS and 'Land' in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla land template for lands.')
             if choice=='godzilla-land' and 'Land' not in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla non-land template for this card.')
             if group in NEEDS_CUSTOM:raise ValidationError('Recognized '+group+' needs a compatible custom template; no incorrect frame will be substituted.')
-            if group in {'modal-front','modal-back'}:
+            if group in {'modal-front','modal-back'} and not choice.startswith('godzilla-'):
                 pair=tuple(x.get('name') for x in sf.get('card_faces',[]))
                 if pair not in APPROVED_MODAL_DFC_PAIRS:
                     approved='; '.join(' / '.join(x) for x in sorted(APPROVED_MODAL_DFC_PAIRS))
                     raise ValidationError('This modal DFC needs a compatible custom template. Approved built-in pairs: '+approved+'.')
-            if group in {'transform-front','transform-back'}:
+            if group=='planeswalker' and choice=='godzilla-card':
+                # Use the regular native loyalty renderer as the structural seed;
+                # the actual one-to-four rows are fitted by the nickname pack.
+                d0=copy.deepcopy(sem)
+                seed=copy.deepcopy(sem);seed['oracle_text']='+1: Seed.\n0: Seed.\n-1: Seed.'
+                data=native.build_regular_pw_3_recipe(seed,native.get_type_info(seed))['data']
+                data['text']['type']['text']=native.get_type_info(sem)['normalized']
+                recipe='godzilla_planeswalker'
+            elif group in GODZILLA_DFC_GROUPS and choice.startswith('godzilla-'):
+                d0,data,recipe=build_godzilla_dfc_data(sem,artist,not settings.get('disableAutofit',False))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group in {'transform-front','transform-back'}:
                 d0,data,recipe=build_transform_data(sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='battle':
@@ -2177,10 +2758,13 @@ class Compiler:
                 d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
-                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-classic')
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group=='helper' and art_origin!='Scryfall selected printing':
+                d0,data,recipe=build_custom_helper_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group in {'art-series','helper'}:
                 d0,data,recipe=build_art_series_data(sem,artist,flags,'helper_scan' if group=='helper' else 'art_series_scan')
@@ -2195,6 +2779,10 @@ class Compiler:
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
                 d0=choose_builtin(sem,'auto' if choice.startswith('godzilla-') else choice)
+                if choice=='auto' and group in {'land','legendary-land'} and 'Land' in sem.get('types',[]) and sem.get('name') not in native.ORIGINAL_DUAL_LANDS:
+                    # The old rounded land recipe stays preserved in the vendor.
+                    # Remove this routing override to restore its automatic use.
+                    d0=choose_builtin(sem,'legend-land')
                 # Saga is the highest-priority structural card treatment. Do not
                 # let another type on the same line (notably Land on Urza's Saga)
                 # win inside the preserved native recipe classifier.
@@ -2206,7 +2794,7 @@ class Compiler:
                     if group in {'standard','legendary'} and choice=='auto':
                         if sem.get('devoid'):apply_devoid_frame(data,sem)
                         apply_miracle_frame(data,sem)
-                    if choice=='legend-land' and not sem['legendary']:native.remove_crown(data)
+                    if d0.get('layout')=='land_full_legendary' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
                     if choice=='auto' and group in {'modal-front','modal-back'}:
@@ -2227,8 +2815,10 @@ class Compiler:
             if group not in t.get('groups',[]):raise ValidationError('The template is not approved for '+group+'.')
             if sem['legendary'] and not t.get('legendary',False):raise ValidationError('This template does not support legendary cards.')
             if sem.get('power') is not None and not ('pt' in t['data']['text'] or 'pt' in (t.get('mapping') or {}).values()):raise ValidationError('A creature template needs a P/T text slot.')
-            data=custom_data(t,sem,sf.get('card_faces',[])[1:]);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
-            if t.get('schemaVersion')==2:fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'custom')
+            sem['_template_group']=group
+            other_faces=[rule_names.display_face(f) for f in sf.get('card_faces',[])[1:]]
+            data=custom_data(t,sem,other_faces);data.update(artSource=sem['art'],setSymbolSource=sem['set_symbol_source'],infoArtist=str(artist))
+            if t.get('schemaVersion') in {2,3}:fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'custom')
             if not settings.get('disableAutofit',False):native.auto_fit(data,sem['art_local_path'])
             recipe='custom:'+choice
         source_aware_placement=None
@@ -2254,26 +2844,85 @@ class Compiler:
                 data[k]=v
         if options.get('rawCard'):
             data=copy.deepcopy(options['rawCard']);data['artSource']=sem['art'];data['setSymbolSource']=sem['set_symbol_source'];data['infoArtist']=str(artist)
-        apply_universal_frame_color_treatment(data,sem)
+            rules_nicknames.format_raw_rules(data,rule_names)
+        visual_template=bool(not choice in {x['id'] for x in BUILTINS} and t.get('visualRecipe'))
+        if not visual_template:apply_universal_frame_color_treatment(data,sem)
+        if choice=='auto' and group=='station' and not options.get('rawCard'):
+            apply_station_textbox_transparency(data,sem,art_origin)
         nickname_applied=False
         if choice.startswith('godzilla-'):
-            nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
-            data.update(full_art_nonland_placement(art))
+            if group=='planeswalker':
+                nickname_applied=nickname_special.apply_planeswalker(data,sem,_nickname_code(sem))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
+            elif group in {'modal-front','modal-back'}:
+                other=sf['card_faces'][1-index]
+                other_sem=semantic(sf,other,1-index)
+                nickname_applied=nickname_special.apply_modal(data,sem,group,_nickname_code(sem),_nickname_code(other_sem),_nickname_pt_src(_nickname_code(sem)))
+                pair=tuple(x.get('name') for x in sf['card_faces'])
+                text=data['text']
+                text['flipsideType']['text']=(_modal_dfc_flipside_label(pair,index,other) if pair in APPROVED_MODAL_DFC_PAIRS
+                    else ' '.join(ingest.split_type_line(other.get('type_line','')).get('types',[])))
+                text['flipSideReminder']['text']=str(other.get('mana_cost') or '')
+                _fit_modal_flipside_label_width(data,other.get('mana_cost'))
+                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'modal_nickname')
+            else:nickname_applied=apply_nickname_treatment(data,sem,group,force=True,full_frame=True)
             for key in ('artX','artY','artZoom','artRotate'):
                 if key in options.get('fit',{}):data[key]=float(options['fit'][key])
             apply_full_art_text(data)
-        elif recipe not in {'art_series_scan','helper_scan'}:
+            if group in {'modal-front','modal-back'}:
+                data['text']['pt'].update(color='black' if _nickname_code(sem) in 'WAC' else 'white',outlineWidth=0,shadowX=0,shadowY=0)
+        elif not visual_template and recipe not in {'art_series_scan','helper_scan'}:
             nickname_applied=apply_nickname_treatment(
                 data,sem,group,
                 refit=bool(not settings.get('disableAutofit',False) and not options.get('fit') and not options.get('rawCard')),
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
-            if group=='token':apply_full_art_text(data)
-        if nickname_applied and group in ORDINARY_GROUPS:
+            if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
+                if choice=='token-full-art':apply_modern_token_text(data,frame_treatment_code(sem))
+                else:apply_full_art_text(data)
+        if (choice in {'auto','legend-land'} and 'Land' in sem.get('types',[])
+                and recipe in {'land_full_legendary','land_full_dual_legendary','land_full_tri_legendary','land_five_color_legendary'}
+                and not options.get('rawCard')):
+            apply_compact_land_header(data,sem,_compact_land_bar_layers)
+        if nickname_applied and (data.get('class') or data.get('saga')):
+            reserve_structural_true_name_space(data)
+        if choice=='auto' and not options.get('rawCard'):
+            apply_textless_land_adjustments(data,recipe,nickname_applied)
+        if choice.startswith('godzilla-'):
+            apply_universal_frame_color_treatment(data,sem)
+        full_card_art=(
+            recipe=='helper_full_art' or choice.startswith('godzilla-') or choice in {'land','legend-land'}
+            or (choice=='auto' and (recipe.startswith('land_') or recipe=='original_dual_land_textless'))
+            or data.get('version')=='m15Nickname'
+            or (source_aware_placement or {}).get('mode')=='full-art'
+        )
+        if full_card_art and not options.get('rawCard'):
+            data['artBounds']=copy.deepcopy(FULL_ART_NONLAND_BOUNDS)
+            if not settings.get('disableAutofit',False):cover_art_window(data,art)
+            for key in ('artX','artY','artZoom','artRotate'):
+                if key in options.get('fit',{}):data[key]=float(options['fit'][key])
+        if nickname_applied and (group in ORDINARY_GROUPS or choice.startswith('godzilla-')):
             reserve_nickname_mana_space(data,sem)
-        if nickname_applied and data.get('version')=='m15Nickname':
+        if choice=='godzilla-card' and group in {'transform-front','transform-back'} and not options.get('rawCard'):
+            apply_godzilla_transform_header(data,sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+        if choice=='godzilla-card':
+            # Select material after native color and header assembly so later
+            # passes cannot restore the nearly-white upstream artifact pieces.
+            apply_artifact_gray(data,sem)
+        unboxed_helper=group=='helper' and (
+            {str(f.get('name') or '').strip() for f in sf.get('card_faces',[])}=={'Day','Night'}
+            or str(sf.get('name') or '').strip().casefold() in {'experience','poison counter'}
+        )
+        if unboxed_helper:
+            title=(data.get('text') or {}).get('nickname' if nickname_applied else 'title')
+            if isinstance(title,dict):title['align']='center'
+            if recipe=='helper_full_art':
+                apply_unboxed_helper_treatment(data,sem,nickname_applied)
+        if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
+        if choice=='godzilla-card' and not options.get('rawCard'):
+            apply_color_indicator(data,face)
         if recipe in {'art_series_scan','helper_scan'}:
             data['infoArtist']=''
             data['infoNote']=''
@@ -2283,7 +2932,13 @@ class Compiler:
             bottom_info=data.get('bottomInfo') or {}
             if isinstance(bottom_info.get('bottomLeft'),dict):bottom_info['bottomLeft']['text']=CARD_FOOTER_NOTE
         data['artSource']='/api/assets/'+art_id
-        data['setSymbolSource']='/img/blank.png' if recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
+        data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
+        if choice in {'auto','normal'} and not options.get('rawCard'):
+            apply_hybrid_frame_treatment(data,sem)
+        if group=='token':center_short_token_rules(data)
+        if group=='planeswalker' and data.get('planeswalker') and (choice=='auto' or choice in BUILTIN_TEMPLATE_VERSIONS):
+            from .planeswalker_frame import layout_planeswalker_abilities
+            layout_planeswalker_abilities(data,sem)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit
@@ -2301,4 +2956,7 @@ class Compiler:
             and not options.get('fit')
         ):
             warning={**warning,'warning':False,'intentionalArtWindow':True}
-        return {'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+        result={'name':sem['name'],'data':data,'renderKey':key,'render':self.store.render_get(key),'group':group,'recipe':recipe,'crop':warning,'flags':flags,'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,'templateCacheVersion':template_cache_version}
+        if rule_names.active:result['nicknameRulesVersion']=rules_nicknames.VERSION
+        result['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
+        return result

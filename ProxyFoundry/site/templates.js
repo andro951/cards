@@ -1,10 +1,12 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,errorBox,confirmAction,downloadBlob,empty,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,downloadBlob,empty,nav} from './ui.js';
 import {pickFile} from './setup.js';
 const ordinary=['standard','legendary','land','legendary-land','basic-land'];
 const fieldNames={title:'Card name',type:'Type line',mana:'Mana cost',rules:'Rules + flavor',flavor:'Flavor text',pt:'Power / toughness',loyalty:'Starting loyalty',defense:'Defense','face2.title':'Other face · name','face2.type':'Other face · type','face2.mana':'Other face · mana','face2.rules':'Other face · rules'};
 for(let i=1;i<=12;i++)fieldNames['line'+i]='Rules line '+i;
 export async function showTemplates(){
+  const epoch=state.routeEpoch;
   state.templates=await api('/api/templates');
+  if(epoch!==state.routeEpoch)return;
   const built=state.templates.filter(t=>!t.data),custom=state.templates.filter(t=>t.data);
   $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">A STYLE THAT’S YOURS</span><h1>Templates</h1><p>Use the approved Card Tools frames, customize a copy, or upload your own CardConjurer template.</p></div><div class="actions"><button class="button" id="upload-template">Upload template</button><button class="button primary" id="new-template">＋ Create template</button></div></div>
   <div class="notice info">The built-in recipes are protected. Creating or editing a template always makes a separate custom style; it never changes your approved originals.</div>
@@ -37,7 +39,7 @@ function editTemplate(input){
   <h3>Which card groups does this template support?</h3><p class="muted">Only select groups your layout was designed to display. A template for split or Adventure cards must include the second face’s rules, not merely its title.</p><div class="group-checkboxes">${Object.entries(state.bootstrap.groups).map(([k,label])=>`<label class="check-line"><input type="checkbox" name="template-groups" value="${esc(k)}" ${(template.groups||[]).includes(k)?'checked':''}><span>${esc(label)}</span></label>`).join('')}</div>
   <section class="well section-gap"><h3>Connect text boxes to card fields</h3><p class="muted">Choose “Keep template text” for static labels. Named boxes keep their existing position, font, size, and formatting.</p><div id="mapping-table"></div></section>
   <details class="well section-gap"><summary>Template data & advanced editing</summary><p class="muted">Edit the native CardConjurer data below, or design it in CardConjurer and upload the save. No frame or typography is reimplemented here. Keep all asset URLs public or embedded.</p><textarea id="template-data" class="json-editor" rows="16" spellcheck="false" aria-label="CardConjurer template JSON">${esc(JSON.stringify(data,null,2))}</textarea><button class="button small" id="reload-slots">Apply JSON & refresh text slots</button></details>
-  <div class="notice">Template changes affect a deck after it is prepared again. Review a rendered example before ordering. The original built-in templates remain unchanged.</div>`,{size:'large',footer:'<span class="footer-hint">Native CardConjurer template · custom copy</span><button class="button primary" id="save-template">Save template</button>',onClose:()=>!changed||window.confirm('Discard unsaved template changes?')});
+  <div class="notice">Template changes affect a deck after it is prepared again. Review a rendered example before ordering. The original built-in templates remain unchanged.</div>`,{size:'large',footer:'<span class="footer-hint">Native CardConjurer template · custom copy</span><button class="button primary" id="save-template">Use template</button>',onClose:()=>!changed||window.confirm('Discard unsaved template changes?')});
   function slots(){
     const defaults=['title','type','mana','rules','flavor','pt','loyalty','defense'];
     $('#mapping-table').innerHTML=`<div class="template-mapping">${Object.entries(data.text||{}).map(([slot,obj])=>{const value=mapping[slot]??(defaults.includes(slot)?slot:'');return `<label class="field"><span>${esc(obj.name||slot)} <small>${esc(slot)}</small></span><select data-slot="${esc(slot)}"><option value="">Keep template text</option>${Object.entries(fieldNames).map(([key,label])=>`<option value="${esc(key)}" ${value===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`}).join('')}</div>`;
@@ -49,7 +51,8 @@ function editTemplate(input){
     try{
       const raw=JSON.parse($('#template-data').value);data=raw.data||raw;
       const payload={...template,name:$('#template-name').value.trim(),legendary:$('#template-legendary').checked,groups:$$('[name="template-groups"]:checked',host).map(e=>e.value),data,mapping:Object.fromEntries(Object.entries(mapping).filter(([slot])=>slot in data.text))};
-      $('#save-template').disabled=true;await api('/api/templates',payload);changed=false;closeModal();await showTemplates();toast('Custom template saved. Select it in a deck’s Art & setup tab.');
+      $('#save-template').disabled=true;setModalBusy(host,true);await api('/api/templates',payload);changed=false;closeModal({completed:true});await showTemplates();toast('Custom template saved. Select it in a deck’s Art & setup tab.');
     }catch(e){errorBox($('.modal-body',host),e.message);if($('#save-template'))$('#save-template').disabled=false;}
+    finally{setModalBusy(host,false);}
   };
 }

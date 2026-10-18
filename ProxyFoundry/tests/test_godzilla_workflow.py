@@ -53,6 +53,7 @@ def test_direct_data_json_uses_existing_schema_and_checks_deck_names(tmp_path):
     ('Creature — Human',['B'],'godzilla-card','m15NicknameFrameB.png'),
     ('Land',[],'godzilla-land','m15NicknameFrameL.png'),
     ('Creature — Human',[],'godzilla-card','m15NicknameFrameA.png'),
+    ('Legendary Creature — Human',['B'],'godzilla-card','m15NicknameFrameB.png'),
 ])
 def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_line,colors,choice,frame):
     store=Store(tmp_path);ws=Workspace(store);art=image(store)
@@ -66,10 +67,12 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
     assert len(data['frames'])>=2
     assert any(item['src'].endswith(frame) and item['masks']==[] for item in data['frames'])
     if type_line=='Land':
-        assert any(item['src'].endswith('m15NicknameTitleL.png') for item in data['frames'])
+        assert any(item['src'].endswith('TitleJoinedL.png') for item in data['frames'])
     elif not colors:
-        assert any(item['src'].endswith('m15NicknameTitleA.png') for item in data['frames'])
+        assert any(item['src'].endswith('TitleJoinedA.png') for item in data['frames'])
     assert all(item.get('masks')==[] for item in data['frames'])
+    if type_line!='Land':
+        assert data['frames'][1]['src'].endswith('m15PTC.png' if not colors else 'm15NicknamePTB.png')
     assert data['text']['nickname']['text']=='Alternate Name'
     assert data['text']['title']['text']=='Test Card'
     for key in ('type','rules'):
@@ -78,7 +81,7 @@ def test_explicit_godzilla_uses_complete_frame_and_outlined_text(tmp_path,type_l
         assert data['text'][key]['outlineWidth']>0
 
 
-def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_layers(tmp_path):
+def test_token_conversion_adds_nickname_without_replacing_selected_frame(tmp_path):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
     source=card()
     compiled=Compiler(store).compile_face(source,source,0,
@@ -87,22 +90,64 @@ def test_token_conversion_restores_full_nickname_frame_after_vendor_replaces_lay
                                    art,'Deck-wide token',sem={**source,'types':['Creature'],
                                    'legendary':False,'nickname':'Alternate Name','name':'Test Card'})
     data=converted['data']
-    assert any(item['src'].endswith('m15NicknameFrameB.png') for item in data['frames'])
-    assert all(item.get('masks')==[] for item in data['frames'])
-    assert data['artBounds']['height']>.9
+    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
+    assert any('/img/frames/token/' in item['src'] for item in data['frames'][1:])
+    assert not any('m15NicknameFrame' in item['src'] for item in data['frames'])
     assert data['text']['nickname']['text']=='Alternate Name'
-    for key in ('title','type','rules'):
-        assert data['text'][key]['color']=='white'
-        assert data['text'][key]['outlineWidth']>0
 
 
-def test_native_token_text_gets_white_black_outline(tmp_path):
+
+@pytest.mark.parametrize('colors',[['W'],['U'],['B'],['R'],['G'],[],['W','U']])
+@pytest.mark.parametrize('nickname',[False,True])
+@pytest.mark.parametrize('convert',[False,True])
+@pytest.mark.parametrize('rules',['','Flying'])
+def test_modern_token_text_is_black_except_white_unoutlined_names(tmp_path,nickname,convert,colors,rules):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
-    source=card(type_line='Creature — Zombie',layout='token')
-    data=Compiler(store).compile_face(source,source,0,{},settings,art)['data']
-    for key in ('type','rules'):
-        assert data['text'][key]['color']=='white'
-        assert data['text'][key]['outlineColor']=='black'
+    source=card(type_line='Creature — Zombie',layout='token',colors=colors)
+    source.update(oracle_text=rules,flavor_text='')
+    if nickname:source['flavor_name']='Alternate Name'
+    compiled=Compiler(store).compile_face(source,source,0,{'templateOverride':'token-full-art'},settings,art)
+    if convert:
+        compiled=ws._apply_token_spec(compiled,{'token_frame_style':'token-full-art','output_key':'Test Card','token_key_suffix':''},art,'Deck-wide token',sem={**source,'types':['Creature'],'legendary':False,'nickname':'Alternate Name' if nickname else ''})
+    data=compiled['data']
+    for key,field in data['text'].items():
+        expected='white' if key=='title' and nickname else ('white' if key in {'title','nickname'} and colors!=['W'] else 'black')
+        assert field['color']==expected
+        assert field['outlineWidth']==0 and field['shadowX']==0 and field['shadowY']==0
+
+
+@pytest.mark.parametrize('type_line,style',[('Artifact — Equipment','godzilla-card'),('Land','godzilla-land'),('Basic Land — Mountain','godzilla-land')])
+def test_noncreature_godzilla_frame_has_an_empty_pt_text_box(tmp_path,type_line,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store);settings=ws.validate_settings({})
+    source=card(type_line=type_line);source.pop('power');source.pop('toughness')
+    if 'Land' in type_line:source.update(colors=[],mana_cost='',oracle_text='{T}: Add {R}.')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':style},settings,art)['data']
+    assert data['version']=='m15Nickname'
+    assert data['text']['pt']['text']==''
+    assert all(isinstance(field['text'],str) for field in data['text'].values())
+    assert not any('Power/Toughness' in frame['name'] for frame in data['frames'])
+    if 'Basic' in type_line:
+        assert data['text']['mana']['text']==''
+        assert data['text']['type']['text']=='Basic Land - Mountain'
+        assert '{R}' in data['text']['rules']['text']
+
+
+def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct(tmp_path):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store);deck=ws.new_deck('Token previews')
+    source=card(type_line='Token Creature — Bird',layout='token');source['oracle_text']='Flying'
+    source['flavor_text']=''
+    source['colors']=['U']
+    entry={'id':'card-id','name':source['name'],'quantity':1,'scryfall':source,
+           'faces':[{'id':'face-id','name':source['name'],'index':0}]}
+    ws.store.put('decks',{**deck,'cards':[entry]},deck['revision'])
+    settings=ws.validate_settings({'source':{'mode':'local','localFiles':{'test_card':art}}})
+    plan=ws.template_preview_targets(deck['id'],'token',settings,[])
+    assert not plan['errors']
+    by_choice={target['choice']:target for target in plan['targets']}
+    assert by_choice['auto']['choices']==['auto','token-classic']
+    assert by_choice['auto']['data']['version']=='tokenTextlessM15'
+    assert by_choice['token-full-art']['data']['version']=='tokenRegular'
+    assert by_choice['token-borderless']['data']['version']=='tokenTextlessBorderless'
 
 
 def test_preview_targets_use_a_card_from_requested_layout(tmp_path):
@@ -144,3 +189,235 @@ def test_commander_picker_keeps_distinct_frames_and_groups_matching_choices(tmp_
                for target in plan['targets'])
     assert all(target['data']['text']['nickname']['x']+target['data']['text']['nickname']['width']<0.70
                for target in plan['targets'])
+
+
+@pytest.mark.parametrize('choice,type_line',[('godzilla-card','Creature - Human'),('godzilla-land','Land')])
+def test_godzilla_base_has_no_real_name_strip_without_nickname(tmp_path,choice,type_line):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line=type_line)
+    compiled=Compiler(store).compile_face(source,source,0,{'templateOverride':choice},ws.validate_settings({}),art)
+    data=compiled['data']
+    assert data['version']=='m15Nickname'
+    assert 'nickname' not in data['text'] and data['text']['title']['text']==source['name']
+    assert any('/proxy-foundry/godzilla/' in f['src'] for f in data['frames'])
+    assert not any('/nickname/addons/' in f['src'] for f in data['frames'])
+
+
+@pytest.mark.parametrize('style',['auto','land','godzilla-land'])
+def test_default_land_true_name_uses_approved_join_position(tmp_path,style):
+    store=Store(tmp_path);ws=Workspace(store)
+    source=card(name='Boros Garrison',type_line='Land',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add {R}{W}.',flavor_name='Apocalypse Resistance Camp')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':style},ws.validate_settings({}),image(store))['data']
+    title=data['text']['title'];main=data['text']['nickname']
+    original_y=main['y']+main['height']+.0064
+    if style=='godzilla-land':
+        assert title['height']==pytest.approx(.0243)
+        assert title['size']==pytest.approx(.0229)
+        return
+    assert title['y']==pytest.approx(original_y)
+    assert title['height']==pytest.approx(.0243)
+    assert title['size']==pytest.approx(.0229)
+    assert data['frames'][0]['name']=='Compact land native Godzilla joined title'
+
+
+@pytest.mark.parametrize('choice',['auto','token-classic','token-full-art','token-borderless','godzilla-card'])
+def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp_path,choice):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Token Creature - Spirit',layout='token')
+    settings=ws.validate_settings({});compiler=Compiler(store)
+    plain=compiler.compile_face(source,source,0,{'templateOverride':choice},settings,art)['data']
+    named=compiler.compile_face(source,source,0,{'templateOverride':choice,'semanticOverrides':{'nickname':'Ghost'}},settings,art)['data']
+    assert named['version']==plain['version']
+    if choice=='godzilla-card':
+        assert named['frames'][0]['src'].endswith('TitleJoinedB.png')
+        assert named['frames'][1:]==[f for f in plain['frames'] if '/godzilla/Title' not in f['src']]
+    else:
+        assert named['frames'][1:]==plain['frames']
+    assert named['frames'][0]['src'].endswith('TitleJoinedB.png' if choice=='godzilla-card' else '/nickname/addons/m15NicknameTitleB.png')
+    assert named['text']['nickname']['text']=='Ghost' and named['text']['title']['text']==source['name']
+    for field in ('type','rules','pt'):
+        assert named['text'][field]==plain['text'][field]
+
+
+@pytest.mark.parametrize('nickname',['','Alternate Name'])
+@pytest.mark.parametrize('has_pt',[False,True])
+def test_godzilla_rules_and_flavor_reserve_visible_pt_space(tmp_path,nickname,has_pt):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Legendary Creature — Human Warrior' if has_pt else 'Legendary Artifact')
+    source['oracle_text']='When this permanent enters, look at the top seven cards of your library. You may reveal an Equipment or Vehicle card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\nEquipment you control have equip {1}.\nVehicles you control have crew 1.'
+    source['flavor_text']='Heaven had rules. Balthazar preferred souvenirs.'
+    if not has_pt:
+        source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-card','semanticOverrides':{'nickname':nickname}},
+        ws.validate_settings({}),art)['data']
+    rules=data['text']['rules']
+    assert source['flavor_text'] in rules['text']
+    if has_pt:
+        overlay=next(frame for frame in data['frames'] if 'Power/Toughness' in frame['name'])
+        assert rules['y']+rules['height'] <= overlay['bounds']['y']-.008+1e-9
+    else:
+        assert rules['height']==.2875
+
+
+@pytest.mark.parametrize('nickname',['','Custom land name'])
+@pytest.mark.parametrize('legendary',[False,True])
+def test_dual_land_godzilla_title_and_real_name_blend_land_colors(tmp_path,nickname,legendary):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(name='Bloodstained Mire',type_line=('Legendary ' if legendary else '')+'Land',colors=[])
+    source.pop('power');source.pop('toughness')
+    source.update(mana_cost='',oracle_text='{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.')
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-land','semanticOverrides':{'nickname':nickname}},
+        ws.validate_settings({}),art)['data']
+    kind='Crown' if legendary else 'Title'
+    bars=[f for f in data['frames'] if '/godzilla/'+kind in f['src']]
+    assert len(bars)==2
+    assert [f['src'][-5] for f in bars]==['R','B']
+    assert bars[0]['masks'][0]['name']=='Right Blend'
+    assert bars[0]['bounds']==bars[1]['bounds']
+    real=[f for f in data['frames'] if '/nickname/addons/' in f['src']]
+    assert len(real)==0
+    if nickname and legendary:
+        assert all('/CrownJoined' in f['src'] for f in bars)
+        assert data['frames'][:2]==bars
+    if nickname and not legendary:
+        assert all('/TitleJoined' in f['src'] for f in bars)
+        assert data['frames'][:2]==bars
+        assert bars[0]['bounds']['height']==pytest.approx(.1053)
+
+
+@pytest.mark.parametrize('style',['auto','godzilla-card'])
+def test_dual_nonland_real_name_bar_uses_same_color_blend(tmp_path,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['U','R'])
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':style,'semanticOverrides':{'nickname':'Alternate'}},
+        ws.validate_settings({}),art)['data']
+    real=[f for f in data['frames'] if ('/godzilla/TitleJoined' if style=='godzilla-card' else '/nickname/addons/') in f['src']]
+    assert [f['src'][-5] for f in real]==['R','U']
+    assert real[0]['masks'][0]['name']=='Right Blend'
+
+
+@pytest.mark.parametrize('colors,code',[(['W'],'W'),(['U'],'U'),(['B'],'B'),(['R'],'R'),(['G'],'G'),(['U','R'],'M'),([],'A'),([],'C')])
+@pytest.mark.parametrize('convert',[False,True])
+def test_godzilla_uses_selected_pt_family_and_unoutlined_numbers(tmp_path,colors,code,convert):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(type_line='Legendary Artifact Creature — Human' if code=='A' else 'Legendary Creature — Human',colors=colors)
+    source['flavor_name']='Alternate Name'
+    result=Compiler(store).compile_face(source,source,0,{'templateOverride':'godzilla-card'},ws.validate_settings({}),art)
+    if convert:
+        result=ws._apply_token_spec(result,{'output_key':'Test Card','token_key_suffix':''},art,'Token conversion',sem={**source,'types':['Artifact','Creature'] if code=='A' else ['Creature'],'legendary':True,'nickname':'Alternate Name'})
+    data=result['data']
+    box=next(frame for frame in data['frames'] if 'Power/Toughness' in frame['name'])
+    normal=code in 'WAC'
+    prefix='/img/frames/m15/regular/m15PT' if normal else '/img/frames/m15/nickname/m15NicknamePT'
+    assert box['src']==prefix+code+'.png'
+    pt=data['text']['pt']
+    assert pt['color']==('black' if normal else 'white') and pt['outlineWidth']==0
+    assert pt['shadowX']==0 and pt['shadowY']==0
+    assert data['text']['rules']['y']+data['text']['rules']['height'] < box['bounds']['y']
+
+
+@pytest.mark.parametrize('mana_cost',['','{W}','{3}{W}{W}','{W}{U}{B}{R}{G}'])
+@pytest.mark.parametrize('style',['normal','auto'])
+def test_normal_nickname_bar_keeps_full_width_with_mana(tmp_path,mana_cost,style):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['W']);source['mana_cost']=mana_cost
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':style,'semanticOverrides':{'nickname':'Guardian'}},
+        ws.validate_settings({}),art)['data']
+    bar=data['frames'][0]['bounds']
+    assert bar['width']==pytest.approx(.9014)
+    assert bar['x']+bar['width']/2==pytest.approx(.5001)
+    true_name=data['text']['title']
+    assert true_name['x']+true_name['width']/2==pytest.approx(.5)
+    assert true_name['align']=='center'
+
+
+def test_nicknamed_nonlegendary_godzilla_uses_one_intact_joined_title(tmp_path):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(colors=['W'])
+    data=Compiler(store).compile_face(source,source,0,
+        {'templateOverride':'godzilla-card','semanticOverrides':{'nickname':'Garth'}},
+        ws.validate_settings({}),art)['data']
+    assert data['frames'][0]['src']=='/img/frames/proxy-foundry/godzilla/TitleJoinedW.png'
+    assert data['frames'][0]['bounds']=={'x':.0494,'y':.0405,'width':.9014,'height':.1053}
+    assert not any('/nickname/addons/' in f['src'] or '/godzilla/TitleW.png' in f['src'] for f in data['frames'])
+
+
+@pytest.mark.parametrize('style',['auto','land','godzilla-land'])
+@pytest.mark.parametrize('legendary',[False,True])
+def test_triome_nickname_bar_matches_land_transition(tmp_path,style,legendary):
+    store=Store(tmp_path);ws=Workspace(store);art=image(store)
+    source=card(name='Savai Triome',type_line=('Legendary ' if legendary else '')+'Land — Mountain Plains Swamp',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add {R}, {W}, or {B}.',flavor_name='The Cosmic Crossroads')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'legend-land' if style=='land' and legendary else style},ws.validate_settings({}),art)['data']
+    parts=[f for f in data['frames'] if '/compact-land/TrueName' in f['src'] or '/compact-land/CrownJoinedBlack' in f['src'] or '/nickname/addons/' in f['src'] or '/godzilla/TitleJoined' in f['src'] or '/godzilla/CrownJoined' in f['src']]
+    assert len(parts)==3
+    assert [f['src'][-5] for f in parts]==['B','W','R']
+    assert all(f['bounds']==parts[0]['bounds'] for f in parts)
+    assert parts[-1]['masks']==[]
+    from urllib.parse import unquote
+    masks=[unquote(f['masks'][0]['src']) for f in parts[:2]]
+    assert '62.5%' in masks[0] and '37.5%' in masks[1]
+
+
+@pytest.mark.parametrize('colors',list(__import__('itertools').combinations('WUBRG',3)))
+def test_all_triome_bar_palettes_use_shared_order(colors):
+    from foundry.compiler import _nickname_bar_layers
+    frame={'src':'/img/frames/m15/nickname/addons/m15NicknameTitleM.png','masks':[],'bounds':{'x':.05,'y':.04,'width':.9,'height':.1}}
+    layers=_nickname_bar_layers(frame,{'types':['Land'],'land_colors':list(colors),'colors':[]})
+    assert [f['src'][-5] for f in layers]==list(reversed(colors))
+    # Three-color spells retain their existing gold treatment.
+    assert _nickname_bar_layers(frame,{'types':['Creature'],'colors':list(colors)})==[frame]
+
+
+@pytest.mark.parametrize('left,width',[(.052,.896),(.12,.7),(.02,.96)])
+def test_name_gradient_samples_title_rim_card_coordinates(left,width):
+    import copy
+    from foundry.compiler import _nickname_gradient_domain,_nickname_bar_layers
+    from foundry.legacy import compiler as native
+    from urllib.parse import unquote
+    title=copy.deepcopy(native.LAYOUTS['land_full_dual']['data']['frames'][0])
+    title['bounds'].update(x=left,width=width)
+    domain=_nickname_gradient_domain({'frames':[title]})
+    assert domain==pytest.approx((left+width*.01,left+width*.99))
+    frame={'src':'/img/frames/m15/nickname/addons/m15NicknameTitleM.png','masks':[],'bounds':{'x':.1,'width':.8}}
+    for colors in [['R','W'],['R','W','B']]:
+        layers=_nickname_bar_layers(frame,{'types':['Land'],'land_colors':colors},domain)
+        svg=unquote(layers[0]['masks'][0]['src'])
+        assert 'gradientUnits="userSpaceOnUse"' in svg
+        assert f'x1="{domain[0]*2010:.6f}"' in svg and f'x2="{domain[1]*2010:.6f}"' in svg
+
+
+@pytest.mark.parametrize('colors',[['W'],['U'],['B'],['R'],['G'],['R','W'],['R','W','B']])
+def test_retired_svg_true_name_keeps_exact_title_paint_for_reconnection(tmp_path,colors,monkeypatch):
+    import xml.etree.ElementTree as ET
+    from urllib.parse import unquote
+    from foundry.compiler import _nickname_gradient_domain
+    from foundry import compiler
+    # Preserve coverage of the dormant rounded family without selecting it in
+    # the live app. Reconnecting it should keep its approved paint matching.
+    monkeypatch.setattr(compiler,'RETIRED_BUILTINS',{})
+    monkeypatch.setattr(compiler,'BUILTINS',compiler.BUILTINS+[{'id':'land','groups':'ordinary'}])
+    store=Store(tmp_path);ws=Workspace(store)
+    source=card(name='Test Land',type_line='Land',colors=[])
+    source.update(mana_cost='',oracle_text='{T}: Add '+', '.join('{'+color+'}' for color in colors)+'.',flavor_name='Alternate Land')
+    source.pop('power');source.pop('toughness')
+    data=Compiler(store).compile_face(source,source,0,{'templateOverride':'land'},ws.validate_settings({}),image(store))['data']
+    title=next(f for f in data['frames'] if 'Title Bar' in f['name'])
+    paint=next(f for f in data['frames'] if f['name']=='True-name title rim colors')
+    def rim(frame):
+        return next(node for node in ET.fromstring(unquote(frame['src'].split(',',1)[1])).iter() if node.get('id')=='rim')
+    original,matched=rim(title),rim(paint)
+    assert [stop.attrib for stop in matched]==[stop.attrib for stop in original]
+    domain=_nickname_gradient_domain(data)
+    for key,expected in zip(('x1','x2'),domain):
+        assert paint['bounds']['x']+float(matched.get(key))/1352*paint['bounds']['width']==pytest.approx(expected)
+    assert matched.get('gradientUnits')=='userSpaceOnUse'
+    assert paint['ogBounds']=={'x':0,'y':0,'width':1,'height':1}
+    assert not any('/nickname/addons/' in f['src'] for f in data['frames'])

@@ -7,14 +7,14 @@ from scripts.package_release import build
 @pytest.mark.skipif((os.environ.get('PF_TEST_BACK_ASSETS')=='1' or (os.environ.get('CI')=='true' and not (Path(__file__).resolve().parents[1]/'assets/backs/forge_default.png').is_file())),reason='Code-only CI uses synthetic backdrops; exact two-background release is verified locally from the complete asset pack.')
 def test_complete_release_contains_no_runtime_cache_or_fonts(tmp_path):
     out=tmp_path/'release.zip';manifest=build(out)
-    required=['START_PROXY_FOUNDRY.bat','START_BULK_PROXY_FORGE.bat','START_BULK_PROXY_FORGE.pyw','START_LEGACY_CARD_TOOLS.bat','RUN_TESTS.bat','run.py','site/index.html','site/app.js','site/deck.js','site/setup.js','site/render.js','site/styles.css','foundry/server.py','extension/manifest.json','extension/bridge.js','extension/background.js','vendor/card_tools/pipeline/card_data_to_cardconjurer.py','foundry/backs.py','site/backs.js','assets/backs/forge_default.png','assets/backs/forge_blank.png','assets/backs/manifest.json','assets/symbols/common.png','assets/symbols/uncommon.png','assets/symbols/rare.png','assets/symbols/mythic.png']
+    required=['START_PROXY_FOUNDRY.bat','START_BULK_PROXY_FORGE.bat','START_BULK_PROXY_FORGE.pyw','START_LEGACY_CARD_TOOLS.bat','RUN_TESTS.bat','run.py','site/index.html','site/app.js','site/deck.js','site/setup.js','site/render.js','site/deck-adapters.mjs','site/styles.css','foundry/server.py','extension/manifest.json','extension/bridge.js','extension/background.js','vendor/card_tools/pipeline/card_data_to_cardconjurer.py','foundry/backs.py','site/backs.js','assets/backs/forge_default.png','assets/backs/forge_blank.png','assets/backs/manifest.json','assets/symbols/common.png','assets/symbols/uncommon.png','assets/symbols/rare.png','assets/symbols/mythic.png']
     with zipfile.ZipFile(out) as z:
         assert z.testzip() is None
         names=z.namelist()
         assert {p for p in names if p.endswith('.png')}=={'BulkProxyForge/site/logo.png','BulkProxyForge/site/discord.png','BulkProxyForge/site/command_tower.png','BulkProxyForge/site/command_tower_custom.png','BulkProxyForge/assets/backs/forge_default.png','BulkProxyForge/assets/backs/forge_blank.png','BulkProxyForge/assets/symbols/common.png','BulkProxyForge/assets/symbols/uncommon.png','BulkProxyForge/assets/symbols/rare.png','BulkProxyForge/assets/symbols/mythic.png'}
         assert all('BulkProxyForge/'+p in names for p in required)
         assert not any(p.lower().endswith(('.ttf','.otf','.woff','.woff2','.pem','.crx','.pyc')) for p in names)
-        assert not any('/test-results/' in p or '/.git/' in p or '/checkpoints/' in p for p in names)
+        assert not any('/test-results/' in p or '/.git/' in p or '/checkpoints/' in p or '/dist/' in p for p in names)
         saved=json.loads(z.read('BulkProxyForge/RELEASE_MANIFEST.json'))
         assert saved==manifest
         for name,digest in saved['files'].items():assert hashlib.sha256(z.read('BulkProxyForge/'+name)).hexdigest()==digest

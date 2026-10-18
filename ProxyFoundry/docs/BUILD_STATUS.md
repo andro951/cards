@@ -1,3 +1,20 @@
-# Integration checkpoint 4
+# Current build and verification
 
-43 local tests currently pass, including an HTTP server smoke test with session-token checks, cross-origin rejection, revision conflict protection and trash/restore. Explicit paired order tests verify multi-deck quantities, per-deck backs and a real alternate back using archive bytes rather than array-order assumptions. Order packaging streams files to disk and freezes deck revisions in an order manifest. UI and runtime orchestration integration is in progress; no claim of a verified live printer handoff is made.
+Updated 2026-10-01. This replaces the obsolete early integration checkpoint.
+
+The final product is a static website with the engine running in the browser. The local preview launcher serves static files for development and local use; there is no hosted application server.
+
+- Routine pytest gate: 531 passed, 0 failed, 0 skipped in the selected group (190.33 seconds).
+- JavaScript syntax and six Node adapter/helper checks passed.
+- Actual static Chromium workflow and template validation checks passed.
+- Ten browser storage checks passed, including selected-folder reconnection, tab ownership, binary ZIP persistence, interrupted generation, quota recovery, file rename/log rotation, cached file metadata invalidation, immediate deck deletion/order guards/reload recovery, and failed-rename source/destination preservation and retry.
+- The 100-image browser session completed and preserved all images after reload (2180.96 seconds); the final bridge passed a separate native render with memory forced above 2 GiB.
+- Five real Supernatural full-art cards rendered and exported through static Chromium (338.24 seconds). All five review images were visually compared with the original custom art; independent source-pixel comparisons passed. See [full-art verification](FULL_ART_VERIFICATION.md).
+- Approved Card Tools files match their canonical Git blobs.
+
+[Testing instructions and individual timings](TESTING.md) describe routine versus affected/full-sweep groups. [Session status](SESSION_STATUS.md) describes the behavior now implemented. This repair run does not imply that every unrelated extended test or a live manufacturing handoff was rerun.
+Timing instrumentation: 522 routine tests passed (216.91 seconds), with an affected static-browser render/export check verifying TIMING records in diagnostics. See [timing logs](TIMING_LOGS.md).
+
+Native render saves now validate and preserve original PNG bytes, and unchanged database snapshots are skipped. See [save verification and benchmark](RENDER_SAVE_VERIFICATION.md).
+
+Timing storage labels: 531 routine tests and two real Chromium startup-path checks passed. The selected-folder permission fixture uses a simulated folder handle; it is not a disk-folder performance benchmark.

@@ -1,18 +1,53 @@
+import {generationScreen} from './generation-progress.js';
+import {recordDiagnostic,downloadBrowserDiagnostics} from './diagnostics.js';
+import {WorkCoordinator} from './work.js';
 export const $=(s,root=document)=>root.querySelector(s);
 export const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Set(),dirty:false,busy:false,helper:false,route:'decks',activeDeck:null};
+export const work=new WorkCoordinator(()=>refreshWorkActivity());
+export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Set(),dirty:false,get busy(){return work.busy},helper:false,route:'decks',activeDeck:null,routeEpoch:0,deckTab:'cards'};
 export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024**2).toFixed(1)+' MB':Math.ceil(n/1024)+' KB';
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const asset=id=>id?'/api/assets/'+id:'';
-export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print',attention:'Needs attention'}[s]||s||'Draft');
+export const thumbnail=url=>/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url;
+export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print','tokens-not-ready':'Tokens not ready',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-export async function api(path,data,method='POST'){
+export function requireDeckAvailable(id,owner=null){if(id)work.requireAvailable(['deck:'+id],owner);}
+export function requireWorkspaceIdle(){work.requireIdle();}
+function mutationResources(path,data){
+  const match=/^\/api\/decks\/([-a-f0-9]{36})(?:\/(save|add|delete|restore|prepare|cards)(?:\/|$))/.exec(path);
+  if(match)return ['deck:'+match[1]];
+  if(['/api/orders/plan','/api/orders/build'].includes(path))return (data?.deckIds||[]).map(id=>'deck:'+id);
+  if(['/api/images/delete-all','/api/backups/import-selected','/api/backups/restore'].includes(path))return ['workspace'];
+  return [];
+}
+export async function api(path,data,method='POST',owner=null){
+  const resources=data!==undefined&&method==='POST'?mutationResources(path,data):[];
+  if(data!==undefined&&method==='POST')work.requireAvailable(resources,owner);
+  const lease=!owner&&resources.length?work.begin({label:resources.includes('workspace')?'Update workspace':'Save deck changes',resources}):null;
+  try{return await requestApi(path,data,method);}
+  finally{if(lease)work.finish(lease);}
+}
+async function requestApi(path,data,method){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
   const r=await fetch(path,opt);const text=await r.text();let result;
-  try{result=JSON.parse(text)}catch{throw new Error('The workspace returned an unreadable response. Reload the page and try again.');}
-  if(!r.ok)throw new Error(result.error||'Request failed.');return result;
+  try{result=JSON.parse(text)}catch(error){
+    recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.length} characters; ${error.message}; start=${text.slice(0,300)}; end=${text.slice(-300)}`);
+    throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
+  }
+  if(!r.ok){recordDiagnostic('API failure',`${path}: HTTP ${r.status}; ${result.error||'Request failed.'}`);const error=new Error(result.error||'Request failed.');error.status=r.status;throw error;}return result;
+}
+export function showWorkspaceError(error,retry=null){
+  recordDiagnostic('workspace error',error.stack||error.message);
+  const notice=document.createElement('div');notice.className='notice error';notice.textContent=error.message;
+  const diagnostics=document.createElement('button');diagnostics.className='button';diagnostics.textContent='Download browser diagnostics';
+  diagnostics.onclick=downloadBrowserDiagnostics;
+  $('#main').replaceChildren(notice,diagnostics);
+  if(retry){
+    const button=document.createElement('button');button.className='button';button.textContent='Retry';button.onclick=retry;
+    $('#main').append(button);
+  }
 }
 export async function blobRequest(path,body,mime='application/octet-stream',headers={}){
   const r=await fetch(path,{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':mime,...headers},body});
@@ -23,74 +58,152 @@ export async function downloadPost(path,data,filename){
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-export async function saveApiFile(path,name,size=null){
-  let handle=null;
-  //Small exports use the browser download folder; large files stream to disk.
-  const smallFile=Number.isFinite(size)&&size>=0&&size<=50*1024*1024;
-  if(!smallFile&&state.bootstrap?.browser&&typeof window.showSaveFilePicker==='function'){
-    try{handle=await window.showSaveFilePicker({suggestedName:name});}
-    catch(error){if(error.name==='AbortError')return;throw error;}
-  }
-  if(handle){
-    const writer=await handle.createWritable();
-    try{
-      let offset=0,total=null;
-      while(total===null||offset<total){
-        const response=await fetch(path,{headers:{Range:`bytes=${offset}-${offset+4*1024*1024-1}`}});
-        if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Download failed.');
-        const match=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('Content-Range')||'');
-        if(response.status!==206||!match||Number(match[1])!==offset)throw new Error('The saved file did not return a valid download range.');
-        const chunk=await response.arrayBuffer();
-        if(chunk.byteLength!==Number(match[2])-offset+1)throw new Error('The download was incomplete.');
-        await writer.write(chunk);offset+=chunk.byteLength;total=Number(match[3]);
-      }
-      await writer.close();return;
-    }catch(error){await writer.abort().catch(()=>{});throw error;}
-  }
+export async function saveApiFile(path,name){
   const response=await fetch(path);
   if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'Download failed.');}
   downloadBlob(await response.blob(),name);
 }
+export async function downloadExportFile(output){
+  //The Blob has received all bytes before staging is removed; orders remain separate.
+  const downloading=saveApiFile(output.download,output.filename);
+  await downloading.finally(()=>api(output.cleanup,{}).catch(error=>{
+    recordDiagnostic('download cleanup failed',error.message);
+  }));
+}
 export function toast(message,error=false){
+  recordDiagnostic(error?'error notification':'notification',message);
   const el=document.createElement('div');el.className='toast'+(error?' error':'');el.setAttribute('role',error?'alert':'status');el.innerHTML=`<span>${esc(message)}</span><button aria-label="Dismiss notification">×</button>`;$('#toast-host').append(el);$('button',el).onclick=()=>el.remove();setTimeout(()=>el.remove(),error?14000:6500);
 }
-export async function attempt(fn){try{return await fn()}catch(e){console.error(e);toast(e.message,true);return null;}}
-let lastFocus=null,modalCloser=null;
-export function closeModal(){if(modalCloser&&!modalCloser())return;$('#modal-host').replaceChildren();document.body.classList.remove('no-scroll');lastFocus?.focus?.();modalCloser=null;}
-export function modal(title,body,{size='',footer='',onClose=null}={}){
-  lastFocus=document.activeElement;modalCloser=onClose;$('#modal-host').innerHTML=`<div class="modal-backdrop"><section class="modal ${esc(size)}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="modal-header"><h2 id="modal-title">${esc(title)}</h2><button class="button quiet icon" id="modal-close" aria-label="Close dialog">×</button></header><div class="modal-body">${body}</div>${footer?`<footer class="modal-footer">${footer}</footer>`:''}</section></div>`;
-  document.body.classList.add('no-scroll');$('#modal-close').onclick=closeModal;
-  const el=$('.modal');$('.modal-backdrop').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal();});
-  el.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();closeModal();}
-    if(e.key==='Tab'){const nodes=$$('button,a,input,select,textarea,summary,[tabindex="0"]',el).filter(x=>!x.disabled&&x.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
-  });
-  // Focus before returning the mounted dialog. A delayed focus callback can steal
-  // typing from a field the user has already chosen (including the artist credit).
-  const first=$('input:not([type=file]):not([disabled]),textarea:not([disabled])',el)||$('#modal-close',el);
-  first?.focus({preventScroll:true});return el;
+export async function attempt(fn){try{return await fn()}catch(e){recordDiagnostic('caught error',e.stack||e.message);console.error(e);toast(e.message,true);return null;}}
+//#region Dialog lifecycle
+let lastFocus=null,modalCloser=null,modalRequired=false,modalBusy=false;
+export function closeModal({completed=false}={}){
+  if(!completed&&(modalRequired||modalBusy))
+    return false;
+
+  if(modalCloser&&!modalCloser())
+    return false;
+
+  $('#modal-host').replaceChildren();document.body.classList.remove('no-scroll');
+  modalCloser=null;modalRequired=false;modalBusy=false;
+  lastFocus?.focus?.();
+  return true;
 }
+export function setModalBusy(host,busy){
+  if(!host?.isConnected||host!==$('#modal-host .modal'))
+    return;
+
+  modalBusy=busy;host.setAttribute('aria-busy',String(busy));
+  $('#modal-close',host).disabled=busy;
+}
+export function modal(title,body,{size='',footer='',onClose=null,dismissible=true}={}){
+  const container=$('#modal-host');
+  if($('.modal',container)&&!closeModal())
+    throw new Error('Complete the current dialog before opening another one.');
+
+  recordDiagnostic('dialog',title);
+  lastFocus=document.activeElement;modalCloser=onClose;modalRequired=!dismissible;modalBusy=false;
+  const backdrop=document.createElement('div');backdrop.className='modal-backdrop';
+  const el=document.createElement('section');el.className='modal'+(size?' '+size:'');
+  el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','modal-title');
+  const header=document.createElement('header');header.className='modal-header';
+  const heading=document.createElement('h2');heading.id='modal-title';heading.textContent=title;
+  const close=document.createElement('button');close.type='button';close.className='button quiet icon';
+  close.id='modal-close';close.textContent='×';close.setAttribute('aria-label','Close dialog');
+  close.hidden=!dismissible;
+  if(!dismissible)
+    close.style.display='none';
+
+  close.onclick=()=>closeModal();header.append(heading,close);
+  const content=document.createElement('div');content.className='modal-body';
+  //Existing callers still supply formatted content; the shared dialog owns its DOM and lifecycle.
+  content.innerHTML=body;el.append(header,content);
+  if(footer){
+    const actions=document.createElement('footer');actions.className='modal-footer';actions.innerHTML=footer;el.append(actions);
+  }
+
+  backdrop.addEventListener('mousedown',event=>{if(event.target===backdrop)event.preventDefault();});
+  backdrop.append(el);container.replaceChildren(backdrop);document.body.classList.add('no-scroll');
+  el.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeModal();}
+    if(e.key==='Tab'){const nodes=$$('button,a,input,select,textarea,summary,[tabindex="0"]',el).filter(x=>!x.disabled&&x.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(!first){e.preventDefault();return;}if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
+  });
+  //Focus synchronously so a delayed callback cannot steal typing from a selected field.
+  const first=$('input:not([type=file]):not([disabled]),textarea:not([disabled])',el)||$$('button',el).find(button=>!button.disabled&&!button.hidden);
+  if(first)
+    first.focus({preventScroll:true});
+  else{
+    el.tabIndex=-1;el.focus({preventScroll:true});
+  }
+
+  return el;
+}
+//#endregion
 export function confirmAction(title,text,label='Continue',danger=false){return new Promise(resolve=>{
-  modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button quiet" id="confirm-no">Cancel</button><button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
-  $('#confirm-no').onclick=()=>closeModal();$('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
+  modal(title,`<p class="muted">${esc(text)}</p>`,{size:'small',footer:`<button class="button ${danger?'danger':'primary'}" id="confirm-yes">${esc(label)}</button>`,onClose:()=>{resolve(false);return true;}});
+  $('#confirm-yes').onclick=()=>{modalCloser=null;closeModal();resolve(true);};
 });}
-export function errorBox(el,message){let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
-export function activity(kind,title,detail,done=0,total=0){
+export function errorBox(el,message){recordDiagnostic('form error',message);let b=$('.form-error',el);if(!b){b=document.createElement('div');b.className='notice error form-error';b.setAttribute('role','alert');el.prepend(b)}b.textContent=message;b.scrollIntoView({block:'nearest'});}
+export function activity(kind,title,detail,done=0,total=0,owner=null){
+  if(owner){work.update(owner,{kind,title,detail,done,total});return;}
+  drawActivity(kind,title,detail,done,total);
+}
+function drawActivity(kind,title,detail,done=0,total=0){
+  if(generationScreen.active){$('#activity').classList.add('hidden');return;}
   $('#activity').classList.remove('hidden');$('#activity-kind').textContent=kind;$('#activity-title').textContent=title;$('#activity-detail').textContent=detail||'';$('#activity-count').textContent=total?`${done} / ${total}`:'';
   const pct=total?Math.min(100,done/total*100):4;$('#activity-bar').style.width=pct+'%';$('.progress-track').setAttribute('aria-valuenow',Math.round(pct));
   const line=`${new Date().toLocaleTimeString()} · ${detail||title}`;
   if(!$('#activity-log').textContent.endsWith(line+'\n'))$('#activity-log').textContent=($('#activity-log').textContent+line+'\n').split('\n').slice(-80).join('\n');
 }
-export function endActivity(message,error=false){$('#activity-title').textContent=message;$('#activity-detail').textContent=error?'Completed images are saved. Details are in the activity log.':'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if($('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);}
-export async function job(path,data,{label='Working',onProgress=null}={}){
-  const result=await api(path,data);if(!result?.id)throw new Error('The app did not start the task.');const ident=result.id;
-  $('#activity-cancel').disabled=false;$('#activity-cancel').textContent='Cancel';$('#activity-cancel').onclick=()=>attempt(async()=>{await api('/api/jobs/'+ident+'/cancel',{});$('#activity-cancel').disabled=true;});
-  activity(label,'Starting…','Starting task');
-  while(true){
-    await sleep(400);const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total);onProgress?.(j);
-    if(j.state==='done'){endActivity('Complete');return j.result;}
-    if(j.state==='failed'||j.state==='cancelled'){endActivity(j.message,true);throw new Error(j.error||j.message);}
+function refreshWorkActivity(){
+  const panel=$('#activity');if(!panel)return;
+  if(generationScreen.active){panel.classList.add('hidden');return;}
+  const task=work.visible();
+  if(task){
+    const p=task.progress;drawActivity(p.kind,p.title,p.detail,p.done,p.total);
+    const cancel=$('#activity-cancel');cancel.textContent=task.controller.signal.aborted?'Cancelling…':'Cancel';cancel.disabled=task.controller.signal.aborted;cancel.onclick=()=>task.controller.abort();
   }
+  let queued=$('#queued-work');
+  if(!queued){queued=document.createElement('div');queued.id='queued-work';queued.style.display='grid';queued.style.gap='8px';panel.append(queued);}
+  queued.replaceChildren();
+  for(const entry of work.queue){
+    const row=document.createElement('div');row.style.display='flex';row.style.alignItems='center';row.style.gap='12px';
+    const label=document.createElement('span');label.textContent=entry.task.label+' · queued';
+    const cancel=document.createElement('button');cancel.className='button quiet small';cancel.textContent='Cancel queued task';cancel.setAttribute('aria-label','Cancel queued '+entry.task.label);cancel.onclick=()=>entry.task.controller.abort();
+    row.append(label,cancel);queued.append(row);panel.classList.remove('hidden');
+  }
+}
+export function endActivity(message,error=false,owner=null){
+  if(owner&&work.visible()!==owner)return;
+  $('#activity-title').textContent=message;$('#activity-detail').textContent=error?(owner?.atomicGeneration?'Previous card images are unchanged. Details are in the activity log.':'Completed images are saved. Details are in the activity log.'):'Your progress is saved.';$('#activity-cancel').textContent='Dismiss';$('#activity-cancel').disabled=false;$('#activity-cancel').onclick=()=>$('#activity').classList.add('hidden');if(!error)setTimeout(()=>{if(!work.busy&&$('#activity-title').textContent===message)$('#activity').classList.add('hidden')},6000);
+}
+function waitForJob(id,signal){
+  return new Promise(resolve=>{
+    const finish=()=>{clearTimeout(timer);window.removeEventListener(`pf-job`,updated);signal?.removeEventListener(`abort`,finish);resolve();};
+    const updated=event=>{if(event.detail.id===id)finish();};
+    const timer=setTimeout(finish,1000);
+    window.addEventListener(`pf-job`,updated);signal?.addEventListener(`abort`,finish,{once:true});
+  });
+}
+export async function job(path,data,{label='Working',onProgress=null,signal=null,owner=null,resources=null,background=false,onStarted=null}={}){
+  const task=owner||work.begin({label,resources:resources||mutationResources(path,data),signal,background});
+  signal=task.controller.signal;let ident=null;
+  const cancel=()=>{if(ident)api('/api/jobs/'+ident+'/cancel',{},'POST',task).catch(error=>recordDiagnostic('cancel task',error.message));};
+  signal?.addEventListener('abort',cancel,{once:true});
+  try{
+    if(signal?.aborted)throw new Error('Task cancelled.');
+    activity(label,'Starting…','Starting task',0,0,task);
+    const result=await api(path,data,'POST',task);if(!result?.id)throw new Error('The app did not start the task.');ident=result.id;
+    if(onStarted)await onStarted(ident);
+    if(signal?.aborted)cancel();
+    while(true){
+      const j=await api('/api/jobs/'+ident);activity(label,j.kind,j.message,j.done,j.total,task);onProgress?.(j);
+      if(j.state==='done'){if(!owner)endActivity('Complete',false,task);return j.result;}
+      if(j.state==='failed'||j.state==='cancelled'){if(!owner)endActivity(j.message,true,task);throw new Error(j.error||j.message);}
+      await waitForJob(ident,signal);
+    }
+  }catch(error){if(!owner)endActivity(error.message,true,task);throw error;}
+  finally{signal?.removeEventListener('abort',cancel);if(!owner)work.finish(task);}
 }
 export async function uploadImage(file,{symbol=false,back=false}={}){
   if(!file)throw new Error('Choose an image.');if(file.size>64*1024**2)throw new Error('Choose an image under 64 MB.');
@@ -104,13 +217,13 @@ export async function uploadImage(file,{symbol=false,back=false}={}){
   return blobRequest('/api/uploads'+(kind?('?kind='+encodeURIComponent(kind)):''),blob,'image/png',{'X-Filename':encodeURIComponent(file.name.replace(/\.svg$/i,'.png'))});
 }
 export function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not decode image.'));i.src=src;});}
-export async function uploadFolder(files,onProgress=()=>{}){
+export async function uploadFolder(files,onProgress=()=>{},source=null){
   const images=[...files].filter(f=>/\.(png|jpe?g|webp|gif)$/i.test(f.name));if(images.length>5000)throw new Error('Select at most 5,000 art images.');
-  const result={};let n=0;
-  for(const file of images){const a=await uploadImage(file);if(result[a.stem])throw new Error('Two images have the same normalized card name: '+file.name);result[a.stem]=a.id;onProgress(++n,images.length);}
-  if(!n)throw new Error('No supported images were found in that folder.');return result;
+  const result={},names={};let done=0;
+  for(const file of images){const a=await uploadImage(file);let key=a.stem,duplicate=1;while(Object.hasOwn(result,key))key=a.stem+'__'+(++duplicate);result[key]=a.id;names[key]=file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name;onProgress?.(++done,images.length);}
+  if(!images.length)throw new Error('No supported images were found in that folder.');if(source)source.localNames=names;return result;
 }
 export function loading(text='Loading…'){return `<div class="loading-state"><span class="spinner"></span>${esc(text)}</div>`;}
 export function empty(title,text,button=''){return `<div class="empty-state"><span class="eyebrow">MAKE IT YOURS</span><h2>${esc(title)}</h2><p>${esc(text)}</p>${button}</div>`;}
-export function nav(hash){if(state.dirty&&!window.confirm('Leave without saving these setup changes?'))return;state.dirty=false;location.hash=hash;}
+export function nav(hash){location.hash=hash;}
 window.addEventListener('beforeunload',e=>{if(state.dirty||state.busy){e.preventDefault();e.returnValue='';}});
