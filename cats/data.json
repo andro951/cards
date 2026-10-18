@@ -595,6 +595,19 @@
         "scryfall_id": "b5000cf8-2104-4d85-95df-29efa92256f6"
       },
       "quantity": 20
+    },
+    {
+      "front": {
+        "name": "Cat",
+        "oracle_id": "5ae6251d-cef9-4fb7-bdcd-e870a062f042",
+        "scryfall_id": "2885d54c-9fb2-4f01-8937-54f8ac1ce5bc"
+      },
+      "back": {
+        "name": "Cat",
+        "oracle_id": "65742c00-2809-4085-a950-8f93845c03d2",
+        "scryfall_id": "255dcc91-7b3d-4b58-85f3-b21be805966e"
+      },
+      "quantity": 20
     }
   ],
   "tokenTreatments": []
