@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Elemental",
+      "oracle_id": "982ee0fe-7985-4110-a83d-61eab53bc275",
+      "scryfall_url": "https://scryfall.com/card/twoe/9/elemental?utm_source=api"
+    },
+    {
+      "name": "Construct",
+      "oracle_id": "ee740c48-59cd-4fcc-b4a5-fe3dde1361d5",
+      "scryfall_url": "https://scryfall.com/card/tcmm/41/construct?utm_source=api"
+    },
+    {
+      "name": "Insect",
+      "oracle_id": "c39cd31f-c4a2-4ca8-b4f9-b2e6289743bc",
+      "scryfall_url": "https://scryfall.com/card/tmm2/10/insect?utm_source=api"
+    },
+    {
+      "name": "Treasure",
+      "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+      "scryfall_id": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89",
+      "scryfall_url": "https://scryfall.com/card/tafr/15/treasure?utm_source=api"
+    },
+    {
+      "name": "Rhino Warrior",
+      "oracle_id": "b21d35b6-1250-4716-bc65-817f875caf64",
+      "scryfall_url": "https://scryfall.com/card/tsnc/11/rhino-warrior?utm_source=api"
+    },
+    {
+      "name": "Pilot",
+      "oracle_id": "425c9e23-3227-44a5-8e10-0cf4d0967799",
+      "scryfall_url": "https://scryfall.com/card/tneo/1/pilot?utm_source=api"
+    },
+    {
+      "name": "Myr",
+      "oracle_id": "bf690282-125f-431c-a363-39f6772324c8",
+      "scryfall_url": "https://scryfall.com/card/tbbd/6/myr?utm_source=api"
+    },
+    {
+      "name": "Angel",
+      "oracle_id": "40c64f08-ab2f-4933-8e0e-d1a1c729008f",
+      "scryfall_url": "https://scryfall.com/card/ta25/2/angel?utm_source=api"
+    },
+    {
+      "name": "Treasure",
+      "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+      "scryfall_id": "93116d98-2dad-4b80-a3af-9e36e34da6d4",
+      "scryfall_url": "https://scryfall.com/card/tsnc/17/treasure?utm_source=api"
+    }
+  ],
+  "artVariants": [
+    {
+      "id": "81a50251-ba7b-4f87-9d22-1d79b12cfb7d",
+      "card": {
+        "name": "Treasure",
+        "section": "columna",
+        "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+        "scryfall_id": "93116d98-2dad-4b80-a3af-9e36e34da6d4"
+      },
+      "quantity": 4,
+      "faces": [
+        {
+          "name": "Treasure",
+          "art": "treasure2.png"
+        }
+      ]
+    }
+  ]
+}
