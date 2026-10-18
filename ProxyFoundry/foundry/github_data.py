@@ -20,6 +20,10 @@ def face_values(entries,card,face):
 
 def location(settings):
     source=settings.get('dataJsonSource') or {}
+    if not source and settings.get('githubSetupFolder'):
+        loc=github_location(settings['githubSetupFolder'])
+        loc['folder']='/'.join(part for part in (loc['folder'],'data.json') if part)
+        return {**loc,'optional':True}
     if source.get('kind')!='github':return None
     value=source.get('value','')
     if value.startswith('https://'):
@@ -54,6 +58,13 @@ def refresh(workspace, deck, cancel=lambda:False):
         commit=str(result.get('sha','')).lower() if isinstance(result,dict) else ''
     if not re.fullmatch(r'[0-9a-f]{40}',commit):raise ValidationError('GitHub did not return an exact commit for data.json.')
     if same_source and prior.get('commit')==commit and prior.get('faces')==faces:return deck
+    if loc.get('optional'):
+        #A project can acquire its first data.json after the deck was imported.
+        #Check the pinned directory so a genuinely absent optional file is not an error.
+        folder=loc['folder'].rpartition('/')[0]
+        rows=net.json('https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(folder,safe='/')+'?ref='+commit,immutable=True)
+        if not isinstance(rows,list):raise ValidationError('GitHub did not return the project folder contents.')
+        if not any(row.get('type')=='file' and row.get('name')=='data.json' for row in rows):return deck
     raw,_,_=net.fetch('https://raw.githubusercontent.com/'+loc['repo']+'/'+commit+'/'+quote(loc['folder'],safe='/'),immutable=True)
     entries=parse_document(raw)
     targets={key for card in deck.get('cards',[]) for face in card.get('faces',[]) for key in matching_keys(card,face)}
@@ -64,6 +75,8 @@ def refresh(workspace, deck, cancel=lambda:False):
     if cancel():raise ValidationError('Preparation cancelled.')
     # Validate everything before touching the deck, then save with its revision.
     updated=copy.deepcopy(deck)
+    if loc.get('optional'):
+        updated['settings']['dataJsonSource']={'kind':'github','value':'https://github.com/'+loc['repo']+'/blob/'+quote(loc['ref'],safe='')+'/'+quote(loc['folder'],safe='/')}
     previous=prior.get('entries',[]) if same_source else deck.get('cardData',[])
     old={selector_key(e):e for e in previous}
     new={selector_key(e):e for e in entries}

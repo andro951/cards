@@ -15,11 +15,12 @@ from foundry.workspace import Workspace
 
 class Remote:
     def __init__(self):
-        self.commit='a'*40;self.calls=[];self.document={'version':1,'cards':[]};self.failure=None
+        self.commit='a'*40;self.calls=[];self.document={'version':1,'cards':[]};self.failure=None;self.present=True
     def transport(self,url):
         self.calls.append(url)
         if '/commits/' in url:value={'sha':self.commit}
         elif url=='https://api.github.com/repos/owner/repo':value={'default_branch':'main'}
+        elif '/contents/' in url:value=[{'type':'file','name':'data.json'}] if self.present else []
         elif url.startswith('https://raw.githubusercontent.com/'):
             if self.failure:raise ValidationError(self.failure)
             value=self.document
@@ -61,6 +62,43 @@ def test_generate_refreshes_angel_germ_and_only_recompiles_changed_cards(env,mon
         text=card['faces'][0]['compiled']['data']['text']
         assert text['nickname']['text']==nick and text['title']['text']==card['name']
     assert result['cards'][2]['faces'][0]['compiled']['renderKey']==control
+
+
+def test_generate_discovers_data_file_added_after_project_import(env,monkeypatch):
+    ws,deck,remote=env
+    deck['settings']['dataJsonSource']=None;remote.present=False
+    ws.store.put('decks',deck,deck['revision'])
+    first=ws.prepare(deck['id'])
+    assert first['settings']['dataJsonSource'] is None
+    assert not any('raw.githubusercontent.com' in url for url in remote.calls)
+    before=first['cards'][2]['faces'][0]['compiled']['renderKey']
+    set_names(remote);remote.present=True;calls=[];compile_face=ws.compiler.compile_face
+    def tracked(sf,*args,**kwargs):calls.append(sf['name']);return compile_face(sf,*args,**kwargs)
+    monkeypatch.setattr(ws.compiler,'compile_face',tracked)
+    result=ws.prepare(deck['id'])
+    assert calls==['Angel','Germ']
+    assert result['settings']['dataJsonSource']=={'kind':'github','value':'https://github.com/owner/repo/blob/main/deck/data.json'}
+    assert result['cards'][0]['faces'][0]['compiled']['data']['text']['nickname']['text']=='Fallen Seraph'
+    assert result['cards'][1]['faces'][0]['compiled']['data']['text']['nickname']['text']=='Shadow of Death'
+    assert result['cards'][2]['faces'][0]['compiled']['renderKey']==before
+    calls.clear();remote.calls.clear();ws.prepare(deck['id'])
+    assert not calls and remote.calls==['https://api.github.com/repos/owner/repo/commits/main']
+
+
+def test_single_card_generation_discovers_unlinked_project_data(env):
+    ws,deck,remote=env;deck['settings']['dataJsonSource']=None
+    ws.store.put('decks',deck,deck['revision']);set_names(remote)
+    result=ws.prepare_card(deck['id'],deck['cards'][0]['id'])
+    assert result['cards'][0]['faces'][0]['compiled']['data']['text']['nickname']['text']=='Fallen Seraph'
+    assert result['settings']['dataJsonSource']['kind']=='github'
+
+
+def test_invalid_discovered_file_does_not_link_or_mutate_deck(env):
+    ws,deck,remote=env;deck['settings']['dataJsonSource']=None
+    ws.store.put('decks',deck,deck['revision']);before=ws.store.get('decks',deck['id'])
+    remote.document={'version':2,'cards':[]}
+    with pytest.raises(ValidationError):ws.prepare(deck['id'])
+    assert ws.store.get('decks',deck['id'])==before
 
 
 def test_same_commit_after_restart_only_checks_commit_and_keeps_revision(env,monkeypatch):

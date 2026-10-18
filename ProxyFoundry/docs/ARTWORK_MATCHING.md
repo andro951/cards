@@ -66,6 +66,8 @@ Only new or changed art variants need preparation; unchanged original entries re
 
 ## Saving data.json
 
+Generation checks the linked GitHub data file before deciding which cards can reuse cached images. If a configured GitHub project did not originally have `data.json`, generation checks its project folder and links the file when it appears. Missing optional files are allowed; an explicitly selected local data file stays local.
+
 Shared files may include token assignments for other decks. A pairing only applies when its referenced token faces are present in the current deck; a normal card with the same identity does not count as a token. Other pairings remain saved without warnings or affecting print counts. Any token face actually present still needs an applicable pairing before printing. New pairings created in the UI must use current token faces.
 
 - A retained local file handle allows updating that file after write permission is granted. A retained artwork directory allows creating `data.json` there. Browsers using ordinary file inputs cannot expose the original writable location; they offer a download.

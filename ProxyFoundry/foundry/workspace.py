@@ -917,7 +917,7 @@ class Workspace:
         if d.get('pendingImport'):
             yield from self.resolve_metadata_steps(ident,progress,cancel)
             d=self.deck(ident)
-        if (d['settings'].get('dataJsonSource') or {}).get('kind')=='github':
+        if github_data.location(d['settings']):
             progress(0,1,'Checking GitHub data.json')
             with timing(self.store,'prepare.github-data'):d=github_data.refresh(self,d,cancel)
             yield
@@ -1022,7 +1022,7 @@ class Workspace:
     @timed('card.prepare-single')
     def prepare_card(self,ident,card_id,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident)
-        if (d['settings'].get('dataJsonSource') or {}).get('kind')=='github':
+        if github_data.location(d['settings']):
             progress(0,1,'Checking GitHub data.json')
             with timing(self.store,'prepare.github-data'):d=github_data.refresh(self,d,cancel)
         rev=d['revision'];s=self.validate_settings(d['settings'])
