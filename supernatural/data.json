@@ -1370,6 +1370,19 @@
         "scryfall_id": "ce860ed4-a5bd-4347-9eab-dd716ea84db1"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Captain America, Liberator",
+        "oracle_id": "26e92eb8-7a23-4e7e-be83-244bb6078606",
+        "scryfall_id": "bfa75d51-307f-45da-8fac-81bb32830ee9"
+      },
+      "back": {
+        "name": "Danitha, Benalia's Hope",
+        "oracle_id": "43b5dbe9-41f7-4082-944b-ea9d6292c6fd",
+        "scryfall_id": "845e5663-2959-44ae-b4c6-d6ea41f01d6e"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
