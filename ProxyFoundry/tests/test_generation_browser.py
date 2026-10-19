@@ -56,3 +56,64 @@ def request(app,method,url,body,headers):
     page.reload();page.locator('#import-deck').wait_for(timeout=90000)
     state=page.evaluate("async()=>{const ui=await import('/site/ui.js');return ui.api('/api/__test__/generation-state');}")
     assert state==({'name':'Updated','renders':3} if finish=='commit' else {'name':'Original','renders':0})
+
+
+def test_slow_runtime_downloads_leave_browser_engine_available(static_browser):
+    directory,context,origin=static_browser
+    worker=directory/'web/engine-worker.js'
+    hook='''
+original_runtime_test_request=request
+def request(app,method,url,body,headers):
+    if url=='/api/render-sessions/async-probe':
+        app.frame_assets({'frames':[{'src':'/img/async-one.svg','masks':[{'src':'/img/async-two.svg'}]}]})
+        return {'status':200,'mime':'application/json','body':b'{"ready":true}','headers':{}}
+    if url=='/api/render-sessions/async-cancel':
+        app.frame_assets({'frames':[{'src':'/img/async-cancel.svg'}]})
+        return {'status':200,'mime':'application/json','body':b'{"ready":true}','headers':{}}
+    return original_runtime_test_request(app,method,url,body,headers)
+'''
+    fake='''
+  const testFetch=self.fetch.bind(self);self.runtimeTestDownloads=[];
+  self.fetch=async(url,options)=>{
+    if(String(url).includes('/img/async-')) {
+      self.runtimeTestDownloads.push(String(url));
+      await new Promise((resolve,reject)=>{
+        const timer=setTimeout(resolve,1800);
+        options.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(options.signal.reason);},{once:true});
+      });
+      return new Response('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><path d="M0 0H1V1H0Z"/></svg>',{headers:{'Content-Type':'image/svg+xml'}});
+    }
+    return testFetch(url,options);
+  };
+'''
+    source=worker.read_text(encoding='utf-8')
+    source=source.replace('  initialized=true;','  python.runPython('+json.dumps(hook)+');\n'+fake+'  initialized=true;')
+    worker.write_text(source,encoding='utf-8')
+    page=context.new_page();errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+    page.goto(origin);page.locator('#import-deck').wait_for(timeout=90000)
+    result=page.evaluate('''async()=>{
+      const ui=await import('/site/ui.js');let finished=false;
+      const frames=ui.api('/api/render-sessions/async-probe').then(value=>{finished=true;return value;});
+      await new Promise(resolve=>setTimeout(resolve,100));
+      const started=performance.now();await ui.api('/api/decks');
+      const availableBeforeFrames=!finished;
+      const elapsed=performance.now()-started;const first=await frames;
+      const cachedStarted=performance.now();const cached=await ui.api('/api/render-sessions/async-probe');
+      const svg=await(await fetch('/img/async-one.svg')).text();
+      return {first,cached,svg,availableBeforeFrames,elapsed,cachedElapsed:performance.now()-cachedStarted};
+    }''')
+    assert result['availableBeforeFrames'] and result['elapsed']<1500,result
+    assert result['first']==result['cached']=={'ready':True}
+    assert result['cachedElapsed']<1000 and result['svg'].startswith('<svg'),result
+    cancelled=page.evaluate('''async()=>{
+      const ui=await import('/site/ui.js');const deck=await ui.api('/api/decks/new',{});
+      const generation=await ui.api('/api/generation/begin',{deckIds:[deck.id]});
+      const pending=ui.api('/api/render-sessions/async-cancel').then(()=>'',error=>error.message);
+      await new Promise(resolve=>setTimeout(resolve,100));
+      const started=performance.now();await ui.api('/api/generation/abort',generation);
+      const error=await pending;const elapsed=performance.now()-started;
+      const retry=await ui.api('/api/render-sessions/async-cancel');return {error,elapsed,retry};
+    }''')
+    assert 'cancel' in cancelled['error'].lower() and cancelled['elapsed']<1500,cancelled
+    assert cancelled['retry']=={'ready':True}
+    assert not errors

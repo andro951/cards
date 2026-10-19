@@ -100,20 +100,20 @@ class App:
             except Exception as exc:
                 self.log.warning('SET_SYMBOL_GEOMETRY_FAILED face=%s key=%s error=%s',face.get('name'),self._short(key),str(exc)[:500])
 
-    def prepare_deck(self, ident, progress=lambda *a:None, cancel=lambda:False):
-        steps=self.prepare_deck_steps(ident,progress,cancel)
+    def prepare_deck(self, ident, progress=lambda *a:None, cancel=lambda:False, freshness_scope=None):
+        steps=self.prepare_deck_steps(ident,progress,cancel,freshness_scope=freshness_scope)
         while True:
             try:next(steps)
             except StopIteration as finished:return finished.value
 
-    def prepare_deck_steps(self, ident, progress=lambda *a:None, cancel=lambda:False, compact=False):
+    def prepare_deck_steps(self, ident, progress=lambda *a:None, cancel=lambda:False, compact=False, freshness_scope=None):
         before=self.ws.deck(ident)
         old={f.get('id'):copy.deepcopy(f.get('compiled') or {}) for c in before.get('cards',[]) for f in c.get('faces',[])}
         self.log.info('PREPARE_BEGIN deck=%s name=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
                       self._short(ident), before.get('name'), PIPELINE_VERSION, before.get('status'),
                       bool(before.get('upgradeRequired')), (before.get('summary') or {}).get('rendered',0))
         with timing(self.store,'deck.prepare',ident=ident):
-            result=yield from self.ws.prepare_steps(ident, progress, cancel)
+            result=yield from self.ws.net.scoped_steps(freshness_scope,self.ws.prepare_steps(ident, progress, cancel))
         self.log.info('PREPARE_DONE deck=%s pipeline=%s status=%s upgradeRequired=%s rendered=%s',
                       self._short(ident), PIPELINE_VERSION, result.get('status'), bool(result.get('upgradeRequired')),
                       (result.get('summary') or {}).get('rendered',0))
@@ -233,6 +233,15 @@ class App:
         ready=getattr(self,'_frame_assets_ready',set())
         missing=sorted(paths-ready)
         if not missing:return
+        if getattr(self.runtime.net,'_deferred_downloads',False):
+            from .network import PendingDownload
+            waiting=[];completed=set()
+            for path in missing:
+                try:self.runtime.ensure(path);completed.add(path)
+                except PendingDownload as pending:waiting.extend(pending.urls)
+            self._frame_assets_ready=ready|completed
+            if waiting:raise PendingDownload(waiting)
+            return
         with self.store.render_save():
             if getattr(self.runtime.net.transport,'prefetch',None):
                 from .domain import CC_REPO,CC_COMMIT
@@ -681,7 +690,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|cropped-art|review-images)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))
-            if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c)))
+            if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c,freshness_scope=d.get('freshnessScope'))))
             if action == 'add': return self.respond(self.app.jobs.start('Add cards', lambda u, c: self.app.ws.add_cards(ident, d, u, c)))
             if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))
             if action == 'delete':

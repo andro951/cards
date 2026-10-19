@@ -29,9 +29,11 @@ export class GenerationEstimate {
 
 //#region Full-screen generation
 export const generationScreen={active:null};
+let freshnessSerial=0;
 export class GenerationScreen {
     constructor(name,cards=1) {
         this.estimate=new GenerationEstimate(cards);
+        this.resetFreshness();
         this.dialog=document.createElement(`dialog`);this.dialog.id=`generation-screen`;
         this.dialog.setAttribute(`aria-label`,`Generating ${name}`);
         Object.assign(this.dialog.style,{position:`fixed`,inset:`0`,width:`100vw`,height:`100dvh`,maxWidth:`none`,maxHeight:`none`,margin:`0`,border:`0`,borderRadius:`0`,boxSizing:`border-box`,background:`#100c08`,color:`#f0d7aa`,padding:`max(24px, 8vw)`,alignContent:`center`,textAlign:`center`});
@@ -50,6 +52,13 @@ export class GenerationScreen {
         document.querySelector(`#activity`)?.classList.add(`hidden`);
     }
     attach=owner=>{this.owner=owner;this.cancel.disabled=false;};
+    resetFreshness=()=>{this.freshnessScope=`generation-${Date.now()}-${++freshnessSerial}`;};
+    review=async operation=>{
+        const reopen=this.dialog.open;
+        if(reopen)this.dialog.close();
+        try{return await operation();}
+        finally{if(reopen&&this.dialog.isConnected)this.dialog.showModal();}
+    };
     update=(phase,done=0,total=0)=>{this.estimate.update(phase,done,total);this.draw();};
     draw=()=>{
         if(this.owner?.controller.signal.aborted)
@@ -70,7 +79,7 @@ export async function withGenerationScreen(name,cards,operation) {
     screen.users=(screen.users||0)+1;
     try {
         const result=await operation(screen);
-        if(screen.users===1) {
+        if(screen.users===1&&result!==false) {
             screen.bar.value=100;screen.percent.textContent=`100%`;screen.time.textContent=`Complete`;screen.cancel.disabled=true;
             clearInterval(screen.timer);
             await new Promise(resolve=>setTimeout(resolve,200));

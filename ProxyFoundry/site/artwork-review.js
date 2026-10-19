@@ -1,4 +1,5 @@
 import {ensureMetadata} from './metadata.js';
+import {generationScreen} from './generation-progress.js';
 import {mountArtVariantPicker} from './art-variants.js';
 import {$,api,job,modal,closeModal,setModalBusy,thumbnail,state,toast,uploadFolder} from './ui.js';
 import {sourceRecord,mergeCardDataDocument,equalDataValues,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
@@ -244,6 +245,8 @@ const githubGuideSnippet=(number,label)=>{
 export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],options={})=>{
     if(!changes.length&&!options.tokenData)
         return;
+    if(generationScreen.active?.dialog.open)
+        return generationScreen.active.review(()=>offerDataSave(deckId,changes,document,githubUrl,cards,options));
 
     const record=await sourceRecord(`deck:${deckId}`)||{};
     let sameSource=!githubUrl||record.github===githubUrl;
@@ -260,9 +263,12 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
     const baseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
     //The remote document can include pairs this deck never edited or imported.
     const tokenBaseline=!refreshed&&sameSource&&record.tokenData||baseline;
-    const rememberResult=async merged=>sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged,
+    const rememberResult=async merged=>{
+        generationScreen.active?.resetFreshness();
+        return sourceRecord(`deck:${deckId}`,{...record,github:url,document:merged,
         sourceBaseline:options.baseline||(sameSource?record.sourceBaseline:null)||null,
         tokenData:options.tokenData?{...(!refreshed&&sameSource?record.tokenData:null),...options.tokenData}:(!refreshed&&sameSource?record.tokenData:null)||null});
+    };
     if(options.autoSave) {
         if(url) {
             const location=githubDataLocation(url),token=await githubCredential(location.repo);
@@ -429,12 +435,13 @@ export const checkArtwork=async(deck,settings=deck.settings,cardData=deck.cardDa
     if(settings.source.mode===`scryfall`)
         return {changes:[],defaults:settings.artDefaults||[],signature:settings.artReviewSignature||``};
 
-    const load=()=>job(`/api/setup/artwork-review`,{deckId:deck.id,settings,cardData},{label:`Check artwork`});
+    const load=()=>job(`/api/setup/artwork-review`,{deckId:deck.id,settings,cardData,freshnessScope:generationScreen.active?.freshnessScope},{label:`Check artwork`});
     const review=await load();
     if(!review.needsReview)
         return {changes:[],defaults:settings.artDefaults||[],signature:review.signature};
 
-    return openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{if(onAdd)await onAdd();return load();}});
+    const choose=()=>openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{if(onAdd)await onAdd();return load();}});
+    return generationScreen.active?generationScreen.active.review(choose):choose();
 };
 
 export const saveArtVariantData=async(deck,changes=[])=>{

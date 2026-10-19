@@ -209,6 +209,7 @@ def test_saved_file_assignments_import_in_setup_and_refresh_from_github(token_de
     ws.store.put('decks',current,current['revision'])
     class Remote:
         def json(self,*args,**kwargs):return {'sha':'a'*40}
+        def fresh_json(self,url):return self.json(url,ttl=0)
         def fetch(self,*args,**kwargs):return json.dumps({**document,'tokenAssignments':[assignment(cards[0],cards[1],8)]}).encode(),'application/json',None
     ws.net=Remote();refreshed=github_data.refresh(ws,ws.deck(deck['id']))
     assert refreshed['tokens']['faces'][0]['used']==8 and refreshed['status']=='ready'

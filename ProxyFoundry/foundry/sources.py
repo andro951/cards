@@ -152,12 +152,15 @@ class Sources:
     @timed('github.index')
     def github_index(self,url,branch=None,refresh=False):
         loc=github_location(url,branch)
-        if loc['default_ref']:loc['ref']=self.net.json('https://api.github.com/repos/'+loc['repo'],ttl=0 if refresh else 600).get('default_branch','main')
+        if loc['default_ref']:
+            url='https://api.github.com/repos/'+loc['repo']
+            loc['ref']=(self.net.fresh_json(url) if refresh else self.net.json(url,ttl=600)).get('default_branch','main')
         requested=str(loc['ref'])
         if re.fullmatch(r'[0-9a-fA-F]{40}',requested):
             commit=requested.lower()
         else:
-            resolved=self.net.json('https://api.github.com/repos/'+loc['repo']+'/commits/'+quote(requested,safe=''),ttl=0 if refresh else 600)
+            url='https://api.github.com/repos/'+loc['repo']+'/commits/'+quote(requested,safe='')
+            resolved=self.net.fresh_json(url) if refresh else self.net.json(url,ttl=600)
             commit=str(resolved.get('sha','')).lower() if isinstance(resolved,dict) else ''
             if not re.fullmatch(r'[0-9a-f]{40}',commit):
                 raise ValidationError('GitHub did not return an exact commit for the artwork folder.')

@@ -72,25 +72,52 @@ def validate_treatments(value):
         seen.add(ident);result.append({'face':ref,'options':validate_spec(row['options'])})
     return result
 
-def resolve(cards,ref):
-    candidates=[c for c in cards if reference(c)['name']==ref['name'] and reference(c).get('copy','')==ref.get('copy','') and reference(c).get('art_variant','')==ref.get('art_variant','')]
-    for field in ('scryfall_id','oracle_id'):
-        if ref.get(field):
-            exact=[c for c in candidates if reference(c).get(field)==ref[field]]
-            if exact:return exact[0] if len({key(reference(c)) for c in exact})==1 else None
-    return candidates[0] if len(candidates)==1 and not (ref.get('scryfall_id') or ref.get('oracle_id')) else None
+class CardReferences:
+    """Index each face once per read; shared metadata may contain thousands of absent rows."""
+    def __init__(self,cards):
+        self.groups={};self.exact={};self.identities={};self.ambiguous=set()
+        for card in cards:
+            ref=reference(card);ident=key(ref);base=self.base(ref)
+            self.identities.setdefault(ident,[]).append(card)
+            self.groups.setdefault(base,[]).append(card)
+            for field in ('scryfall_id','oracle_id'):
+                if not ref.get(field):continue
+                lookup=(base,field,ref[field]);previous=self.exact.get(lookup)
+                if previous and previous[0]!=ident:self.ambiguous.add(lookup)
+                elif not previous:self.exact[lookup]=(ident,card)
+
+    @staticmethod
+    def base(ref):return (ref['name'],ref.get('copy',''),ref.get('art_variant',''))
+
+    def resolve(self,ref):
+        base=self.base(ref)
+        for field in ('scryfall_id','oracle_id'):
+            lookup=(base,field,ref.get(field))
+            if ref.get(field) and lookup in self.exact:
+                return None if lookup in self.ambiguous else self.exact[lookup][1]
+        candidates=self.groups.get(base,[])
+        return candidates[0] if len(candidates)==1 and not (ref.get('scryfall_id') or ref.get('oracle_id')) else None
+
+
+def resolve(cards,ref):return CardReferences(cards).resolve(ref)
 
 def is_token(card,settings):
     sf=card.get('scryfall') or {}
     return bool(card.get('tokenSpec') is not None or settings.get('allCardsTokens') or sf.get('layout') in {'token','double_faced_token'} or re.search(r'\bToken\b',str(sf.get('type_line') or ''),re.I) or any(f.get('group')=='token' or (f.get('compiled') or {}).get('recipe') in {'Deck-wide token','Card Tools copy token'} for f in card.get('faces',[])) or len(card.get('faces',[]))==2 and sf.get('layout')=='reversible_card')
 
 def apply_treatments(deck):
-    for row in deck.get('settings',{}).get('tokenTreatments',[]):
-        card=resolve(deck['cards'],row['face'])
+    rows=deck.get('settings',{}).get('tokenTreatments',[])
+    if not rows:return
+    index=CardReferences(deck['cards'])
+    for row in rows:
+        card=index.resolve(row['face'])
         if card is not None:
             ident=key(reference(card))
-            for other in deck['cards']:
-                if key(reference(other))==ident:other['tokenSpec']=dict(row['options'])
+            identity_changed=False
+            for other in index.identities[ident]:
+                other['tokenSpec']=dict(row['options'])
+                identity_changed=key(reference(other))!=ident or identity_changed
+            if identity_changed:index=CardReferences(deck['cards'])
 
 def overview(deck,*,strict=False):
     settings=deck.get('settings',{});all_tokens=[c for c in deck['cards'] if is_token(c,settings)]
@@ -99,13 +126,15 @@ def overview(deck,*,strict=False):
         ident=key(reference(card));unique.setdefault(ident,card);suggested[ident]=suggested.get(ident,0)+card['quantity']
     cards=list(unique.values())
     singles=[c for c in cards if len(c.get('faces',[]))==1];natural=[c for c in cards if len(c.get('faces',[]))==2]
+    card_index=CardReferences(cards);single_index=CardReferences(singles)
+    single_ids={c['id'] for c in singles};natural_ids={c['id'] for c in natural}
     usage={c['id']:0 for c in singles};assigned=[];invalid=[];natural_used=set();resolved_pairs=set()
     for index,row in enumerate(settings.get('tokenAssignments',[])):
-        front=resolve(cards,row['front']);back=row['back'];kind=back.get('kind');other=resolve(singles,back) if not kind else None
+        front=card_index.resolve(row['front']);back=row['back'];kind=back.get('kind');other=single_index.resolve(back) if not kind else None
         #Shared data.json files can describe other decks or token treatments not used here.
         #Direct pairing edits still require every referenced face to be a current token.
-        if not strict and (not front or not kind and not resolve(cards,back)):continue
-        problem=not front or kind=='reverse' and front not in natural or kind!='reverse' and front not in singles or not kind and (not other or other is front)
+        if not strict and (not front or not kind and not card_index.resolve(back)):continue
+        problem=not front or kind=='reverse' and front['id'] not in natural_ids or kind!='reverse' and front['id'] not in single_ids or not kind and (not other or other is front)
         identity=tuple(sorted((front['id'],other['id']))) if front and other else (front['id'] if front else '',kind)
         if identity in resolved_pairs:problem=True
         if problem:

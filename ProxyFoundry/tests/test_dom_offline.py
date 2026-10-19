@@ -869,6 +869,43 @@ def test_setup_save_failure_blocks_generation_and_allows_retry(dom_page):
     assert not errors,errors
 
 
+def test_generation_screen_and_freshness_scope_cover_preflight(dom_page):
+    page,errors=dom_page
+    result=page.evaluate('''async()=>{
+      const deck=__fixture.deck;deck.pendingImport=true;
+      deck.settings.source={mode:'github',githubFolder:'https://github.com/owner/repo/tree/main/art'};
+      deck.settings.artReviewSignature='matched';
+      const original=window.fetch,visible=[],scopes=[];let total=0;
+      const reply=value=>({ok:true,text:async()=>JSON.stringify(value)});
+      window.fetch=async(path,options={})=>{
+        const data=options.body?JSON.parse(options.body):{};
+        if(path.endsWith('/metadata')) {
+          visible.push(document.querySelector('#generation-screen')?.open===true);
+          return reply({id:'clock-metadata'});
+        }
+        if(path==='/api/jobs/clock-metadata') {
+          await new Promise(resolve=>setTimeout(resolve,80));delete deck.pendingImport;
+          return reply({state:'done',result:deck});
+        }
+        if(path==='/api/setup/artwork-review') {
+          visible.push(document.querySelector('#generation-screen')?.open===true);scopes.push(data.freshnessScope);
+          await new Promise(resolve=>setTimeout(resolve,80));return reply({id:'artwork-fixture'});
+        }
+        if(path.endsWith('/prepare')) {scopes.push(data.freshnessScope);return reply({id:'clock-prepare'});}
+        if(path==='/api/jobs/clock-prepare')return reply({state:'done',result:deck});
+        if(path==='/api/render-sessions')return reply({targets:[],errors:[],cached:1});
+        if(path==='/api/render-diagnostic') {if(data.diagnostic?.stage==='generation.total')total=data.diagnostic.seconds;return reply({});}
+        return original(path,options);
+      };
+      await __mod_render.renderDecks([deck.id]);
+      return {visible,scopes,total,closed:!document.querySelector('#generation-screen')};
+    }''')
+    assert result['visible']==[True,True]
+    assert len(result['scopes'])==2 and result['scopes'][0]==result['scopes'][1] and result['scopes'][0]
+    assert result['total']>=.15 and result['closed']
+    assert not errors,errors
+
+
 def test_setup_navigation_persists_edits_without_confirmation(dom_page):
     page,errors=dom_page
     page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")

@@ -1,4 +1,4 @@
-import {withGenerationScreen} from './generation-progress.js';
+import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {ensureMetadata,pauseMetadata} from './metadata.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {mountBackPicker} from './backs.js';
@@ -487,21 +487,23 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
     await offerDataSave(deck.id,pairedChanges,{version:1,cards:deck.cardData||[]},s.dataJsonSource?.kind==='github'?s.dataJsonSource.value?.startsWith('https:')?s.dataJsonSource.value:s.githubSetupFolder:s.source.mode==='github'?s.githubSetupFolder||s.source.githubFolder:'',deck.cards);pairedChanges=[];
   }
   let generating=false;
-  async function generate(){
+  async function generate(screenOpen=false){
     if(generating)return;
     if(importingArtwork||githubImport.isBusy()||backPicker.isBusy())throw new Error('An import is still finishing. Its progress is shown in Art & Setup.');
+    if(!screenOpen)return withGenerationScreen(deck.name,deck.summary?.faces||deck.cards.length,()=>generate(true));
     generating=true;
     const buttons=[$('#save-generate',root),$('#generate-deck')].filter(Boolean);
     try{
     const resume=await pauseMetadata(deck.id);
     try{
-      if(!await githubImport.ensureImported(s.githubSetupFolder))return;
+      if(!await generationScreen.active.review(()=>githubImport.ensureImported(s.githubSetupFolder)))return false;
       for(const button of buttons){button.disabled=true;}
       readSettings();
       recordDiagnostic('generation setup',JSON.stringify({deckId:deck.id,sourceMode:s.source.mode,githubFolder:s.source.githubFolder,githubSetupFolder:s.githubSetupFolder||'',customArtistSet:!!s.artist.trim(),fallback:s.source.fallback}));
       mark();await persistSetup();
       if(!rarities.every(r=>s.symbols[r]))throw new Error('Upload all four rarity symbols before generating images.');
-      const credited=await ensureCustomArtCredits(await api('/api/decks/'+deck.id));
+      const current=await api('/api/decks/'+deck.id);
+      const credited=await generationScreen.active.review(()=>ensureCustomArtCredits(current));
       if(!credited)return;
       deck.revision=credited.revision;deck.cards=credited.cards;s.artist=credited.settings.artist;
       $('#deck-artist',root).value=s.artist;

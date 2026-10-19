@@ -10,6 +10,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable
 
@@ -17,6 +18,10 @@ from .domain import ValidationError, cache_is_fresh
 from .storage import Store
 
 MAX_REMOTE_BYTES = 64 * 1024 * 1024
+
+class PendingDownload(BaseException):
+    """Suspend a replayable browser GET without holding the Python request lane."""
+    def __init__(self,urls):self.urls=list(dict.fromkeys(urls))
 ALLOWED_HOSTS = {'api.scryfall.com', 'scryfall.com', 'raw.githubusercontent.com', 'api.github.com',
                  'cards.scryfall.io', 'c1.scryfall.com', 'c2.scryfall.com', 'c3.scryfall.com', 'c4.scryfall.com',
                  'archidekt.com', 'www.archidekt.com', 'mtggoldfish.com', 'www.mtggoldfish.com'}
@@ -41,12 +46,66 @@ class SafeRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class Network:
+    @contextmanager
+    def freshness_scope(self,ident):
+        if ident is not None and (not isinstance(ident,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,80}',ident)):
+            raise ValidationError('Invalid generation check scope.')
+        previous=getattr(self._freshness_local,'ident',None)
+        self._freshness_local.ident=ident
+        try:yield
+        finally:self._freshness_local.ident=previous
+
+    def scoped_steps(self,ident,steps):
+        try:
+            while True:
+                with self.freshness_scope(ident):
+                    try:wait=next(steps)
+                    except StopIteration as done:return done.value
+                yield wait
+        finally:steps.close()
+
+    def fresh_json(self,url):
+        ident=getattr(getattr(self,'_freshness_local',None),'ident',None)
+        if not ident:return self.json(url,ttl=0)
+        #Only retain recent operations, never replace the next Generate's live check with a TTL.
+        with self._lock:
+            scopes=self._freshness_cache
+            if ident not in scopes:
+                if len(scopes)>=8:scopes.pop(next(iter(scopes)))
+                scopes[ident]={'values':{},'locks':{}}
+            values=scopes[ident]['values']
+            lock=scopes[ident]['locks'].setdefault(url,threading.Lock())
+        with lock:
+            if url not in values:values[url]=self.json(url,ttl=0)
+            return values[url]
+
+    @contextmanager
+    def deferred_downloads(self):
+        previous=getattr(self,'_deferred_downloads',False)
+        self._deferred_downloads=True
+        try:yield
+        finally:self._deferred_downloads=previous
+
+    def register_downloads(self,rows):
+        errors=getattr(self,'_deferred_errors',{})
+        good=[]
+        for row in rows:
+            if row.get('error'):errors[row['url']]=(self.clock(),row['error'])
+            else:errors.pop(row['url'],None);good.append(row)
+        self._deferred_errors=errors
+        if good:self.register_prefetch([row['url'] for row in good],good)
+
+    def reset_failed_downloads(self):
+        #Pinned 404s remain immutable; a new Generate may retry temporary network failures immediately.
+        self._deferred_errors={url:row for url,row in getattr(self,'_deferred_errors',{}).items() if 'HTTP 404' in row[1]}
+
     def __init__(self, store: Store, *, transport: Callable | None = None,
                  clock: Callable[[], float] = time.time, sleeper: Callable[[float], None] = time.sleep):
         self.store = store
         self.clock, self.sleep = clock, sleeper
         self.transport = transport or self._transport
         self._lock = threading.Lock()
+        self._freshness_local=threading.local();self._freshness_cache={}
         self._last_scryfall = 0.0
         self._url_locks: dict[str, threading.Lock] = {}
         self.hits = 0; self.misses = 0
@@ -99,6 +158,10 @@ class Network:
             if fresh and self.store.asset(old['asset_id']):
                 self.hits += 1
                 return self.store.asset_path(old['asset_id']).read_bytes(), old['mime'], {'cache': True, 'fetchedAt': old['fetched']}
+            if immutable and getattr(self,'_deferred_downloads',False):
+                failed=getattr(self,'_deferred_errors',{}).get(url)
+                if failed and ('HTTP 404' in failed[1] or now-failed[0]<30):raise ValidationError(failed[1])
+                raise PendingDownload([url])
             if urllib.parse.urlsplit(url).hostname == 'api.scryfall.com':
                 with self._lock:
                     remaining = .12 - (time.monotonic() - self._last_scryfall)

@@ -47,14 +47,14 @@ def refresh(workspace, deck, cancel=lambda:False):
     if cancel():raise ValidationError('Preparation cancelled.')
     net=workspace.net
     if loc['default_ref']:
-        loc['ref']=net.json('https://api.github.com/repos/'+loc['repo'],ttl=0).get('default_branch','main')
+        loc['ref']=net.fresh_json('https://api.github.com/repos/'+loc['repo']).get('default_branch','main')
     identity={k:loc[k] for k in ('repo','ref','folder')}
     prior=deck.get('githubCardDataState') or {}
     same_source=prior.get('source')==identity
     faces={face['id']:face_identity(card,face) for card in deck.get('cards',[]) for face in card.get('faces',[])}
     commit=loc['ref'].lower()
     if not re.fullmatch(r'[0-9a-f]{40}',commit):
-        result=net.json('https://api.github.com/repos/'+loc['repo']+'/commits/'+quote(loc['ref'],safe=''),ttl=0)
+        result=net.fresh_json('https://api.github.com/repos/'+loc['repo']+'/commits/'+quote(loc['ref'],safe=''))
         commit=str(result.get('sha','')).lower() if isinstance(result,dict) else ''
     if not re.fullmatch(r'[0-9a-f]{40}',commit):raise ValidationError('GitHub did not return an exact commit for data.json.')
     if same_source and prior.get('commit')==commit and prior.get('faces')==faces:return deck

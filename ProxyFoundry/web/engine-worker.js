@@ -1,5 +1,6 @@
 import {RequestQueue,requestPriority} from './request-queue.js';
 import {mountWorkspaceFiles} from './workspace-fs.js';
+import {RuntimeDownloads} from './runtime-downloads.js';
 import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs';
 
 const buildId='development';
@@ -10,6 +11,8 @@ let ready;
 let owner;
 let initialized=false;
 let generationActive=false;
+let runtimeDownloads;
+let runtimeEpoch=0;
 let completedJobs=[];
 const foregroundJobs=new Set();
 self.publishJob=encoded=>{
@@ -40,6 +43,7 @@ async function start(folder){
   mark('workspace-open');
   self.postMessage({type:'status',message:'Opening saved workspace…'});
   const directory=folder||await navigator.storage.getDirectory();
+  runtimeDownloads=new RuntimeDownloads(directory);
   python.FS.mkdirTree('/workspace');
   for await(const [name,entry] of directory.entries()){
     if(entry.kind==='file'&&['workspace.sqlite3','workspace.sqlite3-wal','workspace.sqlite3-shm'].includes(name))python.FS.writeFile('/workspace/'+name,new Uint8Array(await (await entry.getFile()).arrayBuffer()));
@@ -107,6 +111,7 @@ from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, c
 import base64, json, uuid
 from pathlib import Path
 from foundry.browser import create_app, request
+from foundry.network import PendingDownload
 def buffer_bytes(buffer):
     if not buffer.byteLength:
         return b''
@@ -145,7 +150,14 @@ app = create_app('/workspace', transport, str(location.origin),
     lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile, write_asset=write_asset)
 def browser_request(method, url, body, headers):
     global last_response
-    last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
+    try:
+        #Only GETs may replay: deck mutations and preparation generators never restart.
+        if str(method)=='GET' and str(url).startswith(('/img/','/fonts/','/js/','/css/','/creator/','/runtime/','/api/render-sessions/')):
+            with app.runtime.net.deferred_downloads():
+                last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
+        else:last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))
+    except PendingDownload as pending:
+        return {'downloads':'\u0100'+json.dumps(pending.urls)}
     metadata={k:v for k,v in last_response.items() if k != 'body'}
     encoded={'metadata':'\u0100'+json.dumps(metadata,ensure_ascii=False)}
     if not metadata.get('file'):
@@ -154,6 +166,9 @@ def browser_request(method, url, body, headers):
         else:
             encoded['binaryBody']='\u0100'+base64.b64encode(last_response['body']).decode('ascii')
     return encoded
+
+def register_downloads(encoded):
+    app.runtime.net.register_downloads(json.loads(str(encoded)))
 `);
   initialized=true;
   mark('ready');
@@ -226,9 +241,28 @@ async function handle(event){
     invoke=python.globals.get('browser_request');
     response=invoke(method,url,new Uint8Array(body||[]),headers||{});
     const encoded=response.toJs({dict_converter:Object.fromEntries});
+    if(encoded.downloads!==undefined) {
+      const epoch=runtimeEpoch,urls=JSON.parse(responseText(encoded.downloads));
+      runtimeDownloads.load(urls).then(rows=>requests.enqueue(async()=>{
+        if(epoch!==runtimeEpoch) {
+          self.postMessage({type:'error',id,message:'Runtime request cancelled.'});return;
+        }
+
+        runtimeDownloads.acknowledge(rows);
+        const register=python.globals.get('register_downloads');
+        try{register(JSON.stringify(rows));}
+        finally{register.destroy();}
+        await handle(event);
+      },()=>requestPriority(event.data))).catch(error=>self.postMessage({type:'error',id,message:String(error.message||error)}));
+      return;
+    }
+
     const metadata=JSON.parse(responseText(encoded.metadata));
-    if(method==='POST'&&metadata.status<400&&url==='/api/generation/begin')generationActive=true;
-    if(method==='POST'&&url.startsWith('/api/generation/')&&url!=='/api/generation/begin')generationActive=false;
+    if(method==='POST'&&metadata.status<400&&url==='/api/generation/begin'){generationActive=true;runtimeEpoch++;}
+    if(method==='POST'&&url.startsWith('/api/generation/')&&url!=='/api/generation/begin') {
+      generationActive=false;runtimeEpoch++;
+      if(url==='/api/generation/abort')runtimeDownloads.cancel();
+    }
     let responseBody;
     if(encoded.jsonBody!==undefined)responseBody=responseText(encoded.jsonBody);
     else responseBody=metadata.file?new Uint8Array():responseBytes(encoded.binaryBody);

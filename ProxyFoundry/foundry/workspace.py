@@ -391,6 +391,9 @@ class Workspace:
             except StopIteration as finished:return finished.value
 
     def artwork_review_steps(self,payload,progress=lambda *a:None,cancel=lambda:False):
+        scope=payload.get('freshnessScope')
+        if scope:
+            return (yield from self.net.scoped_steps(scope,self.artwork_review_steps({**payload,'freshnessScope':None},progress,cancel)))
         d=copy.deepcopy(self.deck(payload['deckId']))
         s=self.validate_settings(payload.get('settings') or d['settings']);d['settings']=s
         self._apply_card_data(d,payload.get('cardData',[]),allow_missing=bool(s.get('dataJsonSource')))
@@ -713,7 +716,7 @@ class Workspace:
             spec['power_toughness']=(power or current_power)+'/'+(toughness or current_toughness)
         return spec
 
-    def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None):
+    def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None,finalize=True):
         spec=dict(spec)
         style=spec.pop('token_frame_style',None) or 'token-full-art'
         if sem:
@@ -734,17 +737,18 @@ class Workspace:
         if style:
             short=token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
             configure_token_style(comp['data'],spec.get('frame_color','A'),style,short)
-            if comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
-        fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
+            if finalize and comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
+        if finalize:fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
         if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
             apply_nickname_treatment(comp['data'],sem,'token',
                                      force=bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
                                      full_frame=bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-'))
-            if comp['data'].get('version')=='m15Nickname':comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
-            if comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
+            if finalize and comp['data'].get('version')=='m15Nickname':comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
+            if finalize and comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
         if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
         elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
+        if not finalize:return comp
         fit_token_rules_above_pt(comp['data'])
         center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
@@ -764,12 +768,12 @@ class Workspace:
             group=type_group(face,sf,f.get('index',0))
             choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
             templates.append(self.compiler.template_identity(group,choice))
-        if c.get('tokenSpec') or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
+        if c.get('tokenSpec') is not None or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
-        if c.get('tokenSpec') or s.get('allCardsTokens'):inputs['tokenConversionVersion']=4
+        if c.get('tokenSpec') is not None or s.get('allCardsTokens'):inputs['tokenConversionVersion']=4
         if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['nicknameRulesVersion']=rules_nicknames.VERSION
         if rules_nicknames.has_redundant_nickname(sf,c['faces']):inputs['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
         return stable_hash(inputs)
@@ -838,11 +842,14 @@ class Workspace:
                     nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
                     secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
                     options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '') if s.get('showFlavorText',True) else ''}
-                comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,art_origin=origin)
-                if c.get('tokenSpec'):
+                conversion=bool(c.get('tokenSpec') is not None or s.get('allCardsTokens'))
+                compile_options={'art_origin':origin}
+                if conversion:compile_options['conversion_seed']=True
+                comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,**compile_options)
+                if c.get('tokenSpec') is not None:
                     token_sem=semantic(sf,face,f.get('index',0))
                     token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
-                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem)
+                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem,finalize=not s.get('allCardsTokens'))
                 deck_token_spec=self._deck_token_spec(s,comp)
                 if deck_token_spec:
                     token_sem=semantic(sf,face,f.get('index',0))
@@ -968,21 +975,25 @@ class Workspace:
         if not changed and d.get('status') in {'ready','prepared','attention'}:
             if generation:generation['preparedDeckIds'].add(ident)
             return d
-        download=None;outstanding=set();last_download_progress=0
+        download=None;outstanding=set();last_download_progress=0;art_urls={};art_errors={}
         if generation and getattr(self.net.transport,'start_prefetch',None):
-            urls=self._github_art_urls(changed,s,index)
+            art_urls={card['id']:self._github_art_urls([card],s,index) for card in changed}
+            urls=list(dict.fromkeys(url for values in art_urls.values() for url in values))
             if urls:download=self.net.transport.start_prefetch(urls);outstanding=set(urls)
         def poll_download():
             nonlocal download,outstanding
             result=self.net.transport.poll_prefetch(download)
             rows=result.get('rows',[])
             if rows:
+                art_errors.update({row['url']:row['error'] for row in rows if row.get('error')})
                 try:self.net.register_prefetch([row['url'] for row in rows],rows)
                 except (ValidationError,OSError) as error:
                     logger=getattr(self.store,'timing_logger',None)
                     if logger:logger.warning('ARTWORK_PREFETCH_FAILED error=%s',error)
                 outstanding.difference_update(row['url'] for row in rows)
-            if not result.get('pending'):download=None;outstanding.clear()
+            if not result.get('pending'):
+                for url in outstanding:art_errors[url]=result.get('error') or 'Artwork download did not finish.'
+                download=None;outstanding.clear()
         pending=0;checkpoint_at=time.monotonic()
         def checkpoint():
             nonlocal rev,pending,checkpoint_at
@@ -992,10 +1003,15 @@ class Workspace:
         try:
             for number,c in enumerate(changed):
                 if download:
-                    needed=set(self._github_art_urls([c],s,index))
+                    needed=set(art_urls[c['id']])
                     while download and needed&outstanding:
                         if cancel():raise ValidationError('Preparation cancelled.')
                         poll_download()
+                        if needed&outstanding:
+                            ready=next((i for i in range(number+1,len(changed)) if not set(art_urls[changed[i]['id']])&outstanding),None)
+                            if ready is not None:
+                                changed[number],changed[ready]=changed[ready],c
+                                c=changed[number];needed=set(art_urls[c['id']])
                         if needed&outstanding:
                             if time.monotonic()-last_download_progress>=1:
                                 progress(done,total,'Downloading upcoming artwork');last_download_progress=time.monotonic()
@@ -1003,7 +1019,13 @@ class Workspace:
                 elif not getattr(self.net.transport,'start_prefetch',None) and number%6==0:
                     yield from self._prefetch_github_art_steps(changed[number:number+6],s,index,progress,cancel,done,total)
                 pending+=1
-                done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=True)
+                failure=next((art_errors[url] for url in art_urls.get(c['id'],[]) if url in art_errors),None)
+                if failure:
+                    #Retries already ran asynchronously. Never stall the engine by retrying here.
+                    for face in c['faces']:
+                        self.invalidate_face(face);face['error']='Artwork download failed: '+failure;done+=1
+                    progress(done,total,'Artwork unavailable for '+c['name'])
+                else:done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=True)
                 publish(c)
                 if not getattr(self.store,'generation',None) and (pending>=10 or time.monotonic()-checkpoint_at>=2):checkpoint()
                 yield

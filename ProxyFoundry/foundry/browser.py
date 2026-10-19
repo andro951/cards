@@ -396,7 +396,10 @@ class BrowserHandler(server.Handler):
                                                            '/api/render-sessions','/api/runtime/prepare','/api/render-diagnostic','/api/client-error'}:
                 raise ConflictError('Card generation is running. Wait before making other workspace changes.')
         if path=='/api/generation/begin':
-            result=self.app.store.begin_generation(self.data().get('deckIds'))
+            data=self.data();result=self.app.store.begin_generation(data.get('deckIds'))
+            self.app.runtime.net.reset_failed_downloads()
+            preflight=data.get('preflightSeconds',0)
+            if isinstance(preflight,(int,float)) and 0<=preflight<=86400:self.app.store.generation['started']-=preflight
             generation=self.app.store.generation;session=uid();generation['renderSession']=session
             self.app.render_sessions[session]={'targets':generation['targets'],'created':time.time()}
             return self.respond(result)
@@ -459,7 +462,7 @@ class BrowserHandler(server.Handler):
         metadata=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',path)
         if metadata:
             self.data()
-            return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.ws.resolve_metadata_steps(metadata[1],u,c),priority=1))
+            return self.respond(self.app.jobs.start('Read card details',lambda u,c:self.app.store.batch_import_steps(self.app.ws.resolve_metadata_steps(metadata[1],u,c)),priority=1))
         if path == '/api/decks/import':
             data=self.data()
             return self.respond(self.app.jobs.start('Import deck',
@@ -474,9 +477,9 @@ class BrowserHandler(server.Handler):
             return self.respond(self.app.jobs.start('Load CardConjurer',self.app.runtime.prepare_steps,priority=1))
         prepare=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/prepare',path)
         if prepare:
-            self.data()
+            data=self.data()
             return self.respond(self.app.jobs.start('Prepare deck',
-                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True),priority=1))
+                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True,freshness_scope=data.get('freshnessScope')),priority=1))
         if path == '/api/cleanup/retry':
             for queue in self.app.store.list('cleanup'):
                 queue.pop('error',None)

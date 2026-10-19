@@ -84,6 +84,28 @@ def test_browser_import_route_is_resumable_and_reads_work_between_rows(tmp_path)
     assert not any('compiled' in face for card in deck['cards'] for face in card['faces'])
 
 
+def test_browser_background_metadata_batches_disk_saves_and_keeps_foreground_edits(tmp_path):
+    snapshots=[];calls=[]
+    app=create_app(tmp_path,transport(calls),'http://127.0.0.1',persist=lambda path:snapshots.append(path))
+    deck=app.ws.create_staged({'manifest':{'name':'Background metadata','rows':[
+        {'source':card['id'],'name':card['name'],'quantity':1,'section':'mainboard'} for card in CARDS]}})
+    snapshots.clear()
+    response=request(app,'POST','/api/decks/'+deck['id']+'/metadata',b'{}')
+    ident=json.loads(response['body'])['id']
+    for count in range(len(CARDS)):
+        app.jobs.run_pending(limit=1)
+        assert len(calls)==count+1 and not snapshots
+        assert request(app,'GET','/api/decks/'+deck['id'])['status']==200
+    #The deferred metadata job must not defer an unrelated foreground save.
+    app.ws.save(deck['id'],{'revision':deck['revision'],'notes':'Keep my setup edit'})
+    assert len(snapshots)==1
+    app.jobs.run_pending()
+    assert len(snapshots)==2
+    saved=app.ws.deck(deck['id'])
+    assert app.jobs.get(ident)['state']=='done' and not saved.get('pendingImport')
+    assert saved['notes']=='Keep my setup edit' and len(saved['cards'])==len(CARDS)
+
+
 def test_import_total_timing_spans_generator_chunks(tmp_path,monkeypatch):
     from foundry import timing
     from test_timing import capture,rows

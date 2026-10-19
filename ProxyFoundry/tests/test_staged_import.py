@@ -44,9 +44,10 @@ def test_background_metadata_keeps_intervening_setup_and_uuid_data_file(tmp_path
     assert saved['cardData']==edited['cardData'] and len(calls)==3
     assert [card['id'] for card in saved['cards']]==[card['id'] for card in deck['cards']]
     assert not any('compiled' in face for card in saved['cards'] for face in card['faces'])
-    # A UUID that was unavailable during metadata loading must still be checked before rendering.
-    with pytest.raises(ValidationError,match='selector'):
-        ws.prepare(deck['id'])
+    #Shared data files may contain UUIDs absent from this deck.
+    prepared=ws.prepare(deck['id'])
+    assert prepared['cardData']==saved['cardData']
+    assert all(not face.get('semanticOverrides',{}).get('nickname') for card in prepared['cards'] for face in card['faces'])
 
 
 def test_metadata_only_revision_can_save_once_but_real_intervening_edit_conflicts(tmp_path):

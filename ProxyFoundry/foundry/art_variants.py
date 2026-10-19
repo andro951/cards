@@ -50,13 +50,17 @@ def selected_face(face):
 def apply(deck,invalidate):
     if deck.get('pendingImport'):return False
     rows=validate(deck['settings'].get('artVariants',[]));groups={};assignments={}
+    if not rows and not any(c.get('artVariantId') for c in deck['cards']):return False
+    references={}
     for card in deck['cards']:
         ref=reference(card);key=(ref.get('scryfall_id') or ref.get('oracle_id') or ref['name'],ref['name'],ref['section'])
         groups.setdefault(key,[]).append(card)
+        if len(groups[key])==1:
+            for field,value in ref.items():references.setdefault((field,value),set()).add(key)
     for row in rows:
-        candidates=[key for key,cards in groups.items() if matches(row['card'],cards[0])]
+        candidates=set.intersection(*(references.get((field,value),set()) for field,value in row['card'].items()))
         if len(candidates)>1:raise ValidationError('Alternate artwork matches multiple printings. Include its Scryfall ID.')
-        if candidates:assignments.setdefault(candidates[0],[]).append(row)
+        if candidates:assignments.setdefault(next(iter(candidates)),[]).append(row)
     output=[];changed=False
     for key,cards in groups.items():
         desired=assignments.get(key,[])

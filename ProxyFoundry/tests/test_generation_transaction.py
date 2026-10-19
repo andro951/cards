@@ -94,3 +94,17 @@ def test_generation_rejects_overlap_and_stale_session(tmp_path):
     response=call(app,'/api/settings',{'artist':'Do not lose this edit'})
     assert response['status']==409 and 'Wait before making other workspace changes' in json.loads(response['body'])['error']
     app.store.abort_generation(session['id'])
+
+
+def test_generation_summary_clock_includes_preflight(tmp_path):
+    import time
+    from foundry.browser import create_app
+    app=create_app(tmp_path,lambda url:pytest.fail('No generation-begin network request is needed.'),'https://forge.test')
+    deck=app.ws.new_deck('Clock test')
+    app.runtime.net.register_downloads([{'url':'temporary','error':'HTTP 503'},{'url':'pinned-missing','error':'HTTP 404'}])
+    response=call(app,'/api/generation/begin',{'deckIds':[deck['id']],'preflightSeconds':2.5})
+    assert response['status']==200
+    generation=app.store.generation
+    assert 2.5<=time.perf_counter()-generation['started']<3.5
+    assert set(app.runtime.net._deferred_errors)=={'pinned-missing'}
+    app.store.abort_generation(generation['id'])

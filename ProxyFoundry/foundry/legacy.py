@@ -33,7 +33,18 @@ def _token_source(text):
 def _compiler_source(text):
     if text.count(_MOROPHON_WRAP_RULE)!=1:
         raise RuntimeError('Unexpected v58 Morophon compatibility rule; refusing to silently alter Card Tools.')
-    return text.replace(_MOROPHON_WRAP_RULE,'').replace('if re.match(r"^(?:https?|data):",explicit,re.I):','if re.match(r"^(?:https?|data):",explicit,re.I) or Path(explicit).is_file():')
+    text=text.replace(_MOROPHON_WRAP_RULE,'').replace('if re.match(r"^(?:https?|data):",explicit,re.I):','if re.match(r"^(?:https?|data):",explicit,re.I) or Path(explicit).is_file():')
+    anchor='    entry=recipe_data(recipe,card,type_info); entry["key"]=name; data=entry["data"]'
+    if text.count(anchor)!=1:raise RuntimeError('Unexpected token seed schema in preserved compiler.')
+    text=text.replace(anchor,'''    token_seed=bool(card.pop("_proxy_token_seed",False))
+    entry=copy.deepcopy(LAYOUTS[recipe]) if token_seed else recipe_data(recipe,card,type_info)
+    entry["key"]=name; data=entry["data"]
+    if token_seed:data["frames"]=[]''')
+    for call in ('ensure_legend_crown_border_cover(data, recipe)','try_apply_pt_box(data,card,type_info,recipe)','apply_universal_set_symbol_geometry(data,symbol)'):
+        anchor='    '+call
+        if text.count(anchor)!=1:raise RuntimeError('Unexpected token seed geometry in preserved compiler.')
+        text=text.replace(anchor,'    if not token_seed:'+call)
+    return text
 
 def load(name,relative,adapter=None):
     path=ROOT/relative

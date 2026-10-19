@@ -1,5 +1,41 @@
 # Preparation caching and measurements
 
+## Generation follow-up (2026-10-18)
+
+- Replayable browser GETs for native frames, masks, symbols, fonts, and scripts
+  suspend on a cold immutable URL. A six-slot JavaScript download queue writes
+  verified files directly to workspace assets; the Python request lane handles
+  other cards while the network waits. Derived assets discover their dependencies
+  through the same path, including pinned compatibility fallbacks. Mutating
+  requests and preparation generators are never replayed.
+- Transient artwork failures retry once in the asynchronous queue. A final failure
+  becomes a card error instead of starting another synchronous per-card download.
+  Cancellation and atomic generation publication are retained.
+- Artwork review, data.json refresh, and preparation share a branch-head response
+  within one Generate operation. Every subsequent Generate starts a new live
+  check; saving source data during review resets the operation's check identity.
+- Token pair/treatment references and alternate-art group references are indexed
+  once per pass. On isolated desktop Python tests, the 180-face/180-pair/180-treatment
+  combined read went from 298 ms to 10 ms; 10,000 unrelated shared pairs went from
+  2,484 ms to 17 ms. Applying 1,000 unrelated variants to 180 cards went from
+  406 ms to 23 ms. These synthetic component measurements are not browser or
+  full-deck timings.
+- Ordinary builtin cards converted to tokens use a text/metadata seed without
+  assembling discarded source frames or fitting source artwork. Custom, edited,
+  and special structural layouts retain their source handling. When individual
+  and deck-wide treatments both apply, artwork fitting, crop calculation, and
+  render-key finalization run only for the final token layout. Regression checks
+  compare the resulting card data and render keys with the previous path.
+- The progress screen and elapsed clock begin before metadata/artwork checks,
+  including the setup Generate buttons. Required review dialogs temporarily
+  release the screen; the elapsed clock continues. Generation summaries include
+  this preflight interval explicitly.
+
+Real static-browser tests verify that delayed frame downloads leave other API
+requests responsive, preserve cached bytes, and retain generation commit,
+rollback, cancellation, and reload behavior. The user's full deck has not been
+rerun on their connection; no new whole-deck duration is claimed.
+
 ## Unchanged-deck planning (2026-10-06)
 
 Preparation now builds a change plan before processing cards. The GitHub folder

@@ -1,5 +1,5 @@
 import {mountDeckCards,convertToToken} from './tokens.js';
-import {withGenerationScreen} from './generation-progress.js';
+import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
@@ -259,25 +259,23 @@ export async function refreshDeckProgress(id){
   const updated=await api('/api/decks/'+id);
   if(epoch===state.routeEpoch&&activeCardsView===view)view.refresh(updated);
 }
-async function generate(d,artChecked=false){
+async function generate(d,artChecked=false,screenOpen=false){
   if(state.setupActions?.root.isConnected&&state.setupActions.deckId===d.id)return state.setupActions.generate();
+  if(!screenOpen)return withGenerationScreen(d.name,d.summary?.faces||d.cards.length,()=>generate(d,artChecked,true));
   const resume=await pauseMetadata(d.id);
   try{
     d=await api('/api/decks/'+d.id);
     if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
-    d=await ensureCustomArtCredits(d);if(!d)return;
+    d=await generationScreen.active.review(()=>ensureCustomArtCredits(d));if(!d)return false;
   }finally{await resume();}
   const finish=async()=>{
   d=await ensureMetadata(d.id,d);
   if(!rarities.every(r=>d.settings.symbols?.[r])){nav('deck/'+d.id+'/setup');throw new Error('Set up your four rarity symbols first.');}
-  if(!artChecked){d=await ensureArtworkReady(d.id,{deck:d,returnDeck:true});if(!d)return;}
-  await renderDecks([d.id],{notify:false,artChecked:true});
+  if(await renderDecks([d.id],{notify:false,artChecked})===false)return false;
   const finished=await api('/api/decks/'+d.id);
   if(state.route==='deck'&&state.activeDeck?.id===d.id&&state.deckTab==='setup'&&!state.dirty&&!$('.modal'))await showDeck(d.id,'setup');
   if(finished.status==='ready')nav('deck/'+finished.id+'/cards');
   };
-  if(artChecked||d.settings.source.mode==='scryfall')
-    return withGenerationScreen(d.name,d.summary?.faces||d.cards.length,finish);
   return finish();
 }
 function deckMenu(d){

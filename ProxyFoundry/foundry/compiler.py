@@ -2707,7 +2707,7 @@ class Compiler:
                                  'groups':t.get('groups',[]),'legendary':bool(t.get('legendary')),'variants':t.get('variants',[]),'layoutMetadata':t.get('layoutMetadata',{}),'visualRecipe':t.get('visualRecipe')})
         return 'custom:'+choice,fingerprint,1
     @timed('card.compile')
-    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork'):
+    def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork',conversion_seed=False):
         sem=semantic(sf,face,index)
         for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
             if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
@@ -2733,6 +2733,25 @@ class Compiler:
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
         choice=RETIRED_BUILTINS.get(choice,choice)
         template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
+                and not options.get('rawCard') and not options.get('fit')):
+            donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)
+            layout=native.infer_layout(donor,native.get_type_info(donor))
+            if layout in {'creature','creature_legendary','card_noncreature','card_legendary','nyx_enchantment','nyx_creature'}:
+                donor=copy.deepcopy(donor);donor['_proxy_token_seed']=True
+                data=native.build_one(donor,{'artist':artist},False)['data']
+                if 'Creature' not in sem.get('types',[]):data['text'].pop('pt',None)
+                #The source true-name field carries these native shadows into borderless token names.
+                if sem.get('nickname'):data['text']['title'].update(shadowX=.0014,shadowY=.001)
+                data.update(artSource=sem['art'],setSymbolSource='/api/assets/'+symbol_id,infoArtist=str(artist),infoNote=CARD_FOOTER_NOTE)
+                bottom=data.get('bottomInfo',{}).get('bottomLeft')
+                if isinstance(bottom,dict):bottom['text']=CARD_FOOTER_NOTE
+                result={'name':sem['name'],'data':data,'renderKey':'','render':None,'group':group,'recipe':'token_seed',
+                        'crop':{},'flags':[],'artId':art_id,'symbolId':symbol_id,'artist':str(artist),'credit':credit,
+                        'generationVersion':PIPELINE_VERSION,'templateKey':template_key,'templateVersion':template_version,
+                        'templateCacheVersion':template_cache_version,'nicknameIdentityVersion':rules_nicknames.IDENTITY_VERSION}
+                if rule_names.active:result['nicknameRulesVersion']=rules_nicknames.VERSION
+                return result
         if choice in {x['id'] for x in BUILTINS}:
             builtin=next(x for x in BUILTINS if x['id']==choice)
             if choice!='auto' and builtin['groups']!='ordinary' and group not in builtin['groups']:

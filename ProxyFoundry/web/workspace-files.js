@@ -9,6 +9,8 @@ export class WorkspaceFiles {
         this.inputBuffers=new Map();
         this.directories=new Map();
         this.downloads=new Map();
+        this.assetWrites=new Map();
+        this.downloadWaiting=[];this.downloadBuffered=0;
     }
 
     parts = path => {
@@ -80,22 +82,27 @@ export class WorkspaceFiles {
         return {ok:true};
     }
 
-    prefetch = async (body,signal=null) => {
+    admitDownloads = () => {
+        while(this.downloadWaiting.length&&(!this.downloadBuffered||this.downloadBuffered+this.downloadWaiting[0].size<=48*1024*1024)) {
+            const next=this.downloadWaiting.shift();this.downloadBuffered+=next.size;next.resolve();
+        }
+    };
+    acquireDownload = size => new Promise(resolve=>{this.downloadWaiting.push({size,resolve});this.admitDownloads();});
+
+    prefetch = async (body,signal=null,onResult=null) => {
         const urls=JSON.parse(new TextDecoder().decode(body));
-        if(!Array.isArray(urls)||!urls.length||urls.length>6||urls.some(url=>typeof url!==`string`||!/^https:\/\/raw\.githubusercontent\.com\/[^/?#]+\/[^/?#]+\/[a-fA-F0-9]{40}\/[^?#]+$/.test(url)))
+        if(!Array.isArray(urls)||!urls.length||urls.length>(onResult?10000:6)||urls.some(url=>typeof url!==`string`||!/^https:\/\/raw\.githubusercontent\.com\/[^/?#]+\/[^/?#]+\/[a-fA-F0-9]{40}\/[^?#]+$/.test(url)))
             throw new Error(`Invalid immutable artwork batch.`);
 
-        const writes=new Map(),waiting=[];let buffered=0;
-        const admit=()=>{
-            while(waiting.length&&(!buffered||buffered+waiting[0].size<=48*1024*1024)) {
-                const next=waiting.shift();buffered+=next.size;next.resolve();
+        const writes=new Map();
+        const download=async (url,deadline)=>{
+            const timeout=AbortSignal.timeout(Math.max(1,Math.ceil(deadline-performance.now())));
+            const response=await fetch(url,{redirect:`error`,signal:signal?AbortSignal.any([signal,timeout]):timeout});
+            if(!response.ok) {
+                const error=new Error(`Artwork download failed (HTTP ${response.status}).`);
+                error.retryable=response.status===429||response.status>=500;
+                throw error;
             }
-        };
-        const acquire=size=>new Promise(resolve=>{waiting.push({size,resolve});admit();});
-        const results=await Promise.allSettled(urls.map(async url=>{
-            const response=await fetch(url,{redirect:`error`,signal:signal?AbortSignal.any([signal,AbortSignal.timeout(60000)]):AbortSignal.timeout(60000)});
-            if(!response.ok)
-                throw new Error(`Artwork download failed (HTTP ${response.status}).`);
 
             const size=Number(response.headers.get(`Content-Length`));
             if(size>64*1024*1024)
@@ -104,7 +111,7 @@ export class WorkspaceFiles {
             //Known bodies share a 48 MiB budget; missing length headers retain the
             //previous limit of six simultaneous bodies. A known large file runs alone.
             const weight=size>0?size:8*1024*1024;
-            await acquire(weight);
+            await this.acquireDownload(weight);
             try {
                 const blob=await response.blob();
                 if(!blob.size||blob.size>64*1024*1024)
@@ -133,16 +140,42 @@ export class WorkspaceFiles {
                 }
 
                 const id=[...new Uint8Array(await crypto.subtle.digest(`SHA-256`,bytes))].map(value=>value.toString(16).padStart(2,`0`)).join(``);
-                if(!writes.has(id))
-                    writes.set(id,this.putAsset(`assets/${id.slice(0,2)}/${id}`,blob));
+                if(!writes.has(id)) {
+                    if(!this.assetWrites.has(id)) {
+                        const finish=()=>this.assetWrites.delete(id);
+                        const pending=this.putAsset(`assets/${id.slice(0,2)}/${id}`,blob).then(result=>{finish();return result;},error=>{finish();throw error;});
+                        this.assetWrites.set(id,pending);
+                    }
+
+                    writes.set(id,this.assetWrites.get(id));
+                }
 
                 await writes.get(id);
                 return {id,bytes:blob.size,mime:width?`image/png`:response.headers.get(`Content-Type`)||`application/octet-stream`,width,height};
             }
-            finally{buffered-=weight;admit();}
-        }));
-        //Keep successful downloads when one file needs the normal per-card fallback.
-        return results.map(result=>result.status===`fulfilled`?result.value:{error:String(result.reason?.message||result.reason).slice(0,500)});
+            finally{this.downloadBuffered-=weight;this.admitDownloads();}
+        };
+        const results=new Array(urls.length);let next=0;
+        const consume=async()=>{
+            while(next<urls.length&&!signal?.aborted) {
+                const index=next++,url=urls[index];
+                const deadline=performance.now()+60000;
+                for(let attempt=0;attempt<2;attempt++) {
+                    try{results[index]=await download(url,deadline);break;}
+                    catch(error){
+                        if(attempt===0&&performance.now()<deadline&&!signal?.aborted&&(error.retryable||[`TimeoutError`,`TypeError`].includes(error.name)))
+                            continue;
+
+                        results[index]={error:String(error.message||error).slice(0,500)};break;
+                    }
+                }
+
+                onResult?.(url,results[index]);
+            }
+        };
+        //A slow file occupies one slot; other slots publish and start their next file immediately.
+        await Promise.all(Array.from({length:Math.min(6,urls.length)},()=>consume()));
+        return results;
     }
 
     //#region Filesystem requests
@@ -154,13 +187,9 @@ export class WorkspaceFiles {
 
             const id=crypto.randomUUID(),task={ready:[],pending:urls.length,controller:new AbortController()};
             this.downloads.set(id,task);
-            task.finished=(async()=>{
-                for(let start=0;start<urls.length&&!task.controller.signal.aborted;start+=6) {
-                    const batch=urls.slice(start,start+6);
-                    const rows=await this.prefetch(new TextEncoder().encode(JSON.stringify(batch)),task.controller.signal);
-                    task.ready.push(...batch.map((url,index)=>({url,...rows[index]})));task.pending-=batch.length;
-                }
-            })().catch(error=>{task.error=error.message;task.pending=0;});
+            task.finished=this.prefetch(body,task.controller.signal,(url,row)=>{
+                task.ready.push({url,...row});task.pending--;
+            }).catch(error=>{task.error=error.message;task.pending=0;});
             return {id};
         }
 
