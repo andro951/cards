@@ -35,6 +35,11 @@ def test_abilities_share_actual_font_size_and_stay_inside_their_rows(tmp_path):
     tall=json.loads((Path(__file__).parent/'fixtures/godzilla_special/Tezzeret.json').read_text(encoding='utf-8'))
     for choice in ('auto','godzilla-card'):
         samples.append(Compiler(app.store).compile_face(tall,tall,0,{'templateOverride':choice},settings,art['id'])['data'])
+    from test_planeswalker_frame import AETHERSPARK_ORACLE
+    spark={'name':'The Aetherspark','layout':'normal','type_line':'Legendary Artifact Planeswalker — Equipment',
+           'colors':[],'mana_cost':'{4}','oracle_text':AETHERSPARK_ORACLE,'loyalty':'4','rarity':'mythic'}
+    for choice in ('auto','godzilla-card'):
+        samples.append(Compiler(app.store).compile_face(spark,spark,0,{'templateOverride':choice},settings,art['id'])['data'])
     for data in samples:
         app.runtime_assets.update(referenced_assets(data))
         data['artSource']='data:image/png;base64,'+base64.b64encode(buffer.getvalue()).decode()
@@ -80,6 +85,20 @@ def test_abilities_share_actual_font_size_and_stay_inside_their_rows(tmp_path):
                     assert row['maxY']>=row['minY']>=row['top']-2,row
                     assert row['maxY']<=row['bottom']+2,row
                     assert row['maxX']<=row['right']+4,row
+                badges=frame.evaluate("""()=>{
+                  const badges=[],original=CanvasRenderingContext2D.prototype.drawImage;
+                  CanvasRenderingContext2D.prototype.drawImage=function(image,x,y,width,height,...rest){
+                    if(this===planeswalkerPostFrameContext&&[plusIcon,minusIcon,neutralIcon].includes(image))
+                      badges.push({top:y,bottom:y+height});
+                    return original.call(this,image,x,y,width,height,...rest);
+                  };
+                  try{planeswalkerEdited();}finally{CanvasRenderingContext2D.prototype.drawImage=original;}
+                  return {badges,height:card.height};
+                }""")
+                from foundry.planeswalker_frame import MIN_BADGE_GAP
+                assert len(badges['badges'])==sum(bool(c) for c in data['planeswalker']['abilities'])
+                for first,second in zip(badges['badges'],badges['badges'][1:]):
+                    assert second['top']-first['bottom']>=MIN_BADGE_GAP*badges['height']-2,badges
                 page.close()
             browser.close()
     finally:

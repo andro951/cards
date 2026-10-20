@@ -264,30 +264,46 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
     };
     root.replaceChildren();
     const toolbar=element(`div`);toolbar.className=`toolbar`;
+    Object.assign(toolbar.style,{flexWrap:`wrap`,gap:`8px`,marginBottom:`0`});
     const filters=element(`div`);filters.className=`filter-pills`;
+    Object.assign(filters.style,{height:`44px`,maxWidth:`100%`,minWidth:`0`,overflowX:`auto`,flex:`0 1 auto`});
     for(const [id,label] of [[`all`,`All cards`],[`unrendered`,`Not rendered`],[`attention`,`Needs Review`],[`tokens`,`Token Review`]]) {
-        const control=button(label,()=>{view.filter=id;draw();});control.dataset.cardFilter=id;filters.append(control);
+        const control=button(label,()=>{view.filter=id;draw();});control.dataset.cardFilter=id;control.dataset.filterLabel=label;
+        Object.assign(control.style,{display:`inline-flex`,alignItems:`center`,height:`36px`,minHeight:`36px`,padding:`6px 12px`,flexShrink:`0`});
+        if(id!==`all`) {
+            const count=element(`span`);count.dataset.filterCount=id;count.setAttribute(`aria-hidden`,`true`);
+            Object.assign(count.style,{alignItems:`center`,justifyContent:`center`,minWidth:`18px`,height:`18px`,padding:`0 4px`,marginLeft:`6px`,borderRadius:`9px`,background:`#422918`,fontSize:`10px`,fontWeight:`700`});
+            control.append(count);
+        }
+
+        filters.append(control);
     }
 
     const input=search(`Find a card or token…`,query=>{view.query=query;draw();});input.id=`card-search`;input.value=view.query;
+    Object.assign(input.style,{marginTop:`0`,height:`44px`,minHeight:`44px`,minWidth:`0`,width:`auto`,flex:`1 1 240px`,padding:`8px 12px`});
     toolbar.append(filters,input);root.append(toolbar);
     const content=element(`div`);root.append(content);
     const draw=()=>{
         content.replaceChildren();
         const tokens=deck.tokens||{faces:[],assigned:[],cardIds:[],unused:[],invalid:[],ready:true};
         const byId=new Map(deck.cards.map(card=>[card.id,card])),tokenIds=new Set(tokens.cardIds),query=view.query.toLowerCase().trim();
+        const counts={unrendered:Math.max(0,(deck.summary?.faces||0)-(deck.summary?.rendered||0)),attention:(deck.summary?.warnings||0)+(deck.summary?.errors||0),tokens:tokens.unused.length};
         for(const control of filters.children) {
             control.classList.toggle(`active`,control.dataset.cardFilter===view.filter);
             control.setAttribute(`aria-pressed`,String(control.dataset.cardFilter===view.filter));
-            if(control.dataset.cardFilter===`tokens`)
-                control.textContent=`Token Review${tokens.unused.length?` · ${tokens.unused.length}`:``}`;
+            const counter=control.querySelector(`[data-filter-count]`);
+            if(counter) {
+                const count=counts[control.dataset.cardFilter];counter.textContent=String(count);
+                counter.style.display=count?`inline-flex`:`none`;
+                control.setAttribute(`aria-label`,`${control.dataset.filterLabel} (${count})`);
+            }
         }
 
         const matches=card=>searchText(card).includes(query)&&(view.filter!==`unrendered`||card.faces.some(face=>!face.compiled?.render))&&
             (view.filter!==`attention`||card.faces.some(face=>face.error||((face.compiled?.crop?.warning||face.compiled?.flags?.length)&&face.acceptedWarningKey!==face.compiled?.renderKey)));
         const section=(title,description,kind)=>{
-            const node=element(`section`);node.dataset.deckSection=kind;Object.assign(node.style,{marginTop:`26px`,minWidth:`0`});
-            node.append(element(`h2`,title),element(`p`,description));const items=grid();node.append(items);content.append(node);
+            const node=element(`section`);node.dataset.deckSection=kind;Object.assign(node.style,{marginTop:content.children.length?`12px`:`8px`,minWidth:`0`});
+            node.append(element(`h2`,title),element(`p`,description));const items=grid();items.style.marginTop=`8px`;node.append(items);content.append(node);
             return {node,items};
         };
         if(!tokens.ready) {

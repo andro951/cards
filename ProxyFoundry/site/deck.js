@@ -193,6 +193,15 @@ export async function showDeck(id,tab='cards'){
     <div class="tabs"><button data-tab="cards" class="${tab==='cards'?'active':''}">Cards <span>${summary.physicalCards??summary.cards}</span></button><button data-tab="setup" class="${tab==='setup'?'active':''}">Art & setup</button><button data-tab="review" class="${tab==='review'?'active':''}">Review <span>${summary.warnings+summary.errors||''}</span></button></div>${d.upgradeRequired?`<div class="notice info">This deck was prepared with an older render pipeline. Generate images will force a fresh render of every face. Running pipeline: ${esc(state.bootstrap.pipelineVersion||'unknown')}.</div>`:''}<div id="deck-body"></div>`;
   $$('[data-tab]').forEach(b=>b.onclick=()=>nav('deck/'+id+'/'+b.dataset.tab));
   $('.back-to-library')?.remove();
+  const deckHead=$('#main > .page-head'),deckTabs=$('#main > .tabs');
+  Object.assign(deckHead.style,{marginBottom:`8px`,gap:`8px`});
+  $('.deck-progress',deckHead).style.marginTop=`8px`;
+  $('.actions',deckHead).style.marginTop=`8px`;
+  deckTabs.style.marginBottom=`8px`;
+  for(const control of deckTabs.children) {
+    control.style.padding=`6px 0`;
+  }
+
   const deckTitle=$('.page-head h1');
   deckTitle.title='Click to rename deck';deckTitle.tabIndex=0;deckTitle.style.cursor='text';
   deckTitle.onclick=()=>{

@@ -12,6 +12,7 @@ from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
 from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
 from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,CLASSIC_PINLINE_VERSION,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
 from .devoid_frame import PREFIX as DEVOID_PREFIX,VERSION as DEVOID_VERSION,transparent_header_png
+from .saga_frame import PREFIX as SAGA_PREFIX,VERSION as SAGA_VERSION,transform_back_png
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -164,6 +165,23 @@ function proxyFoundryInlineSymbols(text) {
 
     def fetch(self,path):
         path=self.path(path)
+        saga_back=re.fullmatch(re.escape(SAGA_PREFIX)+r'back-(left|right)-([WUBRGMAL])\.png',path)
+        if saga_back:
+            side,code=saga_back.groups()
+            source='/img/frames/saga/regular/'+('l.png' if code=='L' else f'sagaFrame{code}.png')
+            header=f'/img/frames/m15/transform/regular/{"new/" if side=="right" else ""}back{code}.png'
+            key=f'derived:{CC_COMMIT}:saga-back-v{SAGA_VERSION}:{side}:{code}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch(source);back,_=self.fetch(header)
+                    mask,_=self.fetch('/img/frames/saga/sagaMaskType.png')
+                    raw=transform_back_png(original,back,mask)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Native transform Saga back header and type bar'}
+            return raw,'image/png'
         if re.fullmatch(re.escape(DEVOID_PREFIX)+r'm15DevoidFrame[WUBRGMAL]\.png',path):
             source='/img/frames/m15/devoid/'+path.rsplit('/',1)[-1]
             key=f'derived:{CC_COMMIT}:devoid-header-v{DEVOID_VERSION}:{source}'

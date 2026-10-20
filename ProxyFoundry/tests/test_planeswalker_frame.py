@@ -2,7 +2,7 @@ import io
 import xml.etree.ElementTree as ET
 import pytest
 from PIL import Image,ImageDraw
-from foundry.planeswalker_frame import PREFIX,TALL_EXTRA,SPLICE_Y,MOVE_START,fit_ability_rows,layout_planeswalker_abilities,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script
+from foundry.planeswalker_frame import PREFIX,TALL_EXTRA,SPLICE_Y,MOVE_START,MIN_BADGE_GAP,badge_extents,badge_bases,has_touching_ability_badges,fit_ability_rows,layout_planeswalker_abilities,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script
 from foundry.runtime import Runtime
 from foundry.network import Network
 from foundry.storage import Store
@@ -114,7 +114,10 @@ def test_frames_share_geometry_and_badge_centers_at_equal_bounds(count):
     cards=[]
     for version in versions:
         data={'version':version,'text':{'type':{'y':.5625,'height':.0548}}}
-        layout_planeswalker_abilities(data,{'oracle_text':oracle})
+        #Four abilities use a tall rules well in production. Give all frame
+        #families those same explicit bounds when comparing the shared fitter.
+        bounds={'x':.136,'y':.5727,'width':.764,'height':.3183} if count==4 else None
+        layout_planeswalker_abilities(data,{'oracle_text':oracle},bounds)
         cards.append(data)
     assert all(d['text']==cards[0]['text'] for d in cards)
     # Different native anchor tables must still draw the badges at the same
@@ -127,3 +130,59 @@ def test_frames_share_geometry_and_badge_centers_at_equal_bounds(count):
             row=data['text'][f'ability{index}']
             assert bases[index]+data['planeswalker']['abilityAdjust'][index]+.0085==pytest.approx(row['y']+row['height']/2)
         assert all(data['text'][f'ability{i}']['height']==0 for i in range(count,4))
+
+
+AETHERSPARK_ORACLE=('As long as The Aetherspark is attached to a creature, The Aetherspark can\'t be attacked and has '
+    '"Whenever equipped creature deals combat damage during your turn, put that many loyalty counters on The Aetherspark."\n'
+    '+1: Attach The Aetherspark to up to one target creature you control. Put a +1/+1 counter on that creature.\n'
+    '-5: Draw two cards.\n-10: Add ten mana of any one color.')
+
+
+@pytest.mark.parametrize('version',['planeswalkerRegular','planeswalkerNickname','planeswalkerTall','planeswalkerNicknameTall'])
+@pytest.mark.parametrize('last_cost',['-10','+2','0'])
+def test_passive_and_short_abilities_leave_visible_badge_clearance(version,last_cost):
+    data={'version':version,'text':{'type':{'y':.4967,'height':.0543}}}
+    layout_planeswalker_abilities(data,{'oracle_text':AETHERSPARK_ORACLE.replace('-10:',last_cost+':')})
+    assert not has_touching_ability_badges(data)
+    previous_bottom=None
+    for index,cost in enumerate(data['planeswalker']['abilities']):
+        if not cost:continue
+        row=data['text'][f'ability{index}'];center=row['y']+row['height']/2
+        top,bottom=badge_extents(cost)
+        if previous_bottom is not None:assert center+top-previous_bottom>=MIN_BADGE_GAP-1e-9
+        previous_bottom=center+bottom
+    assert len({data['text'][f'ability{i}']['size'] for i in range(4)})==1
+    #Detect the previous compiled layout without invalidating other frames.
+    data['planeswalker']['abilityAdjust'][3]-=.03
+    assert has_touching_ability_badges(data)
+    assert not has_touching_ability_badges({'version':'normal'})
+
+
+def test_badge_spacing_refreshes_only_colliding_cards_and_then_reuses_cache(tmp_path,monkeypatch):
+    import copy
+    from test_preparation_cache import seeded
+    ws,deck,_,_=seeded(tmp_path)
+    spark={**copy.deepcopy(deck['cards'][0]['scryfall']),'id':'spark','name':'The Aetherspark',
+           'type_line':'Legendary Artifact Planeswalker — Equipment','mana_cost':'{4}','colors':[],
+           'oracle_text':AETHERSPARK_ORACLE,'loyalty':'4','rarity':'mythic'}
+    deck['cards'].append(ws.sources.entry(spark))
+    sources={c['scryfall']['id']:c['scryfall'] for c in deck['cards']}
+    monkeypatch.setattr(ws.sources,'resolve_card',lambda ident,*args:sources[ident])
+    ws.store.put('decks',deck,deck['revision']);prepared=ws.prepare(deck['id'])
+    for c in prepared['cards']:assert not c['faces'][0].get('error')
+    unaffected=copy.deepcopy(prepared['cards'][0]['faces'][0]['compiled'])
+    fixed=prepared['cards'][1]['faces'][0]['compiled']['renderKey']
+    old=ws.store.get('decks',deck['id'])
+    comp=old['cards'][1]['faces'][0]['compiled']
+    comp['data']['planeswalker']['abilityAdjust'][3]-=.03
+    comp['renderKey']='old-overlapping-badges'
+    ws.store.put('decks',old,old['revision'])
+    assert ws.deck(deck['id'])['status']=='draft'
+    calls=[];compile_face=ws.compiler.compile_face
+    def tracked(sf,*args,**kwargs):calls.append(sf['name']);return compile_face(sf,*args,**kwargs)
+    monkeypatch.setattr(ws.compiler,'compile_face',tracked)
+    refreshed=ws.prepare(deck['id'])
+    assert calls==['The Aetherspark']
+    assert refreshed['cards'][0]['faces'][0]['compiled']==unaffected
+    assert refreshed['cards'][1]['faces'][0]['compiled']['renderKey']==fixed
+    calls.clear();ws.prepare(deck['id']);assert calls==[]

@@ -23,6 +23,8 @@ from .compiler import center_short_token_rules
 from . import token_assignments
 from . import art_variants
 from . import substitutes
+from .inline_symbols import has_untap_alias,normalize_untap_aliases
+from .planeswalker_frame import has_touching_ability_badges
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -310,13 +312,16 @@ class Workspace:
                         d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
+                    elif has_untap_alias(data) or has_touching_ability_badges(data):
+                        d['status']='draft'
                     elif nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     elif redundant_nickname and comp.get('nicknameIdentityVersion')!=rules_nicknames.IDENTITY_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
-                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice,sf_face)
+                        identity_face=({**sf_face,'frame_effects':c['scryfall'].get('frame_effects')} if f['group'] in {'transform-front','transform-back'} else sf_face)
+                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice,identity_face)
                         except ValidationError:
                             d['status']='draft'
                         else:
@@ -766,6 +771,7 @@ class Workspace:
         center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
+        normalize_untap_aliases(comp['data'])
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
 
@@ -780,7 +786,8 @@ class Workspace:
             selected.append(local.get(key) if source['mode']=='local' else index.get(key))
             group=type_group(face,sf,f.get('index',0))
             choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
-            templates.append(self.compiler.template_identity(group,choice,face))
+            identity_face=({**face,'frame_effects':sf.get('frame_effects')} if group in {'transform-front','transform-back'} else face)
+            templates.append(self.compiler.template_identity(group,choice,identity_face))
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
@@ -803,6 +810,8 @@ class Workspace:
             return assets[ident]
         for f in c['faces']:
             comp=f.get('compiled') or {}
+            if has_untap_alias(comp.get('data') or {}):return False
+            if has_touching_ability_badges(comp.get('data') or {}):return False
             if nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:return False
             if redundant_nickname and comp.get('nicknameIdentityVersion')!=rules_nicknames.IDENTITY_VERSION:return False
             if f.get('error') or f.get('preparationKey')!=key or not cache_is_fresh(f.get('preparedAt'),time.time(),refresh):return False

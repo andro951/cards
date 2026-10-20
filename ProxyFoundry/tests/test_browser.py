@@ -263,7 +263,7 @@ def test_real_cardconjurer_roundtrip(tmp_path):
 
 
 @pytest.mark.skipif(os.environ.get('PF_LIVE_CC')!='1',reason='Opt-in pinned CardConjurer network rendering')
-@pytest.mark.parametrize('symbol_case',['mana-cluster','infinity'])
+@pytest.mark.parametrize('symbol_case',['mana-cluster','infinity','untap'])
 def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,symbol_case):
     from playwright.sync_api import sync_playwright
     card={
@@ -286,6 +286,12 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,s
                       '{5}{W}, {T}: Harness The Mind Stone. (Once harnessed, its \u221e ability is active.)\n'
                       '\u221e — At the beginning of your end step, exile up to one other target nonland permanent you control, '
                       "then return that card to the battlefield under its owner's control.")
+    elif symbol_case=='untap':
+        card.update(name='Leech Bonder',type_line='Creature — Merfolk Soldier',colors=['U'],
+                    mana_cost='{2}{U}',power='3',toughness='3',rarity='uncommon',
+                    oracle_text='This creature enters with two -1/-1 counters on it.\n'
+                      '{U}, {Q}: Move a counter from target creature onto a second target creature. '
+                      '({Q} is the untap symbol.)')
     store=Store(tmp_path/'mana-wrap');net=Network(store);native_transport=net._transport
     def transport(url):
         if 'api.scryfall.com' in url:return json.dumps(card).encode(),'application/json',{}
@@ -316,7 +322,8 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,s
             if symbol_case=='mana-cluster':
                 assert 'cost {W}{U}{B}{R}{G} less to cast' in rules
                 assert 'cost\n{W}{U}{B}{R}{G}' not in rules
-            else:assert rules.count('\u221e')==2
+            elif symbol_case=='infinity':assert rules.count('\u221e')==2
+            else:assert rules.count('{untap}')==2 and '{Q}' not in rules
             runtime_frame=next(frame for frame in page.frames if '/runtime/host' in frame.url)
             metrics=runtime_frame.evaluate("""() => {
               const box=window.card?.text?.rules;
@@ -355,6 +362,19 @@ def test_real_cardconjurer_inline_mana_cluster_stays_inside_rules_box(tmp_path,s
                 assert infinity['loaded'],infinity
                 assert infinity['normalized']=='{infinity} {inf}',infinity
                 assert all(row['ink']>100 for row in infinity['results']),infinity
+            if symbol_case=='untap':
+                untap=runtime_frame.evaluate("""() => {
+                  const symbol=getManaSymbol('untap');let draws=0;
+                  const canvas=document.createElement('canvas');canvas.width=card.width;canvas.height=card.height;
+                  const prototype=CanvasRenderingContext2D.prototype,draw=prototype.drawImage;
+                  prototype.drawImage=function(image,...args){if(image===symbol.image)draws++;return draw.call(this,image,...args);};
+                  try{writeText({...card.text.rules},canvas.getContext('2d'));}
+                  finally{prototype.drawImage=draw;}
+                  return {loaded:symbol.image.complete&&symbol.image.naturalWidth>0,draws};
+                }""")
+                assert untap['loaded'] and untap['draws']>=2,untap
+                asset=current['cards'][0]['faces'][0]['compiled']['render']['asset_id']
+                (ROOT/'test-results/leech-bonder-untap-preview.png').write_bytes(store.asset_path(asset).read_bytes())
             #A larger-font trial must not leave a forced mana wrap in the final
             #layout. Starting directly at the fitted size should give identical pixels.
             fitting=runtime_frame.evaluate("""() => {

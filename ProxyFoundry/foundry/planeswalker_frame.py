@@ -11,6 +11,37 @@ TALL_EXTRA=147
 TALL_SHIFT=TALL_EXTRA/2100
 SPLICE_Y=1550
 MOVE_START=900
+MIN_BADGE_GAP=.008
+
+
+def badge_extents(cost):
+    """Native image bounds relative to the ability row center, including shadows."""
+    if '+' in cost:return (-.0343,.0381)
+    if '-' in cost or '−' in cost:return (-.0238,.0467)
+    return (-.0238,.0372)
+
+
+def badge_bases(version,count):
+    tall=version!='planeswalkerNicknameTall' and any(v in version for v in ('Tall','Compleated'))
+    return ({1:[.72],2:[.6391,.801],3:[.5986,.72,.8415],4:[.5986,.6796,.7605,.8415]} if tall else
+            {1:[.7467],2:[.6953,.822],3:[.6639,.7467,.8362],4:[.6505,.72,.7905,.861]})[count]
+
+
+def has_touching_ability_badges(data):
+    """Refresh only cached native layouts whose fixed-size badges lack clearance."""
+    walker=data.get('planeswalker') or {}
+    if not walker.get('uniformAbilityText'):return False
+    count=walker.get('count',0)
+    if count not in (1,2,3,4):return False
+    bases=badge_bases(data.get('version',''),count)
+    previous_bottom=None
+    for index,cost in enumerate(walker.get('abilities',[])[:count]):
+        if not cost:continue
+        center=bases[index]+walker.get('abilityAdjust',[0]*4)[index]+.0085
+        top,bottom=badge_extents(cost)
+        if previous_bottom is not None and center+top-previous_bottom<MIN_BADGE_GAP-1e-9:return True
+        previous_bottom=center+bottom
+    return False
 
 
 def pinline_without_loyalty_png(pinline_raw,loyalty_raw):
@@ -44,6 +75,26 @@ def fit_ability_rows(abilities,bounds):
             for cost,text in abilities]
         # Keep the first cost badge clear of the type bar.
         if abilities[0][0]:heights[0]=max(.088,heights[0])
+        if sum(heights)>bounds['height']:continue
+        spare=(bounds['height']-sum(heights))/len(abilities)
+        candidate=[height+spare for height in heights]
+        costs=[i for i,(cost,_) in enumerate(abilities) if cost]
+        # Preserve existing layouts when their equal-share padding is sufficient.
+        if all((candidate[a]+candidate[b])/2+sum(candidate[a+1:b])>=
+               badge_extents(abilities[a][0])[1]-badge_extents(abilities[b][0])[0]+MIN_BADGE_GAP
+               for a,b in zip(costs,costs[1:])):break
+        # Adjacent centers depend on half of each end row's height. Reserve
+        # their actual asymmetric image extents, rather than treating a short
+        # ability as permission to stack fixed-size badges on top of each other.
+        for a,b in zip(costs,costs[1:]):
+            distance=badge_extents(abilities[a][0])[1]-badge_extents(abilities[b][0])[0]+MIN_BADGE_GAP
+            required=2*(distance-sum(heights[a+1:b]))
+            if heights[a]+heights[b]>=required:continue
+            #Grow the shorter row first, then both equally. A short ability
+            #should not receive a huge empty band just to space its neighbors.
+            smaller,larger=sorted((a,b),key=lambda i:heights[i])
+            heights[smaller]=max(heights[smaller],required-max(heights[larger],required/2))
+            heights[larger]=max(heights[larger],required/2)
         if sum(heights)<=bounds['height']:break
     else:raise ValidationError('Planeswalker abilities do not fit the rules box.')
     spare=(bounds['height']-sum(heights))/len(abilities)
@@ -70,9 +121,7 @@ def layout_planeswalker_abilities(data,sem,bounds=None):
     rows=fit_ability_rows(abilities,bounds)
     # The pinned renderer has two native anchor tables. These offsets only
     # translate our calculated row centers into its badge coordinates.
-    tall=data['version']!='planeswalkerNicknameTall' and any(v in data['version'] for v in ('Tall','Compleated'))
-    bases=({1:[.72],2:[.6391,.801],3:[.5986,.72,.8415],4:[.5986,.6796,.7605,.8415]} if tall else
-           {1:[.7467],2:[.6953,.822],3:[.6639,.7467,.8362],4:[.6505,.72,.7905,.861]})[len(abilities)]
+    bases=badge_bases(data['version'],len(abilities))
     adjustments=[]
     for index in range(4):
         active=index<len(abilities)

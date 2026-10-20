@@ -14,6 +14,7 @@ from .color_indicator import apply_color_indicator
 from . import nickname_special
 from . import rules_nicknames
 from .hybrid_frame import apply_hybrid_frame_treatment
+from .inline_symbols import normalize_untap_aliases
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -1059,6 +1060,7 @@ _TRANSFORM_BACK_MASKS={
     'Frame':'/img/frames/m15/transform/regular/new/maskFrameBack.png',
     'Border':'/img/frames/m15/regular/m15MaskBorder.png',
 }
+_TRANSFORM_LEGACY_BACK_MASKS={name:src.replace('/regular/new/','/regular/') for name,src in _TRANSFORM_BACK_MASKS.items()}
 _TRANSFORM_ICON={
     'name':'Transform Icon',
     'src':'/img/frames/m15/transform/icons/default.png',
@@ -1104,6 +1106,13 @@ def _transform_icon_for(card,side):
     return copy.deepcopy(_TRANSFORM_ICON) if side=='front' else None
 
 
+def _left_transform_back(card):
+    #Legacy named markers use the left opening. Keep the approved modern
+    #right-arrow treatment for the special land backs, which omit land.svg.
+    effects=set(card.get('frame_effects') or [])
+    return bool(effects & (_TRANSFORM_EFFECT_ICONS.keys()-{'compasslanddfc'}))
+
+
 def _transform_classic_semantic(sem):
     """Build classic M15 text geometry while keeping the face's own semantics."""
     d=copy.deepcopy(sem)
@@ -1141,7 +1150,9 @@ def _convert_frame_masks(frame,mapping):
 def _apply_transform_frame(data,side,sem,card):
     """Convert classic M15 geometry to CardConjurer's genuine transform assets."""
     if side not in {'front','back'}:raise ValidationError('Invalid transform side.')
-    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_BACK_MASKS
+    left_back=side=='back' and _left_transform_back(card)
+    mapping=_TRANSFORM_FRONT_MASKS if side=='front' else _TRANSFORM_LEGACY_BACK_MASKS if left_back else _TRANSFORM_BACK_MASKS
+    back_folder='' if left_back else 'new/'
     body_code,crown_code=_transform_frame_codes(sem)
     allowed=set('WUBRGMAL') if side=='front' else set('WUBRGMALV')
     if body_code not in allowed:
@@ -1163,7 +1174,7 @@ def _apply_transform_frame(data,side,sem,card):
             # the semantic color already chosen by the ordinary M15 compiler.
             layer_code=m.group(1) if mask_names & {'Pinline','Title','Type','Rules'} else body_code
             frame['src']=(f'/img/frames/m15/transform/regular/front{layer_code}.png' if side=='front'
-                          else f'/img/frames/m15/transform/regular/new/back{layer_code}.png')
+                          else f'/img/frames/m15/transform/regular/{back_folder}back{layer_code}.png')
             converted+=1
             continue
         pt=re.fullmatch(r'/img/frames/m15/regular/m15PT([WUBRGMACV])\.png',src)
@@ -1188,7 +1199,7 @@ def _apply_transform_frame(data,side,sem,card):
                 frame['src']=f'/img/frames/m15/transform/crowns/floating/{target_code.lower()}.png'
             else:
                 frame['src']=(f'/img/frames/m15/transform/crowns/regular/{target_code.lower()}.png' if side=='front'
-                              else f'/img/frames/m15/transform/crowns/regular/new/{target_code.lower()}.png')
+                              else f'/img/frames/m15/transform/crowns/regular/{back_folder}{target_code.lower()}.png')
             continue
         if frame.get('name')=='Legend Crown Lower Cutout':
             frame['bounds']={'x':0.0767,'y':0.1096,'width':0.8467,'height':0.0143}
@@ -1199,12 +1210,12 @@ def _apply_transform_frame(data,side,sem,card):
     text=data.setdefault('text',{})
     title=text.get('title')
     if isinstance(title,dict):
-        title['x']=0.16 if side=='front' else 0.0854
+        title['x']=0.16 if side=='front' or left_back else 0.0854
         title['width']=0.7547
         if side=='back':title['color']='white'
     icon=_transform_icon_for(card,side)
-    #The regular back already has its right-side transform marker. The older
-    #land badge has no matching left opening and otherwise covers the title.
+    #The modern back embeds the right arrow. Legacy backs have a blank left
+    #opening for exactly one named marker and reserve its title space above.
     if icon and not (side=='back' and icon['src'].endswith('/icons/land.svg')):
         data['frames'].insert(0,icon)
     if side=='front':
@@ -1407,10 +1418,8 @@ def apply_dual_saga_tassels(data,sem,group):
 def build_transform_saga_data(sem,group,card,artist,autofit,flags):
     """Build a transform face that is structurally a Saga.
 
-    CardConjurer has genuine Saga structural frames but no separate transform-
-    Saga frame pack. Preserve the complete Saga frame/chapter layout, then add
-    the DFC identity icon for the appropriate side. The universal frame-color
-    pass still runs afterward, exactly as it does for every other card family.
+    Preserve the Saga frame/chapter layout. Back faces reuse the genuine M15
+    transform header and type materials, including the marker recess.
     """
     d0=copy.deepcopy(sem)
     for key in ('parent_name','face_index','scryfall_layout'):
@@ -1430,6 +1439,15 @@ def build_transform_saga_data(sem,group,card,artist,autofit,flags):
         enforce_saga_creature_rules_frame(data,sem)
     apply_dual_saga_tassels(data,sem,saga_group)
     side='front' if group=='transform-front' else 'back'
+    if side=='back' and saga_group=='saga':
+        from .saga_frame import PREFIX
+        left=_left_transform_back(card)
+        for frame in data.get('frames',[]):
+            match=re.fullmatch(r'/img/frames/saga/regular/(?:sagaFrame([WUBRGMA])|(l))\.png',str(frame.get('src','')))
+            if match:frame['src']=PREFIX+f'back-{"left" if left else "right"}-{(match.group(1) or match.group(2)).upper()}.png'
+        title=data['text']['title']
+        title.update(x=.16 if left else .0854,width=.7547,color='white')
+        data['text']['type']['color']='white'
     icon=_transform_icon_for(card,side)
     if icon:
         data.setdefault('frames',[]).insert(0,icon)
@@ -2701,11 +2719,15 @@ class Compiler:
         choice=RETIRED_BUILTINS.get(choice,choice)
         # Only Devoid faces need refreshed materials; preserve unrelated caches.
         devoid_version=2*int(choice in {'auto','normal'} and group in {'standard','legendary'} and face is not None and has_devoid(face))
+        indicator_version=int(choice in {'auto','normal'} and group in {'transform-front','transform-back'} and face is not None and isinstance(face.get('color_indicator'),list) and any(c in 'WUBRG' for c in face['color_indicator'] if isinstance(c,str) and len(c)==1))
+        marker_version=int(choice in {'auto','normal'} and group=='transform-back' and face is not None and _left_transform_back(face))
+        saga_version=int(choice in {'auto','normal'} and group=='transform-back' and face is not None and
+                         ('Saga' in face.get('subtypes',[]) or re.search(r'\bSaga\b',face.get('type_line','')) is not None))
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
@@ -2754,7 +2776,9 @@ class Compiler:
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
         choice=RETIRED_BUILTINS.get(choice,choice)
-        template_key,template_version,template_cache_version=self.template_identity(group,choice,sem)
+        identity_face=({**sem,'color_indicator':face.get('color_indicator'),'frame_effects':sf.get('frame_effects')}
+                       if group in {'transform-front','transform-back'} else sem)
+        template_key,template_version,template_cache_version=self.template_identity(group,choice,identity_face)
         if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
             donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)
@@ -2974,7 +2998,7 @@ class Compiler:
         if data.get('version')=='m15Nickname':
             # Nickname frames move the type bar, so refit the set symbol.
             fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),'m15_nickname')
-        if choice=='godzilla-card' and not options.get('rawCard'):
+        if (choice=='godzilla-card' or (choice in {'auto','normal'} and group in {'transform-front','transform-back'})) and not options.get('rawCard'):
             apply_color_indicator(data,face)
         if recipe in {'art_series_scan','helper_scan'}:
             data['infoArtist']=''
@@ -2994,6 +3018,7 @@ class Compiler:
         if group=='planeswalker' and data.get('planeswalker') and (choice=='auto' or choice in BUILTIN_TEMPLATE_VERSIONS):
             from .planeswalker_frame import layout_planeswalker_abilities
             layout_planeswalker_abilities(data,sem)
+        normalize_untap_aliases(data)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

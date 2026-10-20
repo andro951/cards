@@ -52,7 +52,8 @@ def test_faces_without_a_printed_indicator_are_unchanged(face):
 
 @pytest.mark.parametrize('legendary',[False,True])
 @pytest.mark.parametrize('nickname',[False,True])
-def test_production_dfc_back_has_indicator_and_front_does_not(tmp_path, legendary, nickname):
+@pytest.mark.parametrize('style',['auto','godzilla-card'])
+def test_production_dfc_back_has_indicator_and_front_does_not(tmp_path, legendary, nickname,style):
     from PIL import Image
     import io
     store = Store(tmp_path);workspace = Workspace(store)
@@ -60,7 +61,7 @@ def test_production_dfc_back_has_indicator_and_front_does_not(tmp_path, legendar
     art = ingest_image(store,output.getvalue())['id']
     sf = card(legendary)
     sf['card_faces'][1]['color_indicator'] = ['R']
-    options = {'templateOverride':'godzilla-card'}
+    options = {'templateOverride':style}
     if nickname:options['semanticOverrides'] = {'nickname':'Garth'}
     settings = workspace.validate_settings({})
     compiler = Compiler(store)
@@ -72,3 +73,14 @@ def test_production_dfc_back_has_indicator_and_front_does_not(tmp_path, legendar
             bounds = next(f for f in result['frames'] if f['name']==INDICATOR_BASE_NAME)['bounds'];box = result['text']['type']
             assert bounds['x']+bounds['width'] < box['x']
             assert box['x']+box['width'] <= result['setSymbolX']-.009
+
+
+def test_regular_indicator_cache_refresh_is_limited_to_faces_with_printed_indicators(tmp_path):
+    compiler=Compiler(Store(tmp_path))
+    for group in ('transform-front','transform-back'):
+        original=compiler.template_identity(group,'auto',{})
+        assert compiler.template_identity(group,'auto',{'colors':['U']})==original
+        assert compiler.template_identity(group,'auto',{'color_indicator':[]})==original
+        printed=compiler.template_identity(group,'auto',{'color_indicator':['U']})
+        assert printed[0]==original[0] and printed[1:]==(original[1]+1,original[2]+1)
+        assert compiler.template_identity(group,'godzilla-card',{'color_indicator':['U']})==compiler.template_identity(group,'godzilla-card',{})

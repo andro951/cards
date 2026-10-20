@@ -214,7 +214,57 @@ def test_the_great_synthesis_transform_back_uses_native_saga_structure(tmp_path)
     data=result['data']
     assert result['group']=='transform-back'
     assert result['recipe']=='saga_transform_back'
-    assert any(str(f.get('src','')).startswith('/img/frames/saga/') for f in data['frames'])
+    assert '/img/frames/proxy-foundry/saga/back-left-U.png' in [f.get('src','') for f in data['frames']]
     assert not any('/img/frames/m15/transform/regular/new/back' in str(f.get('src','')) for f in data['frames'])
     assert '/img/frames/m15/transform/icons/moon.svg' in [f.get('src','') for f in data['frames']]
     assert data['text']['type']['text']=='Enchantment - Saga'
+
+
+@pytest.mark.parametrize('effect,marker',[
+    ('sunmoondfc','moon.svg'),('mooneldrazidfc','emrakul.svg'),
+    ('originpwdfc','planeswalker.svg'),('fandfc','fanOpen.svg'),
+    ('convertdfc',None),(None,None),
+])
+@pytest.mark.parametrize('legendary',[False,True])
+def test_regular_back_marker_and_crown_follow_printed_frame_style(tmp_path,effect,marker,legendary):
+    store,art,settings=env(tmp_path);card=everflowing_pair()
+    card['frame_effects']=[effect] if effect else []
+    back=card['card_faces'][1]
+    back.update(name='Hollowhenge Huntmaster',type_line=('Legendary ' if legendary else '')+'Creature — Werewolf',
+                colors=['G'],color_indicator=['G'],power='6',toughness='6')
+    data=Compiler(store).compile_face(card,back,1,{},settings,art)['data']
+    sources=[f.get('src','') for f in data['frames']]
+    icons=[f for f in data['frames'] if '/transform/icons/' in f.get('src','')]
+    if marker:
+        assert len(icons)==1 and icons[0]['src'].endswith('/'+marker)
+        assert icons[0]['bounds']['x']<.5
+        assert all('/regular/new/' not in src for src in sources)
+        assert '/img/frames/m15/transform/regular/backG.png' in sources
+        assert data['text']['title']['x']>=icons[0]['bounds']['x']+icons[0]['bounds']['width']
+        if legendary:assert '/img/frames/m15/transform/crowns/regular/g.png' in sources
+    else:
+        #Modern back PNG owns its one down arrow; no moon is overlaid merely
+        #because the creature is a Werewolf. The title reserves the right side.
+        assert not icons
+        assert '/img/frames/m15/transform/regular/new/backG.png' in sources
+        assert data['text']['title']['x']==.0854
+        assert data['text']['title']['x']+data['text']['title']['width']<.87
+        if legendary:assert '/img/frames/m15/transform/crowns/regular/new/g.png' in sources
+
+
+def test_regular_marker_metadata_and_color_indicator_versions_reuse_preparation(tmp_path,monkeypatch):
+    from foundry.workspace import Workspace
+    store,art,_=env(tmp_path);ws=Workspace(store);card=everflowing_pair()
+    card['frame_effects']=['sunmoondfc'];card['card_faces'][1]['color_indicator']=['G']
+    entry=ws.sources.entry(card)
+    for face in entry['faces']:face['artOverride']=art
+    monkeypatch.setattr(ws.sources,'resolve_card',lambda *a,**k:card)
+    deck=ws.new_deck('Marker cache test')
+    store.put('decks',{**deck,'cards':[entry],'settings':ws.validate_settings({})},deck['revision'])
+    prepared=ws.prepare(deck['id'])
+    assert prepared['status']!='draft'
+    assert ws.deck(deck['id'])['status']!='draft'
+    before=[f['compiled']['renderKey'] for f in prepared['cards'][0]['faces']]
+    monkeypatch.setattr(ws.compiler,'compile_face',lambda *a,**k:pytest.fail('Unchanged faces recompiled'))
+    repeated=ws.prepare(deck['id'])
+    assert [f['compiled']['renderKey'] for f in repeated['cards'][0]['faces']]==before

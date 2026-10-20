@@ -1,4 +1,4 @@
-"""Native face color indicators on the Godzilla type bar."""
+"""Native face color indicators on compatible Godzilla and transform type bars."""
 import math
 from urllib.parse import quote
 
@@ -52,6 +52,13 @@ def apply_color_indicator(data, face):
     # Native pip paint draws above its native beveled/recessed surround.
     layers.append({'name':INDICATOR_BASE_NAME,'src':PREFIX+'base.png','masks':[],
                    'bounds':dict(BASE_BOUNDS)})
+    if data.get('saga'):
+        #Saga type bars are at the foot of the card. The pip SVGs are full-card
+        #native assets, so translate both their paint and their recessed base.
+        offset=float(box['y'])+float(box['height'])/2-(BASE_BOUNDS['y']+BASE_BOUNDS['height']/2)
+        for layer in layers:
+            if layer['name']==INDICATOR_BASE_NAME:layer['bounds']['y']+=offset
+            else:layer['bounds']={'x':0,'y':offset,'width':1,'height':1}
     frames[0:0]=layers
     box['x'] = new_left
     box['width'] = right-new_left
