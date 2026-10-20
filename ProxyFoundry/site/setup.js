@@ -69,6 +69,12 @@ export function renderSetup(root,deck,onSaved){
     </section>
   </div></div><div class="setup-save"><span class="save-status" id="setup-state">Changes saved</span><button class="button primary" id="save-generate">Generate images</button></div></fieldset>`;
   $('#disable-autofit',root).closest('details').remove();
+  const substituteLabel=document.createElement(`label`);substituteLabel.className=`check-line`;
+  const substituteInput=document.createElement(`input`);substituteInput.type=`checkbox`;substituteInput.id=`create-dfc-substitutes`;substituteInput.checked=s.createDfcSubstitutes!==false;
+  const substituteText=document.createElement(`span`);substituteText.textContent=`Create double-sided card substitutes`;
+  const substituteHelp=document.createElement(`small`);substituteHelp.textContent=`Adds one substitute with a normal back for every double-sided card copy. Uses the front's name and rules, a normal frame, and the wooden instruction sign. Two-sided tokens are excluded.`;
+  substituteText.append(substituteHelp);substituteLabel.append(substituteInput,substituteText);
+  $('#all-cards-tokens',root).closest(`label`).before(substituteLabel);
   for(const id of ['deck-name','deck-notes','reuse-style','flavor-policy','refresh-data'])$('#'+id,root).closest('label').remove();
   $('.credit-preview',root)?.remove();
   const sourceCaption=$('[data-source="github"] small',root);
@@ -459,6 +465,7 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       nonlegendary:$('#token-legendary-mode',root).value==='nonlegendary',
       legendaryMode:$('#token-legendary-mode',root).value
     };
+    s.createDfcSubstitutes=substituteInput.checked;
   }
   function persistSetup(importComplete=false){
     clearTimeout(saveTimer);

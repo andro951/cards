@@ -16,6 +16,24 @@ def compiler_setup(tmp_path):
     art=ingest_image(store,output.getvalue())['id']
     return Compiler(store),ws,art
 
+
+@pytest.mark.parametrize('legendary',[False,True])
+@pytest.mark.parametrize('nickname',['','Steam Passage'])
+def test_classic_scalding_tarn_has_neutral_bars_and_dual_pinline(compiler_setup,legendary,nickname):
+    compiler,ws,art=compiler_setup
+    sf={'name':'Scalding Tarn','type_line':('Legendary ' if legendary else '')+'Land',
+        'colors':[],'mana_cost':'','rarity':'rare','artist':'Artist','layout':'normal',
+        'oracle_text':'{T}, Pay 1 life, Sacrifice Scalding Tarn: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.'}
+    result=compiler.compile_face(sf,sf,0,{'templateOverride':'normal',
+        'semanticOverrides':{'nickname':nickname}},ws.validate_settings({}),art)
+    frames=result['data']['frames']
+    for name in ('Title','Type'):
+        bars=[f for f in frames if any(m.get('name')==name for m in f.get('masks',[]))]
+        assert bars and all(f['src']=='/img/frames/m15/regular/m15FrameL.png' for f in bars)
+    pinlines=[f for f in frames if any(m.get('name')=='Pinline' for m in f.get('masks',[]))]
+    assert pinlines and all(f['src'].startswith('data:image/svg+xml;utf8,') for f in pinlines)
+    assert ('nickname' in result['data']['text'])==bool(nickname)
+
 @pytest.mark.parametrize('legendary,nickname',[(False,False),(False,True),(True,False),(True,True)])
 @pytest.mark.parametrize('choice',['auto','legend-land','land'])
 def test_default_land_four_headers_and_saved_retired_selection(compiler_setup,legendary,nickname,choice):

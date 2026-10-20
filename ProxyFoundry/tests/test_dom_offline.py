@@ -844,6 +844,45 @@ def test_setup_generation_buttons_persist_latest_changes_first(dom_page,button):
     assert not errors,errors
 
 
+def test_substitute_setting_defaults_on_and_saves_per_deck(dom_page):
+    page,errors=dom_page
+    page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+    control=page.locator('#create-dfc-substitutes')
+    assert control.is_checked()
+    control.uncheck()
+    page.wait_for_function('__fixture.deck.settings.createDfcSubstitutes===false')
+    page.evaluate("location.hash='#deck/'+__fixture.deck.id")
+    page.locator('[data-card]').wait_for()
+    page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
+    assert not page.locator('#create-dfc-substitutes').is_checked()
+    assert not errors,errors
+
+
+def test_substitutes_have_separate_searchable_grid_and_normal_back(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      const deck=__fixture.deck,card=deck.cards[0];
+      deck.settings.backAsset='b'.repeat(64);
+      card.substitute={id:'substitute-face',name:'Test creature — substitute',compiled:{renderKey:'s'.repeat(64),render:{url:'/api/assets/'+'a'.repeat(64)}}};
+      deck.summary.substitutes=card.quantity;
+      location.hash='#deck/'+deck.id;
+    }''')
+    section=page.locator('[data-deck-section="substitutes"]')
+    section.wait_for()
+    tile=section.locator('[data-substitute]')
+    assert tile.locator('.quantity-pill').inner_text()=='2×'
+    assert page.locator('[data-deck-section="cards"] [data-card]').count()==1
+    tile.hover()
+    assert 'b'*64 in tile.locator('img').get_attribute('src')
+    page.fill('#card-search','no-such-card')
+    assert section.locator('[data-substitute]').count()==0
+    page.fill('#card-search','Test creature')
+    section.locator('[data-substitute]').click()
+    assert page.locator('.modal-body').inner_text().startswith('Generated from this card')
+    page.get_by_role('button',name='Close',exact=True).click()
+    assert not errors,errors
+
+
 
 def test_setup_save_failure_blocks_generation_and_allows_retry(dom_page):
     page,errors=dom_page

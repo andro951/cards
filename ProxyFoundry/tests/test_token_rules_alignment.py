@@ -141,8 +141,8 @@ def test_previous_token_preparation_is_refreshed_once(workspace,monkeypatch,conv
     deck=ws.new_deck('Token alignment cache')
     store.put('decks',{**deck,'cards':[entry],'settings':settings},deck['revision'])
     current=ws.compiler.template_identity
-    def previous(group,choice):
-        key,version,cache=current(group,choice)
+    def previous(group,choice,face=None):
+        key,version,cache=current(group,choice,face)
         return (key,version-1,cache-1) if group=='token' else (key,version,cache)
     monkeypatch.setattr(ws.compiler,'template_identity',previous)
     old=ws.prepare(deck['id'])['cards'][0]['faces'][0]['compiled']['renderKey']

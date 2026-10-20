@@ -658,7 +658,8 @@ def apply_universal_frame_color_treatment(data,sem):
     pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
     retain the old two-native-PNG construction with a full-card smooth fade mask
     so their texture, shading, geometry and alpha are preserved. Title/type/rules
-    use multicolor/gold for two or more colors. Lands use only land_colors.
+    use multicolor/gold for two or more colors, except classic two-color land
+    title/type bars retain neutral land material. Lands use only land_colors.
     """
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
@@ -741,7 +742,19 @@ def apply_universal_frame_color_treatment(data,sem):
             structural['masks']=other
             rebuilt.append(structural)
 
-        # Title/type/rules all share the same semantic single/gold color.
+        # Classic two-color lands have neutral bars inside their split pinline.
+        # Keep this separate from Rules and full-art land material selection.
+        if effect_dual and 'Land' in effect_sem.get('types',[]) and old_src.startswith('/img/frames/m15/regular/m15Frame'):
+            bars=[m for m in boxes if m.get('name') in {'Title','Type'}]
+            if bars:
+                layer=copy.deepcopy(frame)
+                layer['masks']=bars
+                layer['src']='/img/frames/m15/regular/m15FrameL.png'
+                rebuilt.append(layer)
+                boxes=[m for m in boxes if m.get('name') not in {'Title','Type'}]
+                if layer['src']!=old_src:changed=True
+
+        # Remaining boxes share the semantic single/gold color.
         if boxes:
             layer=copy.deepcopy(frame)
             layer['masks']=boxes
@@ -906,6 +919,11 @@ def land_frame_colors(types,face,card,oracle_text):
     return result
 
 
+def has_devoid(face):
+    if 'devoid' in face:return bool(face['devoid'])
+    return any(str(keyword).strip().lower()=='devoid' for keyword in face.get('keywords',[]) or []) or bool(re.search(r'(?im)^\s*Devoid\b',str(face.get('oracle_text') or '')))
+
+
 def semantic(sf,face,index=0):
     get=lambda k,default='':ingest.face_value(face,sf,k,default)
     type_line=get('type_line')
@@ -914,7 +932,7 @@ def semantic(sf,face,index=0):
     d['nickname']=rules_nicknames.effective_nickname(d['name'],d['nickname'])
     d['supertypes']=[word for word in str(type_line).replace('—',' - ').replace('–',' - ').partition(' - ')[0].split() if word in {'Basic','Legendary','Snow','World','Token'}]
     d['printed_type_line']=str(type_line)
-    d['devoid']=any(str(keyword).strip().lower()=='devoid' for keyword in d['keywords']) or bool(re.search(r'(?im)^\\s*Devoid\\b',d['oracle_text']))
+    d['devoid']=has_devoid(d)
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
         if v is not None:d[k]=str(v)
@@ -968,7 +986,7 @@ def apply_devoid_frame(data,sem):
     """
     if not sem.get('devoid'):return False
     code=_devoid_frame_code(sem)
-    frame_src=f'/img/frames/m15/devoid/m15DevoidFrame{code}.png'
+    frame_src=f'/img/frames/proxy-foundry/devoid/m15DevoidFrame{code}.png'
     changed=False;structural=0;pt_found=False
     for frame in data.get('frames',[]):
         if not isinstance(frame,dict):continue
@@ -2679,13 +2697,17 @@ def custom_data(template,sem,other_faces=None):
 
 class Compiler:
     def __init__(self,store):self.store=store
-    def template_identity(self,group,choice):
+    def template_identity(self,group,choice,face=None):
         choice=RETIRED_BUILTINS.get(choice,choice)
+        # Only Devoid faces need refreshed materials; preserve unrelated caches.
+        devoid_version=2*int(choice in {'auto','normal'} and group in {'standard','legendary'} and face is not None and has_devoid(face))
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version
+            # Refresh classic land bars without invalidating other card families.
+            if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
             if group=='planeswalker':version+=2
             if group=='transform-back' and not choice.startswith('godzilla-'):version+=1
@@ -2732,7 +2754,7 @@ class Compiler:
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
         choice=RETIRED_BUILTINS.get(choice,choice)
-        template_key,template_version,template_cache_version=self.template_identity(group,choice)
+        template_key,template_version,template_cache_version=self.template_identity(group,choice,sem)
         if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
             donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)
@@ -2822,11 +2844,11 @@ class Compiler:
                     d0['layout']='saga' if group=='saga' else 'saga_creature'
                 try:
                     data=native.build_one(copy.deepcopy(d0),{'artist':artist},not settings.get('disableAutofit',False),flagged_sagas=flags)['data']
-                    if group in {'standard','legendary'} and choice=='auto':
-                        if sem.get('devoid'):apply_devoid_frame(data,sem)
-                        apply_miracle_frame(data,sem)
                     if d0.get('layout')=='land_full_legendary' and not sem['legendary']:native.remove_crown(data)
                     if d0.get('_neutral_classic'):native.recolor_m15(data,'L')
+                    if group in {'standard','legendary'}:
+                        if sem.get('devoid') and choice in {'auto','normal'}:apply_devoid_frame(data,sem)
+                        if choice=='auto':apply_miracle_frame(data,sem)
                     recipe=native.infer_layout(d0,native.get_type_info(d0))
                     if choice=='auto' and group in {'modal-front','modal-back'}:
                         apply_approved_modal_dfc_semantics(data,sem,sf,index)

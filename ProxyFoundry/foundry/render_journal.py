@@ -1,6 +1,7 @@
 """Recover browser-native PNG writes before publishing grouped SQLite metadata."""
 import json,re,time
 from .domain import ValidationError,uid
+from .substitutes import render_faces
 
 
 def allow_shared_render_files(db):
@@ -23,7 +24,7 @@ def _validate_render_row(store,row,decks):
     if not isinstance(deck_id,str):raise ValidationError('Missing render deck.')
     if deck_id not in decks:
         deck=store.get('decks',deck_id)
-        decks[deck_id]={(c.get('id'),f.get('id')):f for c in (deck or {}).get('cards',[]) for f in c.get('faces',[])}
+        decks[deck_id]={(c.get('id'),f.get('id')):f for c in (deck or {}).get('cards',[]) for f in render_faces(c,(deck or {}).get('settings',{}))}
     face=decks[deck_id].get((row.get('cardId'),row.get('faceId')))
     comp=(face or {}).get('compiled') or {}
     if comp.get('renderKey')!=row['key']:raise ValidationError('A rendered card changed or was deleted. Generate its image again.')

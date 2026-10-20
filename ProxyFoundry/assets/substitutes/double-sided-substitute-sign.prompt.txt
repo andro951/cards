@@ -1,0 +1,26 @@
+Generated with the built-in image_gen tool.
+
+Use case: stylized-concept.
+Asset type: finished landscape card-art asset for a fantasy trading card substitute, aspect ratio exactly 5:4, five units wide by four tall. Target 1600 by 1280 pixels if possible.
+Create a handsome wooden instruction sign viewed perfectly straight-on, filling the rectangular image. Warm pale honey oak planks with restrained realistic wood grain and a narrow dark carved wooden border. A subtly illustrated fantasy tavern sign aesthetic, softly evenly lit. The sign itself is the entire artwork: no surrounding room, props, posts, chains, hands, scenery, trading-card frame, logos, or watermark. Opaque background.
+
+The instructions are the purpose of the image and must be extremely readable when printed small in a card's art window. Use large crisp dark near-black painted serif lettering on light clean wood, strongly contrasted, not distressed or obscured by grain. No cursive. Minimal ornament at outer corners only. Keep all lettering in an inset safe area at least 7 percent from every edge. Make the heading bold and slightly larger than body, in two centered lines. Under the heading, use four clearly separated instruction paragraphs in a clean, balanced layout with comfortable line spacing. Body lettering should be as large as possible, with deliberate line breaks; do not waste space on illustrations. Do not number the paragraphs. Render every word exactly, including apostrophe, without additional text.
+
+Text verbatim:
+DOUBLE-SIDED CARD
+SUBSTITUTE
+
+Keep the matching double-sided card
+beside the game.
+
+Use this substitute in your deck and hand
+so the card’s back stays hidden.
+
+When you play this card or put it onto
+the battlefield, swap in the actual
+double-sided card.
+
+If that card returns to your hand or deck,
+replace it with this substitute.
+
+A polished functional image, warm wood with beautifully legible black typography. All five text sections must be present, accurate, and fully inside the image.

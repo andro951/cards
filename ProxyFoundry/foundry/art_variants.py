@@ -79,6 +79,7 @@ def apply(deck,invalidate):
             existing=old.get(ident);card=existing or copy.deepcopy(donor)
             if existing is None:
                 card['id']=uid() if ident else root
+                card.pop('substitute',None)
                 for index,face in enumerate(card['faces']):face['id']=uid() if ident else root_faces[index]
                 changed=True
             card['quantity']=count;card['artVariantRoot']=root;card['artVariantRootFaces']=root_faces

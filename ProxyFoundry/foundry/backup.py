@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .domain import ConflictError, ValidationError, uid, validate_template, quantity
 from .images import decode_image
+from .substitutes import stored_faces
 from .template_model import validate_model
 
 MAX_BACKUP_BYTES = 2 * 1024 ** 3
@@ -52,12 +53,12 @@ class Backups:
             docs = copy.deepcopy(docs)
             for deck in docs['decks']:
                 for card in deck.get('cards', []):
-                    for face in card.get('faces', []):
+                    for face in stored_faces(card):
                         (face.get('compiled') or {}).pop('render', None)
         render_keys = set()
         for d in docs['decks']:
             for c in d.get('cards', []):
-                for f in c.get('faces', []):
+                for f in stored_faces(c):
                     k = (f.get('compiled') or {}).get('renderKey')
                     if k: render_keys.add(k)
         renders = [r for k in render_keys if (r := self.store.render_get(k))] if include_renders else []
@@ -151,7 +152,7 @@ class Backups:
                 quantity(card.get('quantity'))
                 if not isinstance(card.get('scryfall'),dict) or not isinstance(card.get('faces'),list):
                     raise ValidationError('Backup contains an invalid card.')
-                for face in card['faces']:
+                for face in stored_faces(card):
                     if face.get('compiled'):validate_template(face['compiled']['data'])
         renders=[item for item in manifest.get('renders',[]) if item.get('deck_id') in picked['decks']]
         listed={asset.get('id'):asset for asset in manifest.get('assets',[]) if isinstance(asset,dict)}
@@ -183,7 +184,7 @@ class Backups:
             asset=self.store.asset(render.get('asset_id',''))
             if not deck or not asset:continue
             for card in deck.get('cards',[]):
-                for face in card.get('faces',[]):
+                for face in stored_faces(card):
                     if face.get('id')==render.get('face_id'):
                         self.store.render_put(render['render_key'],asset,deck_id=deck['id'],card_id=card['id'],
                                               face_id=face['id'],deck_name=deck['name'],face_name=face['name'])
@@ -227,7 +228,7 @@ class Backups:
                     quantity(c.get('quantity'))
                     if not isinstance(c.get('scryfall'), dict) or not isinstance(c.get('faces'), list):
                         raise ValidationError('Backup contains an invalid card.')
-                    for f in c['faces']:
+                    for f in stored_faces(c):
                         if f.get('compiled'): validate_template(f['compiled']['data'])
             staged = []
             for i, a in enumerate(m.get('assets', [])):
@@ -262,7 +263,7 @@ class Backups:
                             for group, value in rules.items(): rules[group] = template_map.get(value, value)
                             for c in d['cards']:
                                 c['id'] = uid()
-                                for f in c['faces']:
+                                for f in stored_faces(c):
                                     f['id'] = uid()
                                     f['templateOverride'] = template_map.get(f.get('templateOverride'), f.get('templateOverride'))
                             imported.append(ident)

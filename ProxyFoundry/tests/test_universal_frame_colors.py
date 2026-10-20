@@ -127,6 +127,23 @@ def test_colorless_land_uses_neutral_effects_without_recoloring_structure():
     )
 
 
+@pytest.mark.parametrize('colors,expected',[
+    (['U','R'],'L'),(['W','B'],'L'),(['U'],'U'),(['W','U','R'],'M'),
+])
+def test_classic_land_bars_use_neutral_material_for_exactly_two_colors(colors,expected):
+    data={'frames':[{
+        'name':'Land Frame','src':'/img/frames/m15/regular/m15FrameL.png',
+        'masks':[mask(name) for name in ('Frame','Title','Type','Rules','Pinline')],
+    }]}
+    apply_universal_frame_color_treatment(data,{'types':['Land'],'land_colors':colors,'colors':[]})
+    for effect in ('Title','Type'):
+        assert layers(data,effect)[0]['src'].endswith('m15Frame'+expected+'.png')
+    assert layers(data,'Frame')[0]['src'].endswith('m15FrameL.png')
+    if len(colors)==2:
+        assert layers(data,'Rules')[0]['src'].endswith('m15FrameM.png')
+        assert layers(data,'Pinline')[0]['src'].startswith('data:image/svg+xml;utf8,')
+
+
 def test_single_regular_crown_fallback_restores_old_two_native_png_blend():
     crown_masks=[
         {'src':'/img/frames/m15/crowns/m15MaskLegendCrown.png','name':'Crown Without Pinlines'},

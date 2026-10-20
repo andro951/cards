@@ -22,6 +22,7 @@ from .network import Network
 from .github_setup import import_github_setup_steps,import_symbol_folder_steps
 from .storage import Store
 from . import server
+from . import substitutes
 
 
 def browser_error(exc):
@@ -160,7 +161,7 @@ class BrowserStore(Store):
         self.generation={'id':uid(),'deckIds':list(deck_ids),'started':time.perf_counter(),
                          'snapshot':snapshot,'digest':self._checkpoint_digest,'timings':{},
                          'targets':{},'readyFaces':{},'preparedDeckIds':set(),'errors':[],
-                         'faceCounts':{deck['id']:sum(len(card.get('faces',[])) for card in deck.get('cards',[])) for deck in decks}}
+                         'faceCounts':{deck['id']:sum(substitutes.face_count(card,deck.get('settings',{})) for card in deck.get('cards',[])) for deck in decks}}
         self._defer_checkpoint+=1
         return {'id':self.generation['id']}
 
@@ -411,10 +412,12 @@ class BrowserHandler(server.Handler):
                 raise ValidationError('The generated cards do not belong to this session.')
             generated={row.get('key') for row in rows if isinstance(row,dict)}
             decks=[self.app.store.get('decks',deck_id) for deck_id in generation['deckIds']]
-            cached=self.app.store.render_many((face.get('compiled') or {}).get('renderKey') for deck in decks for card in (deck or {}).get('cards',[]) for face in card.get('faces',[]) if (face.get('compiled') or {}).get('renderKey') not in generated)
+            cached=self.app.store.render_many((face.get('compiled') or {}).get('renderKey') for deck in decks for card in (deck or {}).get('cards',[]) for face in substitutes.render_faces(card,(deck or {}).get('settings',{})) if (face.get('compiled') or {}).get('renderKey') not in generated)
             for deck in decks:
                 for card in (deck or {}).get('cards',[]):
-                    for face in card.get('faces',[]):
+                    if substitutes.required(card,deck.get('settings',{})) and not substitutes.current(card):
+                        raise ValidationError('Generation is incomplete. A double-sided card substitute is missing or out of date.')
+                    for face in substitutes.render_faces(card,deck.get('settings',{})):
                         key=(face.get('compiled') or {}).get('renderKey')
                         if face.get('error') or not key or (key not in generated and not cached.get(key)):
                             raise ValidationError('Generation is incomplete. No card images were updated.')

@@ -105,7 +105,9 @@ def test_bruce_banner_incredible_hulk_modal_pair_uses_its_own_semantics(tmp_path
     assert layer(back_data,'Pinline')['src'].startswith('data:image/svg+xml;utf8,')
 
 
-def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
+@pytest.mark.parametrize('choice',['auto','normal'])
+@pytest.mark.parametrize('keywords',[['Devoid','Kicker'],['Kicker']])
+def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path,choice,keywords):
     w,a,settings=setup(tmp_path)
     card={
         'name':'Sowing Mycospawn',
@@ -114,7 +116,7 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
         'type_line':'Creature — Eldrazi Fungus',
         'mana_cost':'{3}{G}',
         'colors':[],
-        'keywords':['Devoid','Kicker'],
+        'keywords':keywords,
         'oracle_text':'Devoid (This card has no color.)\nKicker {1}{C}\nWhen you cast this spell, search your library for a land card, put it onto the battlefield, then shuffle.',
         'power':'3','toughness':'3',
         'artist':'Slawomir Maniak',
@@ -122,10 +124,10 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
     plain={**card,'keywords':['Kicker'],'oracle_text':card['oracle_text'].split('\n',1)[1]}
     comp=Compiler(w.store)
     normal=comp.compile_face(
-        plain,plain,0,{},settings,a['id'],art_origin='Scryfall selected printing'
+        plain,plain,0,{'templateOverride':choice},settings,a['id'],art_origin='Scryfall selected printing'
     )
     result=comp.compile_face(
-        card,card,0,{},settings,a['id'],art_origin='Scryfall selected printing'
+        card,card,0,{'templateOverride':choice},settings,a['id'],art_origin='Scryfall selected printing'
     )
     data=result['data']
     assert result['group']=='standard'
@@ -142,13 +144,14 @@ def test_sowing_mycospawn_uses_green_devoid_frame(tmp_path):
            & {'Pinline','Title','Type','Rules','Frame','Border'}
     ]
     assert structural
-    assert all(frame.get('src')=='/img/frames/m15/devoid/m15DevoidFrameG.png' for frame in structural)
+    assert all(frame.get('src')=='/img/frames/proxy-foundry/devoid/m15DevoidFrameG.png' for frame in structural)
 
     pt=[frame for frame in data['frames'] if 'Power/Toughness' in str(frame.get('name') or '')]
     assert len(pt)==1
     assert pt[0]['src']=='/img/frames/m15/devoid/m15DevoidPT.png'
-    assert result['crop']['warning'] is False
-    assert result['crop']['intentionalArtWindow'] is True
+    if choice=='auto':
+        assert result['crop']['warning'] is False
+        assert result['crop']['intentionalArtWindow'] is True
     assert data['bottomInfo']['bottomLeft']['text']=='BulkProxyForge • Unofficial Proxy'
 
 
@@ -181,3 +184,37 @@ def test_colorless_eldrazi_without_devoid_keeps_normal_frame_family(tmp_path):
     data=Compiler(w.store).compile_face(card,card,0,{},settings,a['id'])['data']
     assert data.get('version')!='m15Devoid'
     assert not any('/m15/devoid/' in str(frame.get('src') or '') for frame in data['frames'])
+
+
+@pytest.mark.parametrize('choice',['auto','normal'])
+def test_devoid_update_recompiles_only_devoid_and_then_reuses_cache(tmp_path,monkeypatch,choice):
+    w,a,settings=setup(tmp_path)
+    settings['templateRules']={'standard':choice}
+    cards={
+        'devoid':{'id':'devoid','name':'Sowing Mycospawn','layout':'normal','rarity':'rare',
+            'type_line':'Creature — Eldrazi Fungus','mana_cost':'{3}{G}','colors':[],
+            'keywords':['Devoid'],'oracle_text':'Devoid (This card has no color.)','power':'3','toughness':'3'},
+        'plain':{'id':'plain','name':'Plain Eldrazi','layout':'normal','rarity':'rare',
+            'type_line':'Creature — Eldrazi','mana_cost':'{4}','colors':[],
+            'keywords':[],'oracle_text':'Trample','power':'3','toughness':'3'},
+    }
+    entries=[w.sources.entry(card) for card in cards.values()]
+    for entry in entries:entry['faces'][0]['artOverride']=a['id']
+    monkeypatch.setattr(w.sources,'resolve_card',lambda source,refresh=False:cards[source])
+    deck=w.new_deck('Devoid cache scope')
+    w.store.put('decks',{**deck,'cards':entries,'settings':settings},deck['revision'])
+    current=w.compiler.template_identity
+    monkeypatch.setattr(w.compiler,'template_identity',lambda group,style,face=None:current(group,style))
+    w.prepare(deck['id'])
+    monkeypatch.setattr(w.compiler,'template_identity',current)
+    assert w.deck(deck['id'])['status']=='draft'
+    compile_face=w.compiler.compile_face;calls=[]
+    def tracked(sf,*args,**kwargs):
+        calls.append(sf['name']);return compile_face(sf,*args,**kwargs)
+    monkeypatch.setattr(w.compiler,'compile_face',tracked)
+    w.prepare(deck['id'])
+    assert calls==['Sowing Mycospawn']
+    calls.clear()
+    assert w.deck(deck['id'])['status']!='draft'
+    w.prepare(deck['id'])
+    assert not calls

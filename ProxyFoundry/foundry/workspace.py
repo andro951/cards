@@ -22,9 +22,11 @@ from . import github_data
 from .compiler import center_short_token_rules
 from . import token_assignments
 from . import art_variants
+from . import substitutes
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
+DEFAULT_SETTINGS['createDfcSubstitutes']=True
 FRONT_SETTINGS={'artDefaults','source','symbols','artist','templateRules','disableAutofit','flavorPolicy','showFlavorText','allCardsTokens','tokenOptions'}
 class Workspace:
     def __init__(self,store=None,network=None):
@@ -144,6 +146,7 @@ class Workspace:
         names=s['source'].get('localNames',{})
         if not isinstance(names,dict) or any(not isinstance(k,str) or not isinstance(v,str) or len(v)>1000 for k,v in names.items()):raise ValidationError('Invalid artwork filenames.')
         s['allCardsTokens']=bool(s.get('allCardsTokens',False))
+        s['createDfcSubstitutes']=bool(s.get('createDfcSubstitutes',True))
         s['tokenAssignments']=token_assignments.validate_assignments(s.get('tokenAssignments',[]))
         s['tokenTreatments']=token_assignments.validate_treatments(s.get('tokenTreatments',[]))
         s['artVariants']=art_variants.validate(s.get('artVariants',[]))
@@ -275,7 +278,7 @@ class Workspace:
         d['settings']=self._with_default_symbols(d.get('settings',{}))
         token_assignments.apply_treatments(d)
         if renders is None:
-            renders=self.store.render_many(key for c in d['cards'] for f in c['faces'] for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
+            renders=self.store.render_many(key for c in d['cards'] for f in substitutes.render_faces(c,d['settings']) for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             nickname_rules=any(rules_nicknames.face_nicknames(c.get('scryfall',{}),c['faces']).values())
@@ -313,7 +316,7 @@ class Workspace:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
-                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice)
+                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice,sf_face)
                         except ValidationError:
                             d['status']='draft'
                         else:
@@ -326,15 +329,24 @@ class Workspace:
                             elif old_key!=template_key or old_version!=template_version:d['status']='draft'
                 if r:ready+=1
                 if ((comp.get('crop') or {}).get('warning') or comp.get('flags')) and f.get('acceptedWarningKey')!=comp.get('renderKey'):warns+=1
-        d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns}
+        substitute_count=0
+        for card in d['cards']:
+            if not substitutes.required(card,d['settings']):continue
+            substitute_count+=quantity(card['quantity']);total+=1
+            face=card.get('substitute') or {};comp=face.get('compiled') or {}
+            comp['render']=renders.get(comp.get('renderKey',''))
+            if not substitutes.current(card):d['status']='draft'
+            elif face.get('error'):errors+=1
+            elif comp.get('render'):ready+=1
+        d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns,'substitutes':substitute_count}
         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
         d['tokens']=token_assignments.overview(d)
         d['printStatus']='tokens-not-ready' if not d['tokens']['ready'] else d['status']
-        d['summary']['physicalCards']=sum(quantity(c['quantity']) for c in d['cards'] if c['id'] not in set(d['tokens']['cardIds']))+d['tokens']['physicalCount']
+        d['summary']['physicalCards']=sum(quantity(c['quantity']) for c in d['cards'] if c['id'] not in set(d['tokens']['cardIds']))+d['tokens']['physicalCount']+substitute_count
         return d
     def list_decks(self):
         out=[];documents=self.store.list('decks')
-        renders=self.store.render_many(key for old in documents for c in old['cards'] for f in c['faces'] for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
+        renders=self.store.render_many(key for old in documents for c in old['cards'] for f in substitutes.render_faces(c,old.get('settings',{})) for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
         for old in documents:
             d=self.deck(old['id'],document=old,renders=renders);cover=''
             if d['cards']:
@@ -573,6 +585,7 @@ class Workspace:
         d=self.deck(ident);d['name']=d['name']+' · copy';d.pop('id');d.pop('summary',None)
         for c in d['cards']:
             c['id']=uid()
+            c.pop('substitute',None)
             for f in c['faces']:f['id']=uid()
         return self.store.put('decks',d)
     def replace_printing(self,deck_id,card_id,source,revision):
@@ -767,7 +780,7 @@ class Workspace:
             selected.append(local.get(key) if source['mode']=='local' else index.get(key))
             group=type_group(face,sf,f.get('index',0))
             choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
-            templates.append(self.compiler.template_identity(group,choice))
+            templates.append(self.compiler.template_identity(group,choice,face))
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
@@ -814,7 +827,8 @@ class Workspace:
             for f in c['faces']:
                 f['compiled']['render']=self.store.render_get(f['compiled']['renderKey'])
                 done+=1;progress(done,total,'Reused prepared '+f['name'])
-            return done
+            substitutes.build(self,d,c,s)
+            return done+int(substitutes.required(c,s))
         if sf.get('id'):
             progress(done,total,'Checking cached metadata for '+c['name'])
             sf=self.sources.resolve_card(sf['id'],refresh);c['scryfall']=sf
@@ -863,6 +877,8 @@ class Workspace:
             except (ValidationError,native.BuildError,ValueError,OSError) as e:
                 self.invalidate_face(f);f['error']=str(e)
             done+=1;progress(done,total,'Prepared '+f['name'])
+        substitutes.build(self,d,c,s)
+        done+=int(substitutes.required(c,s))
         if all(f.get('compiled') and not f.get('error') for f in c['faces']):
             try:key=self._preparation_key(c,s,index)
             except ValidationError:return done
@@ -936,10 +952,10 @@ class Workspace:
                 self._apply_card_data(d,d.get('cardData',[]),preparing=True)
         index=self._prepare_sources(s,progress)
         yield
-        total=sum(len(c['faces']) for c in d['cards']);done=0
+        total=sum(substitutes.face_count(c,s) for c in d['cards']);done=0
         # Decide which cards need work before processing any of them. Shared
         # symbols are checked once; this scan never reads or hashes image bytes.
-        changed=[];refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
+        changed=[];source_reused=set();refresh=bool(s.get('refreshData') or self.global_settings().get('refreshData'))
         with timing(self.store,'prepare.plan'):
             asset_ids=set();urls=[]
             for c in d['cards']:
@@ -953,13 +969,15 @@ class Workspace:
                 try:key=self._preparation_key(c,s,index)
                 except ValidationError:key=None
                 if key is None or not self._can_reuse_preparation(c,key,refresh,assets,caches):changed.append(c)
-                else:done+=len(c['faces'])
+                elif substitutes.required(c,s) and not substitutes.current(c):
+                    changed.append(c);source_reused.add(c['id'])
+                else:done+=substitutes.face_count(c,s)
         progress(done,total,'Preparation checked: '+str(done)+' faces unchanged; '+str(total-done)+' need preparation')
         generation=getattr(self.store,'generation',None)
         if generation:generation.setdefault('faceCounts',{})[ident]=total
         def publish(card):
             if not generation:return
-            for face in card['faces']:
+            for face in substitutes.render_faces(card,s):
                 comp=face.get('compiled')
                 if face.get('error') or not comp:
                     generation['errors'].append(d['name']+' / '+face['name']+': '+str(face.get('error') or 'not prepared'))
@@ -1025,7 +1043,7 @@ class Workspace:
                     for face in c['faces']:
                         self.invalidate_face(face);face['error']='Artwork download failed: '+failure;done+=1
                     progress(done,total,'Artwork unavailable for '+c['name'])
-                else:done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=True)
+                else:done=self._prepare_card_faces(d,c,s,index,progress,cancel,done,total,checked=c['id'] not in source_reused)
                 publish(c)
                 if not getattr(self.store,'generation',None) and (pending>=10 or time.monotonic()-checkpoint_at>=2):checkpoint()
                 yield
@@ -1052,7 +1070,7 @@ class Workspace:
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
         index=self._prepare_sources(s,progress)
-        self._prepare_card_faces(d,c,s,index,progress,cancel,0,len(c.get('faces',[])))
+        self._prepare_card_faces(d,c,s,index,progress,cancel,0,substitutes.face_count(c,s))
         # Recompute draft state from actual face data after this card is prepared.
         # Front-affecting edits clear their face's compiled data, so unrelated
         # pending cards remain draft while a fully prepared deck can leave draft.
@@ -1293,7 +1311,7 @@ class Workspace:
             d=self.deck(ident)
             if d['status']=='draft':raise ValidationError(d['name']+': prepare changes before rendering.')
             for c in d['cards']:
-                for f in c['faces']:
+                for f in substitutes.render_faces(c,d['settings']):
                     comp=f.get('compiled')
                     if f.get('error') or not comp:
                         errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
@@ -1305,7 +1323,7 @@ class Workspace:
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
         targets={};cached=0;errors=[]
-        for f in c.get('faces',[]):
+        for f in substitutes.render_faces(c,d['settings']):
             comp=f.get('compiled')
             if f.get('error') or not comp:
                 errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
@@ -1315,7 +1333,7 @@ class Workspace:
     def _render_target_from_key(self,key):
         for d in self.store.list('decks'):
             for c in d.get('cards',[]):
-                for f in c.get('faces',[]):
+                for f in substitutes.render_faces(c,d.get('settings',{})):
                     comp=f.get('compiled') or {}
                     if comp.get('renderKey')==key:
                         return {'key':key,'name':f.get('name') or c.get('name') or 'Card','deckName':d.get('name') or 'Deck','deckId':d.get('id'),'cardName':c.get('name') or 'Card','cardId':c.get('id'),'faceId':f.get('id'),'data':comp.get('data') or {}}
@@ -1336,11 +1354,14 @@ class Workspace:
             d=self.deck(ident)
             if d['status']=='draft':raise ValidationError('Prepare '+d['name']+' before exporting CardConjurer data.')
             for c in d['cards']:
-                for f in c['faces']:
+                for f in substitutes.render_faces(c,d['settings']):
                     comp=f.get('compiled')
                     if not comp or f.get('error'):raise ValidationError(f['name']+': fix preparation errors before exporting.')
                     data=copy.deepcopy(comp['data'])
                     data['artSource']=comp.get('exportArtUrl') or data_uri(self.store,comp['artId']);data['setSymbolSource']=data_uri(self.store,comp['symbolId'])
+                    if f is c.get('substitute'):
+                        for frame in data.get('frames',[]):
+                            if frame.get('src','').startswith('/api/assets/'):frame['src']=data_uri(self.store,frame['src'].rsplit('/',1)[-1])
                     key=f['name']
                     if key in used_keys:key=key+' ['+d['name']+' / '+str(len(entries)+1)+']'
                     used_keys.add(key);entries.append({'key':key,'data':data})
@@ -1565,6 +1586,9 @@ class Workspace:
             if not front_url:raise ValidationError(c['name']+': selected printing has no full-card PNG for the front.')
             front=faces[0]
             items.append((unique_name(front.get('name',c['name']),sf,c['id']),front.get('name',c['name']),front_url,self._review_render(front,d['name'])))
+            if substitutes.required(c,d['settings']):
+                substitute=c['substitute']
+                items.append((unique_name(substitute['name'],sf,c['id']),substitute['name'],front_url,self._review_render(substitute,d['name'])))
             if sf.get('layout') in dfc_layouts and len(faces)>=2:
                 if len(sf_faces)<2:raise ValidationError(c['name']+': selected printing is missing its reverse face.')
                 back_url=(sf_faces[1].get('image_uris') or {}).get('png')

@@ -11,6 +11,7 @@ from .transform_crown import restore_crown_bevel,BEVEL_VERSION,mirror_header_png
 from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
 from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
 from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,CLASSIC_PINLINE_VERSION,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
+from .devoid_frame import PREFIX as DEVOID_PREFIX,VERSION as DEVOID_VERSION,transparent_header_png
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -163,6 +164,21 @@ function proxyFoundryInlineSymbols(text) {
 
     def fetch(self,path):
         path=self.path(path)
+        if re.fullmatch(re.escape(DEVOID_PREFIX)+r'm15DevoidFrame[WUBRGMAL]\.png',path):
+            source='/img/frames/m15/devoid/'+path.rsplit('/',1)[-1]
+            key=f'derived:{CC_COMMIT}:devoid-header-v{DEVOID_VERSION}:{source}'
+            with self.lock:asset_lock=self.derived_locks.setdefault(key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    original,_=self.fetch(source)
+                    white=original if source.endswith('FrameW.png') else self.fetch('/img/frames/m15/devoid/m15DevoidFrameW.png')[0]
+                    mask,_=self.fetch('/img/frames/m15/regular/m15MaskFrame.png')
+                    raw=transparent_header_png(original,white,mask)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Transparent Devoid header gaps'}
+            return raw,'image/png'
         if path=='/img/manaSymbols/infinity.svg':
             source='/img/manaSymbols/inf.svg';original,_=self.fetch(source)
             root=ElementTree.fromstring(original)

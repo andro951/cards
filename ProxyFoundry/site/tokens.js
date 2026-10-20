@@ -327,6 +327,28 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
 
             if(!cards.items.children.length)
                 cards.node.append(element(`p`,`No non-token cards match.`));
+
+            const substitutes=deck.settings.createDfcSubstitutes!==false?deck.cards.filter(card=>card.substitute&&!tokenIds.has(card.id)):[];
+            if(substitutes.length) {
+                const sectionView=section(`Double-sided card substitutes`,`One substitute per card copy, with the front's name and rules and a normal card back. Keep the matching double-sided cards beside the game.`,`substitutes`);
+                for(const card of substitutes) {
+                    const substitute={...card,name:card.substitute.name,faces:[card.substitute]};
+                    if(!matches(substitute))
+                        continue;
+
+                    const source=preview(substitute,card.substitute);
+                    const open=()=>{
+                        const host=modal(card.substitute.name,``),body=$(`.modal-body`,host);
+                        const image=element(`img`);image.src=source;image.alt=card.substitute.name;
+                        Object.assign(image.style,{display:`block`,width:`100%`,maxHeight:`75vh`,objectFit:`contain`});
+                        body.append(image,element(`p`,`Generated from this card's front. Change the original card to update its substitute.`),button(`Close`,()=>closeModal()));
+                    };
+                    sectionView.items.append(imageTile(substitute,source,open,{back:asset(deck.settings.backAsset||state.bootstrap.backs?.default?.id),quantity:`${card.quantity}×`,title:`${displayName(card)} · substitute`,dataKey:`substitute`,dataValue:card.id}));count++;
+                }
+
+                if(!sectionView.items.children.length)
+                    sectionView.node.append(element(`p`,`No substitutes match.`));
+            }
         }
 
         if(tokens.cardIds.length||view.filter===`tokens`) {

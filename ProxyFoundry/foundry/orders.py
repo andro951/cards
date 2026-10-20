@@ -3,6 +3,7 @@ from __future__ import annotations
 import json,os,tempfile,time,zipfile
 from .domain import ConflictError,ValidationError,uid,stable_hash
 from .token_assignments import overview
+from . import substitutes
 class Orders:
     def __init__(self,workspace):self.ws=workspace;self.store=workspace.store
     def plan(self,deck_ids,acknowledge=False):
@@ -20,6 +21,11 @@ class Orders:
             token_ids=set(tokens['cardIds']);by_id={c['id']:c for c in d['cards']}
             face_owners={f['id']:c for c in d['cards'] for f in c['faces']}
             printable=[c for c in d['cards'] if c['id'] not in token_ids]
+            for card in list(printable):
+                if not substitutes.required(card,d['settings']):continue
+                back=d['settings'].get('backAsset') or self.ws.backs.builtin('default')['id']
+                printable.append({**card,'name':card['faces'][0]['name']+' — substitute','faces':[card['substitute']],
+                    'backOverride':back,'meldBackAsset':None,'isSubstitute':True})
             for pair in tokens['assigned']:
                 source=by_id[pair['frontCardId']]
                 card={**source,'quantity':pair['quantity'],'faces':list(source['faces'])}
@@ -54,7 +60,8 @@ class Orders:
                                                'frontAsset':self._render(f,d['name']),'warning':warning})
                 for copy in range(c['quantity']):
                     physical.append({'deckId':d['id'],'deckName':d['name'],'cardId':c['id'],'name':c['name'],
-                        'printingId':(c.get('scryfall') or {}).get('id'),'copy':copy+1,'frontAsset':front,'backAsset':back})
+                        'printingId':(c.get('scryfall') or {}).get('id'),'copy':copy+1,'frontAsset':front,'backAsset':back,
+                        **({'isSubstitute':True} if c.get('isSubstitute') else {})})
         if not physical:raise ValidationError('Selected decks contain no cards.')
         if len(physical)>10000:raise ValidationError('Split orders larger than 10,000 physical cards.')
         return {'cards':physical,'decks':decks,'warnings':list(dict.fromkeys(warnings)),'issues':issues,
