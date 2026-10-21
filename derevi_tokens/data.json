@@ -499,6 +499,19 @@
         "scryfall_id": "6e80198c-cfae-46f9-84cb-584d091014c5"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Prime Speaker Vannifar",
+        "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
+        "scryfall_id": "84abfc59-10a7-4cb5-9cdd-81797116c810"
+      },
+      "back": {
+        "name": "Venser, Shaper Savant",
+        "oracle_id": "0f41cefc-d6ff-4db7-ba35-502b7e081de1",
+        "scryfall_id": "77e19416-aa6c-46f1-b247-a94da5d1a13a"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
