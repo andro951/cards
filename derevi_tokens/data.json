@@ -473,6 +473,19 @@
         "scryfall_id": "8616629e-08f9-41ad-bfec-f86c8096f1cb"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Foundation Breaker",
+        "oracle_id": "8b7a3613-f1bd-4262-9b11-b631167c2c2d",
+        "scryfall_id": "d990b59f-2ad1-4224-9f1e-2574eadce1a3"
+      },
+      "back": {
+        "name": "Hylda of the Icy Crown",
+        "oracle_id": "1733c71b-fd28-48dd-8a3d-41afd4b22f0e",
+        "scryfall_id": "ae9231fd-053d-4b84-a7a8-86063465bc49"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
