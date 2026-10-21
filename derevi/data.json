@@ -590,6 +590,19 @@
         "scryfall_id": "4d3473d0-b46f-41f5-ac1e-ba217f7747d4"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Y'shtola Rhul",
+        "oracle_id": "a6a7bf77-0560-4572-a826-3bc9df1f78d1",
+        "scryfall_id": "aef218fa-13a4-4653-95d6-6b3ef1b33a92"
+      },
+      "back": {
+        "name": "Deadeye Navigator",
+        "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
+        "scryfall_id": "4f0791b5-fdb4-4378-8fd3-7e7367ffc05c"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
