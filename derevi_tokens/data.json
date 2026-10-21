@@ -525,6 +525,19 @@
         "scryfall_id": "8b63ec86-670b-4acd-b14c-3d90acbde087"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Urza, Lord High Artificer",
+        "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
+        "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
+      },
+      "back": {
+        "name": "Ant Queen",
+        "oracle_id": "50de88d4-0beb-45e5-9664-d4f0e280e652",
+        "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
