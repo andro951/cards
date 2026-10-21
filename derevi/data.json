@@ -681,6 +681,19 @@
         "scryfall_id": "ba86688d-18f0-4b5c-a797-42bf125a6c9f"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Yorion, Sky Nomad",
+        "oracle_id": "e15504a7-2b67-4185-b916-172145f10b19",
+        "scryfall_id": "275426c4-c14e-47d0-a9d4-24da7f6f6911"
+      },
+      "back": {
+        "name": "Ant Queen",
+        "oracle_id": "50de88d4-0beb-45e5-9664-d4f0e280e652",
+        "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
