@@ -460,6 +460,19 @@
         "scryfall_id": "c7a401b8-29fb-46ef-a663-427f66724d5c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Emiel the Blessed",
+        "oracle_id": "b11c250c-f191-4c52-ba02-a9176f163447",
+        "scryfall_id": "0f594562-7e9f-47e6-a033-fb70e3cf1e10"
+      },
+      "back": {
+        "name": "Enduring Curiosity",
+        "oracle_id": "9d2460c3-8eeb-4f35-b6f6-748c478664c7",
+        "scryfall_id": "8616629e-08f9-41ad-bfec-f86c8096f1cb"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
