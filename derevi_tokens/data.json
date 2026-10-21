@@ -395,6 +395,19 @@
         "scryfall_id": "f0bb1a5c-0f59-4951-827f-fe9df968232d"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Faeburrow Elder",
+        "oracle_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
+        "scryfall_id": "145dcac4-2c53-4ae9-9ede-24dc07474b01"
+      },
+      "back": {
+        "name": "Recruiter of the Guard",
+        "oracle_id": "d521a329-a53a-4962-810a-2abed80df260",
+        "scryfall_id": "8e4c6ba1-1abc-478f-9b7c-97e9e3c92fb0"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
