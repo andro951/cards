@@ -577,6 +577,19 @@
         "scryfall_id": "77ceba8b-de19-4db8-b5a7-f5df49bf241f"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Badgermole Cub",
+        "oracle_id": "2b0afb89-0944-4861-b9c3-e909e2ac215e",
+        "scryfall_id": "340c5799-4964-44dd-8c48-8f3f3aba5211"
+      },
+      "back": {
+        "name": "Stoneforge Mystic",
+        "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
+        "scryfall_id": "4d3473d0-b46f-41f5-ac1e-ba217f7747d4"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
