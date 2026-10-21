@@ -603,6 +603,19 @@
         "scryfall_id": "4f0791b5-fdb4-4378-8fd3-7e7367ffc05c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Frost Titan",
+        "oracle_id": "4c5a2443-a038-44d3-83a4-5e9a6db7b1a7",
+        "scryfall_id": "bb9eec79-1926-46eb-b9e0-6ba12a441495"
+      },
+      "back": {
+        "name": "Sun Titan",
+        "oracle_id": "b2e950fb-cb7e-40a0-a311-5bbdd0477b29",
+        "scryfall_id": "3d6eacf2-f6c7-4ede-b5a5-7463602699ae"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
