@@ -538,6 +538,19 @@
         "scryfall_id": "0efda05d-01ea-4478-b075-00a31d7037f8"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Thalia's Lancers",
+        "oracle_id": "58b349ec-9987-4832-a8f3-8e92027ea75b",
+        "scryfall_id": "9930d08d-5965-4c16-a84d-43c8ccf2ad0b"
+      },
+      "back": {
+        "name": "Willbreaker",
+        "oracle_id": "7c365041-806f-42d6-a2ff-40e20dd8e9f0",
+        "scryfall_id": "2465eafc-453c-4e4f-b369-0951b8a4b7bf"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
