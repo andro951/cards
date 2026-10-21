@@ -421,6 +421,19 @@
         "scryfall_id": "94e3a130-deeb-4bf4-a1f6-9219c3d8c373"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Academy Rector",
+        "oracle_id": "e3c85068-b4b6-40b9-a16c-5c3b2d059ec4",
+        "scryfall_id": "4367bc78-0912-4abd-8edd-bc792558d01a"
+      },
+      "back": {
+        "name": "Brago, King Eternal",
+        "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
+        "scryfall_id": "0ac3fb08-741a-49e5-9fae-b26819677d24"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
