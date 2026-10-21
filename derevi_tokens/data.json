@@ -382,6 +382,19 @@
         "scryfall_id": "121af600-6143-450a-9f87-12ce4833f1ec"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Delney, Streetwise Lookout",
+        "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
+        "scryfall_id": "be219928-3d0e-4d00-b124-152ce8a8c13b"
+      },
+      "back": {
+        "name": "Eldrazi Displacer",
+        "oracle_id": "9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba",
+        "scryfall_id": "f0bb1a5c-0f59-4951-827f-fe9df968232d"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
