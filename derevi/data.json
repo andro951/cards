@@ -434,6 +434,19 @@
         "scryfall_id": "0ac3fb08-741a-49e5-9fae-b26819677d24"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Captain Sisay",
+        "oracle_id": "2e7a9ea9-f76c-4c12-950f-c613fa16cfa8",
+        "scryfall_id": "d24d441c-f37f-44fe-8a93-f5c89df807e4"
+      },
+      "back": {
+        "name": "Displacer Kitten",
+        "oracle_id": "09ef446c-a13d-49d9-a94c-cd5f5a2d440b",
+        "scryfall_id": "c7a401b8-29fb-46ef-a663-427f66724d5c"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
