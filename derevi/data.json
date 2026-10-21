@@ -629,6 +629,19 @@
         "scryfall_id": "617208ff-dd9b-44fd-a740-d3188081e5cc"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Derevi, Empyrial Tactician",
+        "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
+        "scryfall_id": "3a1d0dad-18a8-489e-ac11-08f64b72fda4"
+      },
+      "back": {
+        "name": "Eternal Witness",
+        "oracle_id": "30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c",
+        "scryfall_id": "39704000-65d3-4d39-849e-a3b617376bbc"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
