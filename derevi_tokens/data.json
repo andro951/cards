@@ -408,6 +408,19 @@
         "scryfall_id": "8e4c6ba1-1abc-478f-9b7c-97e9e3c92fb0"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Spellseeker",
+        "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
+        "scryfall_id": "a749c591-2fbe-41d8-ac5b-56ebce82d33e"
+      },
+      "back": {
+        "name": "Transit Mage",
+        "oracle_id": "991efbf1-299d-4892-aeab-8ff9827f7168",
+        "scryfall_id": "6727169f-c33a-4ca5-889d-a63bcfc5a3f0"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
