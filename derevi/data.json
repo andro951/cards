@@ -694,6 +694,19 @@
         "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Enduring Vitality",
+        "oracle_id": "3577c47e-76d3-4659-b922-31c4b74be3a0",
+        "scryfall_id": "9d76a30c-0431-4334-892a-9822dda9671a"
+      },
+      "back": {
+        "name": "Jackdaw Savior",
+        "oracle_id": "9e31ef54-b2f2-4f3f-9779-151b74470ce4",
+        "scryfall_id": "121af600-6143-450a-9f87-12ce4833f1ec"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
