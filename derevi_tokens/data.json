@@ -554,19 +554,6 @@
     },
     {
       "front": {
-        "name": "Yorion, Sky Nomad",
-        "oracle_id": "e15504a7-2b67-4185-b916-172145f10b19",
-        "scryfall_id": "275426c4-c14e-47d0-a9d4-24da7f6f6911"
-      },
-      "back": {
-        "name": "Duplicant",
-        "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
-        "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
-      },
-      "quantity": 2
-    },
-    {
-      "front": {
         "name": "Silver Surfer, Cosmic Voyager",
         "oracle_id": "3ce1f550-d044-4cb1-991b-e98449f74507",
         "scryfall_id": "4f200c66-2356-4aec-978b-6bb509a3d885"
