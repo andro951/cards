@@ -369,6 +369,19 @@
         "scryfall_id": "d8f8a324-006d-4cb8-9816-620a603b4229"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Bloom Tender",
+        "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
+        "scryfall_id": "ba86688d-18f0-4b5c-a797-42bf125a6c9f"
+      },
+      "back": {
+        "name": "Jackdaw Savior",
+        "oracle_id": "9e31ef54-b2f2-4f3f-9779-151b74470ce4",
+        "scryfall_id": "121af600-6143-450a-9f87-12ce4833f1ec"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
