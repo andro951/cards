@@ -694,6 +694,19 @@
         "scryfall_id": "bba1650f-eddf-49a9-820e-489cb8d5b6fa"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Glen Elendra Archmage",
+        "oracle_id": "5f3f68b5-8c6a-4181-bb8a-9c73967d198a",
+        "scryfall_id": "bd9af767-42da-46c7-a2b8-3957b2e3063f"
+      },
+      "back": {
+        "name": "Toski, Bearer of Secrets",
+        "oracle_id": "a8e707ec-ce77-4bc5-8c76-5ea3e81e8c7f",
+        "scryfall_id": "e82e61d1-488d-4627-a54c-d8496a967814"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
