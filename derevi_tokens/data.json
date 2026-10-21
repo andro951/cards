@@ -538,6 +538,19 @@
         "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Gandalf the White",
+        "oracle_id": "5b3b5f6a-375e-4479-9384-a942eda83f9b",
+        "scryfall_id": "e384c20b-d0c1-4781-9d11-e89e5a6bf3fc"
+      },
+      "back": {
+        "name": "Karmic Guide",
+        "oracle_id": "8c31fec9-e4b3-4761-990e-7be38eb05604",
+        "scryfall_id": "b26d50dd-54a1-43ce-9884-3999f698d97b"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
