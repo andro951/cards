@@ -512,6 +512,19 @@
         "scryfall_id": "77e19416-aa6c-46f1-b247-a94da5d1a13a"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Sakashima of a Thousand Faces",
+        "oracle_id": "8ecdaf4b-4442-42da-9714-4257a83faf50",
+        "scryfall_id": "714c3a1f-7b30-4ed8-8f38-6176758741fb"
+      },
+      "back": {
+        "name": "Timeless Witness",
+        "oracle_id": "a52a06aa-56fc-4845-bbcd-a54f16369b34",
+        "scryfall_id": "8b63ec86-670b-4acd-b14c-3d90acbde087"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
