@@ -616,6 +616,19 @@
         "scryfall_id": "3d6eacf2-f6c7-4ede-b5a5-7463602699ae"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Esper Sentinel",
+        "oracle_id": "5def9f38-0a0b-4e8d-9f9d-29dcb46520b4",
+        "scryfall_id": "f3537373-ef54-4578-9d05-6216420ee349"
+      },
+      "back": {
+        "name": "Harmonized Trio",
+        "oracle_id": "f6036065-7196-44d4-8a27-2199f0e1a03c",
+        "scryfall_id": "617208ff-dd9b-44fd-a740-d3188081e5cc"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
