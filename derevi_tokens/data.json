@@ -707,6 +707,19 @@
         "scryfall_id": "121af600-6143-450a-9f87-12ce4833f1ec"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Urza, Lord High Artificer",
+        "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
+        "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
+      },
+      "back": {
+        "name": "Brightglass Gearhulk",
+        "oracle_id": "0c7019a7-3cca-481a-9af0-abedb89c15ad",
+        "scryfall_id": "3dea5b45-925c-4732-8e9d-fa8232792736"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
