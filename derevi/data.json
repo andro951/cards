@@ -720,6 +720,19 @@
         "scryfall_id": "3dea5b45-925c-4732-8e9d-fa8232792736"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Duplicant",
+        "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
+        "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
+      },
+      "back": {
+        "name": "Ulamog, the Infinite Gyre",
+        "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
+        "scryfall_id": "9464a820-65de-44f2-9895-46a35e8621a0"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
