@@ -555,6 +555,19 @@
         "scryfall_id": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Horse",
+        "oracle_id": "e8ca1b87-27c4-41a7-ba45-ee1873712019",
+        "scryfall_id": "f3dd4d92-6471-4f4b-9c70-cbd2196e8c7b"
+      },
+      "back": {
+        "name": "Shapeshifter",
+        "oracle_id": "b9ad70d0-7e71-4ec1-a39e-7d9363501322",
+        "scryfall_id": "1186b536-e6c8-433d-a906-b29f334d619c"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": [
