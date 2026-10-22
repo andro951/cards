@@ -370,7 +370,7 @@ def frame_treatment_code(sem):
 
 def gold_artifact_pt(face):
     """Gold outranks the ordinary artifact PT; keep hybrid/Vehicle treatments."""
-    types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or '')
+    types=face if 'types' in face else ingest.split_type_line(face['type_line']) if face.get('type_line') else {}
     return (set(types.get('types',[])) >= {'Artifact','Creature'}
             and 'Vehicle' not in types.get('subtypes',[])
             and len(set(face.get('colors') or []) & set('WUBRG'))>=2
@@ -962,7 +962,7 @@ def land_frame_colors(types,face,card,oracle_text):
 
 def colorless_land_frame_refresh(face):
     """Refresh only lands the former fallback colored from non-mana effects."""
-    types=face if 'types' in face else ingest.split_type_line(face.get('type_line',''))
+    types=face if 'types' in face else ingest.split_type_line(face['type_line']) if face.get('type_line') else {}
     if 'Land' not in types.get('types',[]):return False
     inferred=face.get('land_colors')
     if inferred is None:
@@ -970,7 +970,7 @@ def colorless_land_frame_refresh(face):
         if not inferred and 'Enchantment' in types.get('types',[]):
             inferred=[color for color in 'WUBRG' if color in (face.get('produced_mana') or [])]
     if inferred:return False
-    legacy_face={**face,'land_colors':None}
+    legacy_face={**face,**types,'subtypes':types.get('subtypes',[]),'land_colors':None}
     return bool(native.infer_land_colors(legacy_face,native.get_type_info(legacy_face)))
 
 

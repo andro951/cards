@@ -77,7 +77,7 @@ def test_both_sides_and_four_headers(setup,legendary,nickname,index):
     assert data['text']['nickname' if nickname else 'title']['outlineColor']=='black'
     if index:
         assert any(any(m['name']=='Type' for m in f.get('masks',[])) and f['src'].endswith('/backR.png') for f in frames)
-    assert result['templateVersion']==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+3
+    assert result['templateVersion']==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+4
 
 def test_dual_front_has_one_black_title_fill_and_preserves_both_pinline_colors(setup):
     compiler,settings,art=setup;sf=card()

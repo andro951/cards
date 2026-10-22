@@ -10,5 +10,5 @@ def test_custom_artist_prompt_and_no_printing_fallback_contract():
     assert 'One artist for all custom artwork' in credits
     assert 'Specify the artist for each card' in credits
     assert "(deckArtist||'')" in credits
-    assert 'await ensureCustomArtCredits(d)' in deck
+    assert 'generationScreen.active.review(()=>ensureCustomArtCredits(d))' in deck
     assert 'Generate images will ask' in setup

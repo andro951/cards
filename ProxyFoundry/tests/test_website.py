@@ -301,8 +301,10 @@ def request(app, method, url, body, headers):
     source=source.replace("const encoded=response.toJs({dict_converter:Object.fromEntries});","if(url==='/api/__test__/large-json')python.runPython('heap_probe=bytearray(128*1024*1024)');const encoded=response.toJs({dict_converter:Object.fromEntries});")
     source=source.replace("if(method==='POST')await mount.syncfs();","metadata.headers['X-Test-Body-Type']=typeof responseBody;if(method==='POST')await mount.syncfs();")
     source=source.replace('if(Uint8Array.fromBase64)return','if(false&&Uint8Array.fromBase64)return')
-    source=source.replace('last_response = request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py()))',
-                          "last_response = TrackedResponse(request(app, str(method), str(url), buffer_bytes(body), dict(headers.to_py())))\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')")
+    response_anchor="    metadata={k:v for k,v in last_response.items() if k != 'body'}"
+    assert source.count(response_anchor)==1
+    response_probe="    last_response = TrackedResponse(last_response)\n    last_response['headers']['X-Test-Live'] = str(live_responses)\n    if str(url) == '/api/__test__/fail':\n        raise ValueError('Injected request failure')\n"
+    source=source.replace(response_anchor,response_probe+response_anchor)
     source=source.replace('self.onmessage=event=>{',"self.onmessage=event=>{\n  if(event.data.url==='/api/__test__/crash')throw new Error('Injected engine crash');")
     source=source.replace('global last_response',"global last_response\n    if str(url) == '/api/__test__/early-fail':\n        raise ValueError('Injected early failure')")
     worker.write_text(source,encoding='utf-8')
@@ -607,7 +609,7 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
             context=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True)
             page=context.new_page();errors=[];generation=[]
             page.on('pageerror',lambda error:errors.append(str(error)))
-            page.on('request',lambda request:generation.append(request.url) if request.method=='POST' and ('/prepare' in request.url or '/render-sessions' in request.url) else None)
+            page.on('request',lambda request:generation.append(request.url) if request.method=='POST' and ('/prepare' in request.url or '/render-sessions' in request.url or '/api/generation/' in request.url) else None)
             try:
                 page.goto(origin,wait_until='domcontentloaded')
                 try:page.locator('#import-deck').wait_for(timeout=90000)
@@ -633,9 +635,10 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                     assert normal['source']['mode']=='scryfall' and normal['artist']==''
                     assert not normal['disableAutofit'] and not normal['allCardsTokens'] and normal['showFlavorText']
                     assert normal['templateRules']['land']=='normal' and not normal['tokenOptions']['power']
-                    page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=180000)
-                    assert any('/prepare' in url for url in generation) and any('/render-sessions' in url for url in generation),generation
-                    page.get_by_role('button',name='View deck').click()
+                    page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+                    page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
+                    assert any('/prepare' in url for url in generation) and any('/api/generation/commit' in url for url in generation),generation
+                    assert page.get_by_role('dialog',name='Your deck is ready').count()==0
                     generation.clear()
                     page.click('[data-tab=setup]');page.locator('#setup-state').wait_for(timeout=90000)
                 data={'version':1,'cards':[{'name':'Syr Gwyn, Hero of Ashvale',
@@ -655,10 +658,12 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 page.wait_for_function("() => document.querySelector('#setup-state')?.textContent==='Changes saved'")
                 assert not generation,'Setup must not generate images: '+repr(generation)
                 page.click('#generate-deck')
-                page.locator('.badge.ready').wait_for(timeout=180000)
-                page.get_by_role('dialog',name='Your deck is ready').wait_for(timeout=30000)
-                page.get_by_role('button',name='View deck').click()
-                page.wait_for_function("() => {const input=document.querySelector('#card-search');return input && parseFloat(getComputedStyle(input).paddingLeft)>=33;}")
+                page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+                page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
+                page.locator('.badge.ready').first.wait_for(timeout=30000)
+                page.locator('#card-search').wait_for(timeout=30000)
+                page.locator('#card-search').fill('Syr Gwyn')
+                page.locator('#card-search').fill('')
                 page.screenshot(path=str(evidence/'ready-deck-search.png'))
                 page.get_by_role('button',name='Review & Print').click()
                 page.click('#order-plan')
@@ -690,7 +695,12 @@ def test_static_website_import_frame_review_and_zip(tmp_path,look,base_path):
                 import io
                 with zipfile.ZipFile(io.BytesIO(bytes(diagnostic_bytes))) as diagnostics:
                     log=diagnostics.read('app.log').decode('utf-8')
-                    assert 'TIMING ' in log and 'render.native' in log and 'network.fetch' in log and 'native.png-export' in log
+                    assert 'TIMING ' in log
+                    summaries=[json.loads(diagnostics.read(name)) for name in diagnostics.namelist()
+                               if Path(name).name.startswith('generation-') and name.endswith('.json')]
+                    assert summaries,'Completed generations must include timing summaries.'
+                    stages={stage for summary in summaries for key in ('preparationTimings','renderTimings') for stage in summary[key]}
+                    assert {'render.native','network.fetch','native.png-export'}<=stages
                 page.reload(wait_until='domcontentloaded')
                 page.get_by_text('New deck',exact=True).first.wait_for(timeout=90000)
                 assert not errors,errors

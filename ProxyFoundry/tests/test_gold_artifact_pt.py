@@ -84,3 +84,10 @@ def test_material_change_preserves_geometry_and_is_idempotent():
     assert data['frames'][0]['masks'] == frame['masks']
     assert data['frames'][1] == vehicle
     assert not apply_gold_artifact_pt(data, semantic(angel(), angel()))
+
+
+@pytest.mark.parametrize('face', [{}, {'name': 'Not hydrated'}, {'type_line': None}, {'types': ['Creature']}])
+def test_partial_metadata_does_not_fail_template_refresh(face):
+    assert not gold_artifact_pt(face)
+    compiler = Compiler(None)
+    assert compiler.template_identity('standard', 'auto', face) == compiler.template_identity('standard', 'auto')

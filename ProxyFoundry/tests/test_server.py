@@ -351,7 +351,7 @@ def test_review_images_export_pairs_scryfall_printing_with_rendered_faces(tmp_pa
     deck=store.put('decks',{'name':'Review Deck','cards':[
         {'id':'normal-card','name':'Review Normal','quantity':1,'scryfall':normal,'faces':[{'id':'normal-face','name':'Review Normal','index':0}]},
         {'id':'dfc-card','name':'Review Transform // Review Back','quantity':1,'scryfall':dfc,'faces':[{'id':'dfc-front','name':'Review Transform','index':0},{'id':'dfc-back','name':'Review Back','index':1}]},
-    ],'settings':{'refreshData':False,'templateRules':{}},'status':'draft','notes':'','importedSource':''})
+    ],'settings':{'refreshData':False,'templateRules':{},'createDfcSubstitutes':False},'status':'draft','notes':'','importedSource':''})
     deck=app.ws.deck(deck['id'])
     colors=[(240,180,20,255),(20,180,240,255),(180,20,240,255)];n=0
     deck_back=ingest_image(store,_review_test_png((101,141),(5,5,5,255)))['id'];deck['settings']['backAsset']=deck_back

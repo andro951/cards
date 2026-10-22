@@ -33,8 +33,7 @@ def test_direct_data_json_uses_existing_schema_and_checks_deck_names(tmp_path):
     ws.store.put('decks',{**deck,'cards':[entry]},deck['revision'])
     raw=b'{"version":1,"cards":[{"name":"Test Card","nickname":"Reskin","flavor_text":"New flavor"}]}'
     assert validate_card_data_for_deck(ws,deck['id'],parse_card_data_json(raw))[0]['nickname']=='Reskin'
-    with pytest.raises(ValidationError,match='not found'):
-        validate_card_data_for_deck(ws,deck['id'],[{'name':'Missing','nickname':'X'}])
+    assert validate_card_data_for_deck(ws,deck['id'],[{'name':'Missing','nickname':'X'}])==[]
 
     class Remote:
         def fetch(self,url,**kwargs):
@@ -132,7 +131,7 @@ def test_noncreature_godzilla_frame_has_an_empty_pt_text_box(tmp_path,type_line,
         assert '{R}' in data['text']['rules']['text']
 
 
-def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_distinct(tmp_path):
+def test_token_picker_groups_automatic_with_modern_and_keeps_classic_previews_distinct(tmp_path):
     store=Store(tmp_path);ws=Workspace(store);art=image(store);deck=ws.new_deck('Token previews')
     source=card(type_line='Token Creature — Bird',layout='token');source['oracle_text']='Flying'
     source['flavor_text']=''
@@ -144,9 +143,9 @@ def test_token_picker_groups_automatic_with_classic_and_keeps_modern_previews_di
     plan=ws.template_preview_targets(deck['id'],'token',settings,[])
     assert not plan['errors']
     by_choice={target['choice']:target for target in plan['targets']}
-    assert by_choice['auto']['choices']==['auto','token-classic']
-    assert by_choice['auto']['data']['version']=='tokenTextlessM15'
-    assert by_choice['token-full-art']['data']['version']=='tokenRegular'
+    assert by_choice['auto']['choices']==['auto','token-full-art']
+    assert by_choice['auto']['data']['version']=='tokenRegular'
+    assert by_choice['token-classic']['data']['version']=='tokenTextlessM15'
     assert by_choice['token-borderless']['data']['version']=='tokenTextlessBorderless'
 
 

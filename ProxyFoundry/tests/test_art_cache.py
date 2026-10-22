@@ -78,6 +78,7 @@ def test_github_folder_index_resolves_current_commit():
     commit='c'*40;blob='d'*40
     class Network:
         def __init__(self):self.calls=[]
+        def fresh_json(self,url):return self.json(url,ttl=0)
         def json(self,url,**kwargs):
             self.calls.append((url,kwargs))
             if url=='https://api.github.com/repos/owner/repo':return {'default_branch':'main'}
@@ -108,6 +109,7 @@ def test_changed_branch_head_cannot_reuse_stale_mutable_raw_bytes(tmp_path):
     state=[0]
     class Network:
         def __init__(self):self.fetch_calls=[]
+        def fresh_json(self,url):return self.json(url,ttl=0)
         def json(self,url,**kwargs):
             if url=='https://api.github.com/repos/owner/repo':return {'default_branch':'main'}
             if url=='https://api.github.com/repos/owner/repo/commits/main':return {'sha':commits[state[0]]}

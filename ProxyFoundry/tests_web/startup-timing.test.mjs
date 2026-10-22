@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {RuntimeDownloads} from '../web/runtime-downloads.js';
 
 const source=fs.readFileSync(new URL('../web/engine-worker.js',import.meta.url),'utf8');
 const start=source.slice(source.indexOf('async function start(folder){'),source.indexOf('//The marker avoids'));
@@ -13,7 +14,7 @@ function fixture(failure='',folder=false){
   const python={FS:{mkdirTree(){},readFile(){return new TextEncoder().encode('{"id":"fixture"}');}},
     async loadPackage(){check('pillow');},unpackArchive(){check('bundle-unpack');},runPython(){check('python-app-init');}};
   const context=vm.createContext({
-    performance:{now:()=>now+=120},TextDecoder,Uint8Array,
+    performance:{now:()=>now+=120},TextDecoder,Uint8Array,RuntimeDownloads,
     navigator:{storage:{getDirectory:async()=>directory}},
     loadPyodide:async()=>{check('pyodide');return python;},
     mountWorkspaceFiles:()=>({}),

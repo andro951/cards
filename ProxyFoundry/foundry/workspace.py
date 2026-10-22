@@ -1348,7 +1348,7 @@ class Workspace:
         c=next((x for x in d['cards'] if x['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
         targets={};cached=0;errors=[]
-        for f in substitutes.render_faces(c,d['settings']):
+        for f in substitutes.render_faces(c,d.get('settings') or {}):
             comp=f.get('compiled')
             if f.get('error') or not comp:
                 errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue

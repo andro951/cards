@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from PIL import Image,ImageChops
 from foundry.compiler import Compiler,BUILTINS
+from foundry.dual_land_rules import PREFIX as DUAL_RULES_PREFIX
 from foundry.land_frame import ASSET_ROOT,GEOMETRY,PREFIX
 from foundry.images import ingest_image
 from foundry.storage import Store
@@ -33,7 +34,7 @@ def test_classic_scalding_tarn_has_neutral_bars_and_dual_pinline(compiler_setup,
     pinlines=[f for f in frames if any(m.get('name')=='Pinline' for m in f.get('masks',[]))]
     assert pinlines and all(f['src'].startswith('data:image/svg+xml;utf8,') for f in pinlines)
     rules=[f for f in frames if any(m.get('name')=='Rules' for m in f.get('masks',[]))]
-    assert [f['src'] for f in rules]==['/img/frames/m15/regular/m15FrameR.png','/img/frames/m15/regular/m15FrameU.png']
+    assert [f['src'] for f in rules]==[DUAL_RULES_PREFIX+'m15FrameR.png',DUAL_RULES_PREFIX+'m15FrameU.png']
     assert [m['name'] for m in rules[0]['masks']]==['Rules','Right Blend']
     assert ('nickname' in result['data']['text'])==bool(nickname)
 
@@ -45,7 +46,7 @@ def test_dual_rules_material_refresh_is_scoped_to_classic_dual_lands(compiler_se
         'oracle_text':'{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle.'}
     base=compiler.template_identity('land','normal',{})
     dual=compiler.template_identity('land','normal',sf)
-    assert dual==(base[0],base[1]+1,base[2]+1)
+    assert dual==(base[0],base[1]+3,base[2]+3)
     assert compiler.template_identity('land','normal',semantic(sf,sf))==dual
     for choice in ('auto','legend-land','godzilla-land'):
         assert compiler.template_identity('land',choice,sf)==compiler.template_identity('land',choice,{})

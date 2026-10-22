@@ -235,6 +235,7 @@ def test_meld_import_uses_real_urza_pair_text_and_physical_half_backs(workspace)
     with Image.open(s.asset_path(might_card['meldBackAsset'])) as im:assert im.getpixel((100,100))[:3]==(17,51,170)
     for card in (urza_card,might_card):
         comp=card['faces'][0]['compiled'];render=io.BytesIO();Image.new('RGB',(comp['data']['width'],comp['data']['height']),'#334455').save(render,'PNG');ws.save_render(comp['renderKey'],render.getvalue(),(comp['data']['width'],comp['data']['height']))
+    saved=s.get('decks',d['id']);saved['settings']['createDfcSubstitutes']=False;s.put('decks',saved,saved['revision'])
     plan=Orders(ws).plan([d['id']])
     assert [x['backAsset'] for x in plan['cards']]==[urza_card['meldBackAsset'],might_card['meldBackAsset']]
     assert 'https://cards.scryfall.io/result.png' in calls
