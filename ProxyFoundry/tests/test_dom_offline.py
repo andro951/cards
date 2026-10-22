@@ -68,6 +68,37 @@ def dom_page(tmp_path):
         (ROOT/'test-results').mkdir(exist_ok=True)
         page.screenshot(path=str(ROOT/'test-results/offline-last.png'),full_page=True);b.close()
 
+@pytest.mark.parametrize('treatment',['card','deck','natural','ordinary'])
+def test_inspector_template_choices_follow_token_treatment(dom_page,treatment):
+    page,errors=dom_page
+    page.evaluate('''treatment=>{
+      const deck=__fixture.deck,card=deck.cards[0];
+      card.scryfall.type_line='Legendary Creature — Elf';card.faces[0].group='legendary';
+      if(treatment==='card')card.tokenSpec={};
+      if(treatment==='deck')deck.settings.allCardsTokens=true;
+      if(treatment==='natural')card.faces[0].group='token';
+      card.faces[0].templateOverride='normal';
+      window.templateWrites=[];const original=window.fetch;
+      window.fetch=async(path,options={})=>{
+        if(path.includes('/cards/')&&options.body)templateWrites.push(JSON.parse(options.body));
+        return original(path,options);
+      };
+    }''',treatment)
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    choices=page.locator('#face-template option').evaluate_all('(options)=>options.map(option=>option.value)')
+    if treatment=='ordinary':
+        assert 'normal' in choices and 'token-classic' not in choices
+    else:
+        assert {'','auto','token-classic','token-full-art','token-borderless','godzilla-card'}==set(choices)
+        assert page.locator('#face-template').input_value()==''
+        assert page.locator('#face-template').evaluate('select=>select.selectedIndex')==0
+        page.locator('#face-template').evaluate("select=>select.closest('details').open=true")
+        page.locator('#face-template').select_option('token-classic')
+        page.click('#save-card')
+        page.wait_for_function("templateWrites.some(patch=>patch.templateOverride==='token-classic')")
+    assert not errors,errors
+
+
 def test_offline_deck_controls_and_templates(dom_page):
     page,errors=dom_page
     page.locator('.deck-tile').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')

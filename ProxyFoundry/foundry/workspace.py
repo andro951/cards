@@ -712,15 +712,19 @@ class Workspace:
         except (OSError,ValueError) as exc:raise ValidationError('Could not decode the Scryfall meld-result image.') from exc
         return ingest_image(self.store,out.getvalue())['id']
     @staticmethod
-    def _deck_token_spec(settings,comp):
+    def _token_frame_spec(choice):
+        if choice=='auto':choice='token-full-art'
+        if choice in {'token-classic','token-full-art','token-borderless'}:return {'token_frame_style':choice}
+        if choice=='godzilla-card':return {'force_nickname_frame':True}
+        return {}
+
+    @staticmethod
+    def _deck_token_spec(settings,comp,frame_choice=None):
         """Translate deck-wide token options to the preserved Card Tools token spec."""
         if not settings.get('allCardsTokens'):return None
         options=settings.get('tokenOptions') or {}
         spec={'output_key':str(comp.get('name') or ''),'token_key_suffix':''}
-        style=settings.get('templateRules',{}).get('token','auto')
-        if style=='auto':style='token-full-art'
-        if style in {'token-classic','token-full-art','token-borderless'}:spec['token_frame_style']=style
-        if settings.get('templateRules',{}).get('token')=='godzilla-card':spec['force_nickname_frame']=True
+        spec.update(Workspace._token_frame_spec(frame_choice or settings.get('templateRules',{}).get('token','auto')))
         if options.get('legendaryMode','nonlegendary' if options.get('nonlegendary') else 'original')=='nonlegendary':spec['nonlegendary']=True
         if options.get('legendaryMode')=='legendary':spec['force_legendary']=True
         if options.get('subtypes'):spec['replace_creature_subtypes']=options['subtypes']
@@ -796,6 +800,8 @@ class Workspace:
             identity_face=({**face,'frame_effects':sf.get('frame_effects')} if group in {'transform-front','transform-back'} else face)
             templates.append(self.compiler.template_identity(group,choice,identity_face))
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
+        if c.get('tokenSpec') is not None and s.get('templateRules',{}).get('token') not in {None,'auto'}:
+            templates.append(self.compiler.template_identity('token',s['templateRules']['token']))
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
@@ -885,11 +891,13 @@ class Workspace:
                 compile_options={'art_origin':origin}
                 if conversion:compile_options['conversion_seed']=True
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,**compile_options)
+                token_choice=options.get('templateOverride') if conversion and self._token_frame_spec(options.get('templateOverride')) else None
                 if c.get('tokenSpec') is not None:
                     token_sem=semantic(sf,face,f.get('index',0))
                     token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
-                    comp=self._apply_token_spec(comp,c['tokenSpec'],art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem,finalize=not s.get('allCardsTokens'))
-                deck_token_spec=self._deck_token_spec(s,comp)
+                    token_spec={**c['tokenSpec'],**self._token_frame_spec(token_choice or s.get('templateRules',{}).get('token','auto'))}
+                    comp=self._apply_token_spec(comp,token_spec,art_id,'Card Tools copy token',not s.get('disableAutofit',False),token_sem,finalize=not s.get('allCardsTokens'))
+                deck_token_spec=self._deck_token_spec(s,comp,token_choice)
                 if deck_token_spec:
                     token_sem=semantic(sf,face,f.get('index',0))
                     token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})

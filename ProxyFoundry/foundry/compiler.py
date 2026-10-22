@@ -2920,6 +2920,9 @@ class Compiler:
         identity_face=({**sem,'color_indicator':face.get('color_indicator'),'frame_effects':sf.get('frame_effects')}
                        if group in {'transform-front','transform-back'} else sem)
         template_key,template_version,template_cache_version=self.template_identity(group,choice,identity_face)
+        #Converted faces use the original layout as a seed, then apply their token frame.
+        if conversion_seed and (choice in {'token-classic','token-full-art','token-borderless'} or options.get('templateOverride')=='godzilla-card'):
+            choice='auto'
         if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
             donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)

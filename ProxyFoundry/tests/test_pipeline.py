@@ -636,6 +636,32 @@ def test_token_styles_only_support_tokens_and_offer_matching_seeds(workspace,sty
     assert seed['text']['rules']['text']=='Flying'
 
 
+@pytest.mark.parametrize('mode',['card','deck'])
+@pytest.mark.parametrize('choice,version',[
+    ('token-classic','tokenTextlessM15'),('token-full-art','tokenRegular'),
+    ('token-borderless','tokenTextlessBorderless'),('auto','tokenRegular'),
+    ('godzilla-card','m15Nickname'),(None,'tokenTextlessM15'),
+])
+def test_converted_face_template_override_controls_token_frame(workspace,mode,choice,version):
+    from foundry.workspace import Workspace
+    store,art,settings=workspace;ws=Workspace(store)
+    source=sf('Legendary Creature — Bird',['U']);source.pop('id');source.update(layout='normal',oracle_text='Flying')
+    card=ws.sources.entry(source);card['faces'][0]['templateOverride']=choice
+    if mode=='card':card['tokenSpec']={'nonlegendary':True}
+    deck=ws.new_deck('Token frame override')
+    deck['cards']=[card]
+    deck['settings']=ws.validate_settings({**settings,'allCardsTokens':mode=='deck',
+        'source':{'mode':'local','localFiles':{'test_card':art}},'templateRules':{'token':'token-classic'}})
+    deck=store.put('decks',deck,deck['revision'])
+    prepared=ws.prepare(deck['id']);face=prepared['cards'][0]['faces'][0]
+    assert not face.get('error'),face.get('error')
+    assert face['compiled']['group']=='token' and face['compiled']['data']['version']==version
+    assert face['compiled']['data']['text']['rules']['text']=='Flying'
+    assert face['compiled']['data']['text']['pt']['text']=='2/3'
+    if choice:
+        assert face['compiled']['templateKey']==ws.compiler.template_identity(face['group'],choice,source)[0]
+
+
 def test_deck_wide_token_options_apply_independent_overrides(workspace):
     from foundry.workspace import Workspace
     s,a,settings=workspace
