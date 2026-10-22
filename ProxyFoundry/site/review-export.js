@@ -3,8 +3,13 @@ import {renderWorkerCount} from './native-render-pool.js';
 import {ReviewZip} from './review-zip.js';
 import {recordDiagnostic} from './diagnostics.js';
 
-export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
-    const task=work.begin({label:`Review images`,resources:[`deck:${deckId}`]}),signal=task.controller.signal;
+export async function downloadReview(deckId,options={}) {
+    return exportReview(deckId,{...options,consume:output=>output.blob?downloadBlob(output.blob,output.filename):downloadExportFile(output)});
+}
+
+//The same worker/ZIP path serves downloads and local batch staging.
+export async function exportReview(deckId,{cardId=null,faceId=null,owner=null,consume=output=>output}={}) {
+    const task=owner||work.begin({label:`Review images`,resources:[`deck:${deckId}`]}),signal=task.controller.signal;
     const workers=[],pending=new Set(),started=performance.now();
     const cancelled=()=>new Error(`Review download cancelled.`);
     const stop=()=>{
@@ -23,8 +28,7 @@ export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
                 throw cancelled();
             }
 
-            await downloadExportFile(output);
-            return;
+            return await consume(output,task);
         }
 
         const plan=await api(`/api/decks/${deckId}/review-plan`,{cardId,faceId},`POST`,task);
@@ -68,15 +72,20 @@ export async function downloadReview(deckId,{cardId=null,faceId=null}={}) {
             throw cancelled();
 
         const blob=zip?zip.finish():single;
-        downloadBlob(blob,plan.filename);
+        const result=await consume({blob,filename:plan.filename,count:done},task);
         recordDiagnostic(`review export`,JSON.stringify({seconds:(performance.now()-started)/1000,count:done,bytes:blob.size,workers:count,format:`png`,scale:.5}));
-        endActivity(`Review download ready`,false,task);
+        if(!owner)
+            endActivity(`Review download ready`,false,task);
+        return result;
     }
     catch(error) {
-        endActivity(signal.aborted?`Review download cancelled`:`Review download failed`,true,task);
+        if(!owner)
+            endActivity(signal.aborted?`Review download cancelled`:`Review download failed`,true,task);
         throw error;
     }
     finally {
-        stop();signal.removeEventListener(`abort`,stop);work.finish(task);
+        stop();signal.removeEventListener(`abort`,stop);
+        if(!owner)
+            work.finish(task);
     }
 }

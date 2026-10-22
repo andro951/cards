@@ -32,6 +32,7 @@ from .runtime import Runtime
 from .storage import Store
 from .tools import CardTools
 from .workspace import Workspace
+from .developer_batch_review import DeveloperBatchReview
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BODY = 64 * 1024 ** 2
@@ -41,6 +42,7 @@ class App:
     def __init__(self, store=None, network=None, *, jobs_factory=Jobs):
         self.store = store or Store()
         self.ws = Workspace(self.store, network)
+        self.developer_batch_review = DeveloperBatchReview(ROOT, self.ws)
         self.jobs = jobs_factory(self.store)
         self.orders = Orders(self.ws)
         self.tools = CardTools(self.ws)
@@ -472,6 +474,10 @@ class Handler(BaseHTTPRequestHandler):
                                  'storageType':self.app.store.storage_type,
                                  'groups': GROUP_LABELS, 'settings': self.app.ws.global_settings(), 'stats': self.app.store.stats(), 'backs': self.app.ws.backs.catalog()})
         if p == '/api/backs/catalog': return self.respond(self.app.ws.backs.catalog())
+        if p == '/api/dev/batch-review/availability':
+            return self.respond({'available': self.app.developer_batch_review.available()})
+        if p == '/api/dev/batch-review/candidates':
+            return self.respond(self.app.developer_batch_review.candidates())
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/export', p):
@@ -613,7 +619,28 @@ class Handler(BaseHTTPRequestHandler):
                 try: return self.app.backups.restore(path, q.get('defaults', ['false'])[0] == 'true', update, cancel)
                 finally: path.unlink(missing_ok=True)
             return self.respond(self.app.jobs.start('Restore workspace backup', restore))
+        if m := re.fullmatch(r'/api/dev/batch-review/([-a-f0-9]{36})/upload/([-a-f0-9]{36})', p):
+            try: offset = int(q.get('offset', [''])[0])
+            except ValueError as error: raise ValidationError('Invalid review ZIP upload offset.') from error
+            return self.respond(self.app.developer_batch_review.upload_chunk(
+                m[1], m[2], offset, self.body(8 * 1024 ** 2)))
         d = self.data()
+        if p == '/api/dev/batch-review/start':
+            return self.respond(self.app.developer_batch_review.start(d.get('deckIds')))
+        if m := re.fullmatch(r'/api/dev/batch-review/([-a-f0-9]{36})/upload/(start|complete)', p):
+            if m[2] == 'start':
+                return self.respond(self.app.developer_batch_review.begin_upload(
+                    m[1], d.get('deckId'), d.get('filename'), d.get('bytes'), d.get('revision')))
+            return self.respond(self.app.developer_batch_review.finish_upload(m[1], d.get('deckId')))
+        if m := re.fullmatch(r'/api/dev/batch-review/([-a-f0-9]{36})/(stage|commit|abort)', p):
+            session, action = m[1], m[2]
+            if action == 'stage':
+                return self.respond(self.app.developer_batch_review.stage_review(
+                    session, d.get('deckId'), d.get('token'), d.get('filename'), d.get('revision')))
+            if action == 'commit':
+                return self.respond(self.app.jobs.start(
+                    'Run all card checks', lambda update, cancel: self.app.developer_batch_review.commit(session, update, cancel)))
+            return self.respond(self.app.developer_batch_review.abort(session))
         if p == '/api/backs/compose': return self.respond(self.app.ws.backs.icon(d.get('iconAsset', '')))
         if p == '/api/setup/artwork-review':
             return self.respond(self.app.jobs.start('Check artwork',lambda u,c:self.app.ws.artwork_review(d,u,c)))

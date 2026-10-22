@@ -5,8 +5,11 @@ from pathlib import Path
 from urllib.parse import quote,unquote,urlsplit
 from xml.etree import ElementTree
 from PIL import Image,ImageDraw,ImageChops,ImageFilter
+from .nickname_geometry import TITLE_BAR_HEIGHT,TITLE_JOINED_HEIGHT,TITLE_BAR_VERSION
 from .domain import ValidationError,CC_REPO,CC_COMMIT,COMPAT_REPO,COMPAT_COMMIT,STATION_SCRIPT_URL,STATION_SCRIPT_SHA256
 from .artifact_frame import ArtifactFrameCache
+from . import classic_token_frame
+from . import dual_land_rules
 from .transform_crown import restore_crown_bevel,BEVEL_VERSION,mirror_header_png,BACK_VERSION
 from .werewolf_frame import neutralize_icon_surround,ICON_RING_VERSION
 from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
@@ -151,6 +154,10 @@ function proxyFoundryInlineSymbols(text) {
         with self.lock:self.requested['/js/frames/versionStation.js']={'url':STATION_SCRIPT_URL,'bytes':len(raw),'cache':meta.get('cache',False),'sha256':STATION_SCRIPT_SHA256,'adapter':'CSP-safe UI property assignment'}
         return text.encode(),'application/javascript'
     def cached(self,path):
+        land_material=dual_land_rules.material(path)
+        if land_material:return bool(self.net.store.cache_get(land_material[1]))
+        token_material=classic_token_frame.material(path)
+        if token_material:return bool(self.net.store.cache_get(token_material[1]))
         if '/proxy-foundry/' not in path:
             for repo,commit,prefix in ((CC_REPO,CC_COMMIT,''),(COMPAT_REPO,COMPAT_COMMIT,'/public')):
                 url='https://raw.githubusercontent.com/'+repo+'/'+commit+prefix+quote(path,safe='/')
@@ -165,6 +172,30 @@ function proxyFoundryInlineSymbols(text) {
 
     def fetch(self,path):
         path=self.path(path)
+        land_material=dual_land_rules.material(path)
+        if land_material:
+            source,key,code=land_material
+            with self.lock:asset_lock=self.derived_locks.setdefault(key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    raw=dual_land_rules.colored_rules_png(self.fetch(source)[0],code)
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Stronger classic dual-land rules texture; alpha unchanged'}
+            return raw,'image/png'
+        token_material=classic_token_frame.material(path)
+        if token_material:
+            source,key=token_material
+            with self.lock:asset_lock=self.derived_locks.setdefault(key,threading.Lock())
+            with asset_lock:
+                cached=self.net.store.cache_get(key)
+                if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
+                else:
+                    raw=classic_token_frame.desaturate_white_png(self.fetch(source)[0])
+                    asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(key,asset,self.net.clock())
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Desaturated native white classic token; alpha unchanged'}
+            return raw,'image/png'
         saga_back=re.fullmatch(re.escape(SAGA_PREFIX)+r'back-(left|right)-([WUBRGMAL])\.png',path)
         if saga_back:
             side,code=saga_back.groups()
@@ -280,6 +311,7 @@ function proxyFoundryInlineSymbols(text) {
         if colored:
             kind,code=colored.groups();joined=kind=='CrownJoinedColored'
             cache_key=f'derived:{CC_COMMIT}:{DFC_MATERIAL_VERSION}:{path}'
+            if not joined:cache_key+=':'+TITLE_BAR_VERSION
             with self.lock:asset_lock=self.derived_locks.setdefault(cache_key,threading.Lock())
             with asset_lock:
                 cached=self.net.store.cache_get(cache_key)
@@ -437,7 +469,8 @@ function proxyFoundryInlineSymbols(text) {
         match=re.fullmatch(r'/img/frames/proxy-foundry/godzilla/(Title|TitleJoined|Crown|CrownJoined)([WUBRGMAL])\.png',path)
         if match:
             kind,code=match.groups()
-            cache_key=f'derived:{CC_COMMIT}:godzilla-separated-v1:{path}'
+            version=TITLE_BAR_VERSION if kind=='Title' else 'godzilla-separated-v1'
+            cache_key=f'derived:{CC_COMMIT}:{version}:{path}'
             store=getattr(self.net,'store',None)
             cached=store.cache_get(cache_key) if store and not kind.endswith('Joined') else None
             if cached:return self.net.store.asset_path(cached['asset_id']).read_bytes(),'image/png'
@@ -448,7 +481,7 @@ function proxyFoundryInlineSymbols(text) {
                 return raw,'image/png'
             # Preserve the crown shoulders below the main bar. A rectangular
             # crop cuts through their outer black outline.
-            height,original=(.069,.1053) if kind=='Title' else (.1286,.1286)
+            height,original=(TITLE_BAR_HEIGHT,TITLE_JOINED_HEIGHT) if kind=='Title' else (.1286,.1286)
             with Image.open(io.BytesIO(raw)) as image:
                 if kind=='Crown':
                     image=image.convert('RGBA')
@@ -467,6 +500,11 @@ function proxyFoundryInlineSymbols(text) {
                     ImageDraw.Draw(image).line([(round(x*width/1428),round(y*total/270)) for x,y in edge],fill=(0,0,0,255),width=max(1,round(4*width/1428)))
                 else:
                     image=image.crop((0,0,image.width,round(image.height*height/original)))
+                    # The joined asset leaves gaps where the subtitle attaches.
+                    # Mirror its native top stroke to close the detached bottom.
+                    stroke=max(1,round(4*image.width/1352))
+                    edge=image.crop((0,0,image.width,stroke)).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                    image.paste(edge,(0,image.height-stroke))
                 output=io.BytesIO();image.save(output,'PNG')
             if store:
                 asset=store.add_asset(output.getvalue(),'image/png');store.cache_put(cache_key,asset,self.net.clock())

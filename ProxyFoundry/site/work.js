@@ -65,6 +65,20 @@ export class WorkCoordinator {
         this.onChange();
         task.resolveSettled();
     };
+    claim = (task, resources) => {
+        if (!this.tasks.has(task.id) || task.controller.signal.aborted)
+            throw new Error(`Task cancelled.`);
+
+        this.requireAvailable(resources, task);
+        for (const resource of resources) {
+            if (!task.resources.includes(resource))
+                task.resources.push(resource);
+
+            this.resources.set(resource, task);
+        }
+
+        this.onChange();
+    };
     requireDeletable = resource => {
         const task = this.resources.get(resource);
         this.requireAvailable([resource],task?.kind === `generation` ? task : null);

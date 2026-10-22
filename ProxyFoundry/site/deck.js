@@ -4,7 +4,7 @@ import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable,bindGenerationButton} from './ui.js';
 import {renderSetup,templateOptions,pickFile,rarities} from './setup.js';
 import {renderDecks,renderCard} from './render.js';
 import {ensureArtworkReady,offerDataSave,editAlternateArt,saveArtVariantData} from './artwork-review.js';
@@ -224,6 +224,7 @@ export async function showDeck(id,tab='cards'){
   const reviewButton=document.createElement('button');reviewButton.className='button';reviewButton.textContent='Review & Print';
   reviewButton.onclick=()=>attempt(()=>chooseOrder([id]));$('#generate-deck').before(reviewButton);
   $('#generate-deck').onclick=()=>attempt(()=>generate(d));
+  bindGenerationButton($('#generate-deck'),[id]);
   $('#deck-menu').onclick=()=>deckMenu(d);
   if(tab==='setup'){
     const setup=renderSetup($('#deck-body'),d,async(updated,generateNow)=>{

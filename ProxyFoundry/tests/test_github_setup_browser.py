@@ -22,7 +22,8 @@ def test_github_setup_one_click_populates_draft_preserves_other_edits_and_saves(
     ]})
     def transport(url):
         if '/commits/' in url:return json.dumps({'sha':'c'*40}).encode(),'application/json',{}
-        raw,mime,headers=remote.transport(url.replace('?ref='+'c'*40,'?ref=main'))
+        mock_url=url.replace('?ref='+'c'*40,'?ref=main').replace('/owner/repo/'+'c'*40+'/', '/owner/repo/main/')
+        raw,mime,headers=remote.transport(mock_url)
         if '/contents/' in url:
             rows=json.loads(raw)
             for row in rows:

@@ -14,7 +14,8 @@ pytestmark=pytest.mark.skipif(
 )
 ROOT=Path(__file__).resolve().parents[1]
 
-def test_harmonized_trio_native_prepare_frame_is_blue(tmp_path):
+@pytest.mark.parametrize('converted',[False,True])
+def test_harmonized_trio_native_prepare_frame_is_blue(tmp_path,converted):
     from playwright.sync_api import sync_playwright
     card={
         'object':'card','id':'617208ff-dd9b-44fd-a740-d3188081e5cc',
@@ -38,10 +39,17 @@ def test_harmonized_trio_native_prepare_frame_is_blue(tmp_path):
     threading.Thread(target=server.serve_forever,daemon=True).start()
     asset=ingest_image(store,art)
     deck=app.ws.create({'name':'Blue Prepare frame regression','source':[{'id':card['id']}],
-        'settings':{'symbols':rarity_variants(store,asset['id']),'backAsset':asset['id']}})
+        'settings':{'symbols':rarity_variants(store,asset['id']),'backAsset':asset['id'],'allCardsTokens':converted}})
     deck=app.ws.prepare(deck['id'])
     assert not [f['error'] for c in deck['cards'] for f in c['faces'] if f.get('error')]
-    frames=deck['cards'][0]['faces'][0]['compiled']['data']['frames']
+    data=deck['cards'][0]['faces'][0]['compiled']['data']
+    frames=data['frames']
+    if converted:
+        assert data['prepareToken']
+        assert any(f.get('prepareTokenHeader') and f['src']=='/img/frames/token/m15/regular/u.png' for f in frames)
+        assert data['text']['title2']['text']=='Brainstorm'
+        assert data['text']['rules2']['text']==card['card_faces'][1]['oracle_text']
+        assert data['text']['pt']['text']=='1/1'
     assert all(f['src']=='/img/frames/prepare/regular/u.png' for f in frames
                if '/img/frames/prepare/regular/' in f.get('src',''))
     with sync_playwright() as playwright:
@@ -51,7 +59,8 @@ def test_harmonized_trio_native_prepare_frame_is_blue(tmp_path):
         try:
             page.goto(server.origin+'/#deck/'+deck['id'])
             page.locator('#generate-deck').wait_for();page.click('#generate-deck')
-            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+            page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
             assert '/img/frames/prepare/regular/u.png' in app.runtime.requested
@@ -60,7 +69,7 @@ def test_harmonized_trio_native_prepare_frame_is_blue(tmp_path):
             image=Image.open(store.asset_path(rendered['asset_id']))
             assert image.size==(2010,2814)
             evidence=ROOT/'test-results';evidence.mkdir(exist_ok=True)
-            image.thumbnail((603,844));image.save(evidence/'prepare_harmonized_trio_blue.png')
+            image.thumbnail((603,844));image.save(evidence/('prepare_harmonized_trio_token_blue.png' if converted else 'prepare_harmonized_trio_blue.png'))
             assert not errors,errors
         finally:
             browser.close();server.shutdown();server.server_close();app.close()

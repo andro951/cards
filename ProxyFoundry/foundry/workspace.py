@@ -19,7 +19,8 @@ from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
 from . import rules_nicknames
 from . import github_data
-from .compiler import center_short_token_rules
+from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION
+from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
 from . import substitutes
@@ -737,6 +738,9 @@ class Workspace:
     def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None,finalize=True):
         spec=dict(spec)
         style=spec.pop('token_frame_style',None) or 'token-full-art'
+        prepare_source=comp['data'] if comp['data'].get('version')=='prepare' else None
+        if prepare_source is not None:style='token-classic'
+        classic_colorless=style=='token-classic' and sem is not None and not spec.get('frame_color') and _token_frame_code(sem)=='C'
         if sem:
             sem=dict(sem)
             rules_nicknames.apply_semantic(sem)
@@ -753,22 +757,25 @@ class Workspace:
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
         if style:
-            short=token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
-            configure_token_style(comp['data'],spec.get('frame_color','A'),style,short)
+            short=False if prepare_source is not None else token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
+            configure_token_style(comp['data'],'C' if classic_colorless else spec.get('frame_color','A'),style,short)
+            if prepare_source is not None:comp['data']=apply_prepare_token_layout(prepare_source,comp['data'],spec.get('frame_color','A'))
             if finalize and comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
         if finalize:fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
         if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
             apply_nickname_treatment(comp['data'],sem,'token',
-                                     force=bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-'),
-                                     full_frame=bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-'))
+                                     force=prepare_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')),
+                                     full_frame=prepare_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')))
             if finalize and comp['data'].get('version')=='m15Nickname':comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
             if finalize and comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
-        if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
-        elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
+        if prepare_source is None:
+            if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
+            elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         if not finalize:return comp
+        reserve_token_mana_space(comp['data'])
         fit_token_rules_above_pt(comp['data'])
-        center_short_token_rules(comp['data'])
+        if prepare_source is None:center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         normalize_untap_aliases(comp['data'])
@@ -793,7 +800,16 @@ class Workspace:
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
-        if c.get('tokenSpec') is not None or s.get('allCardsTokens'):inputs['tokenConversionVersion']=4
+        if c.get('tokenSpec') is not None or s.get('allCardsTokens'):
+            inputs['tokenConversionVersion']=4
+            if sf.get('layout')=='prepare':inputs['prepareTokenLayoutVersion']=PREPARE_TOKEN_LAYOUT_VERSION
+            if any(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or sf.get('mana_cost') or '')) for face in faces):
+                inputs['tokenManaSpacingVersion']=1
+            token_spec=c.get('tokenSpec') or {}
+            token_style=token_spec.get('token_frame_style') or s.get('templateRules',{}).get('token')
+            if token_style=='token-classic' and not token_spec.get('frame_color'):
+                if any(not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line',sf.get('type_line',''))) for face in faces):
+                    inputs['classicColorlessVersion']=classic_token_frame.VERSION
         if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['nicknameRulesVersion']=rules_nicknames.VERSION
         if rules_nicknames.has_redundant_nickname(sf,c['faces']):inputs['nicknameIdentityVersion']=rules_nicknames.IDENTITY_VERSION
         return stable_hash(inputs)

@@ -105,7 +105,8 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
         try:
             page.goto(server.origin+'/#deck/'+deck['id'])
             page.locator('#generate-deck').wait_for();page.click('#generate-deck')
-            page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+            page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+            page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
             ready=app.ws.deck(deck['id'])
             assert ready['status']=='ready',{'errors':errors,'activity':page.locator('#activity-log').text_content()}
             assert '/img/frames/token/regular/tokenFrameARegular.png' in app.runtime.requested
@@ -124,7 +125,8 @@ def test_noncreature_token_renders_with_empty_power_toughness(tmp_path):
                 page.get_by_role('button',name='Select '+label,exact=True).click()
                 with page.expect_response(lambda response:response.url.endswith('/api/render-sessions')):
                     page.click('#save-generate')
-                page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+                page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+                page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
                 ready=app.ws.deck(deck['id'])
                 assert ready['status']=='ready',page.locator('#activity-log').text_content()
                 compiled=ready['cards'][0]['faces'][0]['compiled']
@@ -185,7 +187,8 @@ def test_token_style_gallery_renders_native_assets(tmp_path):
             for style,short,deck in decks:
                 page.goto(server.origin+'/#deck/'+deck['id'])
                 page.locator('#generate-deck').wait_for();page.click('#generate-deck')
-                page.locator('.badge.ready,.toast.error').first.wait_for(timeout=180000)
+                page.locator('#generation-screen').wait_for(state='visible',timeout=30000)
+                page.locator('#generation-screen').wait_for(state='hidden',timeout=180000)
                 ready=app.ws.deck(deck['id'])
                 assert ready['status']=='ready',page.locator('#activity-log').text_content()
                 compiled=ready['cards'][0]['faces'][0]['compiled']

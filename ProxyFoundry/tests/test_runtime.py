@@ -172,7 +172,7 @@ def test_colorless_saga_creature_gap_asset_exists_at_pinned_commit():
         assert response.read(8)==b'\x89PNG\r\n\x1a\n'
 
 
-@pytest.mark.parametrize('kind,height,original',[('Title',.069,.1053)])
+@pytest.mark.parametrize('kind,height,original',[('Title',.0724,.1053)])
 def test_godzilla_main_title_is_cropped_from_pinned_asset(kind,height,original):
     import io
     from PIL import Image
@@ -191,6 +191,7 @@ def test_godzilla_main_title_is_cropped_from_pinned_asset(kind,height,original):
     output=Image.open(io.BytesIO(raw))
     assert mime=='image/png' and len(calls)==1
     expected=source.crop((0,0,60,round(100*height/original)))
+    expected.paste(source.crop((0,0,60,1)),(0,expected.height-1))
     assert output.size==expected.size and output.tobytes()==expected.tobytes()
     assert runtime.diagnostic()['files'][path]['source'].endswith(f'm15Nickname{kind}B.png')
 
@@ -249,3 +250,40 @@ def test_corrected_pinline_masks_exclude_native_black_outline(kind,black,gold):
     mask=Image.open(Path(__file__).resolve().parents[1]/'assets/frame-masks'/(kind+'-pinline.png')).convert('RGBA')
     assert mask.getpixel(black)[3]==0
     assert mask.getpixel(gold)[3]==255
+
+
+@pytest.mark.parametrize('code',list('WUBRGMAL'))
+def test_separated_title_keeps_native_bottom_outline_and_discards_subtitle(tmp_path,code):
+    import io
+    from PIL import Image
+    from foundry.storage import Store
+    from foundry.nickname_geometry import TITLE_BAR_VERSION
+    source=Image.new('RGBA',(1352,221),(0,0,0,128))
+    for y,color in [(133,(0,0,0,255)),(137,(174,151,135,255)),(148,(0,0,0,255)),(152,(80,70,60,128))]:
+        source.paste(color,(0,y,1352,221))
+    source.paste((0,0,0,255),(0,0,1352,4))
+    source.paste((0,0,0,128),(80,148,101,152))
+    buf=io.BytesIO();source.save(buf,'PNG')
+    store=Store(tmp_path)
+    stale=io.BytesIO();source.crop((0,0,1352,145)).save(stale,'PNG')
+    path=f'/img/frames/proxy-foundry/godzilla/Title{code}.png'
+    store.cache_put(f'derived:{CC_COMMIT}:godzilla-separated-v1:{path}',store.add_asset(stale.getvalue(),'image/png'),1)
+    calls=[]
+    class Net:
+        def __init__(self):self.store=store
+        def clock(self):return 2
+        def fetch(self,url,**kwargs):
+            calls.append(url)
+            return buf.getvalue(),'image/png',{}
+    runtime=Runtime(Net())
+    raw,_=runtime.fetch(path)
+    image=Image.open(io.BytesIO(raw)).convert('RGBA')
+    assert image.size==(1352,152)
+    expected=source.crop((0,0,1352,152))
+    expected.paste(source.crop((0,0,1352,4)).transpose(Image.Transpose.FLIP_TOP_BOTTOM),(0,148))
+    assert image.tobytes()==expected.tobytes()
+    assert all(image.getpixel((676,y))==(0,0,0,255) for y in range(148,152))
+    assert all(image.getpixel((90,y))==(0,0,0,255) for y in range(148,152))
+    assert store.cache_get(f'derived:{CC_COMMIT}:{TITLE_BAR_VERSION}:{path}')
+    assert runtime.fetch(path)[0]==raw
+    assert len(calls)==1

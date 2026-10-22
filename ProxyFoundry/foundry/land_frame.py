@@ -1,4 +1,5 @@
 """The approved compact full-art land family; other land families stay native."""
+from .nickname_geometry import TITLE_BAR_HEIGHT
 from pathlib import Path
 import copy,json
 
@@ -75,7 +76,7 @@ def apply_compact_land_header(data,sem,bar_layers):
             else:
                 frames[index]={'name':'Compact land native Godzilla title',
                     'src':'/img/frames/proxy-foundry/godzilla/TitleL.png','masks':[],
-                    'bounds':{'x':.0494,'y':.0405,'width':.9014,'height':.069}}
+                    'bounds':{'x':.0494,'y':.0405,'width':.9014,'height':TITLE_BAR_HEIGHT}}
     if sem.get('legendary'):
         if nickname:
             # The native joined crown owns both bars and their single outline.
@@ -92,11 +93,12 @@ def apply_compact_land_header(data,sem,bar_layers):
                     code=frame['src'].rsplit('CrownJoined',1)[1][0]
                     frame['src']=PREFIX+'CrownJoinedBlack'+code+'.png'
         else:
-            title_index=next(i for i,frame in enumerate(frames) if frame.get('name')=='Compact land black title')
-            frames[title_index:title_index+1]=bar_layers({
-                'name':'Compact land native Godzilla title',
-                'src':'/img/frames/proxy-foundry/godzilla/TitleL.png','masks':[],
-                'bounds':{'x':.0494,'y':.0405,'width':.9014,'height':.069}},sem)
+            # The floating crown owns the title's outer rim. Keep the inset
+            # charcoal fill and remove the underlying frame's second title loop.
+            for frame in frames:
+                for mask in frame.get('masks',[]):
+                    if mask.get('src')=='/img/frames/m15/boxTopper/short/pinline.svg':
+                        mask['src']=PREFIX+'lower-pinline.svg'
             index=next(i for i,frame in enumerate(frames) if 'Floating.png' in str(frame.get('src','')))
             frames.insert(index,part('CrownOutline','Compact land crown black outline'))
         return
@@ -114,5 +116,5 @@ def apply_compact_land_header(data,sem,bar_layers):
         or '/nickname/addons/' in str(frame.get('src','')))]
     joined={'name':'Compact land native Godzilla joined title' if nickname else 'Compact land native Godzilla title',
             'src':'/img/frames/proxy-foundry/godzilla/'+('TitleJoinedL.png' if nickname else 'TitleL.png'),
-            'masks':[],'bounds':{'x':.0494,'y':.0405,'width':.9014,'height':.1053 if nickname else .069}}
+            'masks':[],'bounds':{'x':.0494,'y':.0405,'width':.9014,'height':.1053 if nickname else TITLE_BAR_HEIGHT}}
     frames[0:0]=bar_layers(joined,sem)

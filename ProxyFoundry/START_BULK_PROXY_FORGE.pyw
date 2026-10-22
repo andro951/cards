@@ -1,7 +1,7 @@
 """Double-click preview for the static website; no console or cloud account needed."""
 from functools import partial
-from http.server import SimpleHTTPRequestHandler
-from scripts.static_server import StaticSiteServer
+from scripts.static_server import StaticSiteServer, BatchPreviewHandler
+from scripts.batch_review_bridge import BatchReviewBridge
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
@@ -16,7 +16,7 @@ CREATE_NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 SITE_MARKER = b'<meta name="proxy-foundry" content="workspace-v1">'
 
 
-class QuietSite(SimpleHTTPRequestHandler):
+class QuietSite(BatchPreviewHandler):
     def log_message(self, *_args):
         pass
 
@@ -41,6 +41,7 @@ def is_foundry_preview(port=PORT):
 def make_server(directory, port=PORT):
     handler = partial(QuietSite, directory=str(directory))
     server = StaticSiteServer(('127.0.0.1', port), handler)
+    server.batch_review_bridge = BatchReviewBridge(ROOT)
     server.daemon_threads = True
     return server
 

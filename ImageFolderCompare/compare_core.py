@@ -231,7 +231,96 @@ def existing_outputs(folder):
     return existing
 
 
-def publish_outputs(stage, folder, *, omit_empty=False):
+def _result_tree(root):
+    """Inventory ordinary result files without following links or junctions."""
+    files, directories = [], []
+    if not root.exists():
+        return files, directories
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        if directory.is_symlink() or getattr(directory, "is_junction", lambda: False)():
+            raise ValueError(f"Result folders must not contain links: {directory}")
+        directories.append(directory)
+        for child in directory.iterdir():
+            if child.is_symlink() or getattr(child, "is_junction", lambda: False)():
+                raise ValueError(f"Result folders must not contain links: {child}")
+            if child.is_dir():
+                pending.append(child)
+            elif child.is_file():
+                files.append(child)
+            else:
+                raise ValueError(f"Unsupported result entry: {child}")
+    return files, directories
+
+
+def _remove_empty_results(directories, warning):
+    for directory in sorted(set(directories), key=lambda path: len(path.parts), reverse=True):
+        try:
+            if directory.is_dir() and next(directory.iterdir(), None) is None:
+                directory.rmdir()
+        except OSError as error:
+            # Explorer may hold an empty folder open. The published files are
+            # complete; retaining an empty directory must not fail the batch.
+            warning(f"NOTE: Empty results folder could not be removed: {directory}: {error}")
+
+
+def _publish_output_files(stage, folder, *, omit_empty, warning):
+    """Keep open directories stable and journal file moves for rollback."""
+    stage, folder = stage.resolve(), folder.resolve()
+    if stage.parent != folder or not stage.name.startswith(".image-compare-"):
+        raise ValueError("Invalid result publication workspace.")
+    old_files, old_dirs, new_files, new_dirs = [], [], [], []
+    for name in OUTPUT_NAMES:
+        files, directories = _result_tree(folder / name)
+        old_files.extend(files)
+        old_dirs.extend(directories)
+        source = stage / name
+        if source.exists() and (not omit_empty or next(source.iterdir(), None) is not None):
+            files, directories = _result_tree(source)
+            new_files.extend(files)
+            new_dirs.extend(folder / path.relative_to(stage) for path in directories)
+    backup_root = stage / "previous-files"
+    backup_root.mkdir()
+    backups, installed, created = [], [], []
+    try:
+        # Move backups first. A locked file fails before any new file is installed.
+        for source in old_files:
+            backup = backup_root / source.relative_to(folder)
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(source, backup)
+            backups.append((backup, source))
+        for destination in sorted(new_dirs, key=lambda path: len(path.parts)):
+            if not destination.exists():
+                destination.mkdir()
+                created.append(destination)
+        for source in new_files:
+            destination = folder / source.relative_to(stage)
+            if destination.is_dir():
+                destination.rmdir()  # A previous empty directory can become a file.
+            os.replace(source, destination)
+            installed.append((destination, source))
+    except BaseException as original:
+        try:
+            for destination, source in reversed(installed):
+                os.replace(destination, source)
+            _remove_empty_results(created, warning)
+            for directory in sorted(old_dirs, key=lambda path: len(path.parts)):
+                directory.mkdir(parents=True, exist_ok=True)
+            for backup, destination in reversed(backups):
+                os.replace(backup, destination)
+        except OSError as error:
+            raise RecoveryError(f"Could not restore previous results. Backup files were kept in {stage}: {error}") from error
+        if isinstance(original, PermissionError):
+            raise PermissionError(f"Cannot replace a comparison result file: {original}. Close the image viewer using that file and retry; previous results were restored.") from original
+        raise
+    # All new files are installed. Stale files are in the private backup, and
+    # stale empty folders can now be removed without renaming open deck folders.
+    needed = set(new_dirs)
+    _remove_empty_results([path for path in old_dirs if path not in needed], warning)
+
+
+def publish_outputs(stage, folder, *, omit_empty=False, allow_in_place=False, warning=lambda text: None):
     """Replace the complete result, rolling back if publication fails."""
     existing_outputs(folder)
     saved_outputs = []
@@ -247,7 +336,7 @@ def publish_outputs(stage, folder, *, omit_empty=False):
             if source.exists() and (not omit_empty or next(source.iterdir(), None) is not None):
                 os.replace(source, destination)
                 published.append(destination)
-    except OSError:
+    except OSError as original:
         try:
             for destination in reversed(published):
                 os.replace(destination, stage / destination.name)
@@ -255,6 +344,10 @@ def publish_outputs(stage, folder, *, omit_empty=False):
                 os.replace(backup, destination)
         except OSError as error:
             raise RecoveryError(f"Could not restore previous results. Backup files were kept in {stage}: {error}") from error
+        if allow_in_place and isinstance(original, PermissionError):
+            warning("Result folder is in use; replacing its files without renaming the folder.")
+            _publish_output_files(stage, folder, omit_empty=omit_empty, warning=warning)
+            return
         raise
 
 

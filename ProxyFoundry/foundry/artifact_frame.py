@@ -8,6 +8,7 @@ import time
 
 from PIL import Image
 
+from .nickname_geometry import TITLE_BAR_VERSION
 from .domain import CC_COMMIT, CC_REPO
 from . import transform_crown
 from . import dfc_material
@@ -67,6 +68,8 @@ class ArtifactFrameCache:
 
     def fetch(self, source_path, load_source):
         key = f'derived:{CC_REPO}:{CC_COMMIT}:{ARTIFACT_GRAY_VERSION}:{ARTIFACT_GRAY_PERCENT}:{source_path}'
+        if re.search(r'/(?:Title|TitleColored)[WUBRGMAL]\.png$',source_path):
+            key += ':'+TITLE_BAR_VERSION
         if source_path.startswith(transform_crown.PREFIX):
             key += ':'+transform_crown.BEVEL_VERSION
             if 'Back' in source_path:key += ':'+transform_crown.BACK_VERSION

@@ -7,13 +7,16 @@ from .domain import ValidationError,ORDINARY_GROUPS,GROUP_LABELS,type_group,crop
 from .legacy import compiler as native,ingest
 from .credits import resolve_credit
 from .template_model import apply_regions, select_variant
+from .nickname_geometry import TITLE_BAR_HEIGHT
 from .land_frame import apply_compact_land_header,apply_textless_land_adjustments
 from . import werewolf_frame
 from .artifact_frame import apply_artifact_gray
+from . import classic_token_frame
+from . import dual_land_rules
 from .color_indicator import apply_color_indicator
 from . import nickname_special
 from . import rules_nicknames
-from .hybrid_frame import apply_hybrid_frame_treatment
+from .hybrid_frame import apply_hybrid_frame_treatment,hybrid_colors
 from .inline_symbols import normalize_untap_aliases
 
 # Sampled from the supplied real MTG red pinline reference image.
@@ -365,6 +368,25 @@ def frame_treatment_code(sem):
     if 'Artifact' in types:return 'A'
     return None
 
+def gold_artifact_pt(face):
+    """Gold outranks the ordinary artifact PT; keep hybrid/Vehicle treatments."""
+    types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or '')
+    return (set(types.get('types',[])) >= {'Artifact','Creature'}
+            and 'Vehicle' not in types.get('subtypes',[])
+            and len(set(face.get('colors') or []) & set('WUBRG'))>=2
+            and not hybrid_colors({**face,**types}))
+
+
+def apply_gold_artifact_pt(data,sem):
+    if not gold_artifact_pt(sem):return False
+    changed=False
+    for frame in data.get('frames',[]):
+        if isinstance(frame,dict) and frame.get('src')=='/img/frames/m15/regular/m15PTA.png':
+            frame.update(src='/img/frames/m15/regular/m15PTM.png',name='Multicolored Power/Toughness')
+            changed=True
+    return changed
+
+
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
@@ -659,8 +681,9 @@ def apply_universal_frame_color_treatment(data,sem):
     pinlines and legendary crowns. Pinlines use the flat gradient fill; crowns
     retain the old two-native-PNG construction with a full-card smooth fade mask
     so their texture, shading, geometry and alpha are preserved. Title/type/rules
-    use multicolor/gold for two or more colors, except classic two-color land
-    title/type bars retain neutral land material. Lands use only land_colors.
+    use multicolor/gold for two or more colors, except classic two-color lands:
+    neutral title/type bars and two native rules textures blended left to right.
+    Lands use only land_colors.
     """
     colors=frame_treatment_colors(sem)
     code=frame_treatment_code(sem)
@@ -686,6 +709,10 @@ def apply_universal_frame_color_treatment(data,sem):
         effect_code=frame_treatment_code(effect_sem)
         if effect_sem is not sem and not effect_code:effect_code='A'
         effect_dual=native.canonical_dual_color_order(effect_colors) if len(effect_colors)==2 else []
+        if effect_dual and 'Land' in effect_sem.get('types',[]):
+            rules_name=f'{effect_dual[0]}/{effect_dual[1]} Land Rules'
+            if frame.get('name') in {rules_name,rules_name+' (Right Blend)'}:
+                rebuilt.append(copy.deepcopy(frame));continue
 
         # A card can contain multiple independent crown components. Process
         # each native color family independently, just as pinlines are handled
@@ -731,6 +758,7 @@ def apply_universal_frame_color_treatment(data,sem):
 
         pin=[copy.deepcopy(m) for m in masks if _is_pinline_mask(m)]
         boxes=[copy.deepcopy(m) for m in masks if isinstance(m,dict) and m.get('name') in _FRAME_BOX_MASKS]
+        had_boxes=bool(boxes)
         other=[copy.deepcopy(m) for m in masks if not (
             isinstance(m,dict) and (
                 _is_pinline_mask(m) or m.get('name') in _FRAME_BOX_MASKS
@@ -743,8 +771,8 @@ def apply_universal_frame_color_treatment(data,sem):
             structural['masks']=other
             rebuilt.append(structural)
 
-        # Classic two-color lands have neutral bars inside their split pinline.
-        # Keep this separate from Rules and full-art land material selection.
+        #Classic lands retain neutral bars, with genuine colored rules textures
+        #blended underneath. Full-art land materials use their own treatment.
         if effect_dual and 'Land' in effect_sem.get('types',[]) and old_src.startswith('/img/frames/m15/regular/m15Frame'):
             bars=[m for m in boxes if m.get('name') in {'Title','Type'}]
             if bars:
@@ -754,6 +782,14 @@ def apply_universal_frame_color_treatment(data,sem):
                 rebuilt.append(layer)
                 boxes=[m for m in boxes if m.get('name') not in {'Title','Type'}]
                 if layer['src']!=old_src:changed=True
+            rules=[m for m in boxes if m.get('name')=='Rules']
+            if rules:
+                first,second=effect_dual
+                left=copy.deepcopy(frame);left.update(name=rules_name,src=f'{dual_land_rules.PREFIX}m15Frame{first}.png',masks=rules)
+                right=copy.deepcopy(left);right.update(name=rules_name+' (Right Blend)',src=f'{dual_land_rules.PREFIX}m15Frame{second}.png',
+                    masks=copy.deepcopy(rules)+[{'name':'Right Blend','src':native.dual_crown_right_blend_mask_src()}])
+                rebuilt.extend([right,left]);changed=True
+                boxes=[m for m in boxes if m.get('name')!='Rules']
 
         # Remaining boxes share the semantic single/gold color.
         if boxes:
@@ -779,7 +815,7 @@ def apply_universal_frame_color_treatment(data,sem):
             if layer['src']!=old:changed=True
             rebuilt.append(layer)
 
-        if not other and not boxes and not pin:
+        if not other and not had_boxes and not pin:
             rebuilt.append(copy.deepcopy(frame))
 
     data['frames']=rebuilt
@@ -864,6 +900,8 @@ def normalize_scryfall_inline_italics(value):
 
 _QUOTED_ORACLE_RE=re.compile(r'“[^”]*”|"[^"]*"')
 _ANY_COLOR_OUTPUT_RE=re.compile(r'\b(?:any(?: one)? color|any combination of colors|any type)\b',re.I)
+LAND_FRAME_COLOR_OVERRIDES={'Myriad Landscape':(), 'Escape Tunnel':(), 'Evolving Wilds':(), 'Terramorphic Expanse':(), 'Three Tree City':tuple('WUBRG'),
+                            'Nykthos, Shrine to Nyx':tuple('WUBRG'), 'Tarnation Vista':tuple('WUBRG')}
 
 def land_frame_colors(types,face,card,oracle_text):
     """Infer land frame colors from the land's own mana production.
@@ -873,6 +911,8 @@ def land_frame_colors(types,face,card,oracle_text):
     canonical example), which should not turn an otherwise green land gold.
     """
     if 'Land' not in types.get('types',[]):return []
+    name=ingest.face_value(face,card,'name','')
+    if name in LAND_FRAME_COLOR_OVERRIDES:return list(LAND_FRAME_COLOR_OVERRIDES[name])
 
     result=[]
     def add(color):
@@ -910,14 +950,28 @@ def land_frame_colors(types,face,card,oracle_text):
             if re.search(rf'\b{re.escape(subtype)}\b',clean):add(color)
 
     # Once the printed rules/type line tells us anything useful, do not widen it
-    # with produced_mana. This is what keeps The World Tree green and Nykthos
-    # colorless rather than treating conditional mana access as intrinsic color.
+    # with produced_mana. This keeps The World Tree green and avoids treating
+    # conditional mana access as intrinsic color except for the named overrides.
     if result or has_direct_mana_ability:return result
 
     produced=ingest.face_value(face,card,'produced_mana',[])
     if isinstance(produced,list):
         for color in produced:add(color)
     return result
+
+
+def colorless_land_frame_refresh(face):
+    """Refresh only lands the former fallback colored from non-mana effects."""
+    types=face if 'types' in face else ingest.split_type_line(face.get('type_line',''))
+    if 'Land' not in types.get('types',[]):return False
+    inferred=face.get('land_colors')
+    if inferred is None:
+        inferred=land_frame_colors(types,face,face,face.get('oracle_text',''))
+        if not inferred and 'Enchantment' in types.get('types',[]):
+            inferred=[color for color in 'WUBRG' if color in (face.get('produced_mana') or [])]
+    if inferred:return False
+    legacy_face={**face,'land_colors':None}
+    return bool(native.infer_land_colors(legacy_face,native.get_type_info(legacy_face)))
 
 
 def has_devoid(face):
@@ -946,7 +1000,7 @@ def semantic(sf,face,index=0):
         produced=get('produced_mana',[])
         if isinstance(produced,list):
             lc=[color for color in 'WUBRG' if color in produced]
-    if lc:d['land_colors']=lc
+    if 'Land' in d['types']:d['land_colors']=lc
     if len(sf.get('card_faces',[]))>1:d.update(parent_name=sf['name'],face_index=index,scryfall_layout=sf.get('layout',''))
     if sf.get('layout')=='prepare':
         faces=sf.get('card_faces',[])
@@ -1512,6 +1566,7 @@ def fit_token_art(data,art_local_path,autofit=True):
     """Fit token artwork to the visible art window for the active token frame."""
     version=str(data.get('version') or '')
     bounds=(
+        {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':.431} if data.get('prepareToken') else
         _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
         {'x':0,'y':0,'width':1,'height':1} if version=='tokenTextlessBorderless' else
@@ -1662,6 +1717,58 @@ def build_token_data(sem,artist,autofit,flags,style='token-full-art'):
     return base,data,('token_regular' if style=='token-full-art' and data['version']=='tokenRegular' else style.replace('-','_')+('_short' if short else '_rules'))
 
 
+PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
+
+
+def apply_prepare_token_layout(source,token,frame_code):
+    """Keep Prepare's two lower panels beneath the classic arched token header."""
+    data=copy.deepcopy(source)
+    width=int(data['width']);height=int(data['height']);cutoff=round(.5558*height)
+    def clip(top):
+        y=0 if top else cutoff
+        h=cutoff if top else height-cutoff
+        svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"><rect x="0" y="{y}" width="{width}" height="{h}" fill="white"/></svg>'
+        return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
+    upper,lower=clip(True),clip(False)
+    # On a second conversion, replace the header and clip rather than stacking them.
+    frames=[]
+    for frame in data.get('frames',[]):
+        if frame.get('prepareTokenHeader') or 'Nickname Title' in str(frame.get('name','')):continue
+        frame['masks']=[mask for mask in frame.get('masks',[]) if mask.get('name')!='Prepare lower panels']
+        names={mask.get('name','') for mask in frame['masks']}
+        # Explicit copy-token colors affect the host; its prepared spell keeps
+        # its independently compiled colors and rules.
+        if not any('Prepare Spell' in name or name=='Rules (Right Half)' for name in names):
+            code=frame_code if frame_code in 'WUBRGMA' else 'A'
+            if 'Pinline' in names and str(frame.get('src','')).startswith('data:image'):
+                frame['src']=f'/img/frames/prepare/regular/{code.lower()}.png'
+            else:frame['src']=_frame_effect_source(str(frame.get('src','')),code)
+        frame['masks'].append({'name':'Prepare lower panels','src':lower})
+        frames.append(frame)
+    for frame in token.get('frames',[]):
+        if 'Power/Toughness' in str(frame.get('name','')):
+            # Token P/T overrides keep the original Prepare badge geometry.
+            for original in frames:
+                if 'Power/Toughness' in str(original.get('name','')):
+                    original['src']=frame['src'];original['name']=frame['name']
+            continue
+        layer=copy.deepcopy(frame)
+        layer.setdefault('masks',[]).append({'name':'Arched upper frame','src':upper})
+        layer['prepareTokenHeader']=True
+        frames.append(layer)
+    data['frames']=frames
+    text=data['text'];converted=token['text']
+    # Title/mana use the token header. Everything below keeps Prepare geometry.
+    for key in ('title','mana'):text[key]=copy.deepcopy(converted[key])
+    text.pop('nickname',None)
+    text['title'].update(width=.8292)
+    for key in ('type','pt'):
+        if key in converted:text.setdefault(key,{})['text']=converted[key].get('text','')
+    if 'tokenColorOverride' in token:data['tokenColorOverride']=token['tokenColorOverride']
+    data['prepareToken']=True
+    return data
+
+
 def token_has_short_text(sem):
     # Only compact plain keywords qualify. Activated abilities, reminder text,
     # multiple lines and flavor always retain the larger rules area.
@@ -1674,6 +1781,22 @@ def center_short_token_rules(data):
     content=str(rules.get('text') or '').strip()
     if content and token_has_short_text({'oracle_text':content,'flavor_text':(text.get('flavor') or {}).get('text')}):
         rules['align']='center'
+
+
+def reserve_token_mana_space(data):
+    """Fit the visible token name inside the space left by its mana cost."""
+    text=data.get('text') or {}
+    mana=text.get('mana') or {}
+    symbols=len(re.findall(r'\{[^{}]+\}',str(mana.get('text') or '')))
+    if not symbols:return
+    title=text.get('nickname') if isinstance(text.get('nickname'),dict) else text.get('title')
+    if not isinstance(title,dict):return
+    left=float(title.get('x',.0854))
+    # Match the existing nickname clearance, scaling for larger mana glyphs.
+    scale=max(1,float(mana.get('size') or 71/1638)/(71/1638))
+    right=float(mana.get('x') or 0)+float(mana.get('width',.9292))-(.034+.052*symbols*scale)
+    title['width']=min(float(title.get('width',.8292)),max(.01,right-left))
+    title['oneLine']=True
 
 
 def fit_token_rules_above_pt(data):
@@ -1699,7 +1822,8 @@ def configure_token_style(data,code,style,short):
     if not classic and not large_art:frame['src']=_token_frame_src(code)
     pinline='/img/frames/token/tokenMaskRegularPinline.png'
     if classic:
-        frame['src']=f'/img/frames/token/m15/{family}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
+        frame['src']=(classic_token_frame.PREFIX+family+'-c.png' if code=='C' else
+                      f'/img/frames/token/m15/{family}/{(code if code in "WUBRGMAL" else "A").lower()}.png')
         pinline=f'/img/frames/token/m15/{family}/pinline.svg'
     elif large_art:
         folder='textless-borderless' if borderless else 'textless'
@@ -1727,7 +1851,7 @@ def configure_token_style(data,code,style,short):
     if classic:
         for field in text.values():
             field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
-        text['title']['color']='#fde367'
+        text['title']['color']='white' if code=='C' else '#fde367'
     elif style=='token-full-art':apply_modern_token_text(data,code)
     else:apply_full_art_text(data)
 
@@ -1790,7 +1914,7 @@ def build_custom_helper_data(sem,artist,autofit,flags):
 def apply_unboxed_helper_treatment(data,sem,nickname):
     """Use the native Godzilla title and readable text over softly shaded art."""
     bounds=copy.deepcopy(_NICKNAME_TITLE_BOUNDS)
-    bounds['height']=.1053 if nickname else .069
+    bounds['height']=.1053 if nickname else TITLE_BAR_HEIGHT
     svg='''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2100">
       <defs><linearGradient id="helperFade" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="black" stop-opacity="0"/>
@@ -2461,7 +2585,7 @@ def _apply_godzilla_frame(data,sem,refit=False):
     ]
     kind='Crown' if legendary else 'Title'
     title_bounds=copy.deepcopy(_NICKNAME_CROWN_BOUNDS if legendary else _NICKNAME_TITLE_BOUNDS)
-    title_bounds['height']=.1286 if legendary else .069
+    title_bounds['height']=.1286 if legendary else TITLE_BAR_HEIGHT
     main_bar={
         'name':f'{color_name} {kind}',
         'src':f'/img/frames/proxy-foundry/godzilla/{kind}{code if code in "WUBRGMAL" else "A"}.png',
@@ -2717,17 +2841,34 @@ class Compiler:
     def __init__(self,store):self.store=store
     def template_identity(self,group,choice,face=None):
         choice=RETIRED_BUILTINS.get(choice,choice)
+        land_override_version=int(group in {'land','legendary-land','basic-land'} and face is not None and face.get('name') in LAND_FRAME_COLOR_OVERRIDES)
+        colorless_land_version=int(group in {'land','legendary-land','basic-land'} and face is not None and colorless_land_frame_refresh(face))
+        gold_artifact_pt_version=int(choice in {'auto','normal'} and group not in {'token','station','flip'} and face is not None and gold_artifact_pt(face))
+        token_mana_version=int(group=='token' and face is not None and bool(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or ''))))
+        classic_colorless_version=int(group=='token' and choice=='token-classic' and face is not None and
+                                      not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line','')) and
+                                      not set(face.get('types',[]))&{'Artifact','Land'})
+        # Only compact legendary lands changed their independent title/crown stack.
+        compact_crown_version=int(group=='legendary-land' and choice in {'auto','legend-land'})
+        title_edge_version=int(choice.startswith('godzilla-') or (choice in {'auto','legend-land'} and group in {'land','helper'}))
         # Only Devoid faces need refreshed materials; preserve unrelated caches.
         devoid_version=2*int(choice in {'auto','normal'} and group in {'standard','legendary'} and face is not None and has_devoid(face))
         indicator_version=int(choice in {'auto','normal'} and group in {'transform-front','transform-back'} and face is not None and isinstance(face.get('color_indicator'),list) and any(c in 'WUBRG' for c in face['color_indicator'] if isinstance(c,str) and len(c)==1))
         marker_version=int(choice in {'auto','normal'} and group=='transform-back' and face is not None and _left_transform_back(face))
         saga_version=int(choice in {'auto','normal'} and group=='transform-back' and face is not None and
                          ('Saga' in face.get('subtypes',[]) or re.search(r'\bSaga\b',face.get('type_line','')) is not None))
+        dual_land_version=0
+        if choice=='normal' and group in {'land','legendary-land','basic-land'} and face is not None:
+            land_colors=face.get('land_colors')
+            if land_colors is None:
+                types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
+                land_colors=land_frame_colors(types,face,face,face.get('oracle_text',''))
+            dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
@@ -3011,8 +3152,10 @@ class Compiler:
         data['artSource']='/api/assets/'+art_id
         data['setSymbolSource']='/img/blank.png' if unboxed_helper or recipe in {'art_series_scan','helper_scan'} else '/api/assets/'+symbol_id
         if choice in {'auto','normal'} and not options.get('rawCard'):
+            apply_gold_artifact_pt(data,sem)
             apply_hybrid_frame_treatment(data,sem)
         if group=='token':
+            reserve_token_mana_space(data)
             fit_token_rules_above_pt(data)
             center_short_token_rules(data)
         if group=='planeswalker' and data.get('planeswalker') and (choice=='auto' or choice in BUILTIN_TEMPLATE_VERSIONS):

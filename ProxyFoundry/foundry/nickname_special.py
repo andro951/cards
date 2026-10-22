@@ -3,6 +3,7 @@
 The upstream PNGs stay unchanged. Optional subtitles are hidden with a mask;
 all material, crowns, arrows and loyalty pieces come from the pinned library.
 """
+from .nickname_geometry import TITLE_BAR_HEIGHT
 import copy
 from urllib.parse import quote
 from .legacy import compiler as native
@@ -65,7 +66,7 @@ def apply_planeswalker(data, sem, code):
                 'bounds':{'x':.0307,'y':.0077,'width':.9387,'height':.1024}},
                 {'name':'Planeswalker Godzilla title',
                  'src':f'/img/frames/proxy-foundry/godzilla/Title{code}.png','masks':[],
-                 'bounds':{'x':.0494,'y':.0291,'width':.9014,'height':.069}},
+                 'bounds':{'x':.0494,'y':.0291,'width':.9014,'height':TITLE_BAR_HEIGHT}},
                 {'name':'Normal crown outline','src':'/img/frames/m15/crowns/m15CrownFloatingOutline.png','masks':[],
                  'bounds':{'x':.028,'y':.0058,'width':.944,'height':.1062}},header_cutout,frame]
     data['version']='planeswalkerNicknameTall' if tall else 'planeswalkerNickname'

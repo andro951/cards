@@ -1,4 +1,5 @@
 import pytest
+from itertools import combinations
 from pathlib import Path
 from foundry.compiler import apply_universal_frame_color_treatment,_crown_color_variant
 
@@ -140,8 +141,28 @@ def test_classic_land_bars_use_neutral_material_for_exactly_two_colors(colors,ex
         assert layers(data,effect)[0]['src'].endswith('m15Frame'+expected+'.png')
     assert layers(data,'Frame')[0]['src'].endswith('m15FrameL.png')
     if len(colors)==2:
-        assert layers(data,'Rules')[0]['src'].endswith('m15FrameM.png')
+        from foundry.legacy import compiler as native
+        first,second=native.canonical_dual_color_order(colors)
+        rules=layers(data,'Rules')
+        assert [f['src'] for f in rules]==[f'/img/frames/proxy-foundry/land-rules/colored-texture-v2/m15Frame{second}.png',f'/img/frames/proxy-foundry/land-rules/colored-texture-v2/m15Frame{first}.png']
+        assert [m['name'] for m in rules[0]['masks']]==['Rules','Right Blend']
+        assert [m['name'] for m in rules[1]['masks']]==['Rules']
         assert layers(data,'Pinline')[0]['src'].startswith('data:image/svg+xml;utf8,')
+
+
+@pytest.mark.parametrize('colors',list(combinations('WUBRG',2)))
+def test_classic_dual_land_rules_preserve_native_textures_and_do_not_duplicate_on_repeat(colors):
+    import copy
+    from foundry.legacy import compiler as native
+    data={'frames':[{'name':'Land Frame','src':'/img/frames/m15/regular/m15FrameL.png',
+                     'masks':[mask('Rules','/img/frames/m15/regular/m15MaskRules.png')]}]}
+    sem={'types':['Land'],'land_colors':list(colors),'colors':[]}
+    apply_universal_frame_color_treatment(data,sem)
+    first,second=native.canonical_dual_color_order(colors)
+    assert [f['src'] for f in data['frames']]==[f'/img/frames/proxy-foundry/land-rules/colored-texture-v2/m15Frame{second}.png',f'/img/frames/proxy-foundry/land-rules/colored-texture-v2/m15Frame{first}.png']
+    assert data['frames'][0]['masks'][1]['src']==native.dual_crown_right_blend_mask_src()
+    before=copy.deepcopy(data);apply_universal_frame_color_treatment(data,sem)
+    assert data==before
 
 
 def test_single_regular_crown_fallback_restores_old_two_native_png_blend():

@@ -140,7 +140,7 @@ def run_all(repo, output, *, emit=print):
             log("Some decks failed. Previous result folders were kept; this run was not published.")
         else:
             try:
-                publish_outputs(stage, output, omit_empty=True)
+                publish_outputs(stage, output, omit_empty=True, allow_in_place=True, warning=log)
             except RecoveryError:
                 preserve_stage = True
                 raise

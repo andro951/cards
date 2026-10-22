@@ -1,4 +1,5 @@
 """Approved Godzilla/Werewolf header pieces, independent of the lower frame."""
+from .nickname_geometry import TITLE_BAR_HEIGHT
 import copy,io,re
 from urllib.parse import quote
 from PIL import Image
@@ -75,7 +76,7 @@ def bar_fills(normal,front,*,right_icon=False):
             code=code[1] if code else 'M'
             layer.update(name='Godzilla transform title material',
                          src='/img/frames/proxy-foundry/'+('godzilla/Title' if front else 'transform/TitleColored')+code+'.png',
-                         bounds={'x':.0494,'y':.0405,'width':.9014,'height':.069})
+                         bounds={'x':.0494,'y':.0405,'width':.9014,'height':TITLE_BAR_HEIGHT})
             if right_icon:
                 # Mirror only the clip; the Godzilla bar itself is symmetric.
                 for mask in layer['masks']:

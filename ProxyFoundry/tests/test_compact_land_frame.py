@@ -32,7 +32,25 @@ def test_classic_scalding_tarn_has_neutral_bars_and_dual_pinline(compiler_setup,
         assert bars and all(f['src']=='/img/frames/m15/regular/m15FrameL.png' for f in bars)
     pinlines=[f for f in frames if any(m.get('name')=='Pinline' for m in f.get('masks',[]))]
     assert pinlines and all(f['src'].startswith('data:image/svg+xml;utf8,') for f in pinlines)
+    rules=[f for f in frames if any(m.get('name')=='Rules' for m in f.get('masks',[]))]
+    assert [f['src'] for f in rules]==['/img/frames/m15/regular/m15FrameR.png','/img/frames/m15/regular/m15FrameU.png']
+    assert [m['name'] for m in rules[0]['masks']]==['Rules','Right Blend']
     assert ('nickname' in result['data']['text'])==bool(nickname)
+
+
+def test_dual_rules_material_refresh_is_scoped_to_classic_dual_lands(compiler_setup):
+    from foundry.compiler import semantic
+    compiler,_,_=compiler_setup
+    sf={'name':'Wooded Foothills','type_line':'Land','colors':[],
+        'oracle_text':'{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle.'}
+    base=compiler.template_identity('land','normal',{})
+    dual=compiler.template_identity('land','normal',sf)
+    assert dual==(base[0],base[1]+1,base[2]+1)
+    assert compiler.template_identity('land','normal',semantic(sf,sf))==dual
+    for choice in ('auto','legend-land','godzilla-land'):
+        assert compiler.template_identity('land',choice,sf)==compiler.template_identity('land',choice,{})
+    for colors in ([],['R'],list('WUBRG')):
+        assert compiler.template_identity('land','normal',{'types':['Land'],'land_colors':colors})==base
 
 @pytest.mark.parametrize('legendary,nickname',[(False,False),(False,True),(True,False),(True,True)])
 @pytest.mark.parametrize('choice',['auto','legend-land','land'])
@@ -67,8 +85,9 @@ def test_default_land_four_headers_and_saved_retired_selection(compiler_setup,le
         assert len(crowns)==2
         assert any(f['src'].endswith('m15CrownBFloating.png') for f in crowns)
         assert any(f['src']==PREFIX+'CrownOutline.png' for f in crowns)
-        assert any(f['src']=='/img/frames/proxy-foundry/godzilla/TitleB.png' for f in frames)
-        assert not any('/TitleBlack' in f['src'] for f in frames)
+        assert any(f['src']==PREFIX+'TitleBlackB.png' for f in frames)
+        assert not any('/godzilla/Title' in f['src'] for f in frames)
+        assert not any(m['src']=='/img/frames/m15/boxTopper/short/pinline.svg' for f in frames for m in f['masks'])
     if choice=='land':assert result['templateKey']==compiler.template_identity('legendary-land' if legendary else 'land','legend-land')[0]
 
 def test_retirement_is_hidden_and_persisted_settings_are_redirected(compiler_setup):
@@ -172,7 +191,7 @@ def test_compact_title_material_is_independent_of_card_colors(compiler_setup,leg
     assert all('opacity' not in f for f in headers) # Opacity is baked once, not applied twice.
     if not legendary:
         assert all('/godzilla/TitleJoined' in frame['src'] if nickname else '/godzilla/Title' in frame['src'] for frame in headers)
-        assert headers[0]['bounds']=={'x':.0494,'y':.0405,'width':.9014,'height':.1053 if nickname else .069}
+        assert headers[0]['bounds']=={'x':.0494,'y':.0405,'width':.9014,'height':.1053 if nickname else .0724}
         assert not any('/compact-land/TrueName' in frame['src'] for frame in frames)
         pinlines=[f for f in frames if any(m.get('src')==PREFIX+'lower-pinline.svg' for m in f.get('masks',[]))]
         assert pinlines and all('opacity' not in f for f in pinlines)
@@ -258,3 +277,17 @@ def test_title_tint_preserves_rim_and_matches_type_interior_alpha():
     assert result.getpixel((714,130))==(0,0,0,144)
     assert result.getpixel((714,200))==crown.getpixel((714,200))
     assert result.getpixel((20,130))==crown.getpixel((20,130))
+
+
+def test_compact_header_refresh_keeps_classic_and_basic_versions_unchanged(compiler_setup):
+    from foundry.compiler import AUTO_TEMPLATE_VERSIONS,BUILTIN_TEMPLATE_VERSIONS
+    compiler,_,_=compiler_setup
+    assert compiler.template_identity('legendary-land','auto')[1]==AUTO_TEMPLATE_VERSIONS['legendary-land']+1
+    assert compiler.template_identity('land','auto')[1]==AUTO_TEMPLATE_VERSIONS['land']+1
+    assert compiler.template_identity('basic-land','auto')[1]==AUTO_TEMPLATE_VERSIONS['basic-land']
+    assert compiler.template_identity('legendary-land','legend-land')[1]==BUILTIN_TEMPLATE_VERSIONS['legend-land']+1
+    assert compiler.template_identity('land','legend-land')[1]==BUILTIN_TEMPLATE_VERSIONS['legend-land']+1
+    assert compiler.template_identity('legendary-land','godzilla-land')[1]==BUILTIN_TEMPLATE_VERSIONS['godzilla-land']+1
+
+    assert compiler.template_identity('legendary-land','normal')[1]==BUILTIN_TEMPLATE_VERSIONS['normal']+1
+    assert compiler.template_identity('standard','normal')[1]==BUILTIN_TEMPLATE_VERSIONS['normal']

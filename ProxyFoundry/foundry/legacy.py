@@ -34,6 +34,10 @@ def _compiler_source(text):
     if text.count(_MOROPHON_WRAP_RULE)!=1:
         raise RuntimeError('Unexpected v58 Morophon compatibility rule; refusing to silently alter Card Tools.')
     text=text.replace(_MOROPHON_WRAP_RULE,'').replace('if re.match(r"^(?:https?|data):",explicit,re.I):','if re.match(r"^(?:https?|data):",explicit,re.I) or Path(explicit).is_file():')
+    anchor='    explicit=colors(card.get("land_colors"))\n    if explicit: return explicit'
+    if text.count(anchor)!=1:raise RuntimeError('Unexpected land color inference in preserved compiler.')
+    # An explicit empty list means colorless. Do not rescan activation costs.
+    text=text.replace(anchor,'    if isinstance(card.get("land_colors"),list): return colors(card["land_colors"])\n'+anchor)
     anchor='    entry=recipe_data(recipe,card,type_info); entry["key"]=name; data=entry["data"]'
     if text.count(anchor)!=1:raise RuntimeError('Unexpected token seed schema in preserved compiler.')
     text=text.replace(anchor,'''    token_seed=bool(card.pop("_proxy_token_seed",False))

@@ -1,5 +1,7 @@
 import io
 import os
+import ctypes
+from contextlib import contextmanager
 import tempfile
 import unittest
 import zipfile
@@ -20,6 +22,25 @@ def png(color="red", metadata=None):
         options["pnginfo"] = info
     Image.new("RGBA", (24, 24), color).save(out, "PNG", **options)
     return out.getvalue()
+
+
+@contextmanager
+def windows_open_handle(path, *, directory=False):
+    """Model an Explorer/viewer handle that denies delete/rename sharing."""
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                  wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    handle = kernel.CreateFileW(str(path), 1 if directory else 0x80000000,
+                                3 if directory else 1, None, 3, 0x02000000 if directory else 0x80, None)
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        yield
+    finally:
+        kernel.CloseHandle(handle)
 
 
 class BatchTests(unittest.TestCase):
@@ -146,11 +167,12 @@ class BatchTests(unittest.TestCase):
         latest = self.archive("Deck", "latest", 2000, {"card.png": png("blue")})
         self.run_batch()
         previous = (self.output / "diff/Deck/card.png").read_bytes()
+        (latest.with_suffix("") / "card.png").write_bytes(png("green"))
         (latest.with_suffix("") / "added.png").write_bytes(png())
         replace = os.replace
 
         def locked_output(source, destination):
-            if Path(destination) == self.output / "new":
+            if Path(source) == self.output / "diff" or Path(destination) == self.output / "new/Deck/added.png":
                 raise PermissionError("Simulated locked output")
             return replace(source, destination)
 
@@ -158,6 +180,101 @@ class BatchTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 self.run_batch()
         self.assertEqual((self.output / "diff/Deck/card.png").read_bytes(), previous)
+        self.assertFalse((self.output / "new/Deck/added.png").exists())
+
+    def test_locked_category_directory_publishes_files_and_removes_stale_results(self):
+        self.archive("Deck", "old", 1000, {"card.png": png()})
+        self.archive("Deck", "latest", 2000, {"card.png": png("blue"), "added.png": png("green")})
+        stale = self.output / "diff/OldDeck/stale.png"
+        stale.parent.mkdir(parents=True)
+        stale.write_bytes(png())
+        replace = os.replace
+        def locked_root(source, destination):
+            if Path(source) == self.output / "diff":
+                raise PermissionError("Folder open in Explorer")
+            return replace(source, destination)
+        with patch("compare_core.os.replace", side_effect=locked_root):
+            result = self.run_batch()
+        self.assertTrue(result.published)
+        self.assertEqual((self.output / "diff/Deck/card.png").read_bytes(), png("blue"))
+        self.assertEqual((self.output / "new/Deck/added.png").read_bytes(), png("green"))
+        self.assertFalse(stale.parent.exists())
+        self.assertIn("without renaming", (self.output / "last-run.txt").read_text(encoding="utf-8"))
+
+    def test_failed_rollback_keeps_old_file_backups_for_recovery(self):
+        from compare_core import RecoveryError
+        self.archive("Deck", "old", 1000, {"card.png": png()})
+        latest = self.archive("Deck", "latest", 2000, {"card.png": png("blue")})
+        self.run_batch()
+        (latest.with_suffix('') / 'card.png').write_bytes(png('green'))
+        (latest.with_suffix('') / 'added.png').write_bytes(png())
+        replace = os.replace
+        def fail_publish_and_rollback(source, destination):
+            source, destination = Path(source), Path(destination)
+            if (source == self.output / 'diff' or destination == self.output / 'new/Deck/added.png'
+                    or source == self.output / 'diff/Deck/card.png' and 'previous-files' not in str(destination)):
+                raise PermissionError('Locked during publication/rollback')
+            return replace(source, destination)
+        with patch('compare_core.os.replace', side_effect=fail_publish_and_rollback):
+            with self.assertRaises(RecoveryError):
+                self.run_batch()
+        stages = list(self.output.glob('.image-compare-all-results-*'))
+        self.assertEqual(len(stages), 1)
+        self.assertEqual((stages[0] / 'previous-files/diff/Deck/card.png').read_bytes(), png('blue'))
+
+    def test_rollback_restores_old_file_when_new_result_used_its_name_as_directory(self):
+        from compare_core import publish_outputs
+        previous = self.output / 'diff/Deck/collision'
+        previous.parent.mkdir(parents=True)
+        previous.write_bytes(b'old output')
+        stage = self.output / '.image-compare-results-fixture'
+        (stage / 'diff/Deck/collision').mkdir(parents=True)
+        (stage / 'diff/Deck/collision/card.png').write_bytes(png())
+        (stage / 'new/Deck').mkdir(parents=True)
+        (stage / 'new/Deck/added.png').write_bytes(png())
+        replace = os.replace
+        def locked_output(source, destination):
+            if Path(source) == self.output / 'diff' or Path(destination) == self.output / 'new/Deck/added.png':
+                raise PermissionError('Locked output')
+            return replace(source, destination)
+        with patch('compare_core.os.replace', side_effect=locked_output):
+            with self.assertRaises(PermissionError):
+                publish_outputs(stage, self.output, omit_empty=True, allow_in_place=True)
+        self.assertEqual(previous.read_bytes(), b'old output')
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows directory sharing regression')
+    def test_real_windows_handles_on_root_and_deck_do_not_block_publication(self):
+        self.archive("Deck", "old", 1000, {"card.png": png()})
+        latest = self.archive("Deck", "latest", 2000, {"card.png": png("blue")})
+        self.run_batch()
+        (latest.with_suffix('') / 'card.png').write_bytes(png('green'))
+        with windows_open_handle(self.output / 'diff', directory=True), windows_open_handle(self.output / 'diff/Deck', directory=True):
+            result = self.run_batch()
+        self.assertTrue(result.published)
+        self.assertEqual((self.output / 'diff/Deck/card.png').read_bytes(), png('green'))
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows file sharing regression')
+    def test_real_locked_file_preserves_previous_results_and_reports_viewer(self):
+        self.archive("Deck", "old", 1000, {"card.png": png()})
+        self.archive("Deck", "latest", 2000, {"card.png": png("blue")})
+        self.run_batch()
+        previous = self.output / 'diff/Deck/card.png'
+        with windows_open_handle(self.output / 'diff', directory=True), windows_open_handle(previous):
+            with self.assertRaisesRegex(PermissionError, 'image viewer.*previous results were restored'):
+                self.run_batch()
+        self.assertEqual(previous.read_bytes(), png('blue'))
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows empty-directory sharing regression')
+    def test_empty_locked_directory_is_reported_without_failing_completed_results(self):
+        self.archive("Deck", "old", 1000, {"card.png": png()})
+        latest = self.archive("Deck", "latest", 2000, {"card.png": png("blue")})
+        self.run_batch()
+        (latest.with_suffix('') / 'card.png').write_bytes(png())
+        with windows_open_handle(self.output / 'diff', directory=True):
+            result = self.run_batch()
+            self.assertTrue(result.published)
+            self.assertEqual(list((self.output / 'diff').rglob('*.png')), [])
+        self.assertIn('Empty results folder', (self.output / 'last-run.txt').read_text(encoding='utf-8'))
 
 
 if __name__ == "__main__":

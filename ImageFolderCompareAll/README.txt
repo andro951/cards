@@ -45,6 +45,12 @@ including removing categories or decks that no longer have differences. Source
 images and ZIPs are kept. If any eligible deck fails, the previous complete result
 is kept. Details and skip reasons are written to last-run.txt.
 
+If Windows keeps a result folder open, publication falls back to replacing files
+inside the existing folders, with backups and rollback if any file cannot move.
+Explorer can stay open on diff or a deck subfolder. A viewer that locks an actual
+image file must be closed if reported. An empty folder Windows refuses to remove
+is left empty and noted in last-run.txt; it does not fail a completed comparison.
+
 FROM SOURCE
   Requires Python 3.12+, Pillow, and the sibling ImageFolderCompare source folder.
   python compare_all.py

@@ -49,6 +49,7 @@ export class GenerationScreen {
         this.dialog.append(title,deck,this.bar,this.percent,this.time,this.cancel);
         document.body.append(this.dialog);this.dialog.showModal();this.cancel.disabled=true;
         this.timer=setInterval(this.draw,1000);generationScreen.active=this;
+        window.dispatchEvent(new Event(`pf-generation-state`));
         document.querySelector(`#activity`)?.classList.add(`hidden`);
     }
     attach=owner=>{this.owner=owner;this.cancel.disabled=false;};
@@ -72,6 +73,8 @@ export class GenerationScreen {
         clearInterval(this.timer);this.dialog.close();this.dialog.remove();
         if(generationScreen.active===this)
             generationScreen.active=null;
+
+        window.dispatchEvent(new Event(`pf-generation-state`));
     };
 }
 export async function withGenerationScreen(name,cards,operation) {

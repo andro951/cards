@@ -6,6 +6,29 @@ export const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const work=new WorkCoordinator(()=>refreshWorkActivity());
 export const state={csrf:'',bootstrap:null,decks:[],templates:[],selected:new Set(),dirty:false,get busy(){return work.busy},helper:false,route:'decks',activeDeck:null,routeEpoch:0,deckTab:'cards'};
+const generationButtons=new Map();
+export function bindGenerationButton(button,deckIds,{requireIdle=false}={}){
+  if(!button)return;
+  generationButtons.set(button,{deckIds:[...deckIds],title:button.getAttribute('title'),requireIdle});
+  refreshGenerationButtons();
+}
+export function refreshGenerationButtons(){
+  for(const [button,binding] of generationButtons){
+    if(!button.isConnected){generationButtons.delete(button);continue;}
+    const task=work.resources.get('workspace')||work.resources.get('batch-review')||(binding.requireIdle?[...work.tasks.values()][0]:binding.deckIds.map(id=>work.resources.get('deck:'+id)).find(Boolean));
+    const setup=state.setupActions;
+    const setupBusy=setup&&binding.deckIds.includes(setup.deckId)&&setup.generationBlocked?.();
+    const reason=task?task.label+' is in progress.':generationScreen.active?'Card generation is in progress.':setupBusy?'Finishing your artwork and setup changes.':'';
+    const disabled=Boolean(reason);
+    if(button.disabled!==disabled)button.disabled=disabled;
+    const title=reason||binding.title;
+    if(button.getAttribute('title')!==title){
+      if(title===null)button.removeAttribute('title');
+      else button.title=title;
+    }
+  }
+}
+window.addEventListener('pf-generation-state',refreshGenerationButtons);
 export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024**2).toFixed(1)+' MB':Math.ceil(n/1024)+' KB';
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const asset=id=>id?'/api/assets/'+id:'';
@@ -156,12 +179,13 @@ function drawActivity(kind,title,detail,done=0,total=0){
   if(!$('#activity-log').textContent.endsWith(line+'\n'))$('#activity-log').textContent=($('#activity-log').textContent+line+'\n').split('\n').slice(-80).join('\n');
 }
 function refreshWorkActivity(){
+  refreshGenerationButtons();
   const panel=$('#activity');if(!panel)return;
   if(generationScreen.active){panel.classList.add('hidden');return;}
   const task=work.visible();
   if(task){
     const p=task.progress;drawActivity(p.kind,p.title,p.detail,p.done,p.total);
-    const cancel=$('#activity-cancel');cancel.textContent=task.controller.signal.aborted?'Cancelling…':'Cancel';cancel.disabled=task.controller.signal.aborted;cancel.onclick=()=>task.controller.abort();
+    const cancel=$('#activity-cancel');cancel.textContent=task.controller.signal.aborted?'Cancelling…':'Cancel';cancel.disabled=task.controller.signal.aborted||task.cancellable===false;cancel.onclick=()=>task.controller.abort();
   }
   let queued=$('#queued-work');
   if(!queued){queued=document.createElement('div');queued.id='queued-work';queued.style.display='grid';queued.style.gap='8px';panel.append(queued);}

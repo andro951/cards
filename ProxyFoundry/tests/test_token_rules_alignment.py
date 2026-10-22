@@ -127,8 +127,9 @@ def test_only_token_template_versions_are_advanced(workspace):
     store,_,_=workspace;compiler=Compiler(store)
     assert compiler.template_identity('token','auto')[1]==AUTO_TEMPLATE_VERSIONS['token']+3
     assert compiler.template_identity('standard','auto')[1]==AUTO_TEMPLATE_VERSIONS['standard']
-    assert compiler.template_identity('token','godzilla-card')[1]==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+2
-    assert compiler.template_identity('standard','godzilla-card')[1]==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']
+    # The Godzilla title-bottom-outline refresh applies to both groups.
+    assert compiler.template_identity('token','godzilla-card')[1]==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+3
+    assert compiler.template_identity('standard','godzilla-card')[1]==BUILTIN_TEMPLATE_VERSIONS['godzilla-card']+1
 
 
 @pytest.mark.parametrize('converted',[False,True])

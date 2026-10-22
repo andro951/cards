@@ -1,10 +1,12 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,humanStatus,date,thumbnail,nav,confirmAction,saveApiFile,showWorkspaceError} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,humanStatus,date,thumbnail,nav,confirmAction,saveApiFile,showWorkspaceError,bindGenerationButton} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';
 import {showOrders,chooseOrder,setupHelper} from './orders.js';
 import {showSettings,showHelp} from './settings.js';
 import {renderDecks} from './render.js';
 import {visibleDecks,resumeDeletions} from './deletion.js';
+import {runTemporaryBatchReview,showBatchReviewResult,temporaryBatchReviewAvailable} from './batch-review.js';
+import {recordDiagnostic} from './diagnostics.js';
 
 export async function refreshLibrary({templates=true}={}){
   state.decks=visibleDecks(await api('/api/decks'));if(templates)state.templates=await api('/api/templates');
@@ -18,6 +20,7 @@ function selectTray(){
   tray.classList.remove('hidden');tray.innerHTML=`<strong>${ids.length} deck${ids.length===1?'s':''} · ${count} cards</strong><button class="button quiet small" id="clear-selection">Clear</button><button class="button small" id="render-selected">Generate images</button><button class="button primary small" id="order-selected">Review & Print</button>`;
   $('#clear-selection').onclick=()=>{state.selected.clear();filterLibrary();selectTray();};
   $('#render-selected').onclick=()=>attempt(async()=>{await renderDecks(ids);});
+  bindGenerationButton($('#render-selected'),ids);
   $('#order-selected').onclick=()=>attempt(()=>chooseOrder(ids));
 }
 let filter='all',query='';
@@ -57,6 +60,21 @@ function showLibrary(){
   deckActions.append(search,selectAll);$('.toolbar')?.append(deckActions);
   const savedOrders=document.createElement('button');savedOrders.type='button';savedOrders.className='button quiet small';savedOrders.textContent='Saved print orders';
   savedOrders.onclick=()=>nav('orders');deckActions.append(savedOrders);
+  const batchReview=document.createElement('button');
+  batchReview.type='button';batchReview.className='button quiet small';
+  batchReview.textContent='Temporary batch review';
+  batchReview.title='Developer-only: prepare stale decks and regenerate those marked Needs preparation or Ready to render, save review ZIPs, and run all-check.';
+  batchReview.id='temporary-batch-review';
+  batchReview.onclick=()=>attempt(async()=>{
+    const result=await runTemporaryBatchReview();
+    await refreshLibraryProgress();
+    showBatchReviewResult(result);
+  });
+  temporaryBatchReviewAvailable().then(result=>{
+    if(!result.available||!deckActions.isConnected||state.route!=='decks')return;
+    deckActions.append(batchReview);
+    bindGenerationButton(batchReview,state.decks.map(deck=>deck.id),{requireIdle:true});
+  }).catch(error=>recordDiagnostic('Temporary batch review unavailable',error.message));
   for(const tile of $$('.deck-tile')){
     $('.tile-open',tile)?.remove();
     tile.style.cursor='pointer';
