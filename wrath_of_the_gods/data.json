@@ -542,7 +542,21 @@
       "scryfall_url": "https://scryfall.com/card/mh2/260/verdant-catacombs?utm_source=api"
     }
   ],
-  "tokenAssignments": [],
+  "tokenAssignments": [
+    {
+      "front": {
+        "name": "Replenish",
+        "oracle_id": "523ae937-5535-490d-96ea-07f331b5e5ad",
+        "scryfall_id": "7fd2fe13-bbc0-42b7-bc42-3b51910ce118"
+      },
+      "back": {
+        "name": "Treasure",
+        "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+        "scryfall_id": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9"
+      },
+      "quantity": 1
+    }
+  ],
   "tokenTreatments": [
     {
       "face": {
