@@ -157,6 +157,7 @@ export function mountWorkspaceFiles(FS,owner) {
         prefetchArtwork:urls=>call(`prefetch-artwork`,`assets`,{},new TextEncoder().encode(String(urls))),
         startArtwork:urls=>call(`start-artwork`,`assets`,{},new TextEncoder().encode(String(urls))),
         pollArtwork:id=>call(`poll-artwork`,String(id)),
-        cancelArtwork:id=>call(`cancel-artwork`,String(id))
+        cancelArtwork:id=>call(`cancel-artwork`,String(id)),
+        orderZip:(operation,path,entries)=>call(operation,String(path),{},entries?new TextEncoder().encode(String(entries)):null)
     };
 }

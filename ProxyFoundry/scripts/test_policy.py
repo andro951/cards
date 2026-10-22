@@ -22,6 +22,7 @@ EXTENDED_MODULES={
     'test_native_readiness.py',
     'test_native_task_yields.py',
     'test_order_dialog.py',
+    'test_order_zip_browser.py',
     'test_print_bridge.py',
     'test_prepare_native.py',
     'test_station_native.py',

@@ -55,6 +55,7 @@ async function start(folder){
   self.startWorkspaceArtwork=urls=>JSON.stringify(workspaceMount.startArtwork(urls));
   self.pollWorkspaceArtwork=id=>JSON.stringify(workspaceMount.pollArtwork(id));
   self.cancelWorkspaceArtwork=id=>JSON.stringify(workspaceMount.cancelArtwork(id));
+  self.workspaceOrderZip=(operation,path,entries)=>JSON.stringify(workspaceMount.orderZip(String(operation),String(path),entries));
   self.checkpointMetadata=path=>{
     const request=new XMLHttpRequest();
     request.open('POST',`/workspace-io?owner=${encodeURIComponent(owner)}&operation=checkpoint&path=workspace.sqlite3`,false);
@@ -107,7 +108,7 @@ async function start(folder){
   python.runPython(`
 import sys
 sys.path.insert(0,'/app/ProxyFoundry')
-from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile, putWorkspaceAsset, prefetchWorkspaceArtwork,startWorkspaceArtwork,pollWorkspaceArtwork,cancelWorkspaceArtwork
+from js import syncFetch, syncGithubBatch, location, publishJob, jobCancelled, checkpointMetadata, copyWorkspaceFile, putWorkspaceAsset, prefetchWorkspaceArtwork,startWorkspaceArtwork,pollWorkspaceArtwork,cancelWorkspaceArtwork,workspaceOrderZip
 import base64, json, uuid
 from pathlib import Path
 from foundry.browser import create_app, request
@@ -148,6 +149,7 @@ def write_asset(path,content):
 app = create_app('/workspace', transport, str(location.origin),
     lambda job:publishJob('\u0100'+json.dumps(job,ensure_ascii=False,default=str)),
     lambda ident:bool(jobCancelled(ident)), checkpointMetadata, storage_type='${folder?'selected-folder':'browser'}', copy_file=copyWorkspaceFile, write_asset=write_asset)
+app.orders.archive=lambda operation,path,entries=None:json.loads(str(workspaceOrderZip(operation,path,json.dumps(entries) if entries is not None else None)))
 def browser_request(method, url, body, headers):
     global last_response
     try:

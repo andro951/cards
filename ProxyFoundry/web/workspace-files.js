@@ -9,6 +9,7 @@ export class WorkspaceFiles {
         this.inputBuffers=new Map();
         this.directories=new Map();
         this.downloads=new Map();
+        this.orderZips=new Map();
         this.assetWrites=new Map();
         this.downloadWaiting=[];this.downloadBuffered=0;
     }
@@ -180,6 +181,40 @@ export class WorkspaceFiles {
 
     //#region Filesystem requests
     execute = async (operation,path,query,body) => {
+        if(operation===`start-order-zip`) {
+            const entries=JSON.parse(new TextDecoder().decode(body));
+            if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(path)||!Array.isArray(entries)||!entries.length||entries.length>20000)
+                throw new Error(`Invalid paired ZIP plan.`);
+            for(const entry of entries) {
+                this.parts(entry.path);
+                if(!/^(assets|renders)\//.test(entry.path)||!/^(FRONT|BACK)\/[0-9]{6}\.png$/.test(entry.name))
+                    throw new Error(`Invalid paired ZIP entry.`);
+            }
+
+            const worker=new Worker(new URL(`../site/order-zip-worker.js`,import.meta.url),{type:`module`});
+            const id=crypto.randomUUID(),task={worker,state:`running`,done:0,total:entries.length};
+            task.finished=new Promise(resolve=>{
+                const finish=()=>{worker.terminate();resolve();};
+                worker.onmessage=event=>{Object.assign(task,event.data);if(task.state!==`running`)finish();};
+                worker.onerror=event=>{Object.assign(task,{state:`failed`,error:event.message||`ZIP worker stopped.`});finish();};
+                worker.onmessageerror=()=>{Object.assign(task,{state:`failed`,error:`ZIP worker response could not be read.`});finish();};
+            });
+            try {worker.postMessage({directory:this.directory,path,entries});}
+            catch(error){worker.terminate();throw error;}
+            this.orderZips.set(id,task);return {id};
+        }
+
+        if(operation===`poll-order-zip`||operation===`release-order-zip`) {
+            const task=this.orderZips.get(path);
+            if(!task)throw new Error(`Paired ZIP task expired.`);
+            if(operation===`release-order-zip`) {
+                if(task.state===`running`)task.worker.postMessage({cancel:true});
+                await task.finished;this.orderZips.delete(path);return {ok:true};
+            }
+
+            return {state:task.state,done:task.done,total:task.total,message:task.message,error:task.error,bytes:task.bytes};
+        }
+
         if(operation===`start-artwork`) {
             const urls=JSON.parse(new TextDecoder().decode(body));
             if(!Array.isArray(urls)||urls.length>10000)
