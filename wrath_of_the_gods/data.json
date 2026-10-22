@@ -568,6 +568,19 @@
         "scryfall_id": "1186b536-e6c8-433d-a906-b29f334d619c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Pegasus",
+        "oracle_id": "246d7a00-288d-448e-9b77-8af41e40a44d",
+        "scryfall_id": "f130171f-a3e2-4dac-806a-1f2c428ac9fc"
+      },
+      "back": {
+        "name": "Treasure",
+        "oracle_id": "3c549374-6c37-42e0-8d88-a8555d46732d",
+        "scryfall_id": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": [
