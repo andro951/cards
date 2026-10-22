@@ -12,10 +12,28 @@ function action(label,callback,className='button'){
   button.onclick=()=>attempt(callback);
   return button;
 }
-function imageButton(id,label,callback){
+function imageButton(id,label,callback,eager=false){
   const button=node('button','','card-image');button.type='button';button.title='Enlarge '+label;
-  const image=node('img');image.src=thumbnail(asset(id));image.alt=label;image.loading='lazy';image.decoding='async';button.append(image);
-  button.onclick=callback;return button;
+  const image=node('img');image.alt=label;image.loading=eager?'eager':'lazy';image.decoding='async';
+  const status=node('span','Loading image…');
+  Object.assign(status.style,{position:'absolute',inset:'0',display:'grid',placeItems:'center',padding:'8px',fontSize:'12px'});
+  let original=false,failed=false;
+  const load=(full=false,retry=false)=>{
+    original=full;failed=false;image.style.visibility='hidden';status.hidden=false;status.style.display='grid';
+    status.textContent='Loading image…';button.title='Enlarge '+label;button.setAttribute('aria-busy','true');
+    const url=full?asset(id):thumbnail(asset(id));
+    image.src=url+(retry?'?retry='+Date.now():'');
+  };
+  image.onload=()=>{image.style.visibility='visible';status.hidden=true;status.style.display='none';button.setAttribute('aria-busy','false');};
+  image.onerror=()=>{
+    //A failed cached thumbnail must not hide a valid printable image.
+    if(!original){load(true);return;}
+    failed=true;button.setAttribute('aria-busy','false');button.title='Retry '+label;
+    image.style.visibility='hidden';status.hidden=false;status.style.display='grid';
+    status.textContent='Image unavailable. Click to retry.';
+  };
+  button.append(image,status);load();
+  button.onclick=()=>{if(failed)load(false,true);else callback();};return button;
 }
 function maximize(host){
   host.style.cssText='width:calc(100vw - 20px);height:calc(100dvh - 20px);max-height:none';
@@ -109,7 +127,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       const backSection=node('section','','well section-gap');
       backSection.style.cssText='display:flex;align-items:center;gap:18px';
       const label=names.length===plan.decks.length?'Common back':'Default back · '+names.join(', ');
-      const backPreview=imageButton(back,label,()=>lightbox(back,label));
+      const backPreview=imageButton(back,label,()=>lightbox(back,label),true);
       backPreview.style.cssText='width:100px;flex:none';
       backSection.append(backPreview,node('div',label,'muted'));
       body.append(backSection);
@@ -128,7 +146,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
         pair.append(imageButton(card.frontAsset,card.name+' front',()=>lightbox(card.frontAsset,card.name+' front')));
         if(!defaultBacks.has(card.backAsset)){
           const reverse=node('div');reverse.append(node('small','Unique back'));
-          reverse.append(imageButton(card.backAsset,card.name+' back',()=>lightbox(card.backAsset,card.name+' back')));
+          reverse.append(imageButton(card.backAsset,card.name+' back',()=>lightbox(card.backAsset,card.name+' back'),true));
           pair.append(reverse);
         }
         tile.append(pair,node('b',`${card.quantity}× ${card.name}`),node('small',card.deckName));grid.append(tile);
@@ -143,15 +161,38 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       const download=node('a','Download ZIP','button');download.href='/api/orders/'+plan.id+'/download';download.download='';footer.append(download);
       footer.append(action('Open in TCGPlaytest',()=>openOrder(plan.id),'button primary'));
     }else{
+      const progress=node('div');progress.id='order-build-progress';progress.hidden=true;
+      Object.assign(progress.style,{flex:'1 1 220px',minWidth:'0',gap:'6px',display:'none'});
+      const progressText=node('span','Starting paired ZIP…');progressText.setAttribute('role','status');progressText.setAttribute('aria-live','polite');
+      const bar=node('progress');bar.max=100;bar.setAttribute('aria-label','Paired ZIP build progress');
+      Object.assign(bar.style,{width:'100%',height:'18px',accentColor:'#ed861e'});
+      const detail=node('small');progress.append(progressText,bar,detail);
+      const cancel=action('Cancel build',()=>{});cancel.hidden=true;cancel.style.display='none';
       const build=action('Build paired ZIP',async()=>{
         if(plan.issues?.length)throw new Error('Review each warning before building the ZIP.');
         build.disabled=true;setModalBusy(host,true);
+        const controller=new AbortController();
+        progress.hidden=false;progress.style.display='grid';progressText.textContent='Starting paired ZIP…';detail.textContent='';bar.removeAttribute('value');
+        cancel.hidden=false;cancel.style.display='';cancel.disabled=false;
+        cancel.onclick=()=>{controller.abort();cancel.disabled=true;progressText.textContent='Stopping ZIP build…';};
+        const update=job=>{
+          if(controller.signal.aborted)return;
+          const total=Number(job.total)||0,done=Number(job.done)||0;
+          const percent=total?Math.min(job.state==='done'?100:99,Math.floor(done/total*100)):0;
+          if(total)bar.value=percent;
+          progressText.textContent=total?`${percent}% · ${done} / ${total} cards packaged`:'Starting paired ZIP…';
+          detail.textContent=job.message||'';
+        };
         try{
-          const out=await job('/api/orders/build',{deckIds:[...ids]},{label:'Build paired order'});
+          const out=await job('/api/orders/build',{deckIds:[...ids]},{label:'Build paired order',signal:controller.signal,onProgress:update});
+          bar.value=100;progressText.textContent='100% · ZIP ready';
           setModalBusy(host,false);closeModal();orderReady(out);
-        }finally{setModalBusy(host,false);build.disabled=Boolean(plan.issues?.length);}
+        }catch(error){
+          progressText.textContent=controller.signal.aborted?'ZIP build cancelled.': 'ZIP build failed.';
+          detail.textContent=error.message;throw error;
+        }finally{setModalBusy(host,false);build.disabled=Boolean(plan.issues?.length);cancel.hidden=true;cancel.style.display='none';}
       },'button primary');
-      build.disabled=Boolean(plan.issues?.length);footer.append(build);
+      build.disabled=Boolean(plan.issues?.length);footer.append(progress,cancel,build);
     }
   }
   draw();
