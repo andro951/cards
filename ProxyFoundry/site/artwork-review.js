@@ -440,7 +440,12 @@ export const checkArtwork=async(deck,settings=deck.settings,cardData=deck.cardDa
     if(!review.needsReview)
         return {changes:[],defaults:settings.artDefaults||[],signature:review.signature};
 
-    const choose=()=>openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{if(onAdd)await onAdd();return load();}});
+    const choose=()=>openArtworkHelper(review,{deckId:deck.id,settings,onAdd:async()=>{
+        if(onAdd)await onAdd();
+        //An explicit refresh must also replace the head reused by preparation.
+        generationScreen.active?.resetFreshness();
+        return load();
+    }});
     return generationScreen.active?generationScreen.active.review(choose):choose();
 };
 

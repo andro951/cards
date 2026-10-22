@@ -11,7 +11,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','art-variants','artwork-review','tokens','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','app']:
+    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','art-variants','artwork-review','tokens','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','batch-review-flow','batch-review','app']:
         text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
@@ -952,6 +952,66 @@ def test_setup_navigation_persists_edits_without_confirmation(dom_page):
     page.click('.topbar [data-nav=decks]');page.locator('#deck-search').wait_for()
     assert page.evaluate('__fixture.deck.settings.artist')=='Keep this edit'
     assert not errors,errors
+
+
+@pytest.mark.parametrize('during_generation',[False,True],ids=['setup','generation'])
+def test_github_artwork_refresh_finds_added_images_and_prepares_latest_head(dom_page,during_generation):
+    page,errors=dom_page
+    page.evaluate('''duringGeneration=>{
+      const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      const deck=__fixture.deck,settings={source:{mode:'github',githubFolder:'https://github.com/owner/repo/tree/main/art'}};
+      const original=window.fetch,heads=new Map(),jobs=new Map();
+      window.remoteHead=0;window.headReads=0;window.artworkChecks=[];window.preparedHead=null;
+      const readHead=scope=>{
+        if(scope&&heads.has(scope))return heads.get(scope);
+        headReads++;
+        if(scope)heads.set(scope,remoteHead);
+        return remoteHead;
+      };
+      const reply=value=>({ok:true,text:async()=>JSON.stringify(value)});
+      window.fetch=async(path,options={})=>{
+        const data=options.body?JSON.parse(options.body):{};
+        if(path==='/api/setup/artwork-review') {
+          const head=readHead(data.freshnessScope),id='refresh-review-'+artworkChecks.length;
+          artworkChecks.push({scope:data.freshnessScope,head});
+          jobs.set(id,{needsReview:true,signature:'head-'+head,cards:[],
+            items:[{id:'missing',name:'Spirit',selector:{name:'Spirit'},image,status:'missing',key:null}],
+            inventory:Array.from({length:head+1},(_,index)=>({key:'file'+index,filename:'custom_'+index+'.png',identity:'image'+index,image}))});
+          return reply({id});
+        }
+        if(path.endsWith('/prepare')) {
+          window.preparedScope=data.freshnessScope;window.preparedHead=readHead(data.freshnessScope);
+          jobs.set('refresh-prepare',deck);return reply({id:'refresh-prepare'});
+        }
+        if(path.startsWith('/api/jobs/')&&jobs.has(path.split('/').pop()))
+          return reply({state:'done',result:jobs.get(path.split('/').pop())});
+        return original(path,options);
+      };
+      const operation=async screen=>{
+        const result=await __mod_artwork_review.checkArtwork(deck,settings,[]);
+        await __mod_ui.job('/api/decks/'+deck.id+'/prepare',{freshnessScope:screen?.freshnessScope});
+        return result;
+      };
+      window.refreshResult=undefined;
+      window.refreshPromise=(duringGeneration?__mod_generation_progress.withGenerationScreen('Test deck',1,operation):operation()).then(result=>window.refreshResult=result);
+    }''',during_generation)
+    page.locator('[data-artwork-file]').filter(has_text='custom_0.png').wait_for()
+    for head in [1,2]:
+        page.evaluate('head=>window.remoteHead=head',head)
+        page.get_by_role('button',name='Refresh GitHub folder',exact=True).click()
+        page.locator('[data-artwork-file]').filter(has_text=f'custom_{head}.png').wait_for(timeout=3000)
+    page.locator('[data-artwork-card]').click()
+    page.locator('[data-artwork-file]').filter(has_text='custom_2.png').click()
+    page.click('#artwork-finish')
+    page.wait_for_function('refreshResult!==undefined')
+    result=page.evaluate('({checks:artworkChecks,headReads,preparedHead,preparedScope,result:refreshResult,closed:!document.querySelector("#generation-screen")})')
+    assert [row['head'] for row in result['checks']]==[0,1,2]
+    assert result['preparedHead']==2 and result['result']['changes'][0]['art']=='custom_2.png'
+    if during_generation:
+        assert len({row['scope'] for row in result['checks']})==3
+        assert result['preparedScope']==result['checks'][-1]['scope']
+        assert result['headReads']==3,'Preparation should reuse the refreshed head without another GitHub check.'
+    assert result['closed'] and not errors,errors
 
 
 def test_artwork_refresh_does_not_reuse_stale_images_or_pairs(dom_page):
