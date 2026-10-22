@@ -79,6 +79,77 @@ def test_failed_review_download_releases_staging(download_page):
     assert result=={'calls':['/review','/cleanup'],'error':'Download failed'}
 
 
+@pytest.mark.parametrize('known_size',[True,False],ids=['known-size','unknown-size'])
+def test_manual_card_zip_shows_progress_blocks_repeat_clicks_and_downloads_bytes(download_page,known_size):
+    from playwright.sync_api import expect
+    page=download_page
+    page.set_content('<html><body><div id="modal-host"></div><div id="toast-host"></div></body></html>')
+    for name in ('styles.css','forge-theme.css'):page.add_style_tag(content=(ROOT/'site'/name).read_text(encoding='utf-8'))
+    script='\n'.join(line for line in (ROOT/'site/orders.js').read_text(encoding='utf-8').splitlines() if not line.startswith('import ')).replace('export ','')
+    page.add_script_tag(content=script)
+    page.evaluate('''knownSize=>{
+      window.downloadCalls=0;window.downloadClock=0;performance.now=()=>downloadClock;
+      window.fetch=async()=>{
+        downloadCalls++;
+        return new Response(new ReadableStream({start(controller){
+          window.pushDownload=bytes=>controller.enqueue(new Uint8Array(bytes));
+          window.finishDownload=()=>controller.close();
+        }}),{headers:{'Content-Type':'application/zip',...(knownSize?{'Content-Length':'8'}:{})}});
+      };
+      choosePrintPath({id:'order',download:'/api/orders/order/download',zipBytes:knownSize?8:undefined});
+    }''',known_size)
+    button=page.locator('#manual-zip');button.click()
+    expect(button).to_be_disabled()
+    assert float(button.evaluate('button=>getComputedStyle(button).opacity'))<1
+    progress=page.get_by_role('progressbar',name='Card ZIP download progress')
+    expect(progress).to_be_visible()
+    page.evaluate("()=>{document.querySelector('#manual-zip').click();document.querySelector('#manual-zip').onclick();downloadClock=200;pushDownload([1,2,3]);}")
+    if known_size:
+        expect(progress).to_have_attribute('value','37')
+        expect(page.get_by_role('status')).to_contain_text('37%')
+    else:
+        expect(page.get_by_role('status')).to_contain_text('received')
+        assert progress.get_attribute('value') is None
+    assert page.evaluate('downloadCalls')==1
+    expect(button).to_be_disabled()
+    page.evaluate('()=>{downloadClock=400;pushDownload([4,5,6,7,8]);}')
+    if known_size:expect(progress).to_have_attribute('value','99')
+    with page.expect_download() as result:page.evaluate('finishDownload()')
+    assert result.value.suggested_filename=='BulkProxyForge_Order.zip'
+    assert Path(result.value.path()).read_bytes()==bytes(range(1,9))
+    expect(button).to_be_enabled();expect(progress).to_have_attribute('value','100')
+    expect(page.get_by_role('status')).to_contain_text('ZIP sent to your browser. Check Downloads.')
+
+
+@pytest.mark.parametrize('failure',['http','stream'])
+def test_manual_card_zip_failure_restores_button_for_retry(download_page,failure):
+    from playwright.sync_api import expect
+    page=download_page
+    page.set_content('<html><body><div id="modal-host"></div><div id="toast-host"></div></body></html>')
+    script='\n'.join(line for line in (ROOT/'site/orders.js').read_text(encoding='utf-8').splitlines() if not line.startswith('import ')).replace('export ','')
+    page.add_script_tag(content=script)
+    page.evaluate('''failure=>{
+      window.downloadCalls=0;
+      window.fetch=async()=>{
+        downloadCalls++;
+        if(downloadCalls>1)return new Response(new Uint8Array([5,6,7,8]));
+        if(failure==='http')return new Response(JSON.stringify({error:'Read failed test'}),{status:500});
+        return new Response(new ReadableStream({start(controller){controller.error(new Error('Read failed test'));}}));
+      };
+      choosePrintPath({id:'order',download:'/api/orders/order/download',zipBytes:4});
+    }''',failure)
+    button=page.locator('#manual-zip');button.click()
+    expect(page.get_by_role('status')).to_contain_text('Download failed:')
+    if failure=='http':expect(page.get_by_role('status')).to_contain_text('Read failed test')
+    expect(button).to_be_enabled()
+    assert button.get_attribute('aria-busy')=='false'
+    with page.expect_download() as result:button.click()
+    assert Path(result.value.path()).read_bytes()==bytes([5,6,7,8])
+    expect(button).to_be_enabled()
+    expect(page.get_by_role('status')).to_contain_text('ZIP sent to your browser.')
+    assert page.evaluate('downloadCalls')==2
+
+
 from tests.test_browser_storage import static_browser
 
 def test_static_review_downloads_release_workspace_files_after_browser_receives_them(static_browser):

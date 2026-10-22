@@ -81,10 +81,26 @@ export async function downloadPost(path,data,filename){
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-export async function saveApiFile(path,name){
+export async function saveApiFile(path,name,options={}){
+  const onProgress=options?.onProgress;
+  let total=Number(options?.bytes)||0,received=0;
+  onProgress?.({received,total});
   const response=await fetch(path);
   if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'Download failed.');}
-  downloadBlob(await response.blob(),name);
+  total=Number(response.headers.get('Content-Length'))||total;
+  let blob;
+  if(onProgress&&response.body){
+    let reported=performance.now();
+    const stream=response.body.pipeThrough(new TransformStream({transform(chunk,controller){
+      received+=chunk.byteLength;
+      const now=performance.now();
+      if(now-reported>=100){reported=now;onProgress({received,total});}
+      controller.enqueue(chunk);
+    }}));
+    blob=await new Response(stream,{headers:{'Content-Type':response.headers.get('Content-Type')||'application/octet-stream'}}).blob();
+  }else blob=await response.blob();
+  downloadBlob(blob,name);
+  onProgress?.({received:blob.size,total:blob.size,complete:true});
 }
 export async function downloadExportFile(output){
   //The Blob has received all bytes before staging is removed; orders remain separate.

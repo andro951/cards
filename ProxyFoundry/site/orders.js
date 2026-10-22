@@ -1,4 +1,4 @@
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,job,bytes,date,badge,empty,loading,thumbnail,nav} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,job,bytes,date,badge,empty,loading,thumbnail,nav,saveApiFile} from './ui.js';
 import {renderDecks} from './render.js';
 export function setupHelper(){
   const host=modal('Connect the browser helper','');
@@ -115,7 +115,33 @@ function orderReady(order){
   $('#view-orders').onclick=()=>{closeModal();nav('orders');};
 }
 function choosePrintPath(order){
-  const host=modal('Print Cards',`<div class="well"><h3>Print once · no setup</h3><p>Download your card ZIP, then upload it on TCGPlaytest.</p><a class="button primary" id="manual-zip" href="${esc(order.download)}" download>1 · Download card ZIP</a><button class="button" id="manual-printer">2 · Open TCGPlaytest ↗</button><p class="muted">On the printer page, choose <b>Upload Deck ZIP</b> and select the ZIP you downloaded.</p><img src="/site/tcg-upload-guide.png" alt="TCGPlaytest design page showing the Upload Deck ZIP control" style="width:min(100%,330px);border-radius:9px;border:1px solid #59677a"></div><div class="well section-gap"><h3>Printing again later?</h3><p>Install the optional helper once to send future orders automatically.</p><button class="button" id="install-print-helper">Set up one-click printing</button></div>`,{size:'large'});
+  const host=modal('Print Cards',`<div class="well"><h3>Print once · no setup</h3><p>Download your card ZIP, then upload it on TCGPlaytest.</p><button class="button" id="manual-printer">2 · Open TCGPlaytest ↗</button><p class="muted">On the printer page, choose <b>Upload Deck ZIP</b> and select the ZIP you downloaded.</p><img src="/site/tcg-upload-guide.png" alt="TCGPlaytest design page showing the Upload Deck ZIP control" style="width:min(100%,330px);border-radius:9px;border:1px solid #59677a"></div><div class="well section-gap"><h3>Printing again later?</h3><p>Install the optional helper once to send future orders automatically.</p><button class="button" id="install-print-helper">Set up one-click printing</button></div>`,{size:'large'});
+  const download=document.createElement(`button`);download.id=`manual-zip`;download.type=`button`;download.className=`button primary`;
+  const label=`1 · Download card ZIP`;download.textContent=label;
+  const progress=document.createElement(`div`);progress.hidden=true;progress.style.display=`none`;
+  Object.assign(progress.style,{gap:`6px`,margin:`10px 0`,maxWidth:`480px`});
+  const status=document.createElement(`span`);status.setAttribute(`role`,`status`);status.setAttribute(`aria-live`,`polite`);
+  const bar=document.createElement(`progress`);bar.max=100;bar.setAttribute(`aria-label`,`Card ZIP download progress`);
+  Object.assign(bar.style,{width:`100%`,height:`18px`,accentColor:`#ed861e`});progress.append(status,bar);
+  $(`#manual-printer`,host).before(download,progress);
+  download.onclick=()=>attempt(async()=>{
+    if(download.disabled)
+      return;
+
+    download.disabled=true;download.setAttribute(`aria-busy`,`true`);download.textContent=`Downloading card ZIP…`;
+    progress.hidden=false;progress.style.display=`grid`;bar.removeAttribute(`value`);status.textContent=`Preparing card ZIP download…`;
+    try{
+      await saveApiFile(order.download||`/api/orders/${order.id}/download`,`BulkProxyForge_Order.zip`,{
+        bytes:order.zipBytes,onProgress:({received,total,complete})=>{
+          if(complete){bar.value=100;status.textContent=`ZIP sent to your browser. Check Downloads.`;return;}
+          const percent=total?Math.min(99,Math.floor(received/total*100)):0;
+          if(total)bar.value=percent;
+          status.textContent=received?(total?`${percent}% · ${bytes(received)} / ${bytes(total)}`:`${bytes(received)} received`):`Preparing card ZIP download…`;
+        }
+      });
+    }catch(error){status.textContent=`Download failed: ${error.message} Click Download card ZIP to retry.`;throw error;}
+    finally{download.disabled=false;download.setAttribute(`aria-busy`,`false`);download.textContent=label;}
+  });
   $('#manual-printer',host).onclick=()=>window.open('https://www.tcgplaytest.com/?view=design','_blank','noopener');
   $('#install-print-helper',host).onclick=setupHelper;
 }
