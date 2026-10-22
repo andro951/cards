@@ -1,5 +1,11 @@
 name: Publish Bulk Proxy Forge website
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ProxyFoundry/**'
+      - '.github/workflows/bulk-proxy-forge-pages.yml'
   workflow_dispatch:
 permissions:
   contents: read
