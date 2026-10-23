@@ -1,0 +1,553 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Sisay, Weatherlight Captain",
+      "oracle_id": "fb777610-7562-4d9d-8497-62c562e6d7cb",
+      "scryfall_url": "https://scryfall.com/card/mh1/29/sisay-weatherlight-captain?utm_source=api"
+    },
+    {
+      "name": "Bruce Banner",
+      "oracle_id": "b6c0ee14-2028-4e8b-9acd-ff78821bca9b",
+      "scryfall_url": "https://scryfall.com/card/msh/49/bruce-banner-the-incredible-hulk?utm_source=api"
+    },
+    {
+      "name": "The Incredible Hulk",
+      "oracle_id": "b6c0ee14-2028-4e8b-9acd-ff78821bca9b",
+      "scryfall_url": "https://scryfall.com/card/msh/49/bruce-banner-the-incredible-hulk?utm_source=api"
+    },
+    {
+      "name": "Moonmist",
+      "oracle_id": "2c306e87-e3c8-4066-9be5-570e2f2d6bad",
+      "scryfall_url": "https://scryfall.com/card/isd/195/moonmist?utm_source=api"
+    },
+    {
+      "name": "Maskwood Nexus",
+      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
+      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
+    },
+    {
+      "name": "Geier Reach Bandit",
+      "oracle_id": "64720167-b88b-47f7-bfc1-d5e005c9fd68",
+      "scryfall_url": "https://scryfall.com/card/inr/156/geier-reach-bandit-vildin-pack-alpha?utm_source=api"
+    },
+    {
+      "name": "Vildin-Pack Alpha",
+      "oracle_id": "64720167-b88b-47f7-bfc1-d5e005c9fd68",
+      "scryfall_url": "https://scryfall.com/card/inr/156/geier-reach-bandit-vildin-pack-alpha?utm_source=api"
+    },
+    {
+      "name": "Tovolar, Dire Overlord",
+      "oracle_id": "45d49831-548a-4a0e-9a18-9f7397913895",
+      "scryfall_url": "https://scryfall.com/card/mid/246/tovolar-dire-overlord-tovolar-the-midnight-scourge?utm_source=api"
+    },
+    {
+      "name": "Tovolar, the Midnight Scourge",
+      "oracle_id": "45d49831-548a-4a0e-9a18-9f7397913895",
+      "scryfall_url": "https://scryfall.com/card/mid/246/tovolar-dire-overlord-tovolar-the-midnight-scourge?utm_source=api"
+    },
+    {
+      "name": "Sword of Fire and Ice",
+      "oracle_id": "2ccdc60a-49a9-44b9-a7af-0ebf18b26785",
+      "scryfall_url": "https://scryfall.com/card/2xm/297/sword-of-fire-and-ice?utm_source=api"
+    },
+    {
+      "name": "Thornbite Staff",
+      "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
+      "scryfall_url": "https://scryfall.com/card/mor/145/thornbite-staff?utm_source=api"
+    },
+    {
+      "name": "Prime Speaker Vannifar",
+      "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
+      "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api"
+    },
+    {
+      "name": "Cloud, Midgar Mercenary",
+      "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
+    },
+    {
+      "name": "Elesh Norn",
+      "oracle_id": "650ed75c-20b0-45b8-a4d4-813e0369aaf1",
+      "scryfall_url": "https://scryfall.com/card/mom/12/elesh-norn-the-argent-etchings?utm_source=api"
+    },
+    {
+      "name": "The Argent Etchings",
+      "oracle_id": "650ed75c-20b0-45b8-a4d4-813e0369aaf1",
+      "scryfall_url": "https://scryfall.com/card/mom/12/elesh-norn-the-argent-etchings?utm_source=api"
+    },
+    {
+      "name": "Sheoldred",
+      "oracle_id": "97652492-7906-4d79-983c-fa1dc1239eba",
+      "scryfall_url": "https://scryfall.com/card/mom/125/sheoldred-the-true-scriptures?utm_source=api"
+    },
+    {
+      "name": "The True Scriptures",
+      "oracle_id": "97652492-7906-4d79-983c-fa1dc1239eba",
+      "scryfall_url": "https://scryfall.com/card/mom/125/sheoldred-the-true-scriptures?utm_source=api"
+    },
+    {
+      "name": "Vorinclex",
+      "oracle_id": "166e5680-b8cf-47da-bcae-3591367c5fb4",
+      "scryfall_url": "https://scryfall.com/card/mom/213/vorinclex-the-grand-evolution?utm_source=api"
+    },
+    {
+      "name": "The Grand Evolution",
+      "oracle_id": "166e5680-b8cf-47da-bcae-3591367c5fb4",
+      "scryfall_url": "https://scryfall.com/card/mom/213/vorinclex-the-grand-evolution?utm_source=api",
+      "accepted_art": [
+        "2c4d8e67edddad5ab1a5a087e1b32a527244ecc373e5a1182377d37e98a79a14"
+      ]
+    },
+    {
+      "name": "Jin-Gitaxias",
+      "oracle_id": "b70c3adb-64ba-49ea-bcf6-6406a58cb453",
+      "scryfall_url": "https://scryfall.com/card/mom/65/jin-gitaxias-the-great-synthesis?utm_source=api"
+    },
+    {
+      "name": "The Great Synthesis",
+      "oracle_id": "b70c3adb-64ba-49ea-bcf6-6406a58cb453",
+      "scryfall_url": "https://scryfall.com/card/mom/65/jin-gitaxias-the-great-synthesis?utm_source=api"
+    },
+    {
+      "name": "Shalai, Voice of Plenty",
+      "oracle_id": "a0c47ab6-dfb4-46ee-a3f7-9e1521b4bb4b",
+      "scryfall_url": "https://scryfall.com/card/tdc/130/shalai-voice-of-plenty?utm_source=api"
+    },
+    {
+      "name": "Sigarda, Font of Blessings",
+      "oracle_id": "5fe07a76-f261-4f16-8a15-571bed707261",
+      "scryfall_url": "https://scryfall.com/card/mat/47/sigarda-font-of-blessings?utm_source=api"
+    },
+    {
+      "name": "Old Gnawbone",
+      "oracle_id": "dff3f4c7-f792-4ca3-9b0a-0738e70664d9",
+      "scryfall_url": "https://scryfall.com/card/afr/197/old-gnawbone?utm_source=api"
+    },
+    {
+      "name": "Bloom Tender",
+      "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
+      "scryfall_url": "https://scryfall.com/card/ecl/166/bloom-tender?utm_source=api"
+    },
+    {
+      "name": "Faeburrow Elder",
+      "oracle_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
+      "scryfall_url": "https://scryfall.com/card/ecc/53/faeburrow-elder?utm_source=api"
+    },
+    {
+      "name": "Esika, God of the Tree",
+      "oracle_id": "92023a5d-a143-4950-a71b-d736e6b8e959",
+      "scryfall_url": "https://scryfall.com/card/khm/168/esika-god-of-the-tree-the-prismatic-bridge?utm_source=api"
+    },
+    {
+      "name": "The Prismatic Bridge",
+      "oracle_id": "92023a5d-a143-4950-a71b-d736e6b8e959",
+      "scryfall_url": "https://scryfall.com/card/khm/168/esika-god-of-the-tree-the-prismatic-bridge?utm_source=api"
+    },
+    {
+      "name": "Selvala, Heart of the Wilds",
+      "oracle_id": "1d725121-e50c-42f0-9128-56802f07c89e",
+      "scryfall_url": "https://scryfall.com/card/ecc/116/selvala-heart-of-the-wilds?utm_source=api"
+    },
+    {
+      "name": "Fanatic of Rhonas",
+      "oracle_id": "7973820b-fdaf-46ec-9e3e-d4c0e77b5067",
+      "scryfall_url": "https://scryfall.com/card/mh3/152/fanatic-of-rhonas?utm_source=api"
+    },
+    {
+      "name": "Ramos, Dragon Engine",
+      "oracle_id": "3ed41d2d-211b-4013-8562-8c64d54cc43a",
+      "scryfall_url": "https://scryfall.com/card/fdn/678/ramos-dragon-engine?utm_source=api"
+    },
+    {
+      "name": "Emeritus of Woe",
+      "oracle_id": "93056597-b964-421f-be2f-e92abef1c2a4",
+      "scryfall_url": "https://scryfall.com/card/sos/80/emeritus-of-woe-demonic-tutor?utm_source=api"
+    },
+    {
+      "name": "Brago, King Eternal",
+      "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
+      "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api"
+    },
+    {
+      "name": "Halana and Alena, Partners",
+      "oracle_id": "b347be2d-9aa1-42a9-b652-8fb032832f09",
+      "scryfall_url": "https://scryfall.com/card/fdn/659/halana-and-alena-partners?utm_source=api"
+    },
+    {
+      "name": "Sovereign Okinec Ahau",
+      "oracle_id": "087b2490-e415-44e2-a674-3b5619a0fad5",
+      "scryfall_url": "https://scryfall.com/card/lci/240/sovereign-okinec-ahau?utm_source=api"
+    },
+    {
+      "name": "Ozolith, the Shattered Spire",
+      "oracle_id": "41fed659-237c-4d8e-ad31-d17fa0d3f764",
+      "scryfall_url": "https://scryfall.com/card/soc/281/ozolith-the-shattered-spire?utm_source=api"
+    },
+    {
+      "name": "Forgotten Ancient",
+      "oracle_id": "2ef75cf3-30dc-4852-a6d1-1d6391fad022",
+      "scryfall_url": "https://scryfall.com/card/soc/267/forgotten-ancient?utm_source=api"
+    },
+    {
+      "name": "Incubation Druid",
+      "oracle_id": "34428f42-03ac-4795-8286-6cbea796df2b",
+      "scryfall_url": "https://scryfall.com/card/moc/302/incubation-druid?utm_source=api"
+    },
+    {
+      "name": "Gyre Sage",
+      "oracle_id": "e3aa16cf-079b-4737-9ffd-7bfdffef0cb2",
+      "scryfall_url": "https://scryfall.com/card/moc/300/gyre-sage?utm_source=api"
+    },
+    {
+      "name": "Kami of Whispered Hopes",
+      "oracle_id": "f122624f-f30d-444e-a62a-939829241045",
+      "scryfall_url": "https://scryfall.com/card/soc/273/kami-of-whispered-hopes?utm_source=api"
+    },
+    {
+      "name": "Jegantha, the Wellspring",
+      "oracle_id": "f0587c55-06c1-4930-a62e-668f37464ce9",
+      "scryfall_url": "https://scryfall.com/card/ecc/125/jegantha-the-wellspring?utm_source=api"
+    },
+    {
+      "name": "Sword of Truth and Justice",
+      "oracle_id": "7a8baaf9-e21f-41a0-9f15-80764f6e5e68",
+      "scryfall_url": "https://scryfall.com/card/mh1/229/sword-of-truth-and-justice?utm_source=api"
+    },
+    {
+      "name": "Karolina Dean, Runaway",
+      "oracle_id": "50b5faff-acaa-426b-9f3e-1005c0392e6c",
+      "scryfall_url": "https://scryfall.com/card/msc/694/karolina-dean-runaway?utm_source=api"
+    },
+    {
+      "name": "The Aetherspark",
+      "oracle_id": "483c747a-b602-4747-95bc-72c2c17ed509",
+      "scryfall_url": "https://scryfall.com/card/dft/231/the-aetherspark?utm_source=api"
+    },
+    {
+      "name": "Arena Rector",
+      "oracle_id": "6a23963c-21dc-4d21-8d28-5abad7f859a1",
+      "scryfall_url": "https://scryfall.com/card/bbd/23/arena-rector?utm_source=api"
+    },
+    {
+      "name": "Avacyn, Angel of Hope",
+      "oracle_id": "216cb26e-8da9-478b-bfbc-8030f7adee72",
+      "scryfall_url": "https://scryfall.com/card/inr/477/avacyn-angel-of-hope?utm_source=api"
+    },
+    {
+      "name": "Godo, Bandit Warlord",
+      "oracle_id": "f890d51a-dc90-4179-8423-4738a72a527c",
+      "scryfall_url": "https://scryfall.com/card/cmm/227/godo-bandit-warlord?utm_source=api"
+    },
+    {
+      "name": "Mox Amber",
+      "oracle_id": "7a43bd27-fdd8-41f0-9bc4-92568f3408f1",
+      "scryfall_url": "https://scryfall.com/card/dom/224/mox-amber?utm_source=api"
+    },
+    {
+      "name": "Nick Fury, Agent of S.H.I.E.L.D.",
+      "oracle_id": "62916107-14c0-4516-9fed-a032b1a80e5d",
+      "scryfall_url": "https://scryfall.com/card/msh/25/nick-fury-agent-of-shield?utm_source=api"
+    },
+    {
+      "name": "Ertai Resurrected",
+      "oracle_id": "3d038f7c-95fa-4b71-8f74-b9b4dd45cde0",
+      "scryfall_url": "https://scryfall.com/card/dmu/199/ertai-resurrected?utm_source=api"
+    },
+    {
+      "name": "Venser, Shaper Savant",
+      "oracle_id": "0f41cefc-d6ff-4db7-ba35-502b7e081de1",
+      "scryfall_url": "https://scryfall.com/card/2x2/66/venser-shaper-savant?utm_source=api"
+    },
+    {
+      "name": "Spellseeker",
+      "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
+      "scryfall_url": "https://scryfall.com/card/cmm/120/spellseeker?utm_source=api"
+    },
+    {
+      "name": "Ertai, the Corrupted",
+      "oracle_id": "36934bd0-b275-4222-926c-b5a74cf0967d",
+      "scryfall_url": "https://scryfall.com/card/pls/107/ertai-the-corrupted?utm_source=api"
+    },
+    {
+      "name": "Demonic Tutor",
+      "oracle_id": "82004860-e589-4e38-8d61-8c0210e4ea39",
+      "scryfall_url": "https://scryfall.com/card/3ed/105/demonic-tutor?utm_source=api"
+    },
+    {
+      "name": "Thing in the Ice",
+      "oracle_id": "f2c10591-4c0c-4286-af91-e8d8d10a4c9d",
+      "scryfall_url": "https://scryfall.com/card/inr/91/thing-in-the-ice-awoken-horror?utm_source=api"
+    },
+    {
+      "name": "Awoken Horror",
+      "oracle_id": "f2c10591-4c0c-4286-af91-e8d8d10a4c9d",
+      "scryfall_url": "https://scryfall.com/card/inr/91/thing-in-the-ice-awoken-horror?utm_source=api"
+    },
+    {
+      "name": "Tezzeret the Seeker",
+      "oracle_id": "4aeafdf3-7828-4114-8c74-3bd46357caec",
+      "scryfall_url": "https://scryfall.com/card/mm2/62/tezzeret-the-seeker?utm_source=api"
+    },
+    {
+      "name": "Imperial Recruiter",
+      "oracle_id": "4d6a1391-817a-4ddc-840d-886b138eeb3f",
+      "scryfall_url": "https://scryfall.com/card/mh2/281/imperial-recruiter?utm_source=api"
+    },
+    {
+      "name": "Recruiter of the Guard",
+      "oracle_id": "d521a329-a53a-4962-810a-2abed80df260",
+      "scryfall_url": "https://scryfall.com/card/mh3/266/recruiter-of-the-guard?utm_source=api"
+    },
+    {
+      "name": "Timeless Witness",
+      "oracle_id": "a52a06aa-56fc-4845-bbcd-a54f16369b34",
+      "scryfall_url": "https://scryfall.com/card/tdc/274/timeless-witness?utm_source=api"
+    },
+    {
+      "name": "Ranger of Eos",
+      "oracle_id": "b9c8b929-f3ee-457f-9cbc-9de18eb69dc5",
+      "scryfall_url": "https://scryfall.com/card/mm3/19/ranger-of-eos?utm_source=api"
+    },
+    {
+      "name": "Reveillark",
+      "oracle_id": "1be13ede-98f8-497e-800c-03e5802932b3",
+      "scryfall_url": "https://scryfall.com/card/2x2/26/reveillark?utm_source=api"
+    },
+    {
+      "name": "Karmic Guide",
+      "oracle_id": "8c31fec9-e4b3-4761-990e-7be38eb05604",
+      "scryfall_url": "https://scryfall.com/card/soc/151/karmic-guide?utm_source=api"
+    },
+    {
+      "name": "Jodah, the Unifier",
+      "oracle_id": "490a8045-e160-4ccf-a05e-658ad2b7ac2d",
+      "scryfall_url": "https://scryfall.com/card/dmu/203/jodah-the-unifier?utm_source=api"
+    },
+    {
+      "name": "Derevi, Empyrial Tactician",
+      "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
+      "scryfall_url": "https://scryfall.com/card/c13/186/derevi-empyrial-tactician?utm_source=api"
+    },
+    {
+      "name": "Akroma's Memorial",
+      "oracle_id": "967e8b3f-8266-4d9a-a38b-d0e10184e1e4",
+      "scryfall_url": "https://scryfall.com/card/tsr/262/akromas-memorial?utm_source=api"
+    },
+    {
+      "name": "Kutzil, Malamet Exemplar",
+      "oracle_id": "3233af43-7826-4895-b67e-03c6102c2cd5",
+      "scryfall_url": "https://scryfall.com/card/lci/232/kutzil-malamet-exemplar?utm_source=api"
+    },
+    {
+      "name": "Chromatic Orrery",
+      "oracle_id": "95c3976c-33f3-490b-bfd3-7f1af2fe0416",
+      "scryfall_url": "https://scryfall.com/card/m21/228/chromatic-orrery?utm_source=api"
+    },
+    {
+      "name": "The Duke, Rebel Sentry",
+      "oracle_id": "1c55047d-badc-49bb-b791-e9759577e4eb",
+      "scryfall_url": "https://scryfall.com/card/tle/76/the-duke-rebel-sentry?utm_source=api"
+    },
+    {
+      "name": "Dimir House Guard",
+      "oracle_id": "35c027cd-f754-4e41-9242-8a9d0481171c",
+      "scryfall_url": "https://scryfall.com/card/rvr/73/dimir-house-guard?utm_source=api"
+    },
+    {
+      "name": "Sigarda, Host of Herons",
+      "oracle_id": "e55104e2-4900-48de-b288-d3e6abd5e09e",
+      "scryfall_url": "https://scryfall.com/card/inr/247/sigarda-host-of-herons?utm_source=api"
+    },
+    {
+      "name": "Rupture Spire",
+      "oracle_id": "7eadffcb-1e15-44c1-b1db-78c71b8ec1ce",
+      "scryfall_url": "https://scryfall.com/card/cmr/355/rupture-spire?utm_source=api"
+    },
+    {
+      "name": "Cascading Cataracts",
+      "oracle_id": "d98b4250-3492-4864-9c4c-42db09b3ccd4",
+      "scryfall_url": "https://scryfall.com/card/dmc/202/cascading-cataracts?utm_source=api"
+    },
+    {
+      "name": "Command Tower",
+      "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25",
+      "scryfall_url": "https://scryfall.com/card/msc/233/command-tower?utm_source=api"
+    },
+    {
+      "name": "Crystal Quarry",
+      "oracle_id": "ca68648f-fe3a-4770-9842-a3dc2310f099",
+      "scryfall_url": "https://scryfall.com/card/dmc/206/crystal-quarry?utm_source=api"
+    },
+    {
+      "name": "Exotic Orchard",
+      "oracle_id": "27b047e3-0d41-45e2-98e9-9391d7923a1e",
+      "scryfall_url": "https://scryfall.com/card/mbc/79/exotic-orchard?utm_source=api"
+    },
+    {
+      "name": "Forbidden Orchard",
+      "oracle_id": "cfd60d1f-9832-4408-b84e-0fd3018b015b",
+      "scryfall_url": "https://scryfall.com/card/2x2/323/forbidden-orchard?utm_source=api"
+    },
+    {
+      "name": "Gaea's Cradle",
+      "oracle_id": "7c427c3d-ecd8-45ef-bebd-8f10f4a311db",
+      "scryfall_url": "https://scryfall.com/card/usg/321/gaeas-cradle?utm_source=api"
+    },
+    {
+      "name": "Hidden Hideout",
+      "oracle_id": "b639e1fe-d099-4cab-a0d0-a1b33c7f31dd",
+      "scryfall_url": "https://scryfall.com/card/tmc/43/hidden-hideout?utm_source=api"
+    },
+    {
+      "name": "Nesting Grounds",
+      "oracle_id": "d27bb97d-286b-4947-8d7b-443e4df93319",
+      "scryfall_url": "https://scryfall.com/card/ecc/155/nesting-grounds?utm_source=api"
+    },
+    {
+      "name": "Path of Ancestry",
+      "oracle_id": "b473e293-59e3-4e04-acf2-622604aeb25f",
+      "scryfall_url": "https://scryfall.com/card/mbc/80/path-of-ancestry?utm_source=api"
+    },
+    {
+      "name": "Plaza of Heroes",
+      "oracle_id": "9c58d241-4d9f-4b46-b8ee-f4587f9acfd6",
+      "scryfall_url": "https://scryfall.com/card/msc/255/plaza-of-heroes?utm_source=api"
+    },
+    {
+      "name": "Reflecting Pool",
+      "oracle_id": "67f43ac6-2a58-4b53-b5d7-0330e2a252e2",
+      "scryfall_url": "https://scryfall.com/card/clb/358/reflecting-pool?utm_source=api"
+    },
+    {
+      "name": "Secluded Courtyard",
+      "oracle_id": "79ba18fd-f184-43c1-86df-56ee18ce806c",
+      "scryfall_url": "https://scryfall.com/card/msc/265/secluded-courtyard?utm_source=api"
+    },
+    {
+      "name": "Tarnation Vista",
+      "oracle_id": "b0be3f25-edb1-4299-959c-9aad909730ca",
+      "scryfall_url": "https://scryfall.com/card/big/30/tarnation-vista?utm_source=api"
+    },
+    {
+      "name": "The World Tree",
+      "oracle_id": "3437d504-bf62-4c27-b15f-f6330182ff7e",
+      "scryfall_url": "https://scryfall.com/card/khm/275/the-world-tree?utm_source=api"
+    },
+    {
+      "name": "Transguild Promenade",
+      "oracle_id": "98334bfa-c516-4c20-bdc5-9e32e7127adc",
+      "scryfall_url": "https://scryfall.com/card/cmr/499/transguild-promenade?utm_source=api"
+    },
+    {
+      "name": "Forest",
+      "oracle_id": "b34bb2dc-c1af-4d77-b0b3-a0fb342a5fc6",
+      "scryfall_url": "https://scryfall.com/card/trk/325/forest?utm_source=api"
+    },
+    {
+      "name": "Island",
+      "oracle_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+      "scryfall_url": "https://scryfall.com/card/trk/319/island?utm_source=api"
+    },
+    {
+      "name": "Plains",
+      "oracle_id": "bc71ebf6-2056-41f7-be35-b2e5c34afa99",
+      "scryfall_url": "https://scryfall.com/card/trk/317/plains?utm_source=api"
+    },
+    {
+      "name": "Mountain",
+      "oracle_id": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
+      "scryfall_url": "https://scryfall.com/card/trk/323/mountain?utm_source=api"
+    },
+    {
+      "name": "Swamp",
+      "oracle_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
+      "scryfall_url": "https://scryfall.com/card/trk/321/swamp?utm_source=api"
+    },
+    {
+      "name": "Windswept Heath",
+      "oracle_id": "29737a60-3ebd-40d9-b935-c4f54b90d45d",
+      "scryfall_url": "https://scryfall.com/card/mh3/235/windswept-heath?utm_source=api"
+    },
+    {
+      "name": "Misty Rainforest",
+      "oracle_id": "09dd85aa-47bc-4713-a9b9-8b52ff2285ed",
+      "scryfall_url": "https://scryfall.com/card/mh2/250/misty-rainforest?utm_source=api"
+    },
+    {
+      "name": "Flooded Strand",
+      "oracle_id": "f3c7af78-a77d-4134-82a2-a5ce84285a84",
+      "scryfall_url": "https://scryfall.com/card/mh3/220/flooded-strand?utm_source=api"
+    },
+    {
+      "name": "Verdant Catacombs",
+      "oracle_id": "67d60b24-d429-4ded-90d9-06e49f28c396",
+      "scryfall_url": "https://scryfall.com/card/mh2/260/verdant-catacombs?utm_source=api"
+    },
+    {
+      "name": "Wooded Foothills",
+      "oracle_id": "6587a463-a108-4854-b6d1-944e89b8c8a4",
+      "scryfall_url": "https://scryfall.com/card/mh3/236/wooded-foothills?utm_source=api"
+    },
+    {
+      "name": "Marsh Flats",
+      "oracle_id": "dab520d0-20b4-4273-ba6b-eb07f85ea433",
+      "scryfall_url": "https://scryfall.com/card/mh2/248/marsh-flats?utm_source=api"
+    },
+    {
+      "name": "Arid Mesa",
+      "oracle_id": "c5acf2a5-40f4-433d-a74d-1cb56c521464",
+      "scryfall_url": "https://scryfall.com/card/mh2/244/arid-mesa?utm_source=api"
+    },
+    {
+      "name": "Scalding Tarn",
+      "oracle_id": "cb027150-848c-4a66-88ad-e20222304dd8",
+      "scryfall_url": "https://scryfall.com/card/mh2/254/scalding-tarn?utm_source=api"
+    },
+    {
+      "name": "Spara's Headquarters",
+      "oracle_id": "3123ec89-8e95-4761-ba17-747ec667509f",
+      "scryfall_url": "https://scryfall.com/card/snc/257/sparas-headquarters?utm_source=api"
+    },
+    {
+      "name": "Indatha Triome",
+      "oracle_id": "ec2b3779-55f7-4169-aa66-6312fb52721f",
+      "scryfall_url": "https://scryfall.com/card/iko/248/indatha-triome?utm_source=api"
+    },
+    {
+      "name": "Ketria Triome",
+      "oracle_id": "6bae00e8-06cf-4ac4-a1cc-757e454109fe",
+      "scryfall_url": "https://scryfall.com/card/iko/250/ketria-triome?utm_source=api"
+    },
+    {
+      "name": "Savannah",
+      "oracle_id": "703243f0-8cb3-420f-958f-5fd4bde30293",
+      "scryfall_url": "https://scryfall.com/card/vma/311/savannah?utm_source=api"
+    },
+    {
+      "name": "Tropical Island",
+      "oracle_id": "74b7fe23-5d3a-4092-8d78-7c0eba8f6f73",
+      "scryfall_url": "https://scryfall.com/card/vma/321/tropical-island?utm_source=api"
+    },
+    {
+      "name": "Tundra",
+      "oracle_id": "02418479-9455-417f-a6a1-004356faff37",
+      "scryfall_url": "https://scryfall.com/card/vma/322/tundra?utm_source=api"
+    },
+    {
+      "name": "Godless Shrine",
+      "oracle_id": "73864fcc-1bde-4bc0-831e-2b93e546e417",
+      "scryfall_url": "https://scryfall.com/card/trk/285/godless-shrine?utm_source=api"
+    },
+    {
+      "name": "Steam Vents",
+      "oracle_id": "17039058-822d-409f-938c-b727a366ba63",
+      "scryfall_url": "https://scryfall.com/card/trk/298/steam-vents?utm_source=api"
+    },
+    {
+      "name": "Stomping Ground",
+      "oracle_id": "16052b52-ade1-406f-a06b-ce7ea607fb63",
+      "scryfall_url": "https://scryfall.com/card/trk/299/stomping-ground?utm_source=api"
+    }
+  ]
+}
