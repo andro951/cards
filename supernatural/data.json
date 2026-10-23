@@ -1101,17 +1101,6 @@
     },
     {
       "front": {
-        "name": "Thran Dynamo",
-        "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
-        "scryfall_id": "7ce5f12e-fc02-42f8-a5ca-b523050d4650"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
