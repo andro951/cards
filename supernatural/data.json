@@ -1298,6 +1298,19 @@
         "scryfall_id": "f4607634-6206-4c6c-b389-abcbfe969b65"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Vorpal Sword",
+        "oracle_id": "61bfab3f-d8f0-4ff5-9ddf-3fd605070c8f",
+        "scryfall_id": "7adbe69f-326d-4b4f-850f-c57a1860d17c"
+      },
+      "back": {
+        "name": "Adaptive Omnitool",
+        "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
+        "scryfall_id": "9e84f840-d7c6-4a82-8891-3d12281020ee"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
