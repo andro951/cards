@@ -1068,17 +1068,6 @@
     },
     {
       "front": {
-        "name": "Sword of Light and Shadow",
-        "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
-        "scryfall_id": "b378c8bf-85ed-4d28-aec9-4925d12bca4a"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
