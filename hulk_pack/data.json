@@ -113,7 +113,10 @@
     {
       "name": "The Great Synthesis",
       "oracle_id": "b70c3adb-64ba-49ea-bcf6-6406a58cb453",
-      "scryfall_url": "https://scryfall.com/card/mom/65/jin-gitaxias-the-great-synthesis?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mom/65/jin-gitaxias-the-great-synthesis?utm_source=api",
+      "accepted_art": [
+        "873021cab663c9745b263e3ccb223231a0c4dc2720bece4b5eb18ef3dc22929c"
+      ]
     },
     {
       "name": "Shalai, Voice of Plenty",
