@@ -991,17 +991,6 @@
     },
     {
       "front": {
-        "name": "Adaptive Omnitool",
-        "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
-        "scryfall_id": "9e84f840-d7c6-4a82-8891-3d12281020ee"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
