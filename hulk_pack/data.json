@@ -87,7 +87,10 @@
     {
       "name": "The True Scriptures",
       "oracle_id": "97652492-7906-4d79-983c-fa1dc1239eba",
-      "scryfall_url": "https://scryfall.com/card/mom/125/sheoldred-the-true-scriptures?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mom/125/sheoldred-the-true-scriptures?utm_source=api",
+      "accepted_art": [
+        "e283654f0dc6520ae59f7f5ff814f22ee38488030f3a05b4a43bde5ccf952b4c"
+      ]
     },
     {
       "name": "Vorinclex",
