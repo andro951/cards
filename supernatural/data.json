@@ -1324,6 +1324,19 @@
         "scryfall_id": "2d6209c8-9fa1-4f0a-ab65-ac2fedfcd09b"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Talisman of Conviction",
+        "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
+        "scryfall_id": "a365885c-f7d9-4ea1-9125-5265055e5570"
+      },
+      "back": {
+        "name": "Talisman of Hierarchy",
+        "oracle_id": "b693c3de-2eaf-4850-b405-e79d00adefda",
+        "scryfall_id": "0c959368-2f58-48de-b7a5-2bab408652b5"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
