@@ -1350,6 +1350,19 @@
         "scryfall_id": "c1ab3225-64a9-411e-b22b-1869e958b8e5"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Sword of Light and Shadow",
+        "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
+        "scryfall_id": "b378c8bf-85ed-4d28-aec9-4925d12bca4a"
+      },
+      "back": {
+        "name": "Heartseeker",
+        "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
+        "scryfall_id": "a4f33c08-f3c3-4015-970d-ac0530f97c9c"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
