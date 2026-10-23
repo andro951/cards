@@ -171,9 +171,16 @@ const validateDocument=document=>{
         throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
     validateTokenFields(document);
     for(const entry of document.cards) {
-        if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`,`scryfall_url`].includes(key)))
+        if(!entry||typeof entry!==`object`||Object.keys(entry).some(key=>![`name`,`oracle_id`,`scryfall_id`,`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`,`scryfall_url`,`accepted_art`].includes(key)))
             throw new Error(`The existing data.json has an invalid card entry. It was not changed.`);
         for(const [key,value] of Object.entries(entry)) {
+            if(key===`accepted_art`) {
+                if(!Array.isArray(value)||value.length>1000||value.some(hash=>typeof hash!==`string`||!/^[a-f0-9]{64}$/.test(hash)))
+                    throw new Error(`Invalid artwork approval in data.json. It was not changed.`);
+
+                continue;
+            }
+
             if(value!=null&&typeof value!==`string`)throw new Error(`The existing data.json has invalid card data. It was not changed.`);
             if(key===`oracle_text`&&value&&(value.length>20000||/[\x00-\x08\x0b-\x1f\x7f]/.test(value)))
                 throw new Error(`The rules text is too long or contains unsupported control characters. It was not changed.`);
@@ -210,7 +217,7 @@ export const mergeDataDocument=(original,changes,baseline=null)=>{
                 if([`name`,`oracle_id`,`scryfall_id`,`scryfall_url`].includes(field))
                     continue;
 
-                if(baseline&&current[field]!==old?.[field]&&current[field]!==change[field])
+                if(baseline&&!equalDataValues(current[field],old?.[field])&&!equalDataValues(current[field],change[field]))
                     throw new Error(`The ${field===`art`?`artwork mapping`:field===`oracle_text`?`rules text`:field} changed in the original data.json. Reimport it before saving.`);
             }
 
@@ -331,7 +338,7 @@ export const mergeCardDataDocument=(original,changes,baseline=null,cards=[],toke
     const current=enrichDataDocument(original,cards);
     const before=baseline?enrichDataDocument(baseline,cards):null;
     const edits=enrichDataDocument({version:1,cards:changes},cards).cards.filter(entry=>
-        [`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`].some(field=>Object.hasOwn(entry,field)));
+        [`nickname`,`flavor_text`,`oracle_text`,`artist`,`art`,`accepted_art`].some(field=>Object.hasOwn(entry,field)));
     return mergeTokenData(mergeDataDocument(current,edits,before),tokenData,baseline,tokenBaseline);
 };
 export const dataChangesPending=async(deckId,changes,document,cards=[])=>{

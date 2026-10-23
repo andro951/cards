@@ -435,8 +435,16 @@ async function inspect(deck,card,index=0,initialSide=null){
     const actions=document.createElement('div');actions.className='actions';actions.style.marginTop='10px';
     const accept=document.createElement('button');accept.type='button';accept.className='button primary small';accept.textContent='It Looks Fine';
     accept.onclick=()=>attempt(async()=>{
-      syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,renderKey:current.renderKey,acceptWarning:true}));
-      refreshInspector();await showDeck(d.id,'cards');toast('This rendered face is accepted for printing.');
+      setBusy(true);
+      try {
+        syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,renderKey:current.renderKey,acceptWarning:true}));
+        refreshInspector();await showDeck(d.id,'cards');
+        if(f.acceptedArt?.length)
+          await saveFaceData(faceDataChange({accepted_art:f.acceptedArt}),`Save artwork approval`,true);
+
+        toast('This rendered face is accepted for printing.');
+      }
+      finally {setBusy(false);}
     });
     const fix=document.createElement('button');fix.type='button';fix.className='button small';fix.textContent='Fix Art';
     fix.onclick=()=>{
@@ -485,9 +493,9 @@ async function inspect(deck,card,index=0,initialSide=null){
   rulesField.maxLength=20000;
   rulesField.closest(`label`).querySelector(`small`).textContent=`Leave blank to use official rules. Save also updates your connected data.json, or offers connection and download options.`;
   let savedRules=rulesField.value,pendingRules=false;
-  const rulesDataChange=rules=>{
+  const faceDataChange=values=>{
     const raw=c.scryfall.card_faces?.[f.index]||c.scryfall;
-    const change={name:raw.name||f.name,oracle_text:rules};
+    const change={name:raw.name||f.name,...values};
     const oracleId=raw.oracle_id||c.scryfall.oracle_id;
     if(oracleId)
       change.oracle_id=oracleId;
@@ -496,23 +504,31 @@ async function inspect(deck,card,index=0,initialSide=null){
 
     return change;
   };
-  const saveRulesData=async rules=>{
-    const change=rulesDataChange(rules);
+  const rulesDataChange=rules=>faceDataChange({oracle_text:rules});
+  const saveFaceData=async(change,title,retryPrompt=false)=>{
     const source=d.settings.dataJsonSource;
     const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:d.settings.githubSetupFolder):``;
     const snapshot=d.githubCardDataState;
     const baseline=source?.kind===`github`&&snapshot?{version:1,...snapshot.settings,cards:snapshot.entries}:null;
-    const result=await offerDataSave(d.id,[change],{version:1,cards:d.cardData||[]},url,d.cards,{
-      title:`Connect or download data.json`,baseline,autoSave:true,
+    const options={title,baseline,autoSave:true,
       beforePrompt:()=>{setBusy(false);closeModal({completed:true});}
-    });
+    };
+    const save=options=>offerDataSave(d.id,[change],{version:1,cards:d.cardData||[]},url,d.cards,options);
+    const saving=save(options);
+    const result=await (retryPrompt?saving.catch(error=>{
+      toast(`Saved in this deck. ${error.message}`,true);
+      return save({...options,autoSave:false});
+    }):saving);
     if(result?.github&&source?.value!==result.github) {
       const current=await api(`/api/decks/`+d.id);
       syncCurrent(await api(`/api/decks/`+d.id+`/save`,{revision:current.revision,
         settings:{...current.settings,dataJsonSource:{kind:`github`,value:result.github}}}));
     }
 
-    if(result) {savedRules=rules;pendingRules=false;}
+    return result;
+  };
+  const saveRulesData=async rules=>{
+    if(await saveFaceData(rulesDataChange(rules),`Connect or download data.json`)) {savedRules=rules;pendingRules=false;}
   };
   const prepareCard=async()=>{
     syncCurrent(await job('/api/decks/'+d.id+'/cards/'+c.id+'/prepare',{}, {label:'Prepare card'}));

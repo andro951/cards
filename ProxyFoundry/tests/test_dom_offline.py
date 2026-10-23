@@ -374,6 +374,61 @@ def test_card_rules_editor_saves_data_json_to_github(dom_page):
     assert not errors,errors
 
 
+@pytest.mark.parametrize('target',['github','local','download'])
+def test_art_approval_updates_original_data_or_offers_download(dom_page,target):
+    page,errors=dom_page
+    page.evaluate('''async target=>{
+      const F=__fixture,face=F.deck.cards[0].faces[0],m=__mod_artwork_files;
+      const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      F.deck.status='prepared';face.compiled={renderKey:'current-render',contentRenderKey:'a'.repeat(64),crop:{warning:true},render:{url:image}};
+      window.approvalDocument={version:1,artist:'Keep artist',cards:[{name:'Test creature',nickname:'Keep name',art:'keep.png'},{name:'Other deck card',artist:'Other artist'}]};
+      window.approvalWrites=0;window.renderRequests=0;
+      const original=window.fetch;
+      if(target==='github'){
+        const url='https://github.com/owner/cards/blob/main/deck/data.json';F.deck.settings.dataJsonSource={kind:'github',value:url};
+        await m.rememberGithub(F.deck.id,url,structuredClone(approvalDocument));await m.connectGithub('owner/cards','test-only',false);
+      }
+      if(target==='local'){
+        const file={queryPermission:async()=> 'granted',getFile:async()=>({text:async()=>JSON.stringify(approvalDocument)}),
+          createWritable:async()=>({write:async text=>{approvalWrites++;approvalDocument=JSON.parse(text);},close:async()=>{},abort:async()=>{}})};
+        window.approvalRecord={file,document:structuredClone(approvalDocument)};
+        const get=IDBObjectStore.prototype.get,put=IDBObjectStore.prototype.put,key='deck:'+F.deck.id;
+        IDBObjectStore.prototype.get=function(name){const request=get.call(this,name);if(name===key)Object.defineProperty(request,'result',{get:()=>approvalRecord});return request;};
+        IDBObjectStore.prototype.put=function(value,name){if(name===key){approvalRecord=value;return put.call(this,{document:value.document},name);}return put.call(this,value,name);};
+      }
+      window.fetch=async(url,options={})=>{
+        if(String(url).startsWith('https://api.github.com/')){
+          if(options.method==='PUT'){approvalWrites++;window.approvalPut=JSON.parse(options.body);approvalDocument=JSON.parse(atob(approvalPut.content));return {ok:true,status:200};}
+          return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'current-version',content:btoa(JSON.stringify(approvalDocument))})};
+        }
+        if(String(url).startsWith('/api/render-sessions'))renderRequests++;
+        if(String(url).includes('/cards/')&&options.body){
+          const data=JSON.parse(options.body);
+          if(data.acceptWarning){face.acceptedWarningKey=data.renderKey;face.acceptedArt=['a'.repeat(64)];F.deck.cardData=[{name:'Test creature',accepted_art:face.acceptedArt}];}
+        }
+        return original(url,options);
+      };
+    }''',target)
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.get_by_role('button',name='It Looks Fine',exact=True).click()
+    if target=='download':
+        page.get_by_role('dialog',name='Save artwork approval',exact=True).wait_for()
+        with page.expect_download() as item:page.get_by_role('button',name='Download data.json',exact=True).click()
+        document=json.loads(Path(item.value.path()).read_text(encoding='utf-8'))
+    else:
+        page.wait_for_function('approvalWrites===1&&document.querySelector("#generate-card")?.disabled===false')
+        document=page.evaluate('approvalDocument')
+        assert document['artist']=='Keep artist'
+        current=next(entry for entry in document['cards'] if entry['name']=='Test creature')
+        assert current['nickname']=='Keep name' and current['art']=='keep.png'
+        assert next(entry for entry in document['cards'] if entry['name']=='Other deck card')=={'name':'Other deck card','artist':'Other artist'}
+        if target=='github':assert page.evaluate('approvalPut.sha')=='current-version'
+    assert next(entry for entry in document['cards'] if entry['name']=='Test creature')['accepted_art']==['a'*64]
+    assert page.evaluate('renderRequests')==0
+    assert not page.get_by_role('button',name='It Looks Fine',exact=True).count()
+    assert not errors,errors
+
+
 def test_card_save_offers_connection_or_download_without_a_source(dom_page):
     page,errors=dom_page
     page.evaluate('''()=>{

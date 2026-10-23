@@ -6,7 +6,7 @@ from urllib.parse import quote, urlsplit
 from .card_data import parse_document, document_settings, selector_key, matching_keys, identity as face_identity, validate_targets
 from .domain import ValidationError, github_location
 
-FIELDS={'nickname','flavor_text','oracle_text','artist','art'}
+FIELDS={'nickname','flavor_text','oracle_text','artist','art','accepted_art'}
 
 
 def selector_order(key):
@@ -105,7 +105,9 @@ def refresh(workspace, deck, cancel=lambda:False):
             for field in changes:
                 box=face.setdefault('semanticOverrides',{}) if field in {'nickname','flavor_text','oracle_text'} else face
                 slot={'artist':'artistOverride','art':'artFilename'}.get(field,field)
-                if field=='oracle_text' and after.get(field)=='' and field in after:
+                if field=='accepted_art':
+                    face['acceptedArt']=list(after.get(field,[]))
+                elif field=='oracle_text' and after.get(field)=='' and field in after:
                     if slot in box:box.pop(slot);changed=True
                 elif field in after:
                     if box.get(slot)!=after[field]:box[slot]=after[field];changed=True

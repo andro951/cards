@@ -66,6 +66,8 @@ Only new or changed art variants need preparation; unchanged original entries re
 
 ## Saving data.json
 
+**It Looks Fine** saves the selected face's approval in its `accepted_art` array and updates the connected original data file using the same local/GitHub save flow. Without a writable connection, it offers connection or download. Each value identifies exact rendered content, independently of workspace/deck IDs, so approvals survive reimporting the same card. Multiple approved versions can coexist. Changed artwork, framing, or other rendered content needs its own approval. Importing or saving approvals does not invalidate preparation or redraw cards.
+
 Generation checks the linked GitHub data file before deciding which cards can reuse cached images. If a configured GitHub project did not originally have `data.json`, generation checks its project folder and links the file when it appears. Missing optional files are allowed; an explicitly selected local data file stays local.
 
 Shared files may include token assignments for other decks. A pairing only applies when its referenced token faces are present in the current deck; a normal card with the same identity does not count as a token. Other pairings remain saved without warnings or affecting print counts. Any token face actually present still needs an applicable pairing before printing. New pairings created in the UI must use current token faces.

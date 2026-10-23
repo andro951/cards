@@ -306,6 +306,9 @@ class Workspace:
                     f['lastRender']['render']=renders.get(f['lastRender']['renderKey'])
                 if comp:
                     comp['render']=r
+                    if comp.get('contentRenderKey') and 'acceptedArt' in f:
+                        if comp['contentRenderKey'] in f['acceptedArt']:f['acceptedWarningKey']=comp['renderKey']
+                        else:f.pop('acceptedWarningKey',None)
                     #Converted cards retain their source template identity. Refresh
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
@@ -380,7 +383,8 @@ class Workspace:
             for face in card.get('faces',[]):
                 updates=[selectors[key] for key in set(matching_keys(card,face)) if key in selectors]
                 updates.sort(key=lambda e:(bool(e.get('oracle_id') or e.get('scryfall_id')),sum(bool(e.get(k)) for k in ['oracle_id','scryfall_id','name']),bool(e.get('scryfall_id'))))
-                values={k:v for entry in updates for k,v in entry.items() if k in {'nickname','flavor_text','oracle_text','artist','art'}}
+                values={k:v for entry in updates for k,v in entry.items() if k in {'nickname','flavor_text','oracle_text','artist','art','accepted_art'}}
+                if 'accepted_art' in values:face['acceptedArt']=list(values['accepted_art'])
                 current=face.get('semanticOverrides') or {};changed=False
                 for key in ['nickname','flavor_text','oracle_text']:
                     if key=='oracle_text' and face.get('rulesOverrideLocal'):
@@ -505,6 +509,12 @@ class Workspace:
                     if patch['acceptWarning'] is not True or patch.get('renderKey')!=comp['renderKey']:
                         raise ValidationError('The card render changed. Review its current image again.')
                     f['acceptedWarningKey']=comp['renderKey']
+                    if comp.get('contentRenderKey'):
+                        matching=set(matching_keys(c,f))
+                        saved=[key for row in d.get('cardData',[]) if selector_key(row) in matching for key in row.get('accepted_art',[])]
+                        approvals=list(dict.fromkeys([*saved,*f.get('acceptedArt',[]),comp['contentRenderKey']]))
+                        entry=validate_entries([{**identity(c,f),'accepted_art':approvals}])
+                        f['acceptedArt']=approvals;d['cardData']=merge_entries(d.get('cardData',[]),entry)
                 face_dirty=False
                 if 'selectedArtPrintingId' in patch:
                     selected=patch['selectedArtPrintingId']
@@ -804,7 +814,7 @@ class Workspace:
             templates.append(self.compiler.template_identity('token',s['templateRules']['token']))
         settings={k:s.get(k) for k in FRONT_SETTINGS if k!='source'}
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
-        options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','originalArtist'}} for f in c['faces']]
+        options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','acceptedArt','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):
             inputs['tokenConversionVersion']=4
