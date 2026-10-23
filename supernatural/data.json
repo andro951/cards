@@ -1057,17 +1057,6 @@
     },
     {
       "front": {
-        "name": "Thornbite Staff",
-        "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
-        "scryfall_id": "c1ab3225-64a9-411e-b22b-1869e958b8e5"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
