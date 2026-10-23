@@ -958,17 +958,6 @@
   "tokenAssignments": [
     {
       "front": {
-        "name": "Sol Ring",
-        "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
-        "scryfall_id": "8ee443cc-e17a-493b-9c93-1f9e141a30e4"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
