@@ -1079,17 +1079,6 @@
     },
     {
       "front": {
-        "name": "Heartseeker",
-        "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
-        "scryfall_id": "a4f33c08-f3c3-4015-970d-ac0530f97c9c"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
