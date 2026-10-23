@@ -1024,17 +1024,6 @@
     },
     {
       "front": {
-        "name": "Talisman of Conviction",
-        "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
-        "scryfall_id": "a365885c-f7d9-4ea1-9125-5265055e5570"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
