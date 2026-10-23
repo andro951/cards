@@ -74,7 +74,10 @@
     {
       "name": "The Argent Etchings",
       "oracle_id": "650ed75c-20b0-45b8-a4d4-813e0369aaf1",
-      "scryfall_url": "https://scryfall.com/card/mom/12/elesh-norn-the-argent-etchings?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mom/12/elesh-norn-the-argent-etchings?utm_source=api",
+      "accepted_art": [
+        "91cd05c72b00c1ab40bec76c3a25617cdc8d3a431ea0f4ee5f0e1d21b8f7afe6"
+      ]
     },
     {
       "name": "Sheoldred",
