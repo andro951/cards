@@ -1311,6 +1311,19 @@
         "scryfall_id": "9e84f840-d7c6-4a82-8891-3d12281020ee"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Arcane Signet",
+        "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+        "scryfall_id": "c6b6117c-faab-4bbb-b851-07bd8061ef03"
+      },
+      "back": {
+        "name": "Resurrection Orb",
+        "oracle_id": "b410f294-cbb6-4016-981f-808fd9b7bbae",
+        "scryfall_id": "2d6209c8-9fa1-4f0a-ab65-ac2fedfcd09b"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
