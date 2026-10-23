@@ -316,7 +316,10 @@
     {
       "name": "Ranger of Eos",
       "oracle_id": "b9c8b929-f3ee-457f-9cbc-9de18eb69dc5",
-      "scryfall_url": "https://scryfall.com/card/mm3/19/ranger-of-eos?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mm3/19/ranger-of-eos?utm_source=api",
+      "accepted_art": [
+        "78b25aa88646b141a3a4f2e2a58c918f192acc7a47f1f92f8915d5e9fd312357"
+      ]
     },
     {
       "name": "Reveillark",
