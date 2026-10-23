@@ -435,16 +435,26 @@ async function inspect(deck,card,index=0,initialSide=null){
     const actions=document.createElement('div');actions.className='actions';actions.style.marginTop='10px';
     const accept=document.createElement('button');accept.type='button';accept.className='button primary small';accept.textContent='It Looks Fine';
     accept.onclick=()=>attempt(async()=>{
+      if(accept.disabled)
+        return;
+
+      accept.disabled=true;fix.disabled=true;accept.textContent=`Saving approval…`;
+      accept.setAttribute(`aria-busy`,`true`);accept.setAttribute(`aria-pressed`,`true`);
+      Object.assign(accept.style,{transform:`translateY(2px)`,boxShadow:`inset 0 3px 6px #0008`,filter:`brightness(.8)`,opacity:`.85`,cursor:`wait`});
       setBusy(true);
       try {
         syncCurrent(await api('/api/decks/'+d.id+'/cards/'+c.id,{revision:d.revision,faceId:f.id,renderKey:current.renderKey,acceptWarning:true}));
-        refreshInspector();await showDeck(d.id,'cards');
+        await showDeck(d.id,'cards');
         if(f.acceptedArt?.length)
           await saveFaceData(faceDataChange({accepted_art:f.acceptedArt}),`Save artwork approval`,true);
 
+        refreshInspector();
         toast('This rendered face is accepted for printing.');
       }
-      finally {setBusy(false);}
+      finally {
+        setBusy(false);accept.disabled=false;fix.disabled=false;accept.textContent=`It Looks Fine`;
+        accept.removeAttribute(`aria-busy`);accept.removeAttribute(`aria-pressed`);accept.removeAttribute(`style`);
+      }
     });
     const fix=document.createElement('button');fix.type='button';fix.className='button small';fix.textContent='Fix Art';
     fix.onclick=()=>{
