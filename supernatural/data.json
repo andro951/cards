@@ -2,6 +2,14 @@
   "version": 1,
   "cards": [
     {
+      "name": "Syr Gwyn, Hero of Ashvale",
+      "nickname": "Dean Winchester, Righteous Man",
+      "flavor_text": "Saving the world was never the point. Saving the people in it was.",
+      "artist": "ChatGPT",
+      "oracle_id": "ca411184-3413-492c-ab87-08c9fa1d4806",
+      "scryfall_url": "https://scryfall.com/card/eld/330/syr-gwyn-hero-of-ashvale?utm_source=api"
+    },
+    {
       "name": "Command Tower",
       "nickname": "Men of Letters War Room",
       "flavor_text": "Every apocalypse looks smaller once you put it on a map.",
@@ -402,244 +410,85 @@
       "artist": "ChatGPT"
     },
     {
-      "name": "Embercleave",
-      "nickname": "Archangel Blade",
-      "flavor_text": "Even celestial blood answers to sharpened grace.",
+      "name": "Cloud, Midgar Mercenary",
+      "nickname": "Arthur Ketch, Men of Letters Operative",
+      "flavor_text": "Efficiency came naturally. Conscience took longer.",
       "artist": "ChatGPT",
-      "oracle_id": "4d6120d6-fcce-40bc-9fc6-e1f5beb6c728",
-      "scryfall_url": "https://scryfall.com/card/eld/120/embercleave?utm_source=api"
+      "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
     },
     {
-      "name": "Shadowspear",
-      "nickname": "Kaia's Spear",
-      "flavor_text": "Forged beyond this world, it knew where impossible things could bleed.",
+      "name": "Danitha, Benalia's Hope",
+      "nickname": "Linda Tran, Prophet's Protector",
+      "flavor_text": "Prophets speak for Heaven. Mothers speak louder.",
       "artist": "ChatGPT",
-      "oracle_id": "8b27326f-e7b8-4a4d-b589-df459246d19a",
-      "scryfall_url": "https://scryfall.com/card/thb/236/shadowspear?utm_source=api"
+      "oracle_id": "43b5dbe9-41f7-4082-944b-ea9d6292c6fd",
+      "scryfall_url": "https://scryfall.com/card/dmu/15/danitha-benalias-hope?utm_source=api"
     },
     {
-      "name": "The Regalia",
-      "nickname": "Baby, the Impala",
-      "flavor_text": "Home was four wheels, black paint, and whatever road came next.",
+      "name": "Puresteel Paladin",
+      "nickname": "Bobby Singer, Veteran Hunter",
+      "flavor_text": "Salt, iron, lore, and stubbornness kept more hunters alive than miracles ever did.",
       "artist": "ChatGPT",
-      "oracle_id": "27a7610e-acbe-4a2b-9f61-81b383eb20a5",
-      "scryfall_url": "https://scryfall.com/card/fin/267/the-regalia?utm_source=api"
+      "oracle_id": "74a62c7b-4753-4af2-b7a1-9a4ae8988801",
+      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api"
     },
     {
-      "name": "Excalibur, Sword of Eden",
-      "nickname": "Michael's Lance",
-      "flavor_text": "Made for archangels. Fatal to nearly everything else.",
+      "name": "Stoneforge Mystic",
+      "nickname": "Charlie Bradbury, Queen of Moondoor",
+      "flavor_text": "Give her a locked door, a dead language, or a dragon. She’ll find a way in.",
       "artist": "ChatGPT",
-      "oracle_id": "9fb6bd72-031b-40a1-83c5-8a1c82f84e12",
-      "scryfall_url": "https://scryfall.com/card/acr/72/excalibur-sword-of-eden?utm_source=api"
+      "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
+      "scryfall_url": "https://scryfall.com/card/2xm/31/stoneforge-mystic?utm_source=api"
     },
     {
-      "name": "Mox Amber",
-      "nickname": "Dean's Amulet",
-      "flavor_text": "Some things become sacred because of who refuses to let them go.",
+      "name": "Vilis, Broker of Blood",
+      "nickname": "Crowley, King of Hell",
+      "flavor_text": "Every soul has a price. Crowley simply knows the exchange rate.",
       "artist": "ChatGPT",
-      "oracle_id": "7a43bd27-fdd8-41f0-9bc4-92568f3408f1",
-      "scryfall_url": "https://scryfall.com/card/dom/224/mox-amber?utm_source=api"
+      "oracle_id": "7c209753-121b-4859-944b-4e33f885e777",
+      "scryfall_url": "https://scryfall.com/card/m20/122/vilis-broker-of-blood?utm_source=api"
     },
     {
-      "name": "Mox Opal",
-      "nickname": "Angel Tablet",
-      "flavor_text": "The Word of God was never meant to be easy reading.",
+      "name": "Brutal Cathar",
+      "nickname": "Garth, Monster Hunter",
+      "flavor_text": "He hunted monsters without forgetting that some of them were still people.",
       "artist": "ChatGPT",
-      "oracle_id": "de2440de-e948-4811-903c-0bbe376ff64d",
-      "scryfall_url": "https://scryfall.com/card/2xm/275/mox-opal?utm_source=api"
+      "oracle_id": "1ed2d8e0-462b-468e-8fd3-1f3c6d99fb8a",
+      "scryfall_url": "https://scryfall.com/card/mid/7/brutal-cathar-moonrage-brute?utm_source=api",
+      "oracle_text": "Whenever this creature enters or transforms into Garth, Monster Hunter, exile target creature an opponent controls until this creature leaves the battlefield.\nDaybound (If a player casts no spells during their own turn, it becomes night next turn.)"
     },
     {
-      "name": "Smothering Tithe",
-      "nickname": "Crossroads Contract",
-      "flavor_text": "The ink dries long before the regret does.",
+      "name": "Moonrage Brute",
+      "nickname": "Garth, Friendly Werewolf",
+      "flavor_text": "The moon changed what he was, not who he chose to be.",
       "artist": "ChatGPT",
-      "oracle_id": "153376c9-dffd-458c-8ce3-a4c8269bc4e9",
-      "scryfall_url": "https://scryfall.com/card/cmm/57/smothering-tithe?utm_source=api"
+      "oracle_id": "1ed2d8e0-462b-468e-8fd3-1f3c6d99fb8a",
+      "scryfall_url": "https://scryfall.com/card/mid/7/brutal-cathar-moonrage-brute?utm_source=api"
     },
     {
-      "name": "The Mind Stone",
-      "nickname": "Bottled Grace",
-      "flavor_text": "Even Heaven can be reduced to something small enough to steal.",
+      "name": "Archangel of Thune",
+      "nickname": "Jack Kline, Nephilim",
+      "flavor_text": "Born with the power to end worlds, he chose to save them.",
       "artist": "ChatGPT",
-      "oracle_id": "b175e826-09e8-4fae-9f2e-b902f95b282d",
-      "scryfall_url": "https://scryfall.com/card/msh/21/the-mind-stone?utm_source=api"
+      "oracle_id": "4f2d4538-dc1d-4c09-964b-b0d7c240fb7d",
+      "scryfall_url": "https://scryfall.com/card/2xm/5/archangel-of-thune?utm_source=api"
     },
     {
-      "name": "Black Market Connections",
-      "nickname": "Hell's Ledger",
-      "flavor_text": "Hell remembers every favor, every debt, and every unpaid soul.",
+      "name": "Witch of the Moors",
+      "nickname": "Rowena, Queen of Hell",
+      "flavor_text": "Death was never the end of a spell—only another ingredient.",
       "artist": "ChatGPT",
-      "oracle_id": "d2664f28-49e1-46f8-a863-b217e961a57c",
-      "scryfall_url": "https://scryfall.com/card/clb/669/black-market-connections?utm_source=api"
+      "oracle_id": "7ad97dd9-1342-4ed4-bea9-1bb21d748e04",
+      "scryfall_url": "https://scryfall.com/card/soc/230/witch-of-the-moors?utm_source=api"
     },
     {
-      "name": "Demonic Tutor",
-      "nickname": "Book of Fate",
-      "flavor_text": "Every ending is written somewhere. Finding yours is the dangerous part.",
+      "name": "Loran of the Third Path",
+      "nickname": "Donatello Redfield, Atheist Prophet",
+      "flavor_text": "Faith was optional. The evidence was not.",
       "artist": "ChatGPT",
-      "oracle_id": "82004860-e589-4e38-8d61-8c0210e4ea39",
-      "scryfall_url": "https://scryfall.com/card/cmm/150/demonic-tutor?utm_source=api"
-    },
-    {
-      "name": "Aettir and Priwen",
-      "nickname": "Tiamat Talisman",
-      "flavor_text": "Wish carefully. The talisman has a sense of humor.",
-      "artist": "ChatGPT",
-      "oracle_id": "19d8937e-23fb-4758-a306-0e7af9bb44c4",
-      "scryfall_url": "https://scryfall.com/card/fin/253/aettir-and-priwen?utm_source=api"
-    },
-    {
-      "name": "The Reaver Cleaver",
-      "nickname": "Mjölnir",
-      "flavor_text": "When the hammer falls, arguments about worthiness end quickly.",
-      "artist": "ChatGPT",
-      "oracle_id": "37a2a31d-51e6-4c07-b4c2-b206ad40eb42",
-      "scryfall_url": "https://scryfall.com/card/dmc/8/the-reaver-cleaver?utm_source=api"
-    },
-    {
-      "name": "Kaldra Compleat",
-      "nickname": "Death's Scythe",
-      "flavor_text": "It does not kill. It decides that killing is complete.",
-      "artist": "ChatGPT",
-      "oracle_id": "7359e82b-db79-488d-a1d4-75a00f12a4cf",
-      "scryfall_url": "https://scryfall.com/card/cmm/958/kaldra-compleat?utm_source=api"
-    },
-    {
-      "name": "Helm of the Host",
-      "nickname": "Loki's Hat",
-      "flavor_text": "The best disguise is the one reality agrees to believe.",
-      "artist": "ChatGPT",
-      "oracle_id": "83b43aba-bf9c-4da2-967d-9daa632e97d2",
-      "scryfall_url": "https://scryfall.com/card/msc/200/helm-of-the-host?utm_source=api"
-    },
-    {
-      "name": "Fighter Class",
-      "nickname": "Hunter's Manual",
-      "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
-      "artist": "ChatGPT",
-      "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
-      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
-    },
-    {
-      "name": "Kaya the Inexorable",
-      "nickname": "Death, the Pale Horseman",
-      "flavor_text": "Kings, angels, gods—eventually, they all become his business.",
-      "artist": "ChatGPT",
-      "oracle_id": "13a4f88b-6832-43a1-b4fa-c1ee60560bad",
-      "scryfall_url": "https://scryfall.com/card/khm/218/kaya-the-inexorable?utm_source=api"
-    },
-    {
-      "name": "Sol Ring",
-      "nickname": "Ring of Death",
-      "flavor_text": "The oldest promise is the simplest: everything ends.",
-      "artist": "ChatGPT",
-      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
-      "scryfall_url": "https://scryfall.com/card/frc/21/sol-ring?utm_source=api"
-    },
-    {
-      "name": "Viridian Longbow",
-      "nickname": "Rock-Salt Shotgun",
-      "flavor_text": "It won’t kill a ghost. It will make one reconsider the room.",
-      "artist": "ChatGPT",
-      "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
-      "scryfall_url": "https://scryfall.com/card/afc/221/viridian-longbow?utm_source=api"
-    },
-    {
-      "name": "Vorpal Sword",
-      "nickname": "Angel Blade",
-      "flavor_text": "Small enough to hide. Sharp enough to kill Heaven.",
-      "artist": "ChatGPT",
-      "oracle_id": "61bfab3f-d8f0-4ff5-9ddf-3fd605070c8f",
-      "scryfall_url": "https://scryfall.com/card/afr/124/vorpal-sword?utm_source=api"
-    },
-    {
-      "name": "Adaptive Omnitool",
-      "nickname": "John's Journal",
-      "flavor_text": "When the boys didn’t know what they were hunting, John usually did.",
-      "artist": "ChatGPT",
-      "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
-      "scryfall_url": "https://scryfall.com/card/fdc/243/adaptive-omnitool?utm_source=api"
-    },
-    {
-      "name": "Arcane Signet",
-      "nickname": "Men of Letters Key",
-      "flavor_text": "One turn of the key, and a century of secrets opened.",
-      "artist": "ChatGPT",
-      "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
-      "scryfall_url": "https://scryfall.com/card/frc/20/arcane-signet?utm_source=api"
-    },
-    {
-      "name": "Resurrection Orb",
-      "nickname": "Resurrection Charm",
-      "flavor_text": "Some protections only prove themselves after your heart stops.",
-      "artist": "ChatGPT",
-      "oracle_id": "b410f294-cbb6-4016-981f-808fd9b7bbae",
-      "scryfall_url": "https://scryfall.com/card/40k/165/resurrection-orb?utm_source=api"
-    },
-    {
-      "name": "Talisman of Conviction",
-      "nickname": "Ring of War",
-      "flavor_text": "Slip it on, and every disagreement remembers how to become a war.",
-      "artist": "ChatGPT",
-      "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
-      "scryfall_url": "https://scryfall.com/card/msc/217/talisman-of-conviction?utm_source=api"
-    },
-    {
-      "name": "Talisman of Hierarchy",
-      "nickname": "Ring of Pestilence",
-      "flavor_text": "Where Pestilence passed, even the air learned to sicken.",
-      "artist": "ChatGPT",
-      "oracle_id": "b693c3de-2eaf-4850-b405-e79d00adefda",
-      "scryfall_url": "https://scryfall.com/card/soc/358/talisman-of-hierarchy?utm_source=api"
-    },
-    {
-      "name": "Talisman of Indulgence",
-      "nickname": "Ring of Famine",
-      "flavor_text": "Hunger is easiest to command once it has already claimed you.",
-      "artist": "ChatGPT",
-      "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
-      "scryfall_url": "https://scryfall.com/card/frc/63/talisman-of-indulgence?utm_source=api"
-    },
-    {
-      "name": "Thornbite Staff",
-      "nickname": "The First Blade",
-      "flavor_text": "It never asked Cain to kill. It only made killing easier.",
-      "artist": "ChatGPT",
-      "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
-      "scryfall_url": "https://scryfall.com/card/mor/145/thornbite-staff?utm_source=api"
-    },
-    {
-      "name": "Sword of Light and Shadow",
-      "nickname": "Book of the Damned",
-      "flavor_text": "Every forbidden answer leaves another stain on the page.",
-      "artist": "ChatGPT",
-      "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
-      "scryfall_url": "https://scryfall.com/card/2xm/298/sword-of-light-and-shadow?utm_source=api"
-    },
-    {
-      "name": "Heartseeker",
-      "nickname": "The Colt",
-      "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could.",
-      "artist": "ChatGPT",
-      "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
-      "scryfall_url": "https://scryfall.com/card/dst/124/heartseeker?utm_source=api"
-    },
-    {
-      "name": "Maskwood Nexus",
-      "nickname": "Monster-Making Formula",
-      "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
-      "artist": "ChatGPT",
-      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
-      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
-    },
-    {
-      "name": "Thran Dynamo",
-      "nickname": "Souls of Purgatory",
-      "flavor_text": "A million restless souls can power miracles—or monsters.",
-      "artist": "ChatGPT",
-      "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
-      "scryfall_url": "https://scryfall.com/card/cmm/415/thran-dynamo?utm_source=api"
+      "oracle_id": "b3d81980-76f2-44e2-b1c9-01e30c726312",
+      "scryfall_url": "https://scryfall.com/card/mkc/71/loran-of-the-third-path?utm_source=api"
     },
     {
       "name": "Argentum Armor",
@@ -650,20 +499,28 @@
       "scryfall_url": "https://scryfall.com/card/afc/198/argentum-armor?utm_source=api"
     },
     {
-      "name": "Meteor Sword",
-      "nickname": "Rod of Aaron",
-      "flavor_text": "Divine power rarely arrives with instructions.",
+      "name": "Embercleave",
+      "nickname": "Archangel Blade",
+      "flavor_text": "Even celestial blood answers to sharpened grace.",
       "artist": "ChatGPT",
-      "oracle_id": "181965fb-e685-4b1f-9bd6-3a33bed933b2",
-      "scryfall_url": "https://scryfall.com/card/tla/258/meteor-sword?utm_source=api"
+      "oracle_id": "4d6120d6-fcce-40bc-9fc6-e1f5beb6c728",
+      "scryfall_url": "https://scryfall.com/card/eld/120/embercleave?utm_source=api"
     },
     {
-      "name": "Syr Gwyn, Hero of Ashvale",
-      "nickname": "Dean Winchester, Righteous Man",
-      "flavor_text": "Saving the world was never the point. Saving the people in it was.",
+      "name": "Heartseeker",
+      "nickname": "The Colt",
+      "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could.",
       "artist": "ChatGPT",
-      "oracle_id": "ca411184-3413-492c-ab87-08c9fa1d4806",
-      "scryfall_url": "https://scryfall.com/card/eld/330/syr-gwyn-hero-of-ashvale?utm_source=api"
+      "oracle_id": "9ebd9ceb-05a4-4387-b63e-4c62ead2b98b",
+      "scryfall_url": "https://scryfall.com/card/dst/124/heartseeker?utm_source=api"
+    },
+    {
+      "name": "Shadowspear",
+      "nickname": "Kaia's Spear",
+      "flavor_text": "Forged beyond this world, it knew where impossible things could bleed.",
+      "artist": "ChatGPT",
+      "oracle_id": "8b27326f-e7b8-4a4d-b589-df459246d19a",
+      "scryfall_url": "https://scryfall.com/card/thb/236/shadowspear?utm_source=api"
     },
     {
       "name": "Cecil, Dark Knight",
@@ -690,28 +547,140 @@
       "scryfall_url": "https://scryfall.com/card/clb/4/archivist-of-oghma?utm_source=api"
     },
     {
-      "name": "Cloud, Midgar Mercenary",
-      "nickname": "Arthur Ketch, Men of Letters Operative",
-      "flavor_text": "Efficiency came naturally. Conscience took longer.",
+      "name": "The Regalia",
+      "nickname": "Baby, the Impala",
+      "flavor_text": "Home was four wheels, black paint, and whatever road came next.",
       "artist": "ChatGPT",
-      "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
-      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
+      "oracle_id": "27a7610e-acbe-4a2b-9f61-81b383eb20a5",
+      "scryfall_url": "https://scryfall.com/card/fin/267/the-regalia?utm_source=api"
     },
     {
-      "name": "Puresteel Paladin",
-      "nickname": "Bobby Singer, Veteran Hunter",
-      "flavor_text": "Salt, iron, lore, and stubbornness kept more hunters alive than miracles ever did.",
+      "name": "Arcane Signet",
+      "nickname": "Men of Letters Key",
+      "flavor_text": "One turn of the key, and a century of secrets opened.",
       "artist": "ChatGPT",
-      "oracle_id": "74a62c7b-4753-4af2-b7a1-9a4ae8988801",
-      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api"
+      "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+      "scryfall_url": "https://scryfall.com/card/frc/20/arcane-signet?utm_source=api"
     },
     {
-      "name": "Stoneforge Mystic",
-      "nickname": "Charlie Bradbury, Queen of Moondoor",
-      "flavor_text": "Give her a locked door, a dead language, or a dragon. She’ll find a way in.",
+      "name": "Excalibur, Sword of Eden",
+      "nickname": "Michael's Lance",
+      "flavor_text": "Made for archangels. Fatal to nearly everything else.",
       "artist": "ChatGPT",
-      "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
-      "scryfall_url": "https://scryfall.com/card/2xm/31/stoneforge-mystic?utm_source=api"
+      "oracle_id": "9fb6bd72-031b-40a1-83c5-8a1c82f84e12",
+      "scryfall_url": "https://scryfall.com/card/acr/72/excalibur-sword-of-eden?utm_source=api"
+    },
+    {
+      "name": "Meteor Sword",
+      "nickname": "Rod of Aaron",
+      "flavor_text": "Divine power rarely arrives with instructions.",
+      "artist": "ChatGPT",
+      "oracle_id": "181965fb-e685-4b1f-9bd6-3a33bed933b2",
+      "scryfall_url": "https://scryfall.com/card/tla/258/meteor-sword?utm_source=api"
+    },
+    {
+      "name": "Mox Amber",
+      "nickname": "Dean's Amulet",
+      "flavor_text": "Some things become sacred because of who refuses to let them go.",
+      "artist": "ChatGPT",
+      "oracle_id": "7a43bd27-fdd8-41f0-9bc4-92568f3408f1",
+      "scryfall_url": "https://scryfall.com/card/dom/224/mox-amber?utm_source=api"
+    },
+    {
+      "name": "Mox Opal",
+      "nickname": "Angel Tablet",
+      "flavor_text": "The Word of God was never meant to be easy reading.",
+      "artist": "ChatGPT",
+      "oracle_id": "de2440de-e948-4811-903c-0bbe376ff64d",
+      "scryfall_url": "https://scryfall.com/card/2xm/275/mox-opal?utm_source=api"
+    },
+    {
+      "name": "Smothering Tithe",
+      "nickname": "Crossroads Contract",
+      "flavor_text": "The ink dries long before the regret does.",
+      "artist": "ChatGPT",
+      "oracle_id": "153376c9-dffd-458c-8ce3-a4c8269bc4e9",
+      "scryfall_url": "https://scryfall.com/card/cmm/57/smothering-tithe?utm_source=api"
+    },
+    {
+      "name": "Sol Ring",
+      "nickname": "Ring of Death",
+      "flavor_text": "The oldest promise is the simplest: everything ends.",
+      "artist": "ChatGPT",
+      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+      "scryfall_url": "https://scryfall.com/card/frc/21/sol-ring?utm_source=api"
+    },
+    {
+      "name": "Sword of Light and Shadow",
+      "nickname": "Book of the Damned",
+      "flavor_text": "Every forbidden answer leaves another stain on the page.",
+      "artist": "ChatGPT",
+      "oracle_id": "01c8a554-45a6-46ca-b40a-af0fd4529e40",
+      "scryfall_url": "https://scryfall.com/card/2xm/298/sword-of-light-and-shadow?utm_source=api"
+    },
+    {
+      "name": "Talisman of Conviction",
+      "nickname": "Ring of War",
+      "flavor_text": "Slip it on, and every disagreement remembers how to become a war.",
+      "artist": "ChatGPT",
+      "oracle_id": "6c326439-5620-4ec6-a56a-fe9c3d5d2a46",
+      "scryfall_url": "https://scryfall.com/card/msc/217/talisman-of-conviction?utm_source=api"
+    },
+    {
+      "name": "Talisman of Hierarchy",
+      "nickname": "Ring of Pestilence",
+      "flavor_text": "Where Pestilence passed, even the air learned to sicken.",
+      "artist": "ChatGPT",
+      "oracle_id": "b693c3de-2eaf-4850-b405-e79d00adefda",
+      "scryfall_url": "https://scryfall.com/card/soc/358/talisman-of-hierarchy?utm_source=api"
+    },
+    {
+      "name": "Talisman of Indulgence",
+      "nickname": "Ring of Famine",
+      "flavor_text": "Hunger is easiest to command once it has already claimed you.",
+      "artist": "ChatGPT",
+      "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
+      "scryfall_url": "https://scryfall.com/card/frc/63/talisman-of-indulgence?utm_source=api"
+    },
+    {
+      "name": "The Mind Stone",
+      "nickname": "Bottled Grace",
+      "flavor_text": "Even Heaven can be reduced to something small enough to steal.",
+      "artist": "ChatGPT",
+      "oracle_id": "b175e826-09e8-4fae-9f2e-b902f95b282d",
+      "scryfall_url": "https://scryfall.com/card/msh/21/the-mind-stone?utm_source=api"
+    },
+    {
+      "name": "Thornbite Staff",
+      "nickname": "The First Blade",
+      "flavor_text": "It never asked Cain to kill. It only made killing easier.",
+      "artist": "ChatGPT",
+      "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
+      "scryfall_url": "https://scryfall.com/card/mor/145/thornbite-staff?utm_source=api"
+    },
+    {
+      "name": "Thran Dynamo",
+      "nickname": "Souls of Purgatory",
+      "flavor_text": "A million restless souls can power miracles—or monsters.",
+      "artist": "ChatGPT",
+      "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
+      "scryfall_url": "https://scryfall.com/card/cmm/415/thran-dynamo?utm_source=api"
+    },
+    {
+      "name": "Resurrection Orb",
+      "nickname": "Resurrection Charm",
+      "flavor_text": "Some protections only prove themselves after your heart stops.",
+      "artist": "ChatGPT",
+      "oracle_id": "b410f294-cbb6-4016-981f-808fd9b7bbae",
+      "scryfall_url": "https://scryfall.com/card/40k/165/resurrection-orb?utm_source=api"
+    },
+    {
+      "name": "Stonehewer Giant",
+      "nickname": "Giant of the Bad Place",
+      "flavor_text": "In the Bad Place, even the horizon could stand up and hunt you.",
+      "artist": "ChatGPT",
+      "oracle_id": "b3d99ea0-d61f-4394-8913-b4057c38ff3e",
+      "scryfall_url": "https://scryfall.com/card/2xm/32/stonehewer-giant?utm_source=api"
     },
     {
       "name": "Aerith Gainsborough",
@@ -722,37 +691,12 @@
       "scryfall_url": "https://scryfall.com/card/fin/4/aerith-gainsborough?utm_source=api"
     },
     {
-      "name": "Brutal Cathar",
-      "nickname": "Garth, Monster Hunter",
-      "flavor_text": "He hunted monsters without forgetting that some of them were still people.",
+      "name": "Bloodthirsty Conqueror",
+      "nickname": "Benny Lafitte, Purgatory Survivor",
+      "flavor_text": "Purgatory taught him survival. Dean reminded him what survival was for.",
       "artist": "ChatGPT",
-      "oracle_id": "1ed2d8e0-462b-468e-8fd3-1f3c6d99fb8a",
-      "scryfall_url": "https://scryfall.com/card/mid/7/brutal-cathar-moonrage-brute?utm_source=api",
-      "oracle_text": "Whenever this creature enters or transforms into Garth, Monster Hunter, exile target creature an opponent controls until this creature leaves the battlefield.\nDaybound (If a player casts no spells during their own turn, it becomes night next turn.)"
-    },
-    {
-      "name": "Moonrage Brute",
-      "nickname": "Garth, Friendly Werewolf",
-      "flavor_text": "The moon changed what he was, not who he chose to be.",
-      "artist": "ChatGPT",
-      "oracle_id": "1ed2d8e0-462b-468e-8fd3-1f3c6d99fb8a",
-      "scryfall_url": "https://scryfall.com/card/mid/7/brutal-cathar-moonrage-brute?utm_source=api"
-    },
-    {
-      "name": "Danitha Capashen, Paragon",
-      "nickname": "Eileen Leahy, Men of Letters Legacy",
-      "flavor_text": "She listened with her eyes and hunted with absolute precision.",
-      "artist": "ChatGPT",
-      "oracle_id": "4b6377da-83e7-4519-9582-16a9c16b8faa",
-      "scryfall_url": "https://scryfall.com/card/cmm/20/danitha-capashen-paragon?utm_source=api"
-    },
-    {
-      "name": "Kelsien, the Plague",
-      "nickname": "Rufus Turner, Grizzled Hunter",
-      "flavor_text": "Experience is what you get when the thing trying to kill you misses.",
-      "artist": "ChatGPT",
-      "oracle_id": "5b3326a5-18c5-4d45-90e1-f6d00ca2bced",
-      "scryfall_url": "https://scryfall.com/card/c20/11/kelsien-the-plague?utm_source=api"
+      "oracle_id": "fd505c02-c59e-476d-8e88-35da862ddc23",
+      "scryfall_url": "https://scryfall.com/card/fdn/58/bloodthirsty-conqueror?utm_source=api"
     },
     {
       "name": "Knight Exemplar",
@@ -763,12 +707,68 @@
       "scryfall_url": "https://scryfall.com/card/moc/192/knight-exemplar?utm_source=api"
     },
     {
-      "name": "Loran of the Third Path",
-      "nickname": "Donatello Redfield, Atheist Prophet",
-      "flavor_text": "Faith was optional. The evidence was not.",
+      "name": "Vona, Butcher of Magan",
+      "nickname": "Billie, the New Death",
+      "flavor_text": "Death doesn’t make exceptions. Billie makes appointments.",
       "artist": "ChatGPT",
-      "oracle_id": "b3d81980-76f2-44e2-b1c9-01e30c726312",
-      "scryfall_url": "https://scryfall.com/card/mkc/71/loran-of-the-third-path?utm_source=api"
+      "oracle_id": "b1c56e23-eae6-47a1-a1cd-3a2d01621768",
+      "scryfall_url": "https://scryfall.com/card/lcc/293/vona-butcher-of-magan?utm_source=api"
+    },
+    {
+      "name": "Black Market Connections",
+      "nickname": "Hell's Ledger",
+      "flavor_text": "Hell remembers every favor, every debt, and every unpaid soul.",
+      "artist": "ChatGPT",
+      "oracle_id": "d2664f28-49e1-46f8-a863-b217e961a57c",
+      "scryfall_url": "https://scryfall.com/card/clb/669/black-market-connections?utm_source=api"
+    },
+    {
+      "name": "Demonic Tutor",
+      "nickname": "Book of Fate",
+      "flavor_text": "Every ending is written somewhere. Finding yours is the dangerous part.",
+      "artist": "ChatGPT",
+      "oracle_id": "82004860-e589-4e38-8d61-8c0210e4ea39",
+      "scryfall_url": "https://scryfall.com/card/cmm/150/demonic-tutor?utm_source=api"
+    },
+    {
+      "name": "Armored Skyhunter",
+      "nickname": "Apalo of the Skies",
+      "flavor_text": "Who needs boots when you have wings?",
+      "artist": "ChatGPT",
+      "oracle_id": "b4dbbf56-d7df-4183-bb48-cfc6b4d0468f",
+      "scryfall_url": "https://scryfall.com/card/soc/138/armored-skyhunter?utm_source=api"
+    },
+    {
+      "name": "Nahiri, Forged in Fury",
+      "nickname": "Charlie, Rebel of Apocalypse World",
+      "flavor_text": "In her world, surviving long enough to laugh was its own rebellion.",
+      "artist": "ChatGPT",
+      "oracle_id": "87966759-206a-4a2d-bf78-86f727c29972",
+      "scryfall_url": "https://scryfall.com/card/mat/36/nahiri-forged-in-fury?utm_source=api"
+    },
+    {
+      "name": "Aettir and Priwen",
+      "nickname": "Tiamat Talisman",
+      "flavor_text": "Wish carefully. The talisman has a sense of humor.",
+      "artist": "ChatGPT",
+      "oracle_id": "19d8937e-23fb-4758-a306-0e7af9bb44c4",
+      "scryfall_url": "https://scryfall.com/card/fin/253/aettir-and-priwen?utm_source=api"
+    },
+    {
+      "name": "Danitha Capashen, Paragon",
+      "nickname": "Eileen Leahy, Men of Letters Legacy",
+      "flavor_text": "She listened with her eyes and hunted with absolute precision.",
+      "artist": "ChatGPT",
+      "oracle_id": "4b6377da-83e7-4519-9582-16a9c16b8faa",
+      "scryfall_url": "https://scryfall.com/card/cmm/20/danitha-capashen-paragon?utm_source=api"
+    },
+    {
+      "name": "Adaptive Omnitool",
+      "nickname": "John's Journal",
+      "flavor_text": "When the boys didn’t know what they were hunting, John usually did.",
+      "artist": "ChatGPT",
+      "oracle_id": "e91240bc-4a13-4131-9379-5ddac6555f4a",
+      "scryfall_url": "https://scryfall.com/card/fdc/243/adaptive-omnitool?utm_source=api"
     },
     {
       "name": "Sephiroth, Fabled SOLDIER",
@@ -787,140 +787,20 @@
       "scryfall_url": "https://scryfall.com/card/fin/115/sephiroth-fabled-soldier-sephiroth-one-winged-angel?utm_source=api"
     },
     {
-      "name": "Armored Skyhunter",
-      "nickname": "Apalo of the Skies",
-      "flavor_text": "Who needs boots when you have wings?",
+      "name": "The Reaver Cleaver",
+      "nickname": "Mjölnir",
+      "flavor_text": "When the hammer falls, arguments about worthiness end quickly.",
       "artist": "ChatGPT",
-      "oracle_id": "b4dbbf56-d7df-4183-bb48-cfc6b4d0468f",
-      "scryfall_url": "https://scryfall.com/card/soc/138/armored-skyhunter?utm_source=api"
+      "oracle_id": "37a2a31d-51e6-4c07-b4c2-b206ad40eb42",
+      "scryfall_url": "https://scryfall.com/card/dmc/8/the-reaver-cleaver?utm_source=api"
     },
     {
-      "name": "Astor, Bearer of Blades",
-      "nickname": "Balthazar, Thief of Heaven",
-      "flavor_text": "Heaven had rules. Balthazar preferred souvenirs.",
+      "name": "Kaldra Compleat",
+      "nickname": "Death's Scythe",
+      "flavor_text": "It does not kill. It decides that killing is complete.",
       "artist": "ChatGPT",
-      "oracle_id": "196962f0-6aff-4198-9e0c-eaf42aeaf147",
-      "scryfall_url": "https://scryfall.com/card/dmu/194/astor-bearer-of-blades?utm_source=api"
-    },
-    {
-      "name": "Ria Ivor, Bane of Bladehold",
-      "nickname": "Pestilence, Bringer of Disease",
-      "flavor_text": "He didn’t bring disease. He simply reminded the world how easily it spreads.",
-      "artist": "ChatGPT",
-      "oracle_id": "785f55bb-d47c-470c-94d4-95f69055e35f",
-      "scryfall_url": "https://scryfall.com/card/one/214/ria-ivor-bane-of-bladehold?utm_source=api"
-    },
-    {
-      "name": "Rohirrim Chargers",
-      "nickname": "Donna Hanscum, Wayward Sheriff",
-      "flavor_text": "She met the impossible with a smile, a shotgun, and an ‘okey-dokey.’",
-      "artist": "ChatGPT",
-      "oracle_id": "8e638c52-e7b9-445b-adcf-77b58e06c2ba",
-      "scryfall_url": "https://scryfall.com/card/ltc/496/rohirrim-chargers?utm_source=api"
-    },
-    {
-      "name": "Éowyn, Fearless Knight",
-      "nickname": "Claire Novak, Wayward Hunter",
-      "flavor_text": "She stopped waiting for angels to save her.",
-      "artist": "ChatGPT",
-      "oracle_id": "dcc349e9-399d-4f33-8131-d1801272466a",
-      "scryfall_url": "https://scryfall.com/card/ltr/201/%C3%A9owyn-fearless-knight?utm_source=api"
-    },
-    {
-      "name": "Archangel of Thune",
-      "nickname": "Jack Kline, Nephilim",
-      "flavor_text": "Born with the power to end worlds, he chose to save them.",
-      "artist": "ChatGPT",
-      "oracle_id": "4f2d4538-dc1d-4c09-964b-b0d7c240fb7d",
-      "scryfall_url": "https://scryfall.com/card/2xm/5/archangel-of-thune?utm_source=api"
-    },
-    {
-      "name": "Bloodthirsty Conqueror",
-      "nickname": "Benny Lafitte, Purgatory Survivor",
-      "flavor_text": "Purgatory taught him survival. Dean reminded him what survival was for.",
-      "artist": "ChatGPT",
-      "oracle_id": "fd505c02-c59e-476d-8e88-35da862ddc23",
-      "scryfall_url": "https://scryfall.com/card/fdn/58/bloodthirsty-conqueror?utm_source=api"
-    },
-    {
-      "name": "Captain America, Liberator",
-      "nickname": "Bobby Singer, Resistance Leader",
-      "flavor_text": "When the world ended, Bobby kept building places worth defending.",
-      "artist": "ChatGPT",
-      "oracle_id": "26e92eb8-7a23-4e7e-be83-244bb6078606",
-      "scryfall_url": "https://scryfall.com/card/msc/587/captain-america-liberator?utm_source=api"
-    },
-    {
-      "name": "Danitha, Benalia's Hope",
-      "nickname": "Linda Tran, Prophet's Protector",
-      "flavor_text": "Prophets speak for Heaven. Mothers speak louder.",
-      "artist": "ChatGPT",
-      "oracle_id": "43b5dbe9-41f7-4082-944b-ea9d6292c6fd",
-      "scryfall_url": "https://scryfall.com/card/dmu/15/danitha-benalias-hope?utm_source=api"
-    },
-    {
-      "name": "Lyra Dawnbringer",
-      "nickname": "Gabriel, the Trickster",
-      "flavor_text": "The joke was always funniest just before reality changed.",
-      "artist": "ChatGPT",
-      "oracle_id": "592c91fc-6430-4c76-9460-65f047350f67",
-      "scryfall_url": "https://scryfall.com/card/fdn/738/lyra-dawnbringer?utm_source=api"
-    },
-    {
-      "name": "Stonehewer Giant",
-      "nickname": "Giant of the Bad Place",
-      "flavor_text": "In the Bad Place, even the horizon could stand up and hunt you.",
-      "artist": "ChatGPT",
-      "oracle_id": "b3d99ea0-d61f-4394-8913-b4057c38ff3e",
-      "scryfall_url": "https://scryfall.com/card/2xm/32/stonehewer-giant?utm_source=api"
-    },
-    {
-      "name": "Thalia's Lancers",
-      "nickname": "Missouri Moseley, Spirit Medium",
-      "flavor_text": "People lied. Spirits lied. Missouri had little patience for either.",
-      "artist": "ChatGPT",
-      "oracle_id": "58b349ec-9987-4832-a8f3-8e92027ea75b",
-      "scryfall_url": "https://scryfall.com/card/emn/47/thalias-lancers?utm_source=api"
-    },
-    {
-      "name": "Vona, Butcher of Magan",
-      "nickname": "Billie, the New Death",
-      "flavor_text": "Death doesn’t make exceptions. Billie makes appointments.",
-      "artist": "ChatGPT",
-      "oracle_id": "b1c56e23-eae6-47a1-a1cd-3a2d01621768",
-      "scryfall_url": "https://scryfall.com/card/lcc/293/vona-butcher-of-magan?utm_source=api"
-    },
-    {
-      "name": "Witch of the Moors",
-      "nickname": "Rowena, Queen of Hell",
-      "flavor_text": "Death was never the end of a spell—only another ingredient.",
-      "artist": "ChatGPT",
-      "oracle_id": "7ad97dd9-1342-4ed4-bea9-1bb21d748e04",
-      "scryfall_url": "https://scryfall.com/card/soc/230/witch-of-the-moors?utm_source=api"
-    },
-    {
-      "name": "Nahiri, Forged in Fury",
-      "nickname": "Charlie, Rebel of Apocalypse World",
-      "flavor_text": "In her world, surviving long enough to laugh was its own rebellion.",
-      "artist": "ChatGPT",
-      "oracle_id": "87966759-206a-4a2d-bf78-86f727c29972",
-      "scryfall_url": "https://scryfall.com/card/mat/36/nahiri-forged-in-fury?utm_source=api"
-    },
-    {
-      "name": "Ob Nixilis, the Ascended",
-      "nickname": "Lucifer, Fallen Archangel",
-      "flavor_text": "He never needed a throne to believe Heaven belonged to him.",
-      "artist": "ChatGPT",
-      "oracle_id": "3a49b518-61c8-4dea-8008-c5edf8384581",
-      "scryfall_url": "https://scryfall.com/card/frc/5/ob-nixilis-the-ascended?utm_source=api"
-    },
-    {
-      "name": "Riders of the Mark",
-      "nickname": "Jody Mills, Wayward Matriarch",
-      "flavor_text": "Anyone could become family. Anyone who threatened them became her problem.",
-      "artist": "ChatGPT",
-      "oracle_id": "c7031047-5109-482f-b2e9-14800b9279bf",
-      "scryfall_url": "https://scryfall.com/card/ltr/827/riders-of-the-mark?utm_source=api"
+      "oracle_id": "7359e82b-db79-488d-a1d4-75a00f12a4cf",
+      "scryfall_url": "https://scryfall.com/card/cmm/958/kaldra-compleat?utm_source=api"
     },
     {
       "name": "Avacyn, Angel of Horror",
@@ -931,20 +811,132 @@
       "scryfall_url": "https://scryfall.com/card/frc/7/avacyn-angel-of-horror?utm_source=api"
     },
     {
-      "name": "Vilis, Broker of Blood",
-      "nickname": "Crowley, King of Hell",
-      "flavor_text": "Every soul has a price. Crowley simply knows the exchange rate.",
+      "name": "Lyra Dawnbringer",
+      "nickname": "Gabriel, the Trickster",
+      "flavor_text": "The joke was always funniest just before reality changed.",
       "artist": "ChatGPT",
-      "oracle_id": "7c209753-121b-4859-944b-4e33f885e777",
-      "scryfall_url": "https://scryfall.com/card/m20/122/vilis-broker-of-blood?utm_source=api"
+      "oracle_id": "592c91fc-6430-4c76-9460-65f047350f67",
+      "scryfall_url": "https://scryfall.com/card/fdn/738/lyra-dawnbringer?utm_source=api"
     },
     {
-      "name": "Imperial Recruiter",
-      "nickname": "Sam Winchester, Learned Hunter",
-      "flavor_text": "Every monster leaves a pattern. Sam only needs enough time to find it.",
+      "name": "Ob Nixilis, the Ascended",
+      "nickname": "Lucifer, Fallen Archangel",
+      "flavor_text": "He never needed a throne to believe Heaven belonged to him.",
       "artist": "ChatGPT",
-      "oracle_id": "4d6a1391-817a-4ddc-840d-886b138eeb3f",
-      "scryfall_url": "https://scryfall.com/card/mh2/281/imperial-recruiter?utm_source=api"
+      "oracle_id": "3a49b518-61c8-4dea-8008-c5edf8384581",
+      "scryfall_url": "https://scryfall.com/card/frc/5/ob-nixilis-the-ascended?utm_source=api"
+    },
+    {
+      "name": "Éowyn, Fearless Knight",
+      "nickname": "Claire Novak, Wayward Hunter",
+      "flavor_text": "She stopped waiting for angels to save her.",
+      "artist": "ChatGPT",
+      "oracle_id": "dcc349e9-399d-4f33-8131-d1801272466a",
+      "scryfall_url": "https://scryfall.com/card/ltr/201/%C3%A9owyn-fearless-knight?utm_source=api"
+    },
+    {
+      "name": "Ria Ivor, Bane of Bladehold",
+      "nickname": "Pestilence, Bringer of Disease",
+      "flavor_text": "He didn’t bring disease. He simply reminded the world how easily it spreads.",
+      "artist": "ChatGPT",
+      "oracle_id": "785f55bb-d47c-470c-94d4-95f69055e35f",
+      "scryfall_url": "https://scryfall.com/card/one/214/ria-ivor-bane-of-bladehold?utm_source=api"
+    },
+    {
+      "name": "Riders of the Mark",
+      "nickname": "Jody Mills, Wayward Matriarch",
+      "flavor_text": "Anyone could become family. Anyone who threatened them became her problem.",
+      "artist": "ChatGPT",
+      "oracle_id": "c7031047-5109-482f-b2e9-14800b9279bf",
+      "scryfall_url": "https://scryfall.com/card/ltr/827/riders-of-the-mark?utm_source=api"
+    },
+    {
+      "name": "Rohirrim Chargers",
+      "nickname": "Donna Hanscum, Wayward Sheriff",
+      "flavor_text": "She met the impossible with a smile, a shotgun, and an ‘okey-dokey.’",
+      "artist": "ChatGPT",
+      "oracle_id": "8e638c52-e7b9-445b-adcf-77b58e06c2ba",
+      "scryfall_url": "https://scryfall.com/card/ltc/496/rohirrim-chargers?utm_source=api"
+    },
+    {
+      "name": "Thalia's Lancers",
+      "nickname": "Missouri Moseley, Spirit Medium",
+      "flavor_text": "People lied. Spirits lied. Missouri had little patience for either.",
+      "artist": "ChatGPT",
+      "oracle_id": "58b349ec-9987-4832-a8f3-8e92027ea75b",
+      "scryfall_url": "https://scryfall.com/card/emn/47/thalias-lancers?utm_source=api"
+    },
+    {
+      "name": "Viridian Longbow",
+      "nickname": "Rock-Salt Shotgun",
+      "flavor_text": "It won’t kill a ghost. It will make one reconsider the room.",
+      "artist": "ChatGPT",
+      "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
+      "scryfall_url": "https://scryfall.com/card/afc/221/viridian-longbow?utm_source=api"
+    },
+    {
+      "name": "Vorpal Sword",
+      "nickname": "Angel Blade",
+      "flavor_text": "Small enough to hide. Sharp enough to kill Heaven.",
+      "artist": "ChatGPT",
+      "oracle_id": "61bfab3f-d8f0-4ff5-9ddf-3fd605070c8f",
+      "scryfall_url": "https://scryfall.com/card/afr/124/vorpal-sword?utm_source=api"
+    },
+    {
+      "name": "Helm of the Host",
+      "nickname": "Loki's Hat",
+      "flavor_text": "The best disguise is the one reality agrees to believe.",
+      "artist": "ChatGPT",
+      "oracle_id": "83b43aba-bf9c-4da2-967d-9daa632e97d2",
+      "scryfall_url": "https://scryfall.com/card/msc/200/helm-of-the-host?utm_source=api"
+    },
+    {
+      "name": "Astor, Bearer of Blades",
+      "nickname": "Balthazar, Thief of Heaven",
+      "flavor_text": "Heaven had rules. Balthazar preferred souvenirs.",
+      "artist": "ChatGPT",
+      "oracle_id": "196962f0-6aff-4198-9e0c-eaf42aeaf147",
+      "scryfall_url": "https://scryfall.com/card/dmu/194/astor-bearer-of-blades?utm_source=api"
+    },
+    {
+      "name": "Fighter Class",
+      "nickname": "Hunter's Manual",
+      "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
+      "artist": "ChatGPT",
+      "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
+      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
+    },
+    {
+      "name": "Captain America, Liberator",
+      "nickname": "Bobby Singer, Resistance Leader",
+      "flavor_text": "When the world ended, Bobby kept building places worth defending.",
+      "artist": "ChatGPT",
+      "oracle_id": "26e92eb8-7a23-4e7e-be83-244bb6078606",
+      "scryfall_url": "https://scryfall.com/card/msc/587/captain-america-liberator?utm_source=api"
+    },
+    {
+      "name": "Maskwood Nexus",
+      "nickname": "Monster-Making Formula",
+      "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
+      "artist": "ChatGPT",
+      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
+      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
+    },
+    {
+      "name": "Kelsien, the Plague",
+      "nickname": "Rufus Turner, Grizzled Hunter",
+      "flavor_text": "Experience is what you get when the thing trying to kill you misses.",
+      "artist": "ChatGPT",
+      "oracle_id": "5b3326a5-18c5-4d45-90e1-f6d00ca2bced",
+      "scryfall_url": "https://scryfall.com/card/c20/11/kelsien-the-plague?utm_source=api"
+    },
+    {
+      "name": "Kaya the Inexorable",
+      "nickname": "Death, the Pale Horseman",
+      "flavor_text": "Kings, angels, gods—eventually, they all become his business.",
+      "artist": "ChatGPT",
+      "oracle_id": "13a4f88b-6832-43a1-b4fa-c1ee60560bad",
+      "scryfall_url": "https://scryfall.com/card/khm/218/kaya-the-inexorable?utm_source=api"
     },
     {
       "name": "Isshin, Two Heavens as One",
@@ -953,6 +945,14 @@
       "artist": "ChatGPT",
       "oracle_id": "65114758-9a75-43a7-96e8-0aa68faa6b24",
       "scryfall_url": "https://scryfall.com/card/neo/224/isshin-two-heavens-as-one?utm_source=api"
+    },
+    {
+      "name": "Imperial Recruiter",
+      "nickname": "Sam Winchester, Learned Hunter",
+      "flavor_text": "Every monster leaves a pattern. Sam only needs enough time to find it.",
+      "artist": "ChatGPT",
+      "oracle_id": "4d6a1391-817a-4ddc-840d-886b138eeb3f",
+      "scryfall_url": "https://scryfall.com/card/mh2/281/imperial-recruiter?utm_source=api"
     }
   ],
   "tokenAssignments": [
@@ -978,7 +978,7 @@
         "oracle_id": "2bb2f9ed-6378-40c9-9170-976711919014",
         "scryfall_id": "ce94fb42-cde4-4637-b938-13f17793bf1f"
       },
-      "quantity": 4
+      "quantity": 2
     },
     {
       "front": {
