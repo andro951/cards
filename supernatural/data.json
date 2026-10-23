@@ -1046,17 +1046,6 @@
     },
     {
       "front": {
-        "name": "Talisman of Indulgence",
-        "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
-        "scryfall_id": "36bd614f-ab3b-4ad1-ab5c-a7ca0a641f32"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
