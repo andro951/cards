@@ -1285,6 +1285,19 @@
         "scryfall_id": "a062a004-984e-4b62-960c-af7288f7a3e9"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Sol Ring",
+        "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+        "scryfall_id": "8ee443cc-e17a-493b-9c93-1f9e141a30e4"
+      },
+      "back": {
+        "name": "Viridian Longbow",
+        "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
+        "scryfall_id": "f4607634-6206-4c6c-b389-abcbfe969b65"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
