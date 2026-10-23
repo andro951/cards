@@ -1337,6 +1337,19 @@
         "scryfall_id": "0c959368-2f58-48de-b7a5-2bab408652b5"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Talisman of Indulgence",
+        "oracle_id": "1d9aeaaa-66f6-41cb-9bac-162d6fd8662c",
+        "scryfall_id": "36bd614f-ab3b-4ad1-ab5c-a7ca0a641f32"
+      },
+      "back": {
+        "name": "Thornbite Staff",
+        "oracle_id": "dae4815e-9025-4993-ab46-52a3f1a7219e",
+        "scryfall_id": "c1ab3225-64a9-411e-b22b-1869e958b8e5"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
