@@ -969,17 +969,6 @@
     },
     {
       "front": {
-        "name": "Viridian Longbow",
-        "oracle_id": "8b9119b0-9948-497f-aa92-2879d07bed1c",
-        "scryfall_id": "f4607634-6206-4c6c-b389-abcbfe969b65"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
