@@ -1090,17 +1090,6 @@
     },
     {
       "front": {
-        "name": "Maskwood Nexus",
-        "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
-        "scryfall_id": "1246c42d-57c0-4cba-959a-15ad89d8a50b"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
