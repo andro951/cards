@@ -1002,17 +1002,6 @@
     },
     {
       "front": {
-        "name": "Arcane Signet",
-        "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
-        "scryfall_id": "c6b6117c-faab-4bbb-b851-07bd8061ef03"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
