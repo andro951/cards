@@ -1112,17 +1112,6 @@
     },
     {
       "front": {
-        "name": "Argentum Armor",
-        "oracle_id": "d0a1f39b-cda4-4925-83f8-2161f575edfb",
-        "scryfall_id": "fb1b7468-85f9-472e-9f7c-b268f84aea1c"
-      },
-      "back": {
-        "kind": "card-back"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Day",
         "oracle_id": "84142407-ba98-497d-bbc8-39176aa67c02",
         "scryfall_id": "9c0f7843-4cbb-4d0f-8887-ec823a9238da"
