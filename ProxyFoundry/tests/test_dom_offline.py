@@ -109,6 +109,66 @@ def test_offline_deck_controls_and_templates(dom_page):
     assert not errors,errors
 
 
+@pytest.mark.parametrize('flow',['artwork-cancel','artwork-finish','cached-cancel','cached-confirm','render-failure'])
+def test_single_card_generation_hands_off_dialogs_and_restores_editor(dom_page,flow):
+    page,errors=dom_page
+    page.evaluate('''flow=>{
+      const deck=__fixture.deck,card=deck.cards[0],face=card.faces[0],cached=flow.startsWith('cached');
+      const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      deck.settings.source={mode:cached?'scryfall':'local',fallback:true,localFiles:{}};
+      deck.status='prepared';face.compiled={renderKey:'before',render:{asset_id:'a'.repeat(64),url:image}};
+      card.scryfall.image_uris={art_crop:image};
+      window.singleRenderCalls=[];const original=window.fetch;
+      const reply=value=>({ok:true,status:200,text:async()=>JSON.stringify(value)});
+      window.fetch=async(path,options={})=>{
+        const data=options.body?JSON.parse(options.body):{};
+        if(path.endsWith('/cards/'+card.id+'/prepare')){
+          if(!cached)delete face.compiled.render;
+          return reply({id:'single-prepare'});
+        }
+        if(path==='/api/jobs/single-prepare')return reply({state:'done',result:deck});
+        if(path.includes('/cards/')&&data.semanticOverrides)face.semanticOverrides=data.semanticOverrides;
+        if(path==='/api/setup/artwork-review')return reply({id:'single-artwork'});
+        if(path==='/api/jobs/single-artwork')return reply({state:'done',result:{
+          needsReview:true,signature:'new-artwork',items:[{id:face.id,cardId:card.id,name:card.name,selector:{name:card.name},image,status:'missing',key:null,reason:'Choose artwork'}],inventory:[]}});
+        if(path==='/api/render-sessions/card'){
+          singleRenderCalls.push(data);
+          if(flow==='render-failure')return {ok:false,status:500,text:async()=>JSON.stringify({error:'Card render request failed'})};
+          return reply({targets:[],errors:[],cached:1});
+        }
+        if(path==='/api/render-diagnostic')return reply({});
+        return original(path,options);
+      };
+    }''',flow)
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.get_by_role('button',name='Show back side').click()
+    page.fill('#card-qty','3')
+    page.locator('#nickname-override').evaluate("input=>input.closest('details').open=true")
+    page.fill('#nickname-override','Keep this nickname')
+    page.evaluate("window.originalInspector=document.querySelector('#generate-card').closest('.modal')")
+    page.click('#generate-card')
+    if flow.startswith('cached'):
+        page.get_by_role('dialog',name='This card already matches the cached render.',exact=True).wait_for()
+        if flow=='cached-cancel':page.click('#modal-close')
+        else:page.click('#confirm-yes')
+    else:
+        page.get_by_role('dialog',name='Match your artwork',exact=True).wait_for()
+        if flow=='artwork-cancel':page.click('#artwork-cancel')
+        else:page.click('#artwork-default-rest')
+    page.wait_for_function("!originalInspector.isConnected&&document.querySelector('#generate-card')?.disabled===false")
+    assert page.locator('#card-qty').input_value()=='3'
+    assert page.locator('#nickname-override').input_value()=='Keep this nickname'
+    assert page.locator('#inspector-image').get_attribute('alt')=='Test creature back'
+    assert page.locator('.modal').count()==1 and page.locator('#generation-screen').count()==0
+    expected=0 if flow.endswith('cancel') else 1
+    assert page.evaluate('singleRenderCalls.length')==expected
+    if flow=='cached-confirm':assert page.evaluate('singleRenderCalls[0].force') is True
+    toasts=page.locator('#toast-host').inner_text()
+    assert 'Complete the current dialog' not in toasts
+    if flow=='render-failure':assert 'Card render request failed' in toasts
+    assert not errors,errors
+
+
 def artwork_helper(page,count=2,images=2,fallback=False):
     page.evaluate('''({count,images,fallback})=>{
       const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';

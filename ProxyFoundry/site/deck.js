@@ -350,7 +350,7 @@ async function inspectMeldReverse(deck,card){
   });
 }
 
-async function inspect(deck,card,index=0){
+async function inspect(deck,card,index=0,initialSide=null){
   let d=await api('/api/decks/'+deck.id);let c=d.cards.find(x=>x.id===card.id);if(!c)throw new Error('This card was removed in another tab.');
   let f=c.faces[index]||c.faces[0],fit={...(f.fit||{})},artOverride=f.artOverride,backOverride=c.backOverride,backDesignOverride=c.backDesignOverride||null;
   const comp=f.compiled,group=f.group||comp?.group||'standard',sfFace=c.scryfall.card_faces?.[f.index]||c.scryfall,legendary=String(sfFace.type_line||c.scryfall.type_line||'').includes('Legendary');
@@ -369,7 +369,7 @@ async function inspect(deck,card,index=0){
   <div class="field"><span>Custom artwork override</span><div class="actions"><button class="button small" id="face-art">Upload art</button><button class="button quiet small" id="clear-face-art">Use deck artwork source</button></div><small id="face-art-state">${artOverride?'Individual custom artwork selected':esc(comp?.artOrigin||'Using deck source')}</small>${artShapeHint}</div>
   <div class="field"><span>Back override <small>optional, applies to this card only</small></span><div class="actions"><button class="button small" id="face-back">Upload full back</button><button class="button small" id="face-back-designer">Default / icon back</button><button class="button quiet small" id="clear-face-back">${hasPhysicalReverse(c)?'Use actual reverse':'Use deck back'}</button></div><small id="face-back-state">${backOverride?'Individual back selected':hasPhysicalReverse(c)?'Paired with '+esc(physicalReverseName(c)):'Using deck default back'}</small><div id="face-back-picker" class="hidden"></div></div>
   <details><summary>Artwork positioning & text overrides</summary><p class="muted" style="font-size:11px;margin-bottom:13px">The default is Card Tools’ existing fit. Changing these values affects only this face.</p><div class="field-row"><label class="field"><span>Horizontal position (pixels)</span><input id="fit-x" type="number" step="1" value="${Math.round((data.artX||0)*(data.width||2010))}"></label><label class="field"><span>Vertical position (pixels)</span><input id="fit-y" type="number" step="1" value="${Math.round((data.artY||0)*(data.height||2814))}"></label></div><div class="field-row"><label class="field"><span>Art scale (%)</span><input id="fit-zoom" type="number" min=".01" step=".1" value="${((data.artZoom||1)*100).toFixed(2)}"></label><label class="field"><span>Rotation (degrees)</span><input id="fit-rotation" type="number" step="1" value="${data.artRotate||0}"></label></div><button class="button quiet small" id="reset-fit">Reset to automatic fitting</button><label class="field section-gap"><span>Nickname / reskin name <small>optional</small></span><input id="nickname-override" value="${esc(f.semanticOverrides?.nickname??c.scryfall.flavor_name??'')}" placeholder="Use Scryfall flavor name, if any"><small>When nonblank, automatically uses the Godzilla-style alternate-name treatment while the real card name stays underneath.</small></label><label class="field"><span>Rules text override</span><textarea id="rules-override" rows="4" placeholder="Use current Scryfall Oracle text">${esc(f.semanticOverrides?.oracle_text??'')}</textarea><small>Leave blank to use the fetched Oracle text. The original Scryfall record remains cached unchanged.</small></label><label class="field"><span>Flavor text override</span><textarea id="flavor-override" rows="3" placeholder="Use the deck’s flavor policy">${esc(f.semanticOverrides?.flavor_text??'')}</textarea></label><label class="check-line"><input type="checkbox" id="remove-flavor" ${f.semanticOverrides?.flavor_text===''?'checked':''}><span>Remove flavor text from this face</span></label><label class="field"><span>Rarity / set-symbol override</span><select id="rarity-override"><option value="">Use selected printing (${esc(c.scryfall.rarity||'common')})</option>${rarities.map(r=>`<option value="${r}" ${f.semanticOverrides?.rarity===r?'selected':''}>${r}</option>`).join('')}</select></label></details><div class="inspector-actions"><button class="button danger-quiet small" id="remove-card">Remove card</button><button class="button quiet small" id="copy-token">Make copy token</button></div></div></div>`,{size:'large',footer:`<span class="footer-hint">Changes are saved to this deck only.</span><button class="button quiet" id="download-review-image">Download review image</button><button class="button" id="generate-card">Generate this card</button><button class="button primary" id="save-card">Done</button>`});
-  let selectedSide=index===1?'back':'front';
+  let selectedSide=initialSide||(index===1?'back':'front');
   const large=$('#inspector-image',host);
   let setSide=()=>{};
   if(large){
@@ -554,11 +554,13 @@ async function inspect(deck,card,index=0){
 
     closeModal({completed:true});await showDeck(d.id,'cards');toast('Card saved. Unchanged front images stay cached.');
   }finally{setBusy(false);}});
-  $('#generate-card').onclick=()=>attempt(async()=>{setBusy(true);try{
+  $('#generate-card').onclick=()=>attempt(async()=>{let reopen=false;setBusy(true);try{
     await persistCard();
     await prepareCard();
     syncCurrent(await api('/api/decks/'+d.id));
     refreshInspector();
+    //Generation preflight owns its artwork and confirmation dialogs; resume this editor afterward.
+    closeModal({completed:true});reopen=true;
     let force=false;
     if(!force && cardRenderMatchesCache(c)){
       const ok=await confirmAction(
@@ -570,10 +572,8 @@ async function inspect(deck,card,index=0){
       force=true;
     }
     await renderCard(d.id,c.id,{force});
-    syncCurrent(await api('/api/decks/'+d.id));
-    refreshInspector();
     await showDeck(d.id,'cards');
-  }finally{setBusy(false);}});
+  }finally{setBusy(false);if(reopen)await inspect(d,c,index,selectedSide);}});
   $('#download-review-image').onclick=()=>attempt(async()=>{setBusy(true);try{await persistCard();if(!f.compiled?.render)throw new Error('Generate images for this card before downloading its review image.');
     await downloadReview(d.id,{cardId:c.id,faceId:f.id});await showDeck(d.id,'cards');}finally{setBusy(false);}});
   if($('#inspect-flip'))$('#inspect-flip').onclick=()=>{closeModal();if(c.faces.length===2)attempt(()=>inspect(d,c,index===0?1:0));else attempt(()=>inspectMeldReverse(d,c));};
