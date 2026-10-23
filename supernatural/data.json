@@ -1363,6 +1363,19 @@
         "scryfall_id": "a4f33c08-f3c3-4015-970d-ac0530f97c9c"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Maskwood Nexus",
+        "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
+        "scryfall_id": "1246c42d-57c0-4cba-959a-15ad89d8a50b"
+      },
+      "back": {
+        "name": "Thran Dynamo",
+        "oracle_id": "a699c663-8131-4045-9265-a83e86609374",
+        "scryfall_id": "7ce5f12e-fc02-42f8-a5ca-b523050d4650"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
