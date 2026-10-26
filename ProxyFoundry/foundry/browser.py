@@ -461,7 +461,7 @@ class BrowserHandler(server.Handler):
                 lambda update,cancel:operation(export[1],update,cancel)))
         if path == '/api/decks/manifest':
             data=self.data()
-            return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(data.get('source',''),data.get('includeOutside',True),cancel=c)))
+            return self.respond(self.app.jobs.start('Read deck list',lambda u,c:self.app.ws.sources.read_deck_manifest(data.get('source',''),cancel=c)))
         metadata=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/metadata',path)
         if metadata:
             self.data()

@@ -55,10 +55,10 @@ def test_github_folders():
 
 def test_deck_text():
     x = parse_deck_text('Commander\n1 Esika, God of the Tree (KHM) 168\nDeck\n4x Forest\n1 Fire // Ice\nSideboard\n1 Bad\nOutside The Game\n1 Wish')
-    assert [r['quantity'] for r in x] == [1, 4, 1]
+    assert [r['quantity'] for r in x] == [1, 4, 1, 1]
     assert x[0]['source'] == 'khm:168'
     assert x[2]['name'] == 'Fire // Ice'
-    assert len(parse_deck_text('Outside The Game\n1 Wish', True)) == 1
+    assert len(parse_deck_text('Outside The Game\n1 Wish')) == 1
 
 
 @pytest.mark.parametrize('types,layout,index,expected', [

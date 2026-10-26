@@ -120,11 +120,11 @@ def test_refresh_deck_cards_reloads_original_source_and_blocks_generation(dom_pa
     }''',failed)
     page.locator('.deck-tile').click();page.click('#deck-menu');page.get_by_role('button',name='Refresh deck cards',exact=True).click()
     assert page.get_by_label('Original deck link',exact=True).input_value()==page.evaluate('__fixture.deck.importedSource')
-    assert page.get_by_text('Include Outside the Game cards',exact=True).is_visible()
+    assert page.get_by_text('Include Outside the Game cards',exact=True).count()==0
     page.click('#refresh-deck-cards');page.wait_for_function('typeof finishRefresh==="function"')
     assert page.locator('#generate-deck').is_disabled() and page.locator('#refresh-deck-cards').is_disabled()
     assert page.evaluate('refreshPayload.source')==page.evaluate('__fixture.deck.importedSource')
-    assert page.evaluate('refreshPayload.includeOutside') is False
+    assert page.evaluate('Object.hasOwn(refreshPayload,"includeOutside")') is False
     page.evaluate('finishRefresh()')
     if failed:
         page.get_by_role('alert').filter(has_text='Original deck unavailable').wait_for()

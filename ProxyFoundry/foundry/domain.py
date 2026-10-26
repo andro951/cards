@@ -81,7 +81,7 @@ def github_location(raw,branch=None):
     if not re.fullmatch(r'[A-Za-z0-9_.-]+',owner) or not re.fullmatch(r'[A-Za-z0-9_.-]+',repo):raise ValidationError('Invalid GitHub repository.')
     return {'repo':owner+'/'+repo.removesuffix('.git'),'ref':ref,'folder':folder,'default_ref':defaulted}
 
-def parse_deck_text(text,include_outside=False):
+def parse_deck_text(text):
     section='mainboard';rows=[]
     headings={'commander','commanders','deck','mainboard','main deck','lands','nonlands','sideboard','maybeboard','outside the game','outside_the_game','companion'}
     for lineno,line in enumerate(str(text).splitlines(),1):
@@ -89,7 +89,7 @@ def parse_deck_text(text,include_outside=False):
         if not line or line.startswith(('#','//')):continue
         header=line.rstrip(':').strip().lower()
         if header in headings:section=header.replace(' ','_');continue
-        if section in {'sideboard','maybeboard'} or section=='outside_the_game' and not include_outside:continue
+        if section in {'sideboard','maybeboard'}:continue
         line=re.sub(r'\s+\*[A-Z]\*\s*$','',line)
         m=re.match(r'^(\d+)\s*[xX]?\s+(.+)$',line)
         count,name=(quantity(m[1]),m[2].strip()) if m else (1,line)

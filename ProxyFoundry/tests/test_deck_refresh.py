@@ -121,19 +121,19 @@ def test_refresh_clamps_art_variants_without_discarding_retained_variant_images(
     assert result['deck']['settings']['artVariants'][0]['quantity']==2
 
 
-def test_outside_preference_is_retained_and_sideboard_is_excluded(env):
+def test_outside_is_always_included_despite_legacy_preference_and_sideboard_is_excluded(env):
     ws,deck,remote=env;remote['rows'].extend([(CARD_C,1,'outside'),(CARD_C,3,'sideboard')])
+    deck['includeOutside']=False;ws.store.put('decks',deck,deck['revision'])
     first=refresh(env,includeOutside=False)['deck']
-    assert len(first['cards'])==2 and not first['includeOutside']
-    assert len(refresh(env)['deck']['cards'])==2
-    assert len(refresh(env,includeOutside=True)['deck']['cards'])==3
+    assert len(first['cards'])==3 and 'includeOutside' not in first
+    assert len(refresh(env)['deck']['cards'])==3
 
 
 def test_helper_import_retains_original_url_for_later_refresh(env):
     ws,_,_=env;link='https://archidekt.com/decks/12345/example'
     listing=ws.sources.read_deck_manifest(json.dumps({'sourceUrl':link,'name':'Helper deck','rows':[{'source':CARD_A,'quantity':1}]}))
     deck=ws.create_staged({'manifest':listing,'includeOutside':False})
-    assert deck['importedSource']==link and deck['includeOutside'] is False
+    assert deck['importedSource']==link and 'includeOutside' not in deck
 
 
 def test_removed_token_cleans_its_pair_without_invalid_pair_warnings(env):

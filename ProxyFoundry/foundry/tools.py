@@ -44,7 +44,7 @@ class CardTools:
         if not isinstance(source,dict):raise ValidationError('Provide a Scryfall deck link or deck JSON export.')
         entries=[];seen=set()
         try:
-            for section,row in image_tools.iter_entries(source,None,bool(payload.get('includeOutside'))):
+            for section,row in image_tools.iter_entries(source,None,True):
                 for name,url,_ in image_tools.choose_digest_png_downloads(row.get('card_digest') or {}):
                     if url not in seen:seen.add(url);entries.append((name,url))
         except (RuntimeError,ValueError) as exc:raise ValidationError(str(exc)) from exc

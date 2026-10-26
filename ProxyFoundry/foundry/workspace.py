@@ -196,17 +196,17 @@ class Workspace:
 
     def create_steps(self,payload,progress=lambda *a:None,cancel=lambda:False):
         refresh=bool(payload.get('settings',{}).get('refreshData',self.global_settings().get('refreshData',False)))
-        result=yield from self.sources.import_deck_steps(payload.get('source',''),payload.get('includeOutside',True),refresh,progress,cancel)
+        result=yield from self.sources.import_deck_steps(payload.get('source',''),refresh,progress,cancel)
         if cancel():raise ValidationError('Import cancelled.')
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
-        document={**result,'name':name,'settings':settings,'status':'draft','notes':'','includeOutside':bool(payload.get('includeOutside',True))}
+        document={**result,'name':name,'settings':settings,'status':'draft','notes':''}
         art_variants.apply(document,self.invalidate_face)
         return self.store.put('decks',document)
     def create_staged(self,payload):
         supplied=payload.get('manifest')
         if not isinstance(supplied,dict):raise ValidationError('Read a deck list before choosing its look.')
-        listing=self.sources.read_deck_manifest(supplied,payload.get('includeOutside',True))
+        listing=self.sources.read_deck_manifest(supplied)
         cards=[]
         for row in listing['rows']:
             sf={'name':row['name'],'layout':'normal','type_line':''}
@@ -214,7 +214,7 @@ class Workspace:
             card=self.sources.entry(sf,row['quantity'],row['section']);card['metadataSource']=row['source'];cards.append(card)
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
         return self.store.put('decks',{'name':listing['name'],'cards':cards,'settings':settings,'status':'draft','notes':'',
-            'importedSource':supplied.get('importedSource',''),'includeOutside':bool(payload.get('includeOutside',True)),'pendingImport':True,'stagedImport':True})
+            'importedSource':supplied.get('importedSource',''),'pendingImport':True,'stagedImport':True})
 
     def resolve_metadata(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.resolve_metadata_steps(ident,progress,cancel)
@@ -592,7 +592,7 @@ class Workspace:
     def add_cards_steps(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
         d=self.deck(ident);rev=payload.get('revision')
         if rev!=d['revision']:raise ConflictError('Reload the deck before adding cards.')
-        result=yield from self.sources.import_deck_steps(payload.get('source',''),payload.get('includeOutside',False),d['settings'].get('refreshData',False),progress,cancel)
+        result=yield from self.sources.import_deck_steps(payload.get('source',''),d['settings'].get('refreshData',False),progress,cancel)
         if cancel():raise ValidationError('Import cancelled.')
         if sum(c['quantity'] for c in d['cards']+result['cards'])>10000:raise ValidationError('Deck limit is 10,000 cards.')
         for card in result['cards']:card['deckLocal']=True

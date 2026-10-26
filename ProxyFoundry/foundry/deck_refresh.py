@@ -15,13 +15,11 @@ def refresh_steps(ws,ident,payload,progress,cancel):
     if revision!=deck['revision']:raise ConflictError('Reload the deck before refreshing its cards.')
     if deck.get('pendingImport'):raise ValidationError('Wait for card details to finish before refreshing the deck.')
     link=deck_link(payload.get('sourceUrl') or deck.get('importedSource'))
-    outside=payload.get('includeOutside',deck.get('includeOutside',True))
-    if not isinstance(outside,bool):raise ValidationError('Choose whether to include Outside the Game cards.')
     source=payload.get('source',link)
     if 'scryfall.com/' not in link and source==link:
         raise ValidationError('Refresh this deck through the browser helper, or supply its deck export.')
     progress(0,1,'Reading the latest deck list');yield
-    listing=ws.sources.read_deck_manifest(source,outside,cancel=cancel,allow_empty=True)
+    listing=ws.sources.read_deck_manifest(source,cancel=cancel,allow_empty=True)
     if cancel():raise ValidationError('Deck refresh cancelled.')
     original=copy.deepcopy(deck['cards']);groups={};known={};local=[]
     for card in deck['cards']:
@@ -97,7 +95,7 @@ def refresh_steps(ws,ident,payload,progress,cancel):
         deck['settings']['tokenTreatments']=[row for row in deck['settings']['tokenTreatments'] if survives(row['face'])]
     token_assignments.apply_treatments(deck)
     if changes['added']:deck['status']='draft'
-    deck['importedSource']=link;deck['includeOutside']=outside;deck.pop('summary',None);deck.pop('metadataBaseRevision',None)
+    deck['importedSource']=link;deck.pop('includeOutside',None);deck.pop('summary',None);deck.pop('metadataBaseRevision',None)
     #No partial list is published, and edits/deletion during the fetch cannot be overwritten.
     if cancel():raise ValidationError('Deck refresh cancelled.')
     current=ws.store.get('decks',ident)

@@ -59,7 +59,7 @@ function preparationStatus(title,message){
   panel.append(heading,detail);main.append(panel);
   return detail;
 }
-function chooseLook(manifest,includeOutside=true){
+function chooseLook(manifest){
   let choosing=false;
   const host=modal('Choose Look','',{size:'large'});
   const body=$('.modal-body',host);
@@ -84,7 +84,7 @@ function chooseLook(manifest,includeOutside=true){
       const epoch=state.routeEpoch;
       let deck=null;
       try{
-        deck=await job('/api/decks/import',{manifest,includeOutside,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
+        deck=await job('/api/decks/import',{manifest,settings:value==='normal'?{source:{mode:'scryfall',fallback:false},artist:'',symbols:{},backAsset:null,backDesign:{mode:'default'},cardData:[],dataJsonSource:null,disableAutofit:false,flavorPolicy:'auto',showFlavorText:true,acceptCropWarnings:false,acceptLayoutWarnings:false,allCardsTokens:false,tokenOptions:{},templateRules:Object.fromEntries(['standard','legendary','land','legendary-land','basic-land'].map(group=>[group,'normal']))}:{}},{label:'Import deck'});
         if(epoch===state.routeEpoch)nav('deck/'+deck.id+(value==='normal'?'/cards':'/setup'));
         else toast(deck.name+' was imported. Open it from Deck Library when you’re ready.');
         if(value==='normal')await generate(deck);
@@ -121,10 +121,7 @@ function addNewDeck(){
   const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
   const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
   fileLabel.append(fileTitle,file);advanced.append(fileLabel);
-  const outsideLabel=document.createElement('label');outsideLabel.className='check-line';
-  const outside=document.createElement('input');outside.type='checkbox';outside.checked=true;outside.id='import-outside';
-  const outsideText=document.createElement('span');outsideText.textContent='Include Outside the Game cards';
-  outsideLabel.append(outside,outsideText);advanced.append(outsideLabel);body.append(advanced);
+  body.append(advanced);
   const updateButton=()=>{addButton.disabled=!(link.value.trim()||sourceText.value.trim());addButton.style.filter=addButton.disabled?'grayscale(1)':'';helperNotice.classList.add('hidden');};
   link.oninput=()=>{sourceText.value='';file.value='';updateButton();};
   sourceText.oninput=()=>{link.value='';file.value='';updateButton();};
@@ -140,12 +137,12 @@ function addNewDeck(){
     if(source.startsWith('{')){
       try{JSON.parse(source);}catch{errorBox(body,'The JSON export is not valid.');return;}
     }
-    const includeOutside=outside.checked;addButton.disabled=true;addButton.textContent='Reading deck list…';setModalBusy(host,true);
+    addButton.disabled=true;addButton.textContent='Reading deck list…';setModalBusy(host,true);
     try{
       const prepared=await prepareDeckSource(source);
-      const manifest=await job('/api/decks/manifest',{source:prepared,includeOutside},{label:'Read deck list'});
+      const manifest=await job('/api/decks/manifest',{source:prepared},{label:'Read deck list'});
       if(!host.isConnected)return;
-      closeModal({completed:true});chooseLook(manifest,includeOutside);
+      closeModal({completed:true});chooseLook(manifest);
     }catch(error){if(host.isConnected)errorBox(body,error.message);}
     finally{setModalBusy(host,false);addButton.textContent='Add deck';if(addButton.isConnected)updateButton();}
   };
@@ -154,14 +151,14 @@ function addNewDeck(){
 export async function importDeck(existing=null){
   if(!existing)return addNewDeck();
   requireDeckAvailable(existing.id);
-  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label><label class="check-line"><input type="checkbox" id="import-outside" checked><span>Include “Outside the Game” cards<small>Sideboard and maybeboard remain excluded, matching Card Tools.</small></span></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
+  const host=modal(existing?'Add cards to '+existing.name:'Bring your next deck to the table',`<span class="eyebrow">START WITH THE CARDS YOU ALREADY CHOSE</span><p class="muted" style="margin-bottom:22px">Paste a public Scryfall deck link, a card list, or upload the deck’s JSON export. Exact printing identifiers keep your chosen artwork intact.</p>${existing?'':`<label class="field"><span>Deck name <small>optional</small></span><input id="import-name" placeholder="Use the name from Scryfall" maxlength="200"></label>`}<label class="field"><span>${existing?'Cards to add':'Deck link or decklist'}</span><textarea id="import-source" rows="7" placeholder="https://scryfall.com/@you/decks/…&#10;&#10;or&#10;1 Sol Ring (CMM) 396&#10;12 Forest"></textarea></label><label class="field"><span>Or upload a deck export</span><input type="file" id="import-file" accept=".json,.txt"><small>JSON is best for keeping each selected printing. Plain names use Scryfall’s named-card result; you can change the printing afterward.</small></label>${existing?'':`<div class="notice info">Next: choose artwork, reuse or customize templates, add four rarity symbols and a deck back. You can use existing templates or create/upload your own.</div>`}`,{footer:`<span class="footer-hint">Nothing is sent to a printer during import.</span><button class="button primary" id="do-import">${existing?'Add cards':'Import deck →'}</button>`});
   $('#import-file').onchange=()=>attempt(async()=>{const f=$('#import-file').files[0];if(!f)return;if(f.size>20*1024**2)throw new Error('Choose a deck export under 20 MB.');$('#import-source').value=await f.text();});
   $('#do-import').onclick=async()=>{
     let source=$('#import-source').value.trim();if(!source){errorBox($('.modal-body',host),'Paste a deck link or card list first.');return;}
     $('#do-import').disabled=true;
     try{
       source=await prepareDeckSource(source);
-      const payload={source,includeOutside:$('#import-outside').checked,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
+      const payload={source,...(existing?{revision:existing.revision}:{name:$('#import-name').value.trim()})};
       closeModal();
       const d=await job(existing?'/api/decks/'+existing.id+'/add':'/api/decks/import',payload,{label:existing?'Add cards':'Import deck'});
       state.dirty=false;
@@ -298,25 +295,22 @@ function refreshDeckCards(deck){
   const link=document.createElement(`input`);link.type=`url`;link.setAttribute(`aria-label`,`Original deck link`);link.placeholder=`https://scryfall.com/@you/decks/…`;
   link.value=/^https:\/\/(?:www\.)?(?:scryfall\.com\/|archidekt\.com\/|mtggoldfish\.com\/)/i.test(deck.importedSource||``)?deck.importedSource:``;
   label.append(link);
-  const outsideLabel=document.createElement(`label`);outsideLabel.className=`check-line`;
-  const outside=document.createElement(`input`);outside.type=`checkbox`;outside.checked=deck.includeOutside!==false;
-  outsideLabel.append(outside,document.createTextNode(`Include Outside the Game cards`));
   const note=document.createElement(`p`);note.className=`muted`;note.textContent=`Locally added cards and copy tokens are kept. Images are generated only when you choose Generate Images afterward.`;
   const status=document.createElement(`p`);status.setAttribute(`role`,`status`);status.setAttribute(`aria-live`,`polite`);
   const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button primary`;refresh.id=`refresh-deck-cards`;refresh.textContent=`Refresh cards`;
   const update=()=>{refresh.disabled=!link.value.trim();};link.oninput=update;update();
-  body.append(description,label,outsideLabel,note,status,refresh);
+  body.append(description,label,note,status,refresh);
   refresh.onclick=()=>attempt(async()=>{
     if(refresh.disabled)return;
-    refresh.disabled=true;link.disabled=true;outside.disabled=true;setModalBusy(host,true);refresh.textContent=`Refreshing…`;
+    refresh.disabled=true;link.disabled=true;setModalBusy(host,true);refresh.textContent=`Refreshing…`;
     let owner;
     try {
       if(state.setupActions?.deckId===deck.id&&state.setupActions.root.isConnected)await state.setupActions.flush();
-      const current=await api(`/api/decks/${deck.id}`),sourceUrl=link.value.trim(),includeOutside=outside.checked;
+      const current=await api(`/api/decks/${deck.id}`),sourceUrl=link.value.trim();
       owner=work.begin({label:`Refresh deck cards`,resources:[`deck:${deck.id}`]});
       status.textContent=`Fetching the latest decklist…`;
       const source=await prepareDeckSource(sourceUrl,{allowEmpty:true});
-      const result=await job(`/api/decks/${deck.id}/refresh`,{revision:current.revision,sourceUrl,source,includeOutside},
+      const result=await job(`/api/decks/${deck.id}/refresh`,{revision:current.revision,sourceUrl,source},
         {label:`Refresh deck cards`,owner,onProgress:progress=>{status.textContent=progress.message;}});
       await showDeck(deck.id,`cards`);
       body.replaceChildren();
@@ -344,7 +338,7 @@ function refreshDeckCards(deck){
     catch(error){errorBox(body,error.message);}
     finally {
       if(owner)work.finish(owner);
-      setModalBusy(host,false);link.disabled=false;outside.disabled=false;refresh.textContent=`Refresh cards`;update();
+      setModalBusy(host,false);link.disabled=false;refresh.textContent=`Refresh cards`;update();
     }
   });
 }

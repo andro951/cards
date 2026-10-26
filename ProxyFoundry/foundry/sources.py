@@ -47,18 +47,18 @@ class Sources:
         meld_result={k:card.get(k) for k in ('id','name','artist','set','collector_number','rarity') if card.get(k) is not None}
         meld_result['image_uris']={k:images[k] for k in ('png','large','normal','small') if images.get(k)}
         return {**d,'_meld_proxy':True,'_meld_result':meld_result}
-    def import_deck(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
-        steps=self.import_deck_steps(source,include_outside,refresh,progress,cancel)
+    def import_deck(self,source,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.import_deck_steps(source,refresh,progress,cancel)
         while True:
             try:next(steps)
             except StopIteration as finished:return finished.value
 
-    def import_deck_steps(self,source,include_outside=True,refresh=False,progress=lambda *a:None,cancel=lambda:False):
+    def import_deck_steps(self,source,refresh=False,progress=lambda *a:None,cancel=lambda:False):
         with timing(self.net.store,'deck.import',source=source[:300] if isinstance(source,str) else '[Scryfall export]',refresh=refresh):
-            return (yield from self._import_deck_steps(source,include_outside,refresh,progress,cancel))
+            return (yield from self._import_deck_steps(source,refresh,progress,cancel))
 
     @timed('deck.list.fetch')
-    def read_deck_manifest(self,source,include_outside=True,refresh=False,cancel=lambda:False,*,include_digests=False,allow_empty=False):
+    def read_deck_manifest(self,source,refresh=False,cancel=lambda:False,*,include_digests=False,allow_empty=False):
         if cancel():raise ValidationError('Import cancelled.')
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
@@ -76,7 +76,7 @@ class Sources:
         if isinstance(source,dict) and source.get('sourceUrl'):original=deck_link(source['sourceUrl'])
         title='New deck';digests={}
         if isinstance(source,dict) and 'entries' in source:
-            try:_,rows=deck_parser.extract_card_sources(source,include_outside_the_game=include_outside)
+            try:_,rows=deck_parser.extract_card_sources(source,include_outside_the_game=True)
             except Exception as exc:
                 if allow_empty and str(exc)=='No usable cards were found in the selected deck sections.':rows=[]
                 else:raise ValidationError(str(exc)) from exc
@@ -92,14 +92,13 @@ class Sources:
             for row in source['rows']:
                 if not isinstance(row,dict):raise ValidationError('Deck source returned an invalid card row.')
                 section=str(row.get('section') or 'mainboard')
-                if not include_outside and section not in {'mainboard','commanders'}:continue
                 manifest.append({'name':str(row.get('name') or ''), 'source':row.get('source'), 'quantity':quantity(row.get('quantity',1)), 'section':section})
         elif isinstance(source,list):
             manifest=[]
             for r in source:
                 if not isinstance(r,dict):raise ValidationError('Card import rows must be objects.')
                 manifest.append({'name':str(r.get('name') or ''), 'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
-        elif isinstance(source,str):manifest=parse_deck_text(source,include_outside)
+        elif isinstance(source,str):manifest=parse_deck_text(source)
         else:raise ValidationError('Upload a Scryfall export, paste a public deck link or card names.')
         if not manifest and not allow_empty:raise ValidationError('No cards were supplied.')
         if sum(r['quantity'] for r in manifest)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
@@ -114,8 +113,8 @@ class Sources:
         if include_digests:listing['digests']=digests
         return listing
 
-    def _import_deck_steps(self,source,include_outside,refresh,progress,cancel):
-        listing=self.read_deck_manifest(source,include_outside,refresh,cancel,include_digests=True)
+    def _import_deck_steps(self,source,refresh,progress,cancel):
+        listing=self.read_deck_manifest(source,refresh,cancel,include_digests=True)
         title=listing['name'];manifest=listing['rows'];original=listing['importedSource'];digests=listing['digests']
         #No deck is published until all rows are resolved; cached metadata is durable.
         yield
