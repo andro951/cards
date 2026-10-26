@@ -621,6 +621,19 @@
         "scryfall_id": "c2963ce1-f9d8-437a-9489-e0913a8b8d26"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Angel",
+        "oracle_id": "263fd9ed-d3dc-4a96-b731-dd8f4bb0f95a",
+        "scryfall_id": "e1e5dbd5-5fba-4d09-aa27-359505042651"
+      },
+      "back": {
+        "name": "Rat",
+        "oracle_id": "0d804fad-62db-4e3b-8d3c-ee62eba38569",
+        "scryfall_id": "c1788d4c-31b8-4f73-8275-5470316e7ad4"
+      },
+      "quantity": 5
     }
   ],
   "tokenTreatments": [
