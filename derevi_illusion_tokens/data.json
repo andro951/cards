@@ -312,7 +312,10 @@
     {
       "name": "Willbreaker",
       "oracle_id": "7c365041-806f-42d6-a2ff-40e20dd8e9f0",
-      "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api",
+      "accepted_art": [
+        "7ca5e0c6d20ec81e54cb531266959858ac74d100834382379e4a91bc20469fe0"
+      ]
     },
     {
       "name": "Duplicant",
