@@ -987,6 +987,7 @@ def semantic(sf,face,index=0):
     d['nickname']=rules_nicknames.effective_nickname(d['name'],d['nickname'])
     d['supertypes']=[word for word in str(type_line).replace('—',' - ').replace('–',' - ').partition(' - ')[0].split() if word in {'Basic','Legendary','Snow','World','Token'}]
     d['printed_type_line']=str(type_line)
+    if neutral_elemental_token(sf) or neutral_elemental_token(face):d['neutralTokenBars']=True
     d['devoid']=has_devoid(d)
     for k in ('power','toughness','loyalty','defense'):
         v=get(k,None)
@@ -1587,6 +1588,25 @@ def fit_token_art(data,art_local_path,autofit=True):
             data['artY']-=height*(zoom-current)/(2*data['height'])
             data['artZoom']=zoom
     return True
+
+def neutral_elemental_token(face):
+    #WOE 009 keeps neutral surfaces despite being a white/blue token.
+    return bool(face.get('neutralTokenBars') or face.get('oracle_id')=='982ee0fe-7985-4110-a83d-61eab53bc275')
+
+
+def apply_neutral_elemental_token(data,sem):
+    if not neutral_elemental_token(sem) or not str(data.get('version','')).startswith('token'):return
+    for frame in data.get('frames',[]):
+        src=str(frame.get('src',''))
+        if any(_is_pinline_mask(mask) for mask in frame.get('masks',[])):continue
+        classic=re.fullmatch(r'/img/frames/token/m15/(regular|textless)/m\.png',src)
+        if classic:frame['src']=classic_token_frame.PREFIX+classic.group(1)+'-c.png'
+        elif src.startswith('/img/frames/token/'):frame['src']=_frame_effect_source(src,'C')
+        elif src=='/img/frames/m15/regular/m15PTM.png':
+            frame.update(src='/img/frames/m15/regular/m15PTC.png',name='Colorless Power/Toughness')
+    if data.get('version') in {'tokenRegularM15','tokenTextlessM15'}:
+        data['text'].get('nickname',data['text']['title'])['color']='white'
+
 
 def _token_frame_code(sem):
     colors=[]
@@ -2845,6 +2865,7 @@ class Compiler:
         colorless_land_version=int(group in {'land','legendary-land','basic-land'} and face is not None and colorless_land_frame_refresh(face))
         gold_artifact_pt_version=int(choice in {'auto','normal'} and group not in {'token','station','flip'} and face is not None and gold_artifact_pt(face))
         token_mana_version=int(group=='token' and face is not None and bool(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or ''))))
+        neutral_token_version=int(group=='token' and face is not None and neutral_elemental_token(face) and choice in {'auto','token-classic','token-full-art','token-borderless'})
         classic_colorless_version=int(group=='token' and choice=='token-classic' and face is not None and
                                       not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line','')) and
                                       not set(face.get('types',[]))&{'Artifact','Land'})
@@ -2865,10 +2886,10 @@ class Compiler:
                 land_colors=land_frame_colors(types,face,face,face.get('oracle_text',''))
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
@@ -3164,6 +3185,7 @@ class Compiler:
             apply_gold_artifact_pt(data,sem)
             apply_hybrid_frame_treatment(data,sem)
         if group=='token':
+            apply_neutral_elemental_token(data,sem)
             reserve_token_mana_space(data)
             fit_token_rules_above_pt(data)
             center_short_token_rules(data)

@@ -19,7 +19,7 @@ from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
 from . import rules_nicknames
 from . import github_data
-from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION
+from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
 from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
@@ -822,6 +822,7 @@ class Workspace:
             if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
             elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         if not finalize:return comp
+        if sem:apply_neutral_elemental_token(comp['data'],sem)
         reserve_token_mana_space(comp['data'])
         fit_token_rules_above_pt(comp['data'])
         if prepare_source is None:center_short_token_rules(comp['data'])
