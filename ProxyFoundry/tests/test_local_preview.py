@@ -49,9 +49,24 @@ def test_launcher_builds_before_reopening_an_existing_preview(monkeypatch):
     monkeypatch.setitem(preview['build_and_start'].__globals__,'is_foundry_preview',
                         lambda:(calls.append('detect') or True))
     class Events:
-        def put(self,item):calls.append(item[0])
+        def put(self,item):
+            calls.append(item[0])
+            if item[0]=='existing':assert item[1].startswith(preview['address']()+'?_pf_launch=')
     preview['build_and_start'](Events())
     assert calls==['status','build','detect','existing']
+
+
+def test_every_browser_open_bypasses_cached_startup_on_same_workspace_origin(monkeypatch):
+    from urllib.parse import urlsplit,parse_qs
+    preview=runpy.run_path(str(ROOT/'START_BULK_PROXY_FORGE.pyw'),run_name='preview_test')
+    opened=[]
+    monkeypatch.setattr(preview['webbrowser'],'open',lambda url,**kwargs:opened.append(url))
+    preview['open_site']();preview['open_site']()
+    assert len(set(opened))==2
+    for url in opened:
+        parsed=urlsplit(url)
+        assert parsed.scheme=='http' and parsed.netloc=='127.0.0.1:8767' and parsed.path=='/'
+        assert len(parse_qs(parsed.query)['_pf_launch'][0])==32
 
 
 def test_old_app_marker_alone_is_not_treated_as_static_preview(tmp_path):

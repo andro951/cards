@@ -80,6 +80,51 @@ def test_stale_runtime_bundle_recovers_once_without_changing_workspace(tmp_path,
     finally:server.shutdown();server.server_close();thread.join(timeout=5)
 
 
+def test_launcher_reopens_current_app_after_restart_with_cached_old_startup(tmp_path):
+    import runpy,re
+    from playwright.sync_api import sync_playwright
+    preview=runpy.run_path(str(ROOT/'START_BULK_PROXY_FORGE.pyw'),run_name='preview_test')
+    directory=tmp_path/'site'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py'),'--output',str(directory)],cwd=ROOT,check=True,capture_output=True)
+    expected=re.search(r"const buildId='([^']+)'",(directory/'web/bootstrap.js').read_text()).group(1)
+    older=tmp_path/'older';older.mkdir();(older/'web').mkdir()
+    (older/'index.html').write_text((directory/'index.html').read_text().replace('?v='+expected,''))
+    (older/'web/bootstrap.js').write_text("document.body.hidden=false;document.body.textContent='Older cached startup';")
+    class CachedSite(http.server.SimpleHTTPRequestHandler):
+        def end_headers(self):
+            self.send_header('Cache-Control','public, max-age=86400');super().end_headers()
+        def log_message(self,*args):pass
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(CachedSite,directory=str(older)))
+    port=server.server_port;origin=preview['address'](port)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    profile=str(tmp_path/'browser-profile')
+    channel='msedge' if Path('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe').is_file() else 'chromium'
+    with sync_playwright() as playwright:
+        context=playwright.chromium.launch_persistent_context(profile,headless=True,channel=channel)
+        try:
+            page=context.new_page();page.goto(origin);page.get_by_text('Older cached startup',exact=True).wait_for()
+            page.evaluate("""async()=>{
+                localStorage.setItem('workspace-test-marker','keep');
+                const root=await navigator.storage.getDirectory();
+                const writer=await (await root.getFileHandle('saved-artwork.png',{create:true})).createWritable();
+                await writer.write('existing artwork');await writer.close();
+            }""")
+        finally:context.close();server.shutdown();server.server_close();thread.join(timeout=5)
+        server=preview['make_server'](directory,port)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        context=playwright.chromium.launch_persistent_context(profile,headless=True,channel=channel)
+        try:
+            page=context.new_page();page.goto(origin)
+            #Closing both browser and preview does not invalidate a fresh disk-cache entry.
+            page.get_by_text('Older cached startup',exact=True).wait_for(timeout=10000)
+            page.goto(preview['launch_address'](port),wait_until='domcontentloaded')
+            page.wait_for_function("document.querySelector('#import-deck')&&!document.querySelector('#browser-startup')",timeout=90000)
+            assert page.evaluate("localStorage.getItem('workspace-test-marker')")=='keep'
+            assert page.evaluate("navigator.storage.getDirectory().then(async root=>(await (await root.getFileHandle('saved-artwork.png')).getFile()).text())")=='existing artwork'
+            assert page.evaluate("performance.getEntriesByType('resource').some(entry=>entry.name.includes('/web/bootstrap.js?v='+"+repr(expected)+"))")
+        finally:context.close();server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 @pytest.mark.parametrize('static_browser',['chromium'],indirect=True,ids=['native-handles'])
 def test_static_artwork_pairing_persists_without_rendering(static_browser):
     directory,context,origin=static_browser

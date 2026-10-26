@@ -6,6 +6,7 @@ from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
 from urllib.request import Request, urlopen
+from uuid import uuid4
 import subprocess
 import sys
 import webbrowser
@@ -28,6 +29,15 @@ class QuietSite(BatchPreviewHandler):
 
 def address(port=PORT):
     return f'http://127.0.0.1:{port}/'
+
+
+def launch_address(port=PORT):
+    #A previously cached page never sees the new server's no-cache headers.
+    return address(port)+'?_pf_launch='+uuid4().hex
+
+
+def open_site():
+    return webbrowser.open(launch_address(), new=1)
 
 
 def is_foundry_preview(port=PORT):
@@ -73,7 +83,7 @@ def build_and_start(events):
         return
 
     if is_foundry_preview():
-        events.put(('existing', address()))
+        events.put(('existing', launch_address()))
         return
 
     events.put(('status', 'Opening the local preview…'))
@@ -114,9 +124,6 @@ def main():
             server.shutdown()
             server.server_close()
         root.destroy()
-
-    def open_site():
-        webbrowser.open(address(), new=1)
 
     open_button = tk.Button(buttons, text='Open website', command=open_site, state='disabled', bg='#e39355', fg='#22170f', relief='flat', padx=14, pady=6)
     open_button.pack(side='left', padx=6)
