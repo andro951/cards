@@ -128,7 +128,10 @@
     {
       "name": "Puresteel Paladin",
       "oracle_id": "74a62c7b-4753-4af2-b7a1-9a4ae8988801",
-      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api",
+      "accepted_art": [
+        "643fa971535f4ef5a58beec96409afe47bd10476f42723361fdeddd7de9e83e6"
+      ]
     },
     {
       "name": "Wan Shi Tong, Librarian",
