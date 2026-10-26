@@ -164,7 +164,10 @@
     {
       "name": "Trophy Mage",
       "oracle_id": "08afc0d7-192f-4ab6-b6a0-c4265cf5e225",
-      "scryfall_url": "https://scryfall.com/card/ddu/42/trophy-mage?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ddu/42/trophy-mage?utm_source=api",
+      "accepted_art": [
+        "a0ef336e3870bfede5197d6e3d5d9ff1ba1b504a030293a80e22d84a044dadb9"
+      ]
     },
     {
       "name": "Yisan, the Wanderer Bard",
