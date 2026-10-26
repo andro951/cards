@@ -884,6 +884,19 @@
         "scryfall_id": "ba86688d-18f0-4b5c-a797-42bf125a6c9f"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Sakura-Tribe Scout",
+        "oracle_id": "0c319f45-cb0f-4641-acd8-145768acb3fc",
+        "scryfall_id": "9cbdda50-8a27-4094-849d-b6f66def82ce"
+      },
+      "back": {
+        "name": "Ulamog, the Infinite Gyre",
+        "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
+        "scryfall_id": "9464a820-65de-44f2-9895-46a35e8621a0"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
