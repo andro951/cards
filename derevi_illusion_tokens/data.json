@@ -193,7 +193,10 @@
     {
       "name": "Captain Sisay",
       "oracle_id": "2e7a9ea9-f76c-4c12-950f-c613fa16cfa8",
-      "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api",
+      "accepted_art": [
+        "95d763a697495d7de3fee4ec11203c9c09c5a3d9def435315b164d6cf67fe71e"
+      ]
     },
     {
       "name": "Displacer Kitten",
