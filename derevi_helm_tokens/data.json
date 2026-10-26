@@ -551,6 +551,19 @@
         "scryfall_id": "77ceba8b-de19-4db8-b5a7-f5df49bf241f"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "The Seriema",
+        "oracle_id": "a6bcec1f-f515-4e63-9e84-8eb04cc582ff",
+        "scryfall_id": "dec91ec3-42d3-4922-96f0-dbb50a576084"
+      },
+      "back": {
+        "name": "Shorikai, Genesis Engine",
+        "oracle_id": "e2962883-6daf-4a84-af73-917afc73092c",
+        "scryfall_id": "969ac7dd-f3aa-4888-9ff0-d16a31b5e7a9"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
