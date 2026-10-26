@@ -486,6 +486,19 @@
         "scryfall_id": "9930d08d-5965-4c16-a84d-43c8ccf2ad0b"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Raff Capashen, Ship's Mage",
+        "oracle_id": "13044ca1-76a3-43b2-a8e4-3bbc692c30c5",
+        "scryfall_id": "c681e33b-3d60-4aaa-8186-51866d8b79d1"
+      },
+      "back": {
+        "name": "Timeless Witness",
+        "oracle_id": "a52a06aa-56fc-4845-bbcd-a54f16369b34",
+        "scryfall_id": "8b63ec86-670b-4acd-b14c-3d90acbde087"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
