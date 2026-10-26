@@ -4,7 +4,7 @@ import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable,bindGenerationButton,work} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,activity,endActivity,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable,bindGenerationButton,work} from './ui.js';
 import {renderSetup,pickFile,rarities} from './setup.js';
 import {frameChoices} from './frame-picker.js';
 import {renderDecks,renderCard} from './render.js';
@@ -296,10 +296,9 @@ function refreshDeckCards(deck){
   link.value=/^https:\/\/(?:www\.)?(?:scryfall\.com\/|archidekt\.com\/|mtggoldfish\.com\/)/i.test(deck.importedSource||``)?deck.importedSource:``;
   label.append(link);
   const note=document.createElement(`p`);note.className=`muted`;note.textContent=`Locally added cards and copy tokens are kept. Images are generated only when you choose Generate Images afterward.`;
-  const status=document.createElement(`p`);status.setAttribute(`role`,`status`);status.setAttribute(`aria-live`,`polite`);
   const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button primary`;refresh.id=`refresh-deck-cards`;refresh.textContent=`Refresh cards`;
   const update=()=>{refresh.disabled=!link.value.trim();};link.oninput=update;update();
-  body.append(description,label,note,status,refresh);
+  body.append(description,label,note,refresh);
   refresh.onclick=()=>attempt(async()=>{
     if(refresh.disabled)return;
     refresh.disabled=true;link.disabled=true;setModalBusy(host,true);refresh.textContent=`Refreshing…`;
@@ -308,37 +307,22 @@ function refreshDeckCards(deck){
       if(state.setupActions?.deckId===deck.id&&state.setupActions.root.isConnected)await state.setupActions.flush();
       const current=await api(`/api/decks/${deck.id}`),sourceUrl=link.value.trim();
       owner=work.begin({label:`Refresh deck cards`,resources:[`deck:${deck.id}`]});
-      status.textContent=`Fetching the latest decklist…`;
+      activity(`Refresh deck cards`,`Refresh deck cards`,`Fetching the latest decklist…`,0,0,owner);
+      closeModal({completed:true});
       const source=await prepareDeckSource(sourceUrl,{allowEmpty:true});
       const result=await job(`/api/decks/${deck.id}/refresh`,{revision:current.revision,sourceUrl,source},
-        {label:`Refresh deck cards`,owner,onProgress:progress=>{status.textContent=progress.message;}});
-      await showDeck(deck.id,`cards`);
-      body.replaceChildren();
-      const summary=document.createElement(`p`),changes=result.changes;
-      summary.textContent=`${changes.retained} matching cards kept · ${changes.added.length} added · ${changes.removed.length} removed · ${changes.quantityChanged.length} quantities updated${changes.moved.length?` · ${changes.moved.length} moved between sections`:``}`;
-      body.append(summary);
-      for(const [title,rows] of [[`Added`,changes.added],[`Removed`,changes.removed],[`Quantities`,changes.quantityChanged]]) {
-        if(!rows.length)continue;
-        const heading=document.createElement(`h3`),list=document.createElement(`ul`);heading.textContent=title;
-        for(const row of rows) {
-          const item=document.createElement(`li`);item.textContent=`${row.name} · ${row.before!==undefined?`${row.before} → ${row.after}`:`${row.quantity} copies`}`;list.append(item);
-        }
-
-        body.append(heading,list);
-      }
-
-      const message=document.createElement(`p`);message.textContent=changes.added.length?`Generate Images to prepare and render the new cards. Existing images will be reused.`:`The decklist is up to date. Existing card images were retained.`;body.append(message);
-      if(result.deck.status===`draft`) {
-        const generateButton=document.createElement(`button`);generateButton.type=`button`;generateButton.className=`button primary`;generateButton.textContent=`Generate Images`;
-        generateButton.onclick=()=>attempt(async()=>{closeModal();await generate(result.deck);});body.append(generateButton);
-      }
-
-      const done=document.createElement(`button`);done.type=`button`;done.className=`button`;done.textContent=`Done`;done.onclick=()=>closeModal();body.append(done);
+        {label:`Refresh deck cards`,owner});
+      if(state.route===`deck`&&state.activeDeck?.id===deck.id)await showDeck(deck.id,`cards`);
+      const changes=result.changes;
+      endActivity(`${changes.retained} matching cards kept · ${changes.added.length} added · ${changes.removed.length} removed · ${changes.quantityChanged.length} quantities updated${changes.moved.length?` · ${changes.moved.length} moved between sections`:``}`,false,owner);
     }
-    catch(error){errorBox(body,error.message);}
+    catch(error){
+      if(host.isConnected)errorBox(body,error.message);
+      else endActivity(error.message,true,owner);
+    }
     finally {
       if(owner)work.finish(owner);
-      setModalBusy(host,false);link.disabled=false;refresh.textContent=`Refresh cards`;update();
+      if(host.isConnected){setModalBusy(host,false);link.disabled=false;refresh.textContent=`Refresh cards`;update();}
     }
   });
 }

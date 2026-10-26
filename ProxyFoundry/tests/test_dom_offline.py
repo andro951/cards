@@ -122,18 +122,18 @@ def test_refresh_deck_cards_reloads_original_source_and_blocks_generation(dom_pa
     assert page.get_by_label('Original deck link',exact=True).input_value()==page.evaluate('__fixture.deck.importedSource')
     assert page.get_by_text('Include Outside the Game cards',exact=True).count()==0
     page.click('#refresh-deck-cards');page.wait_for_function('typeof finishRefresh==="function"')
-    assert page.locator('#generate-deck').is_disabled() and page.locator('#refresh-deck-cards').is_disabled()
+    assert page.locator('#generate-deck').is_disabled()
+    assert page.get_by_role('dialog',name='Refresh deck cards',exact=True).count()==0
+    assert page.locator('#activity').is_visible()
     assert page.evaluate('refreshPayload.source')==page.evaluate('__fixture.deck.importedSource')
     assert page.evaluate('Object.hasOwn(refreshPayload,"includeOutside")') is False
     page.evaluate('finishRefresh()')
     if failed:
-        page.get_by_role('alert').filter(has_text='Original deck unavailable').wait_for()
-        page.wait_for_function('!document.querySelector("#refresh-deck-cards").disabled')
+        page.locator('#activity-title').filter(has_text='Original deck unavailable').wait_for()
         assert page.evaluate('__fixture.deck.cards[0].quantity')==2
     else:
-        page.get_by_role('dialog',name='Refresh deck cards',exact=True).get_by_text('1 matching cards kept',exact=False).wait_for()
+        page.locator('#activity-title').filter(has_text='1 matching cards kept').wait_for()
         assert page.locator('.quantity-pill').inner_text()=='3×'
-        page.get_by_role('button',name='Done',exact=True).click()
     assert page.locator('#generate-deck').is_enabled()
     assert page.evaluate('renderCalls')==0 and not errors,errors
 

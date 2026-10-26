@@ -47,7 +47,8 @@ def request(app,method,url,body,headers):
     page.locator('[data-card]').first.wait_for();page.click('#deck-menu')
     page.get_by_role('button',name='Refresh deck cards',exact=True).click()
     page.click('#refresh-deck-cards')
-    page.get_by_role('dialog',name='Refresh deck cards',exact=True).get_by_text('1 matching cards kept',exact=False).wait_for(timeout=30000)
+    page.locator('#activity-title').filter(has_text='1 matching cards kept').wait_for(timeout=30000)
+    assert page.get_by_role('dialog',name='Refresh deck cards',exact=True).count()==0
     current=page.evaluate("async id=>{const {api}=await import('/site/ui.js');return api('/api/decks/'+id);}",deck['id'])
     assert current['name']==deck['name'] and current['settings']==deck['settings']
     alpha,gamma=current['cards']
@@ -55,7 +56,6 @@ def request(app,method,url,body,headers):
     assert alpha['faces']==deck['cards'][0]['faces']
     assert gamma['name']=='Gamma' and not gamma['faces'][0].get('compiled')
     assert page.get_by_role('button',name='Generate Images',exact=True).last.is_visible()
-    page.get_by_role('button',name='Done',exact=True).click()
     page.reload(wait_until='domcontentloaded');page.locator('[data-card]').first.wait_for(timeout=90000)
     assert page.locator('[data-card]').count()==2
     assert not generation and not errors,{'generation':generation,'errors':errors}
