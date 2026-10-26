@@ -647,6 +647,19 @@
         "scryfall_id": "ce6d2786-ef9c-4772-bb71-697131c3c3a4"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Ajani's Pridemate",
+        "oracle_id": "9fcff433-c6f7-44c6-8279-04625703cb3e",
+        "scryfall_id": "7801c326-d740-4cec-9268-05348ace8302"
+      },
+      "back": {
+        "name": "Rat",
+        "oracle_id": "0d804fad-62db-4e3b-8d3c-ee62eba38569",
+        "scryfall_id": "c1788d4c-31b8-4f73-8275-5470316e7ad4"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": [
