@@ -397,7 +397,10 @@
     {
       "name": "Deadeye Navigator",
       "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
-      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api",
+      "accepted_art": [
+        "0fce972e5aeef872a17a2d6a31def3b328537a950ba2cb923a6da175dff373c0"
+      ]
     }
   ],
   "tokenAssignments": [
