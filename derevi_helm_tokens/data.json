@@ -421,6 +421,19 @@
         "scryfall_id": "8616629e-08f9-41ad-bfec-f86c8096f1cb"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Hylda of the Icy Crown",
+        "oracle_id": "1733c71b-fd28-48dd-8a3d-41afd4b22f0e",
+        "scryfall_id": "ae9231fd-053d-4b84-a7a8-86063465bc49"
+      },
+      "back": {
+        "name": "Timeless Witness",
+        "oracle_id": "a52a06aa-56fc-4845-bbcd-a54f16369b34",
+        "scryfall_id": "8b63ec86-670b-4acd-b14c-3d90acbde087"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
