@@ -660,6 +660,19 @@
         "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Ajani's Pridemate",
+        "oracle_id": "9fcff433-c6f7-44c6-8279-04625703cb3e",
+        "scryfall_id": "7801c326-d740-4cec-9268-05348ace8302"
+      },
+      "back": {
+        "name": "Cat Soldier",
+        "oracle_id": "53c009a1-b9b6-43d6-8543-77688fedf8ae",
+        "scryfall_id": "921d6192-6b6d-4aa1-be80-bc0b9f503e33"
+      },
+      "quantity": 4
     }
   ],
   "tokenTreatments": [
