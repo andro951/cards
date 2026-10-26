@@ -404,7 +404,8 @@
     {
       "name": "Raff Capashen, Ship's Mage",
       "oracle_id": "13044ca1-76a3-43b2-a8e4-3bbc692c30c5",
-      "scryfall_url": "https://scryfall.com/card/cmm/351/raff-capashen-ships-mage?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/351/raff-capashen-ships-mage?utm_source=api",
+      "art": "raff_capashen.png"
     },
     {
       "name": "Ant Queen",
@@ -425,6 +426,21 @@
       "name": "Oswald Fiddlebender",
       "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
       "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api"
+    },
+    {
+      "name": "Tezzeret the Seeker",
+      "oracle_id": "4aeafdf3-7828-4114-8c74-3bd46357caec",
+      "scryfall_url": "https://scryfall.com/card/mm2/62/tezzeret-the-seeker?utm_source=api"
+    },
+    {
+      "name": "Nephalia Smuggler",
+      "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
+      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api"
+    },
+    {
+      "name": "Deadeye Navigator",
+      "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
+      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api"
     },
     {
       "name": "Windswept Heath",
