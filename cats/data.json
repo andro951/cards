@@ -621,6 +621,19 @@
         "scryfall_id": "c2963ce1-f9d8-437a-9489-e0913a8b8d26"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Eldrazi",
+        "oracle_id": "41014a6a-0f5b-48ae-8cb8-9a89f0f0180f",
+        "scryfall_id": "ce6d2786-ef9c-4772-bb71-697131c3c3a4"
+      },
+      "back": {
+        "name": "Angel",
+        "oracle_id": "263fd9ed-d3dc-4a96-b731-dd8f4bb0f95a",
+        "scryfall_id": "e1e5dbd5-5fba-4d09-aa27-359505042651"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": [
