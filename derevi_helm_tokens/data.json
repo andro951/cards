@@ -304,6 +304,19 @@
         "scryfall_id": "d8f8a324-006d-4cb8-9816-620a603b4229"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Wan Shi Tong, Librarian",
+        "oracle_id": "2bace3ea-7d28-4a1c-857a-d3c3a1c11b59",
+        "scryfall_id": "e20da6b5-1057-4a28-9e85-07de714e262f"
+      },
+      "back": {
+        "name": "Sakura-Tribe Scout",
+        "oracle_id": "0c319f45-cb0f-4641-acd8-145768acb3fc",
+        "scryfall_id": "9cbdda50-8a27-4094-849d-b6f66def82ce"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
