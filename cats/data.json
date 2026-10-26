@@ -624,19 +624,6 @@
     },
     {
       "front": {
-        "name": "Nacatl War-Pride",
-        "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
-        "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
-      },
-      "back": {
-        "name": "Angel",
-        "oracle_id": "263fd9ed-d3dc-4a96-b731-dd8f4bb0f95a",
-        "scryfall_id": "e1e5dbd5-5fba-4d09-aa27-359505042651"
-      },
-      "quantity": 5
-    },
-    {
-      "front": {
         "name": "Cat Soldier",
         "oracle_id": "53c009a1-b9b6-43d6-8543-77688fedf8ae",
         "scryfall_id": "921d6192-6b6d-4aa1-be80-bc0b9f503e33"
