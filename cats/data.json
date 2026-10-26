@@ -662,5 +662,16 @@
       "quantity": 4
     }
   ],
-  "tokenTreatments": []
+  "tokenTreatments": [
+    {
+      "face": {
+        "name": "Nacatl War-Pride",
+        "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
+        "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
+      },
+      "options": {
+        "nonlegendary": true
+      }
+    }
+  ]
 }
