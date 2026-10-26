@@ -564,6 +564,19 @@
         "scryfall_id": "969ac7dd-f3aa-4888-9ff0-d16a31b5e7a9"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Sakura-Tribe Scout",
+        "oracle_id": "0c319f45-cb0f-4641-acd8-145768acb3fc",
+        "scryfall_id": "9cbdda50-8a27-4094-849d-b6f66def82ce"
+      },
+      "back": {
+        "name": "Cloud, Midgar Mercenary",
+        "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+        "scryfall_id": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
