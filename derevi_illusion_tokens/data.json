@@ -845,6 +845,19 @@
         "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Derevi, Empyrial Tactician",
+        "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
+        "scryfall_id": "3a1d0dad-18a8-489e-ac11-08f64b72fda4"
+      },
+      "back": {
+        "name": "Abuelo, Ancestral Echo",
+        "oracle_id": "eaa9baac-72f2-4bde-9146-860878d9860b",
+        "scryfall_id": "40eee689-2514-421a-8056-eb7668be66ff"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
