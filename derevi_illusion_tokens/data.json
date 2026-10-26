@@ -361,7 +361,10 @@
     {
       "name": "Oswald Fiddlebender",
       "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
-      "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api",
+      "accepted_art": [
+        "4d149485352d708b3977b397b74870be52f7ef0ccf202ea7e745007686825fc4"
+      ]
     },
     {
       "name": "Sakura-Tribe Scout",
