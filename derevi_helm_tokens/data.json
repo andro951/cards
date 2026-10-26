@@ -408,6 +408,19 @@
         "scryfall_id": "77e19416-aa6c-46f1-b247-a94da5d1a13a"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Prime Speaker Vannifar",
+        "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
+        "scryfall_id": "84abfc59-10a7-4cb5-9cdd-81797116c810"
+      },
+      "back": {
+        "name": "Enduring Curiosity",
+        "oracle_id": "9d2460c3-8eeb-4f35-b6f6-748c478664c7",
+        "scryfall_id": "8616629e-08f9-41ad-bfec-f86c8096f1cb"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
