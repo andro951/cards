@@ -107,7 +107,7 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
                 onCancel:restore,onComplete:(rows,split)=>{variants=rows;splits.push(split);selectedArt=null;restore();changed();}});
         });
         selectExisting.disabled=true;selectExisting.title=`Use this art as another printing of an existing card.`;
-        const finish=button(`Finish`,()=>complete(false));finish.id=`artwork-finish`;
+        const finish=button(`Finish`,()=>complete(true));finish.id=`artwork-finish`;
         const fallback=button(`Default Art for the rest`,()=>complete(true));fallback.id=`artwork-default-rest`;fallback.style.fontWeight=`bold`;
         const add=button(settings.source.mode===`github`?`Refresh GitHub folder`:`Add images`,async()=>{
             add.disabled=true;
@@ -203,13 +203,16 @@ export const openArtworkHelper=async(initial,{deckId,settings,onAdd=null})=>{
             if(visible.length>rightLimit)
                 rightGrid.append(button(`Show more images`,()=>{rightLimit+=60;draw();}));
 
-            finish.disabled=outstanding.length>0;
+            finish.disabled=outstanding.some(item=>item.variantId);
+            finish.title=finish.disabled?`Pair artwork for the remaining alternate-art copies before finishing.`:
+                outstanding.length?`Keep matched custom artwork and use Scryfall artwork for the remaining cards.`:``;
             finish.textContent=unused.length?`Finish — leave unused images`:`Finish`;
             fallback.hidden=!settings.source.fallback||!outstanding.length;
             fallback.style.display=fallback.hidden?`none`:``;
             fallback.disabled=!outstanding.length;
-            if(outstanding.length&&settings.source.fallback&& !warning.textContent)
-                warning.textContent=`These cards don’t have custom artwork. Add images now, or choose Default Art for the rest to use their Scryfall artwork.`;
+            if(outstanding.length&&!warning.textContent)
+                warning.textContent=finish.disabled?`Alternate-art copies still need their custom artwork paired.`:
+                    `Finish keeps your matched custom artwork, uses Scryfall artwork for the remaining cards, and leaves unused images untouched.`;
         };
         const complete=async useDefaults=>{
             const changes=[];
