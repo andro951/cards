@@ -555,7 +555,10 @@
     {
       "name": "Urza's Saga",
       "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
-      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
+      "accepted_art": [
+        "345e68136bb212ce53c472e49fb34f5078c21b59cbbe112a871658da709e95c8"
+      ]
     },
     {
       "name": "Horizon of Progress",
