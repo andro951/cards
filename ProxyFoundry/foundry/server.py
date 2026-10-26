@@ -477,7 +477,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == '/api/dev/batch-review/availability':
             return self.respond({'available': self.app.developer_batch_review.available()})
         if p == '/api/dev/batch-review/candidates':
-            return self.respond(self.app.developer_batch_review.candidates())
+            return self.respond(self.app.developer_batch_review.candidates(q.get('downloadAll',[''])[0]=='1'))
         if p == '/api/decks': return self.respond(self.app.ws.list_decks())
         if p == '/api/templates': return self.respond(self.app.ws.templates())
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/export', p):
@@ -626,7 +626,7 @@ class Handler(BaseHTTPRequestHandler):
                 m[1], m[2], offset, self.body(8 * 1024 ** 2)))
         d = self.data()
         if p == '/api/dev/batch-review/start':
-            return self.respond(self.app.developer_batch_review.start(d.get('deckIds')))
+            return self.respond(self.app.developer_batch_review.start(d.get('deckIds'),d.get('downloadAll') is True))
         if m := re.fullmatch(r'/api/dev/batch-review/([-a-f0-9]{36})/upload/(start|complete)', p):
             if m[2] == 'start':
                 return self.respond(self.app.developer_batch_review.begin_upload(

@@ -1,4 +1,4 @@
-import {api,blobRequest,job,activity,endActivity,work,modal,$,state} from './ui.js';
+import {api,blobRequest,job,activity,endActivity,work,modal,closeModal,$,state} from './ui.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {renderDecks} from './render.js';
 import {exportReview} from './review-export.js';
@@ -37,9 +37,9 @@ const batchApi=async(path,data,owner)=>{
 
     return result;
 };
-const batchCandidates=async()=>{
+const batchCandidates=async(downloadAll=false)=>{
     if(!browserPreview())
-        return batchApi(`/candidates`);
+        return batchApi(`/candidates${downloadAll?`?downloadAll=1`:``}`);
 
     if(!(await temporaryBatchReviewAvailable()).available)
         return {available:false,decks:[]};
@@ -47,7 +47,7 @@ const batchCandidates=async()=>{
     previewDecks=(await api(`/api/decks`)).map(deckSnapshot);
     const decks=[],skipped=[];
     for(const deck of previewDecks) {
-        if([`draft`,`prepared`].includes(deck.status)&&deck.printStatus!==`tokens-not-ready`&&deck.summary.faces>0)
+        if((downloadAll?[`draft`,`prepared`,`ready`]:[`draft`,`prepared`]).includes(deck.status)&&deck.printStatus!==`tokens-not-ready`&&deck.summary.faces>0)
             decks.push(deck);
         else if(deck.printStatus===`tokens-not-ready`||deck.status===`attention`)
             skipped.push({name:deck.name,reason:deck.printStatus===`tokens-not-ready`?`Token assignments need attention`:`Needs attention before generation`});
@@ -98,22 +98,22 @@ const stageReview=async(sessionId,deck,output,revision)=>{
     return {filename:output.filename};
 };
 const reviewFlow=createBatchReviewFlow({
-    getCandidates:async()=>{
-        const response=await batchCandidates();
+    getCandidates:async({downloadAll})=>{
+        const response=await batchCandidates(downloadAll);
         if(!response.available)
             throw new Error(`ImageFolderCompareAll is not available beside this ProxyFoundry checkout.`);
 
         checkCancelled();
         return response;
     },
-    start:async deckIds=>{
+    start:async(deckIds,{downloadAll})=>{
         batchRevisions.clear();
-        const session=await batchApi(`/start`,{deckIds,...(browserPreview()?{decks:previewDecks.filter(deck=>deckIds.includes(deck.id))}:{})},batchTask);
+        const session=await batchApi(`/start`,{deckIds,downloadAll,...(browserPreview()?{decks:previewDecks.filter(deck=>deckIds.includes(deck.id))}:{})},batchTask);
         activeSession=session.id;
         return session;
     },
     render:async deckIds=>{
-        const result=await renderDecks(deckIds,{notify:false,signal:batchTask.controller.signal});
+        const result=deckIds.length?await renderDecks(deckIds,{notify:false,signal:batchTask.controller.signal}):true;
         if(result!==false)
             work.claim(batchTask,[`workspace`]);
 
@@ -175,7 +175,18 @@ const reviewFlow=createBatchReviewFlow({
     abort:sessionId=>batchApi(`/${sessionId}/abort`,{},batchTask),
     onAbortError:error=>recordDiagnostic(`Review batch cleanup failed`,error.message)
 });
-export const runTemporaryBatchReview=async()=>{
+export const chooseBatchReviewDownload=()=>new Promise(resolve=>{
+    let selection=null;
+    const host=modal(`Temporary Batch Review`,``,{size:`small`,onClose:()=>{resolve(selection);return true;}});
+    const body=$(`.modal-body`,host),description=document.createElement(`p`);
+    description.textContent=`Download Changed downloads decks that need preparation or rendering. Download All also downloads decks that are already ready, reusing their saved card images.`;
+    body.append(description);
+    for(const [mode,label] of [[`changed`,`Download Changed`],[`all`,`Download All`]]) {
+        const button=document.createElement(`button`);button.type=`button`;button.className=`button primary`;button.textContent=label;
+        button.style.marginRight=`8px`;button.onclick=()=>{selection=mode;closeModal();};body.append(button);
+    }
+});
+export const runTemporaryBatchReview=async({downloadAll=false}={})=>{
     if(reviewFlow.busy)
         throw new Error(`A review batch is already running.`);
 
@@ -183,8 +194,8 @@ export const runTemporaryBatchReview=async()=>{
     const owner=work.begin({label:`Batch review`,resources:[`batch-review`]});
     batchTask=owner;
     try {
-        activity(`Batch review`,`Checking decks`,`Finding decks that need regeneration`,0,0,owner);
-        const result=await reviewFlow.run();
+        activity(`Batch review`,`Checking decks`,downloadAll?`Finding all decks for review download`:`Finding decks that need regeneration`,0,0,owner);
+        const result=await reviewFlow.run({downloadAll});
         endActivity(`Batch review complete`,false,owner);
         return result;
     }

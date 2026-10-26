@@ -35,10 +35,10 @@ class DeveloperBatchReview:
     def available(self):
         return self.checker.is_file() and self.cards_root.is_dir()
 
-    def candidates(self):
+    def candidates(self, download_all=False):
         decks, skipped = [], []
         for deck in self.workspace.list_decks():
-            if self._eligible(deck):
+            if self._eligible(deck, download_all):
                 decks.append({key: deck.get(key) for key in ("id", "name", "status", "printStatus")})
             elif deck.get("printStatus") == "tokens-not-ready":
                 skipped.append({"name": deck["name"], "reason": "Token assignments need attention"})
@@ -51,12 +51,13 @@ class DeveloperBatchReview:
     def eligible(self):
         return [deck for deck in self.workspace.list_decks() if self._eligible(deck)]
 
-    def _eligible(self, deck):
-        if deck.get("status") not in {"draft", "prepared"} or deck.get("printStatus") == "tokens-not-ready":
+    def _eligible(self, deck, download_all=False):
+        statuses = {"draft", "prepared", "ready"} if download_all else {"draft", "prepared"}
+        if deck.get("status") not in statuses or deck.get("printStatus") == "tokens-not-ready":
             return False
         return (deck.get("summary") or {}).get("faces", 0) > 0
 
-    def start(self, deck_ids):
+    def start(self, deck_ids, download_all=False):
         if not isinstance(deck_ids, list) or not deck_ids or len(deck_ids) > 500:
             raise ValidationError("Choose at least one deck for the review batch.")
         if any(not isinstance(value, str) for value in deck_ids) or len(set(deck_ids)) != len(deck_ids):
@@ -74,7 +75,7 @@ class DeveloperBatchReview:
             selected, used_cards = [], set()
             for ident in deck_ids:
                 deck = current.get(ident)
-                if not deck or not self._eligible(deck):
+                if not deck or not self._eligible(deck, download_all):
                     raise ConflictError("A selected deck's status changed; refresh the deck list and run again.")
                 cards = self._cards_folder(deck["name"], folder_mapping)
                 if cards in used_cards:

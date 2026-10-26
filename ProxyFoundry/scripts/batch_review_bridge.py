@@ -83,7 +83,7 @@ class BatchReviewBridge:
                         raise ConflictError("A review batch is already running.")
                     self.workspace.decks = {}
                     self.workspace.update(data.get("decks"))
-                    result = self.service.start(data.get("deckIds"))
+                    result = self.service.start(data.get("deckIds"), data.get("downloadAll") is True)
                 return self.respond(handler, result)
             match = re.fullmatch(r"/([-a-f0-9]{36})/(ready|upload/start|upload/complete|commit|abort)", path)
             if not match:

@@ -5,7 +5,7 @@ import {showOrders,chooseOrder,setupHelper} from './orders.js';
 import {showSettings,showHelp} from './settings.js';
 import {renderDecks} from './render.js';
 import {visibleDecks,resumeDeletions} from './deletion.js';
-import {runTemporaryBatchReview,showBatchReviewResult,temporaryBatchReviewAvailable} from './batch-review.js';
+import {runTemporaryBatchReview,chooseBatchReviewDownload,showBatchReviewResult,temporaryBatchReviewAvailable} from './batch-review.js';
 import {recordDiagnostic} from './diagnostics.js';
 
 export async function refreshLibrary({templates=true}={}){
@@ -63,10 +63,14 @@ function showLibrary(){
   const batchReview=document.createElement('button');
   batchReview.type='button';batchReview.className='button quiet small';
   batchReview.textContent='Temporary batch review';
-  batchReview.title='Developer-only: prepare stale decks and regenerate those marked Needs preparation or Ready to render, save review ZIPs, and run all-check.';
+  batchReview.title='Choose Download Changed or Download All, save review ZIPs, and run all-check.';
   batchReview.id='temporary-batch-review';
   batchReview.onclick=()=>attempt(async()=>{
-    const result=await runTemporaryBatchReview();
+    const mode=await chooseBatchReviewDownload();
+    if(mode===null)
+      return;
+
+    const result=await runTemporaryBatchReview({downloadAll:mode===`all`});
     await refreshLibraryProgress();
     showBatchReviewResult(result);
   });

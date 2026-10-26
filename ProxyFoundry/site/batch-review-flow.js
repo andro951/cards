@@ -1,20 +1,20 @@
 export function createBatchReviewFlow(dependencies) {
     let active=false;
-    const run=async()=>{
+    const run=async({downloadAll=false}={})=>{
         if(active)
             throw new Error(`A review batch is already running.`);
 
         active=true;
         let sessionId=null;
         try {
-            const candidates=await dependencies.getCandidates();
+            const candidates=await dependencies.getCandidates({downloadAll});
             const decks=candidates.decks;
             if(!decks.length)
                 return {decks:[],skipped:candidates.skipped||[],result:null};
 
-            const session=await dependencies.start(decks.map(deck=>deck.id));
+            const session=await dependencies.start(decks.map(deck=>deck.id),{downloadAll});
             sessionId=session.id;
-            const rendered=await dependencies.render(decks.map(deck=>deck.id));
+            const rendered=await dependencies.render(decks.filter(deck=>deck.status!==`ready`).map(deck=>deck.id));
             if(rendered===false)
                 throw new Error(`Generation was cancelled. No review ZIPs were copied.`);
 
