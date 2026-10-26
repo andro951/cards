@@ -115,7 +115,10 @@
     {
       "name": "Cloud, Midgar Mercenary",
       "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
-      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api",
+      "accepted_art": [
+        "7f96dd10ab3bac9ac391a00546922a27b684c4e68cb761f3eca08b6b40412394"
+      ]
     },
     {
       "name": "Gilded Drake",
