@@ -871,6 +871,19 @@
         "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Oswald Fiddlebender",
+        "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
+        "scryfall_id": "bba1650f-eddf-49a9-820e-489cb8d5b6fa"
+      },
+      "back": {
+        "name": "Bloom Tender",
+        "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
+        "scryfall_id": "ba86688d-18f0-4b5c-a797-42bf125a6c9f"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
