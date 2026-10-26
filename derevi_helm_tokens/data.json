@@ -4,27 +4,42 @@
     {
       "name": "Weathered Wayfarer",
       "oracle_id": "1093fdb6-bd4f-46a8-92e3-5aa46b52bb4f",
-      "scryfall_url": "https://scryfall.com/card/2x2/34/weathered-wayfarer?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/34/weathered-wayfarer?utm_source=api",
+      "accepted_art": [
+        "f6966d68bb6c4c8b8659aa84ca37cd2f16624598c046a3a4ceb1038eaa106b15"
+      ]
     },
     {
       "name": "Bloom Tender",
       "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
-      "scryfall_url": "https://scryfall.com/card/ecl/166/bloom-tender?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ecl/166/bloom-tender?utm_source=api",
+      "accepted_art": [
+        "cdd41ea7e9bc9e43ee8e9292b618da88f8322073cc9a50b500f363851ad2d697"
+      ]
     },
     {
       "name": "Cloud, Midgar Mercenary",
       "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
-      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api",
+      "accepted_art": [
+        "71721c3670c8399175b0409196c10b87292c0aba5fa09b9ea30e955bce68cd32"
+      ]
     },
     {
       "name": "Gilded Drake",
       "oracle_id": "7f06c098-6482-4bf3-a9a1-110d6d5b5703",
-      "scryfall_url": "https://scryfall.com/card/usg/76/gilded-drake?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/usg/76/gilded-drake?utm_source=api",
+      "accepted_art": [
+        "4910f9612b293281e38fb7e315ceebc98d18b7f04221d12cd37e3f4ce6c1b532"
+      ]
     },
     {
       "name": "Puresteel Paladin",
       "oracle_id": "74a62c7b-4753-4af2-b7a1-9a4ae8988801",
-      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/51/puresteel-paladin?utm_source=api",
+      "accepted_art": [
+        "681eeca3b0826c3f015c9045854b790fe7bb356b09771fbc1495c874328ddf74"
+      ]
     },
     {
       "name": "Wan Shi Tong, Librarian",
@@ -34,182 +49,290 @@
     {
       "name": "Delney, Streetwise Lookout",
       "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
-      "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api",
+      "accepted_art": [
+        "64d36d81ae4a9d6505a5950768d8dcf515d7f714f8e4be0871605c193174f5d8"
+      ]
     },
     {
       "name": "Faeburrow Elder",
       "oracle_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
-      "scryfall_url": "https://scryfall.com/card/ecc/53/faeburrow-elder?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ecc/53/faeburrow-elder?utm_source=api",
+      "accepted_art": [
+        "100f066f4a8c7b7e4fb2b224679d09b601f467fafe4c2ae3533204aa39b7af09"
+      ]
     },
     {
       "name": "Recruiter of the Guard",
       "oracle_id": "d521a329-a53a-4962-810a-2abed80df260",
-      "scryfall_url": "https://scryfall.com/card/mh3/266/recruiter-of-the-guard?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mh3/266/recruiter-of-the-guard?utm_source=api",
+      "accepted_art": [
+        "19b61f093d95cbdf88b3e0ff50015b99d813d4f0055cf308c515b0aa5dce75b3"
+      ]
     },
     {
       "name": "Spellseeker",
       "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
-      "scryfall_url": "https://scryfall.com/card/cmm/120/spellseeker?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/120/spellseeker?utm_source=api",
+      "accepted_art": [
+        "713e9ea94dde7177df130788512a6d6de3f1f3dfcd244044ef77f9c78e7dd8c6"
+      ]
     },
     {
       "name": "Trophy Mage",
       "oracle_id": "08afc0d7-192f-4ab6-b6a0-c4265cf5e225",
-      "scryfall_url": "https://scryfall.com/card/ddu/42/trophy-mage?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ddu/42/trophy-mage?utm_source=api",
+      "accepted_art": [
+        "0db5f4d98a09f5bbfbea18fc7b20448077c1ec702abdaf30658c6295975c3eeb"
+      ]
     },
     {
       "name": "Yisan, the Wanderer Bard",
       "oracle_id": "7f4b0233-a2b0-41a2-8448-2df1f845148c",
-      "scryfall_url": "https://scryfall.com/card/cmm/334/yisan-the-wanderer-bard?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/334/yisan-the-wanderer-bard?utm_source=api",
+      "accepted_art": [
+        "3acb2be2c189d4a5f446d7faac206ea7c93351992fc4b20a914d6ec921a10101"
+      ]
     },
     {
       "name": "Academy Rector",
       "oracle_id": "e3c85068-b4b6-40b9-a16c-5c3b2d059ec4",
-      "scryfall_url": "https://scryfall.com/card/uds/1/academy-rector?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/uds/1/academy-rector?utm_source=api",
+      "accepted_art": [
+        "408251772dc61a2f7953822c6b9985083dfbbe155e53a31f96dc3747a41be5da"
+      ]
     },
     {
       "name": "Brago, King Eternal",
       "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
-      "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api",
+      "accepted_art": [
+        "153faf418c15945f14a70330718324bf70856fbb85255f0f10896cd625602d72"
+      ]
     },
     {
       "name": "Captain Sisay",
       "oracle_id": "2e7a9ea9-f76c-4c12-950f-c613fa16cfa8",
-      "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api",
+      "accepted_art": [
+        "ddb0641a05d441d3f7a96f70b6ee4f942b4ed9ad075dea42e58167af5e317d03"
+      ]
     },
     {
       "name": "Displacer Kitten",
       "oracle_id": "09ef446c-a13d-49d9-a94c-cd5f5a2d440b",
-      "scryfall_url": "https://scryfall.com/card/clb/63/displacer-kitten?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/clb/63/displacer-kitten?utm_source=api",
+      "accepted_art": [
+        "8eedb91a761e3104d012bfe96ad0d12303b24b1931ca123f0dc8dcd7209fc033"
+      ]
     },
     {
       "name": "Emiel the Blessed",
       "oracle_id": "b11c250c-f191-4c52-ba02-a9176f163447",
-      "scryfall_url": "https://scryfall.com/card/2x2/10/emiel-the-blessed?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/10/emiel-the-blessed?utm_source=api",
+      "accepted_art": [
+        "46abcf8c6d9660dbb679c5e0307a6cd405c0ad1c2da2f7a234eff2011e2d94ff"
+      ]
     },
     {
       "name": "Enduring Curiosity",
       "oracle_id": "9d2460c3-8eeb-4f35-b6f6-748c478664c7",
-      "scryfall_url": "https://scryfall.com/card/dsk/51/enduring-curiosity?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/dsk/51/enduring-curiosity?utm_source=api",
+      "accepted_art": [
+        "2993145b2e928d9c0e7e5bcfa02f19cf278077997886890980b7f9b62844bc71"
+      ]
     },
     {
       "name": "Foundation Breaker",
       "oracle_id": "8b7a3613-f1bd-4262-9b11-b631167c2c2d",
-      "scryfall_url": "https://scryfall.com/card/ecc/108/foundation-breaker?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ecc/108/foundation-breaker?utm_source=api",
+      "accepted_art": [
+        "4fbb9cd40518417f58cfd3b0b44cad1fb5039018a84c7f9882266ae0b2ee7c76"
+      ]
     },
     {
       "name": "Hylda of the Icy Crown",
       "oracle_id": "1733c71b-fd28-48dd-8a3d-41afd4b22f0e",
-      "scryfall_url": "https://scryfall.com/card/woe/206/hylda-of-the-icy-crown?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/woe/206/hylda-of-the-icy-crown?utm_source=api",
+      "accepted_art": [
+        "13d4fe285c023232cd8e6117de9ef6e754cf5339b8ad35d1a4c250ebd6a1f3ea"
+      ]
     },
     {
       "name": "Preston, the Vanisher",
       "oracle_id": "2e00ccc9-6d5f-4de3-bbec-48b49d363244",
-      "scryfall_url": "https://scryfall.com/card/j22/8/preston-the-vanisher?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/j22/8/preston-the-vanisher?utm_source=api",
+      "accepted_art": [
+        "df7387721e426171ccf63825dabe634a585f8afcaf6422205aa34a0dc815f4d4"
+      ]
     },
     {
       "name": "Prime Speaker Vannifar",
       "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
-      "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api",
+      "accepted_art": [
+        "5974526cecd74702a4207b1849712b56dd33d72765dfddc4bdb8e54506e55ec8"
+      ]
     },
     {
       "name": "Sakashima of a Thousand Faces",
       "oracle_id": "8ecdaf4b-4442-42da-9714-4257a83faf50",
-      "scryfall_url": "https://scryfall.com/card/cmr/89/sakashima-of-a-thousand-faces?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmr/89/sakashima-of-a-thousand-faces?utm_source=api",
+      "accepted_art": [
+        "ab9e3adaa100f42d7d02dd47c6d84c5eca67c55a59232e1dc0515ab11c854f33"
+      ]
     },
     {
       "name": "Teshar, Ancestor's Apostle",
       "oracle_id": "d4193f50-33b5-4201-ba03-eb135eced7ff",
-      "scryfall_url": "https://scryfall.com/card/soc/180/teshar-ancestors-apostle?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/soc/180/teshar-ancestors-apostle?utm_source=api",
+      "accepted_art": [
+        "b30acb0acbdb9f1f2c6b4346d980f88594019f9b70b9612efdad7df7b066e51d"
+      ]
     },
     {
       "name": "Timeless Witness",
       "oracle_id": "a52a06aa-56fc-4845-bbcd-a54f16369b34",
-      "scryfall_url": "https://scryfall.com/card/tdc/274/timeless-witness?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/tdc/274/timeless-witness?utm_source=api",
+      "accepted_art": [
+        "cdaa25b65eb1b184be9c4be1e1cdc6706116e721cbc5db9615656cbcdf9145e3"
+      ]
     },
     {
       "name": "Urza, Lord High Artificer",
       "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
-      "scryfall_url": "https://scryfall.com/card/cmm/130/urza-lord-high-artificer?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/130/urza-lord-high-artificer?utm_source=api",
+      "accepted_art": [
+        "a9afc74ee311e336f91faba842ad9d9a209220983950c8b64be62b93096fe6ad"
+      ]
     },
     {
       "name": "Venser, Shaper Savant",
       "oracle_id": "0f41cefc-d6ff-4db7-ba35-502b7e081de1",
-      "scryfall_url": "https://scryfall.com/card/2x2/66/venser-shaper-savant?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/66/venser-shaper-savant?utm_source=api",
+      "accepted_art": [
+        "2d0be189637da4a8dfeb7a3da3313796cdbb23a8653823afe62345cc50b7d8f6"
+      ]
     },
     {
       "name": "Ant Queen",
       "oracle_id": "50de88d4-0beb-45e5-9664-d4f0e280e652",
-      "scryfall_url": "https://scryfall.com/card/mm2/139/ant-queen?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mm2/139/ant-queen?utm_source=api",
+      "accepted_art": [
+        "b6717a921f62b5a9c34c674b3a2c2a265793234028e5bb92a6404a811366b02b"
+      ]
     },
     {
       "name": "Gandalf the White",
       "oracle_id": "5b3b5f6a-375e-4479-9384-a942eda83f9b",
-      "scryfall_url": "https://scryfall.com/card/ltr/19/gandalf-the-white?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ltr/19/gandalf-the-white?utm_source=api",
+      "accepted_art": [
+        "e94eaa738294d7d5790a2f6bfeb44f115acfd9bb5d6993b988dd95cf249f53a2"
+      ]
     },
     {
       "name": "Karmic Guide",
       "oracle_id": "8c31fec9-e4b3-4761-990e-7be38eb05604",
-      "scryfall_url": "https://scryfall.com/card/soc/151/karmic-guide?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/soc/151/karmic-guide?utm_source=api",
+      "accepted_art": [
+        "990c9941964c95b2aaca715913665435ad3bf516b327e6ab250883bd2b330d5a"
+      ]
     },
     {
       "name": "Reveillark",
       "oracle_id": "1be13ede-98f8-497e-800c-03e5802932b3",
-      "scryfall_url": "https://scryfall.com/card/2x2/26/reveillark?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/26/reveillark?utm_source=api",
+      "accepted_art": [
+        "61f7194c6b6f157fccda9d65e2afd5b882d084a9eb3e8b23040a557263abd591"
+      ]
     },
     {
       "name": "Stonehewer Giant",
       "oracle_id": "b3d99ea0-d61f-4394-8913-b4057c38ff3e",
-      "scryfall_url": "https://scryfall.com/card/2xm/32/stonehewer-giant?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2xm/32/stonehewer-giant?utm_source=api",
+      "accepted_art": [
+        "f95b84957767485fd9d47d5698851ab2e3432a2d93e8914217df69fcfccd44d1"
+      ]
     },
     {
       "name": "Thalia's Lancers",
       "oracle_id": "58b349ec-9987-4832-a8f3-8e92027ea75b",
-      "scryfall_url": "https://scryfall.com/card/emn/47/thalias-lancers?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/emn/47/thalias-lancers?utm_source=api",
+      "accepted_art": [
+        "7e8ff3430a1d588d122786632c495f92b19b2ca94ecd35235fdace9ff7b425f2"
+      ]
     },
     {
       "name": "Willbreaker",
       "oracle_id": "7c365041-806f-42d6-a2ff-40e20dd8e9f0",
-      "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api",
+      "accepted_art": [
+        "e5782280519c5d5eef28442c5681c9948d3e3e5e2406618f3875e407bb74f88a"
+      ]
     },
     {
       "name": "Duplicant",
       "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
-      "scryfall_url": "https://scryfall.com/card/cmm/946/duplicant?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/946/duplicant?utm_source=api",
+      "accepted_art": [
+        "0a5e5aabb7e8dc8b93ddf65a25988689ac25b79ad226a20a872be2ad4eb75518"
+      ]
     },
     {
       "name": "Silver Surfer, Cosmic Voyager",
       "oracle_id": "3ce1f550-d044-4cb1-991b-e98449f74507",
-      "scryfall_url": "https://scryfall.com/card/msc/639/silver-surfer-cosmic-voyager?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/msc/639/silver-surfer-cosmic-voyager?utm_source=api",
+      "accepted_art": [
+        "2e606732166089e8e93ef6e2cc452871a55865e21856a4c1f6007c7fe2e75053"
+      ]
     },
     {
       "name": "Ultimecia, Temporal Threat",
       "oracle_id": "5a8e7e35-e9ea-4808-8aa7-7580a23b9d9d",
-      "scryfall_url": "https://scryfall.com/card/fin/556/ultimecia-temporal-threat?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/fin/556/ultimecia-temporal-threat?utm_source=api",
+      "accepted_art": [
+        "e034cb5516e53fead9f19331461892af6511cd76bef3a98112e51ccd83795fe9"
+      ]
     },
     {
       "name": "Elesh Norn, Grand Cenobite",
       "oracle_id": "958d71ff-c9f7-46f0-96ca-79e7f4d65a16",
-      "scryfall_url": "https://scryfall.com/card/ima/18/elesh-norn-grand-cenobite?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/ima/18/elesh-norn-grand-cenobite?utm_source=api",
+      "accepted_art": [
+        "65ec7e7c5ce1c235e62de30d39b9f9760d59e4d35be7efff82b2c31e5e28fabe"
+      ]
     },
     {
       "name": "Old Gnawbone",
       "oracle_id": "dff3f4c7-f792-4ca3-9b0a-0738e70664d9",
-      "scryfall_url": "https://scryfall.com/card/afr/197/old-gnawbone?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/afr/197/old-gnawbone?utm_source=api",
+      "accepted_art": [
+        "7466531b96595775d516b6f7905ced6d115b460d08622af43b892f8aa99728f9"
+      ]
     },
     {
       "name": "Ulamog, the Infinite Gyre",
       "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
-      "scryfall_url": "https://scryfall.com/card/2x2/3/ulamog-the-infinite-gyre?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/3/ulamog-the-infinite-gyre?utm_source=api",
+      "accepted_art": [
+        "90a53c4d3566678e7187bac278f61e87883d8e35dbe29ff65811aa6d28d5fc2d"
+      ]
     },
     {
       "name": "Derevi, Empyrial Tactician",
       "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
-      "scryfall_url": "https://scryfall.com/card/cma/176/derevi-empyrial-tactician?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cma/176/derevi-empyrial-tactician?utm_source=api",
+      "accepted_art": [
+        "6b3bdb222eda8cc4ff0077ea8046c6daff253339df99ab9bf8cb3001c0e7d458"
+      ]
     },
     {
       "name": "Oswald Fiddlebender",
       "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
-      "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api",
+      "accepted_art": [
+        "bf937593e8faa4adc3f9273dd8138f41b38f5f71486ba177de9538c6d98c2858"
+      ]
     },
     {
       "name": "Sakura-Tribe Scout",
@@ -219,7 +342,10 @@
     {
       "name": "Nephalia Smuggler",
       "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
-      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api",
+      "accepted_art": [
+        "7ccf0b25f0993cf9ba5d83206ba0062bf5a57562c17a0417d587aae4e8d3411b"
+      ]
     },
     {
       "name": "Abuelo, Ancestral Echo",
@@ -239,17 +365,26 @@
     {
       "name": "Deadeye Navigator",
       "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
-      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api",
+      "accepted_art": [
+        "067eabef0954d6a3baeda915c803137e5ca8e83d450efe44e47d48b44eda2160"
+      ]
     },
     {
       "name": "The Seriema",
       "oracle_id": "a6bcec1f-f515-4e63-9e84-8eb04cc582ff",
-      "scryfall_url": "https://scryfall.com/card/eoe/35/the-seriema?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/eoe/35/the-seriema?utm_source=api",
+      "accepted_art": [
+        "65b512fa2aa4f4484c82a2df94651c4c88ce2bc5d2cbda42d2b8def1d633a393"
+      ]
     },
     {
       "name": "Shorikai, Genesis Engine",
       "oracle_id": "e2962883-6daf-4a84-af73-917afc73092c",
-      "scryfall_url": "https://scryfall.com/card/nec/4/shorikai-genesis-engine?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/nec/4/shorikai-genesis-engine?utm_source=api",
+      "accepted_art": [
+        "d4bcc6c73ea8c639e5f77a786480e6c592f1f0103700c716d03930ab3b273e39"
+      ]
     }
   ],
   "tokenAssignments": [
