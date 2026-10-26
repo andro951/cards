@@ -286,7 +286,10 @@
     {
       "name": "Karmic Guide",
       "oracle_id": "8c31fec9-e4b3-4761-990e-7be38eb05604",
-      "scryfall_url": "https://scryfall.com/card/soc/151/karmic-guide?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/soc/151/karmic-guide?utm_source=api",
+      "accepted_art": [
+        "48a4033309808a70f80b42cb94f4a914daf2ad719f01e264fbccccd1e002e978"
+      ]
     },
     {
       "name": "Reveillark",
