@@ -343,6 +343,19 @@
         "scryfall_id": "e20da6b5-1057-4a28-9e85-07de714e262f"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Spellseeker",
+        "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
+        "scryfall_id": "a749c591-2fbe-41d8-ac5b-56ebce82d33e"
+      },
+      "back": {
+        "name": "Trophy Mage",
+        "oracle_id": "08afc0d7-192f-4ab6-b6a0-c4265cf5e225",
+        "scryfall_id": "5252794a-5cbe-45e3-b5c1-b27c667e9c17"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
