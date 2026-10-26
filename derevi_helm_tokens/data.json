@@ -330,6 +330,19 @@
         "scryfall_id": "3a1d0dad-18a8-489e-ac11-08f64b72fda4"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Oswald Fiddlebender",
+        "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
+        "scryfall_id": "bba1650f-eddf-49a9-820e-489cb8d5b6fa"
+      },
+      "back": {
+        "name": "Wan Shi Tong, Librarian",
+        "oracle_id": "2bace3ea-7d28-4a1c-857a-d3c3a1c11b59",
+        "scryfall_id": "e20da6b5-1057-4a28-9e85-07de714e262f"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
