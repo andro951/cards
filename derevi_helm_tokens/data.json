@@ -343,19 +343,6 @@
         "scryfall_id": "94e3a130-deeb-4bf4-a1f6-9219c3d8c373"
       },
       "quantity": 1
-    },
-    {
-      "front": {
-        "name": "Abuelo, Ancestral Echo",
-        "oracle_id": "eaa9baac-72f2-4bde-9146-860878d9860b",
-        "scryfall_id": "40eee689-2514-421a-8056-eb7668be66ff"
-      },
-      "back": {
-        "name": "Trophy Mage",
-        "oracle_id": "08afc0d7-192f-4ab6-b6a0-c4265cf5e225",
-        "scryfall_id": "5252794a-5cbe-45e3-b5c1-b27c667e9c17"
-      },
-      "quantity": 1
     }
   ],
   "tokenTreatments": []
