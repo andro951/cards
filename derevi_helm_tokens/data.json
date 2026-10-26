@@ -317,6 +317,19 @@
         "scryfall_id": "9cbdda50-8a27-4094-849d-b6f66def82ce"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Delney, Streetwise Lookout",
+        "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
+        "scryfall_id": "be219928-3d0e-4d00-b124-152ce8a8c13b"
+      },
+      "back": {
+        "name": "Faeburrow Elder",
+        "oracle_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
+        "scryfall_id": "145dcac4-2c53-4ae9-9ede-24dc07474b01"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
