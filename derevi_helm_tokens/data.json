@@ -330,6 +330,19 @@
         "scryfall_id": "145dcac4-2c53-4ae9-9ede-24dc07474b01"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Recruiter of the Guard",
+        "oracle_id": "d521a329-a53a-4962-810a-2abed80df260",
+        "scryfall_id": "8e4c6ba1-1abc-478f-9b7c-97e9e3c92fb0"
+      },
+      "back": {
+        "name": "Yisan, the Wanderer Bard",
+        "oracle_id": "7f4b0233-a2b0-41a2-8448-2df1f845148c",
+        "scryfall_id": "94e3a130-deeb-4bf4-a1f6-9219c3d8c373"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
