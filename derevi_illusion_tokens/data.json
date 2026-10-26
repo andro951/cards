@@ -832,6 +832,19 @@
         "scryfall_id": "a749c591-2fbe-41d8-ac5b-56ebce82d33e"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Raff Capashen, Ship's Mage",
+        "oracle_id": "13044ca1-76a3-43b2-a8e4-3bbc692c30c5",
+        "scryfall_id": "c681e33b-3d60-4aaa-8186-51866d8b79d1"
+      },
+      "back": {
+        "name": "Urza, Lord High Artificer",
+        "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
+        "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
