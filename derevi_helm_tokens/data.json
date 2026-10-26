@@ -265,6 +265,19 @@
         "scryfall_id": "6e9a17b5-422c-4add-adbf-63e4492121e8"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Cloud, Midgar Mercenary",
+        "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+        "scryfall_id": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5"
+      },
+      "back": {
+        "name": "Gilded Drake",
+        "oracle_id": "7f06c098-6482-4bf3-a9a1-110d6d5b5703",
+        "scryfall_id": "8de3fdae-cc2c-4a14-b15b-4fe1a983dfbf"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
