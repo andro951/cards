@@ -621,6 +621,19 @@
         "scryfall_id": "c2963ce1-f9d8-437a-9489-e0913a8b8d26"
       },
       "quantity": 4
+    },
+    {
+      "front": {
+        "name": "Rat",
+        "oracle_id": "0d804fad-62db-4e3b-8d3c-ee62eba38569",
+        "scryfall_id": "c1788d4c-31b8-4f73-8275-5470316e7ad4"
+      },
+      "back": {
+        "name": "Nacatl War-Pride",
+        "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
+        "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
+      },
+      "quantity": 3
     }
   ],
   "tokenTreatments": [
