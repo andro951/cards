@@ -13,7 +13,7 @@ export function identifyDeck(raw){
   return {site:site===deckSites[0]?'archidekt':'mtggoldfish',id};
 }
 
-export function parseArchidekt(data){
+export function parseArchidekt(data,{allowEmpty=false}={}){
   if(!data||!Array.isArray(data.cards))throw new Error('Archidekt did not return a public deck.');
   const categories=new Map((data.categories||[]).map(item=>[item.name,item]));
   const rows=data.cards.filter(item=>!item.deletedAt).map(item=>{
@@ -24,11 +24,11 @@ export function parseArchidekt(data){
     const source=/^[0-9a-f-]{36}$/i.test(card.uid||'')?card.uid:card.oracleCard?.name;
     return {source,quantity:Number(item.quantity)||1,section};
   }).filter(item=>item.source&&item.quantity>0);
-  if(!rows.length)throw new Error('The Archidekt deck has no importable cards.');
+  if(!rows.length&&!allowEmpty)throw new Error('The Archidekt deck has no importable cards.');
   return {name:data.name||'Archidekt deck',rows};
 }
 
-export function parseGoldfish(text,title='MTGGoldfish deck'){
+export function parseGoldfish(text,title='MTGGoldfish deck',{allowEmpty=false}={}){
   const rows=[];
   let section='mainboard';
   let sawCards=false;
@@ -44,6 +44,6 @@ export function parseGoldfish(text,title='MTGGoldfish deck'){
     rows.push({source:match[2],quantity:Number(match[1]),section});
     sawCards=true;
   }
-  if(!rows.length)throw new Error('The MTGGoldfish deck has no importable cards.');
+  if(!rows.length&&!allowEmpty)throw new Error('The MTGGoldfish deck has no importable cards.');
   return {name:title,rows};
 }

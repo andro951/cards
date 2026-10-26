@@ -13,6 +13,12 @@ Bulk Proxy Forge turns public Magic: The Gathering deck links into rendered prox
 
 Saved print packages are available from **Saved print orders** on the Deck Library page.
 
+### Refresh a decklist
+
+Open a deck's **Deck actions** menu and choose **Refresh deck cards**. The original public deck link is filled in when retained; older export-based imports can reconnect by pasting that link once. The Outside the Game choice is remembered. Archidekt and MTGGoldfish refreshes use the same optional browser helper as their imports.
+
+Refresh preserves matching printings, face IDs, custom artwork, edits, approvals, and saved renders. It updates quantities, reuses cards moved between deck sections, adds new printings, and removes cards absent from the current list. Locally added cards and copy tokens stay in the deck. Alternate-art allocations shrink with the source quantity, and pairings referencing removed tokens are cleared. A change summary appears before you choose **Generate Images**; refresh itself does not prepare or render cards. Subsequent generation reuses unchanged images. Interrupted, unavailable, or stale refreshes leave the previous list intact.
+
 ### Local developer review batch
 
 The local preview launcher (`START_BULK_PROXY_FORGE.bat`) exposes **Temporary batch review** in the Deck Library when `ImageFolderCompareAll/ImageFolderCompareAll.exe` is installed beside ProxyFoundry in the Cards repository. It uses the browser workspace already open in that preview. Restart the preview launcher after installing this update so its file bridge is available.

@@ -99,6 +99,45 @@ def test_inspector_template_choices_follow_token_treatment(dom_page,treatment):
     assert not errors,errors
 
 
+@pytest.mark.parametrize('failed',[False,True],ids=['complete','unavailable'])
+def test_refresh_deck_cards_reloads_original_source_and_blocks_generation(dom_page,failed):
+    page,errors=dom_page
+    page.evaluate('''failed=>{
+      __fixture.deck.importedSource='https://scryfall.com/@you/decks/33333333-3333-4333-8333-333333333333';
+      __fixture.deck.includeOutside=false;window.refreshPayload=null;window.renderCalls=0;
+      const original=window.fetch,reply=value=>({ok:true,text:async()=>JSON.stringify(value)});
+      window.fetch=async(path,options={})=>{
+        if(path.endsWith('/refresh')){refreshPayload=JSON.parse(options.body);return reply({id:'refresh-list'});}
+        if(path==='/api/jobs/refresh-list'){
+          await new Promise(resolve=>window.finishRefresh=resolve);
+          if(failed)return reply({state:'failed',error:'Original deck unavailable',message:'Original deck unavailable'});
+          __fixture.deck.cards[0].quantity=3;__fixture.deck.summary.cards=3;__fixture.deck.revision++;
+          return reply({state:'done',result:{deck:__fixture.deck,changes:{added:[],removed:[],quantityChanged:[{name:'Test creature',before:2,after:3}],moved:[],retained:1,local:0}}});
+        }
+        if(path.startsWith('/api/render-sessions'))renderCalls++;
+        return original(path,options);
+      };
+    }''',failed)
+    page.locator('.deck-tile').click();page.click('#deck-menu');page.get_by_role('button',name='Refresh deck cards',exact=True).click()
+    assert page.get_by_label('Original deck link',exact=True).input_value()==page.evaluate('__fixture.deck.importedSource')
+    assert page.get_by_text('Include Outside the Game cards',exact=True).is_visible()
+    page.click('#refresh-deck-cards');page.wait_for_function('typeof finishRefresh==="function"')
+    assert page.locator('#generate-deck').is_disabled() and page.locator('#refresh-deck-cards').is_disabled()
+    assert page.evaluate('refreshPayload.source')==page.evaluate('__fixture.deck.importedSource')
+    assert page.evaluate('refreshPayload.includeOutside') is False
+    page.evaluate('finishRefresh()')
+    if failed:
+        page.get_by_role('alert').filter(has_text='Original deck unavailable').wait_for()
+        page.wait_for_function('!document.querySelector("#refresh-deck-cards").disabled')
+        assert page.evaluate('__fixture.deck.cards[0].quantity')==2
+    else:
+        page.get_by_role('dialog',name='Refresh deck cards',exact=True).get_by_text('1 matching cards kept',exact=False).wait_for()
+        assert page.locator('.quantity-pill').inner_text()=='3×'
+        page.get_by_role('button',name='Done',exact=True).click()
+    assert page.locator('#generate-deck').is_enabled()
+    assert page.evaluate('renderCalls')==0 and not errors,errors
+
+
 def test_offline_deck_controls_and_templates(dom_page):
     page,errors=dom_page
     page.locator('.deck-tile').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')

@@ -4,7 +4,7 @@ import {downloadReview} from './review-export.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
-import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable,bindGenerationButton} from './ui.js';
+import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,job,loading,empty,badge,asset,thumbnail,humanStatus,nav,confirmAction,uploadImage,downloadPost,downloadBlob,downloadExportFile,requireDeckAvailable,bindGenerationButton,work} from './ui.js';
 import {renderSetup,pickFile,rarities} from './setup.js';
 import {frameChoices} from './frame-picker.js';
 import {renderDecks,renderCard} from './render.js';
@@ -15,7 +15,7 @@ import {creditFields,bindCreditFields,ensureCustomArtCredits} from './credits.js
 const views=new Map();
 let activeCardsView=null;
 window.addEventListener('hashchange',()=>{activeCardsView=null;});
-async function prepareDeckSource(source){
+async function prepareDeckSource(source,{allowEmpty=false}={}){
   const text=source.trim();
   if(/^https:\/\/(?:www\.)?(?:archidekt\.com\/decks\/|mtggoldfish\.com\/deck\/)/i.test(text)){
     const adapters=await import('./deck-adapters.mjs');
@@ -34,8 +34,8 @@ async function prepareDeckSource(source){
     });
     if(!reply.ok)throw new Error(reply.error||'The browser helper could not fetch this deck.');
     if(reply.deck?.site!==expected.site||reply.deck?.id!==expected.id)throw new Error('The browser helper returned a different deck.');
-    const deck=expected.site==='archidekt'?adapters.parseArchidekt(JSON.parse(reply.deck.body)):adapters.parseGoldfish(reply.deck.body,reply.deck.title);
-    return JSON.stringify(deck);
+    const deck=expected.site==='archidekt'?adapters.parseArchidekt(JSON.parse(reply.deck.body),{allowEmpty}):adapters.parseGoldfish(reply.deck.body,reply.deck.title,{allowEmpty});
+    return JSON.stringify({...deck,sourceUrl:text});
   }
   if(text.startsWith('{')){
     const data=JSON.parse(text);
@@ -289,11 +289,72 @@ async function generate(d,artChecked=false,screenOpen=false){
   };
   return finish();
 }
+function refreshDeckCards(deck){
+  requireDeckAvailable(deck.id);
+  const host=modal(`Refresh deck cards`,``,{size:`small`});
+  const body=$(`.modal-body`,host);
+  const description=document.createElement(`p`);description.textContent=`Reload the original decklist. Matching cards keep their images and edits. Quantities are updated, new cards are added, and removed cards leave this deck.`;
+  const label=document.createElement(`label`);label.className=`field`;label.textContent=`Original deck link`;
+  const link=document.createElement(`input`);link.type=`url`;link.setAttribute(`aria-label`,`Original deck link`);link.placeholder=`https://scryfall.com/@you/decks/…`;
+  link.value=/^https:\/\/(?:www\.)?(?:scryfall\.com\/|archidekt\.com\/|mtggoldfish\.com\/)/i.test(deck.importedSource||``)?deck.importedSource:``;
+  label.append(link);
+  const outsideLabel=document.createElement(`label`);outsideLabel.className=`check-line`;
+  const outside=document.createElement(`input`);outside.type=`checkbox`;outside.checked=deck.includeOutside!==false;
+  outsideLabel.append(outside,document.createTextNode(`Include Outside the Game cards`));
+  const note=document.createElement(`p`);note.className=`muted`;note.textContent=`Locally added cards and copy tokens are kept. Images are generated only when you choose Generate Images afterward.`;
+  const status=document.createElement(`p`);status.setAttribute(`role`,`status`);status.setAttribute(`aria-live`,`polite`);
+  const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button primary`;refresh.id=`refresh-deck-cards`;refresh.textContent=`Refresh cards`;
+  const update=()=>{refresh.disabled=!link.value.trim();};link.oninput=update;update();
+  body.append(description,label,outsideLabel,note,status,refresh);
+  refresh.onclick=()=>attempt(async()=>{
+    if(refresh.disabled)return;
+    refresh.disabled=true;link.disabled=true;outside.disabled=true;setModalBusy(host,true);refresh.textContent=`Refreshing…`;
+    let owner;
+    try {
+      if(state.setupActions?.deckId===deck.id&&state.setupActions.root.isConnected)await state.setupActions.flush();
+      const current=await api(`/api/decks/${deck.id}`),sourceUrl=link.value.trim(),includeOutside=outside.checked;
+      owner=work.begin({label:`Refresh deck cards`,resources:[`deck:${deck.id}`]});
+      status.textContent=`Fetching the latest decklist…`;
+      const source=await prepareDeckSource(sourceUrl,{allowEmpty:true});
+      const result=await job(`/api/decks/${deck.id}/refresh`,{revision:current.revision,sourceUrl,source,includeOutside},
+        {label:`Refresh deck cards`,owner,onProgress:progress=>{status.textContent=progress.message;}});
+      await showDeck(deck.id,`cards`);
+      body.replaceChildren();
+      const summary=document.createElement(`p`),changes=result.changes;
+      summary.textContent=`${changes.retained} matching cards kept · ${changes.added.length} added · ${changes.removed.length} removed · ${changes.quantityChanged.length} quantities updated${changes.moved.length?` · ${changes.moved.length} moved between sections`:``}`;
+      body.append(summary);
+      for(const [title,rows] of [[`Added`,changes.added],[`Removed`,changes.removed],[`Quantities`,changes.quantityChanged]]) {
+        if(!rows.length)continue;
+        const heading=document.createElement(`h3`),list=document.createElement(`ul`);heading.textContent=title;
+        for(const row of rows) {
+          const item=document.createElement(`li`);item.textContent=`${row.name} · ${row.before!==undefined?`${row.before} → ${row.after}`:`${row.quantity} copies`}`;list.append(item);
+        }
+
+        body.append(heading,list);
+      }
+
+      const message=document.createElement(`p`);message.textContent=changes.added.length?`Generate Images to prepare and render the new cards. Existing images will be reused.`:`The decklist is up to date. Existing card images were retained.`;body.append(message);
+      if(result.deck.status===`draft`) {
+        const generateButton=document.createElement(`button`);generateButton.type=`button`;generateButton.className=`button primary`;generateButton.textContent=`Generate Images`;
+        generateButton.onclick=()=>attempt(async()=>{closeModal();await generate(result.deck);});body.append(generateButton);
+      }
+
+      const done=document.createElement(`button`);done.type=`button`;done.className=`button`;done.textContent=`Done`;done.onclick=()=>closeModal();body.append(done);
+    }
+    catch(error){errorBox(body,error.message);}
+    finally {
+      if(owner)work.finish(owner);
+      setModalBusy(host,false);link.disabled=false;outside.disabled=false;refresh.textContent=`Refresh cards`;update();
+    }
+  });
+}
 function deckMenu(d){
   const permanent=true;
   modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size PNG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
+  const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button`;refresh.textContent=`Refresh deck cards`;
+  refresh.onclick=()=>attempt(()=>refreshDeckCards(d));add.after(refresh);bindGenerationButton(refresh,[d.id]);
   const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';
   saveStyle.onclick=()=>{
     const host=modal('Create reusable style','',{footer:'<button class="button primary" id="save-style-preset">Create style</button>'});

@@ -24,3 +24,12 @@ test('MTGGoldfish parses main and sideboard cards',()=>{
     {source:'Island',quantity:2,section:'mainboard'},
     {source:'Negate',quantity:1,section:'outside'}]);
 });
+
+test('refresh can read an empty deck while new imports and invalid responses still fail',()=>{
+  assert.throws(()=>parseArchidekt({cards:[]}));
+  assert.throws(()=>parseGoldfish(''));
+  assert.deepEqual(parseArchidekt({cards:[]},{allowEmpty:true}).rows,[]);
+  assert.deepEqual(parseGoldfish('',undefined,{allowEmpty:true}).rows,[]);
+  assert.throws(()=>parseArchidekt({error:'Private deck'},{allowEmpty:true}));
+  assert.throws(()=>parseGoldfish('<html>Not found</html>',undefined,{allowEmpty:true}));
+});

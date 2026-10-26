@@ -200,7 +200,7 @@ class Workspace:
         if cancel():raise ValidationError('Import cancelled.')
         name=str(payload.get('name') or result['name']).strip()[:200] or 'Untitled deck'
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
-        document={**result,'name':name,'settings':settings,'status':'draft','notes':''}
+        document={**result,'name':name,'settings':settings,'status':'draft','notes':'','includeOutside':bool(payload.get('includeOutside',True))}
         art_variants.apply(document,self.invalidate_face)
         return self.store.put('decks',document)
     def create_staged(self,payload):
@@ -214,7 +214,7 @@ class Workspace:
             card=self.sources.entry(sf,row['quantity'],row['section']);card['metadataSource']=row['source'];cards.append(card)
         settings=self.validate_settings({**self.import_defaults(),**payload.get('settings',{})})
         return self.store.put('decks',{'name':listing['name'],'cards':cards,'settings':settings,'status':'draft','notes':'',
-            'importedSource':supplied.get('importedSource',''),'pendingImport':True,'stagedImport':True})
+            'importedSource':supplied.get('importedSource',''),'includeOutside':bool(payload.get('includeOutside',True)),'pendingImport':True,'stagedImport':True})
 
     def resolve_metadata(self,ident,progress=lambda *a:None,cancel=lambda:False):
         steps=self.resolve_metadata_steps(ident,progress,cancel)
@@ -595,8 +595,17 @@ class Workspace:
         result=yield from self.sources.import_deck_steps(payload.get('source',''),payload.get('includeOutside',False),d['settings'].get('refreshData',False),progress,cancel)
         if cancel():raise ValidationError('Import cancelled.')
         if sum(c['quantity'] for c in d['cards']+result['cards'])>10000:raise ValidationError('Deck limit is 10,000 cards.')
+        for card in result['cards']:card['deckLocal']=True
         d['cards']+=result['cards'];d['status']='draft';d.pop('summary',None)
         return self.store.put('decks',d,rev)
+    def refresh_deck(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
+        steps=self.refresh_deck_steps(ident,payload,progress,cancel)
+        while True:
+            try:next(steps)
+            except StopIteration as finished:return finished.value
+    def refresh_deck_steps(self,ident,payload,progress=lambda *a:None,cancel=lambda:False):
+        from .deck_refresh import refresh_steps
+        return (yield from refresh_steps(self,ident,payload,progress,cancel))
     def duplicate(self,ident):
         d=self.deck(ident);d['name']=d['name']+' · copy';d.pop('id');d.pop('summary',None)
         for c in d['cards']:
@@ -1128,7 +1137,7 @@ class Workspace:
         spec={k:v for k,v in spec.items() if k in allowed};spec.setdefault('token_key_suffix',' — Copy Token')
         try:tokens.build_token({'key':c['name'],'data':c['faces'][0]['compiled']['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token specification could not be applied: '+str(exc)) from exc
-        new=copy.deepcopy(c);new['id']=uid();new['name']=c['name']+spec['token_key_suffix'];new['quantity']=1;new['tokenSpec']=spec
+        new=copy.deepcopy(c);new['id']=uid();new['name']=c['name']+spec['token_key_suffix'];new['quantity']=1;new['tokenSpec']=spec;new['deckLocal']=True
         new['faces'][0].update(id=uid(),name=new['name']);new['faces'][0].pop('compiled',None)
         d['cards'].append(new);d['status']='draft';d.pop('summary',None);return self.store.put('decks',d,revision)
     def templates(self):return BUILTINS+self.store.list('templates')

@@ -714,11 +714,12 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/review-plan', p):
             return self.respond(self.app.ws.review_plan(m[1],d.get('cardId'),d.get('faceId')))
-        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|duplicate|delete|restore|originals|cropped-art|review-images)', p):
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/(save|prepare|add|refresh|duplicate|delete|restore|originals|cropped-art|review-images)', p):
             ident, action = m[1], m[2]
             if action == 'save': return self.respond(self.app.ws.save(ident, d))
             if action == 'prepare': return self.respond(self.app.jobs.start('Prepare deck', lambda u, c: self.app.prepare_deck(ident, u, c,freshness_scope=d.get('freshnessScope'))))
             if action == 'add': return self.respond(self.app.jobs.start('Add cards', lambda u, c: self.app.ws.add_cards(ident, d, u, c)))
+            if action == 'refresh': return self.respond(self.app.jobs.start('Refresh deck cards', lambda u,c:self.app.ws.refresh_deck(ident,d,u,c)))
             if action == 'duplicate': return self.respond(self.app.ws.duplicate(ident))
             if action == 'delete':
                 if self.app.ws.global_settings().get('deletePermanently'):

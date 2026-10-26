@@ -475,6 +475,11 @@ class BrowserHandler(server.Handler):
             data=self.data()
             return self.respond(self.app.jobs.start('Add cards',
                 lambda update,cancel:self.app.ws.add_cards_steps(add[1],data,update,cancel)))
+        refresh=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/refresh',path)
+        if refresh:
+            data=self.data()
+            return self.respond(self.app.jobs.start('Refresh deck cards',
+                lambda update,cancel:self.app.ws.refresh_deck_steps(refresh[1],data,update,cancel)))
         if path == '/api/runtime/prepare':
             self.data()
             return self.respond(self.app.jobs.start('Load CardConjurer',self.app.runtime.prepare_steps,priority=1))

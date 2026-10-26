@@ -5,6 +5,16 @@ import hashlib,json,re
 from urllib.parse import quote,urlsplit
 from .domain import ValidationError,parse_deck_text,quantity,uid,github_location,slug,type_group,stable_hash
 from .legacy import deck_parser,ingest
+
+def deck_link(value):
+    if not isinstance(value,str):raise ValidationError('Enter the original public deck link.')
+    value=value.strip();url=urlsplit(value)
+    if url.scheme!='https' or url.netloc.lower() not in {'scryfall.com','www.scryfall.com','archidekt.com','www.archidekt.com','mtggoldfish.com','www.mtggoldfish.com'}:
+        raise ValidationError('Use a public Scryfall, Archidekt, or MTGGoldfish deck link.')
+    path=r'/@[^/]+/decks/[0-9a-fA-F-]{36}(?:/[^\s]*)?' if 'scryfall.com' in url.netloc.lower() else r'/decks/\d+(?:/[^\s]*)?' if 'archidekt.com' in url.netloc.lower() else r'/deck/\d+(?:/[^\s]*)?'
+    if not re.fullmatch(path,url.path):raise ValidationError('Enter a public deck link, including its deck ID.')
+    return value
+
 class Sources:
     def __init__(self,network):self.net=network
     @timed('scryfall.resolve')
@@ -48,7 +58,7 @@ class Sources:
             return (yield from self._import_deck_steps(source,include_outside,refresh,progress,cancel))
 
     @timed('deck.list.fetch')
-    def read_deck_manifest(self,source,include_outside=True,refresh=False,cancel=lambda:False,*,include_digests=False):
+    def read_deck_manifest(self,source,include_outside=True,refresh=False,cancel=lambda:False,*,include_digests=False,allow_empty=False):
         if cancel():raise ValidationError('Import cancelled.')
         original=source if isinstance(source,str) else '[Scryfall export]'
         if isinstance(source,str):
@@ -63,10 +73,13 @@ class Sources:
                 source=self.net.json(deck_parser.deck_export_url(deck_parser.extract_deck_uuid(text)),ttl=0)
             elif re.match(r'^https://(?:www\.)?(?:archidekt\.com/decks/\d+|mtggoldfish\.com/deck/\d+)(?:[/?#]|$)',text):
                 source=self.net.json(text,ttl=0)
+        if isinstance(source,dict) and source.get('sourceUrl'):original=deck_link(source['sourceUrl'])
         title='New deck';digests={}
         if isinstance(source,dict) and 'entries' in source:
             try:_,rows=deck_parser.extract_card_sources(source,include_outside_the_game=include_outside)
-            except Exception as exc:raise ValidationError(str(exc)) from exc
+            except Exception as exc:
+                if allow_empty and str(exc)=='No usable cards were found in the selected deck sections.':rows=[]
+                else:raise ValidationError(str(exc)) from exc
             title=source.get('name') or source.get('title') or title
             for rows0 in source['entries'].values():
                 for row in rows0 if isinstance(rows0,list) else []:
@@ -88,7 +101,7 @@ class Sources:
                 manifest.append({'name':str(r.get('name') or ''), 'source':r.get('id') or r.get('source') or r.get('name'),'quantity':quantity(r.get('quantity',1)),'section':r.get('section','mainboard')})
         elif isinstance(source,str):manifest=parse_deck_text(source,include_outside)
         else:raise ValidationError('Upload a Scryfall export, paste a public deck link or card names.')
-        if not manifest:raise ValidationError('No cards were supplied.')
+        if not manifest and not allow_empty:raise ValidationError('No cards were supplied.')
         if sum(r['quantity'] for r in manifest)>10000:raise ValidationError('Deck limit is 10,000 physical cards.')
         for row in manifest:
             key=str(row.get('source') or '').strip()
