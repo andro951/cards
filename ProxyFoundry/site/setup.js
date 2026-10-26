@@ -5,7 +5,7 @@ import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox,bindGenerationButton,refreshGenerationButtons} from './ui.js';
 import {checkArtwork,offerDataSave,saveArtVariantData} from './artwork-review.js';
-import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub} from './artwork-files.js';
+import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub,equalDataValues} from './artwork-files.js';
 import {originalArtist,composeCredit,ensureCustomArtCredits} from './credits.js';
 import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
 export const rarities=['common','uncommon','rare','mythic'];
@@ -483,7 +483,21 @@ $('#symbol-folder',root).onchange=()=>attempt(async()=>{
       }
       readSettings();
       const version=changeVersion;
-      const updated=await api('/api/decks/'+deck.id+'/save',{revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)});
+      const patch={revision:deck.revision,settings:structuredClone(s),cardData:structuredClone(stagedCardData)};
+      const baseline={settings:structuredClone(deck.settings),cardData:structuredClone(deck.cardData||[])};
+      let updated;
+      for(let attempt=0;attempt<3;attempt++){
+        const result=await api('/api/decks/'+deck.id+'/save',patch).then(updated=>({updated}),error=>({error}));
+        if(!result.error){updated=result.updated;break;}
+        if(result.error.status!==409||attempt===2)throw result.error;
+
+        const current=await api('/api/decks/'+deck.id);
+        //Metadata and card-list updates may advance the revision without editing this draft.
+        if(!equalDataValues(current.settings,baseline.settings)||!equalDataValues(current.cardData||[],baseline.cardData))throw result.error;
+
+        patch.revision=current.revision;
+      }
+
       if(updated.revision>=deck.revision){const changedCount=updated.cards.length!==deck.cards.length;Object.assign(deck,updated);if(changedCount)refreshMetadata(deck);}persistedVersion=version;
       if(state.activeDeck?.id===deck.id)state.activeDeck=deck;
       if(state.setupActions?.root===root)state.dirty=persistedVersion!==changeVersion;

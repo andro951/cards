@@ -27,11 +27,21 @@ export function githubSetupSection(folder=''){
 export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onImport,deckId=''}){
   const input=$('#github-setup-folder',host),button=$('#github-setup-button',host),status=$('#github-setup-status',host),warnings=$('#github-setup-warnings',host);
   let importing=false;
+  const normalize=value=>String(value||'').trim().replace(/\/+$/,'');
+  let importedFolder=normalize(input.value);
+  const alreadyImported=()=>Boolean(importedFolder)&&normalize(input.value)===importedFolder;
+  const redrawButton=()=>{
+    const imported=alreadyImported(),pressed=importing||imported;
+    button.disabled=pressed;button.textContent=importing?'Importing…':imported?'Imported':'1-click import';
+    button.setAttribute('aria-pressed',String(pressed));button.setAttribute('aria-busy',String(importing));
+    Object.assign(button.style,{transform:pressed?'translateY(2px)':'',boxShadow:pressed?'inset 0 3px 6px #0008':'',filter:pressed?'brightness(.8)':'',opacity:pressed?'.85':'',cursor:importing?'wait':imported?'default':''});
+  };
   function message(text,kind='info'){
     status.className='notice '+kind;status.textContent=text;
   }
   async function run(){
     if(importing)return false;
+    if(alreadyImported())return true;
     if(isBusy()){message('Wait for the current upload to finish before importing.');return false;}
     try{requireDeckAvailable(deckId);}catch(error){message(error.message);return false;}
     const url=input.value.trim();
@@ -39,12 +49,12 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
     const wasDirty=state.dirty;
     let applied=false;
     importing=true;state.dirty=true;
-    button.disabled=true;input.disabled=true;button.textContent='Importing…';onBusy(true);
+    input.disabled=true;redrawButton();onBusy(true);
     warnings.replaceChildren();message('Reading GitHub project folder…');
     try{
       const result=await job('/api/setup/github-import',{url,deckId},{label:'GitHub setup',resources:deckId?['deck:'+deckId]:[],onProgress:j=>{if(host.isConnected)message(j.message);}});
       // The callback is bound to the importing deck, even after navigation.
-      await onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'),result.cardDataDocument);applied=true;input.value=result.settings.githubSetupFolder;
+      await onImport(result.settings,result.cardData||[],Object.prototype.hasOwnProperty.call(result.summary,'data'),result.cardDataDocument);applied=true;input.value=result.settings.githubSetupFolder;importedFolder=normalize(input.value);
       const art=result.summary.art==='github'?'GitHub art folder':'Scryfall artwork (no art folder)',symbols={folder:'four rarity symbols',generated:'four color-shifted symbols',default:'bundled default rarity symbols'}[result.summary.symbols]||'bundled default rarity symbols';
       const back={default:'default forge back',icon:'custom icon on the forge back',custom:'complete custom back'}[result.summary.back];
       const data=Object.prototype.hasOwnProperty.call(result.summary,'data')?', plus data.json':'';
@@ -58,14 +68,15 @@ export function mountGithubSetupImport(host,{isBusy=()=>false,onBusy=()=>{},onIm
       return false;
     }finally{
       importing=false;
-      if(host.isConnected){if(!applied)state.dirty=wasDirty;button.disabled=false;input.disabled=false;button.textContent='1-click import';onBusy(false);}
+      if(host.isConnected){if(!applied)state.dirty=wasDirty;input.disabled=false;redrawButton();onBusy(false);}
     }
   }
   button.onclick=run;
+  input.addEventListener('input',redrawButton);redrawButton();
   input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();run();}});
-  return {isBusy:()=>importing,ensureImported:async folder=>{
+  return {isBusy:()=>importing,ensureImported:async()=>{
     const url=input.value.trim();
-    if(!url||url.replace(/\/$/,'')===String(folder||'').trim().replace(/\/$/,''))return true;
+    if(!url||alreadyImported())return true;
     return run();
   }};
 }

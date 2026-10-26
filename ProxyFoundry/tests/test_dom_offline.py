@@ -1318,7 +1318,7 @@ def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page
       window.fetch=async(path,opts={})=>{
         let value;
         if(path==='/api/setup/github-import')value={id:'github-fixture'};
-        else if(path==='/api/jobs/github-fixture'){await new Promise(resolve=>setTimeout(resolve,200));value={state:'done',kind:'GitHub setup',message:'Done',done:1,total:1,result:{
+        else if(path==='/api/jobs/github-fixture'){await new Promise(resolve=>window.finishGithubImport=resolve);value={state:'done',kind:'GitHub setup',message:'Done',done:1,total:1,result:{
           settings:{source:{mode:'github',githubFolder:'https://github.com/owner/cards/tree/main/deck/art',localFiles:{},fallback:false},
             symbols:Object.fromEntries(['common','uncommon','rare','mythic'].map(r=>[r,'a'.repeat(64)])),
             symbolsSource:{kind:'github',value:'https://github.com/owner/cards/tree/main/deck/set_symbols'},
@@ -1332,12 +1332,19 @@ def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page
     }""")
     page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/deck')
     page.click('#github-setup-button')
+    page.wait_for_function('typeof finishGithubImport==="function"')
+    button=page.locator('#github-setup-button')
+    assert button.inner_text()=='Importing…' and button.get_attribute('aria-pressed')=='true'
+    assert button.get_attribute('aria-busy')=='true' and button.is_disabled()
+    assert 'inset' in button.evaluate('button=>button.style.boxShadow')
     if leave_during_import:
         page.click('.topbar [data-nav=decks]');page.locator('#deck-search').wait_for()
+        page.evaluate('finishGithubImport()')
         page.wait_for_function("window.__fixture.deck.settings.symbolsSource?.kind==='github'")
         page.evaluate("location.hash='#deck/'+__fixture.deck.id+'/setup'")
         page.locator('#setup-state').wait_for()
     else:
+        page.evaluate('finishGithubImport()')
         page.wait_for_function("document.querySelector('#github-setup-status')?.classList.contains('success')")
     symbols=page.locator('#symbol-grid').locator('xpath=..')
     data=page.locator('#data-json-section')
@@ -1350,6 +1357,49 @@ def test_one_click_github_updates_source_choices_and_restores_on_reopen(dom_page
     for panel in [symbols,data]:
         assert 'selected' in panel.get_by_role('button',name='From GitHub',exact=True).get_attribute('class')
     assert page.locator('#symbol-github-folder').input_value().endswith('/set_symbols')
+    assert button.inner_text()=='Imported' and button.get_attribute('aria-pressed')=='true'
+    assert button.get_attribute('aria-busy')=='false' and button.is_disabled()
+    page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/other')
+    assert button.inner_text()=='1-click import' and button.is_enabled()
+    assert button.get_attribute('aria-pressed')=='false'
+    page.locator('#github-setup-folder').fill('https://github.com/owner/cards/tree/main/deck/')
+    assert button.inner_text()=='Imported' and button.get_attribute('aria-pressed')=='true'
+    assert not errors,errors
+
+
+@pytest.mark.parametrize('competing_edit',[False,True],ids=['background-metadata','real-setup-edit'])
+def test_setup_save_retries_only_revisions_that_leave_the_setup_unchanged(dom_page,competing_edit):
+    page,errors=dom_page
+    page.evaluate('''competing=>{
+      const original=window.fetch;window.setupSaveRequests=0;
+      window.fetch=async(path,options={})=>{
+        if(path.endsWith('/save')){
+          setupSaveRequests++;
+          if(setupSaveRequests===1){
+            __fixture.deck.revision++;
+            __fixture.deck.notes='Background notes are retained';
+            __fixture.deck.cards[0].name='Resolved card name';
+            if(competing)__fixture.deck.settings.artist='Another setup editor';
+            return {ok:false,status:409,text:async()=>JSON.stringify({error:'This deck changed in another tab. Reload it before saving; your edits were not overwritten.'})};
+          }
+          if(JSON.parse(options.body).revision!==__fixture.deck.revision)throw new Error('Retry must use the latest revision');
+        }
+        return original(path,options);
+      };
+      location.hash='#deck/'+__fixture.deck.id+'/setup';
+    }''',competing_edit)
+    page.locator('#deck-artist').fill('My typed artist')
+    if competing_edit:
+        page.locator('#setup-state').filter(has_text='Could not save changes').wait_for()
+        assert page.evaluate('setupSaveRequests')==1
+        assert page.evaluate('__fixture.deck.settings.artist')=='Another setup editor'
+        assert page.locator('#deck-artist').input_value()=='My typed artist'
+    else:
+        page.wait_for_function("document.querySelector('#setup-state').textContent==='Changes saved'")
+        assert page.evaluate('setupSaveRequests')==2
+        assert page.evaluate('__fixture.deck.settings.artist')=='My typed artist'
+    assert page.evaluate('__fixture.deck.notes')=='Background notes are retained'
+    assert page.evaluate('__fixture.deck.cards[0].name')=='Resolved card name'
     assert not errors,errors
 
 
