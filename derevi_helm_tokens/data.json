@@ -577,6 +577,19 @@
         "scryfall_id": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Ulamog, the Infinite Gyre",
+        "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
+        "scryfall_id": "9464a820-65de-44f2-9895-46a35e8621a0"
+      },
+      "back": {
+        "name": "Derevi, Empyrial Tactician",
+        "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
+        "scryfall_id": "3a1d0dad-18a8-489e-ac11-08f64b72fda4"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
