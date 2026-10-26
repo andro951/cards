@@ -485,7 +485,8 @@ class Workspace:
                         if row['id']==c['artVariantId']:row['quantity']=c['quantity']
             if 'tokenSpec' in patch:
                 if c.get('tokenSpec') is None:
-                    for face in c['faces']:face['semanticOverrides']={**face.get('semanticOverrides',{}),'flavor_text':''}
+                    for face in c['faces']:
+                        face['semanticOverrides']={**face.get('semanticOverrides',{}),'flavor_text':''};face['showFlavorText']=False
                 c['tokenSpec']=token_assignments.validate_spec(patch['tokenSpec'])
                 rows=d['settings'].get('tokenTreatments',[])
                 ref=token_assignments.reference(c)
@@ -549,8 +550,9 @@ class Workspace:
                         source={'printingId':printing['id'],'field':selected['field']}
                     if f.get(field_name)!=text or f.get(kind)!=source:
                         f[field_name]=text;f[kind]=source;face_dirty=True
-                for k in ('artistOverride','artistCreditMode','artOverride','artFilename','templateOverride','fit','semanticOverrides'):
+                for k in ('artistOverride','artistCreditMode','artOverride','artFilename','templateOverride','fit','semanticOverrides','showFlavorText'):
                     if k in patch:
+                        if k=='showFlavorText' and not isinstance(patch[k],bool):raise ValidationError('Choose whether to show flavor text for this face.')
                         if k=='semanticOverrides':
                             if not isinstance(patch[k],dict):raise ValidationError('Card text overrides must be an object.')
                             if 'oracle_text' in patch[k]:
@@ -904,11 +906,12 @@ class Workspace:
                 official_flavor=f.get('officialFlavorText')
                 flavor=str(ingest.face_value(flavor_face,flavor_sf,'flavor_text','') or '') if official_flavor is None else official_flavor
                 overrides.setdefault('flavor_text',flavor)
-                if not s.get('showFlavorText',True):overrides['flavor_text']=''
+                show_flavor=s.get('showFlavorText',True) and f.get('showFlavorText',True)
+                if not show_flavor:overrides['flavor_text']=''
                 if sf.get('layout') in {'flip','prepare'} and len(sf_faces)==2:
                     nested='flip_face' if sf['layout']=='flip' else 'prepared_spell'
                     secondary_flavor=ingest.select_matching_flavor_face(flavor_sf,sf_faces[1],1)
-                    options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '') if s.get('showFlavorText',True) else ''}
+                    options['nestedFlavorTexts']={nested:str(ingest.face_value(secondary_flavor,flavor_sf,'flavor_text','') or '') if show_flavor else ''}
                 conversion=bool(c.get('tokenSpec') is not None or s.get('allCardsTokens'))
                 compile_options={'art_origin':origin}
                 if conversion:compile_options['conversion_seed']=True
@@ -1141,7 +1144,7 @@ class Workspace:
         try:tokens.build_token({'key':c['name'],'data':c['faces'][0]['compiled']['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token specification could not be applied: '+str(exc)) from exc
         new=copy.deepcopy(c);new['id']=uid();new['name']=c['name']+spec['token_key_suffix'];new['quantity']=1;new['tokenSpec']=spec;new['deckLocal']=True
-        new['faces'][0].update(id=uid(),name=new['name'],semanticOverrides={**new['faces'][0].get('semanticOverrides',{}),'flavor_text':''});new['faces'][0].pop('compiled',None)
+        new['faces'][0].update(id=uid(),name=new['name'],showFlavorText=False,semanticOverrides={**new['faces'][0].get('semanticOverrides',{}),'flavor_text':''});new['faces'][0].pop('compiled',None)
         d['cards'].append(new);d['status']='draft';d.pop('summary',None);return self.store.put('decks',d,revision)
     def templates(self):return BUILTINS+self.store.list('templates')
     def template_preview_targets(self,deck_id,group,settings,card_data=None,choices=None):
@@ -1173,10 +1176,10 @@ class Workspace:
         if face_options.get('officialRulesText') is not None:
             options['semanticOverrides'].setdefault('oracle_text',face_options['officialRulesText'])
         options['semanticOverrides'].setdefault('flavor_text',str(ingest.face_value(face,sf,'flavor_text','') or ''))
-        if not s.get('showFlavorText',True):options['semanticOverrides']['flavor_text']=''
         for key in ('nickname','flavor_text','oracle_text'):
             if key in staged.get(face.get('name',''),{}):
                 options['semanticOverrides'][key]=staged[face['name']][key]
+        if not s.get('showFlavorText',True) or face_options.get('showFlavorText') is False:options['semanticOverrides']['flavor_text']=''
         targets=[];errors={};seen_previews={}
         legendary=is_legendary(face)
         for template in self.templates():

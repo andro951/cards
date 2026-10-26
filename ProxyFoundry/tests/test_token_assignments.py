@@ -154,13 +154,14 @@ def test_individual_token_conversion_turns_off_flavor_only_for_that_card(token_d
     deck=ws.store.put('decks',{**deck,'cards':cards},deck['revision'])
     saved=ws.mutate_card(deck['id'],original['id'],{'revision':deck['revision'],'tokenSpec':{'nonlegendary':True}})
     face=saved['cards'][2]['faces'][0]
-    assert face['semanticOverrides']['flavor_text']=='' and saved['settings']['showFlavorText'] is True
+    assert face['semanticOverrides']['flavor_text']=='' and face['showFlavorText'] is False and saved['settings']['showFlavorText'] is True
     assert saved['cards'][2]['scryfall']['flavor_text']==flavor
     assert saved['cards'][0]['faces']==before['cards'][0]['faces']
     restored=ws.mutate_card(deck['id'],original['id'],{'revision':saved['revision'],'faceId':face['id'],
-        'semanticOverrides':{'flavor_text':'Explicitly restored flavor'}})
+        'showFlavorText':True,'semanticOverrides':{'flavor_text':'Explicitly restored flavor'}})
     tweaked=ws.mutate_card(deck['id'],original['id'],{'revision':restored['revision'],'tokenSpec':{'nonlegendary':False}})
     assert tweaked['cards'][2]['faces'][0]['semanticOverrides']['flavor_text']=='Explicitly restored flavor'
+    assert tweaked['cards'][2]['faces'][0]['showFlavorText'] is True
 
 
 def test_deck_wide_token_conversion_turns_off_flavor_but_allows_a_later_explicit_choice(token_deck):
@@ -172,6 +173,21 @@ def test_deck_wide_token_conversion_turns_off_flavor_but_allows_a_later_explicit
     off=ws.save(deck['id'],{'revision':restored['revision'],'settings':{'allCardsTokens':False}})
     enabled=ws.save(deck['id'],{'revision':off['revision'],'settings':{'allCardsTokens':True,'showFlavorText':True}})
     assert enabled['settings']['showFlavorText'] is False
+
+
+def test_converted_card_keeps_flavor_hidden_after_imported_card_data_is_applied(env):
+    ws,deck,_=env;card=deck['cards'][0];flavor='Flavor from the linked project data.'
+    card['scryfall'].update(layout='normal',type_line='Creature — Angel',flavor_text='Original printing flavor')
+    deck['settings']['dataJsonSource']={'kind':'local','value':'data.json'}
+    deck['settings']['templateRules']['token']='token-classic'
+    deck['cardData']=[{'name':'Angel','flavor_text':flavor}]
+    deck=ws.store.put('decks',deck,deck['revision'])
+    ws.mutate_card(deck['id'],card['id'],{'revision':deck['revision'],'tokenSpec':{'nonlegendary':True}})
+    result=ws.prepare(deck['id']);converted=result['cards'][0]
+    assert converted['faces'][0]['showFlavorText'] is False
+    assert flavor not in json.dumps(converted['faces'][0]['compiled']['data'])
+    assert result['cardData'][0]['flavor_text']==flavor
+    assert converted['scryfall']['flavor_text']=='Original printing flavor'
 
 
 def test_missing_partner_is_ignored_but_present_token_still_needs_a_back(token_deck):

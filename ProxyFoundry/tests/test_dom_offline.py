@@ -152,6 +152,25 @@ def test_make_all_tokens_unchecks_and_saves_flavor_text_without_forcing_it_off_o
     assert not errors,errors
 
 
+def test_individual_token_flavor_control_can_reenable_flavor_after_conversion(dom_page):
+    page,errors=dom_page
+    page.evaluate('''()=>{
+      const card=__fixture.deck.cards[0];card.tokenSpec={nonlegendary:true};
+      card.faces[0].showFlavorText=false;card.faces[0].semanticOverrides={flavor_text:'Imported flavor'};
+      const original=window.fetch;window.flavorChanges=[];
+      window.fetch=(path,options={})=>{
+        if(path.includes('/cards/')&&options.body)flavorChanges.push(JSON.parse(options.body));
+        return original(path,options);
+      };
+    }''')
+    page.locator('.deck-tile').click();page.locator('[data-card]').click()
+    page.locator('#remove-flavor').evaluate('input=>input.closest("details").open=true')
+    assert page.locator('#remove-flavor').is_checked()
+    page.locator('#remove-flavor').uncheck();page.click('#save-card')
+    page.wait_for_function('flavorChanges.some(patch=>patch.showFlavorText===true)')
+    assert not errors,errors
+
+
 def test_offline_deck_controls_and_templates(dom_page):
     page,errors=dom_page
     page.locator('.deck-tile').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')
