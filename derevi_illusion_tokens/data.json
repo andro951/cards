@@ -237,7 +237,10 @@
     {
       "name": "Prime Speaker Vannifar",
       "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
-      "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api",
+      "accepted_art": [
+        "8adaf3135399038ecf8ffbee8016230b2a1055423513e3159c3fab1d2166911b"
+      ]
     },
     {
       "name": "Sakashima of a Thousand Faces",
