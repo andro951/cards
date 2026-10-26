@@ -374,7 +374,10 @@
     {
       "name": "Nephalia Smuggler",
       "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
-      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api",
+      "accepted_art": [
+        "1de163f60bf1c3825b4fc38ffb08407b3f48db9000b5c2973938add31f8184f5"
+      ]
     },
     {
       "name": "Abuelo, Ancestral Echo",
