@@ -263,7 +263,10 @@
     {
       "name": "Urza, Lord High Artificer",
       "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
-      "scryfall_url": "https://scryfall.com/card/cmm/130/urza-lord-high-artificer?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/130/urza-lord-high-artificer?utm_source=api",
+      "accepted_art": [
+        "f08ff5dbc02f78c56e0e73f84eb1e36d578f277a10d44e83bf2d08881ab461a7"
+      ]
     },
     {
       "name": "Venser, Shaper Savant",
