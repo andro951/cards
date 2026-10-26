@@ -320,7 +320,10 @@
     {
       "name": "Duplicant",
       "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
-      "scryfall_url": "https://scryfall.com/card/cmm/946/duplicant?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/946/duplicant?utm_source=api",
+      "accepted_art": [
+        "cbd9d27b757c6ce0a4bafedaf465925805e191b162640adbdc6045a45d099f45"
+      ]
     },
     {
       "name": "Silver Surfer, Cosmic Voyager",
