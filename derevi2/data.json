@@ -605,6 +605,19 @@
         "scryfall_id": "ff615495-a230-484e-a858-ead84f880bdd"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Insect",
+        "oracle_id": "c39cd31f-c4a2-4ca8-b4f9-b2e6289743bc",
+        "scryfall_id": "599b5074-86a5-4666-8cf4-3deb83c09ba0"
+      },
+      "back": {
+        "name": "Myr",
+        "oracle_id": "bf690282-125f-431c-a363-39f6772324c8",
+        "scryfall_id": "f32ad93f-3fd5-465c-ac6a-6f8fb57c19bd"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
