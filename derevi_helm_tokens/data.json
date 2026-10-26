@@ -512,6 +512,19 @@
         "scryfall_id": "0f594562-7e9f-47e6-a033-fb70e3cf1e10"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Duplicant",
+        "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
+        "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
+      },
+      "back": {
+        "name": "Ultimecia, Temporal Threat",
+        "oracle_id": "5a8e7e35-e9ea-4808-8aa7-7580a23b9d9d",
+        "scryfall_id": "b64e4475-f1c6-4d85-b42f-6d84d06855bb"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
