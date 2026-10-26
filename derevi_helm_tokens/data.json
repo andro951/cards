@@ -281,19 +281,6 @@
     },
     {
       "front": {
-        "name": "Oswald Fiddlebender",
-        "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
-        "scryfall_id": "bba1650f-eddf-49a9-820e-489cb8d5b6fa"
-      },
-      "back": {
-        "name": "Cloud, Midgar Mercenary",
-        "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
-        "scryfall_id": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5"
-      },
-      "quantity": 1
-    },
-    {
-      "front": {
         "name": "Bloom Tender",
         "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
         "scryfall_id": "ba86688d-18f0-4b5c-a797-42bf125a6c9f"
