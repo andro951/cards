@@ -369,6 +369,19 @@
         "scryfall_id": "4367bc78-0912-4abd-8edd-bc792558d01a"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Brago, King Eternal",
+        "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
+        "scryfall_id": "0ac3fb08-741a-49e5-9fae-b26819677d24"
+      },
+      "back": {
+        "name": "Captain Sisay",
+        "oracle_id": "2e7a9ea9-f76c-4c12-950f-c613fa16cfa8",
+        "scryfall_id": "d24d441c-f37f-44fe-8a93-f5c89df807e4"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
