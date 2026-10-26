@@ -2,14 +2,107 @@
   "version": 1,
   "cards": [
     {
-      "name": "Nephalia Smuggler",
-      "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
-      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api"
+      "name": "Fanatic of Rhonas",
+      "oracle_id": "7973820b-fdaf-46ec-9e3e-d4c0e77b5067",
+      "scryfall_url": "https://scryfall.com/card/mh3/152/fanatic-of-rhonas?utm_source=api"
+    },
+    {
+      "name": "Eldrazi Displacer",
+      "oracle_id": "9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba",
+      "scryfall_url": "https://scryfall.com/card/ogw/13/eldrazi-displacer?utm_source=api"
+    },
+    {
+      "name": "Jackdaw Savior",
+      "oracle_id": "9e31ef54-b2f2-4f3f-9779-151b74470ce4",
+      "scryfall_url": "https://scryfall.com/card/blb/18/jackdaw-savior?utm_source=api"
+    },
+    {
+      "name": "Transit Mage",
+      "oracle_id": "991efbf1-299d-4892-aeab-8ff9827f7168",
+      "scryfall_url": "https://scryfall.com/card/dft/70/transit-mage?utm_source=api"
+    },
+    {
+      "name": "Yorion, Sky Nomad",
+      "oracle_id": "e15504a7-2b67-4185-b916-172145f10b19",
+      "scryfall_url": "https://scryfall.com/card/iko/232/yorion-sky-nomad?utm_source=api"
+    },
+    {
+      "name": "Badgermole Cub",
+      "oracle_id": "2b0afb89-0944-4861-b9c3-e909e2ac215e",
+      "scryfall_url": "https://scryfall.com/card/tla/167/badgermole-cub?utm_source=api"
+    },
+    {
+      "name": "Enduring Vitality",
+      "oracle_id": "3577c47e-76d3-4659-b922-31c4b74be3a0",
+      "scryfall_url": "https://scryfall.com/card/dsk/176/enduring-vitality?utm_source=api"
+    },
+    {
+      "name": "Brightglass Gearhulk",
+      "oracle_id": "0c7019a7-3cca-481a-9af0-abedb89c15ad",
+      "scryfall_url": "https://scryfall.com/card/dft/191/brightglass-gearhulk?utm_source=api"
+    },
+    {
+      "name": "Esper Sentinel",
+      "oracle_id": "5def9f38-0a0b-4e8d-9f9d-29dcb46520b4",
+      "scryfall_url": "https://scryfall.com/card/mh2/12/esper-sentinel?utm_source=api"
+    },
+    {
+      "name": "Eternal Witness",
+      "oracle_id": "30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c",
+      "scryfall_url": "https://scryfall.com/card/cmm/286/eternal-witness?utm_source=api"
+    },
+    {
+      "name": "Fauna Shaman",
+      "oracle_id": "35b8fa77-4e85-418b-b335-cd1af127075c",
+      "scryfall_url": "https://scryfall.com/card/bro/179/fauna-shaman?utm_source=api"
+    },
+    {
+      "name": "Frost Titan",
+      "oracle_id": "4c5a2443-a038-44d3-83a4-5e9a6db7b1a7",
+      "scryfall_url": "https://scryfall.com/card/c14/112/frost-titan?utm_source=api"
+    },
+    {
+      "name": "Glen Elendra Archmage",
+      "oracle_id": "5f3f68b5-8c6a-4181-bb8a-9c73967d198a",
+      "scryfall_url": "https://scryfall.com/card/uma/58/glen-elendra-archmage?utm_source=api"
+    },
+    {
+      "name": "Harmonized Trio",
+      "oracle_id": "f6036065-7196-44d4-8a27-2199f0e1a03c",
+      "scryfall_url": "https://scryfall.com/card/sos/52/harmonized-trio-brainstorm?utm_source=api"
+    },
+    {
+      "name": "Saffi Eriksdotter",
+      "oracle_id": "84ba3e2c-ea96-470b-92c6-b937dc87549b",
+      "scryfall_url": "https://scryfall.com/card/tsr/260/saffi-eriksdotter?utm_source=api"
+    },
+    {
+      "name": "Stoneforge Mystic",
+      "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
+      "scryfall_url": "https://scryfall.com/card/2xm/31/stoneforge-mystic?utm_source=api"
+    },
+    {
+      "name": "Sun Titan",
+      "oracle_id": "b2e950fb-cb7e-40a0-a311-5bbdd0477b29",
+      "scryfall_url": "https://scryfall.com/card/soc/178/sun-titan?utm_source=api"
+    },
+    {
+      "name": "Toski, Bearer of Secrets",
+      "oracle_id": "a8e707ec-ce77-4bc5-8c76-5ea3e81e8c7f",
+      "scryfall_url": "https://scryfall.com/card/mkc/191/toski-bearer-of-secrets?utm_source=api"
+    },
+    {
+      "name": "Y'shtola Rhul",
+      "oracle_id": "a6a7bf77-0560-4572-a826-3bc9df1f78d1",
+      "scryfall_url": "https://scryfall.com/card/fin/86/yshtola-rhul?utm_source=api"
     },
     {
       "name": "Weathered Wayfarer",
       "oracle_id": "1093fdb6-bd4f-46a8-92e3-5aa46b52bb4f",
-      "scryfall_url": "https://scryfall.com/card/2x2/34/weathered-wayfarer?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/34/weathered-wayfarer?utm_source=api",
+      "accepted_art": [
+        "41a3b3b9917f3e572a1ed25b289aba8a55f6af659d3886d8cdd95870a7efe183"
+      ]
     },
     {
       "name": "Bloom Tender",
@@ -20,11 +113,6 @@
       "name": "Cloud, Midgar Mercenary",
       "oracle_id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
       "scryfall_url": "https://scryfall.com/card/fin/10/cloud-midgar-mercenary?utm_source=api"
-    },
-    {
-      "name": "Fanatic of Rhonas",
-      "oracle_id": "7973820b-fdaf-46ec-9e3e-d4c0e77b5067",
-      "scryfall_url": "https://scryfall.com/card/mh3/152/fanatic-of-rhonas?utm_source=api"
     },
     {
       "name": "Gilded Drake",
@@ -47,19 +135,9 @@
       "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api"
     },
     {
-      "name": "Eldrazi Displacer",
-      "oracle_id": "9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba",
-      "scryfall_url": "https://scryfall.com/card/ogw/13/eldrazi-displacer?utm_source=api"
-    },
-    {
       "name": "Faeburrow Elder",
       "oracle_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
       "scryfall_url": "https://scryfall.com/card/ecc/53/faeburrow-elder?utm_source=api"
-    },
-    {
-      "name": "Jackdaw Savior",
-      "oracle_id": "9e31ef54-b2f2-4f3f-9779-151b74470ce4",
-      "scryfall_url": "https://scryfall.com/card/blb/18/jackdaw-savior?utm_source=api"
     },
     {
       "name": "Recruiter of the Guard",
@@ -70,11 +148,6 @@
       "name": "Spellseeker",
       "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
       "scryfall_url": "https://scryfall.com/card/cmm/120/spellseeker?utm_source=api"
-    },
-    {
-      "name": "Transit Mage",
-      "oracle_id": "991efbf1-299d-4892-aeab-8ff9827f7168",
-      "scryfall_url": "https://scryfall.com/card/dft/70/transit-mage?utm_source=api"
     },
     {
       "name": "Trophy Mage",
@@ -197,11 +270,6 @@
       "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api"
     },
     {
-      "name": "Yorion, Sky Nomad",
-      "oracle_id": "e15504a7-2b67-4185-b916-172145f10b19",
-      "scryfall_url": "https://scryfall.com/card/iko/232/yorion-sky-nomad?utm_source=api"
-    },
-    {
       "name": "Duplicant",
       "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
       "scryfall_url": "https://scryfall.com/card/cmm/946/duplicant?utm_source=api"
@@ -232,59 +300,9 @@
       "scryfall_url": "https://scryfall.com/card/2x2/3/ulamog-the-infinite-gyre?utm_source=api"
     },
     {
-      "name": "Badgermole Cub",
-      "oracle_id": "2b0afb89-0944-4861-b9c3-e909e2ac215e",
-      "scryfall_url": "https://scryfall.com/card/tla/167/badgermole-cub?utm_source=api"
-    },
-    {
-      "name": "Enduring Vitality",
-      "oracle_id": "3577c47e-76d3-4659-b922-31c4b74be3a0",
-      "scryfall_url": "https://scryfall.com/card/dsk/176/enduring-vitality?utm_source=api"
-    },
-    {
-      "name": "Brightglass Gearhulk",
-      "oracle_id": "0c7019a7-3cca-481a-9af0-abedb89c15ad",
-      "scryfall_url": "https://scryfall.com/card/dft/191/brightglass-gearhulk?utm_source=api"
-    },
-    {
-      "name": "Deadeye Navigator",
-      "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
-      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api"
-    },
-    {
       "name": "Derevi, Empyrial Tactician",
       "oracle_id": "afa49a09-146f-4439-850e-dd1938c93cef",
       "scryfall_url": "https://scryfall.com/card/cma/176/derevi-empyrial-tactician?utm_source=api"
-    },
-    {
-      "name": "Esper Sentinel",
-      "oracle_id": "5def9f38-0a0b-4e8d-9f9d-29dcb46520b4",
-      "scryfall_url": "https://scryfall.com/card/mh2/12/esper-sentinel?utm_source=api"
-    },
-    {
-      "name": "Eternal Witness",
-      "oracle_id": "30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c",
-      "scryfall_url": "https://scryfall.com/card/cmm/286/eternal-witness?utm_source=api"
-    },
-    {
-      "name": "Fauna Shaman",
-      "oracle_id": "35b8fa77-4e85-418b-b335-cd1af127075c",
-      "scryfall_url": "https://scryfall.com/card/bro/179/fauna-shaman?utm_source=api"
-    },
-    {
-      "name": "Frost Titan",
-      "oracle_id": "4c5a2443-a038-44d3-83a4-5e9a6db7b1a7",
-      "scryfall_url": "https://scryfall.com/card/c14/112/frost-titan?utm_source=api"
-    },
-    {
-      "name": "Glen Elendra Archmage",
-      "oracle_id": "5f3f68b5-8c6a-4181-bb8a-9c73967d198a",
-      "scryfall_url": "https://scryfall.com/card/uma/58/glen-elendra-archmage?utm_source=api"
-    },
-    {
-      "name": "Harmonized Trio",
-      "oracle_id": "f6036065-7196-44d4-8a27-2199f0e1a03c",
-      "scryfall_url": "https://scryfall.com/card/sos/52/harmonized-trio-brainstorm?utm_source=api"
     },
     {
       "name": "Oswald Fiddlebender",
@@ -292,29 +310,34 @@
       "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api"
     },
     {
-      "name": "Saffi Eriksdotter",
-      "oracle_id": "84ba3e2c-ea96-470b-92c6-b937dc87549b",
-      "scryfall_url": "https://scryfall.com/card/tsr/260/saffi-eriksdotter?utm_source=api"
+      "name": "Sakura-Tribe Scout",
+      "oracle_id": "0c319f45-cb0f-4641-acd8-145768acb3fc",
+      "scryfall_url": "https://scryfall.com/card/sok/144/sakura-tribe-scout?utm_source=api"
     },
     {
-      "name": "Stoneforge Mystic",
-      "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
-      "scryfall_url": "https://scryfall.com/card/2xm/31/stoneforge-mystic?utm_source=api"
+      "name": "Nephalia Smuggler",
+      "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
+      "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api"
     },
     {
-      "name": "Sun Titan",
-      "oracle_id": "b2e950fb-cb7e-40a0-a311-5bbdd0477b29",
-      "scryfall_url": "https://scryfall.com/card/soc/178/sun-titan?utm_source=api"
+      "name": "Abuelo, Ancestral Echo",
+      "oracle_id": "eaa9baac-72f2-4bde-9146-860878d9860b",
+      "scryfall_url": "https://scryfall.com/card/lci/219/abuelo-ancestral-echo?utm_source=api"
     },
     {
-      "name": "Toski, Bearer of Secrets",
-      "oracle_id": "a8e707ec-ce77-4bc5-8c76-5ea3e81e8c7f",
-      "scryfall_url": "https://scryfall.com/card/mkc/191/toski-bearer-of-secrets?utm_source=api"
+      "name": "Raff Capashen, Ship's Mage",
+      "oracle_id": "13044ca1-76a3-43b2-a8e4-3bbc692c30c5",
+      "scryfall_url": "https://scryfall.com/card/cmm/351/raff-capashen-ships-mage?utm_source=api"
     },
     {
-      "name": "Y'shtola Rhul",
-      "oracle_id": "a6a7bf77-0560-4572-a826-3bc9df1f78d1",
-      "scryfall_url": "https://scryfall.com/card/fin/86/yshtola-rhul?utm_source=api"
+      "name": "Guardian Scalelord",
+      "oracle_id": "d6c7d7a6-2d38-4c06-ab83-bee9cc18de52",
+      "scryfall_url": "https://scryfall.com/card/moc/16/guardian-scalelord?utm_source=api"
+    },
+    {
+      "name": "Deadeye Navigator",
+      "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
+      "scryfall_url": "https://scryfall.com/card/inr/59/deadeye-navigator?utm_source=api"
     }
   ],
   "tokenAssignments": [
