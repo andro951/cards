@@ -185,7 +185,10 @@
     {
       "name": "Brago, King Eternal",
       "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
-      "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api",
+      "accepted_art": [
+        "392a2eeb61a5481cd6004c14b514caf830b562118d789fe9d7fcc5de928be115"
+      ]
     },
     {
       "name": "Captain Sisay",
