@@ -473,6 +473,19 @@
         "scryfall_id": "0efda05d-01ea-4478-b075-00a31d7037f8"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Reveillark",
+        "oracle_id": "1be13ede-98f8-497e-800c-03e5802932b3",
+        "scryfall_id": "53b4dcd6-b1b6-4f1c-9264-e58bdc87399b"
+      },
+      "back": {
+        "name": "Willbreaker",
+        "oracle_id": "7c365041-806f-42d6-a2ff-40e20dd8e9f0",
+        "scryfall_id": "2465eafc-453c-4e4f-b369-0951b8a4b7bf"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
