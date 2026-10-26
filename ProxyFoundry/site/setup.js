@@ -357,7 +357,10 @@ export function renderSetup(root,deck,onSaved){
     $('#all-token-options',root).classList.toggle('hidden',!s.allCardsTokens);
     redrawFrames();
   };
-  $('#all-cards-tokens',root).addEventListener('change',redrawTokenOptions);redrawTokenOptions();
+  $('#all-cards-tokens',root).addEventListener('change',()=>{
+    if($('#all-cards-tokens',root).checked){flavorToggle.checked=false;s.showFlavorText=false;}
+    redrawTokenOptions();
+  });redrawTokenOptions();
   function redrawSource(){
     $$('[data-mode]',root).forEach(x=>x.classList.toggle('selected',x.dataset.mode===s.source.mode));
     $$('[data-source]',root).forEach(x=>x.classList.toggle('hidden',x.dataset.source!==s.source.mode));

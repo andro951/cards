@@ -9,6 +9,7 @@ from foundry.workspace import Workspace
 from foundry import art_variants
 from test_import_scheduling import drain
 from test_scryfall_deck_refresh import DECK_URL,EXPORT_URL,CARD_A,CARD_B,card
+from test_token_assignments import token_deck,assignment
 
 CARD_C='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 
@@ -146,6 +147,128 @@ def test_removed_token_cleans_its_pair_without_invalid_pair_warnings(env):
     result=refresh(env)['deck']
     assert result['settings']['tokenAssignments']==[] and not result['tokens']['invalid']
     assert len(result['tokens']['unused'])==1
+
+
+@pytest.mark.parametrize('staged',[False,True],ids=['existing-import','staged-import'])
+@pytest.mark.parametrize('removed_indices',[(0,),(1,),(3,),(0,1,3)],ids=['paired-front','paired-back','double-sided','all-tokens'])
+def test_refresh_removes_real_token_faces_and_pairings_without_losing_other_images(token_deck,staged,removed_indices,monkeypatch):
+    from foundry import token_assignments
+    from foundry.orders import Orders
+    ws,deck,cards=token_deck
+    deck['importedSource']=DECK_URL
+    if staged:
+        deck['stagedImport']=True
+        for entry in deck['cards']:entry['metadataSource']=entry['scryfall']['id']
+    shared={'front':{'name':'Token from another deck'},'back':{'kind':'card-back'},'quantity':2}
+    pair=assignment(cards[0],cards[1],7)
+    deck['settings']['tokenAssignments']=[pair,shared]
+    deck['settings']['tokenTreatments']=[{'face':token_assignments.reference(cards[0]),'options':{'frame_color':'W'}}]
+    deck=ws.store.put('decks',deck,deck['revision']);deck=ws.deck(deck['id'])
+    before={entry['id']:copy.deepcopy(entry) for entry in deck['cards']}
+    removed={cards[index]['id'] for index in removed_indices};calls=[]
+    def remote(url):
+        calls.append(url);assert url==EXPORT_URL
+        entries={}
+        for entry in cards:
+            if entry['id'] in removed:continue
+            section='mainboard' if entry['scryfall']['layout']=='normal' else 'outside'
+            entries.setdefault(section,[]).append({'count':entry['quantity'],'card_digest':entry['scryfall']})
+        return json.dumps({'name':'Source tokens','entries':entries}).encode(),'application/json',{}
+    ws.net.transport=remote
+    monkeypatch.setattr(ws.compiler,'compile_face',lambda *args,**kwargs:pytest.fail('Refresh must not render or prepare retained token faces'))
+    old_order=Orders(ws).build([deck['id']])
+    result=ws.refresh_deck(deck['id'],{'revision':deck['revision']})
+    updated=result['deck'];present={entry['id'] for entry in updated['cards']}
+    assert present==set(before)-removed
+    assert {row['name'] for row in result['changes']['removed']}=={cards[index]['scryfall']['name'] for index in removed_indices}
+    assert not result['changes']['added'] and result['changes']['local']==0
+    for entry in updated['cards']:
+        assert entry['faces']==before[entry['id']]['faces']
+    assert not updated['tokens']['invalid']
+    assert all(row['frontCardId'] in present and (row['backCardId'] is None or row['backCardId'] in present) for row in updated['tokens']['assigned'])
+    assert updated['settings']['tokenAssignments']==([pair] if not removed.intersection({cards[0]['id'],cards[1]['id']}) else [])+[shared]
+    assert bool(updated['settings']['tokenTreatments'])==(cards[0]['id'] not in removed)
+    assert set(updated['tokens']['cardIds'])=={entry['id'] for entry in updated['cards'] if entry['scryfall']['layout']!='normal'}
+    assert ws.store.get('orders',old_order['id'])['cards']==old_order['cards']
+    for index in removed_indices:
+        for face in before[cards[index]['id']]['faces']:
+            assert ws.store.render_get(face['compiled']['renderKey'])
+    repeated=ws.refresh_deck(deck['id'],{'revision':updated['revision']})
+    assert not repeated['changes']['removed'] and {entry['id'] for entry in repeated['deck']['cards']}==present
+    assert calls==[EXPORT_URL,EXPORT_URL]
+    reloaded=ws.deck(deck['id'])
+    if reloaded['tokens']['unused']:
+        by_id={entry['id']:entry for entry in reloaded['cards']}
+        rows=reloaded['settings']['tokenAssignments']+[assignment(by_id[row['cardId']]) for row in reloaded['tokens']['unused']]
+        ws.save(deck['id'],{'revision':reloaded['revision'],'tokenAssignments':rows})
+    assert all(row['cardId'] not in removed for row in Orders(ws).plan([deck['id']])['cards'])
+
+
+@pytest.mark.parametrize('legacy',[False,True],ids=['current-copy','legacy-copy'])
+def test_refresh_preserves_local_copy_tokens_when_their_source_card_is_removed(env,legacy):
+    ws,deck,remote=env
+    copied=ws.copy_token(deck['id'],deck['cards'][0]['id'],{'nonlegendary':True},deck['revision'])
+    assert copied['cards'][-1]['faces'][0]['semanticOverrides']['flavor_text']==''
+    assert copied['cards'][0]['faces']==deck['cards'][0]['faces']
+    if legacy:
+        copied['cards'][-1].pop('deckLocal');copied=ws.store.put('decks',copied,copied['revision'])
+    kept=copy.deepcopy(ws.deck(deck['id'])['cards'][-1]);remote['rows']=[(CARD_B,1,'mainboard')]
+    result=refresh(env)
+    assert [entry['name'] for entry in result['deck']['cards']]==['Beta',kept['name']]
+    assert result['deck']['cards'][-1]==kept and result['changes']['local']==1
+
+
+@pytest.mark.parametrize('treatment',['individual','deck-wide'])
+@pytest.mark.parametrize('legacy',[False,True],ids=['source-markers','missing-source-markers'])
+def test_refresh_removes_normal_cards_treated_as_tokens_even_without_old_metadata_markers(token_deck,treatment,legacy):
+    from foundry import token_assignments
+    ws,deck,cards=token_deck;removed=cards[0];partner=cards[1]
+    removed['name']=removed['faces'][0]['name']=removed['scryfall']['name']='Badgermole Cub'
+    removed['scryfall'].update(layout='normal',type_line='Creature — Badger Mole')
+    if treatment=='individual':removed['tokenSpec']={'nonlegendary':True}
+    else:deck['settings']['allCardsTokens']=True
+    deck.update(cards=cards,stagedImport=True,importedSource=DECK_URL)
+    for entry in cards:
+        if not legacy:entry['metadataSource']=entry['scryfall']['id']
+    rows=[assignment(removed,partner,2),assignment(cards[2]) if treatment=='deck-wide' else assignment(partner)]
+    deck['settings']['tokenAssignments']=rows
+    deck['settings']['tokenTreatments']=[{'face':token_assignments.reference(removed),'options':{'nonlegendary':True}}] if treatment=='individual' else []
+    deck=ws.store.put('decks',deck,deck['revision']);before=ws.deck(deck['id'])
+    expected={entry['id']:entry for entry in before['cards'] if entry['id']!=removed['id']}
+    calls=[]
+    def remote(url):
+        calls.append(url)
+        if url!=EXPORT_URL:
+            value=next(entry['scryfall'] for entry in cards if url.endswith(entry['scryfall']['id']))
+            return json.dumps(value).encode(),'application/json',{}
+        return json.dumps({'name':'Derevi Illusion Tokens','entries':{'columna':[
+            {'count':entry['quantity'],'card_digest':entry['scryfall']} for entry in cards if entry['id']!=removed['id']
+        ],'columnb':[{'count':1,'found':False,'raw_text':''}]}}).encode(),'application/json',{}
+    ws.net.transport=remote
+    result=ws.refresh_deck(deck['id'],{'revision':deck['revision']});updated=result['deck']
+    assert {entry['id'] for entry in updated['cards']}==set(expected)
+    assert 'Badgermole Cub' not in [entry['name'] for entry in updated['cards']]
+    assert result['changes']['removed']==[{'name':'Badgermole Cub','quantity':removed['quantity']}]
+    assert not result['changes']['added'] and result['changes']['local']==0
+    assert updated['settings']['tokenAssignments']==[rows[1]] and not updated['settings']['tokenTreatments']
+    assert not updated['tokens']['invalid'] and removed['id'] not in updated['tokens']['cardIds']
+    for entry in updated['cards']:assert entry['faces']==expected[entry['id']]['faces']
+    assert calls==[EXPORT_URL]
+
+
+def test_refresh_repairs_previous_duplicate_token_faces_and_keeps_the_rendered_original(env):
+    ws,deck,remote=env;kept=deck['cards'][0]
+    duplicate=ws.sources.entry(kept['scryfall'],kept['quantity'],kept['section'])
+    duplicate['metadataSource']=kept['scryfall']['id']
+    deck.update(cards=[duplicate,*deck['cards']],stagedImport=True)
+    deck['settings']['allCardsTokens']=True
+    ws.store.put('decks',deck,deck['revision']);expected=copy.deepcopy(ws.deck(deck['id'])['cards'][1])
+    remote['rows']=[(CARD_A,2,'mainboard')]
+    result=refresh(env)
+    assert result['deck']['cards']==[expected]
+    assert result['deck']['tokens']['cardIds']==[kept['id']]
+    assert len(result['deck']['tokens']['faces'])==1
+    assert remote['calls']==[EXPORT_URL]
 
 
 @pytest.mark.parametrize('cancel',[False,True])

@@ -5,8 +5,15 @@ from .sources import deck_link
 from . import art_variants,token_assignments
 
 
-def local_card(card,staged=False):
-    return bool(card.get('deckLocal') or token_assignments.reference(card).get('copy') or staged and not card.get('metadataSource'))
+def local_card(card):
+    #Missing legacy metadata is not proof that a card was added locally.
+    return bool(card.get('deckLocal') or token_assignments.reference(card).get('copy'))
+
+
+def retention_quality(card):
+    faces=card['faces']
+    return (sum(bool((face.get('compiled') or {}).get('render') or (face.get('lastRender') or {}).get('render')) for face in faces),
+            sum(bool(face.get('compiled') or face.get('lastRender')) for face in faces))
 
 
 def refresh_steps(ws,ident,payload,progress,cancel):
@@ -23,7 +30,7 @@ def refresh_steps(ws,ident,payload,progress,cancel):
     if cancel():raise ValidationError('Deck refresh cancelled.')
     original=copy.deepcopy(deck['cards']);groups={};known={};local=[]
     for card in deck['cards']:
-        if local_card(card,deck.get('stagedImport',False)):local.append(card);continue
+        if local_card(card):local.append(card);continue
         sf=card.get('scryfall') or {};key=(sf.get('id'),card.get('section','mainboard'))
         if not key[0]:raise ValidationError('Finish reading card details before refreshing this deck.')
         groups.setdefault(key,[]).append(card)
@@ -65,7 +72,8 @@ def refresh_steps(ws,ident,payload,progress,cancel):
             allocated=min(card['quantity'],remaining);remaining-=allocated
             if allocated:variant_updates[card['artVariantId']]=allocated
             else:removed_variants.add(card['artVariantId'])
-        retained=previous if variants else [previous[0]]
+        #A previous refresh may have left an unrendered duplicate before its saved original.
+        retained=previous if variants else [max(previous,key=retention_quality)]
         for index,card in enumerate(retained):
             card['quantity']=count if index==0 else 0;card['section']=key[1];cards.append(card)
     for key,previous in groups.items():

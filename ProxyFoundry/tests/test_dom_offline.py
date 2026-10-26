@@ -138,6 +138,20 @@ def test_refresh_deck_cards_reloads_original_source_and_blocks_generation(dom_pa
     assert page.evaluate('renderCalls')==0 and not errors,errors
 
 
+def test_make_all_tokens_unchecks_and_saves_flavor_text_without_forcing_it_off_on_reopen(dom_page):
+    page,errors=dom_page
+    page.locator('.deck-tile').click();page.click('[data-tab=setup]')
+    assert page.locator('#show-flavor-text').is_checked()
+    page.locator('#all-cards-tokens').check()
+    assert not page.locator('#show-flavor-text').is_checked()
+    page.wait_for_function('__fixture.deck.settings.allCardsTokens&&__fixture.deck.settings.showFlavorText===false')
+    page.locator('#show-flavor-text').check()
+    page.wait_for_function('__fixture.deck.settings.showFlavorText===true')
+    page.click('[data-tab=cards]');page.click('[data-tab=setup]')
+    assert page.locator('#all-cards-tokens').is_checked() and page.locator('#show-flavor-text').is_checked()
+    assert not errors,errors
+
+
 def test_offline_deck_controls_and_templates(dom_page):
     page,errors=dom_page
     page.locator('.deck-tile').click();page.locator('[data-card]').click();page.fill('#card-qty','4');page.click('#save-card')

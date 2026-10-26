@@ -441,6 +441,7 @@ class Workspace:
             dirty=self._apply_card_data(d,patch.get('cardData'),allow_missing=bool(source)) or dirty
         if 'settings' in patch:
             incoming={**d['settings'],**patch['settings']}
+            if patch['settings'].get('allCardsTokens') and not d['settings'].get('allCardsTokens'):incoming['showFlavorText']=False
             # Old callers sending a complete back by ID remain supported.
             if 'backAsset' in patch['settings'] and 'backDesign' not in patch['settings']:incoming.pop('backDesign',None)
             new=self.validate_settings(incoming)
@@ -483,6 +484,8 @@ class Workspace:
                     for row in d['settings'].get('artVariants',[]):
                         if row['id']==c['artVariantId']:row['quantity']=c['quantity']
             if 'tokenSpec' in patch:
+                if c.get('tokenSpec') is None:
+                    for face in c['faces']:face['semanticOverrides']={**face.get('semanticOverrides',{}),'flavor_text':''}
                 c['tokenSpec']=token_assignments.validate_spec(patch['tokenSpec'])
                 rows=d['settings'].get('tokenTreatments',[])
                 ref=token_assignments.reference(c)
@@ -1138,7 +1141,7 @@ class Workspace:
         try:tokens.build_token({'key':c['name'],'data':c['faces'][0]['compiled']['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token specification could not be applied: '+str(exc)) from exc
         new=copy.deepcopy(c);new['id']=uid();new['name']=c['name']+spec['token_key_suffix'];new['quantity']=1;new['tokenSpec']=spec;new['deckLocal']=True
-        new['faces'][0].update(id=uid(),name=new['name']);new['faces'][0].pop('compiled',None)
+        new['faces'][0].update(id=uid(),name=new['name'],semanticOverrides={**new['faces'][0].get('semanticOverrides',{}),'flavor_text':''});new['faces'][0].pop('compiled',None)
         d['cards'].append(new);d['status']='draft';d.pop('summary',None);return self.store.put('decks',d,revision)
     def templates(self):return BUILTINS+self.store.list('templates')
     def template_preview_targets(self,deck_id,group,settings,card_data=None,choices=None):

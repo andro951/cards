@@ -147,6 +147,33 @@ def test_deck_wide_treatment_is_classified_without_rendering(token_deck):
     assert len(tokens.overview(deck)['cardIds'])==4
 
 
+def test_individual_token_conversion_turns_off_flavor_only_for_that_card(token_deck):
+    ws,deck,cards=token_deck;original=cards[2]
+    before=copy.deepcopy(ws.deck(deck['id']));flavor='Keep the original printing flavor.'
+    original['scryfall']['flavor_text']=flavor
+    deck=ws.store.put('decks',{**deck,'cards':cards},deck['revision'])
+    saved=ws.mutate_card(deck['id'],original['id'],{'revision':deck['revision'],'tokenSpec':{'nonlegendary':True}})
+    face=saved['cards'][2]['faces'][0]
+    assert face['semanticOverrides']['flavor_text']=='' and saved['settings']['showFlavorText'] is True
+    assert saved['cards'][2]['scryfall']['flavor_text']==flavor
+    assert saved['cards'][0]['faces']==before['cards'][0]['faces']
+    restored=ws.mutate_card(deck['id'],original['id'],{'revision':saved['revision'],'faceId':face['id'],
+        'semanticOverrides':{'flavor_text':'Explicitly restored flavor'}})
+    tweaked=ws.mutate_card(deck['id'],original['id'],{'revision':restored['revision'],'tokenSpec':{'nonlegendary':False}})
+    assert tweaked['cards'][2]['faces'][0]['semanticOverrides']['flavor_text']=='Explicitly restored flavor'
+
+
+def test_deck_wide_token_conversion_turns_off_flavor_but_allows_a_later_explicit_choice(token_deck):
+    ws,deck,_=token_deck
+    first=ws.save(deck['id'],{'revision':deck['revision'],'settings':{'allCardsTokens':True}})
+    assert first['settings']['allCardsTokens'] and first['settings']['showFlavorText'] is False
+    restored=ws.save(deck['id'],{'revision':first['revision'],'settings':{'showFlavorText':True}})
+    assert restored['settings']['allCardsTokens'] and restored['settings']['showFlavorText']
+    off=ws.save(deck['id'],{'revision':restored['revision'],'settings':{'allCardsTokens':False}})
+    enabled=ws.save(deck['id'],{'revision':off['revision'],'settings':{'allCardsTokens':True,'showFlavorText':True}})
+    assert enabled['settings']['showFlavorText'] is False
+
+
 def test_missing_partner_is_ignored_but_present_token_still_needs_a_back(token_deck):
     ws,deck,cards=token_deck
     ws.save(deck['id'],{'revision':deck['revision'],'tokenAssignments':[assignment(cards[0],cards[1])]})
@@ -276,6 +303,7 @@ def test_converted_card_prepares_with_existing_native_token_renderer(env):
     ws,deck,_=env;card=deck['cards'][0]
     card['scryfall'].update(layout='normal',type_line='Creature — Angel')
     deck['settings']['dataJsonSource']={'kind':'local','value':'data.json'}
+    deck['settings']['templateRules']['token']='token-classic'
     deck=ws.store.put('decks',deck,deck['revision']);prepared=ws.prepare(deck['id'])
     changed=ws.mutate_card(deck['id'],card['id'],{'revision':prepared['revision'],
         'tokenSpec':{'nonlegendary':True,'power_toughness':'1/1','replace_creature_subtypes':['Spirit']}})
