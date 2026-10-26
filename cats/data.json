@@ -621,19 +621,6 @@
         "scryfall_id": "c2963ce1-f9d8-437a-9489-e0913a8b8d26"
       },
       "quantity": 4
-    },
-    {
-      "front": {
-        "name": "Cat Soldier",
-        "oracle_id": "53c009a1-b9b6-43d6-8543-77688fedf8ae",
-        "scryfall_id": "921d6192-6b6d-4aa1-be80-bc0b9f503e33"
-      },
-      "back": {
-        "name": "Eldrazi",
-        "oracle_id": "41014a6a-0f5b-48ae-8cb8-9a89f0f0180f",
-        "scryfall_id": "ce6d2786-ef9c-4772-bb71-697131c3c3a4"
-      },
-      "quantity": 2
     }
   ],
   "tokenTreatments": [
