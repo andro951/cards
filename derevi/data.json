@@ -1126,6 +1126,19 @@
         "scryfall_id": "f32ad93f-3fd5-465c-ac6a-6f8fb57c19bd"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Construct",
+        "oracle_id": "ee740c48-59cd-4fcc-b4a5-fe3dde1361d5",
+        "scryfall_id": "48fdadab-af27-46d3-bcf6-35e7affb1e43"
+      },
+      "back": {
+        "name": "Elemental",
+        "oracle_id": "982ee0fe-7985-4110-a83d-61eab53bc275",
+        "scryfall_id": "ff615495-a230-484e-a858-ead84f880bdd"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
