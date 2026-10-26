@@ -447,6 +447,19 @@
         "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Ant Queen",
+        "oracle_id": "50de88d4-0beb-45e5-9664-d4f0e280e652",
+        "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
+      },
+      "back": {
+        "name": "Gandalf the White",
+        "oracle_id": "5b3b5f6a-375e-4479-9384-a942eda83f9b",
+        "scryfall_id": "e384c20b-d0c1-4781-9d11-e89e5a6bf3fc"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
