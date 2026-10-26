@@ -16,18 +16,22 @@ pytestmark=pytest.mark.skipif(
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def test_converted_artifact_tokens_render_with_and_without_crown_and_nickname(workspace):
+@pytest.mark.parametrize('kind',['artifact','station'])
+def test_converted_artifact_tokens_render_with_and_without_crown_and_nickname(workspace,kind):
     from foundry.compiler import semantic
     from playwright.sync_api import sync_playwright
     store,art,settings=workspace;app=App(store)
     app.runtime_assets.update([art,*settings['symbols'].values()])
     card={'name':'Sol Ring','type_line':'Artifact','mana_cost':'{1}',
           'oracle_text':'{T}: Add {C}{C}.','colors':[],'rarity':'uncommon'}
+    if kind=='station':
+        from tests.test_v58_station import card as station
+        card=station();card['name']='The Seriema'
     variants=[]
     for nickname in ('','Ring of Death'):
         for legendary in (False,True):
             sem=semantic(card,card);sem['nickname']=nickname
-            comp=app.ws.compiler.compile_face(card,card,0,{'semanticOverrides':{'nickname':nickname}},settings,art)
+            comp=app.ws.compiler.compile_face(card,card,0,{'semanticOverrides':{'nickname':nickname}},settings,art,conversion_seed=kind=='station')
             comp=app.ws._apply_token_spec(comp,{'force_legendary':legendary,'nonlegendary':not legendary},art,'Converted token',False,sem)
             variants.append(comp['data'])
     server=LocalServer(app)

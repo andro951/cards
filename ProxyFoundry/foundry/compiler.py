@@ -2923,14 +2923,20 @@ class Compiler:
         #Converted faces use the original layout as a seed, then apply their token frame.
         if conversion_seed and (choice in {'token-classic','token-full-art','token-borderless'} or options.get('templateOverride')=='godzilla-card'):
             choice='auto'
-        if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
+        if (conversion_seed and group in {'standard','legendary','station'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
             donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)
+            if group=='station':
+                #Station's native ability slots cannot be reused in a token frame.
+                #Seed one complete rules box, retaining thresholds and Spacecraft P/T.
+                donor=copy.deepcopy(donor)
+                if sem.get('power') is not None:donor['layout']='creature_legendary' if sem.get('legendary') else 'creature'
+                else:donor['layout']='card_legendary' if sem.get('legendary') else 'card_noncreature'
             layout=native.infer_layout(donor,native.get_type_info(donor))
             if layout in {'creature','creature_legendary','card_noncreature','card_legendary','nyx_enchantment','nyx_creature'}:
                 donor=copy.deepcopy(donor);donor['_proxy_token_seed']=True
                 data=native.build_one(donor,{'artist':artist},False)['data']
-                if 'Creature' not in sem.get('types',[]):data['text'].pop('pt',None)
+                if 'Creature' not in sem.get('types',[]) and group!='station':data['text'].pop('pt',None)
                 #The source true-name field carries these native shadows into borderless token names.
                 if sem.get('nickname'):data['text']['title'].update(shadowX=.0014,shadowY=.001)
                 data.update(artSource=sem['art'],setSymbolSource='/api/assets/'+symbol_id,infoArtist=str(artist),infoNote=CARD_FOOTER_NOTE)

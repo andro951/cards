@@ -768,6 +768,8 @@ class Workspace:
         style=spec.pop('token_frame_style',None) or 'token-full-art'
         prepare_source=comp['data'] if comp['data'].get('version')=='prepare' else None
         if prepare_source is not None:style='token-classic'
+        if prepare_source is None and not isinstance(comp['data'].get('text',{}).get('rules',{}).get('text'),str):
+            raise ValidationError('This card layout needs a compatible token template with a complete rules text box.')
         classic_colorless=style=='token-classic' and sem is not None and not spec.get('frame_color') and _token_frame_code(sem)=='C'
         if sem:
             sem=dict(sem)
