@@ -229,7 +229,10 @@
     {
       "name": "Preston, the Vanisher",
       "oracle_id": "2e00ccc9-6d5f-4de3-bbec-48b49d363244",
-      "scryfall_url": "https://scryfall.com/card/j22/8/preston-the-vanisher?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/j22/8/preston-the-vanisher?utm_source=api",
+      "accepted_art": [
+        "3dd43e02804f9f44df50dbaad97d46fabccd790302a531e86d36d6c46c115d39"
+      ]
     },
     {
       "name": "Prime Speaker Vannifar",
