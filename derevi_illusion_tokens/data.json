@@ -141,7 +141,10 @@
     {
       "name": "Delney, Streetwise Lookout",
       "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
-      "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api",
+      "accepted_art": [
+        "efc348e45d4d59d013127d80e4477b0f029928edbee94cb17974634e1ddd91eb"
+      ]
     },
     {
       "name": "Faeburrow Elder",
