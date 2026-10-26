@@ -434,6 +434,19 @@
         "scryfall_id": "8b63ec86-670b-4acd-b14c-3d90acbde087"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Displacer Kitten",
+        "oracle_id": "09ef446c-a13d-49d9-a94c-cd5f5a2d440b",
+        "scryfall_id": "c7a401b8-29fb-46ef-a663-427f66724d5c"
+      },
+      "back": {
+        "name": "Urza, Lord High Artificer",
+        "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
+        "scryfall_id": "7b7a348a-51f7-4dc5-8fe7-1c70fea5e050"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
