@@ -211,7 +211,10 @@
     {
       "name": "Enduring Curiosity",
       "oracle_id": "9d2460c3-8eeb-4f35-b6f6-748c478664c7",
-      "scryfall_url": "https://scryfall.com/card/dsk/51/enduring-curiosity?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/dsk/51/enduring-curiosity?utm_source=api",
+      "accepted_art": [
+        "cca75fc193e832fe5473cdf037b9345e81fbccaf09306b5a5368b52f5dcbd1f5"
+      ]
     },
     {
       "name": "Foundation Breaker",
