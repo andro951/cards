@@ -245,7 +245,10 @@
     {
       "name": "Sakashima of a Thousand Faces",
       "oracle_id": "8ecdaf4b-4442-42da-9714-4257a83faf50",
-      "scryfall_url": "https://scryfall.com/card/cmr/89/sakashima-of-a-thousand-faces?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmr/89/sakashima-of-a-thousand-faces?utm_source=api",
+      "accepted_art": [
+        "eb2141e2315f198f8393dacc9f8ddd553ce0788e46d584bfc46cd6e3bf95b8a3"
+      ]
     },
     {
       "name": "Teshar, Ancestor's Apostle",
