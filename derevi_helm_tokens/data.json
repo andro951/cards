@@ -538,6 +538,19 @@
         "scryfall_id": "4f0791b5-fdb4-4378-8fd3-7e7367ffc05c"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Elesh Norn, Grand Cenobite",
+        "oracle_id": "958d71ff-c9f7-46f0-96ca-79e7f4d65a16",
+        "scryfall_id": "78c2bfef-06a5-4c7f-8283-ea3fb673b7a1"
+      },
+      "back": {
+        "name": "Old Gnawbone",
+        "oracle_id": "dff3f4c7-f792-4ca3-9b0a-0738e70664d9",
+        "scryfall_id": "77ceba8b-de19-4db8-b5a7-f5df49bf241f"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
