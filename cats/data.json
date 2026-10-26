@@ -647,6 +647,19 @@
         "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
       },
       "quantity": 5
+    },
+    {
+      "front": {
+        "name": "Eldrazi",
+        "oracle_id": "41014a6a-0f5b-48ae-8cb8-9a89f0f0180f",
+        "scryfall_id": "ce6d2786-ef9c-4772-bb71-697131c3c3a4"
+      },
+      "back": {
+        "name": "Nacatl War-Pride",
+        "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
+        "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": [
