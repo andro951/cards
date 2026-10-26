@@ -294,7 +294,10 @@
     {
       "name": "Reveillark",
       "oracle_id": "1be13ede-98f8-497e-800c-03e5802932b3",
-      "scryfall_url": "https://scryfall.com/card/2x2/26/reveillark?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/2x2/26/reveillark?utm_source=api",
+      "accepted_art": [
+        "7d7b575bced0371242d11be3d444326d063cdcd7e81fd5d890a7c0a4711d8527"
+      ]
     },
     {
       "name": "Stonehewer Giant",
