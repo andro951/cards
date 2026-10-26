@@ -809,19 +809,6 @@
     },
     {
       "front": {
-        "name": "Duplicant",
-        "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
-        "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
-      },
-      "back": {
-        "name": "Ulamog, the Infinite Gyre",
-        "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
-        "scryfall_id": "9464a820-65de-44f2-9895-46a35e8621a0"
-      },
-      "quantity": 2
-    },
-    {
-      "front": {
         "name": "Delney, Streetwise Lookout",
         "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
         "scryfall_id": "be219928-3d0e-4d00-b124-152ce8a8c13b"
