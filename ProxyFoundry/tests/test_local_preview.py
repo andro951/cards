@@ -30,6 +30,9 @@ def test_preview_serves_site_files_only_on_loopback(tmp_path):
         assert preview['is_foundry_preview'](server.server_port)
         with urlopen(preview['address'](server.server_port)+'web/engine-worker.js') as response:
             assert response.read()==b'self.ready=true;'
+            assert response.headers['Cache-Control']=='no-cache'
+        with urlopen(preview['address'](server.server_port)) as response:
+            assert response.headers['Cache-Control']=='no-cache'
     finally:
         server.shutdown();server.server_close();thread.join(timeout=5)
 

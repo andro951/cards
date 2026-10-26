@@ -32,6 +32,17 @@ document.body.hidden=false;
 const diagnosticButton=document.createElement('button');diagnosticButton.className='button';diagnosticButton.textContent='Download browser diagnostics';
 diagnosticButton.onclick=downloadBrowserDiagnostics;startup.append(diagnosticButton);
 
+function reloadUpdatedPage(automatic=false){
+  const key='pf-startup-update-retry',now=Date.now();
+  //A deployment can briefly serve mixed files. Retry once, without a reload loop.
+  if(automatic&&now-Number(sessionStorage.getItem(key)||0)<60000)return false;
+
+  sessionStorage.setItem(key,String(now));
+  const url=new URL(location.href);url.searchParams.set('_pf_update',String(now));
+  location.replace(url.href);
+  return true;
+}
+
 try{
 const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/',updateViaCache:'none'});
 await navigator.serviceWorker.ready;
@@ -100,6 +111,14 @@ else{
     pending.clear();
     files.inputBuffers.clear();
   };
+  const recoverVersion=error=>{
+    failEngine(error);worker.terminate();
+    recordDiagnostic('startup version mismatch',error);
+    if(reloadUpdatedPage(true))return;
+
+    const retry=document.createElement('button');retry.className='button primary';retry.textContent='Reload updated app';
+    retry.onclick=()=>reloadUpdatedPage();startup.append(retry);
+  };
   worker.onerror=event=>failEngine(event.message||'The card engine stopped. Reload the page to continue; completed images are saved.');
   worker.onmessageerror=()=>failEngine('The card engine response could not be read. Reload the page to continue; completed images are saved.');
 
@@ -115,10 +134,13 @@ else{
       recordDiagnostic('task',`${data.job.kind}: ${data.job.message} (${data.job.done}/${data.job.total})`);}
     if(data.type==='status'){message.textContent=data.message;setEngineStatus(data.message);}
     if(data.type==='ready'){
-      if(data.buildId!==buildId)failEngine('The website and card engine are different versions. Reload the page to finish updating; saved decks stay in your workspace.');
+      if(data.buildId!==buildId)recoverVersion(`The website and card engine are different versions. Reload the page to finish updating; saved decks stay in your workspace. (Website ${buildId}, engine ${data.buildId}.)`);
       else{setEngineStatus('Ready');readyResolve();}
     }
-    if(data.type==='fatal')failEngine(data.message);
+    if(data.type==='fatal'){
+      if(data.code==='BUILD_MISMATCH')recoverVersion(data.message);
+      else failEngine(data.message);
+    }
     if(data.type==='response'||data.type==='error'){
       files.inputBuffers.delete(data.id);
       const port=pending.get(data.id);
@@ -209,6 +231,10 @@ else{
       window.addEventListener('pf-ui-error',event=>reject(new Error(event.detail)),{once:true});
     });
     await Promise.all([import('/site/app.js'),appReady]);
+    if(new URL(location.href).searchParams.has('_pf_update')){
+      const url=new URL(location.href);url.searchParams.delete('_pf_update');history.replaceState(history.state,'',url.href);
+    }
+
     shell.style.display='';
     startup.remove();
     recordDiagnostic('startup timing',JSON.stringify({stage:'website-total',seconds:(performance.now()-startupStarted)/1000,outcome:'ok',storageType:folder?'selected-folder':'browser'}));

@@ -20,6 +20,11 @@ class QuietSite(BatchPreviewHandler):
     def log_message(self, *_args):
         pass
 
+    def end_headers(self):
+        if self.path.split('?',1)[0].endswith(('/', '.html', '.js', '.mjs', '.zip')):
+            self.send_header('Cache-Control', 'no-cache')
+        super().end_headers()
+
 
 def address(port=PORT):
     return f'http://127.0.0.1:{port}/'

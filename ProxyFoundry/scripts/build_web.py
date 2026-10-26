@@ -52,7 +52,7 @@ for name in ('bootstrap.js', 'engine-worker.js', 'storage-choice.js', 'settings-
 html = (root / 'site' / 'index.html').read_text(encoding='utf-8')
 html = html.replace('<body>', '<body hidden>', 1)
 html = html.replace('<script type="module" src="/site/app.js"></script>',
-                    '<script type="module" src="/web/bootstrap.js"></script>')
+                    '<script type="module" src="/web/bootstrap.js?v='+build_id+'"></script>')
 html = html.replace('BULK PROXY FORGE 1.3 <span>LOCAL</span>',
                     'BULK PROXY FORGE 2.0 <span>WEB</span>')
 (dist / 'index.html').write_text(deployed_source(html), encoding='utf-8')

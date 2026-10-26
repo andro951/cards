@@ -980,7 +980,9 @@ def test_mixed_website_engine_version_stops_with_saved_workspace_guidance(tmp_pa
             browser=playwright.chromium.launch(headless=True);page=browser.new_page()
             try:
                 page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
-                page.get_by_text('The website and card engine are different versions.',exact=False).wait_for(timeout=90000)
+                page.get_by_role('button',name='Reload updated app',exact=True).wait_for(timeout=90000)
+                assert '_pf_update=' in page.url
+                assert 'The website and card engine are different versions.' in page.locator('#browser-startup').inner_text()
                 assert not page.locator('#import-deck').is_visible()
                 assert page.get_by_role('button',name='Download browser diagnostics').is_visible()
                 error=page.evaluate("async()=>{const response=await fetch('/api/settings');return {status:response.status,data:await response.json()};}")

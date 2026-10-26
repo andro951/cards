@@ -65,7 +65,7 @@ async function start(folder){
   mount={syncfs:async()=>python.runPython('app.store.checkpoint()')};
   mark('bundle-fetch');
   self.postMessage({type:'status',message:'Loading application bundle…'});
-  const archive=await fetch('/web/runtime.zip',{cache:'no-store'});
+  const archive=await fetch('/web/runtime.zip?v='+buildId,{cache:'no-store'});
   if(!archive.ok)
     throw new Error(`Card engine bundle could not be loaded (${archive.status}).`);
   const archiveBytes=await archive.arrayBuffer();
@@ -75,7 +75,10 @@ async function start(folder){
   self.postMessage({type:'status',message:'Starting workspace tools…'});
 
   const bundleVersion=JSON.parse(new TextDecoder().decode(python.FS.readFile('/app/ProxyFoundry/build.json'))).id;
-  if(bundleVersion!==buildId)throw new Error('The website engine bundle is a different version. Reload the page to finish updating.');
+  if(bundleVersion!==buildId){
+    const error=new Error(`The website engine bundle is a different version. Reload the page to finish updating; saved decks stay in your workspace. (Engine ${buildId}, bundle ${bundleVersion}.)`);
+    error.code='BUILD_MISMATCH';throw error;
+  }
 
   self.syncFetch=url=>{
     const xhr=new XMLHttpRequest();
@@ -227,7 +230,7 @@ function scheduleCleanup(){
 self.onmessage=event=>{
   if(event.data.type==='start'){
     owner=event.data.owner;
-    ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error)}));
+    ready=start(event.data.folder).catch(error=>self.postMessage({type:'fatal',message:String(error.stack||error),code:error.code}));
     return;
   }
   requests.enqueue(()=>handle(event),()=>generationActive&&/\/thumbnail(?:\?|$)/.test(event.data.url)?Infinity:requestPriority(event.data)).then(()=>{scheduleJobs();scheduleCleanup();});

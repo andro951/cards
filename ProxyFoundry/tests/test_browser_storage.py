@@ -33,6 +33,53 @@ def static_browser(tmp_path,request):
     server.shutdown();server.server_close();thread.join(timeout=5)
 
 
+@pytest.mark.parametrize('base_path',['/','/cards/'])
+def test_stale_runtime_bundle_recovers_once_without_changing_workspace(tmp_path,base_path):
+    import io,json,re,zipfile
+    from playwright.sync_api import sync_playwright
+    directory=tmp_path/'site'
+    subprocess.run([os.sys.executable,str(ROOT/'scripts/build_web.py'),'--base-path',base_path,'--output',str(directory)],cwd=ROOT,check=True,capture_output=True)
+    expected=re.search(r"const buildId='([^']+)'",(directory/'web/bootstrap.js').read_text()).group(1)
+    assert f'/web/bootstrap.js?v={expected}' in (directory/'index.html').read_text()
+    with zipfile.ZipFile(directory/'web/runtime.zip') as archive:
+        assert json.loads(archive.read('build.json'))['id']==expected
+        wrong=io.BytesIO()
+        with zipfile.ZipFile(wrong,'w',zipfile.ZIP_DEFLATED) as changed:
+            for name in archive.namelist():
+                changed.writestr(name,b'{"id":"stale-fixture"}' if name=='build.json' else archive.read(name))
+    served=tmp_path/'served';served.mkdir()
+    if base_path=='/':served=directory
+    else:shutil.move(str(directory),str(served/'cards'))
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(served)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser=playwright.chromium.launch(headless=True);context=browser.new_context();page=context.new_page()
+            page.add_init_script("""navigator.storage.getDirectory().then(async directory=>{
+                if(!await directory.getFileHandle('saved-artwork.png').catch(()=>null)){
+                    const stream=await (await directory.getFileHandle('saved-artwork.png',{create:true})).createWritable();
+                    await stream.write('existing artwork');await stream.close();
+                }
+            });""")
+            bundles=[]
+            def runtime(route):
+                bundles.append(route.request.url)
+                if len(bundles)==1:route.fulfill(status=200,body=wrong.getvalue(),content_type='application/zip')
+                else:route.continue_()
+            page.route('**/web/runtime.zip*',runtime)
+            try:
+                page.goto(f'http://127.0.0.1:{server.server_port}{base_path}?kept=1#decks',wait_until='domcontentloaded')
+                page.wait_for_function("document.querySelector('#import-deck')&&!document.querySelector('#browser-startup')",timeout=90000)
+                assert len(bundles)==2 and all(f'?v={expected}' in url for url in bundles)
+                assert page.url.endswith('?kept=1#decks')
+                assert page.evaluate("navigator.storage.getDirectory().then(async directory=>(await (await directory.getFileHandle('saved-artwork.png')).getFile()).text())")=='existing artwork'
+                previous=page.evaluate("JSON.parse(localStorage.getItem('bulk-proxy-forge-browser-diagnostics'))")
+                #The mismatch is recorded before the retry; the new engine reaches Ready.
+                assert any('Ready'==entry['detail'] for entry in previous['entries'] if entry['kind']=='engine')
+            finally:context.close();browser.close()
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
 @pytest.mark.parametrize('static_browser',['chromium'],indirect=True,ids=['native-handles'])
 def test_static_artwork_pairing_persists_without_rendering(static_browser):
     directory,context,origin=static_browser
