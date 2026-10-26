@@ -2,7 +2,7 @@
 import copy,json
 import pytest
 from foundry.card_data import parse_document
-from foundry.domain import ValidationError,uid
+from foundry.domain import ValidationError,ConflictError,uid
 from test_github_data_refresh import env
 
 
@@ -72,3 +72,48 @@ def test_multiple_approved_art_versions_accumulate_for_the_same_face(env):
     result=ws.mutate_card(deck['id'],other['id'],{'revision':deck['revision'],'faceId':face['id'],
         'renderKey':'new-version','acceptWarning':True})
     assert result['cardData'][0]['accepted_art']==[first,'f'*64]
+
+
+def bulk_review(env):
+    ws,deck,remote=env;deck=ws.prepare(deck['id']);rows=[]
+    for card in deck['cards'][:2]:
+        face=card['faces'][0];face['compiled']['crop']={'warning':True}
+        ws.store.render_put(face['compiled']['renderKey'],ws.store.asset(face['artOverride']))
+        rows.append({'cardId':card['id'],'faceId':face['id'],'renderKey':face['compiled']['renderKey']})
+    deck['cards'][2]['faces'][0]['error']='Artwork missing'
+    deck=ws.store.put('decks',deck,deck['revision'])
+    return ws,deck,remote,rows
+
+
+def test_bulk_approval_saves_once_without_rendering_and_leaves_errors(env,monkeypatch):
+    ws,deck,remote,rows=bulk_review(env);before=copy.deepcopy(deck['cards']);calls=list(remote.calls)
+    monkeypatch.setattr(ws.compiler,'compile_face',lambda *a,**k:pytest.fail('Approval must not compile'))
+    result=ws.accept_art_warnings(deck['id'],{'revision':deck['revision'],'faces':rows})
+    updated=result['deck']
+    assert updated['revision']==deck['revision']+1
+    assert updated['summary']['warnings']==0 and updated['summary']['errors']==1
+    assert len(result['changes'])==2 and result['changes']==updated['cardData']
+    for current,previous in zip(updated['cards'][:2],before[:2]):
+        face=current['faces'][0];old=previous['faces'][0]
+        assert face['acceptedWarningKey']==face['compiled']['renderKey']
+        assert face['acceptedArt']==[face['compiled']['contentRenderKey']]
+        assert face['preparationKey']==old['preparationKey'] and face['compiled']['data']==old['compiled']['data']
+    assert updated['cards'][2]['faces'][0]['error']=='Artwork missing'
+    assert remote.calls==calls
+    assert ws.deck(deck['id'])['summary']['warnings']==0
+
+
+@pytest.mark.parametrize('change',['revision','render','unrendered','error'])
+def test_bulk_approval_rejects_changed_or_unrendered_faces_atomically(env,change):
+    ws,deck,_,rows=bulk_review(env);before=ws.store.get('decks',deck['id'])
+    patch={'revision':deck['revision'],'faces':copy.deepcopy(rows)}
+    if change=='revision':patch['revision']-=1
+    elif change=='render':patch['faces'][1]['renderKey']='changed'
+    elif change=='unrendered':
+        with ws.store.connect() as db:db.execute('DELETE FROM renders WHERE render_key=?',(rows[1]['renderKey'],))
+    else:
+        before['cards'][1]['faces'][0]['error']='Render failed'
+        before=ws.store.put('decks',before,before['revision']);patch['revision']=before['revision']
+    with pytest.raises((ValidationError,ConflictError)):
+        ws.accept_art_warnings(deck['id'],patch)
+    assert ws.store.get('decks',deck['id'])==before

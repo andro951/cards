@@ -501,6 +501,73 @@ def test_art_approval_updates_original_data_or_offers_download(dom_page,target):
     assert not errors,errors
 
 
+@pytest.mark.parametrize('target',['github','download'])
+def test_bulk_art_approval_confirms_whole_deck_and_saves_once(dom_page,target):
+    page,errors=dom_page
+    page.evaluate('''async target=>{
+      const F=__fixture,first=F.deck.cards[0],image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfYQAAAAASUVORK5CYII=';
+      const second=structuredClone(first);second.id='bulk-other-card';second.name='Other card';second.scryfall.name='Other card';
+      second.faces=[0,1].map(index=>({...structuredClone(first.faces[0]),id:'bulk-face-'+index,index,name:'Other '+index}));
+      const broken=structuredClone(first);broken.id='bulk-broken-card';broken.name='Broken card';broken.faces[0].id='bulk-broken-face';broken.faces[0].error='Image missing';
+      F.deck.cards=[first,second,broken];F.deck.status='prepared';F.deck.summary={cards:3,faces:4,rendered:3,warnings:3,errors:1};
+      let index=0;
+      for(const card of [first,second])for(const face of card.faces){index++;face.compiled={renderKey:'render-'+index,contentRenderKey:String(index).repeat(64),crop:{warning:true},render:{url:image}};}
+      window.bulkCalls=0;window.bulkWrites=0;window.bulkDocument={version:1,artist:'Keep artist',cards:[{name:'Test creature',nickname:'Keep name'}]};
+      if(target==='github'){
+        const url='https://github.com/owner/cards/blob/main/deck/data.json';F.deck.settings.dataJsonSource={kind:'github',value:url};
+        await __mod_artwork_files.rememberGithub(F.deck.id,url,structuredClone(bulkDocument));await __mod_artwork_files.connectGithub('owner/cards','test-only',false);
+      }
+      const original=window.fetch;
+      window.fetch=async(url,options={})=>{
+        if(String(url).endsWith('/accept-art')){
+          bulkCalls++;window.bulkPatch=JSON.parse(options.body);await new Promise(resolve=>window.releaseBulk=resolve);
+          const changes=[];
+          for(const row of bulkPatch.faces){
+            const card=F.deck.cards.find(card=>card.id===row.cardId),face=card.faces.find(face=>face.id===row.faceId);
+            face.acceptedWarningKey=row.renderKey;face.acceptedArt=[face.compiled.contentRenderKey];changes.push({name:face.name,accepted_art:face.acceptedArt});
+          }
+          F.deck.cardData=changes;F.deck.summary.warnings=0;F.deck.revision++;
+          return {ok:true,status:200,text:async()=>JSON.stringify({deck:F.deck,changes})};
+        }
+        if(String(url).startsWith('https://api.github.com/')){
+          if(options.method==='PUT'){bulkWrites++;bulkDocument=JSON.parse(atob(JSON.parse(options.body).content));return {ok:true,status:200};}
+          return {ok:true,status:200,json:async()=>({encoding:'base64',sha:'current-version',content:btoa(JSON.stringify(bulkDocument))})};
+        }
+        return original(url,options);
+      };
+    }''',target)
+    page.locator('.deck-tile').click()
+    assert page.locator('#approve-all-art').count()==0
+    page.locator('[data-card-filter=attention]').click()
+    page.locator('#card-search').fill('Test creature')
+    page.locator('#approve-all-art').click()
+    confirmation=page.get_by_role('dialog',name='Approve all flagged artwork?',exact=True)
+    assert 'looked at every card in this deck' in confirmation.inner_text()
+    assert '3 flagged card faces' in confirmation.inner_text()
+    assert 'hidden by your search' in confirmation.inner_text()
+    page.locator('#modal-close').click()
+    assert page.evaluate('bulkCalls')==0
+    page.locator('#approve-all-art').click();page.locator('#confirm-yes').click()
+    page.wait_for_function('typeof releaseBulk==="function"')
+    assert page.locator('#approve-all-art').is_disabled()
+    assert page.locator('#approve-all-art').get_attribute('aria-pressed')=='true'
+    assert page.locator('#generate-deck').is_disabled()
+    page.evaluate('releaseBulk()')
+    if target=='download':
+        page.get_by_role('dialog',name='Save artwork approvals',exact=True).wait_for()
+        with page.expect_download() as download:page.get_by_role('button',name='Download data.json',exact=True).click()
+        document=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+    else:
+        page.wait_for_function('bulkWrites===1')
+        document=page.evaluate('bulkDocument')
+        assert document['artist']=='Keep artist' and document['cards'][0]['nickname']=='Keep name'
+    page.wait_for_function('!document.querySelector("#approve-all-art")')
+    assert page.evaluate('bulkCalls')==1
+    assert len([entry for entry in document['cards'] if entry.get('accepted_art')])==3
+    assert page.evaluate('__fixture.deck.cards[2].faces[0].error')=='Image missing'
+    assert not errors,errors
+
+
 def test_card_save_offers_connection_or_download_without_a_source(dom_page):
     page,errors=dom_page
     page.evaluate('''()=>{

@@ -469,6 +469,36 @@ class Workspace:
                     for face in card.get('faces',[]):
                         self.invalidate_face(face)
         d.pop('summary',None);return self.store.put('decks',d,expected)
+    def _accept_face_warning(self,d,c,f,render_key):
+        comp=f.get('compiled') or {}
+        if not comp.get('renderKey') or not self.store.render_get(comp['renderKey']):
+            raise ValidationError('Render this face before accepting its warning.')
+        if not ((comp.get('crop') or {}).get('warning') or comp.get('flags')):
+            raise ValidationError('This face has no current crop or layout warning.')
+        if render_key!=comp['renderKey']:
+            raise ValidationError('The card render changed. Review its current image again.')
+        f['acceptedWarningKey']=comp['renderKey']
+        if not comp.get('contentRenderKey'):return []
+        matching=set(matching_keys(c,f))
+        saved=[key for row in d.get('cardData',[]) if selector_key(row) in matching for key in row.get('accepted_art',[])]
+        approvals=list(dict.fromkeys([*saved,*f.get('acceptedArt',[]),comp['contentRenderKey']]))
+        entry=validate_entries([{**identity(c,f),'accepted_art':approvals}])
+        f['acceptedArt']=approvals;d['cardData']=merge_entries(d.get('cardData',[]),entry)
+        return entry
+    def accept_art_warnings(self,deck_id,patch):
+        d=self.deck(deck_id);rev=patch.get('revision');rows=patch.get('faces')
+        if rev!=d['revision']:raise ConflictError('Reload the deck before approving its artwork.')
+        if not isinstance(rows,list) or not rows:raise ValidationError('Choose the rendered faces you reviewed.')
+        faces={(c['id'],f['id']):(c,f) for c in d['cards'] for f in c['faces']};changes=[];seen=set()
+        for row in rows:
+            if not isinstance(row,dict):raise ValidationError('Invalid artwork approval.')
+            key=(str(row.get('cardId') or ''),str(row.get('faceId') or ''))
+            if key not in faces or key in seen:raise ValidationError('A reviewed face was removed or selected more than once.')
+            seen.add(key);c,f=faces[key]
+            if f.get('error'):raise ValidationError('Resolve this card error before approving its artwork.')
+            changes=merge_entries(changes,self._accept_face_warning(d,c,f,row.get('renderKey')))
+        d.pop('summary',None);self.store.put('decks',d,rev)
+        return {'deck':self.deck(deck_id),'changes':changes}
     def mutate_card(self,deck_id,card_id,patch):
         d=self.deck(deck_id);c=next((c for c in d['cards'] if c['id']==card_id),None)
         if not c:raise ValidationError('Card no longer exists.')
@@ -505,20 +535,9 @@ class Workspace:
                 if not f:raise ValidationError('Card face no longer exists.')
                 before_rules=(f.get('semanticOverrides') or {}).get('oracle_text','')
                 if 'acceptWarning' in patch:
-                    comp=f.get('compiled') or {}
-                    if not comp.get('renderKey') or not self.store.render_get(comp['renderKey']):
-                        raise ValidationError('Render this face before accepting its warning.')
-                    if not ((comp.get('crop') or {}).get('warning') or comp.get('flags')):
-                        raise ValidationError('This face has no current crop or layout warning.')
-                    if patch['acceptWarning'] is not True or patch.get('renderKey')!=comp['renderKey']:
+                    if patch['acceptWarning'] is not True:
                         raise ValidationError('The card render changed. Review its current image again.')
-                    f['acceptedWarningKey']=comp['renderKey']
-                    if comp.get('contentRenderKey'):
-                        matching=set(matching_keys(c,f))
-                        saved=[key for row in d.get('cardData',[]) if selector_key(row) in matching for key in row.get('accepted_art',[])]
-                        approvals=list(dict.fromkeys([*saved,*f.get('acceptedArt',[]),comp['contentRenderKey']]))
-                        entry=validate_entries([{**identity(c,f),'accepted_art':approvals}])
-                        f['acceptedArt']=approvals;d['cardData']=merge_entries(d.get('cardData',[]),entry)
+                    self._accept_face_warning(d,c,f,patch.get('renderKey'))
                 face_dirty=False
                 if 'selectedArtPrintingId' in patch:
                     selected=patch['selectedArtPrintingId']

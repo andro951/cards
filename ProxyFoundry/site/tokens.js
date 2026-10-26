@@ -1,4 +1,4 @@
-import {api,asset,thumbnail,modal,closeModal,setModalBusy,attempt,toast,$,confirmAction,errorBox,state} from './ui.js';
+import {api,asset,thumbnail,modal,closeModal,setModalBusy,attempt,toast,$,confirmAction,errorBox,state,work} from './ui.js';
 import {offerDataSave} from './artwork-review.js';
 
 //#region Shared controls and persistence
@@ -255,7 +255,7 @@ export const assignToken=async(deck,front,onChanged,preview,pair=null,onInspect=
 
 //#region Deck image grid
 export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onChanged})=>{
-    let deck=initial;
+    let deck=initial,approving=false;
     const tokenChanged=updated=>{
         if(view.filter===`tokens`)
             view.filter=`all`;
@@ -328,6 +328,57 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
             }
 
             content.append(notice);
+        }
+
+        const reviewFaces=view.filter===`attention`?deck.cards.flatMap(card=>card.faces.filter(face=>!face.error&&face.compiled?.render&&
+            (face.compiled.crop?.warning||face.compiled.flags?.length)&&face.acceptedWarningKey!==face.compiled.renderKey)
+            .map(face=>({cardId:card.id,faceId:face.id,renderKey:face.compiled.renderKey}))):[];
+        const reviewRevision=deck.revision;
+        if(view.filter===`attention`&&reviewFaces.length) {
+            const approve=button(`All look good`,async()=>{
+                if(approving)
+                    return;
+
+                approving=true;approve.disabled=true;
+                let owner=null;
+                try {
+                    const confirmed=await confirmAction(`Approve all flagged artwork?`,
+                        `Warning: Only click “All look good” if you have looked at every card in this deck and all artwork with warnings looks good. This approves ${reviewFaces.length} flagged card faces across the entire deck, including both sides and cards hidden by your search.`,
+                        `All look good`);
+                    if(!confirmed)
+                        return;
+
+                    owner=work.begin({label:`Save artwork approvals`,resources:[`deck:${deck.id}`]});
+                    approve.textContent=`Saving approvals…`;approve.setAttribute(`aria-busy`,`true`);approve.setAttribute(`aria-pressed`,`true`);
+                    Object.assign(approve.style,{transform:`translateY(2px)`,boxShadow:`inset 0 3px 6px #0008`,filter:`brightness(.8)`,cursor:`wait`});
+                    const result=await api(`/api/decks/${deck.id}/accept-art`,{revision:reviewRevision,faces:reviewFaces});
+                    deck=result.deck;
+                    const source=deck.settings.dataJsonSource;
+                    const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder):``;
+                    const document={version:1,cards:deck.cardData||[]};
+                    const options={title:`Save artwork approvals`,autoSave:true,baseline:snapshot(deck)};
+                    const saved=await offerDataSave(deck.id,result.changes,document,url,deck.cards,options).catch(error=>{
+                        toast(`Saved in this deck. ${error.message}`,true);
+                        return offerDataSave(deck.id,result.changes,document,url,deck.cards,{...options,autoSave:false});
+                    });
+                    if(saved?.github&&saved.github!==source?.value) {
+                        const current=await api(`/api/decks/${deck.id}`);
+                        await api(`/api/decks/${deck.id}/save`,{revision:current.revision,settings:{dataJsonSource:{kind:`github`,value:saved.github}}});
+                    }
+
+                    await onChanged(await api(`/api/decks/${deck.id}`));
+                    toast(`All reviewed artwork is accepted for printing.`);
+                }
+                finally {
+                    if(owner)
+                        work.finish(owner);
+
+                    approving=false;approve.disabled=false;approve.textContent=`All look good`;
+                    approve.removeAttribute(`aria-busy`);approve.removeAttribute(`aria-pressed`);approve.removeAttribute(`style`);
+                    draw();
+                }
+            },true);
+            approve.id=`approve-all-art`;approve.disabled=approving;approve.style.marginTop=`8px`;content.append(approve);
         }
 
         let count=0;
