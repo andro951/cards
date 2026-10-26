@@ -172,7 +172,10 @@
     {
       "name": "Yisan, the Wanderer Bard",
       "oracle_id": "7f4b0233-a2b0-41a2-8448-2df1f845148c",
-      "scryfall_url": "https://scryfall.com/card/cmm/334/yisan-the-wanderer-bard?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/cmm/334/yisan-the-wanderer-bard?utm_source=api",
+      "accepted_art": [
+        "3a48202ca7cc5650b3738d67a6384f6363c3c952c4534f9e79bce385a28f45af"
+      ]
     },
     {
       "name": "Academy Rector",
