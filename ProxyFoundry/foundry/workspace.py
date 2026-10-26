@@ -19,7 +19,7 @@ from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
 from . import rules_nicknames
 from . import github_data
-from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
+from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
 from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
@@ -313,6 +313,8 @@ class Workspace:
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
+                        d['status']='draft'
+                    if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and not data.get('stationToken'):
                         d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
@@ -786,8 +788,11 @@ class Workspace:
         spec=dict(spec)
         style=spec.pop('token_frame_style',None) or 'token-full-art'
         prepare_source=comp['data'] if comp['data'].get('version')=='prepare' else None
-        if prepare_source is not None:style='token-classic'
-        if prepare_source is None and not isinstance(comp['data'].get('text',{}).get('rules',{}).get('text'),str):
+        station_source=comp['data'] if comp['data'].get('version')=='stationRegular' else None
+        structured_source=prepare_source if prepare_source is not None else station_source
+        station_color=spec.get('frame_color')
+        if structured_source is not None:style='token-classic'
+        if structured_source is None and not isinstance(comp['data'].get('text',{}).get('rules',{}).get('text'),str):
             raise ValidationError('This card layout needs a compatible token template with a complete rules text box.')
         classic_colorless=style=='token-classic' and sem is not None and not spec.get('frame_color') and _token_frame_code(sem)=='C'
         if sem:
@@ -806,26 +811,27 @@ class Workspace:
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
         if style:
-            short=False if prepare_source is not None else token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
+            short=False if structured_source is not None else token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
             configure_token_style(comp['data'],'C' if classic_colorless else spec.get('frame_color','A'),style,short)
             if prepare_source is not None:comp['data']=apply_prepare_token_layout(prepare_source,comp['data'],spec.get('frame_color','A'))
+            elif station_source is not None:comp['data']=apply_station_token_layout(station_source,comp['data'],station_color)
             if finalize and comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
         if finalize:fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
         if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
             apply_nickname_treatment(comp['data'],sem,'token',
-                                     force=prepare_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')),
-                                     full_frame=prepare_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')))
+                                     force=structured_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')),
+                                     full_frame=structured_source is None and (bool(spec.get('force_nickname_frame')) or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')))
             if finalize and comp['data'].get('version')=='m15Nickname':comp['data'].update(full_art_nonland_placement(self.store.asset(art_id)))
             if finalize and comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
-        if prepare_source is None:
+        if structured_source is None:
             if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
             elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         if not finalize:return comp
         if sem:apply_neutral_elemental_token(comp['data'],sem)
         reserve_token_mana_space(comp['data'])
         fit_token_rules_above_pt(comp['data'])
-        if prepare_source is None:center_short_token_rules(comp['data'])
+        if structured_source is None:center_short_token_rules(comp['data'])
         art=self.store.asset(art_id)
         if art:comp['crop']=crop_metrics(art['width'],art['height'],comp['data'])
         normalize_untap_aliases(comp['data'])
@@ -855,6 +861,7 @@ class Workspace:
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):
             inputs['tokenConversionVersion']=4
             if sf.get('layout')=='prepare':inputs['prepareTokenLayoutVersion']=PREPARE_TOKEN_LAYOUT_VERSION
+            if any(type_group(face,sf,i)=='station' for i,face in enumerate(faces)):inputs['stationTokenLayoutVersion']=STATION_TOKEN_LAYOUT_VERSION
             if any(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or sf.get('mana_cost') or '')) for face in faces):
                 inputs['tokenManaSpacingVersion']=1
             token_spec=c.get('tokenSpec') or {}

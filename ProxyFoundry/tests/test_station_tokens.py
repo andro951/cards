@@ -27,20 +27,24 @@ def test_station_converts_without_aborting_deck_and_retains_all_rules(workspace,
         assert not face.get('error')
         assert face['compiled'] and face['compiled']['renderKey']
     data=prepared['cards'][0]['faces'][0]['compiled']['data']
-    assert data['version'].startswith('token')
+    assert data['version']=='stationRegular' and data['stationToken']
     assert data['text']['pt']['text']=='5/5'
     assert 'Spacecraft' in data['text']['type']['text']
-    rules=data['text']['rules']['text']
-    for content in ('At the beginning of combat','Station','7+ |','Flying','Other artifacts you control have indestructible.'):
+    rules='\n'.join(data['text'][f'ability{i}']['text'] for i in range(3))
+    for content in ('At the beginning of combat','Station','Flying','Other artifacts you control have indestructible.'):
         assert content in rules
-    assert not any(key.startswith('ability') for key in data['text'])
-    assert 'station' not in data and not data.get('onload')
+    assert 'rules' not in data['text']
+    assert data['station']['badgeValues']==['','','7+']
+    assert data['text']['pt']['y']==2
+    assert data['onload']=='/js/frames/versionStation.js'
+    assert any(frame.get('stationTokenHeader') for frame in data['frames'])
     assert ws.prepare(deck['id'])['cards']==prepared['cards']
 
 
 def test_structured_layout_without_token_rules_is_a_validation_error(workspace):
     store,art,settings=workspace;ws=Workspace(store);station=card()
     comp=ws.compiler.compile_face(station,station,0,{},settings,art)
+    comp['data']['version']='unsupported-structured-layout'
     original=copy.deepcopy(comp)
     with pytest.raises(ValidationError,match='compatible token template'):
         ws._apply_token_spec(comp,{},art,'Copy token')

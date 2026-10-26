@@ -1567,7 +1567,7 @@ def fit_token_art(data,art_local_path,autofit=True):
     """Fit token artwork to the visible art window for the active token frame."""
     version=str(data.get('version') or '')
     bounds=(
-        {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':.431} if data.get('prepareToken') else
+        {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':.431} if data.get('prepareToken') or data.get('stationToken') else
         _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
         {'x':0,'y':0,'width':1,'height':1} if version=='tokenTextlessBorderless' else
@@ -1738,11 +1738,22 @@ def build_token_data(sem,artist,autofit,flags,style='token-full-art'):
 
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
+STATION_TOKEN_LAYOUT_VERSION='arched-v1'
 
 
 def apply_prepare_token_layout(source,token,frame_code):
     """Keep Prepare's two lower panels beneath the classic arched token header."""
+    return _apply_structured_token_layout(source,token,frame_code,'prepare')
+
+
+def apply_station_token_layout(source,token,frame_code=None):
+    """Keep native Station abilities, badges and dynamic P/T beneath the arch."""
+    return _apply_structured_token_layout(source,token,frame_code,'station')
+
+
+def _apply_structured_token_layout(source,token,frame_code,kind):
     data=copy.deepcopy(source)
+    header_key=kind+'TokenHeader';lower_name=kind.title()+' lower panels'
     width=int(data['width']);height=int(data['height']);cutoff=round(.5558*height)
     def clip(top):
         y=0 if top else cutoff
@@ -1753,39 +1764,40 @@ def apply_prepare_token_layout(source,token,frame_code):
     # On a second conversion, replace the header and clip rather than stacking them.
     frames=[]
     for frame in data.get('frames',[]):
-        if frame.get('prepareTokenHeader') or 'Nickname Title' in str(frame.get('name','')):continue
-        frame['masks']=[mask for mask in frame.get('masks',[]) if mask.get('name')!='Prepare lower panels']
+        if frame.get(header_key) or 'Nickname Title' in str(frame.get('name','')):continue
+        frame['masks']=[mask for mask in frame.get('masks',[]) if mask.get('name')!=lower_name]
         names={mask.get('name','') for mask in frame['masks']}
         # Explicit copy-token colors affect the host; its prepared spell keeps
         # its independently compiled colors and rules.
-        if not any('Prepare Spell' in name or name=='Rules (Right Half)' for name in names):
+        if (kind=='prepare' or frame_code) and not any('Prepare Spell' in name or name=='Rules (Right Half)' for name in names):
             code=frame_code if frame_code in 'WUBRGMA' else 'A'
             if 'Pinline' in names and str(frame.get('src','')).startswith('data:image'):
-                frame['src']=f'/img/frames/prepare/regular/{code.lower()}.png'
+                frame['src']=(f'/img/frames/prepare/regular/{code.lower()}.png' if kind=='prepare'
+                              else f'/img/frames/station/{code.lower()}.png')
             else:frame['src']=_frame_effect_source(str(frame.get('src','')),code)
-        frame['masks'].append({'name':'Prepare lower panels','src':lower})
+        frame['masks'].append({'name':lower_name,'src':lower})
         frames.append(frame)
     for frame in token.get('frames',[]):
         if 'Power/Toughness' in str(frame.get('name','')):
             # Token P/T overrides keep the original Prepare badge geometry.
-            for original in frames:
+            for original in (frames if kind=='prepare' else []):
                 if 'Power/Toughness' in str(original.get('name','')):
                     original['src']=frame['src'];original['name']=frame['name']
             continue
         layer=copy.deepcopy(frame)
         layer.setdefault('masks',[]).append({'name':'Arched upper frame','src':upper})
-        layer['prepareTokenHeader']=True
+        layer[header_key]=True
         frames.append(layer)
     data['frames']=frames
     text=data['text'];converted=token['text']
-    # Title/mana use the token header. Everything below keeps Prepare geometry.
+    #Title/mana use the token header. Everything below keeps its native geometry.
     for key in ('title','mana'):text[key]=copy.deepcopy(converted[key])
     text.pop('nickname',None)
     text['title'].update(width=.8292)
     for key in ('type','pt'):
         if key in converted:text.setdefault(key,{})['text']=converted[key].get('text','')
     if 'tokenColorOverride' in token:data['tokenColorOverride']=token['tokenColorOverride']
-    data['prepareToken']=True
+    data[kind+'Token']=True
     return data
 
 
@@ -2937,6 +2949,8 @@ class Compiler:
         artist=credit['display']
         sem['artist']=artist
         group=type_group(face,sf,index);choice=options.get('templateOverride') or settings.get('templateRules',{}).get(group,'auto');flags=[]
+        #Arched Station tokens need the filled native lower frame beneath their rules.
+        station_frame_origin='Scryfall selected printing' if conversion_seed and group=='station' else art_origin
         choice=RETIRED_BUILTINS.get(choice,choice)
         identity_face=({**sem,'color_indicator':face.get('color_indicator'),'frame_effects':sf.get('frame_effects')}
                        if group in {'transform-front','transform-back'} else sem)
@@ -2944,20 +2958,14 @@ class Compiler:
         #Converted faces use the original layout as a seed, then apply their token frame.
         if conversion_seed and (choice in {'token-classic','token-full-art','token-borderless'} or options.get('templateOverride')=='godzilla-card'):
             choice='auto'
-        if (conversion_seed and group in {'standard','legendary','station'} and choice in {'auto','normal','godzilla-card'}
+        if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
             donor=choose_builtin(sem,'auto' if choice=='godzilla-card' else choice)
-            if group=='station':
-                #Station's native ability slots cannot be reused in a token frame.
-                #Seed one complete rules box, retaining thresholds and Spacecraft P/T.
-                donor=copy.deepcopy(donor)
-                if sem.get('power') is not None:donor['layout']='creature_legendary' if sem.get('legendary') else 'creature'
-                else:donor['layout']='card_legendary' if sem.get('legendary') else 'card_noncreature'
             layout=native.infer_layout(donor,native.get_type_info(donor))
             if layout in {'creature','creature_legendary','card_noncreature','card_legendary','nyx_enchantment','nyx_creature'}:
                 donor=copy.deepcopy(donor);donor['_proxy_token_seed']=True
                 data=native.build_one(donor,{'artist':artist},False)['data']
-                if 'Creature' not in sem.get('types',[]) and group!='station':data['text'].pop('pt',None)
+                if 'Creature' not in sem.get('types',[]):data['text'].pop('pt',None)
                 #The source true-name field carries these native shadows into borderless token names.
                 if sem.get('nickname'):data['text']['title'].update(shadowX=.0014,shadowY=.001)
                 data.update(artSource=sem['art'],setSymbolSource='/api/assets/'+symbol_id,infoArtist=str(artist),infoNote=CARD_FOOTER_NOTE)
@@ -3003,7 +3011,7 @@ class Compiler:
                 d0,data,recipe=build_battle_data(sem,sf,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='station' and 'Land' in sem.get('types',[]):
-                d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,art_origin)
+                d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,station_frame_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
                 d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-full-art')
@@ -3052,7 +3060,7 @@ class Compiler:
                     if choice=='auto' and group in {'saga','saga-creature'}:
                         apply_dual_saga_tassels(data,sem,group)
                     if choice=='auto' and group=='station':
-                        apply_station_underframe_policy(data,sem,art_origin)
+                        apply_station_underframe_policy(data,sem,station_frame_origin)
                     if choice=='auto' and group=='prepare':
                         apply_prepare_frame_color(data,sem)
                     fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
@@ -3096,7 +3104,7 @@ class Compiler:
         visual_template=bool(not choice in {x['id'] for x in BUILTINS} and t.get('visualRecipe'))
         if not visual_template:apply_universal_frame_color_treatment(data,sem)
         if choice=='auto' and group=='station' and not options.get('rawCard'):
-            apply_station_textbox_transparency(data,sem,art_origin)
+            apply_station_textbox_transparency(data,sem,station_frame_origin)
         nickname_applied=False
         if choice.startswith('godzilla-'):
             if group=='planeswalker':
