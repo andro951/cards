@@ -858,6 +858,19 @@
         "scryfall_id": "499cc16c-9ead-45b9-b56c-7512cd54cf7c"
       },
       "quantity": 2
+    },
+    {
+      "front": {
+        "name": "Deadeye Navigator",
+        "oracle_id": "ebef6d84-b724-4a84-bcde-8eb6dc06717d",
+        "scryfall_id": "4f0791b5-fdb4-4378-8fd3-7e7367ffc05c"
+      },
+      "back": {
+        "name": "Duplicant",
+        "oracle_id": "ea86abfa-6cab-4ef0-8463-34136fc25b59",
+        "scryfall_id": "9ecb184f-c282-42f3-9576-09781a116352"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": []
