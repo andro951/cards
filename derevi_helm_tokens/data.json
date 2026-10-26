@@ -460,6 +460,19 @@
         "scryfall_id": "e384c20b-d0c1-4781-9d11-e89e5a6bf3fc"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Karmic Guide",
+        "oracle_id": "8c31fec9-e4b3-4761-990e-7be38eb05604",
+        "scryfall_id": "b26d50dd-54a1-43ce-9884-3999f698d97b"
+      },
+      "back": {
+        "name": "Stonehewer Giant",
+        "oracle_id": "b3d99ea0-d61f-4394-8913-b4057c38ff3e",
+        "scryfall_id": "0efda05d-01ea-4478-b075-00a31d7037f8"
+      },
+      "quantity": 1
     }
   ],
   "tokenTreatments": []
