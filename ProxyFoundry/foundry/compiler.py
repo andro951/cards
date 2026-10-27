@@ -69,6 +69,8 @@ AUTO_TEMPLATE_VERSIONS['station']=6
 AUTO_TEMPLATE_VERSIONS['helper']=6
 AUTO_TEMPLATE_VERSIONS['emblem']+=1
 AUTO_TEMPLATE_VERSIONS['battle']+=1
+#Battle rules stop before the defense star, including its leftmost point.
+AUTO_TEMPLATE_VERSIONS['battle']+=1
 AUTO_TEMPLATE_VERSIONS['transform-back']+=1
 AUTO_TEMPLATE_VERSIONS['planeswalker']+=2
 # Classic hybrid cards use neutral bars/PT and split native body/rules textures.
@@ -2132,7 +2134,7 @@ def build_battle_data(sem,card,artist,autofit,flags):
         },
         'rules':{
             'name':'Rules Text','text':rules,
-            'x':272/2100,'y':1008/1500,'width':1661/2100,'height':414/1500,
+            'x':272/2100,'y':1008/1500,'width':1580/2100,'height':414/1500,
             'size':(0.0362*2100)/1500,
         },
         'reminder':{
@@ -2971,6 +2973,7 @@ class Compiler:
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
+            if group=='battle':version+=1
             if group=='planeswalker':version+=2
             if group=='transform-back' and not choice.startswith('godzilla-'):version+=1
             if choice=='godzilla-card' and group in {'transform-front','transform-back'}:version+=1
