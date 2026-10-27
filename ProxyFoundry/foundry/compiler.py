@@ -2907,6 +2907,9 @@ class Compiler:
         gold_artifact_pt_version=int(choice in {'auto','normal'} and group not in {'token','station','flip'} and face is not None and gold_artifact_pt(face))
         token_mana_version=int(group=='token' and face is not None and bool(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or ''))))
         neutral_token_version=int(group=='token' and face is not None and neutral_elemental_token(face) and choice in {'auto','token-classic','token-full-art','token-borderless'})
+        #Only classic two-color walkers used the mask that covered the type rim.
+        walker_type_outline_version=int(group=='planeswalker' and choice in {'auto','normal'} and face is not None
+                                        and len(set(face.get('colors') or [])&set('WUBRG'))==2)
         classic_colorless_version=int(group=='token' and choice=='token-classic' and face is not None and
                                       not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line','')) and
                                       not set(face.get('types',[]))&{'Artifact','Land'})
@@ -2927,10 +2930,10 @@ class Compiler:
                 land_colors=land_frame_colors(types,face,face,face.get('oracle_text',''))
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1

@@ -285,9 +285,10 @@ function proxyFoundryInlineSymbols(text) {
                 if cached:raw=self.net.store.asset_path(cached['asset_id']).read_bytes()
                 else:
                     pinline,_=self.fetch(source);badge,_=self.fetch('/img/frames/planeswalker/maskLoyalty.png')
-                    raw=pinline_without_loyalty_png(pinline,badge)
+                    type_bar,_=self.fetch(source.replace('MaskPinline.png','MaskType.png'))
+                    raw=pinline_without_loyalty_png(pinline,badge,type_bar)
                     asset=self.net.store.add_asset(raw,'image/png');self.net.store.cache_put(cache_key,asset,self.net.clock())
-            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Native planeswalker pinline excluding the loyalty badge'}
+            with self.lock:self.requested[path]={'source':source,'bytes':len(raw),'cache':bool(cached),'adapter':'Native planeswalker pinline excluding the loyalty badge and type-bar rim'}
             return raw,'image/png'
         tall_pw=re.fullmatch(re.escape(PW_PREFIX)+r'(FrameTall([WUBRGMAL])|Mask(Pinline|Type)Tall|textTall)\.(png|svg)',path)
         if tall_pw:

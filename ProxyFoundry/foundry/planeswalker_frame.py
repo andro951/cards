@@ -6,7 +6,7 @@ from PIL import Image,ImageChops,ImageFilter
 PREFIX='/img/frames/proxy-foundry/planeswalker/'
 TALL_VERSION='repeat-middle-v1'
 PINLINE_VERSION='nickname-pinline-v1'
-CLASSIC_PINLINE_VERSION='badge-cutout-v1'
+CLASSIC_PINLINE_VERSION='badge-type-cutout-v2'
 TALL_EXTRA=147
 TALL_SHIFT=TALL_EXTRA/2100
 SPLICE_Y=1550
@@ -44,13 +44,19 @@ def has_touching_ability_badges(data):
     return False
 
 
-def pinline_without_loyalty_png(pinline_raw,loyalty_raw):
+def pinline_without_loyalty_png(pinline_raw,loyalty_raw,type_raw=None):
     with Image.open(io.BytesIO(pinline_raw)) as source:
         pinline=source.convert('RGBA')
     with Image.open(io.BytesIO(loyalty_raw)) as source:
         badge=source.convert('RGBA').getchannel('A').resize(pinline.size,Image.Resampling.LANCZOS)
     badge=badge.point(lambda a:255 if a else 0).filter(ImageFilter.MaxFilter(3))
     pinline.putalpha(ImageChops.multiply(pinline.getchannel('A'),ImageChops.invert(badge)))
+    if type_raw is not None:
+        with Image.open(io.BytesIO(type_raw)) as source:
+            type_alpha=source.convert('RGBA').getchannel('A')
+        #The native pinline mask overlaps the type bar's black rim. Leave
+        #that rim to the original frame/type layer instead of painting it.
+        pinline.putalpha(ImageChops.subtract(pinline.getchannel('A'),type_alpha))
     out=io.BytesIO();pinline.save(out,'PNG');return out.getvalue()
 
 
