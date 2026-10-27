@@ -255,6 +255,35 @@ align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 # Full-card artwork is composed before frame/text overlays. Bounds describe
 # the card canvas, never the shorter fitting window supplied by a frame pack.
 FULL_ART_NONLAND_BOUNDS={'x':0,'y':0,'width':1,'height':1}
+NORMAL_ART_ANCHOR_VERSION=1
+
+
+def normal_art_anchor_applies(data,art):
+    bounds=data.get('artBounds') or {}
+    width=float(art.get('width') or 0);height=float(art.get('height') or 0)
+    return (width>0 and height>0 and abs(width/height/(5/7)-1)<=.02
+            and bounds and bounds!=FULL_ART_NONLAND_BOUNDS
+            and float(bounds.get('width') or 0)>0 and float(bounds.get('height') or 0)>0
+            and float(data.get('artRotate') or 0)%360==0)
+
+
+def apply_normal_art_anchor(data,art):
+    """Map the normal frame's upper art-window center into the final art window."""
+    if not normal_art_anchor_applies(data,art):return False
+    reference=native.LAYOUTS['creature']['data']['artBounds']
+    image_w=float(art['width']);image_h=float(art['height'])
+    anchor_x=(reference['x']+reference['width']/2)*image_w
+    anchor_y=(reference['y']+reference['height']/2)*image_h
+    card_w=float(data['width']);card_h=float(data['height']);bounds=data['artBounds']
+    window_w=bounds['width']*card_w;window_h=bounds['height']*card_h
+    center_x=(bounds['x']+bounds['width']/2)*card_w
+    center_y=(bounds['y']+bounds['height']/2)*card_h
+    #Cover each side of the target around this anchor, keeping the source unstretched.
+    zoom=max(float(data.get('artZoom') or 0),window_w/(2*anchor_x),window_w/(2*(image_w-anchor_x)),
+             window_h/(2*anchor_y),window_h/(2*(image_h-anchor_y)))
+    data.update(artX=(center_x-anchor_x*zoom)/card_w,artY=(center_y-anchor_y*zoom)/card_h,
+                artZoom=zoom,artRotate=0,normalArtAnchorVersion=NORMAL_ART_ANCHOR_VERSION)
+    return True
 
 def _is_custom_art_origin(art_origin):
     return str(art_origin or '')!='Scryfall selected printing'
@@ -3201,6 +3230,9 @@ class Compiler:
             from .planeswalker_frame import layout_planeswalker_abilities
             layout_planeswalker_abilities(data,sem)
         normalize_untap_aliases(data)
+        if (not conversion_seed and _is_custom_art_origin(art_origin) and not settings.get('disableAutofit',False)
+                and not options.get('fit') and not options.get('rawCard')):
+            apply_normal_art_anchor(data,art)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

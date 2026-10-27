@@ -26,6 +26,7 @@ from . import art_variants
 from . import substitutes
 from .inline_symbols import has_untap_alias,normalize_untap_aliases
 from .planeswalker_frame import has_touching_ability_badges
+from .compiler import normal_art_anchor_applies,apply_normal_art_anchor,NORMAL_ART_ANCHOR_VERSION
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -312,6 +313,8 @@ class Workspace:
                     #Converted cards retain their source template identity. Refresh
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
+                    if self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION:
+                        d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and not data.get('stationToken'):
@@ -838,6 +841,13 @@ class Workspace:
         comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
         return comp
 
+    @staticmethod
+    def _uses_normal_art_anchor(face,settings):
+        comp=face.get('compiled') or {}
+        return (not settings.get('disableAutofit',False) and not face.get('fit') and not face.get('rawCard')
+                and comp.get('artOrigin') not in {None,'Scryfall selected printing'}
+                and normal_art_anchor_applies(comp.get('data') or {},comp.get('crop') or {}))
+
     def _preparation_key(self,c,s,index):
         # Hash small preparation inputs only, never source image files.
         sf=c['scryfall'];faces=ingest.face_list(sf);selected=[];templates=[]
@@ -858,6 +868,7 @@ class Workspace:
         settings['source']={k:v for k,v in source.items() if k not in {'localFiles','localNames'}}
         options=[{k:v for k,v in f.items() if k not in {'compiled','lastRender','error','preparationKey','preparedAt','group','warnings','render','acceptedWarningKey','acceptedArt','originalArtist'}} for f in c['faces']]
         inputs={'version':1,'pipeline':PIPELINE_VERSION,'sf':sf,'faces':options,'settings':settings,'selectedArt':selected,'templates':templates,'token':c.get('tokenSpec')}
+        if any(self._uses_normal_art_anchor(art_variants.selected_face(f),s) for f in c['faces']):inputs['normalArtAnchorVersion']=NORMAL_ART_ANCHOR_VERSION
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):
             inputs['tokenConversionVersion']=4
             if sf.get('layout')=='prepare':inputs['prepareTokenLayoutVersion']=PREPARE_TOKEN_LAYOUT_VERSION
@@ -956,6 +967,10 @@ class Workspace:
                     token_sem=semantic(sf,face,f.get('index',0))
                     token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
                     comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False),token_sem)
+                if (conversion and origin!='Scryfall selected printing' and not s.get('disableAutofit',False)
+                        and not options.get('fit') and not options.get('rawCard') and apply_normal_art_anchor(comp['data'],comp['crop'])):
+                    comp['crop']=crop_metrics(comp['crop']['width'],comp['crop']['height'],comp['data'])
+                    comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
                 content_key=comp['renderKey']
                 comp['contentRenderKey']=content_key
                 comp['renderKey']=stable_hash({'content':content_key,'deck':d['id'],'face':f['id']})
