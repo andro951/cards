@@ -1,0 +1,433 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Kiora, Sovereign of the Deep",
+      "oracle_id": "95df54e2-0196-4e54-8144-de5982ce07f5",
+      "scryfall_url": "https://scryfall.com/card/mat/35/kiora-sovereign-of-the-deep?utm_source=api"
+    },
+    {
+      "name": "Brokers Hideout",
+      "oracle_id": "bd002797-a545-4bee-88bf-b878436e7cca",
+      "scryfall_url": "https://scryfall.com/card/snc/248/brokers-hideout?utm_source=api"
+    },
+    {
+      "name": "Escape Tunnel",
+      "oracle_id": "0056fc91-4398-471c-b561-7ff99750ac8a",
+      "scryfall_url": "https://scryfall.com/card/tmt/184/escape-tunnel?utm_source=api"
+    },
+    {
+      "name": "Evolving Wilds",
+      "oracle_id": "a75445d3-1303-4bb5-89ad-26ea93fecd48",
+      "scryfall_url": "https://scryfall.com/card/roe/228/evolving-wilds?utm_source=api"
+    },
+    {
+      "name": "Fabled Passage",
+      "oracle_id": "0c85b8f7-0bd0-4680-9ec5-d4b110460a54",
+      "scryfall_url": "https://scryfall.com/card/eld/244/fabled-passage?utm_source=api"
+    },
+    {
+      "name": "Guildless Commons",
+      "oracle_id": "ee723c7c-ec9f-4ffb-8f36-cd7637eb1fae",
+      "scryfall_url": "https://scryfall.com/card/cmm/1003/guildless-commons?utm_source=api"
+    },
+    {
+      "name": "Inventors' Fair",
+      "oracle_id": "91d4a5fe-fd6d-4b14-a63f-61b4d0ecd9c4",
+      "scryfall_url": "https://scryfall.com/card/kld/247/inventors-fair?utm_source=api"
+    },
+    {
+      "name": "Mystic Sanctuary",
+      "oracle_id": "17b60106-a4c7-410a-8ac3-ec8e74e29a7c",
+      "scryfall_url": "https://scryfall.com/card/soc/388/mystic-sanctuary?utm_source=api"
+    },
+    {
+      "name": "Simic Growth Chamber",
+      "oracle_id": "046f5783-cc7b-416a-8cf6-2bcef9c2cc1a",
+      "scryfall_url": "https://scryfall.com/card/dsc/298/simic-growth-chamber?utm_source=api"
+    },
+    {
+      "name": "Terramorphic Expanse",
+      "oracle_id": "1bd3e453-aa21-4ee6-95c2-d6d920ee8e7a",
+      "scryfall_url": "https://scryfall.com/card/tsp/279/terramorphic-expanse?utm_source=api"
+    },
+    {
+      "name": "The Mycosynth Gardens",
+      "oracle_id": "03f5c566-825c-4c46-9c01-a2f9b1e70a13",
+      "scryfall_url": "https://scryfall.com/card/eoc/168/the-mycosynth-gardens?utm_source=api"
+    },
+    {
+      "name": "Urza's Saga",
+      "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+    },
+    {
+      "name": "Tolaria West",
+      "oracle_id": "46eefc72-2d9e-4389-8ae1-26d9ee472b5c",
+      "scryfall_url": "https://scryfall.com/card/tsr/286/tolaria-west?utm_source=api"
+    },
+    {
+      "name": "Rimewood Falls",
+      "oracle_id": "983739cd-0b36-40d9-9a03-7b6aa7ffd0df",
+      "scryfall_url": "https://scryfall.com/card/khm/266/rimewood-falls?utm_source=api"
+    },
+    {
+      "name": "Snow-Covered Forest",
+      "oracle_id": "5f0d3be8-e63e-4ade-ae58-6b0c14f2ce6d",
+      "scryfall_url": "https://scryfall.com/card/khm/284/snow-covered-forest?utm_source=api"
+    },
+    {
+      "name": "Snow-Covered Island",
+      "oracle_id": "5b2460a5-6ae5-4cad-ba94-1a9e98e6e4c0",
+      "scryfall_url": "https://scryfall.com/card/khm/278/snow-covered-island?utm_source=api"
+    },
+    {
+      "name": "Field of the Dead",
+      "oracle_id": "aa959340-c869-4caa-92c7-572bd8d23eef",
+      "scryfall_url": "https://scryfall.com/card/m20/247/field-of-the-dead?utm_source=api"
+    },
+    {
+      "name": "Oboro, Palace in the Clouds",
+      "oracle_id": "645fb11b-d684-4bec-8532-8fa97e8f7b28",
+      "scryfall_url": "https://scryfall.com/card/sok/164/oboro-palace-in-the-clouds?utm_source=api"
+    },
+    {
+      "name": "Lotus Field",
+      "oracle_id": "134d5b82-7940-4b33-a922-7f9d1f403e50",
+      "scryfall_url": "https://scryfall.com/card/soc/385/lotus-field?utm_source=api"
+    },
+    {
+      "name": "Myriad Landscape",
+      "oracle_id": "2549bc57-9ffb-4053-9f10-f2a5f792b845",
+      "scryfall_url": "https://scryfall.com/card/eoc/169/myriad-landscape?utm_source=api"
+    },
+    {
+      "name": "Academy Ruins",
+      "oracle_id": "a3da7d5b-2c2b-45fe-b9c5-413b8c8fc0a2",
+      "scryfall_url": "https://scryfall.com/card/2xm/309/academy-ruins?utm_source=api"
+    },
+    {
+      "name": "Mosswort Bridge",
+      "oracle_id": "7cb9e29f-835f-4155-a2a5-4b778866c773",
+      "scryfall_url": "https://scryfall.com/card/tdc/379/mosswort-bridge?utm_source=api"
+    },
+    {
+      "name": "Arid Archway",
+      "oracle_id": "3be3d7e6-7860-438a-b8c8-ef154c18c163",
+      "scryfall_url": "https://scryfall.com/card/otj/252/arid-archway?utm_source=api"
+    },
+    {
+      "name": "Aesi, Tyrant of Gyre Strait",
+      "oracle_id": "6511f317-bd38-46d0-b800-7125a3f420da",
+      "scryfall_url": "https://scryfall.com/card/dsc/210/aesi-tyrant-of-gyre-strait?utm_source=api"
+    },
+    {
+      "name": "Koma, Cosmos Serpent",
+      "oracle_id": "6ba0656f-e0d2-4735-9c66-3a00afa9fc23",
+      "scryfall_url": "https://scryfall.com/card/mkc/213/koma-cosmos-serpent?utm_source=api"
+    },
+    {
+      "name": "Lotus Cobra",
+      "oracle_id": "8ad91f64-ccab-4edc-bd54-b2ee9267d614",
+      "scryfall_url": "https://scryfall.com/card/znr/193/lotus-cobra?utm_source=api"
+    },
+    {
+      "name": "Maskwood Nexus",
+      "oracle_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111",
+      "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
+    },
+    {
+      "name": "Tezzeret the Seeker",
+      "oracle_id": "4aeafdf3-7828-4114-8c74-3bd46357caec",
+      "scryfall_url": "https://scryfall.com/card/mm2/62/tezzeret-the-seeker?utm_source=api"
+    },
+    {
+      "name": "Tiller Engine",
+      "oracle_id": "62f6baba-da3b-45b8-a3c1-efb75763cca8",
+      "scryfall_url": "https://scryfall.com/card/dmc/20/tiller-engine?utm_source=api"
+    },
+    {
+      "name": "Transit Mage",
+      "oracle_id": "991efbf1-299d-4892-aeab-8ff9827f7168",
+      "scryfall_url": "https://scryfall.com/card/dft/70/transit-mage?utm_source=api"
+    },
+    {
+      "name": "Tribute Mage",
+      "oracle_id": "c2b51295-8820-425f-a517-55231123c7de",
+      "scryfall_url": "https://scryfall.com/card/mh1/73/tribute-mage?utm_source=api"
+    },
+    {
+      "name": "Icebreaker Kraken",
+      "oracle_id": "01590ff3-34fa-47aa-b5da-f0b8c1b031c6",
+      "scryfall_url": "https://scryfall.com/card/khm/63/icebreaker-kraken?utm_source=api"
+    },
+    {
+      "name": "Roaming Throne",
+      "oracle_id": "3640c29b-1534-4952-b297-619ade948431",
+      "scryfall_url": "https://scryfall.com/card/lci/258/roaming-throne?utm_source=api"
+    },
+    {
+      "name": "Sakashima of a Thousand Faces",
+      "oracle_id": "8ecdaf4b-4442-42da-9714-4257a83faf50",
+      "scryfall_url": "https://scryfall.com/card/cmr/89/sakashima-of-a-thousand-faces?utm_source=api"
+    },
+    {
+      "name": "Spark Double",
+      "oracle_id": "8dcb35e5-ae44-455f-86e3-4a77d496ff34",
+      "scryfall_url": "https://scryfall.com/card/rvr/62/spark-double?utm_source=api"
+    },
+    {
+      "name": "Grappling Kraken",
+      "oracle_id": "1ba99ade-df8d-4654-882a-a5f4256ada3d",
+      "scryfall_url": "https://scryfall.com/card/fdn/39/grappling-kraken?utm_source=api"
+    },
+    {
+      "name": "Hullbreaker Horror",
+      "oracle_id": "d4a84e78-d9b9-4c67-8a4b-4329e65f0f15",
+      "scryfall_url": "https://scryfall.com/card/inr/68/hullbreaker-horror?utm_source=api"
+    },
+    {
+      "name": "Spawning Kraken",
+      "oracle_id": "f0357833-80b5-40ba-874a-bd22ea6e4e46",
+      "scryfall_url": "https://scryfall.com/card/c21/33/spawning-kraken?utm_source=api"
+    },
+    {
+      "name": "Starwinder",
+      "oracle_id": "face2dc0-37ba-4efe-b900-b5521567c943",
+      "scryfall_url": "https://scryfall.com/card/eoe/79/starwinder?utm_source=api"
+    },
+    {
+      "name": "Summon: Leviathan",
+      "oracle_id": "b38d1811-64d7-4a35-a86c-3291eecd8391",
+      "scryfall_url": "https://scryfall.com/card/fin/77/summon:-leviathan?utm_source=api",
+      "accepted_art": [
+        "d6df54832d238575b96a9510d5b0637a4996e443d1118d2816482dcafcc8676c"
+      ]
+    },
+    {
+      "name": "Apex Devastator",
+      "oracle_id": "b4d6747c-3516-4e71-be30-af007c6b1dc4",
+      "scryfall_url": "https://scryfall.com/card/cmr/217/apex-devastator?utm_source=api"
+    },
+    {
+      "name": "Imoti, Celebrant of Bounty",
+      "oracle_id": "eca32dcd-6845-433e-a631-ed1f0ee78f25",
+      "scryfall_url": "https://scryfall.com/card/cmr/280/imoti-celebrant-of-bounty?utm_source=api"
+    },
+    {
+      "name": "Azusa, Lost but Seeking",
+      "oracle_id": "6c2c8bf3-9bf8-4a86-89d3-3bb36260dc51",
+      "scryfall_url": "https://scryfall.com/card/cmm/274/azusa-lost-but-seeking?utm_source=api"
+    },
+    {
+      "name": "Roil Elemental",
+      "oracle_id": "7e0d2965-bbcd-4214-b1b6-c0d2601ce078",
+      "scryfall_url": "https://scryfall.com/card/zen/62/roil-elemental?utm_source=api"
+    },
+    {
+      "name": "Tireless Provisioner",
+      "oracle_id": "ab8d5f5c-1976-4f77-8ed2-8d28ee666741",
+      "scryfall_url": "https://scryfall.com/card/moc/313/tireless-provisioner?utm_source=api"
+    },
+    {
+      "name": "Llanowar Scout",
+      "oracle_id": "3bdc9211-8eff-4b30-8d6f-d26f4087f77f",
+      "scryfall_url": "https://scryfall.com/card/dom/170/llanowar-scout?utm_source=api"
+    },
+    {
+      "name": "Walking Atlas",
+      "oracle_id": "855a4837-7fc8-4b97-afbd-daa88e322c89",
+      "scryfall_url": "https://scryfall.com/card/wwk/131/walking-atlas?utm_source=api"
+    },
+    {
+      "name": "Arixmethes, Slumbering Isle",
+      "oracle_id": "caeb39ee-f0bb-4305-9e8b-b30ba0a74c78",
+      "scryfall_url": "https://scryfall.com/card/dsc/211/arixmethes-slumbering-isle?utm_source=api"
+    },
+    {
+      "name": "Thassa, Deep-Dwelling",
+      "oracle_id": "2396299a-c031-4020-b13e-1f9bf9d64511",
+      "scryfall_url": "https://scryfall.com/card/thb/71/thassa-deep-dwelling?utm_source=api"
+    },
+    {
+      "name": "Urza, Lord High Artificer",
+      "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
+      "scryfall_url": "https://scryfall.com/card/cmm/130/urza-lord-high-artificer?utm_source=api"
+    },
+    {
+      "name": "Cultivator Colossus",
+      "oracle_id": "4d8505d3-c8a1-4850-95d4-5ddb8ad49770",
+      "scryfall_url": "https://scryfall.com/card/inr/190/cultivator-colossus?utm_source=api"
+    },
+    {
+      "name": "Junk Winder",
+      "oracle_id": "5b677e88-bcc9-4a55-9c89-8bbd0e2344dc",
+      "scryfall_url": "https://scryfall.com/card/mkc/107/junk-winder?utm_source=api"
+    },
+    {
+      "name": "Patron of the Moon",
+      "oracle_id": "e514546a-ca03-48ba-90e1-7a0e145137f2",
+      "scryfall_url": "https://scryfall.com/card/bok/45/patron-of-the-moon?utm_source=api"
+    },
+    {
+      "name": "Sol Ring",
+      "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+      "scryfall_url": "https://scryfall.com/card/msc/211/sol-ring?utm_source=api"
+    },
+    {
+      "name": "Erratic Portal",
+      "oracle_id": "4a85cd7e-625b-4043-b7f1-999def26eb36",
+      "scryfall_url": "https://scryfall.com/card/tpr/222/erratic-portal?utm_source=api"
+    },
+    {
+      "name": "In Search of Greatness",
+      "oracle_id": "a7b45840-505d-4b7d-a084-549be08b0c20",
+      "scryfall_url": "https://scryfall.com/card/khm/177/in-search-of-greatness?utm_source=api"
+    },
+    {
+      "name": "Trade Routes",
+      "oracle_id": "120fa67e-e5e0-4c23-9a78-d6171d357aee",
+      "scryfall_url": "https://scryfall.com/card/9ed/108/trade-routes?utm_source=api"
+    },
+    {
+      "name": "Retreat to Coralhelm",
+      "oracle_id": "c450f6b7-bb2a-4b8c-aec7-d27555137b63",
+      "scryfall_url": "https://scryfall.com/card/dsc/126/retreat-to-coralhelm?utm_source=api"
+    },
+    {
+      "name": "One with the Multiverse",
+      "oracle_id": "06bb4272-25d1-46db-8585-15f919267e1e",
+      "scryfall_url": "https://scryfall.com/card/bro/59/one-with-the-multiverse?utm_source=api"
+    },
+    {
+      "name": "Omniscience",
+      "oracle_id": "730e39e6-c61d-48b5-8827-bfd952bf1be7",
+      "scryfall_url": "https://scryfall.com/card/fdn/161/omniscience?utm_source=api"
+    },
+    {
+      "name": "Traverse the Outlands",
+      "oracle_id": "0d49cf51-af1f-4c17-9cf4-b82bc7c2c72e",
+      "scryfall_url": "https://scryfall.com/card/clb/258/traverse-the-outlands?utm_source=api"
+    },
+    {
+      "name": "Verdant Confluence",
+      "oracle_id": "0f786c99-d245-4b11-bcce-6e13fb1255cc",
+      "scryfall_url": "https://scryfall.com/card/cmm/329/verdant-confluence?utm_source=api"
+    },
+    {
+      "name": "Conduit of Worlds",
+      "oracle_id": "ed14be15-8f8d-4fe3-a147-f5da8ed873bf",
+      "scryfall_url": "https://scryfall.com/card/msc/171/conduit-of-worlds?utm_source=api"
+    },
+    {
+      "name": "Oracle of Mul Daya",
+      "oracle_id": "6c5b02eb-7829-436a-8555-fea200e4b67f",
+      "scryfall_url": "https://scryfall.com/card/eoc/102/oracle-of-mul-daya?utm_source=api"
+    },
+    {
+      "name": "Kodama of the East Tree",
+      "oracle_id": "cb1afab6-b9c8-4b9c-840b-24106523a783",
+      "scryfall_url": "https://scryfall.com/card/cmr/239/kodama-of-the-east-tree?utm_source=api"
+    },
+    {
+      "name": "Nissa, Resurgent Animist",
+      "oracle_id": "c1fc5923-c3cd-448a-98d1-c154661c2812",
+      "scryfall_url": "https://scryfall.com/card/mat/22/nissa-resurgent-animist?utm_source=api"
+    },
+    {
+      "name": "Tireless Tracker",
+      "oracle_id": "e6555cca-e608-4c87-b835-9cd47fd1f543",
+      "scryfall_url": "https://scryfall.com/card/eoc/110/tireless-tracker?utm_source=api"
+    },
+    {
+      "name": "Tatyova, Benthic Druid",
+      "oracle_id": "0715e860-3b3b-4331-9718-207973e94fee",
+      "scryfall_url": "https://scryfall.com/card/fdn/247/tatyova-benthic-druid?utm_source=api"
+    },
+    {
+      "name": "Traveling Chocobo",
+      "oracle_id": "2e5675d3-3fb0-43b5-a65c-95aacbe48bf9",
+      "scryfall_url": "https://scryfall.com/card/fin/210/traveling-chocobo?utm_source=api"
+    },
+    {
+      "name": "Rhystic Study",
+      "oracle_id": "53236dd7-845a-444c-96d5-f41ed7325d8f",
+      "scryfall_url": "https://scryfall.com/card/j22/114/rhystic-study?utm_source=api"
+    },
+    {
+      "name": "Up the Beanstalk",
+      "oracle_id": "050f5733-7c0b-4991-9a6c-7ea12ccf0ca9",
+      "scryfall_url": "https://scryfall.com/card/woe/195/up-the-beanstalk?utm_source=api"
+    },
+    {
+      "name": "Consecrated Sphinx",
+      "oracle_id": "311a449d-dc74-46e6-9a47-6a597931f736",
+      "scryfall_url": "https://scryfall.com/card/2x2/43/consecrated-sphinx?utm_source=api"
+    },
+    {
+      "name": "Amulet of Vigor",
+      "oracle_id": "dba16032-66c1-4ccb-9d65-d41ac550d182",
+      "scryfall_url": "https://scryfall.com/card/wwk/121/amulet-of-vigor?utm_source=api"
+    },
+    {
+      "name": "Serpent of Yawning Depths",
+      "oracle_id": "d31c6043-e005-4efe-9aa7-d82cb122eebe",
+      "scryfall_url": "https://scryfall.com/card/thb/291/serpent-of-yawning-depths?utm_source=api"
+    },
+    {
+      "name": "Leyline of Transformation",
+      "oracle_id": "cfaa13d6-9992-4223-8bd7-c44046505555",
+      "scryfall_url": "https://scryfall.com/card/dsk/63/leyline-of-transformation?utm_source=api"
+    },
+    {
+      "name": "Arcane Adaptation",
+      "oracle_id": "2188c03f-11b6-4651-914a-b4fdd59127e3",
+      "scryfall_url": "https://scryfall.com/card/xln/46/arcane-adaptation?utm_source=api"
+    },
+    {
+      "name": "Summer Bloom",
+      "oracle_id": "e5df4597-1647-4ac2-bdb3-a517598d1431",
+      "scryfall_url": "https://scryfall.com/card/2x2/160/summer-bloom?utm_source=api"
+    },
+    {
+      "name": "Helm of the Host",
+      "oracle_id": "83b43aba-bf9c-4da2-967d-9daa632e97d2",
+      "scryfall_url": "https://scryfall.com/card/msc/200/helm-of-the-host?utm_source=api"
+    },
+    {
+      "name": "Meloku the Clouded Mirror",
+      "oracle_id": "3b96b8c3-b9c8-4712-a3b1-243a67cc013a",
+      "scryfall_url": "https://scryfall.com/card/cmr/399/meloku-the-clouded-mirror?utm_source=api"
+    },
+    {
+      "name": "Boundless Realms",
+      "oracle_id": "e6acafb7-856f-4125-a908-a620635b8ba3",
+      "scryfall_url": "https://scryfall.com/card/m13/162/boundless-realms?utm_source=api"
+    },
+    {
+      "name": "Auton Soldier",
+      "oracle_id": "94357494-4ccc-43d4-b2d4-351581cbf9b6",
+      "scryfall_url": "https://scryfall.com/card/who/36/auton-soldier?utm_source=api"
+    },
+    {
+      "name": "Ancient Greenwarden",
+      "oracle_id": "3bcf090c-e890-4a9f-a8aa-6079e4ec9947",
+      "scryfall_url": "https://scryfall.com/card/otc/186/ancient-greenwarden?utm_source=api"
+    },
+    {
+      "name": "Reshape the Earth",
+      "oracle_id": "edc15ea8-d321-4884-bdcf-ae6198aab78b",
+      "scryfall_url": "https://scryfall.com/card/cmr/249/reshape-the-earth?utm_source=api"
+    },
+    {
+      "name": "The Great Henge",
+      "oracle_id": "78427103-9543-41fb-b6d4-72963fe87275",
+      "scryfall_url": "https://scryfall.com/card/cmm/294/the-great-henge?utm_source=api"
+    },
+    {
+      "name": "Monstrous Vortex",
+      "oracle_id": "6e27956e-ba2f-41a9-8e39-ec54424591b6",
+      "scryfall_url": "https://scryfall.com/card/mh3/162/monstrous-vortex?utm_source=api"
+    }
+  ]
+}
