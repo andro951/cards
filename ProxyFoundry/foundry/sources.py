@@ -190,7 +190,11 @@ class Sources:
                 if comparison.get('status')=='ahead' and isinstance(files,list) and len(files)<300 and all(isinstance(f,dict) and f.get('filename') and f.get('status') in {'added','modified','removed','renamed','copied','changed','unchanged'} for f in files):
                     changed={path for f in files for path in (f['filename'],f.get('previous_filename')) if path}
                     unchanged={e['path']:e for e in previous['index'].values() if e.get('path') not in changed}
-            except (ValidationError,OSError):pass
+            except Exception:
+                #Browser HTTP failures are JsException, not OSError. Comparison
+                #is optional; refresh the folder below when it is unavailable.
+                #PendingDownload derives from BaseException and still suspends.
+                unchanged={}
         api='https://api.github.com/repos/'+loc['repo']+'/contents/'+quote(loc['folder'],safe='/')+'?ref='+commit
         rows=self.net.json(api,immutable=True)
         if not isinstance(rows,list):raise ValidationError('That GitHub link is a file, not an artwork folder.')
