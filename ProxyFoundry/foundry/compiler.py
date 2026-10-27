@@ -255,7 +255,7 @@ align_m15_set_symbol_vertical=fit_set_symbol_to_bounds
 # Full-card artwork is composed before frame/text overlays. Bounds describe
 # the card canvas, never the shorter fitting window supplied by a frame pack.
 FULL_ART_NONLAND_BOUNDS={'x':0,'y':0,'width':1,'height':1}
-NORMAL_ART_ANCHOR_VERSION=1
+NORMAL_ART_ANCHOR_VERSION=2
 
 
 def normal_art_anchor_applies(data,art):
@@ -3230,9 +3230,6 @@ class Compiler:
             from .planeswalker_frame import layout_planeswalker_abilities
             layout_planeswalker_abilities(data,sem)
         normalize_untap_aliases(data)
-        if (not conversion_seed and _is_custom_art_origin(art_origin) and not settings.get('disableAutofit',False)
-                and not options.get('fit') and not options.get('rawCard')):
-            apply_normal_art_anchor(data,art)
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

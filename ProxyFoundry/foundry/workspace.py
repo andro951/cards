@@ -26,7 +26,7 @@ from . import art_variants
 from . import substitutes
 from .inline_symbols import has_untap_alias,normalize_untap_aliases
 from .planeswalker_frame import has_touching_ability_badges
-from .compiler import normal_art_anchor_applies,apply_normal_art_anchor,NORMAL_ART_ANCHOR_VERSION
+from .compiler import normal_art_anchor_applies,apply_normal_art_anchor,NORMAL_ART_ANCHOR_VERSION,FULL_ART_NONLAND_BOUNDS
 
 BUNDLED_SYMBOL_ROOT=Path(__file__).resolve().parents[1]/'assets'/'symbols'
 DEFAULT_SETTINGS={'source':{'mode':'scryfall','githubFolder':'','ref':'','localFiles':{},'fallback':False},'symbols':{},'artist':'','backAsset':None,'templateRules':{},'disableAutofit':False,'refreshData':False,'flavorPolicy':'auto','showFlavorText':True,'dataJsonSource':None,'symbolsSource':None,'allCardsTokens':False,'tokenOptions':{'power':'','toughness':'','subtypes':'','nonlegendary':False},'acceptCropWarnings':False,'acceptLayoutWarnings':False}
@@ -313,7 +313,8 @@ class Workspace:
                     #Converted cards retain their source template identity. Refresh
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
-                    if self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION:
+                    if ((self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION)
+                            or data.get('normalArtAnchorVersion')==1):
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
                         d['status']='draft'
@@ -844,7 +845,8 @@ class Workspace:
     @staticmethod
     def _uses_normal_art_anchor(face,settings):
         comp=face.get('compiled') or {}
-        return (not settings.get('disableAutofit',False) and not face.get('fit') and not face.get('rawCard')
+        return (comp.get('tokenArtSourceFullArt') is True and comp.get('recipe') in {'Deck-wide token','Card Tools copy token'}
+                and not settings.get('disableAutofit',False) and not face.get('fit') and not face.get('rawCard')
                 and comp.get('artOrigin') not in {None,'Scryfall selected printing'}
                 and normal_art_anchor_applies(comp.get('data') or {},comp.get('crop') or {}))
 
@@ -956,6 +958,12 @@ class Workspace:
                 compile_options={'art_origin':origin}
                 if conversion:compile_options['conversion_seed']=True
                 comp=self.compiler.compile_face(sf,face,f.get('index',0),options,s,art_id,**compile_options)
+                #Only real cards with a full-art source frame need this anchor
+                #when converted. Native tokens keep their token-frame placement.
+                token_art_source_full_art=bool(conversion and comp.get('group') not in {'token','emblem'}
+                    and sf.get('layout') not in {'token','double_faced_token','emblem'}
+                    and not re.search(r'\bToken\b',str(face.get('type_line') or sf.get('type_line') or ''),re.I)
+                    and comp['data'].get('artBounds')==FULL_ART_NONLAND_BOUNDS)
                 token_choice=options.get('templateOverride') if conversion and self._token_frame_spec(options.get('templateOverride')) else None
                 if c.get('tokenSpec') is not None:
                     token_sem=semantic(sf,face,f.get('index',0))
@@ -967,7 +975,8 @@ class Workspace:
                     token_sem=semantic(sf,face,f.get('index',0))
                     token_sem.update({k:v for k,v in options.get('semanticOverrides',{}).items() if k in {'nickname','flavor_text','oracle_text'}})
                     comp=self._apply_token_spec(comp,deck_token_spec,art_id,'Deck-wide token',not s.get('disableAutofit',False),token_sem)
-                if (conversion and origin!='Scryfall selected printing' and not s.get('disableAutofit',False)
+                if token_art_source_full_art:comp['tokenArtSourceFullArt']=True
+                if (token_art_source_full_art and origin!='Scryfall selected printing' and not s.get('disableAutofit',False)
                         and not options.get('fit') and not options.get('rawCard') and apply_normal_art_anchor(comp['data'],comp['crop'])):
                     comp['crop']=crop_metrics(comp['crop']['width'],comp['crop']['height'],comp['data'])
                     comp['renderKey']=render_key(comp['data'],art_id,comp.get('templateCacheVersion',1));comp['render']=None
