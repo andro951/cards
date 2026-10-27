@@ -398,6 +398,17 @@ def frame_treatment_code(sem):
     if 'Artifact' in types:return 'A'
     return None
 
+def inset_normal_rules_bottom(data):
+    """Keep descenders inside classic rules panels without a P/T box."""
+    if data.get('version') not in {'m15Regular','m15TransformFront','m15Devoid'}:return False
+    text=data.get('text') or {}
+    if str((text.get('pt') or {}).get('text') or '').strip():return False
+    rules=text.get('rules')
+    if not isinstance(rules,dict) or not rules.get('height'):return False
+    rules['height']=max(.01,float(rules['height'])-.008)
+    return True
+
+
 def gold_artifact_pt(face):
     """Gold outranks the ordinary artifact PT; keep hybrid/Vehicle treatments."""
     types=face if 'types' in face else ingest.split_type_line(face['type_line']) if face.get('type_line') else {}
@@ -2929,6 +2940,10 @@ class Compiler:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
             outline_colors=set(face.get('land_colors') if face.get('land_colors') is not None else land_frame_colors(types,face,face,face.get('oracle_text','')))&set('WUBRG')
         dual_outline_version=int(len(outline_colors)==2)
+        no_pt_rules_version=int(choice in {'auto','normal'} and face is not None
+            and (group in {'standard','legendary','transform-front','transform-back','meld'}
+                 or choice=='normal' and group in {'land','legendary-land','basic-land'})
+            and not all(face.get(key) is not None and str(face[key]).strip() for key in ('power','toughness')))
         classic_colorless_version=int(group=='token' and choice=='token-classic' and face is not None and
                                       not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line','')) and
                                       not set(face.get('types',[]))&{'Artifact','Land'})
@@ -2949,10 +2964,10 @@ class Compiler:
                 land_colors=land_frame_colors(types,face,face,face.get('oracle_text',''))
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1
@@ -3243,6 +3258,7 @@ class Compiler:
         if choice in {'auto','normal'} and not options.get('rawCard'):
             apply_gold_artifact_pt(data,sem)
             apply_hybrid_frame_treatment(data,sem)
+            inset_normal_rules_bottom(data)
         if group=='token':
             apply_neutral_elemental_token(data,sem)
             reserve_token_mana_space(data)
