@@ -109,7 +109,8 @@
       "oracle_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
       "scryfall_url": "https://scryfall.com/card/ecl/166/bloom-tender?utm_source=api",
       "accepted_art": [
-        "ae61877f973f051c2da1dc99a219d4e27815e4443fc407d97ae0cc02a63b6ee8"
+        "ae61877f973f051c2da1dc99a219d4e27815e4443fc407d97ae0cc02a63b6ee8",
+        "05c248157224d3fa393d0bc15f158a85dc3a6d0e53681c053b7372e619b8b529"
       ]
     },
     {
@@ -143,7 +144,8 @@
       "oracle_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375",
       "scryfall_url": "https://scryfall.com/card/mkm/12/delney-streetwise-lookout?utm_source=api",
       "accepted_art": [
-        "efc348e45d4d59d013127d80e4477b0f029928edbee94cb17974634e1ddd91eb"
+        "efc348e45d4d59d013127d80e4477b0f029928edbee94cb17974634e1ddd91eb",
+        "1d28c7abc19307a80209b21dbd029f2d01ac69150f6aee6ec0a82b881b320bf3"
       ]
     },
     {
@@ -166,7 +168,8 @@
       "oracle_id": "08afc0d7-192f-4ab6-b6a0-c4265cf5e225",
       "scryfall_url": "https://scryfall.com/card/ddu/42/trophy-mage?utm_source=api",
       "accepted_art": [
-        "a0ef336e3870bfede5197d6e3d5d9ff1ba1b504a030293a80e22d84a044dadb9"
+        "a0ef336e3870bfede5197d6e3d5d9ff1ba1b504a030293a80e22d84a044dadb9",
+        "c8fd7f30fe193069c29f4b84e8f1417f8080d9ef3ad5c3aa88a8ca821172a665"
       ]
     },
     {
@@ -187,7 +190,8 @@
       "oracle_id": "fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be",
       "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api",
       "accepted_art": [
-        "392a2eeb61a5481cd6004c14b514caf830b562118d789fe9d7fcc5de928be115"
+        "392a2eeb61a5481cd6004c14b514caf830b562118d789fe9d7fcc5de928be115",
+        "24236d7f8c82cb638c4f5379d1a47c8568c35291b14ea10444b52405b63f8e69"
       ]
     },
     {
@@ -195,7 +199,8 @@
       "oracle_id": "2e7a9ea9-f76c-4c12-950f-c613fa16cfa8",
       "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api",
       "accepted_art": [
-        "95d763a697495d7de3fee4ec11203c9c09c5a3d9def435315b164d6cf67fe71e"
+        "95d763a697495d7de3fee4ec11203c9c09c5a3d9def435315b164d6cf67fe71e",
+        "546a705ec071213b17032133e79c30986ee64cd639238631a6102036c9cf1996"
       ]
     },
     {
@@ -239,7 +244,8 @@
       "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
       "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api",
       "accepted_art": [
-        "8adaf3135399038ecf8ffbee8016230b2a1055423513e3159c3fab1d2166911b"
+        "8adaf3135399038ecf8ffbee8016230b2a1055423513e3159c3fab1d2166911b",
+        "69eb7ba1e2fc3b0082ca1976182dec93ec4107addf360f0611967e84e00d25a4"
       ]
     },
     {
@@ -314,7 +320,8 @@
       "oracle_id": "7c365041-806f-42d6-a2ff-40e20dd8e9f0",
       "scryfall_url": "https://scryfall.com/card/ori/84/willbreaker?utm_source=api",
       "accepted_art": [
-        "7ca5e0c6d20ec81e54cb531266959858ac74d100834382379e4a91bc20469fe0"
+        "7ca5e0c6d20ec81e54cb531266959858ac74d100834382379e4a91bc20469fe0",
+        "4b5d5991a4fafa12ea498d6356255f1e8ec772bb9976b2665234afaba046a0b3"
       ]
     },
     {
@@ -350,7 +357,8 @@
       "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
       "scryfall_url": "https://scryfall.com/card/2x2/3/ulamog-the-infinite-gyre?utm_source=api",
       "accepted_art": [
-        "bcd4a69da447a30e6347f834585bd61bb9a9029a8452677d577977ac5943e30b"
+        "bcd4a69da447a30e6347f834585bd61bb9a9029a8452677d577977ac5943e30b",
+        "b55b02259182edb640a83ec63a6c9d550126f60b2157a5bbcc11bbefff2fb579"
       ]
     },
     {
@@ -363,7 +371,8 @@
       "oracle_id": "dbc9ea19-cf68-41d3-88a8-b5ab8df75c5a",
       "scryfall_url": "https://scryfall.com/card/afr/28/oswald-fiddlebender?utm_source=api",
       "accepted_art": [
-        "4d149485352d708b3977b397b74870be52f7ef0ccf202ea7e745007686825fc4"
+        "4d149485352d708b3977b397b74870be52f7ef0ccf202ea7e745007686825fc4",
+        "64b472c3398b6625d6a82b0cef672bab5ab931195de2a894a86ee0add39671db"
       ]
     },
     {
@@ -376,7 +385,8 @@
       "oracle_id": "f96a2aa6-3259-4bb6-92cd-4d17215d04d0",
       "scryfall_url": "https://scryfall.com/card/2x2/61/nephalia-smuggler?utm_source=api",
       "accepted_art": [
-        "1de163f60bf1c3825b4fc38ffb08407b3f48db9000b5c2973938add31f8184f5"
+        "1de163f60bf1c3825b4fc38ffb08407b3f48db9000b5c2973938add31f8184f5",
+        "5a7937c6ca58caf0a805c3103f870579b5f880c898e53a365b9203afc02d8e9c"
       ]
     },
     {
