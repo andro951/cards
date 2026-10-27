@@ -92,7 +92,7 @@ def validate_model(value):
             validate_model({**value,'variants':[], 'regions':{**regions,**replacements}})
     metadata=value.get('layoutMetadata') or {}
     if not isinstance(metadata,dict) or set(metadata)-{'tokenStyle'}:raise ValidationError('Unknown template layout metadata.')
-    if metadata.get('tokenStyle') not in {None,'token-classic','token-full-art','token-borderless'}:raise ValidationError('Choose a supported token layout family.')
+    if metadata.get('tokenStyle') not in {None,'token-classic','token-full-art','token-full-art-short','token-borderless'}:raise ValidationError('Choose a supported token layout family.')
     return {**value,'layoutMetadata':metadata,'schemaVersion':SCHEMA,'data':data,'groups':groups,'baseGroup':base,
             'regions':copy.deepcopy(regions),'variants':copy.deepcopy(variants)}
 

@@ -96,7 +96,7 @@ export function renderSetup(root,deck,onSaved){
   const tokenFrameLabel=document.createElement('label');tokenFrameLabel.className='field';
   const tokenFrameTitle=document.createElement('span');tokenFrameTitle.textContent='Token frame';
   const tokenFrame=document.createElement('select');tokenFrame.id='token-frame';
-  for(const [value,label] of [['auto','Automatic · Modern full-art token'],['token-classic','Classic arched token'],['token-full-art','Modern full-art token'],['token-borderless','Modern borderless token'],['godzilla-card','Godzilla full art token']]){
+  for(const [value,label] of [['auto','Automatic · Modern full-art token · short rules box'],['token-classic','Classic arched token'],['token-full-art-short','Modern full-art token · short rules box'],['token-full-art','Modern full-art token · normal rules box'],['token-borderless','Modern borderless token'],['godzilla-card','Godzilla full art token']]){
     const option=document.createElement('option');option.value=value;option.textContent=label;tokenFrame.append(option);
   }
   tokenFrame.value=s.templateRules.token||'auto';tokenFrameLabel.append(tokenFrameTitle,tokenFrame);

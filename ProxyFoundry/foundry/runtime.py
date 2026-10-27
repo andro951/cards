@@ -173,6 +173,11 @@ function proxyFoundryInlineSymbols(text) {
 
     def fetch(self,path):
         path=self.path(path)
+        short_token=re.fullmatch(r'/img/frames/proxy-foundry/token-short/frame([WUBRGMALC])\.png',path)
+        if short_token:
+            raw=(Path(__file__).resolve().parents[1]/'assets/token-short'/('frame'+short_token[1]+'.png')).read_bytes()
+            with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled native Short token frame components'}
+            return raw,'image/png'
         land_material=dual_land_rules.material(path)
         if land_material:
             source,key,code=land_material

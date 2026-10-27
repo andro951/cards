@@ -17,6 +17,7 @@ from .credits import credit_text,printing_artist
 from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
+from .compiler import DEFAULT_TOKEN_STYLE,MODERN_TOKEN_STYLES,TOKEN_FRAME_STYLES
 from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
@@ -762,8 +763,8 @@ class Workspace:
         return ingest_image(self.store,out.getvalue())['id']
     @staticmethod
     def _token_frame_spec(choice):
-        if choice=='auto':choice='token-full-art'
-        if choice in {'token-classic','token-full-art','token-borderless'}:return {'token_frame_style':choice}
+        if choice=='auto':choice=DEFAULT_TOKEN_STYLE
+        if choice in TOKEN_FRAME_STYLES:return {'token_frame_style':choice}
         if choice=='godzilla-card':return {'force_nickname_frame':True}
         return {}
 
@@ -790,7 +791,7 @@ class Workspace:
 
     def _apply_token_spec(self,comp,spec,art_id,recipe_label,autofit=True,sem=None,finalize=True):
         spec=dict(spec)
-        style=spec.pop('token_frame_style',None) or 'token-full-art'
+        style=spec.pop('token_frame_style',None) or DEFAULT_TOKEN_STYLE
         prepare_source=comp['data'] if comp['data'].get('version')=='prepare' else None
         station_source=comp['data'] if comp['data'].get('version')=='stationRegular' else None
         structured_source=prepare_source if prepare_source is not None else station_source
@@ -829,7 +830,7 @@ class Workspace:
             if finalize and comp.get('symbolId') and comp['data'].get('version')=='m15Nickname':
                 fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),'m15_nickname')
         if structured_source is None:
-            if style=='token-full-art' and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
+            if style in MODERN_TOKEN_STYLES and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
             elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
         if not finalize:return comp
         if sem:apply_neutral_elemental_token(comp['data'],sem)
@@ -1405,7 +1406,7 @@ class Workspace:
         return previews
 
     def template_seed(self,kind='normal'):
-        if kind in {'token-classic','token-full-art','token-borderless'}:
+        if kind in TOKEN_FRAME_STYLES:
             sem={'name':'My token template','types':['Creature'],'subtypes':['Beast'],'legendary':False,
                  'colors':['G'],'layout':'creature','oracle_text':'Flying','flavor_text':'','mana_cost':'','rarity':'common',
                  'set_symbol_source':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==',

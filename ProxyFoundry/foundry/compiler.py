@@ -26,6 +26,13 @@ from .pinline_masks import OUTLINES as PINLINE_OUTLINES
 PINLINE_RED_HEX='e43c24'
 native.DUAL_EASE_SOLID_HEX['R']=PINLINE_RED_HEX
 native.DUAL_PALETTE['R']=(PINLINE_RED_HEX,native.DUAL_PALETTE['R'][1])
+PINLINE_GREEN_HEX='007b43'
+native.DUAL_EASE_SOLID_HEX['G']=PINLINE_GREEN_HEX
+native.DUAL_PALETTE['G']=(PINLINE_GREEN_HEX,native.DUAL_PALETTE['G'][1])
+native.DUAL_TEMPLATE_HEX['G_DARK']=PINLINE_GREEN_HEX
+DEFAULT_TOKEN_STYLE='token-full-art-short'
+MODERN_TOKEN_STYLES={'token-full-art','token-full-art-short'}
+TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
@@ -35,7 +42,8 @@ BUILTINS=[
 RETIRED_BUILTINS={'land':'legend-land'}
 BUILTINS.extend([
  {'id':'token-classic','name':'Classic arched token','description':'Classic token frame; larger art for short keywords, a rules box for longer text.','legendary':True,'groups':['token']},
- {'id':'token-full-art','name':'Modern full-art token','description':'Modern token frame; a filled textbox whenever rules or flavor text is present.','legendary':True,'groups':['token']},
+ {'id':'token-full-art-short','name':'Modern full-art token · short rules box','description':'Default modern token frame with a shorter filled rules box and more artwork.','legendary':True,'groups':['token']},
+ {'id':'token-full-art','name':'Modern full-art token · normal rules box','description':'Modern token frame with the normal filled rules box for longer text.','legendary':True,'groups':['token']},
  {'id':'token-borderless','name':'Modern borderless token','description':'Edge-to-edge artwork with outlined rules text and the modern token bars.','legendary':True,'groups':['token']},
  {'id':'godzilla-card','name':'Godzilla full art · non-land','description':'Native alternate-name frames for cards, tokens, planeswalkers and double-faced cards.','legendary':True,'groups':['standard','legendary','token','planeswalker','transform-front','transform-back','modal-front','modal-back']},
  {'id':'godzilla-land','name':'Godzilla full art · land','description':'Complete alternate-name frame for lands.','legendary':True,'groups':['land','legendary-land','basic-land']},
@@ -59,7 +67,7 @@ AUTO_TEMPLATE_VERSIONS={group:1 for group in GROUP_LABELS}
 # that canvas for each loaded Saga instead of reusing the previous Saga's
 # chapter shields/dividers. Scope invalidation to Saga cards only.
 AUTO_TEMPLATE_VERSIONS.update({'standard':6,'legendary':6,'land':3,'legendary-land':3,'basic-land':2,'saga':8,'saga-creature':11,'class':4,'transform-front':12,'transform-back':12,'modal-front':2,'modal-back':2,'station':5,'planeswalker':7,'meld':4,'battle':3,'token':3,'emblem':1,'prepare':2})
-BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':12,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-borderless':2}
+BUILTIN_TEMPLATE_VERSIONS={'normal':2,'land':2,'legend-land':2,'godzilla-card':12,'godzilla-land':11,'token-classic':2,'token-full-art':2,'token-full-art-short':2,'token-borderless':2}
 for _group in ('land','legendary-land','basic-land'):AUTO_TEMPLATE_VERSIONS[_group]+=6
 for _choice in ('normal','land','legend-land','godzilla-card','godzilla-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
 for _choice in ('normal','land','legend-land'):BUILTIN_TEMPLATE_VERSIONS[_choice]+=3
@@ -433,6 +441,8 @@ def apply_gold_artifact_pt(data,sem):
 def _frame_effect_source(src,code):
     """Switch an effect layer to the requested color in the same asset family."""
     if not code:return src
+    if re.fullmatch(r'/img/frames/proxy-foundry/token-short/frame[WUBRGMALC]\.png',src):
+        return f'/img/frames/proxy-foundry/token-short/frame{code}.png' if code in 'WUBRGMALC' else src
     match=re.fullmatch(r'/img/frames/token/m15/(regular|textless)/[wubrgmal]\.png',src)
     if match:return f'/img/frames/token/m15/{match.group(1)}/{(code if code in "WUBRGMAL" else "A").lower()}.png'
     match=re.fullmatch(r'/img/frames/token/(regular|textless|textless-borderless)/(?:tokenFrame[WUBRGMAL](?:Regular|Textless)|frameC)\.png',src)
@@ -1657,7 +1667,7 @@ def apply_neutral_elemental_token(data,sem):
         if any(_is_pinline_mask(mask) for mask in frame.get('masks',[])):continue
         classic=re.fullmatch(r'/img/frames/token/m15/(regular|textless)/m\.png',src)
         if classic:frame['src']=classic_token_frame.PREFIX+classic.group(1)+'-c.png'
-        elif src.startswith('/img/frames/token/'):frame['src']=_frame_effect_source(src,'C')
+        elif src.startswith(('/img/frames/token/','/img/frames/proxy-foundry/token-short/')):frame['src']=_frame_effect_source(src,'C')
         elif src=='/img/frames/m15/regular/m15PTM.png':
             frame.update(src='/img/frames/m15/regular/m15PTC.png',name='Colorless Power/Toughness')
     if data.get('version') in {'tokenRegularM15','tokenTextlessM15'}:
@@ -1682,7 +1692,7 @@ def _token_frame_src(code):
 def _token_pt_src(code):
     return f'/img/frames/m15/regular/m15PT{code if code in "WUBRGMAC" else "C"}.png'
 
-def build_token_data(sem,artist,autofit,flags,style='token-full-art'):
+def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
     """Build tokens using the selected genuine CardConjurer token family."""
     types=set(sem.get('types',[]))
     creature='Creature' in types
@@ -1904,9 +1914,10 @@ def configure_token_style(data,code,style,short):
     borderless=style=='token-borderless'
     large_art=short or borderless
     #Black body text needs the filled native textbox even for one keyword.
-    if style=='token-full-art':large_art=not str(data['text']['rules'].get('text') or '').strip()
+    if style in MODERN_TOKEN_STYLES:large_art=not str(data['text']['rules'].get('text') or '').strip()
+    compact=style=='token-full-art-short' and not large_art
     family='textless' if large_art else 'regular'
-    frame=next(f for f in reversed(data['frames']) if str(f.get('src','')).startswith('/img/frames/token/'))
+    frame=next(f for f in reversed(data['frames']) if str(f.get('src','')).startswith(('/img/frames/token/','/img/frames/proxy-foundry/token-short/')))
     if not classic and not large_art:frame['src']=_token_frame_src(code)
     pinline='/img/frames/token/tokenMaskRegularPinline.png'
     if classic:
@@ -1917,6 +1928,9 @@ def configure_token_style(data,code,style,short):
         folder='textless-borderless' if borderless else 'textless'
         frame['src']=f'/img/frames/token/{folder}/'+('frameC.png' if code=='C' else f'tokenFrame{code}Textless.png')
         pinline='/img/frames/token/tokenMaskTextlessPinline.png'
+    elif compact:
+        frame['src']=f'/img/frames/proxy-foundry/token-short/frame{code if code in "WUBRGMALC" else "A"}.png'
+        pinline='/img/frames/token/short/m15MaskPinlineSuperShort.png'
     # These packs contain complete textured frames. Combining their editor
     # masks cuts out much of that texture; keep the whole image as the base.
     # Only multicolor tokens need a separate pinline layer for the shared dual
@@ -1927,8 +1941,14 @@ def configure_token_style(data,code,style,short):
             'name':'Token Pinline','src':frame['src'],
             'masks':[{'src':pinline,'name':'Pinline'}],
         })
-    data['version']=('tokenTextlessM15' if large_art else 'tokenRegularM15') if classic else ('tokenTextlessBorderless' if borderless else 'tokenTextless' if large_art else 'tokenRegular')
+    data['version']=('tokenTextlessM15' if large_art else 'tokenRegularM15') if classic else ('tokenTextlessBorderless' if borderless else 'tokenTextless' if large_art else 'tokenShort' if compact else 'tokenRegular')
     text=data['text']
+    if compact:
+        shift=59/2100
+        text['type']['y']=.65+shift
+        data['setSymbolBounds']['y']=.6743+shift
+        data['watermarkBounds']={**_TOKEN_WATERMARK_BOUNDS,'y':.8177+shift,'height':.1472-shift}
+        text['rules'].update(x=.086,y=.7143+shift,width=.828,height=.2048-shift,size=.0362,oneLine=False,align='left')
     if large_art:
         text['type']['y']=0.8196
         data['setSymbolBounds']['y']=0.8439
@@ -1940,7 +1960,7 @@ def configure_token_style(data,code,style,short):
         for field in text.values():
             field.update(color='black',outlineWidth=0,shadowX=0,shadowY=0)
         text['title']['color']='white' if code=='C' else '#fde367'
-    elif style=='token-full-art':apply_modern_token_text(data,code)
+    elif style in MODERN_TOKEN_STYLES:apply_modern_token_text(data,code)
     else:apply_full_art_text(data)
 
 
@@ -2933,7 +2953,9 @@ class Compiler:
         colorless_land_version=int(group in {'land','legendary-land','basic-land'} and face is not None and colorless_land_frame_refresh(face))
         gold_artifact_pt_version=int(choice in {'auto','normal'} and group not in {'token','station','flip'} and face is not None and gold_artifact_pt(face))
         token_mana_version=int(group=='token' and face is not None and bool(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or ''))))
-        neutral_token_version=int(group=='token' and face is not None and neutral_elemental_token(face) and choice in {'auto','token-classic','token-full-art','token-borderless'})
+        short_token_default_version=int(group=='token' and choice=='auto' and
+            (face is None or bool(str(face.get('oracle_text') or '').strip() or str(face.get('flavor_text') or '').strip())))
+        neutral_token_version=int(group=='token' and face is not None and neutral_elemental_token(face) and choice in TOKEN_FRAME_STYLES|{'auto'})
         #Only classic two-color walkers used the mask that covered the type rim.
         walker_type_outline_version=int(group=='planeswalker' and choice in {'auto','normal'} and face is not None
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
@@ -2942,6 +2964,7 @@ class Compiler:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
             outline_colors=set(face.get('land_colors') if face.get('land_colors') is not None else land_frame_colors(types,face,face,face.get('oracle_text','')))&set('WUBRG')
         dual_outline_version=int(len(outline_colors)==2)
+        green_palette_version=int(len(outline_colors)==2 and 'G' in outline_colors)
         no_pt_rules_version=int(choice in {'auto','normal'} and face is not None
             and (group in {'standard','legendary','transform-front','transform-back','meld'}
                  or choice=='normal' and group in {'land','legendary-land','basic-land'})
@@ -2967,6 +2990,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
+            version+=green_palette_version+short_token_default_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -2983,6 +3007,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
+            version+=green_palette_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
@@ -3025,7 +3050,7 @@ class Compiler:
                        if group in {'transform-front','transform-back'} else sem)
         template_key,template_version,template_cache_version=self.template_identity(group,choice,identity_face)
         #Converted faces use the original layout as a seed, then apply their token frame.
-        if conversion_seed and (choice in {'token-classic','token-full-art','token-borderless'} or options.get('templateOverride')=='godzilla-card'):
+        if conversion_seed and (choice in TOKEN_FRAME_STYLES or options.get('templateOverride')=='godzilla-card'):
             choice='auto'
         if (conversion_seed and group in {'standard','legendary'} and choice in {'auto','normal','godzilla-card'}
                 and not options.get('rawCard') and not options.get('fit')):
@@ -3050,7 +3075,7 @@ class Compiler:
             builtin=next(x for x in BUILTINS if x['id']==choice)
             if choice!='auto' and builtin['groups']!='ordinary' and group not in builtin['groups']:
                 raise ValidationError('This template does not support '+group+'.')
-            if group not in ORDINARY_GROUPS and choice not in {'auto','godzilla-card','token-classic','token-full-art','token-borderless'}:
+            if group not in ORDINARY_GROUPS and choice not in TOKEN_FRAME_STYLES|{'auto','godzilla-card'}:
                 raise ValidationError('Choose automatic or a custom template for '+group+'.')
             if choice=='godzilla-card' and group!='token' and group not in GODZILLA_DFC_GROUPS and 'Land' in sem.get('types',[]):
                 raise ValidationError('Choose the Godzilla land template for lands.')
@@ -3083,7 +3108,7 @@ class Compiler:
                 d0,data,recipe=build_station_land_data(sem,artist,not settings.get('disableAutofit',False),flags,station_frame_origin)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='token':
-                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else 'token-full-art')
+                d0,data,recipe=build_token_data(sem,artist,not settings.get('disableAutofit',False),flags,choice if choice.startswith('token-') else DEFAULT_TOKEN_STYLE)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             elif group=='emblem':
                 d0,data,recipe=build_emblem_data(sem,artist,not settings.get('disableAutofit',False),flags)
@@ -3203,7 +3228,7 @@ class Compiler:
             )
             if choice in {'land','legend-land'}:apply_full_art_text(data)
             if group=='token' and data.get('version') not in {'tokenRegularM15','tokenTextlessM15'}:
-                if choice in {'auto','token-full-art'}:apply_modern_token_text(data,frame_treatment_code(sem))
+                if choice in MODERN_TOKEN_STYLES|{'auto'}:apply_modern_token_text(data,frame_treatment_code(sem))
                 else:apply_full_art_text(data)
         if (choice in {'auto','legend-land'} and 'Land' in sem.get('types',[])
                 and recipe in {'land_full_legendary','land_full_dual_legendary','land_full_tri_legendary','land_five_color_legendary'}
