@@ -1,3 +1,4 @@
+import './favicon.js';
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,job,loading,badge,humanStatus,date,thumbnail,nav,confirmAction,saveApiFile,showWorkspaceError,bindGenerationButton} from './ui.js';
 import {showDeck,importDeck} from './deck.js';
 import {showTemplates} from './templates.js';

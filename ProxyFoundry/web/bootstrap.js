@@ -1,3 +1,4 @@
+import '/site/favicon.js';
 import {WorkspaceFiles} from './workspace-files.js';
 import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
 const basePath='';
