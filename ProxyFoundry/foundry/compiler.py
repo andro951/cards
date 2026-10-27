@@ -18,6 +18,7 @@ from . import nickname_special
 from . import rules_nicknames
 from .hybrid_frame import apply_hybrid_frame_treatment,hybrid_colors
 from .inline_symbols import normalize_untap_aliases
+from .pinline_masks import OUTLINES as PINLINE_OUTLINES
 
 # Sampled from the supplied real MTG red pinline reference image.
 # Keep the preserved vendor compiler unchanged; override only the palette used
@@ -731,6 +732,7 @@ def apply_universal_frame_color_treatment(data,sem):
     for frame in source_frames:
         if not isinstance(frame,dict):
             rebuilt.append(frame);continue
+        if frame.get('name')=='Native black frame outlines' and frame.get('src') in PINLINE_OUTLINES.values():continue
 
         old_src=str(frame.get('src',''))
         effect_sem=sem.get('prepared_spell',sem) if any('Prepare Spell' in str(m.get('name','')) or m.get('name')=='Rules (Right Half)' for m in frame.get('masks',[]) if isinstance(m,dict)) else sem
@@ -842,6 +844,18 @@ def apply_universal_frame_color_treatment(data,sem):
             else:
                 layer['src']=_frame_effect_source(old,effect_code)
             if layer['src']!=old:changed=True
+            if effect_dual:
+                for mask in pin:
+                    #The Godzilla body reuses the ordinary mask but has no
+                    #framed art window. Never add the ordinary window to it.
+                    if data.get('version')=='m15Nickname' and mask.get('src')=='/img/frames/m15/regular/m15MaskPinlineSuper.png':continue
+                    outline_src=PINLINE_OUTLINES.get(mask.get('src'))
+                    if not outline_src:continue
+                    outline=copy.deepcopy(layer)
+                    outline.update(name='Native black frame outlines',src=outline_src,masks=[])
+                    #Earlier entries render later: restore the native black
+                    #edge above the gradient without repainting its colors.
+                    rebuilt.append(outline)
             rebuilt.append(layer)
 
         if not other and not had_boxes and not pin:
@@ -2910,6 +2924,11 @@ class Compiler:
         #Only classic two-color walkers used the mask that covered the type rim.
         walker_type_outline_version=int(group=='planeswalker' and choice in {'auto','normal'} and face is not None
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
+        outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
+        if group in {'land','legendary-land','basic-land'} and face is not None:
+            types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
+            outline_colors=set(face.get('land_colors') if face.get('land_colors') is not None else land_frame_colors(types,face,face,face.get('oracle_text','')))&set('WUBRG')
+        dual_outline_version=int(len(outline_colors)==2)
         classic_colorless_version=int(group=='token' and choice=='token-classic' and face is not None and
                                       not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line','')) and
                                       not set(face.get('types',[]))&{'Artifact','Land'})
@@ -2930,10 +2949,10 @@ class Compiler:
                 land_colors=land_frame_colors(types,face,face,face.get('oracle_text',''))
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
-            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version
+            version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
-            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version
+            version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version
             # Refresh classic land bars without invalidating other card families.
             if choice=='normal' and group in {'land','legendary-land','basic-land'}:version+=1
             if group in {'emblem','battle'}:version+=1

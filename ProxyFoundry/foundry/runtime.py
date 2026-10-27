@@ -16,6 +16,7 @@ from .dfc_material import color_title_png,VERSION as DFC_MATERIAL_VERSION
 from .planeswalker_frame import PREFIX as PW_PREFIX,TALL_VERSION,PINLINE_VERSION,CLASSIC_PINLINE_VERSION,pinline_without_loyalty_png,nickname_pinline_png,extend_rules_png,extend_rules_svg,renderer_script as planeswalker_renderer_script
 from .devoid_frame import PREFIX as DEVOID_PREFIX,VERSION as DEVOID_VERSION,transparent_header_png
 from .saga_frame import PREFIX as SAGA_PREFIX,VERSION as SAGA_VERSION,transform_back_png
+from .pinline_masks import PREFIX as PINLINE_MASK_PREFIX,BUNDLED as PINLINE_OUTLINE_FILES
 
 class Runtime:
     SOURCE_FILES=('/creator/index.html','/js/main-1.js','/js/creator-23.js','/js/frames/groupStandard-3.js','/js/frames/packM15Regular-1.js','/css/style-9.css')
@@ -431,6 +432,10 @@ function proxyFoundryInlineSymbols(text) {
                 return raw,'image/png'
             raw=(Path(__file__).resolve().parents[1]/'assets/werewolf'/(werewolf[1]+'.png')).read_bytes()
             with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled approved Werewolf header'}
+            return raw,'image/png'
+        if path.startswith(PINLINE_MASK_PREFIX) and path[len(PINLINE_MASK_PREFIX):] in PINLINE_OUTLINE_FILES:
+            raw=(Path(__file__).resolve().parents[1]/'assets/frame-masks'/path[len(PINLINE_MASK_PREFIX):]).read_bytes()
+            with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled native black outlines above the two-color pinline'}
             return raw,'image/png'
         mask=re.fullmatch(r'/img/frames/proxy-foundry/masks/(class|saga|creature-saga)-pinline\.png',path)
         if mask:
