@@ -63,7 +63,8 @@
       "scryfall_url": "https://scryfall.com/card/ecc/53/faeburrow-elder?utm_source=api",
       "accepted_art": [
         "100f066f4a8c7b7e4fb2b224679d09b601f467fafe4c2ae3533204aa39b7af09",
-        "a42cf4d299a866b1ffd1043b48703c886cd64360cc08234aace826a84fcd6f7f"
+        "a42cf4d299a866b1ffd1043b48703c886cd64360cc08234aace826a84fcd6f7f",
+        "8423aa95d98583d3cc7de24fe713574afb04148cb1f6a41b181f5c9da598c7c2"
       ]
     },
     {
@@ -115,7 +116,8 @@
       "scryfall_url": "https://scryfall.com/card/khc/82/brago-king-eternal?utm_source=api",
       "accepted_art": [
         "153faf418c15945f14a70330718324bf70856fbb85255f0f10896cd625602d72",
-        "fd72f46891800cefc89e4293e161e21f97f894a7a31e95975b4c32747a0dffb9"
+        "fd72f46891800cefc89e4293e161e21f97f894a7a31e95975b4c32747a0dffb9",
+        "a214c7dd14d323d7d6fbed39405f233f730774fe4a949da7c23bec8115a9483b"
       ]
     },
     {
@@ -124,7 +126,8 @@
       "scryfall_url": "https://scryfall.com/card/inv/237/captain-sisay?utm_source=api",
       "accepted_art": [
         "ddb0641a05d441d3f7a96f70b6ee4f942b4ed9ad075dea42e58167af5e317d03",
-        "14abefbddd128bd413caee28ea2f6ac94a95049e6e8629281071017322830488"
+        "14abefbddd128bd413caee28ea2f6ac94a95049e6e8629281071017322830488",
+        "eb861fb3104ec758fba5d68c3515d0d33bd212f96c1b2d980771012891d07f89"
       ]
     },
     {
@@ -166,7 +169,8 @@
       "oracle_id": "1733c71b-fd28-48dd-8a3d-41afd4b22f0e",
       "scryfall_url": "https://scryfall.com/card/woe/206/hylda-of-the-icy-crown?utm_source=api",
       "accepted_art": [
-        "13d4fe285c023232cd8e6117de9ef6e754cf5339b8ad35d1a4c250ebd6a1f3ea"
+        "13d4fe285c023232cd8e6117de9ef6e754cf5339b8ad35d1a4c250ebd6a1f3ea",
+        "58402fe44ed03231d2e9c254dcfcb1d901ff0d308ac32cf42e2cbb4e051ba848"
       ]
     },
     {
@@ -182,7 +186,8 @@
       "oracle_id": "b543bfa2-0174-4dd8-9ee6-09b92fb44934",
       "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api",
       "accepted_art": [
-        "5974526cecd74702a4207b1849712b56dd33d72765dfddc4bdb8e54506e55ec8"
+        "5974526cecd74702a4207b1849712b56dd33d72765dfddc4bdb8e54506e55ec8",
+        "b7a640fea1af467aa2ae6a96fd0161cf3c7ec78717e2fdfcc0ed2e6b3bf0b933"
       ]
     },
     {
@@ -335,7 +340,8 @@
       "oracle_id": "b817bc56-9b4d-4c50-bafa-3c652b99578f",
       "scryfall_url": "https://scryfall.com/card/2x2/3/ulamog-the-infinite-gyre?utm_source=api",
       "accepted_art": [
-        "90a53c4d3566678e7187bac278f61e87883d8e35dbe29ff65811aa6d28d5fc2d"
+        "90a53c4d3566678e7187bac278f61e87883d8e35dbe29ff65811aa6d28d5fc2d",
+        "905baa0cc0b97c90c178851d0c3dd77efdbd6724bafcd6c9026fe68e3bfd75d4"
       ]
     },
     {
@@ -398,7 +404,8 @@
       "scryfall_url": "https://scryfall.com/card/eoe/35/the-seriema?utm_source=api",
       "accepted_art": [
         "65b512fa2aa4f4484c82a2df94651c4c88ce2bc5d2cbda42d2b8def1d633a393",
-        "9367985b2449bd103aa6022b50ec8ba8f214cb09c59edf23651e2be9993dc69b"
+        "9367985b2449bd103aa6022b50ec8ba8f214cb09c59edf23651e2be9993dc69b",
+        "1114c9dcd0e7e9bc39536175d6235d89026ebc5dbd3ebf8ad20ca6687ef7ac75"
       ]
     },
     {
@@ -406,7 +413,8 @@
       "oracle_id": "e2962883-6daf-4a84-af73-917afc73092c",
       "scryfall_url": "https://scryfall.com/card/nec/4/shorikai-genesis-engine?utm_source=api",
       "accepted_art": [
-        "d4bcc6c73ea8c639e5f77a786480e6c592f1f0103700c716d03930ab3b273e39"
+        "d4bcc6c73ea8c639e5f77a786480e6c592f1f0103700c716d03930ab3b273e39",
+        "7d03e49e2b47e14a276e9d011d320301ff4c21d4f86171e63d6526de4e6b7732"
       ]
     }
   ],
