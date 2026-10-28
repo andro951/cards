@@ -80,7 +80,9 @@ def fit_ability_rows(abilities,bounds):
             text,passive=not cost,font_size=size*(.7467 if cost else .7907)/(bounds['width']-(gutter if cost else 0)))
             for cost,text in abilities]
         # Keep the first cost badge clear of the type bar.
-        if abilities[0][0]:heights[0]=max(.088,heights[0])
+        if abilities[0][0]:
+            top,_=badge_extents(abilities[0][0])
+            heights[0]=max(2*(-top+MIN_BADGE_GAP),heights[0])
         if sum(heights)>bounds['height']:continue
         spare=(bounds['height']-sum(heights))/len(abilities)
         candidate=[height+spare for height in heights]

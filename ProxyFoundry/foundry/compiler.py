@@ -2978,7 +2978,7 @@ class Compiler:
         #Only classic two-color walkers used the mask that covered the type rim.
         walker_type_outline_version=int(group=='planeswalker' and choice in {'auto','normal'} and face is not None
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
-        regular_walker_rules_version=int(group=='planeswalker' and choice in {'auto','godzilla-card'} and face is not None
+        regular_walker_rules_version=2*int(group=='planeswalker' and choice in {'auto','godzilla-card'} and face is not None
             and 1<=len(native.parse_planeswalker_abilities(face.get('oracle_text','')))<=3)
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:

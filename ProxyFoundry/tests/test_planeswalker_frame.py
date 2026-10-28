@@ -107,6 +107,22 @@ def test_shared_fitter_uses_supplied_bounds_and_reserves_badge_margin(count,pass
     assert all(b['y']==pytest.approx(a['y']-.1) for a,b in zip(rows,moved))
 
 
+@pytest.mark.parametrize('version',['planeswalkerRegular','planeswalkerNickname'])
+@pytest.mark.parametrize('index',range(3))
+def test_cats_planeswalkers_fit_with_bottom_margin_and_badge_clearance(version,index):
+    import json
+    from pathlib import Path
+    card=json.loads((Path(__file__).parent/'fixtures/cats_planeswalkers.json').read_text(encoding='utf-8'))[index]
+    data={'version':version,'text':{'type':{'y':.5625,'height':.0548}}}
+    layout_planeswalker_abilities(data,card)
+    rows=[data['text'][f'ability{i}'] for i in range(3)]
+    assert rows[-1]['y']+rows[-1]['height']==pytest.approx(.883)
+    assert len({row['size'] for row in rows})==1
+    assert not has_touching_ability_badges(data)
+    first_top=badge_extents(data['planeswalker']['abilities'][0])[0]
+    assert rows[0]['height']/2+first_top>=MIN_BADGE_GAP-1e-9
+
+
 @pytest.mark.parametrize('count',[1,2,3,4])
 def test_frames_share_geometry_and_badge_centers_at_equal_bounds(count):
     oracle='\n'.join(['+1: Draw a card.','-2: Destroy target creature.','0: You gain 3 life.','-7: Draw seven cards.'][:count])
@@ -114,9 +130,9 @@ def test_frames_share_geometry_and_badge_centers_at_equal_bounds(count):
     cards=[]
     for version in versions:
         data={'version':version,'text':{'type':{'y':.5625,'height':.0548}}}
-        #Four abilities use a tall rules well in production. Give all frame
-        #families those same explicit bounds when comparing the shared fitter.
-        bounds={'x':.136,'y':.5727,'width':.764,'height':.3183} if count==4 else None
+        #Compare the shared fitter at equal explicit bounds. Default normal
+        #frames deliberately reserve more bottom clearance than tall frames.
+        bounds={'x':.136,'y':.5727,'width':.764,'height':.3183}
         layout_planeswalker_abilities(data,{'oracle_text':oracle},bounds)
         cards.append(data)
     assert all(d['text']==cards[0]['text'] for d in cards)
@@ -142,7 +158,10 @@ AETHERSPARK_ORACLE=('As long as The Aetherspark is attached to a creature, The A
 @pytest.mark.parametrize('last_cost',['-10','+2','0'])
 def test_passive_and_short_abilities_leave_visible_badge_clearance(version,last_cost):
     data={'version':version,'text':{'type':{'y':.4967,'height':.0543}}}
-    layout_planeswalker_abilities(data,{'oracle_text':AETHERSPARK_ORACLE.replace('-10:',last_cost+':')})
+    #Four abilities use the tall rules well in production, even when testing
+    #the common badge calculation with a different native anchor table.
+    layout_planeswalker_abilities(data,{'oracle_text':AETHERSPARK_ORACLE.replace('-10:',last_cost+':')},
+        {'x':.136,'y':.5727,'width':.764,'height':.3183})
     assert not has_touching_ability_badges(data)
     previous_bottom=None
     for index,cost in enumerate(data['planeswalker']['abilities']):
