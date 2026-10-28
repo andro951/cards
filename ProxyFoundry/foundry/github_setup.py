@@ -105,6 +105,10 @@ def import_symbol_folder_steps(workspace, payload, progress=lambda *a: None, can
         raw_url='https://raw.githubusercontent.com/'+loc['repo']+'/'+ref+'/'+quote(path,safe='/')
         raw,_,_=workspace.net.fetch(raw_url,refresh=True,ttl=0)
         result[rarity]=ingest_image(workspace.store,raw,trim_transparent_padding=True)['id']
+        from .domain import stable_hash
+        workspace.store.put('github-setup-images',{
+            'id':stable_hash({'url':raw_url,'trim':True,'version':1}),'assetId':result[rarity],
+            'source':{'url':raw_url,'transform':'trim-transparent'}})
         yield
         check_cancel()
     progress(4,4,'Four rarity symbols imported')
@@ -287,7 +291,8 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
             image = ingest_image(store, raw, trim_transparent_padding=trim_transparent_padding)
         except ValidationError as exc:
             raise ValidationError(row['name'] + ': ' + str(exc)) from exc
-        store.put('github-setup-images',{'id':cache_key,'assetId':image['id']})
+        store.put('github-setup-images',{'id':cache_key,'assetId':image['id'],
+                  'source':{'url':raw_url,'transform':'trim-transparent' if trim_transparent_padding else 'image'}})
         done += 1
         progress(done, total, 'Imported ' + row['name'])
         yield

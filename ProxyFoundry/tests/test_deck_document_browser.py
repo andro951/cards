@@ -13,6 +13,18 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Opt-in i
 def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
     from playwright.sync_api import sync_playwright
     source,deck=source_deck(tmp_path)
+    import io
+    from PIL import Image
+    from foundry.images import ingest_image
+    from foundry.domain import stable_hash
+    symbol_image=Image.new('RGBA',(40,40));symbol_image.paste('orange',(10,10,30,30))
+    symbol_buffer=io.BytesIO();symbol_image.save(symbol_buffer,'PNG');symbol_raw=symbol_buffer.getvalue()
+    symbol_url='https://raw.githubusercontent.com/owner/cards/'+'a'*40+'/set_symbol/uncommon.png'
+    original_symbol=source.store.add_asset(symbol_raw,'image/png',40,40)
+    source.store.cache_put(symbol_url,original_symbol,source.net.clock())
+    cropped_symbol=ingest_image(source.store,symbol_raw,trim_transparent_padding=True)
+    source.store.put('github-setup-images',{'id':stable_hash({'url':symbol_url,'trim':True,'version':1}),'assetId':cropped_symbol['id']})
+    deck['settings']['symbols']['uncommon']=cropped_symbol['id']
     from urllib.parse import quote
     original_vector='data:image/svg+xml;utf8,'+quote('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><defs><linearGradient id="paint"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/></linearGradient></defs><rect width="40" height="40" fill="url(#paint)"/></svg>')
     deck['cards'][0]['faces'][0]['compiled']['data']['frames'].append({'name':'Generated gradient','src':original_vector,'masks':[]})
@@ -102,10 +114,11 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
               const owner=ui.work.begin({label:'Automatic generation save test',resources:['deck:'+id]});
               try {
                 await (await import('/site/deck-document.js')).saveGenerationData([id],{owner});
-                return {vectors:Object.keys(saved.vectors).length,embedded:JSON.stringify(saved).includes('data:image/'),version:saved.version};
+                const symbol=saved.images[saved.deck.settings.symbols.uncommon];
+                return {vectors:Object.keys(saved.vectors).length,embedded:JSON.stringify(saved).includes('data:image/'),version:saved.version,symbolTransform:symbol.transform,symbolURL:symbol.url};
               } finally {window.fetch=original;ui.work.finish(owner);await files.disconnectGithub('owner/cards');}
             }''')
-            assert auto_save=={'vectors':1,'embedded':False,'version':2}
+            assert auto_save=={'vectors':1,'embedded':False,'version':2,'symbolTransform':'trim-transparent','symbolURL':symbol_url}
             page.evaluate('''document=>{
               window.requiredSave=import('/site/artwork-review.js').then(({offerDataSave})=>
                 offerDataSave('fixture',[],{version:1,cards:[]},'https://github.com/owner/cards/blob/main/data.json',[],

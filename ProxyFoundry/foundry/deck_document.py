@@ -250,8 +250,22 @@ def export_document(workspace,ident,*,allow_missing=False):
         if field in deck['settings']:value[field]=copy.deepcopy(deck['settings'][field])
     with workspace.store.connect() as db:
         sources={}
-        for row in db.execute('SELECT asset_id,url FROM http_cache ORDER BY fetched DESC'):
+        source_rows=list(db.execute('SELECT asset_id,url FROM http_cache ORDER BY fetched DESC'))
+        for row in source_rows:
             sources.setdefault(row['asset_id'],row['url'])
+    # Setup imports crop symbols/back icons. Their processed content hashes do
+    # not match the original downloads in http_cache. Retain the source recipe,
+    # and recover historical imports from the existing URL/trim cache identity.
+    from .domain import stable_hash
+    setup_images={item['id']:item for item in workspace.store.list('github-setup-images')}
+    processed_sources={}
+    for item in setup_images.values():
+        if item.get('source'):processed_sources.setdefault(item['assetId'],item['source'])
+    for row in source_rows:
+        if not row['url'].startswith('https://raw.githubusercontent.com/'):continue
+        for trim in (True,False):
+            cached=setup_images.get(stable_hash({'url':row['url'],'trim':trim,'version':1}))
+            if cached:processed_sources.setdefault(cached['assetId'],{'url':row['url'],'transform':'trim-transparent' if trim else 'image'})
     #Known package images have permanent GitHub locations. Preserve the exact
     #normalization step used when bundled symbols were imported.
     root=Path(__file__).resolve().parents[1]
@@ -288,7 +302,8 @@ def export_document(workspace,ident,*,allow_missing=False):
         try:
             if url:validate_remote_url(url)
         except ValidationError:url=None
-        source=deck.get('imageSources',{}).get(asset_id) or bundled.get(asset_id) or recipes.get(asset_id)
+        source=deck.get('imageSources',{}).get(asset_id) or processed_sources.get(asset_id) or bundled.get(asset_id) or recipes.get(asset_id)
+        if source and 'url' in source:source={**source,'url':permanent_url(workspace,source['url'])}
         if source:entry.update(source)
         elif url:entry.update(url=permanent_url(workspace,url),transform='raw')
         else:missing.append(asset_id)

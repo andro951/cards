@@ -29,7 +29,10 @@ def source_deck(tmp_path):
 def destination(tmp_path,source,document):
     urls={}
     for ident,entry in document['images'].items():
-        if entry.get('transform')=='trim-transparent':
+        cached=source.store.cache_get(entry['url'])
+        if cached:
+            raw=source.store.asset_path(cached['asset_id']).read_bytes()
+        elif entry.get('transform')=='trim-transparent':
             filename=entry['url'].split('/ProxyFoundry/')[-1]
             raw=(Path(__file__).parents[1]/filename).read_bytes()
         else:raw=source.store.asset_path(ident).read_bytes()
@@ -135,6 +138,39 @@ def test_vector_drawing_recipes_reject_active_or_external_content():
                 '<svg xmlns="http://www.w3.org/2000/svg"><use href="https://example.com/a.svg"/></svg>']:
         with pytest.raises(ValidationError):map_images('data:image/svg+xml,'+quote(svg),vectors={})
     with pytest.raises(ValidationError):vector_source({'kind':'svg','root':{'tag':'svg'}})
+
+
+@pytest.mark.parametrize('legacy',[False,True])
+def test_cropped_github_symbols_keep_original_sources_and_rebuild(tmp_path,legacy):
+    import io
+    from PIL import Image
+    from foundry.images import ingest_image
+    ws,deck=source_deck(tmp_path);urls={};expected={}
+    for n,rarity in enumerate(['common','uncommon','rare','mythic']):
+        image=Image.new('RGBA',(40,40));image.paste((40*n,60,90,255),(10,10,30,30))
+        buffer=io.BytesIO();image.save(buffer,'PNG');raw=buffer.getvalue()
+        url='https://raw.githubusercontent.com/owner/cards/'+'a'*40+'/symbols/'+rarity+'.png'
+        urls[url]=(raw,'image/png',{})
+        original=ws.store.add_asset(raw,'image/png',40,40);ws.store.cache_put(url,original,ws.net.clock())
+        trimmed=ingest_image(ws.store,raw,trim_transparent_padding=True)
+        assert trimmed['id']!=original['id']
+        key=stable_hash({'url':url,'trim':True,'version':1})
+        record={'id':key,'assetId':trimmed['id']}
+        if not legacy:record['source']={'url':url,'transform':'trim-transparent'}
+        ws.store.put('github-setup-images',record)
+        if not legacy:
+            #New provenance survives eviction of the original HTTP cache entry.
+            with ws.store.connect() as db:db.execute('DELETE FROM http_cache WHERE url=?',(url,))
+        deck['settings']['symbols'][rarity]=trimmed['id'];expected[trimmed['id']]=url
+    ws.store.put('decks',deck,deck['revision'])
+    before=ws.store.get('decks',deck['id'])['revision']
+    document=export_document(ws,deck['id'])
+    assert ws.store.get('decks',deck['id'])['revision']==before
+    for ident,url in expected.items():assert {k:document['images'][ident][k] for k in ['url','transform']}=={'url':url,'transform':'trim-transparent'}
+    other=destination(tmp_path,ws,{**document,'images':{key:entry for key,entry in document['images'].items() if key not in expected}})
+    transport=other.net.transport;other.net.transport=lambda url:urls[url] if url in urls else transport(url)
+    restored=import_document(other,document)
+    assert restored['settings']['symbols']==deck['settings']['symbols']
 
 
 def test_v1_overlays_stay_compatible():
