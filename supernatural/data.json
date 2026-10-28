@@ -2,6 +2,13 @@
   "version": 1,
   "cards": [
     {
+      "name": "Germ",
+      "oracle_id": "bb549594-35f6-4ac6-9f1f-cfb35784d99e",
+      "scryfall_url": "https://scryfall.com/card/tfdc/4/germ?utm_source=api",
+      "nickname": "Shadow of Death",
+      "artist": "ChatGPT"
+    },
+    {
       "name": "Syr Gwyn, Hero of Ashvale",
       "nickname": "Dean Winchester, Righteous Man",
       "flavor_text": "Saving the world was never the point. Saving the people in it was.",
@@ -282,11 +289,10 @@
       "scryfall_url": "https://scryfall.com/card/tdc/390/shattered-landscape?utm_source=api"
     },
     {
-      "name": "Germ",
-      "oracle_id": "bb549594-35f6-4ac6-9f1f-cfb35784d99e",
-      "scryfall_url": "https://scryfall.com/card/tfdc/4/germ?utm_source=api",
-      "nickname": "Shadow of Death",
-      "artist": "ChatGPT"
+      "name": "Phyrexian Germ",
+      "oracle_id": "a1c2af93-83c0-4974-b4db-abf95981d4e3",
+      "scryfall_url": "https://scryfall.com/card/tfdc/4/phyrexian-germ?utm_source=api",
+      "art": "105_germ.png"
     },
     {
       "name": "Phyrexian Mite",
