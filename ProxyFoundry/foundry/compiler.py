@@ -33,6 +33,7 @@ native.DUAL_TEMPLATE_HEX['G_DARK']=PINLINE_GREEN_HEX
 DEFAULT_TOKEN_STYLE='token-full-art-short'
 MODERN_TOKEN_STYLES={'token-full-art','token-full-art-short'}
 TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
+TOKEN_DUAL_COLOR_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
@@ -1838,8 +1839,10 @@ def _apply_structured_token_layout(source,token,frame_code,kind):
         if (kind=='prepare' or frame_code) and not any('Prepare Spell' in name or name=='Rules (Right Half)' for name in names):
             code=frame_code if frame_code in 'WUBRGMA' else 'A'
             if 'Pinline' in names and str(frame.get('src','')).startswith('data:image'):
-                frame['src']=(f'/img/frames/prepare/regular/{code.lower()}.png' if kind=='prepare'
-                              else f'/img/frames/station/{code.lower()}.png')
+                #Gold bars on a two-color host keep its already colored pinline.
+                if code!='M':
+                    frame['src']=(f'/img/frames/prepare/regular/{code.lower()}.png' if kind=='prepare'
+                                  else f'/img/frames/station/{code.lower()}.png')
             else:frame['src']=_frame_effect_source(str(frame.get('src','')),code)
         frame['masks'].append({'name':lower_name,'src':lower})
         frames.append(frame)

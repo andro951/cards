@@ -18,6 +18,7 @@ from .backs import Backs
 from .template_model import convert_cardconjurer, validate_model
 from .compiler import RETIRED_BUILTINS
 from .compiler import DEFAULT_TOKEN_STYLE,MODERN_TOKEN_STYLES,TOKEN_FRAME_STYLES
+from .compiler import apply_universal_frame_color_treatment,frame_treatment_colors,land_frame_colors,TOKEN_DUAL_COLOR_VERSION
 from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
@@ -320,6 +321,10 @@ class Workspace:
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and not data.get('stationToken'):
+                        d['status']='draft'
+                    if (comp.get('recipe') in {'Deck-wide token','Card Tools copy token'}
+                            and self._dual_token_color_source(sf,sf_face,{} if d['settings'].get('allCardsTokens') else c.get('tokenSpec') or {})
+                            and data.get('tokenDualColorVersion')!=TOKEN_DUAL_COLOR_VERSION):
                         d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
@@ -769,6 +774,16 @@ class Workspace:
         return {}
 
     @staticmethod
+    def _dual_token_color_source(sf,face,spec):
+        if spec.get('frame_color') not in (None,'','M'):return False
+        types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or sf.get('type_line') or '')
+        colors=face.get('colors',sf.get('colors',[]))
+        if 'Land' in types.get('types',[]):
+            colors=face.get('land_colors')
+            if colors is None:colors=land_frame_colors(types,face,sf,face.get('oracle_text',sf.get('oracle_text','')))
+        return len(set(colors or [])&set('WUBRG'))==2
+
+    @staticmethod
     def _deck_token_spec(settings,comp,frame_choice=None):
         """Translate deck-wide token options to the preserved Card Tools token spec."""
         if not settings.get('allCardsTokens'):return None
@@ -815,9 +830,13 @@ class Workspace:
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
+        dual_colors=bool(sem and spec.get('frame_color')=='M' and len(frame_treatment_colors(sem))==2)
         if style:
             short=False if structured_source is not None else token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
             configure_token_style(comp['data'],'C' if classic_colorless else spec.get('frame_color','A'),style,short)
+            #Color the header before clipping it onto native Prepare/Station
+            #panels so their masks and badges retain their original geometry.
+            if dual_colors and structured_source is not None:apply_universal_frame_color_treatment(comp['data'],sem)
             if prepare_source is not None:comp['data']=apply_prepare_token_layout(prepare_source,comp['data'],spec.get('frame_color','A'))
             elif station_source is not None:comp['data']=apply_station_token_layout(station_source,comp['data'],station_color)
             if finalize and comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
@@ -832,6 +851,9 @@ class Workspace:
         if structured_source is None:
             if style in MODERN_TOKEN_STYLES and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
             elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
+        if dual_colors:
+            if structured_source is None:apply_universal_frame_color_treatment(comp['data'],sem)
+            comp['data']['tokenDualColorVersion']=TOKEN_DUAL_COLOR_VERSION
         if not finalize:return comp
         if sem:apply_neutral_elemental_token(comp['data'],sem)
         reserve_token_mana_space(comp['data'])
@@ -879,6 +901,8 @@ class Workspace:
             if any(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or sf.get('mana_cost') or '')) for face in faces):
                 inputs['tokenManaSpacingVersion']=1
             token_spec=c.get('tokenSpec') or {}
+            if any(self._dual_token_color_source(sf,face,{} if s.get('allCardsTokens') else token_spec) for face in faces):
+                inputs['tokenDualColorVersion']=TOKEN_DUAL_COLOR_VERSION
             token_style=token_spec.get('token_frame_style') or s.get('templateRules',{}).get('token')
             if token_style=='token-classic' and not token_spec.get('frame_color'):
                 if any(not face.get('colors') and not re.search(r'\b(?:Artifact|Land)\b',face.get('type_line',sf.get('type_line',''))) for face in faces):
