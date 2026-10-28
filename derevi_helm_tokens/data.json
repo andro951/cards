@@ -64,7 +64,8 @@
       "accepted_art": [
         "100f066f4a8c7b7e4fb2b224679d09b601f467fafe4c2ae3533204aa39b7af09",
         "a42cf4d299a866b1ffd1043b48703c886cd64360cc08234aace826a84fcd6f7f",
-        "8423aa95d98583d3cc7de24fe713574afb04148cb1f6a41b181f5c9da598c7c2"
+        "8423aa95d98583d3cc7de24fe713574afb04148cb1f6a41b181f5c9da598c7c2",
+        "cf6fb0d578350a67e44d7a8a827b63471c4efccd486ce7606dacee90b83ce703"
       ]
     },
     {
@@ -117,7 +118,8 @@
       "accepted_art": [
         "153faf418c15945f14a70330718324bf70856fbb85255f0f10896cd625602d72",
         "fd72f46891800cefc89e4293e161e21f97f894a7a31e95975b4c32747a0dffb9",
-        "a214c7dd14d323d7d6fbed39405f233f730774fe4a949da7c23bec8115a9483b"
+        "a214c7dd14d323d7d6fbed39405f233f730774fe4a949da7c23bec8115a9483b",
+        "7f211524d6e577051f97475aeb74aef8664ce0d60977fbfc24358d929482a15a"
       ]
     },
     {
@@ -127,7 +129,8 @@
       "accepted_art": [
         "ddb0641a05d441d3f7a96f70b6ee4f942b4ed9ad075dea42e58167af5e317d03",
         "14abefbddd128bd413caee28ea2f6ac94a95049e6e8629281071017322830488",
-        "eb861fb3104ec758fba5d68c3515d0d33bd212f96c1b2d980771012891d07f89"
+        "eb861fb3104ec758fba5d68c3515d0d33bd212f96c1b2d980771012891d07f89",
+        "b58f57d4861f6024c186d08d22064b3965cb4a87a507f5fa170ab8df236583de"
       ]
     },
     {
@@ -170,7 +173,8 @@
       "scryfall_url": "https://scryfall.com/card/woe/206/hylda-of-the-icy-crown?utm_source=api",
       "accepted_art": [
         "13d4fe285c023232cd8e6117de9ef6e754cf5339b8ad35d1a4c250ebd6a1f3ea",
-        "58402fe44ed03231d2e9c254dcfcb1d901ff0d308ac32cf42e2cbb4e051ba848"
+        "58402fe44ed03231d2e9c254dcfcb1d901ff0d308ac32cf42e2cbb4e051ba848",
+        "63366cd35e7d08d21b8ffae6946365423355a36127683eeb348fd869040fa799"
       ]
     },
     {
@@ -187,7 +191,8 @@
       "scryfall_url": "https://scryfall.com/card/rna/195/prime-speaker-vannifar?utm_source=api",
       "accepted_art": [
         "5974526cecd74702a4207b1849712b56dd33d72765dfddc4bdb8e54506e55ec8",
-        "b7a640fea1af467aa2ae6a96fd0161cf3c7ec78717e2fdfcc0ed2e6b3bf0b933"
+        "b7a640fea1af467aa2ae6a96fd0161cf3c7ec78717e2fdfcc0ed2e6b3bf0b933",
+        "b963817faad9c9d234ef5224e62aca7339e7e45638ca960676d68daf4436ed86"
       ]
     },
     {
@@ -405,7 +410,8 @@
       "accepted_art": [
         "65b512fa2aa4f4484c82a2df94651c4c88ce2bc5d2cbda42d2b8def1d633a393",
         "9367985b2449bd103aa6022b50ec8ba8f214cb09c59edf23651e2be9993dc69b",
-        "1114c9dcd0e7e9bc39536175d6235d89026ebc5dbd3ebf8ad20ca6687ef7ac75"
+        "1114c9dcd0e7e9bc39536175d6235d89026ebc5dbd3ebf8ad20ca6687ef7ac75",
+        "7f602f17228b93e139d009dea5598da38203ca0a8cc876fafb8b5ab1a1ac83fe"
       ]
     },
     {
@@ -414,7 +420,8 @@
       "scryfall_url": "https://scryfall.com/card/nec/4/shorikai-genesis-engine?utm_source=api",
       "accepted_art": [
         "d4bcc6c73ea8c639e5f77a786480e6c592f1f0103700c716d03930ab3b273e39",
-        "7d03e49e2b47e14a276e9d011d320301ff4c21d4f86171e63d6526de4e6b7732"
+        "7d03e49e2b47e14a276e9d011d320301ff4c21d4f86171e63d6526de4e6b7732",
+        "f214d9e5c406c27d4e0a3e9144169166258d34ab35a772565767288fb2f13e60"
       ]
     }
   ],
