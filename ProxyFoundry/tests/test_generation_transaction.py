@@ -12,6 +12,38 @@ def call(app,path,data):
     return request(app,'POST',path,json.dumps(data).encode())
 
 
+def test_recipe_source_metadata_stays_in_generation_batch_and_layout_edits_remain_blocked(tmp_path):
+    from foundry.browser import BrowserStore
+    from foundry.server import App
+    snapshots=[]
+    app=App(BrowserStore(tmp_path,lambda path:snapshots.append(Path(path).read_bytes())))
+    deck=app.ws.new_deck('Recipe sources');other=app.ws.new_deck('Other deck')
+    import io
+    from PIL import Image
+    buffer=io.BytesIO();Image.new('RGB',(8,8),'red').save(buffer,'PNG');raw=buffer.getvalue()
+    image=app.store.add_asset(raw,'image/png',8,8)
+    app.ws.net.transport=lambda url:(raw,'image/png',{})
+    image_url='https://cards.scryfall.io/art_crop/permanent.png'
+    count=len(snapshots);session=app.store.begin_generation([deck['id']])
+    image_sources=call(app,'/api/decks/'+deck['id']+'/image-sources',{'revision':deck['revision'],'sources':{image['id']:image_url}})
+    assert image_sources['status']==200
+    assert app.store.get('decks',deck['id'])['imageSources'][image['id']]['url']==image_url
+    current=app.store.get('decks',deck['id'])
+    source={'kind':'github','value':'https://github.com/owner/cards/blob/main/data.json'}
+    connected=call(app,'/api/decks/'+deck['id']+'/save',{'revision':current['revision'],'settings':{'dataJsonSource':source}})
+    assert connected['status']==200
+    assert app.store.get('decks',deck['id'])['settings']['dataJsonSource']==source
+    assert len(snapshots)==count
+    for path,payload in [
+        ('/api/decks/'+deck['id']+'/save',{'revision':current['revision'],'settings':{'disableAutofit':True}}),
+        ('/api/decks/'+deck['id']+'/save',{'revision':current['revision'],'name':'Unexpected edit','settings':{'dataJsonSource':source}}),
+        ('/api/decks/'+other['id']+'/image-sources',{'revision':other['revision'],'sources':{}}),
+    ]:
+        assert call(app,path,payload)['status']==409
+    app.store.abort_generation(session['id'])
+    assert not app.store.get('decks',deck['id'])['settings'].get('dataJsonSource')
+
+
 def test_generation_has_one_durable_commit_and_reopens_with_all_faces(tmp_path):
     app,snapshots,deck=fixture(tmp_path);count=len(snapshots)
     session=app.store.begin_generation(['deck'])

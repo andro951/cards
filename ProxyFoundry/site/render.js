@@ -117,6 +117,11 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     screen.attach(owner);screen.update('prepare');
     let generation=null;
     try {
+    if(state.bootstrap.browser) {
+        generation=await api(`/api/generation/begin`,{deckIds:ids,preflightSeconds});
+        owner.atomicGeneration=true;
+        state.generationTransaction={...generation,timings:{"generation.preflight":{count:1,seconds:preflightSeconds,max:preflightSeconds}}};
+    }
     let preparationTask=null,preparationError=null;
     const prepareAll=async()=>{
       for(const id of ids){
@@ -134,11 +139,6 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
       if(readyPlan.errors.length)throw new Error(readyPlan.errors.join('\n'));
       await screen.review(()=>saveGenerationData(ids,{owner}));
       if(owner.controller.signal.aborted)throw new Error('Generation cancelled before rendering.');
-    }
-    if(state.bootstrap.browser) {
-        generation=await api(`/api/generation/begin`,{deckIds:ids,preflightSeconds});
-        owner.atomicGeneration=true;
-        state.generationTransaction={...generation,timings:{"generation.preflight":{count:1,seconds:preflightSeconds,max:preflightSeconds}}};
     }
     if(prepare&&!saveBeforeRender){
       if(generation) {

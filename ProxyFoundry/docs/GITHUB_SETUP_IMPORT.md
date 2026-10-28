@@ -27,6 +27,8 @@ Set symbols may also be imported directly from a public GitHub folder in the **S
 
 For decks linked to GitHub data.json, generation automatically saves the complete recipe after artwork/preparation and render-readiness checks pass, before any images are rendered. The first save may require connecting GitHub. A failed, conflicting, or cancelled GitHub save stops generation; downloading a file cannot bypass this gate. An unchanged complete recipe does not create another commit. There is no manual Save data.json action. **More → Export complete data.json** remains available to download a portable copy. Artwork/rules/approval save flows also write the complete format.
 
+Preparation remains inside the browser generation transaction so its metadata changes share the final database write. Starting the transaction does not start image rendering; the readiness and GitHub save gate still runs first. See [the autosave performance bisection](GENERATION_AUTOSAVE_PERFORMANCE.md) for the measured regression and repair.
+
 To rebuild the deck on another computer, choose **Add New Deck → Other import methods** and upload the file. A version-2 file imported through Art & Setup also creates a separate deck. Existing decks and templates are preserved.
 
 The recipe includes the full ordered deck list and quantities, exact printing metadata, all deck settings, per-face edits and crop/position settings, selected frames and custom templates, backs and symbols, token treatments and pairings, alternate-art allocations, warning approvals, notes, and prepared layouts. It records the renderer pipeline and native renderer commit. New workspace identifiers are allocated during import; printing identifiers and rendering inputs remain unchanged.

@@ -392,8 +392,16 @@ class BrowserHandler(server.Handler):
         generation=getattr(self.app.store,'generation',None)
         if generation:
             prepare=any(path=='/api/decks/'+ident+'/prepare' for ident in generation['deckIds'])
+            # The generation owner may finish permanent-source metadata before
+            # writing the complete GitHub recipe. Layout/card edits remain blocked.
+            image_sources=any(path=='/api/decks/'+ident+'/image-sources' for ident in generation['deckIds'])
+            data_source=False
+            if any(path=='/api/decks/'+ident+'/save' for ident in generation['deckIds']):
+                payload=self.data()
+                data_source=(isinstance(payload,dict) and set(payload)=={'revision','settings'} and isinstance(payload.get('settings'),dict)
+                             and set(payload['settings'])=={'dataJsonSource'})
             control=bool(re.fullmatch(r'/api/jobs/[-a-f0-9]{36}/(?:cancel|pause|resume)',path))
-            if not prepare and not control and path not in {'/api/generation/commit','/api/generation/abort','/api/generation/begin',
+            if not prepare and not image_sources and not data_source and not control and path not in {'/api/generation/commit','/api/generation/abort','/api/generation/begin',
                                                            '/api/render-sessions','/api/runtime/prepare','/api/render-diagnostic','/api/client-error'}:
                 raise ConflictError('Card generation is running. Wait before making other workspace changes.')
         if path=='/api/generation/begin':

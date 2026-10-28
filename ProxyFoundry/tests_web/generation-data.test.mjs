@@ -33,14 +33,14 @@ function fixture({github=true,errors=[],save=async()=>{},prepareFailure=false,br
 
 test('GitHub recipe is saved after readiness checks and before atomic image generation',async()=>{
     const f=fixture();await f.run();
-    assert.deepEqual(f.events,['prepare','plan','save','begin','render','commit']);
+    assert.deepEqual(f.events,['begin','prepare','plan','save','render','commit']);
     assert.equal(f.work.busy,false);
 });
 
 test('missing inputs and preparation errors prevent both saving and rendering',async()=>{
     for(const options of [{errors:['Card not ready']},{prepareFailure:true}]){
         const f=fixture(options);await assert.rejects(f.run());
-        assert.ok(!f.events.includes('save'));assert.ok(!f.events.includes('render'));assert.ok(!f.events.includes('begin'));
+        assert.ok(!f.events.includes('save'));assert.ok(!f.events.includes('render'));assert.equal(f.events.at(-1),'abort');
         assert.equal(f.work.busy,false);
     }
 });
@@ -48,7 +48,7 @@ test('missing inputs and preparation errors prevent both saving and rendering',a
 test('failed GitHub write prevents image generation and releases the deck',async()=>{
     const f=fixture({save:async()=>{throw new Error('GitHub failed');}});
     await assert.rejects(f.run(),/GitHub failed/);
-    assert.deepEqual(f.events,['prepare','plan','save']);assert.equal(f.work.busy,false);
+    assert.deepEqual(f.events,['begin','prepare','plan','save','abort']);assert.equal(f.work.busy,false);
 });
 
 test('rendering waits for the complete GitHub write to finish',async()=>{
@@ -56,7 +56,7 @@ test('rendering waits for the complete GitHub write to finish',async()=>{
     const reached=new Promise(resolve=>started=resolve),waiting=new Promise(resolve=>release=resolve);
     const f=fixture({save:async()=>{started();await waiting;}});
     const running=f.run();await reached;
-    assert.deepEqual(f.events,['prepare','plan','save']);
+    assert.deepEqual(f.events,['begin','prepare','plan','save']);
     release();await running;assert.ok(f.events.includes('render'));
 });
 
