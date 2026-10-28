@@ -320,7 +320,7 @@ class Workspace:
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
                         d['status']='draft'
-                    if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and not data.get('stationToken'):
+                    if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and data.get('stationTokenLayoutVersion')!=STATION_TOKEN_LAYOUT_VERSION:
                         d['status']='draft'
                     if (comp.get('recipe') in {'Deck-wide token','Card Tools copy token'}
                             and self._dual_token_color_source(sf,sf_face,{} if d['settings'].get('allCardsTokens') else c.get('tokenSpec') or {})

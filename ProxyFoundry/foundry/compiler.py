@@ -1805,7 +1805,7 @@ def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
 
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
-STATION_TOKEN_LAYOUT_VERSION='arched-v1'
+STATION_TOKEN_LAYOUT_VERSION='arched-artifact-v2'
 
 
 def apply_prepare_token_layout(source,token,frame_code):
@@ -1814,8 +1814,24 @@ def apply_prepare_token_layout(source,token,frame_code):
 
 
 def apply_station_token_layout(source,token,frame_code=None):
-    """Keep native Station abilities, badges and dynamic P/T beneath the arch."""
-    return _apply_structured_token_layout(source,token,frame_code,'station')
+    """Use an artifact arch with colored trim above native Station panels."""
+    frames=[]
+    for frame in token.get('frames',[]):
+        src=str(frame.get('src',''))
+        if not frame.get('masks') and re.fullmatch(r'/img/frames/token/m15/regular/[wubrgmal]\.png',src):
+            #Keep the complete artifact texture beneath a native colored trim.
+            #Two-color headers already have their gradient and black outlines.
+            if not any(_is_pinline_mask(mask) for layer in token['frames'] for mask in layer.get('masks',[])):
+                trim=copy.deepcopy(frame)
+                trim.update(name='Station token colored pinline',masks=[{'name':'Pinline','src':'/img/frames/token/m15/regular/pinline.svg'}])
+                frames.append(trim)
+            frame=copy.deepcopy(frame)
+            frame.update(name='Artifact token frame',src='/img/frames/token/m15/regular/a.png')
+        frames.append(frame)
+    token={**token,'frames':frames}
+    data=_apply_structured_token_layout(source,token,frame_code,'station')
+    data['stationTokenLayoutVersion']=STATION_TOKEN_LAYOUT_VERSION
+    return data
 
 
 def _apply_structured_token_layout(source,token,frame_code,kind):
