@@ -351,7 +351,7 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
                     owner=work.begin({label:`Save artwork approvals`,resources:[`deck:${deck.id}`]});
                     approve.textContent=`Saving approvals…`;approve.setAttribute(`aria-busy`,`true`);approve.setAttribute(`aria-pressed`,`true`);
                     Object.assign(approve.style,{transform:`translateY(2px)`,boxShadow:`inset 0 3px 6px #0008`,filter:`brightness(.8)`,cursor:`wait`});
-                    const result=await api(`/api/decks/${deck.id}/accept-art`,{revision:reviewRevision,faces:reviewFaces});
+                    const result=await api(`/api/decks/${deck.id}/accept-art`,{revision:reviewRevision,faces:reviewFaces},'POST',owner);
                     deck=result.deck;
                     const source=deck.settings.dataJsonSource;
                     const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder):``;
@@ -363,7 +363,7 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
                     });
                     if(saved?.github&&saved.github!==source?.value) {
                         const current=await api(`/api/decks/${deck.id}`);
-                        await api(`/api/decks/${deck.id}/save`,{revision:current.revision,settings:{dataJsonSource:{kind:`github`,value:saved.github}}});
+                        await api(`/api/decks/${deck.id}/save`,{revision:current.revision,settings:{dataJsonSource:{kind:`github`,value:saved.github}}},'POST',owner);
                     }
 
                     await onChanged(await api(`/api/decks/${deck.id}`));
