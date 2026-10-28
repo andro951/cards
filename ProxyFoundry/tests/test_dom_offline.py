@@ -11,11 +11,13 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_DOM')!='1',reason='Opt-in offli
 
 def bundle():
     out=[]
-    for name in ['diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','art-variants','artwork-review','tokens','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','batch-review-flow','batch-review','app']:
+    for name in ['workspace-fetch','diagnostics','generation-progress','work','ui','metadata','deletion','credits','backs','github-setup','artwork-files','art-variants','deck-document','artwork-review','tokens','native-render-pool','review-zip','review-export','render','frame-picker','setup','orders','templates','settings','deck','batch-review-flow','batch-review','app']:
         text=(ROOT/'site'/(name+'.js')).read_text(encoding='utf-8')
         exports=re.findall(r'export\s+(?:async\s+)?(?:function|const|let|class)\s+([$\w]+)',text)
         text=re.sub(r"import\s+\{([^}]+)\}\s+from\s+'\./([^']+)\.js';",lambda m:'const {'+m[1]+'}=__mod_'+m[2].replace('-','_')+';',text)
+        text=text.replace("import './favicon.js';",'')
         text=text.replace("await import('./ui.js')",'__mod_ui').replace('import.meta.url','document.baseURI')
+        text=text.replace("await import('./artwork-review.js')",'__mod_artwork_review')
         text=re.sub(r'(?m)^export[ \t]+','',text)
         out.append('const __mod_'+name.replace('-','_')+'=(()=>{\n'+text+'\nreturn {'+','.join(exports)+'};})();')
     return '\n'.join(out)
@@ -43,6 +45,7 @@ def dom_page(tmp_path):
           const d=opts.body?JSON.parse(opts.body):null,F=window.__fixture;let value={};
           if(path==='/api/bootstrap')value={csrf:'test',runtimeOrigin:'http://127.0.0.1:1111',groups:F.groups,settings:F.settings,stats:{},backs:{default:{id:'a'.repeat(64)},blank:{id:'b'.repeat(64)},iconBounds:{x:207,y:450,size:640},blankSize:[1055,1491]}};
           else if(path==='/api/decks')value=F.decks||[F.deck];
+          else if(path.endsWith('/data-document'))value={missing:[],revision:F.deck.revision,document:{version:2,format:'bulk-proxy-forge-deck',cards:F.deck.cardData||[],deck:structuredClone(F.deck),templates:[],images:{},renderer:{},includesRenders:false}};
           else if(path==='/api/templates'&&!d)value=F.templates;
           else if(path==='/api/templates'&&d){value={...d,id:'33333333-3333-4333-8333-333333333333'};F.templates.push(value);}
           else if(path.startsWith('/api/templates/seed'))value=F.seed;

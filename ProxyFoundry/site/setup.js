@@ -5,6 +5,7 @@ import {mountBackPicker} from './backs.js';
 import {githubSetupSection,mountGithubSetupImport} from './github-setup.js';
 import {$,$$,esc,state,api,attempt,toast,uploadImage,uploadFolder,asset,job,nav,blobRequest,modal,closeModal,errorBox,bindGenerationButton,refreshGenerationButtons} from './ui.js';
 import {checkArtwork,offerDataSave,saveArtVariantData} from './artwork-review.js';
+import {isCompleteDeckDocument,importCompleteDeck} from './deck-document.js';
 import {mergeDataDocument,pickArtworkFiles,rememberFile,rememberGithub,equalDataValues} from './artwork-files.js';
 import {originalArtist,composeCredit,ensureCustomArtCredits} from './credits.js';
 import {frameChoices,framePlaceholder,openFramePicker} from './frame-picker.js';
@@ -257,6 +258,8 @@ export function renderSetup(root,deck,onSaved){
     try{[handle]=await window.showOpenFilePicker({types:[{description:'Card data',accept:{'application/json':['.json']}}],multiple:false});}
     catch(error){if(error.name==='AbortError')return;throw error;}
     const file=await handle.getFile();
+    const complete=JSON.parse(await file.text());
+    if(isCompleteDeckDocument(complete)){const imported=await importCompleteDeck(complete);nav('deck/'+imported.id+'/cards');return;}
     const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');
     await rememberFile(deck.id,handle,JSON.parse(await file.text()));
     stageCardData(result.cardData,{kind:'local',value:file.name},result.settings);
@@ -266,6 +269,7 @@ export function renderSetup(root,deck,onSaved){
     linkDataButton.disabled=true;
     try{
       const result=await api('/api/setup/card-data/github',{deckId:deck.id,url:dataUrl.value.trim()});
+      if(isCompleteDeckDocument(result.document)){const imported=await importCompleteDeck(result.document);nav('deck/'+imported.id+'/cards');return;}
       stageCardData(result.cardData,{kind:'github',value:dataUrl.value.trim()},result.settings);
       await rememberGithub(deck.id,dataUrl.value.trim(),result.document||{version:1,cards:result.cardData});
     }finally{linkDataButton.disabled=false;}
@@ -351,7 +355,7 @@ export function renderSetup(root,deck,onSaved){
   (s.dataJsonSource?.kind==='github'?githubMode:computerMode).onclick();
   symbolGithubInput.value=s.symbolsSource?.value||'';
   (s.symbolsSource?.kind==='github'?symbolGithub:symbolComputer).onclick();
-  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,JSON.parse(await file.text()));stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'},result.settings);}finally{input.value='';}});
+  $('#data-json-file',root).onchange=()=>attempt(async()=>{const input=$('#data-json-file',root),file=input.files[0];if(!file)return;try{const document=JSON.parse(await file.text());if(isCompleteDeckDocument(document)){const imported=await importCompleteDeck(document);nav('deck/'+imported.id+'/cards');return;}const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),file,'application/json');await rememberFile(deck.id,null,document);stageCardData(result.cardData,{kind:'local',value:file.name||'data.json'},result.settings);}finally{input.value='';}});
   const redrawTokenOptions=()=>{
     s.allCardsTokens=$('#all-cards-tokens',root).checked;
     $('#all-token-options',root).classList.toggle('hidden',!s.allCardsTokens);
@@ -372,6 +376,7 @@ export function renderSetup(root,deck,onSaved){
     onBusy:busy=>{const fields=$('#setup-fields',root);fields.disabled=busy;fields.inert=busy;refreshGenerationButtons();},
     deckId:deck.id,
     onImport:async(patch,cardData,hasDataJson,document)=>{
+      if(isCompleteDeckDocument(document)){const imported=await importCompleteDeck(document);nav('deck/'+imported.id+'/cards');return;}
       applyDataArtist(patch);
       pairedChanges=[];s.artDefaults=[];s.artReviewSignature='';
       await rememberGithub(deck.id,patch.githubSetupFolder,document||{version:1,cards:cardData||[]});
@@ -403,7 +408,7 @@ export function renderSetup(root,deck,onSaved){
     refreshGenerationButtons();
     try{
     const data=[...files].find(file=>(file.artworkPath||file.webkitRelativePath?.split('/').slice(1).join('/')||file.name)==='data.json');
-    if(data){const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,JSON.parse(await data.text()),'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'},result.settings);}
+    if(data){const document=JSON.parse(await data.text());if(isCompleteDeckDocument(document)){const imported=await importCompleteDeck(document);nav('deck/'+imported.id+'/cards');return;}const result=await blobRequest('/api/setup/card-data/file?deckId='+encodeURIComponent(deck.id),data,'application/json');await rememberFile(deck.id,data.sourceHandle||null,document,'folder');stageCardData(result.cardData,{kind:'local',value:'data.json'},result.settings);}
     s.source.localFiles=await uploadFolder(files,(n,total)=>{$('#local-count',root).textContent=`Importing artwork ${n} / ${total}…`;},s.source);
     s.artDefaults=[];s.artReviewSignature='';
     $('#local-count',root).textContent=`${Object.keys(s.source.localFiles).length} images saved in this deck’s local workspace.`;mark();

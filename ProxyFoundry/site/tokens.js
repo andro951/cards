@@ -356,7 +356,7 @@ export const mountDeckCards=(root,initial,view,{preview,backPreview,inspect,onCh
                     const source=deck.settings.dataJsonSource;
                     const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder):``;
                     const document={version:1,cards:deck.cardData||[]};
-                    const options={title:`Save artwork approvals`,autoSave:true,baseline:snapshot(deck)};
+                    const options={title:`Save artwork approvals`,autoSave:true,baseline:snapshot(deck),owner};
                     const saved=await offerDataSave(deck.id,result.changes,document,url,deck.cards,options).catch(error=>{
                         toast(`Saved in this deck. ${error.message}`,true);
                         return offerDataSave(deck.id,result.changes,document,url,deck.cards,{...options,autoSave:false});

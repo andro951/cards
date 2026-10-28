@@ -2,7 +2,8 @@ import {ensureMetadata} from './metadata.js';
 import {generationScreen} from './generation-progress.js';
 import {mountArtVariantPicker} from './art-variants.js';
 import {$,api,job,modal,closeModal,setModalBusy,thumbnail,state,toast,uploadFolder} from './ui.js';
-import {sourceRecord,mergeCardDataDocument,equalDataValues,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
+import {sourceRecord,mergeCardDataDocument,completeDataDocument,equalDataValues,downloadData,saveLocalData,saveGithubData,githubDataLocation,githubCredential,connectGithub,disconnectGithub,pickArtworkFiles} from './artwork-files.js';
+import {completeDeckDocument} from './deck-document.js';
 
 const element=(tag,text=``)=>{
     const node=document.createElement(tag);
@@ -246,11 +247,16 @@ const githubGuideSnippet=(number,label)=>{
     return image;
 };
 export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],options={})=>{
-    if(!changes.length&&!options.tokenData)
+    if(!changes.length&&!options.tokenData&&!options.forceDocument)
         return;
     if(generationScreen.active?.dialog.open)
         return generationScreen.active.review(()=>offerDataSave(deckId,changes,document,githubUrl,cards,options));
 
+    if(!options.completeDocument){
+        const complete=await completeDeckDocument(deckId,{owner:options.owner||generationScreen.active?.owner||null});
+        if(!complete)return;
+        options={...options,completeDocument:complete};
+    }
     const record=await sourceRecord(`deck:${deckId}`)||{};
     let sameSource=!githubUrl||record.github===githubUrl;
     let url=githubUrl||record.github;
@@ -263,7 +269,8 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
     catch(error){url=``;sourceWarning=`Use the full GitHub folder link in Art & Setup to update data.json. You can download it now.`;}
     //Reuse our last write until generation imports a newer source snapshot.
     const refreshed=options.baseline&&!equalDataValues(options.baseline,record.sourceBaseline);
-    const baseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
+    const overlayBaseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
+    const baseline=sameSource&&record.document?.version===2?{...record.document,cards:overlayBaseline?.cards||[]}:overlayBaseline;
     //The remote document can include pairs this deck never edited or imported.
     const tokenBaseline=!refreshed&&sameSource&&record.tokenData||baseline;
     const rememberResult=async merged=>{
@@ -276,13 +283,13 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         if(url) {
             const location=githubDataLocation(url),token=await githubCredential(location.repo);
             if(token) {
-                const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline);
+                const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline,options.completeDocument);
                 await rememberResult(merged);
                 return {github:url};
             }
         }
         else if(record.file||record.folder) {
-            const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData);
+            const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData,options.completeDocument);
             await sourceRecord(`deck:${deckId}`,result);
             return {local:true};
         }
@@ -308,7 +315,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
             if(saving)return;
             saving=true;
             try {
-                const output=mergeCardDataDocument(record.document||document,changes,null,cards,options.tokenData);
+                const output=completeDataDocument(mergeCardDataDocument(record.document||document,changes,null,cards,options.tokenData),options.completeDocument);
                 downloadData(output);
                 if(!url&&!record.file&&!record.folder)
                     await sourceRecord(`deck:${deckId}`,{...record,document:output});
@@ -331,7 +338,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
                         guide.focus();save.disabled=false;saving=false;return;
                     }
 
-                    const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline);
+                    const merged=await saveGithubData(location,token,changes,baseline,fetch,cards,options.tokenData,tokenBaseline,options.completeDocument);
                     await rememberResult(merged);status.textContent=`Updated ${location.repo}/${location.path} on ${location.branch}.`;
                     toast(status.textContent);
                     if(!remember.checked&&!remembered)
@@ -390,7 +397,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         else if(record.file||record.folder) {
             const save=button(record.file?`Update existing data.json`:`Create data.json in artwork folder`,async()=>{
                 save.disabled=true;saving=true;status.textContent=`Saving data.json…`;
-                try{const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData);await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});}
+                try{const result=await saveLocalData({...record,document:baseline,tokenData:tokenBaseline},changes,cards,options.tokenData,options.completeDocument);await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});}
                 catch(error){status.textContent=error.message;}
                 finally{save.disabled=false;saving=false;}
             });choices.append(save);
@@ -416,7 +423,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
                     saving=true;
                     try {
                         const [file]=await window.showOpenFilePicker({types:[{description:`Card data`,accept:{'application/json': [`.json`]}}],multiple:false});
-                        const result=await saveLocalData({file},changes,cards,options.tokenData);
+                        const result=await saveLocalData({file},changes,cards,options.tokenData,options.completeDocument);
                         await sourceRecord(`deck:${deckId}`,result);saving=false;finish({local:true});
                     }
                     catch(error){if(error.name!==`AbortError`)status.textContent=error.message;}

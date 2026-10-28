@@ -461,6 +461,9 @@ class Handler(BaseHTTPRequestHandler):
             self.respond({'error': 'The operation failed. Your saved decks are unchanged. See Settings → Diagnostics for the error log.'}, 500)
 
     def get(self, p, q):
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/data-document',p):
+            from .deck_document import export_document
+            return self.respond(export_document(self.app.ws,m[1],allow_missing=True))
         if p in ('/', '/index.html'):
             html = (ROOT / 'site/index.html').read_bytes()
             return self.send_bytes(html, 'text/html; charset=utf-8', headers={'Content-Security-Policy':
@@ -576,15 +579,31 @@ class Handler(BaseHTTPRequestHandler):
         raise FileNotFoundError('That page or API endpoint does not exist.')
 
     def post(self, p, q):
+        if p=='/api/deck-documents/import':
+            from .deck_document import import_document,MAX_DOCUMENT_BYTES
+            try:value=json.loads(self.body(MAX_DOCUMENT_BYTES))
+            except (ValueError,UnicodeError) as error:raise ValidationError('Choose a valid complete data.json.') from error
+            return self.respond(self.app.jobs.start('Import complete deck',lambda update,cancel:import_document(self.app.ws,value,update,cancel)))
+        if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/image-sources',p):
+            from .deck_document import source_for_image,HASH
+            data=self.data();deck=self.app.ws.deck(m[1]);updates=data.get('sources')
+            if not isinstance(updates,dict) or len(updates)>10000:raise ValidationError('Invalid image source list.')
+            sources=dict(deck.get('imageSources',{}))
+            for ident,url in updates.items():
+                if not HASH.fullmatch(ident) or not self.app.store.asset(ident):raise ValidationError('That source image is missing.')
+                sources[ident]=source_for_image(self.app.ws,ident,url)
+            deck['imageSources']=sources;deck.pop('summary',None)
+            return self.respond(self.app.store.put('decks',deck,data.get('revision')))
         if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/delete', p):
             return self.respond(self.app.ws.release_review_download(m[1]))
         if p == '/api/setup/card-data/file':
             deck_ids = q.get('deckId', [])
             if len(deck_ids) != 1: raise ValidationError('Choose a deck before importing data.json.')
-            raw=self.body(2 * 1024 * 1024)
+            raw=self.body(20 * 1024 * 1024)
             entries = parse_card_data_json(raw)
             from .card_data import document_settings
-            return self.respond({'cardData': validate_card_data_for_deck(self.app.ws, deck_ids[0], entries),'settings':document_settings(raw)})
+            if json.loads(raw.decode('utf-8-sig')).get('version')!=2:entries=validate_card_data_for_deck(self.app.ws,deck_ids[0],entries)
+            return self.respond({'cardData':entries,'settings':document_settings(raw)})
         if p == '/api/uploads':
             raw = self.body()
             kinds = q.get('kind', [])

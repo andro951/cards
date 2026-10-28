@@ -23,6 +23,24 @@ Set symbols may also be imported directly from a public GitHub folder in the **S
 
 ## `data.json`
 
+### Complete deck recipes (version 2)
+
+Use **More → Export complete data.json** on a finished deck to download its complete recipe. **Save complete data.json** uses the existing connected GitHub/local file or offers connection and download choices. Save again after changing the deck to update that recipe. Artwork/rules/approval save flows also write the complete format.
+
+To rebuild the deck on another computer, choose **Add New Deck → Other import methods** and upload the file. A version-2 file imported through Art & Setup also creates a separate deck. Existing decks and templates are preserved.
+
+The recipe includes the full ordered deck list and quantities, exact printing metadata, all deck settings, per-face edits and crop/position settings, selected frames and custom templates, backs and symbols, token treatments and pairings, alternate-art allocations, warning approvals, notes, and prepared layouts. It records the renderer pipeline and native renderer commit. New workspace identifiers are allocated during import; printing identifiers and rendering inputs remain unchanged.
+
+There are **no embedded images or finished PNGs**. The `images` map identifies source images by SHA-256 and permanent HTTPS location. GitHub image URLs are pinned to commits. Transparent-padding normalization and generated icon backs are recorded as build operations. Bundled symbols and backs point to their versioned application assets. User-uploaded art, custom frames, and generated assets without reusable sources require permanent URLs before export; the app previews each missing image and verifies its URL against the saved pixels.
+
+Import validates image hashes and dependencies before publishing the new deck. Missing or changed sources produce an error rather than substituted artwork. Unchanged imported recipes reuse their captured metadata and prepared layouts when **Generate images** rebuilds their PNGs. Editing the recipe's cards/settings returns that deck to the ordinary preparation flow. A recipe from an incompatible renderer pipeline must be rebuilt using its recorded release; the app does not silently migrate it.
+
+The complete format is a JSON object with `version: 2`, `format: "bulk-proxy-forge-deck"`, a `deck` snapshot, `templates`, `images`, `renderer`, and `includesRenders: false`. The top-level `cards`, `artist`, `tokenAssignments`, `tokenTreatments`, and `artVariants` remain compatible with artwork editing and concurrent data-file merges. The file limit is 20 MB. Credentials, browser handles, HTTP/font caches, unrelated decks, and saved print-order ZIPs are not part of a deck recipe.
+
+### Artwork overlays (version 1)
+
+Existing version-1 files remain supported as partial artwork/rules overlays. They cannot recreate a complete deck by themselves. Saving a complete recipe upgrades the file while preserving its other card entries.
+
 Optional top-level `artist` sets the deck artist for custom artwork. Per-card
 `artist` values override it. Omitting the top-level field keeps the current deck
 artist; an empty string clears it. This works for local files, GitHub file links

@@ -165,8 +165,10 @@ export const validateArtVariants=rows=>{
     return rows;
 };
 const validateDocument=document=>{
-    if(!document||document.version!==1||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`].includes(key)))
+    if(!document||![1,2].includes(document.version)||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`,...(document.version===2?[`format`,`deck`,`templates`,`images`,`renderer`,`includesRenders`]:[])].includes(key)))
         throw new Error(`The existing data.json is invalid. It was not changed.`);
+    if(document.version===2&&(document.format!==`bulk-proxy-forge-deck`||!document.deck||!document.images||document.includesRenders!==false))
+        throw new Error(`The complete data.json is invalid. It was not changed.`);
     if(Object.hasOwn(document,`artist`)&&(typeof document.artist!==`string`||document.artist.length>300))
         throw new Error(`The existing data.json has an invalid deck artist. It was not changed.`);
     validateTokenFields(document);
@@ -348,7 +350,21 @@ export const dataChangesPending=async(deckId,changes,document,cards=[])=>{
     return JSON.stringify(current)!==JSON.stringify(mergeCardDataDocument(saved,changes,null,cards));
 };
 export const downloadData=document=>downloadBlob(dataBlob(document),`data.json`);
-export const saveLocalData=async(record,changes,cards=[],tokenData=null)=>{
+export const completeDataDocument=(merged,complete,original=null,baseline=null)=>{
+    if(!complete)return merged;
+    validateDocument(complete);
+    if(original?.version===2){
+        const identity=value=>value.deck.recipeId||value.deck.id;
+        if(identity(original)!==identity(complete))throw new Error(`This data.json contains a different complete deck. Choose a separate file for this deck.`);
+        if(baseline?.version===2&&!equalDataValues(original.deck,baseline.deck)&&!equalDataValues(original.deck,complete.deck))
+            throw new Error(`The complete deck recipe changed on disk or GitHub. Import its latest version before saving.`);
+    }
+    const result=structuredClone(complete);
+    for(const field of [`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`])
+        if(Object.hasOwn(merged,field))result[field]=structuredClone(merged[field]);
+    return result;
+};
+export const saveLocalData=async(record,changes,cards=[],tokenData=null,complete=null)=>{
     const permissionHandle=record.file||record.folder;
     if(!permissionHandle)
         throw new Error(`This browser did not retain access to the original file or folder. Download data.json instead.`);
@@ -368,7 +384,7 @@ export const saveLocalData=async(record,changes,cards=[],tokenData=null)=>{
         original=JSON.parse(await file.text());
     }
 
-    const merged=mergeCardDataDocument(original,changes,record.document,cards,tokenData,record.tokenData||record.document);
+    const merged=completeDataDocument(mergeCardDataDocument(original,changes,record.document,cards,tokenData,record.tokenData||record.document),complete,original,record.document);
     // Read and validate before creating a new file or opening the atomic writer.
     handle||=await record.folder.getFileHandle(`data.json`,{create:true});
     const writer=await handle.createWritable();
@@ -427,7 +443,7 @@ const encodeContent=content=>{
 
     return btoa(binary);
 };
-export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[],tokenData=null,tokenBaseline=baseline)=>{
+export const saveGithubData=async(location,token,changes,baseline=null,fetcher=fetch,cards=[],tokenData=null,tokenBaseline=baseline,complete=null)=>{
     if(!/^[^/]+\/[^/]+$/.test(location.repo)||!location.branch||location.path.split(`/`).at(-1)!==`data.json`||location.path.split(`/`).some(part=>!part||part===`.`||part===`..`))
         throw new Error(`Choose the repository’s data.json file.`);
     const url=`https://api.github.com/repos/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/contents/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
@@ -440,12 +456,22 @@ export const saveGithubData=async(location,token,changes,baseline=null,fetcher=f
             throw new Error(`GitHub could not read data.json (${response.status}). Check your connection.`);
 
         const existing=response.status===404?null:await response.json();
-        if(existing&&(!existing.sha||existing.encoding!==`base64`||typeof existing.content!==`string`))
+        if(existing&&(!existing.sha||![`base64`,`none`].includes(existing.encoding)))
             throw new Error(`GitHub returned an unreadable data.json. It was not changed.`);
 
-        const original=existing?JSON.parse(decodeContent(existing.content)):{version:1,cards:[]};
+        let original={version:1,cards:[]};
+        if(existing?.encoding===`base64`)original=JSON.parse(decodeContent(existing.content));
+        else if(existing){
+            //The contents API omits base64 for files over 1 MB. Read the same
+            //immutable blob via raw media, retaining the SHA used for the PUT.
+            const large=await fetcher(`https://api.github.com/repos/${location.repo}/git/blobs/${existing.sha}`,{headers:{...headers,Accept:`application/vnd.github.raw+json`},cache:`no-store`});
+            if(!large.ok)throw new Error(`GitHub could not read the complete data.json (${large.status}).`);
+            const text=await large.text();if(text.length>20*1024**2)throw new Error(`Complete data.json exceeds 20 MB.`);
+            original=JSON.parse(text);
+        }
         //Recheck the edited fields on every retry; never replace a concurrent rules edit.
-        const merged=mergeCardDataDocument(original,changes,baseline,cards,tokenData,tokenBaseline);
+        const merged=completeDataDocument(mergeCardDataDocument(original,changes,baseline,cards,tokenData,tokenBaseline),complete,original,baseline);
+        if(complete)merged.deck.settings.dataJsonSource={kind:`github`,value:`https://github.com/${location.repo}/blob/${encodeURIComponent(location.branch)}/${location.path}`};
         const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge card data`,branch:location.branch,
             content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
         recordDiagnostic(`GitHub data save`,JSON.stringify({repo:location.repo,path:location.path,branch:location.branch,

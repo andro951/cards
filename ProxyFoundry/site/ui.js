@@ -40,10 +40,10 @@ export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export function requireDeckAvailable(id,owner=null){if(id)work.requireAvailable(['deck:'+id],owner);}
 export function requireWorkspaceIdle(){work.requireIdle();}
 function mutationResources(path,data){
-  const match=/^\/api\/decks\/([-a-f0-9]{36})(?:\/(save|add|refresh|delete|restore|prepare|cards)(?:\/|$))/.exec(path);
+  const match=/^\/api\/decks\/([-a-f0-9]{36})(?:\/(save|add|refresh|delete|restore|prepare|cards|image-sources)(?:\/|$))/.exec(path);
   if(match)return ['deck:'+match[1]];
   if(['/api/orders/plan','/api/orders/build'].includes(path))return (data?.deckIds||[]).map(id=>'deck:'+id);
-  if(['/api/images/delete-all','/api/backups/import-selected','/api/backups/restore'].includes(path))return ['workspace'];
+  if(['/api/images/delete-all','/api/backups/import-selected','/api/backups/restore','/api/deck-documents/import'].includes(path))return ['workspace'];
   return [];
 }
 export async function api(path,data,method='POST',owner=null){

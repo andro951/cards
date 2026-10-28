@@ -1,6 +1,7 @@
 import {mountDeckCards,convertToToken} from './tokens.js';
 import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {downloadReview} from './review-export.js';
+import {isCompleteDeckDocument,importCompleteDeck,downloadCompleteDeck,saveCompleteDeck} from './deck-document.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
@@ -118,7 +119,7 @@ function addNewDeck(){
   const sourceText=document.createElement('textarea');sourceText.rows=5;sourceText.placeholder='1 Sol Ring\n12 Forest';
   textLabel.append(textTitle,sourceText);advanced.append(textLabel);
   const fileLabel=document.createElement('label');fileLabel.className='field';
-  const fileTitle=document.createElement('span');fileTitle.textContent='Upload JSON or text file';
+  const fileTitle=document.createElement('span');fileTitle.textContent='Upload data.json, a deck export, or a text file';
   const file=document.createElement('input');file.type='file';file.accept='.json,.txt';
   fileLabel.append(fileTitle,file);advanced.append(fileLabel);
   body.append(advanced);
@@ -139,6 +140,13 @@ function addNewDeck(){
     }
     addButton.disabled=true;addButton.textContent='Reading deck list…';setModalBusy(host,true);
     try{
+      if(source.startsWith('{')){
+        const document=JSON.parse(source);
+        if(isCompleteDeckDocument(document)){
+          const deck=await importCompleteDeck(document);
+          closeModal({completed:true});nav('deck/'+deck.id+'/cards');toast('Complete deck recipe imported. Generate images to rebuild it.');return;
+        }
+      }
       const prepared=await prepareDeckSource(source);
       const manifest=await job('/api/decks/manifest',{source:prepared},{label:'Read deck list'});
       if(!host.isConnected)return;
@@ -331,6 +339,10 @@ function deckMenu(d){
   modal('Deck actions',`<div class="stack"><button class="button" id="duplicate-deck">Duplicate deck</button><button class="button" id="deck-image-zip">Download paired images ZIP</button><button class="button" id="download-cc">Export CardConjurer save</button><button class="button" id="download-originals">Download original printing images</button><button class="button" id="download-cropped-art">Download Cropped Art</button><button class="button" id="download-review-images">Download review Images</button><button class="button" id="use-as-defaults">Use this deck’s style as my default</button><button class="button danger" id="trash-deck">${permanent?'Delete deck permanently':'Move deck to Trash'}</button></div><p class="muted" style="margin-top:16px;font-size:12px">${permanent?'Permanent deletion cannot be undone. Shared artwork and render caches are retained.':'Exports use prepared card data. Half-size PNG reviews place the selected Scryfall printing beside your rendered card with a 1 px gap. Only actual double-faced reverse faces are included.'}</p>`,{size:'small'});
   const add=document.createElement('button');add.className='button';add.textContent='＋ Add Cards';add.onclick=()=>attempt(()=>importDeck(d));
   $('.stack',$('#modal-host')).prepend(add);
+  const complete=document.createElement('button');complete.type='button';complete.className='button';complete.textContent='Export complete data.json';
+  complete.onclick=()=>attempt(async()=>{closeModal();await downloadCompleteDeck(d.id);});add.after(complete);
+  const saveData=document.createElement('button');saveData.type='button';saveData.className='button';saveData.textContent='Save complete data.json';
+  saveData.onclick=()=>attempt(async()=>{closeModal();await saveCompleteDeck(d.id);});complete.after(saveData);
   const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button`;refresh.textContent=`Refresh deck cards`;
   refresh.onclick=()=>attempt(()=>refreshDeckCards(d));add.after(refresh);bindGenerationButton(refresh,[d.id]);
   const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';

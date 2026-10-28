@@ -15,7 +15,7 @@ from .images import ingest_image
 
 RASTER_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
 IMAGE_EXTENSIONS = RASTER_EXTENSIONS | {'.svg'}
-DATA_JSON_MAX_BYTES = 2 * 1024 * 1024
+DATA_JSON_MAX_BYTES = 20 * 1024 * 1024
 DATA_JSON_MAX_CARDS = 10000
 
 
@@ -42,7 +42,8 @@ def import_card_data_url(workspace, payload, include_document=False):
     raw_url = 'https://raw.githubusercontent.com/' + loc['repo'] + '/' + quote(loc['ref'], safe='') + '/' + quote(loc['folder'], safe='/')
     raw, _, _ = workspace.net.fetch(raw_url, refresh=True, ttl=0)
     entries = parse_card_data_json(raw)
-    entries=validate_card_data_for_deck(workspace, payload['deckId'], entries)
+    if json.loads(raw.decode('utf-8-sig')).get('version')!=2:
+        entries=validate_card_data_for_deck(workspace, payload['deckId'], entries)
     from .card_data import document_settings
     return {'cardData':entries,'document':json.loads(raw.decode('utf-8-sig')),'settings':document_settings(raw)} if include_document else entries
 
@@ -311,7 +312,7 @@ def import_github_setup_steps(workspace, payload, progress=lambda *a: None, canc
         check_cancel()
         card_data = parse_card_data_json(raw)
         deck_id = payload.get('deckId')
-        if deck_id and card_data:
+        if deck_id and card_data and json.loads(raw.decode('utf-8-sig')).get('version')!=2:
             card_data=validate_card_data_for_deck(workspace, deck_id, card_data)
         done += 1
         progress(done, total, 'Imported data.json')

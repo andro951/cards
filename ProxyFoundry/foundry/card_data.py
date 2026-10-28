@@ -85,11 +85,15 @@ def merge_entries(original,updates):
     return list(entries.values())
 
 def parse_document(raw):
-    if not isinstance(raw,(bytes,bytearray)) or len(raw)>2*1024*1024:raise ValidationError('data.json must be a UTF-8 JSON file no larger than 2 MB.')
+    if not isinstance(raw,(bytes,bytearray)) or len(raw)>20*1024*1024:raise ValidationError('data.json must be a UTF-8 JSON file no larger than 20 MB.')
     try:value=json.loads(bytes(raw).decode('utf-8-sig'))
     except (ValueError,UnicodeError) as exc:raise ValidationError('data.json is not valid UTF-8 JSON.') from exc
     if not isinstance(value,dict):raise ValidationError('data.json must contain a JSON object.')
-    if set(value)-{'version','cards','artist','tokenAssignments','tokenTreatments','artVariants'}:raise ValidationError('data.json has unsupported top-level fields.')
+    if value.get('version')==2:
+        from .deck_document import validate
+        validate(value,require_renderer=False)
+    elif len(raw)>2*1024*1024:raise ValidationError('Version-1 data.json must be no larger than 2 MB.')
+    elif set(value)-{'version','cards','artist','tokenAssignments','tokenTreatments','artVariants'}:raise ValidationError('data.json has unsupported top-level fields.')
     if 'artVariants' in value:
         from .art_variants import validate
         validate(value['artVariants'])
@@ -97,7 +101,7 @@ def parse_document(raw):
     if 'tokenAssignments' in value:validate_assignments(value['tokenAssignments'])
     if 'tokenTreatments' in value:validate_treatments(value['tokenTreatments'])
     if 'artist' in value and (not isinstance(value['artist'],str) or len(value['artist'])>300):raise ValidationError('data.json artist must be text no longer than 300 characters.')
-    if value.get('version')!=1:raise ValidationError('data.json version must be 1.')
+    if value.get('version') not in (1,2):raise ValidationError('data.json version must be 1 or 2.')
     if not isinstance(value.get('cards'),list):raise ValidationError('data.json cards must be an array.')
     return validate_entries(value['cards'])
 

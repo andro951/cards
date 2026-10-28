@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import zipfile
+import subprocess
 
 arguments=argparse.ArgumentParser()
 arguments.add_argument('--base-path',default='/')
@@ -27,6 +28,10 @@ for directory in ('foundry','site','web','vendor/card_tools','assets'):
         if path.is_file() and '__pycache__' not in path.parts:
             version.update(path.relative_to(root).as_posix().encode());version.update(path.read_bytes())
 build_id=version.hexdigest()[:20]
+source_commit=os.environ.get('GITHUB_SHA')
+if not source_commit:
+    try:source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+    except (OSError,subprocess.CalledProcessError):source_commit='506a2e62bce8b8f39423e7580c40907306d04792'
 def deployed_source(text):
     text=re.sub(r"(['\"])/(site|web)/",lambda match:match[1]+base+'/'+match[2]+'/',text)
     text=text.replace("const buildId='development';","const buildId='"+build_id+"';")
@@ -60,7 +65,7 @@ html = html.replace('BULK PROXY FORGE 1.3 <span>LOCAL</span>',
 runtime=dist / 'web' / 'runtime.zip'
 pending=dist / 'web' / 'runtime.zip.tmp'
 with zipfile.ZipFile(pending, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-    archive.writestr('build.json',json.dumps({'id':build_id}))
+    archive.writestr('build.json',json.dumps({'id':build_id,'sourceCommit':source_commit}))
     for directory in ('foundry', 'vendor/card_tools', 'assets', 'extension'):
         for path in (root / directory).rglob('*'):
             if path.is_file() and '__pycache__' not in path.parts and path.suffix in {'.py', '.png', '.json', '.js', '.md', '.txt'}:

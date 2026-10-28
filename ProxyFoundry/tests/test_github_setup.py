@@ -467,7 +467,8 @@ def test_inventory_staged_before_metadata_loads_can_be_saved_afterward(tmp_path)
 
 @pytest.mark.parametrize('data,match',[
     (b'{bad json','valid UTF-8 JSON'),
-    ({'version':2,'cards':[]},'version must be 1'),
+    ({'version':3,'cards':[]},'version must be 1 or 2'),
+    ({'version':2,'cards':[]},'complete Bulk Proxy Forge data.json'),
     ({'version':1,'cards':{}},'cards must be an array'),
     ({'version':1,'cards':[{'name':'A Test Creature','nickname':7}]},'nickname.*must be text'),
     ({'version':1,'cards':[{'name':'A Test Creature','nickname':'One'},{'name':'A Test Creature','flavor_text':'Two'}]},'more than one nonempty entry'),

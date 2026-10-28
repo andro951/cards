@@ -404,6 +404,11 @@ class BrowserHandler(server.Handler):
             generation=self.app.store.generation;session=uid();generation['renderSession']=session
             self.app.render_sessions[session]={'targets':generation['targets'],'created':time.time()}
             return self.respond(result)
+        if path=='/api/deck-documents/import':
+            from .deck_document import import_document_steps,MAX_DOCUMENT_BYTES
+            try:value=json.loads(self.body(MAX_DOCUMENT_BYTES))
+            except (ValueError,UnicodeError) as error:raise ValidationError('Choose a valid complete data.json.') from error
+            return self.respond(self.app.jobs.start('Import complete deck',lambda update,cancel:import_document_steps(self.app.ws,value,update,cancel)))
         if path=='/api/generation/commit':
             from .render_journal import commit_render_rows
             data=self.data();generation=self.app.store.require_generation(data.get('id'));commit_started=time.perf_counter()

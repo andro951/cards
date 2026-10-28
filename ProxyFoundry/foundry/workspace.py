@@ -283,6 +283,8 @@ class Workspace:
         # uploaded/custom rarity IDs continue to override the matching defaults.
         d['settings']=self._with_default_symbols(d.get('settings',{}))
         token_assignments.apply_treatments(d)
+        from .deck_document import reusable_recipe
+        frozen_recipe=reusable_recipe(d)
         if renders is None:
             renders=self.store.render_many(key for c in d['cards'] for f in substitutes.render_faces(c,d['settings']) for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
         ready=0;errors=0;warns=0;total=0
@@ -315,7 +317,8 @@ class Workspace:
                     #Converted cards retain their source template identity. Refresh
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
-                    if ((self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION)
+                    if frozen_recipe:pass
+                    elif ((self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION)
                             or data.get('normalArtAnchorVersion')==1):
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and data.get('version')=='tokenTextless' and str((data.get('text',{}).get('rules') or {}).get('text') or '').strip():
@@ -360,6 +363,9 @@ class Workspace:
             elif face.get('error'):errors+=1
             elif comp.get('render'):ready+=1
         d['summary']={'cards':sum(quantity(c['quantity']) for c in d['cards']),'faces':total,'rendered':ready,'errors':errors,'warnings':warns,'substitutes':substitute_count}
+        if frozen_recipe:
+            d.pop('upgradeRequired',None)
+            if d.get('status')=='draft':d['status']='prepared'
         if d.get('status')!='draft':d['status']='attention' if errors else 'ready' if total and ready==total else 'prepared'
         d['tokens']=token_assignments.overview(d)
         d['printStatus']='tokens-not-ready' if not d['tokens']['ready'] else d['status']
@@ -1076,6 +1082,10 @@ class Workspace:
 
     def prepare_steps(self,ident,progress=lambda *a:None,cancel=lambda:False):
         with timing(self.store,'prepare.load'):d=self.deck(ident)
+        from .deck_document import reusable_recipe
+        if reusable_recipe(d):
+            progress(1,1,'Reusing the complete data.json build recipe')
+            return d
         if d.get('pendingImport'):
             yield from self.resolve_metadata_steps(ident,progress,cancel)
             d=self.deck(ident)
