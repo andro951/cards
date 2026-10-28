@@ -93,14 +93,20 @@ def apply_compact_land_header(data,sem,bar_layers):
                     code=frame['src'].rsplit('CrownJoined',1)[1][0]
                     frame['src']=PREFIX+'CrownJoinedBlack'+code+'.png'
         else:
-            # The floating crown owns the title's outer rim. Keep the inset
-            # charcoal fill and remove the underlying frame's second title loop.
+            #Keep the approved title; the floating crown supplies only its
+            #outer contour, with its overlapping inner black stroke removed.
             for frame in frames:
+                src=str(frame.get('src',''))
+                if src.startswith('/img/frames/m15/crowns/m15Crown') and src.endswith('Floating.png'):
+                    code=src.rsplit('m15Crown',1)[1][0]
+                    frame['src']=PREFIX+'CrownFloatingOuter'+code+'.png'
                 for mask in frame.get('masks',[]):
                     if mask.get('src')=='/img/frames/m15/boxTopper/short/pinline.svg':
                         mask['src']=PREFIX+'lower-pinline.svg'
-            index=next(i for i,frame in enumerate(frames) if 'Floating.png' in str(frame.get('src','')))
-            frames.insert(index,part('CrownOutline','Compact land crown black outline'))
+            index=next(i for i,frame in enumerate(frames) if str(frame.get('src','')).startswith(PREFIX+'CrownFloatingOuter'))
+            outline=part('CrownOutline','Compact land crown black outline')
+            outline['src']=PREFIX+'CrownOuterOutline.png'
+            frames.insert(index,outline)
         return
 
     # The original compact pinline also contains a separate title ring.

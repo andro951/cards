@@ -415,7 +415,7 @@ function proxyFoundryInlineSymbols(text) {
             if 'M105.672,232.739' not in original:raise ValidationError('Pinned compact land pinline changed.')
             shape.set('d',original.split('M105.672,232.739')[0])
             return ET.tostring(svg),'image/svg+xml'
-        compact=re.fullmatch(r'/img/frames/proxy-foundry/compact-land/(TrueName[WUBRGMAL]|Title[WUBRGMAL]|TitleBlack[WUBRGMAL]?|CrownJoinedBlack[WUBRGMAL]|TitleCut[WUBRGMAL]|CrownOutline|PinlineFade)\.png',path)
+        compact=re.fullmatch(r'/img/frames/proxy-foundry/compact-land/(TrueName[WUBRGMAL]|Title[WUBRGMAL]|TitleBlack[WUBRGMAL]?|CrownJoinedBlack[WUBRGMAL]|CrownFloatingOuter[WUBRGMALC]|TitleCut[WUBRGMAL]|CrownOutline|CrownOuterOutline|PinlineFade)\.png',path)
         if compact:
             raw=(Path(__file__).resolve().parents[1]/'assets/compact-land'/(compact[1]+'.png')).read_bytes()
             with self.lock:self.requested[path]={'bytes':len(raw),'adapter':'Bundled approved compact land header'}

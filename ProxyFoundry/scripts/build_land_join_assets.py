@@ -78,6 +78,8 @@ def build(fetch,destination):
     build_black_title(fetch,destination)
     from scripts.build_compact_pinline_fade import build as build_pinline_fade
     build_pinline_fade(fetch,destination)
+    from scripts.build_land_outer_crowns import build as build_outer_crowns
+    build_outer_crowns(fetch,destination)
     return json.loads((destination/'geometry.json').read_text(encoding='utf-8'))
 
 if __name__=='__main__':

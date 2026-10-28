@@ -13,8 +13,10 @@ Nonlegendary + nickname:
   Preserve native alpha and shading; match only colored rim pixels.
   No horizontal blending. True-name text follows the two-pixel move.
 
-Legendary without nickname keeps the normal native floating crown with the
-approved black contour. Legendary with nickname uses the native Godzilla
+Legendary without nickname keeps the native floating crown with its inner
+black stroke removed, plus an outer-only black contour. These variants are
+bundled at build time; generation does no image processing for this change.
+Legendary with nickname uses the native Godzilla
 joined crown; no cropped addon is stacked on top of it.
 
 The rounded Temple family is preserved in the vendor compiler. To restore it:

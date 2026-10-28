@@ -2995,6 +2995,7 @@ class Compiler:
                                       not set(face.get('types',[]))&{'Artifact','Land'})
         # Only compact legendary lands changed their independent title/crown stack.
         compact_crown_version=int(group=='legendary-land' and choice in {'auto','legend-land'})
+        if compact_crown_version and not (face or {}).get('nickname'):compact_crown_version+=1
         title_edge_version=int(choice.startswith('godzilla-') or (choice in {'auto','legend-land'} and group in {'land','helper'}))
         # Only Devoid faces need refreshed materials; preserve unrelated caches.
         devoid_version=2*int(choice in {'auto','normal'} and group in {'standard','legendary'} and face is not None and has_devoid(face))
