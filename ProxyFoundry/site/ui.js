@@ -1,6 +1,7 @@
 import {generationScreen} from './generation-progress.js';
 import {recordDiagnostic,downloadBrowserDiagnostics} from './diagnostics.js';
 import {WorkCoordinator} from './work.js';
+import {workspaceFetch} from './workspace-fetch.js';
 export const $=(s,root=document)=>root.querySelector(s);
 export const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -54,7 +55,7 @@ export async function api(path,data,method='POST',owner=null){
 }
 async function requestApi(path,data,method){
   const opt=data===undefined?{}:{method,headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)};
-  const r=await fetch(path,opt);const text=await r.text();let result;
+  const r=await workspaceFetch(path,opt);const text=await r.text();let result;
   try{result=JSON.parse(text)}catch(error){
     recordDiagnostic('invalid API response',`${path}: HTTP ${r.status}; ${r.headers.get('Content-Type')}; ${text.length} characters; ${error.message}; start=${text.slice(0,300)}; end=${text.slice(-300)}`);
     throw new Error(`The workspace returned an unreadable response (${path}, HTTP ${r.status}). Reload the page and try again.`);
@@ -73,11 +74,11 @@ export function showWorkspaceError(error,retry=null){
   }
 }
 export async function blobRequest(path,body,mime='application/octet-stream',headers={}){
-  const r=await fetch(path,{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':mime,...headers},body});
+  const r=await workspaceFetch(path,{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':mime,...headers},body});
   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||'Upload failed.');}return r.json();
 }
 export async function downloadPost(path,data,filename){
-  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)});
+  const r=await workspaceFetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify(data)});
   if(!r.ok)throw new Error((await r.json()).error||'Export failed.');downloadBlob(await r.blob(),filename);
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
@@ -85,7 +86,7 @@ export async function saveApiFile(path,name,options={}){
   const onProgress=options?.onProgress;
   let total=Number(options?.bytes)||0,received=0;
   onProgress?.({received,total});
-  const response=await fetch(path);
+  const response=await workspaceFetch(path);
   if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'Download failed.');}
   total=Number(response.headers.get('Content-Length'))||total;
   let blob;

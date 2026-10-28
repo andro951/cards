@@ -35,7 +35,7 @@ export async function showSettings(){
     if(!await confirmAction('Restore this workspace backup?',`Restore ${file.name} as new deck/template copies? Your current decks and settings will not be overwritten.`,'Restore copies'))return;
     const task=work.begin({label:'Restore backup',resources:['workspace']});const epoch=state.routeEpoch;
     try{
-      const r=await fetch('/api/backups/import',{method:'POST',headers:{'X-Proxy-CSRF':state.csrf,'Content-Type':'application/zip'},body:file});const d=await r.json();if(!r.ok)throw new Error(d.error||'Backup upload failed.');
+      const d=await blobRequest('/api/backups/import',file,'application/zip');
       await waitExistingJob(d.id,task);if(epoch===state.routeEpoch)await showSettings();toast('Backup restored as new copies. Find the decks in your library.');
     }finally{work.finish(task);}
   });

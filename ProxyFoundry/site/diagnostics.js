@@ -1,3 +1,4 @@
+import {workspaceFetch} from './workspace-fetch.js';
 const storageKey='bulk-proxy-forge-browser-diagnostics';
 const originalWarn=console.warn.bind(console);
 let previousSession=null;
@@ -31,7 +32,7 @@ export function browserDiagnosticReport(){
     pendingImages:[...document.images].filter(image=>!image.complete).map(image=>({url:cleanDetail(image.currentSrc||image.src),label:image.alt,loading:image.loading}))};
 }
 export async function diagnosticZipRequest(csrf){
-  return fetch('/api/diagnostics.zip',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Proxy-CSRF':csrf},body:JSON.stringify({browser:browserDiagnosticReport()})});
+  return workspaceFetch('/api/diagnostics.zip',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Proxy-CSRF':csrf},body:JSON.stringify({browser:browserDiagnosticReport()})});
 }
 export function downloadBrowserDiagnostics(){
   const report=browserDiagnosticReport();

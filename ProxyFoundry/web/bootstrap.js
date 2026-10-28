@@ -1,9 +1,17 @@
 import '/site/favicon.js';
 import {WorkspaceFiles} from './workspace-files.js';
+import {createWorkspaceFetch} from './workspace-transport.js';
 import {recordDiagnostic,setEngineStatus,downloadBrowserDiagnostics} from '/site/diagnostics.js';
 const basePath='';
 const buildId='development';
 const startupStarted=performance.now();
+let startupStage='register-service-worker';
+const startupError=error=>{
+  recordDiagnostic('startup failure',JSON.stringify({stage:startupStage,name:error.name,message:error.message,stack:error.stack}));
+  message.textContent=`Could not open the browser workspace: ${error.message}`;
+  const retry=document.createElement('button');retry.className='button';retry.textContent='Retry opening workspace';
+  retry.onclick=()=>location.reload();startup.append(retry);
+};
 window.__pfBasePath=basePath;
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
@@ -59,7 +67,9 @@ else{
   announceOwner();navigator.serviceWorker.addEventListener('controllerchange',announceOwner);
   const worker=new Worker('/web/engine-worker.js?v='+buildId,{type:'module'});
   const {savedFolder}=await import('/web/storage-choice.js');
+  startupStage='read-workspace-preference';
   const folder=await savedFolder();
+  startupStage='check-workspace-permission';
   if(folder&&await folder.queryPermission({mode:'readwrite'})!=='granted'){
     message.textContent='Reconnect your workspace folder to open your saved decks.';
     await new Promise(resolve=>{
@@ -78,6 +88,7 @@ else{
     });
   }
   if(!navigator.locks)throw new Error('This browser cannot safely lock your workspace. Open the site in a current browser.');
+  startupStage='lock-workspace';
   await new Promise(resolve=>{
     navigator.locks.request('bulk-proxy-forge-workspace',{ifAvailable:true},async lock=>{
       if(!lock){
@@ -88,12 +99,12 @@ else{
       await new Promise(()=>{});
     }).catch(error=>{message.textContent=`Could not lock the workspace: ${error.message}`;});
   });
+  startupStage='open-browser-storage';
   const browserRoot=await navigator.storage.getDirectory();
-  //The exclusive workspace lock makes prior-session download staging safe to discard.
-  await browserRoot.removeEntry(`bulk-proxy-forge-download-staging`,{recursive:true}).catch(error=>{
-    if(error.name!==`NotFoundError`)throw error;
-  });
-  const downloadStaging=await browserRoot.getDirectoryHandle(`bulk-proxy-forge-download-staging`,{create:true});
+  startupStage='open-download-staging';
+  const stagingRoot=await browserRoot.getDirectoryHandle(`bulk-proxy-forge-download-staging`,{create:true});
+  const stagingSession=`session-${crypto.randomUUID()}`;
+  const downloadStaging=await stagingRoot.getDirectoryHandle(stagingSession,{create:true});
   window.__pfWorkspaceDirectory=folder||browserRoot;
   const files=new WorkspaceFiles(folder||browserRoot,downloadStaging);
   const pending=new Map();
@@ -156,13 +167,10 @@ else{
       }
     }
   };
+  startupStage='start-card-engine';
   worker.postMessage({type:'start',folder,owner});
 
-  navigator.serviceWorker.addEventListener('message',async event=>{
-    const data=event.data;
-    if(data.type==='owner-probe'){event.ports[0]?.postMessage({owner});event.ports[0]?.close();return;}
-    if(data.type!=='request')return;
-    const port=event.ports[0];
+  const dispatchWorkspaceRequest=async (data,port)=>{
     try{
       if(engineFailure)throw new Error(engineFailure);
       if(data.url.startsWith('/workspace-io?')){
@@ -195,6 +203,14 @@ else{
       worker.postMessage(data,data.body?[data.body]:[]);
     }
     catch(error){port.postMessage({type:'error',id:data.id,message:String(error)});port.close();}
+  };
+  window.__pfWorkspaceFetch=createWorkspaceFetch(dispatchWorkspaceRequest,id=>{
+    pending.get(id)?.close();pending.delete(id);files.inputBuffers.delete(id);
+  },basePath);
+  navigator.serviceWorker.addEventListener('message',event=>{
+    const data=event.data;
+    if(data.type==='owner-probe'){event.ports[0]?.postMessage({owner});event.ports[0]?.close();return;}
+    if(data.type==='request')dispatchWorkspaceRequest(data,event.ports[0]);
   });
 
   window.addEventListener('message',async event=>{
@@ -209,7 +225,7 @@ else{
         if(!Number.isSafeInteger(data.offset)||data.offset<0)throw new Error('Invalid order chunk.');
         headers.Range=`bytes=${data.offset}-${data.offset+1024*1024-1}`;
       }
-      const response=await fetch('/api/transfer/'+data.id+'/'+data.kind+suffix,{headers,cache:'no-store'});
+      const response=await window.__pfWorkspaceFetch('/api/transfer/'+data.id+'/'+data.kind+suffix,{headers,cache:'no-store'});
       if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Saved order could not be read.');
       if(data.kind==='metadata')reply.data=await response.json();
       else{
@@ -227,6 +243,7 @@ else{
 
   try{
     await ready;
+    startupStage='open-workspace-ui';
     const appReady=new Promise((resolve,reject)=>{
       window.addEventListener('pf-ui-ready',resolve,{once:true});
       window.addEventListener('pf-ui-error',event=>reject(new Error(event.detail)),{once:true});
@@ -239,8 +256,17 @@ else{
     shell.style.display='';
     startup.remove();
     recordDiagnostic('startup timing',JSON.stringify({stage:'website-total',seconds:(performance.now()-startupStarted)/1000,outcome:'ok',storageType:folder?'selected-folder':'browser'}));
+    //An old browser file handle can prevent deletion. Temporary export cleanup
+    //must never block opening the workspace or touch saved decks and images.
+    const cleanup=async()=>{
+      for await(const [name] of stagingRoot.entries()){
+        if(name===stagingSession)continue;
+        await stagingRoot.removeEntry(name,{recursive:true}).catch(error=>recordDiagnostic('download staging cleanup',`${name}: ${error.name}: ${error.message}`));
+      }
+    };
+    cleanup().catch(error=>recordDiagnostic('download staging cleanup',`${error.name}: ${error.message}`));
   }
-  catch(error){message.textContent=`Could not open the browser workspace: ${error.message}`;}
+  catch(error){startupError(error);}
 }
 }
-catch(error){message.textContent=`Could not open the browser workspace: ${error.message}`;}
+catch(error){startupError(error);}
