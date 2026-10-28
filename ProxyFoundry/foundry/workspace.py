@@ -323,9 +323,9 @@ class Workspace:
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and data.get('stationTokenLayoutVersion')!=STATION_TOKEN_LAYOUT_VERSION:
                         d['status']='draft'
                     if (comp.get('recipe') in {'Deck-wide token','Card Tools copy token'}
-                            and self._dual_token_color_source(sf,sf_face,{} if d['settings'].get('allCardsTokens') else c.get('tokenSpec') or {})
-                            and data.get('tokenDualColorVersion')!=TOKEN_DUAL_COLOR_VERSION):
-                        d['status']='draft'
+                            and self._dual_token_color_source(sf,sf_face,{} if d['settings'].get('allCardsTokens') else c.get('tokenSpec') or {})):
+                        rounded=data.get('version') in {'tokenRegularM15','tokenTextlessM15'} or data.get('prepareToken') or data.get('stationToken')
+                        if data.get('tokenDualColorVersion')!=(TOKEN_DUAL_COLOR_VERSION if rounded else None):d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
                     elif has_untap_alias(data) or has_touching_ability_badges(data):
@@ -830,7 +830,8 @@ class Workspace:
         try:entry=tokens.build_token({'key':comp['name'],'data':comp['data']},spec)
         except (Exception,SystemExit) as exc:raise ValidationError('Token conversion could not be applied: '+str(exc)) from exc
         comp['data']=entry['data'];comp['name']=entry['key'];comp['group']='token';comp['recipe']=recipe_label
-        dual_colors=bool(sem and spec.get('frame_color')=='M' and len(frame_treatment_colors(sem))==2)
+        comp['data'].pop('tokenDualColorVersion',None)
+        dual_colors=bool(style=='token-classic' and sem and spec.get('frame_color')=='M' and len(frame_treatment_colors(sem))==2)
         if style:
             short=False if structured_source is not None else token_has_short_text({'oracle_text':comp['data']['text']['rules']['text']})
             configure_token_style(comp['data'],'C' if classic_colorless else spec.get('frame_color','A'),style,short)
@@ -851,7 +852,9 @@ class Workspace:
         if structured_source is None:
             if style in MODERN_TOKEN_STYLES and comp['data'].get('version')!='m15Nickname':apply_modern_token_text(comp['data'],spec.get('frame_color','A'))
             elif comp['data'].get('version') not in {'tokenRegularM15','tokenTextlessM15'} or not style:apply_full_art_text(comp['data'])
-        if dual_colors:
+        #Only the rounded token family receives this conversion treatment.
+        #Nickname frames can replace it above with a full-art card frame.
+        if dual_colors and (structured_source is not None or comp['data'].get('version') in {'tokenRegularM15','tokenTextlessM15'}):
             if structured_source is None:apply_universal_frame_color_treatment(comp['data'],sem)
             comp['data']['tokenDualColorVersion']=TOKEN_DUAL_COLOR_VERSION
         if not finalize:return comp
