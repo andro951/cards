@@ -13,6 +13,7 @@ const startupError=error=>{
   retry.onclick=()=>location.reload();startup.append(retry);
 };
 window.__pfBasePath=basePath;
+window.__pfBuildId=buildId;
 const shell=document.querySelector('.app-shell');
 shell.style.display='none';
 const startup=document.createElement('main');

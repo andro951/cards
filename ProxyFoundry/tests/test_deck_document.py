@@ -104,6 +104,39 @@ def test_embedded_images_are_rejected(tmp_path):
     with pytest.raises(ValidationError,match='embedded'):validate(document)
 
 
+@pytest.mark.parametrize('base64_encoded',[False,True])
+def test_generated_gradient_layers_export_as_drawing_inputs_and_rebuild(tmp_path,base64_encoded):
+    import base64,xml.etree.ElementTree as ET
+    from urllib.parse import quote,unquote
+    ws,deck=source_deck(tmp_path)
+    svg='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><defs><linearGradient id="fade"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/></linearGradient></defs><rect width="20" height="20" fill="url(#fade)"/></svg>'
+    uri=('data:image/svg+xml;base64,'+base64.b64encode(svg.encode()).decode()) if base64_encoded else 'data:image/svg+xml;utf8,'+quote(svg)
+    frames=deck['cards'][0]['faces'][0]['compiled']['data']['frames']
+    frames.append({'name':'Generated land title gradient','src':uri,'masks':[]})
+    ws.store.put('decks',deck,deck['revision'])
+    document=export_document(ws,deck['id'])
+    assert len(document['vectors'])==1
+    assert 'data:image/' not in json.dumps(document) and 'base64' not in json.dumps(document)
+    other=destination(tmp_path,ws,document);restored=import_document(other,document)
+    restored_uri=restored['cards'][0]['faces'][0]['compiled']['data']['frames'][-1]['src']
+    def tree(node):return (node.tag,dict(node.attrib),node.text,[tree(c) for c in node])
+    assert tree(ET.fromstring(unquote(restored_uri.split(',',1)[1])))==tree(ET.fromstring(svg))
+    assert reusable_recipe(restored)
+    missing=copy.deepcopy(document);missing['vectors']={}
+    with pytest.raises(ValidationError,match='vector'):validate(missing)
+    tampered=copy.deepcopy(document);next(iter(tampered['vectors'].values()))['root']['attributes']['width']='99'
+    with pytest.raises(ValidationError,match='identity'):validate(tampered)
+
+
+def test_vector_drawing_recipes_reject_active_or_external_content():
+    from foundry.deck_document import map_images,vector_source
+    from urllib.parse import quote
+    for svg in ['<svg xmlns="http://www.w3.org/2000/svg"><script/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg"><use href="https://example.com/a.svg"/></svg>']:
+        with pytest.raises(ValidationError):map_images('data:image/svg+xml,'+quote(svg),vectors={})
+    with pytest.raises(ValidationError):vector_source({'kind':'svg','root':{'tag':'svg'}})
+
+
 def test_v1_overlays_stay_compatible():
     assert parse_document(b'{"version":1,"cards":[{"name":"One Card","nickname":"Two"}]}')[0]['nickname']=='Two'
 

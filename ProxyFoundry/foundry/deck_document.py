@@ -9,24 +9,62 @@ from .substitutes import stored_faces
 from .network import validate_remote_url
 from .images import decode_image,ingest_image,sanitize_svg
 from pathlib import Path
-from urllib.parse import quote,urlsplit
+from urllib.parse import quote,urlsplit,unquote_to_bytes
 
 MAX_DOCUMENT_BYTES=20*1024**2
 HASH=re.compile(r'^[a-f0-9]{64}$')
 UUID=re.compile(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$',re.I)
 EMPTY_IMAGE='builtin:transparent-pixel'
+VECTOR_PREFIX='builtin:generated-vector:'
 
 
-def map_images(value,store=None,restore=False):
+def vector_source(recipe):
+    """Build passive vector frame layers from drawing instructions, not image bytes."""
+    import xml.etree.ElementTree as ET
+    count=0
+    def build(node,depth=0):
+        nonlocal count
+        count+=1
+        if depth>64 or count>20000 or not isinstance(node,dict):raise ValidationError('Invalid vector drawing instructions.')
+        if set(node)!={'tag','attributes','text','tail','children'} or not isinstance(node['tag'],str) or not isinstance(node['attributes'],dict) or not isinstance(node['children'],list):
+            raise ValidationError('Invalid vector drawing instructions.')
+        if any(not isinstance(k,str) or not isinstance(v,str) for k,v in node['attributes'].items()) or any(v is not None and not isinstance(v,str) for v in (node['text'],node['tail'])):
+            raise ValidationError('Invalid vector drawing instructions.')
+        item=ET.Element(node['tag'],node['attributes']);item.text=node['text'];item.tail=node['tail']
+        item.extend(build(child,depth+1) for child in node['children'])
+        return item
+    if not isinstance(recipe,dict) or set(recipe)!={'kind','root'} or recipe['kind']!='svg':raise ValidationError('Unsupported vector drawing recipe.')
+    raw=ET.tostring(build(recipe['root']),encoding='utf-8')
+    return 'data:image/svg+xml,'+quote(sanitize_svg(raw).decode(),safe='')
+
+
+def vector_identity(recipe):
+    return hashlib.sha256(json.dumps(recipe,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+
+def map_images(value,store=None,restore=False,vectors=None):
     from .template_model import TRANSPARENT
-    if isinstance(value,dict):return {key:map_images(item,store,restore) for key,item in value.items()}
-    if isinstance(value,list):return [map_images(item,store,restore) for item in value]
+    if isinstance(value,dict):return {key:map_images(item,store,restore,vectors) for key,item in value.items()}
+    if isinstance(value,list):return [map_images(item,store,restore,vectors) for item in value]
+    if restore and isinstance(value,str) and value.startswith(VECTOR_PREFIX):
+        recipe=(vectors or {}).get(value[len(VECTOR_PREFIX):])
+        return vector_source(recipe)
     if restore and value==EMPTY_IMAGE:return TRANSPARENT
     if not restore and value==TRANSPARENT:return EMPTY_IMAGE
     if not restore and isinstance(value,str) and value.startswith('data:image/'):
         import base64
-        try:raw=base64.b64decode(value.split(',',1)[1],validate=True)
+        try:
+            header,payload=value.split(',',1)
+            raw=base64.b64decode(payload,validate=True) if ';base64' in header.lower() else unquote_to_bytes(payload)
         except (ValueError,IndexError) as error:raise ValidationError('Invalid embedded source image.') from error
+        if header.split(';',1)[0].lower()=='data:image/svg+xml':
+            import xml.etree.ElementTree as ET
+            def drawing(node):return {'tag':node.tag,'attributes':dict(node.attrib),'text':node.text,'tail':node.tail,'children':[drawing(child) for child in node]}
+            recipe={'kind':'svg','root':drawing(ET.fromstring(sanitize_svg(raw)))}
+            ident=vector_identity(recipe)
+            if vectors is None:raise ValidationError('Vector drawing registry is missing.')
+            vectors[ident]=recipe
+            return VECTOR_PREFIX+ident
         asset=ingest_image(store,raw)
         return '/api/assets/'+asset['id']
     return value
@@ -76,6 +114,19 @@ def validate(value,*,require_renderer=True):
     if not isinstance(renderer,dict) or (require_renderer and (renderer.get('commit')!=CC_COMMIT or renderer.get('pipeline')!=PIPELINE_VERSION)):
         raise ValidationError('This deck recipe needs a different renderer version. Use its recorded Bulk Proxy Forge release to rebuild it exactly.')
     deck=value.get('deck')
+    vectors=value.get('vectors',{})
+    if not isinstance(vectors,dict) or len(vectors)>10000:raise ValidationError('Invalid vector drawing registry.')
+    for ident,recipe in vectors.items():
+        if not HASH.fullmatch(ident) or vector_identity(recipe)!=ident:raise ValidationError('Invalid vector drawing identity.')
+        vector_source(recipe)
+    def check_vectors(item):
+        if isinstance(item,dict):
+            for v in item.values():check_vectors(v)
+        elif isinstance(item,list):
+            for v in item:check_vectors(v)
+        elif isinstance(item,str) and item.startswith(VECTOR_PREFIX) and item[len(VECTOR_PREFIX):] not in vectors:
+            raise ValidationError('A required vector drawing recipe is missing.')
+    check_vectors([deck,value.get('templates',[])])
     if not isinstance(deck,dict) or not isinstance(deck.get('settings'),dict) or not isinstance(deck.get('cards'),list):
         raise ValidationError('The complete data.json is missing its deck or settings.')
     if not UUID.fullmatch(str(deck.get('id',''))):raise ValidationError('Invalid data.json deck identifier.')
@@ -187,12 +238,14 @@ def export_document(workspace,ident,*,allow_missing=False):
             compiled=face.get('compiled') or {}
             compiled.pop('render',None)
     deck.pop('recipeSnapshot',None)
-    deck=map_images(deck,workspace.store)
-    templates=map_images(templates,workspace.store)
+    vectors={}
+    deck=map_images(deck,workspace.store,vectors=vectors)
+    templates=map_images(templates,workspace.store,vectors=vectors)
     value={'version':2,'format':'bulk-proxy-forge-deck','cards':copy.deepcopy(deck.get('cardData',[])),
            'artist':deck['settings'].get('artist',''),'deck':deck,'templates':list(templates.values()),'images':{},
            'renderer':{'pipeline':PIPELINE_VERSION,'repository':CC_REPO,'commit':CC_COMMIT},
            'includesRenders':False}
+    if vectors:value['vectors']=vectors
     for field in ('tokenAssignments','tokenTreatments','artVariants'):
         if field in deck['settings']:value[field]=copy.deepcopy(deck['settings'][field])
     with workspace.store.connect() as db:
@@ -291,7 +344,7 @@ def import_document_steps(workspace,value,progress=lambda *a:None,cancel=lambda:
         progress(index+1,len(value['images']),'Restoring source image '+str(index+1))
         yield
     if cancel():raise ValidationError('Complete deck import cancelled.')
-    deck=map_images(copy.deepcopy(value['deck']),restore=True)
+    deck=map_images(copy.deepcopy(value['deck']),restore=True,vectors=value.get('vectors',{}))
     for field in ('summary','tokens','printStatus','upgradeRequired','revision','createdAt','updatedAt','deleted','githubCardDataState','pendingImport'):
         deck.pop(field,None)
     recipe_id=deck.get('recipeId',deck['id'])
@@ -310,7 +363,7 @@ def import_document_steps(workspace,value,progress=lambda *a:None,cancel=lambda:
         return item
     deck=remap(deck)
     deck['recipeId']=recipe_id
-    templates=remap(map_images(copy.deepcopy(value.get('templates',[])),restore=True))
+    templates=remap(map_images(copy.deepcopy(value.get('templates',[])),restore=True,vectors=value.get('vectors',{})))
     deck['imageSources']={ident:{key:entry[key] for key in ('url','transform','recipe') if key in entry} for ident,entry in value['images'].items()}
     #Validate settings against staged templates without persisting partial decks.
     rules=deck['settings'].get('templateRules',{})

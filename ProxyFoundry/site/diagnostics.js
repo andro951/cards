@@ -27,7 +27,7 @@ export function setEngineStatus(status){
 }
 export function browserDiagnosticReport(){
   persist();
-  return {url:location.href,userAgent:navigator.userAgent,engineStatus,
+  return {url:location.href,userAgent:navigator.userAgent,engineStatus,buildId:window.__pfBuildId||null,
     serviceWorker:navigator.serviceWorker?.controller?.scriptURL||null,entries,previousSession,
     pendingImages:[...document.images].filter(image=>!image.complete).map(image=>({url:cleanDetail(image.currentSrc||image.src),label:image.alt,loading:image.loading}))};
 }

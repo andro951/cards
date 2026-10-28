@@ -165,7 +165,7 @@ export const validateArtVariants=rows=>{
     return rows;
 };
 const validateDocument=document=>{
-    if(!document||![1,2].includes(document.version)||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`,...(document.version===2?[`format`,`deck`,`templates`,`images`,`renderer`,`includesRenders`]:[])].includes(key)))
+    if(!document||![1,2].includes(document.version)||!Array.isArray(document.cards)||document.cards.length>10000||Object.keys(document).some(key=>![`version`,`cards`,`artist`,`tokenAssignments`,`tokenTreatments`,`artVariants`,...(document.version===2?[`format`,`deck`,`templates`,`images`,`vectors`,`renderer`,`includesRenders`]:[])].includes(key)))
         throw new Error(`The existing data.json is invalid. It was not changed.`);
     if(document.version===2&&(document.format!==`bulk-proxy-forge-deck`||!document.deck||!document.images||document.includesRenders!==false))
         throw new Error(`The complete data.json is invalid. It was not changed.`);
