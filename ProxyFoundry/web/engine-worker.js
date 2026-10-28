@@ -263,11 +263,8 @@ async function handle(event){
     }
 
     const metadata=JSON.parse(responseText(encoded.metadata));
-    if(method==='POST'&&metadata.status<400&&url==='/api/generation/begin'){generationActive=true;runtimeEpoch++;}
-    if(method==='POST'&&url.startsWith('/api/generation/')&&url!=='/api/generation/begin') {
-      generationActive=false;runtimeEpoch++;
-      if(url==='/api/generation/abort')runtimeDownloads.cancel();
-    }
+    syncGenerationState();
+    if(method==='POST'&&url==='/api/generation/abort')runtimeDownloads.cancel();
     let responseBody;
     if(encoded.jsonBody!==undefined)responseBody=responseText(encoded.jsonBody);
     else responseBody=metadata.file?new Uint8Array():responseBytes(encoded.binaryBody);
@@ -289,10 +286,16 @@ async function handle(event){
 }
 
 
+function syncGenerationState(){
+  const active=!!python.runPython('app.store.generation is not None');
+  if(active!==generationActive){generationActive=active;runtimeEpoch++;}
+}
+
 async function runJobs(){
   if(!initialized)return;
   try{
     const pending=python.runPython('app.jobs.run_pending(limit=1)');
+    syncGenerationState();
     jobDelay=Number(python.runPython('app.jobs.next_delay()'));
     if(!completedJobs.length)return pending;
     await mount.syncfs();

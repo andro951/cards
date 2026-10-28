@@ -12,6 +12,35 @@ def call(app,path,data):
     return request(app,'POST',path,json.dumps(data).encode())
 
 
+@pytest.mark.parametrize('outcome',['complete','cancel','failure'])
+def test_direct_preparation_owns_one_batch_and_cleans_up_on_every_exit(tmp_path,outcome):
+    from foundry.browser import BrowserStore
+    from foundry.server import App
+    snapshots=[]
+    app=App(BrowserStore(tmp_path,lambda path:snapshots.append(Path(path).read_bytes())))
+    app.jobs=BrowserJobs(app.store)
+    deck=app.ws.new_deck('Direct preparation');count=len(snapshots)
+    def prepare(ident,update,cancel,**options):
+        assert app.store.generation and app.store._defer_checkpoint==1
+        for n in range(30):
+            app.store.put('benchmark-work',{'id':str(n),'value':n})
+            yield
+        if outcome=='failure':raise ValidationError('Injected preparation failure')
+        return {'id':ident}
+    app.prepare_deck_steps=prepare
+    response=call(app,'/api/decks/'+deck['id']+'/prepare',{})
+    assert response['status']==200
+    job=json.loads(response['body']);app.jobs.run_pending(limit=1)
+    assert len(snapshots)==count
+    if outcome=='cancel':app.jobs.cancel(job['id'])
+    while app.jobs.run_pending(limit=1):pass
+    assert app.store.generation is None and app.store._defer_checkpoint==0
+    assert app.jobs.get(job['id'])['state']=={'complete':'done','cancel':'cancelled','failure':'failed'}[outcome]
+    if outcome=='complete':
+        assert len(snapshots)==count+1 and len(app.store.list('benchmark-work'))==30
+    else:assert not app.store.list('benchmark-work')
+
+
 def test_recipe_source_metadata_stays_in_generation_batch_and_layout_edits_remain_blocked(tmp_path):
     from foundry.browser import BrowserStore
     from foundry.server import App

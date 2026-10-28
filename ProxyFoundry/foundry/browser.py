@@ -499,8 +499,23 @@ class BrowserHandler(server.Handler):
         prepare=re.fullmatch(r'/api/decks/([-a-f0-9]{36})/prepare',path)
         if prepare:
             data=self.data()
-            return self.respond(self.app.jobs.start('Prepare deck',
-                lambda update,cancel:self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True,freshness_scope=data.get('freshnessScope')),priority=1))
+            # Preserve fast batched writes and concurrent artwork acquisition even
+            # when a caller prepares directly, without opening a render session.
+            owned=self.app.store.generation is None
+            session=self.app.store.begin_generation([prepare[1]]) if owned else self.app.store.generation
+            def run(update,cancel):
+                try:
+                    result=yield from self.app.prepare_deck_steps(prepare[1],update,cancel,compact=True,freshness_scope=data.get('freshnessScope'))
+                    if owned:self.app.store.commit_generation(session['id'])
+                    return result
+                except BaseException:
+                    if owned and self.app.store.generation and self.app.store.generation['id']==session['id']:
+                        self.app.store.abort_generation(session['id'])
+                    raise
+            try:return self.respond(self.app.jobs.start('Prepare deck',run,priority=1))
+            except BaseException:
+                if owned:self.app.store.abort_generation(session['id'])
+                raise
         if path == '/api/cleanup/retry':
             for queue in self.app.store.list('cleanup'):
                 queue.pop('error',None)

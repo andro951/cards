@@ -77,3 +77,40 @@ the isolated production-generation approach in `benchmark_generation.py`, and
 temporary builds from the revisions above. Count actual `BrowserStore.persist`
 calls rather than attempted `checkpoint` calls: unchanged/deferred checkpoints
 do not imply a disk write. Keep fresh-save and cached-output trials separate.
+
+## Full Hulk Pack preparation follow-up
+
+Diagnostics (5) recorded a 435.264-second preparation job for Hulk Pack: 100
+cards, 118 faces. The retained application log covers only the final part of that
+job. In that retained interval, 27 `card.prepare` entries accompany 136 timed
+database checkpoints totaling 72.86 seconds. Artwork resolution totals 78.87
+seconds and card preparation totals 92.80 seconds. These timings overlap; they
+must not be added. The late land-card compilation calls are below the normal
+0.1-second logging threshold. Repeated full snapshots, together with serial
+artwork acquisition, explain the observed preparation slowdown.
+
+A read-only snapshot of the actual workspace database and the real Hulk Pack
+inputs was replayed in isolated Edge OPFS. Remote artwork bytes were served from
+the read-only workspace, and GitHub JSON freshness was frozen across revisions.
+The original workspace was never modified. This measures the real preparation,
+normalization and browser persistence paths, while excluding internet variance.
+
+| Version/path | Cold preparation | Cached-art layout rebuild | Unchanged check |
+| --- | ---: | ---: | ---: |
+| Original `4f0219c` | 20.540 s | 12.748 s | Not measured |
+| Fixed `2a829e1`, explicit generation batch | 20.267 s | 13.305 s | Not measured |
+| Backend-guarded direct preparation | 20.878 s | 12.787 s | 0.746 s |
+
+Each cold/rebuild run makes one durable metadata write. The unchanged check makes
+none. Original `4f0219c` has its known Tezzeret planeswalker-fit error; the fixed
+runs prepare all 118 faces without errors. These are preparation measurements,
+not full PNG-generation durations, and the live internet can add download time.
+
+Browser direct preparation now opens and owns a preparation-only transaction
+when its caller has not already opened one. This preserves deferred metadata
+writes, six-slot artwork prefetch and generation-aware job scheduling regardless
+of the caller. It commits once after success and rolls back on cancellation or
+failure. Existing full-generation transactions retain ownership. The engine
+tracks actual backend transaction state so thumbnails remain deferred during
+either path and resume afterward. Cancellation/failure tests verify no leaked
+transaction, and a real 118-face browser replay verifies the direct path.
