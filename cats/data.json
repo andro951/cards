@@ -579,7 +579,10 @@
       "name": "Nacatl War-Pride",
       "oracle_id": "692fdca7-0eff-4d2d-b744-213b6f6e18fb",
       "scryfall_id": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db",
-      "scryfall_url": "https://scryfall.com/card/plst/FUT-147/nacatl-war-pride?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/plst/FUT-147/nacatl-war-pride?utm_source=api",
+      "accepted_art": [
+        "20d83eb604098befd34c894e2baa7624b24f3b574b65ad0a3678e1423375d2e3"
+      ]
     }
   ],
   "tokenAssignments": [
