@@ -6,6 +6,45 @@ from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def test_real_browser_save_recovers_stale_handle_and_preserves_existing_assets(tmp_path):
+    import functools,http.server,os,threading,pytest
+    if os.environ.get('PF_BROWSER')!='1':pytest.skip('Opt-in isolated browser storage')
+    from playwright.sync_api import sync_playwright
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(ROOT)))
+    threading.Thread(target=server.serve_forever,daemon=True).start()
+    out=io.BytesIO();Image.new('RGBA',(40,56),'blue').save(out,'PNG')
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(headless=True,**({'channel':os.environ['PF_BROWSER_CHANNEL']} if os.environ.get('PF_BROWSER_CHANNEL') else {}))
+            page=browser.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/web/')
+            result=page.evaluate('''async png=>{
+                const {BrowserRenderSave}=await import('/web/render-save.js');
+                const root=await (await navigator.storage.getDirectory()).getDirectoryHandle('save-test',{create:true});
+                const saver=await BrowserRenderSave.open(null,root,{id:'isolated'});
+                const original=saver.write;let injected=0,handles=0;
+                saver.write=async(folder,name,data)=>original({getFileHandle:async(...args)=>{
+                    const handle=await folder.getFileHandle(...args);handles++;
+                    return {getFile:()=>handle.getFile(),createWritable:async()=>{
+                        if(!injected++){throw new DOMException('State changed since read from disk','InvalidStateError');}
+                        return handle.createWritable();
+                    }};
+                }},name,data);
+                const blob=new Blob([Uint8Array.from(atob(png),c=>c.charCodeAt(0))]);
+                const target={key:'a'.repeat(64),deckId:'deck',cardId:'card',faceId:'face'};
+                await Promise.all([1,2,3].map(()=>saver.save(target,{blob,width:40,height:56})));
+                const hash=saver.rows[0].hash,folder=await saver.assets.getDirectoryHandle(hash.slice(0,2));
+                const handle=await folder.getFileHandle(hash),before=await handle.getFile();
+                await new Promise(resolve=>setTimeout(resolve,30));
+                const reopened=await BrowserRenderSave.open(null,root,{id:'second'});
+                await reopened.save(target,{blob,width:40,height:56});
+                const after=await handle.getFile();
+                return {rows:saver.rows.length,handles,preserved:before.lastModified===after.lastModified,bytes:await after.text()===await blob.text()};
+            }''',base64.b64encode(out.getvalue()).decode())
+            assert result=={'rows':3,'handles':2,'preserved':True,'bytes':True}
+            browser.close()
+    finally:server.shutdown();server.server_close()
+
+
 def test_direct_browser_save_validation_grouping_and_retry():
     out=io.BytesIO();Image.new('RGBA',(40,56),'blue').save(out,'PNG')
     module='data:text/javascript;base64,'+base64.b64encode((ROOT/'web/render-save.js').read_bytes()).decode()
@@ -21,7 +60,7 @@ class Directory{
  async getDirectoryHandle(name){if(!this.directories.has(name))this.directories.set(name,new Directory());return this.directories.get(name);}
  async getFileHandle(name){
   const files=this.files;
-  return {async createWritable(){
+  return {async getFile(){return files.get(name)||new Blob([]);},async createWritable(){
    const chunks=[];
    return new WritableStream({write(value){if(failWrite)throw Error('full');chunks.push(value);},close(){files.set(name,new Blob(chunks));}});
   }};

@@ -87,6 +87,7 @@ async function runRenderPlan(plan,options={}){
         if(!generation){endActivity(successMessage,false,owner);if(successToast)toast(successToast);}
         return {rows:saver?.rows||[]};
     }catch(error){
+        recordDiagnostic('Render failure detail',JSON.stringify({name:error.name,message:error.message,stack:error.stack,cause:error.cause?.stack,stage:pool?'render-or-save':'renderer-startup'}));
         if(generation)error=new Error(signal.aborted?`Generation cancelled. Previous card images are unchanged.`:error.message.replace(`Completed images are saved.`,`Previous card images are unchanged.`));
         if(signal.aborted){if(work.visible()===owner)$('#activity').classList.add('hidden');}
         else{api('/api/client-error',{error:'Native render: '+(error.stack||error.message)}).catch(()=>{});endActivity(error.message,true,owner);}

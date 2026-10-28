@@ -17,10 +17,33 @@ export class BrowserRenderSave {
         return saver;
     }
     write = async (directory,name,data) => {
-        const handle=await directory.getFileHandle(name,{create:true});
-        const stream=await handle.createWritable();
-        //pipeTo aborts the destination on failure; only close publishes the complete file.
-        await (data instanceof Blob?data:new Blob([data])).stream().pipeTo(stream);
+        const blob=data instanceof Blob?data:new Blob([data]);
+        for(let attempt=0;attempt<3;attempt++) {
+            let stream;
+            try {
+                //Reacquire the handle after a transient Windows filesystem failure.
+                const handle=await directory.getFileHandle(name,{create:true});
+                if(/^[a-f0-9]{64}$/.test(name)) {
+                    const existing=await handle.getFile();
+                    if(existing.size===blob.size) {
+                        const hash=[...new Uint8Array(await crypto.subtle.digest(`SHA-256`,await existing.arrayBuffer()))].map(value=>value.toString(16).padStart(2,`0`)).join(``);
+                        if(hash===name)return; //Content-addressed assets are immutable.
+                    }
+                }
+                stream=await handle.createWritable();
+                //Only close publishes the complete file. Retry from the same PNG bytes.
+                await blob.stream().pipeTo(stream);
+                return;
+            }
+            catch(error) {
+                await stream?.abort().catch(()=>{});
+                if(attempt<2&&[`InvalidStateError`,`NotReadableError`].includes(error.name)) {
+                    await new Promise(resolve=>setTimeout(resolve,100*(attempt+1)));
+                    continue;
+                }
+                throw new Error(`Could not save ${name}: ${error.name||`Error`}: ${error.message}`,{cause:error});
+            }
+        }
     };
     save = async (target,output) => {
         const {blob,width,height}=output;
@@ -50,7 +73,7 @@ export class BrowserRenderSave {
 
         const folder=await this.folders.get(prefix);
         if(!this.writes.has(hash)) {
-            const written=this.write(folder,hash,blob).catch(error=>{this.writes.delete(hash);throw error;});
+            const written=this.write(folder,hash,new Blob([bytes],{type:`image/png`})).catch(error=>{this.writes.delete(hash);throw error;});
             this.writes.set(hash,written);
         }
 
