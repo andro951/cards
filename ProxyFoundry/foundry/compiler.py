@@ -2959,6 +2959,8 @@ class Compiler:
         #Only classic two-color walkers used the mask that covered the type rim.
         walker_type_outline_version=int(group=='planeswalker' and choice in {'auto','normal'} and face is not None
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
+        regular_walker_rules_version=int(group=='planeswalker' and choice in {'auto','godzilla-card'} and face is not None
+            and 1<=len(native.parse_planeswalker_abilities(face.get('oracle_text','')))<=3)
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
@@ -2990,7 +2992,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
-            version+=green_palette_version+short_token_default_version
+            version+=green_palette_version+short_token_default_version+regular_walker_rules_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -3007,7 +3009,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
-            version+=green_palette_version
+            version+=green_palette_version+regular_walker_rules_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')

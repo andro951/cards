@@ -123,7 +123,10 @@ def layout_planeswalker_abilities(data,sem,bounds=None):
     if bounds is None:
         type_box=data['text']['type']
         start=type_box['y']+type_box['height']+.0217
-        bounds={'x':.136,'y':start,'width':.764,'height':.891-start}
+        #Normal-height panels need a little more room for the last line's
+        #descenders above the curved lower border.
+        bottom=.883 if data.get('version') in {'planeswalkerRegular','planeswalkerNickname'} else .891
+        bounds={'x':.136,'y':start,'width':.764,'height':bottom-start}
     rows=fit_ability_rows(abilities,bounds)
     # The pinned renderer has two native anchor tables. These offsets only
     # translate our calculated row centers into its badge coordinates.
