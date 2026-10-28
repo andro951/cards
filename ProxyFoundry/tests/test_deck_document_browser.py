@@ -13,6 +13,8 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Opt-in i
 def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
     from playwright.sync_api import sync_playwright
     source,deck=source_deck(tmp_path)
+    native_data=deck['cards'][0]['faces'][0]['compiled']['data']
+    native_data['text'].pop('type');native_data['version']='textlessBasics'
     import io
     from PIL import Image
     from foundry.images import ingest_image
@@ -67,6 +69,7 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
             assert result['deck']['cards'][0]['quantity']==3
             assert result['deck']['cards'][0]['faces'][0]['fit']==document['deck']['cards'][0]['faces'][0]['fit']
             assert result['images']==document['images']
+            assert 'type' not in result['deck']['cards'][0]['faces'][0]['compiled']['data']['text']
             assert 'base64' not in saved.read_text(encoding='utf-8')
             merge_checks=page.evaluate('''async document=>{
               const files=await import('/site/artwork-files.js');

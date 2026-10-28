@@ -160,7 +160,7 @@ def render_key(data,art_digest='',template_version=1):
     if template_version!=1:payload['template']=template_version
     return stable_hash(payload)
 
-def validate_template(entry):
+def validate_template(entry,*,require_text_boxes=True):
     if isinstance(entry,list):
         if len(entry)!=1:raise ValidationError('Choose one template face at a time.')
         entry=entry[0]
@@ -171,7 +171,7 @@ def validate_template(entry):
     for k in ('width','height'):
         n=d.get(k)
         if isinstance(n,bool) or not isinstance(n,(int,float)) or not math.isfinite(n) or not 100<=n<=8192:raise ValidationError('Template dimensions must be 100–8,192 pixels.')
-    if not all(k in d['text'] for k in ('title','type')):raise ValidationError('Templates need title and type text boxes.')
+    if require_text_boxes and not all(k in d['text'] for k in ('title','type')):raise ValidationError('Templates need title and type text boxes.')
     for p in [d.get('onload'),*(d.get('manaSymbols') or [])]:
         if p and (not re.fullmatch(r'/js/(?:frames|manaSymbols)/[A-Za-z0-9_./-]+\.js',str(p)) or '..' in p.split('/')):raise ValidationError('Template scripts must be paths in the pinned CardConjurer runtime.')
     def walk(v):

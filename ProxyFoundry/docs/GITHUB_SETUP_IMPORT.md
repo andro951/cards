@@ -33,6 +33,8 @@ Generated vector frame layers (gradients, masks and similar shapes) are preserve
 
 GitHub-imported symbols and back icons retain their original URL and transparent-padding crop operation. The exporter also recovers these sources for older setup imports from their existing URL/trim cache records, without downloading or reprocessing images. A cropped image's hash differs from the original download; this alone does not mean a source URL is missing.
 
+Compiled native layouts preserve intentionally absent text boxes, including title-only textless basic lands. They receive structural and script validation without the title/type requirement used for user-created reusable templates. Export/import does not add placeholder text boxes or alter the layout.
+
 To rebuild the deck on another computer, choose **Add New Deck → Other import methods** and upload the file. A version-2 file imported through Art & Setup also creates a separate deck. Existing decks and templates are preserved.
 
 The recipe includes the full ordered deck list and quantities, exact printing metadata, all deck settings, per-face edits and crop/position settings, selected frames and custom templates, backs and symbols, token treatments and pairings, alternate-art allocations, warning approvals, notes, and prepared layouts. It records the renderer pipeline and native renderer commit. New workspace identifiers are allocated during import; printing identifiers and rendering inputs remain unchanged.

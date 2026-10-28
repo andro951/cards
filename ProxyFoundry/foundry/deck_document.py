@@ -157,7 +157,10 @@ def validate(value,*,require_renderer=True):
                 raise ValidationError('The complete data.json contains invalid or duplicate card/face identifiers.')
             seen.add(ident)
         for face in stored_faces(card):
-            if face.get('compiled'):validate_template(face['compiled'].get('data'))
+            # Native textless/basic-land layouts intentionally omit text boxes.
+            # Keep structural/script validation without treating renders as
+            # user-authored reusable templates.
+            if face.get('compiled'):validate_template(face['compiled'].get('data'),require_text_boxes=False)
     images=value.get('images')
     if not isinstance(images,dict) or len(images)>25000:raise ValidationError('Invalid data.json image sources.')
     for ident,entry in images.items():

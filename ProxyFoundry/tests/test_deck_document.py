@@ -107,6 +107,22 @@ def test_embedded_images_are_rejected(tmp_path):
     with pytest.raises(ValidationError,match='embedded'):validate(document)
 
 
+@pytest.mark.parametrize('fields',[['title'],[]])
+def test_native_textless_layouts_round_trip_without_inventing_text_boxes(tmp_path,fields):
+    from foundry.domain import validate_template
+    ws,deck=source_deck(tmp_path)
+    data=deck['cards'][0]['faces'][0]['compiled']['data']
+    data['text']={key:data['text'][key] for key in fields};data['version']='textlessBasics'
+    ws.store.put('decks',deck,deck['revision'])
+    with pytest.raises(ValidationError,match='title and type'):validate_template(data)
+    document=export_document(ws,deck['id']);other=destination(tmp_path,ws,document)
+    restored=import_document(other,document)
+    assert restored['cards'][0]['faces'][0]['compiled']['data']==data
+    unsafe=copy.deepcopy(document)
+    unsafe['deck']['cards'][0]['faces'][0]['compiled']['data']['frames'][0]['src']='javascript:alert(1)'
+    with pytest.raises(ValidationError,match='executable'):validate(unsafe)
+
+
 @pytest.mark.parametrize('base64_encoded',[False,True])
 def test_generated_gradient_layers_export_as_drawing_inputs_and_rebuild(tmp_path,base64_encoded):
     import base64,xml.etree.ElementTree as ET
