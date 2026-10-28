@@ -2,6 +2,7 @@ import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {recordDiagnostic} from './diagnostics.js';
 import {$,state,api,blobRequest,job,activity,endActivity,toast,work} from './ui.js';
 import {ensureArtworkReady} from './artwork-review.js';
+import {generationNeedsDataSave,saveGenerationData} from './deck-document.js';
 import {NativeRenderer,NativeRenderPool,renderWorkerCount} from './native-render-pool.js';
 
 function logTiming(stage,started,outcome,detail={}){
@@ -115,12 +116,6 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     screen.attach(owner);screen.update('prepare');
     let generation=null;
     try {
-    if(state.bootstrap.browser) {
-        generation=await api(`/api/generation/begin`,{deckIds:ids,preflightSeconds});
-        owner.atomicGeneration=true;
-        state.generationTransaction={...generation,timings:{"generation.preflight":{count:1,seconds:preflightSeconds,max:preflightSeconds}}};
-    }
-
     let preparationTask=null,preparationError=null;
     const prepareAll=async()=>{
       for(const id of ids){
@@ -130,7 +125,21 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
         }});if(!generation)await update(id);
       }
     };
-    if(prepare){
+    const saveBeforeRender=await generationNeedsDataSave(ids);
+    let readyPlan=null;
+    if(saveBeforeRender){
+      if(prepare)await prepareAll();
+      readyPlan=await api('/api/render-sessions',{deckIds:ids,force},'POST',owner);
+      if(readyPlan.errors.length)throw new Error(readyPlan.errors.join('\n'));
+      await screen.review(()=>saveGenerationData(ids,{owner}));
+      if(owner.controller.signal.aborted)throw new Error('Generation cancelled before rendering.');
+    }
+    if(state.bootstrap.browser) {
+        generation=await api(`/api/generation/begin`,{deckIds:ids,preflightSeconds});
+        owner.atomicGeneration=true;
+        state.generationTransaction={...generation,timings:{"generation.preflight":{count:1,seconds:preflightSeconds,max:preflightSeconds}}};
+    }
+    if(prepare&&!saveBeforeRender){
       if(generation) {
         preparationTask=prepareAll();preparationTask.catch(error=>{preparationError=error;});
       }
@@ -138,7 +147,8 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
     }
     if(owner.controller.signal.aborted)throw new Error('Generation cancelled. Previous card images are unchanged.');
     let plan,moreTargets=null;
-    if(generation&&prepare&&!force) {
+    if(readyPlan)plan=readyPlan;
+    else if(generation&&prepare&&!force) {
       let cursor=0;
       const read=async stopped=>{
         let next;
@@ -194,6 +204,10 @@ export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false
     return work.render(async owner=>{
     screen.attach(owner);
     const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
+    if(await generationNeedsDataSave([deckId])){
+        if(plan.errors.length)throw new Error(plan.errors.join('\n'));
+        await screen.review(()=>saveGenerationData([deckId],{owner}));
+    }
     return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:null});
     },{label:'Generate card image',resources:['deck:'+deckId],kind:'generation'});
   });

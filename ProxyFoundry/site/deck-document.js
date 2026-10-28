@@ -66,19 +66,29 @@ export async function importCompleteDeck(document){
     finally{work.finish(owner);}
 }
 
-export async function saveCompleteDeck(id){
-    const owner=work.begin({label:`Save complete data.json`,resources:[`deck:${id}`]});
-    try{
+export async function generationNeedsDataSave(ids){
+    for(const id of ids){
+        const deck=await api(`/api/decks/${id}`);
+        if(deck.settings.dataJsonSource?.kind===`github`||deck.settings.githubSetupFolder)return true;
+    }
+    return false;
+}
+
+export async function saveGenerationData(ids,{owner}={}){
+    for(const id of ids){
+        if(owner?.controller.signal.aborted)throw new Error(`Generation cancelled before saving data.json.`);
         const deck=await api(`/api/decks/${id}`);
         const source=deck.settings.dataJsonSource;
-        const url=source?.kind===`github`?(source.value.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder):``;
+        if(source?.kind!==`github`)continue;
+        const url=source.value?.startsWith(`https:`)?source.value:deck.settings.githubSetupFolder;
         const {offerDataSave}=await import('./artwork-review.js');
         const saved=await offerDataSave(id,deck.cardData||[],{version:1,cards:deck.cardData||[]},url,deck.cards,
-            {title:`Save complete data.json`,forceDocument:true,autoSave:true,owner});
+            {title:`Save deck to GitHub before generation`,forceDocument:true,autoSave:true,requireGithubSave:true,owner});
+        if(!saved?.github)throw new Error(`Generation stopped: the complete data.json was not saved to GitHub.`);
+        if(owner?.controller.signal.aborted)throw new Error(`Generation cancelled after saving data.json. No images were generated.`);
         if(saved?.github&&saved.github!==source?.value){
             const current=await api(`/api/decks/${id}`);
             await api(`/api/decks/${id}/save`,{revision:current.revision,settings:{dataJsonSource:{kind:`github`,value:saved.github}}},'POST',owner);
         }
     }
-    finally{work.finish(owner);}
 }

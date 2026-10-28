@@ -25,7 +25,7 @@ Set symbols may also be imported directly from a public GitHub folder in the **S
 
 ### Complete deck recipes (version 2)
 
-Use **More → Export complete data.json** on a finished deck to download its complete recipe. **Save complete data.json** uses the existing connected GitHub/local file or offers connection and download choices. Save again after changing the deck to update that recipe. Artwork/rules/approval save flows also write the complete format.
+For decks linked to GitHub data.json, generation automatically saves the complete recipe after artwork/preparation and render-readiness checks pass, before any images are rendered. The first save may require connecting GitHub. A failed, conflicting, or cancelled GitHub save stops generation; downloading a file cannot bypass this gate. An unchanged complete recipe does not create another commit. There is no manual Save data.json action. **More → Export complete data.json** remains available to download a portable copy. Artwork/rules/approval save flows also write the complete format.
 
 To rebuild the deck on another computer, choose **Add New Deck → Other import methods** and upload the file. A version-2 file imported through Art & Setup also creates a separate deck. Existing decks and templates are preserved.
 

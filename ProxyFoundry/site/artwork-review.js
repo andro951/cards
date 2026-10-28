@@ -267,6 +267,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         url=`https://github.com/${location.repo.split(`/`).map(encodeURIComponent).join(`/`)}/blob/${encodeURIComponent(location.branch)}/${location.path.split(`/`).map(encodeURIComponent).join(`/`)}`;
     }}
     catch(error){url=``;sourceWarning=`Use the full GitHub folder link in Art & Setup to update data.json. You can download it now.`;}
+    if(options.requireGithubSave&&!url)throw new Error(`Generation stopped: connect a valid GitHub data.json in Art & Setup.`);
     //Reuse our last write until generation imports a newer source snapshot.
     const refreshed=options.baseline&&!equalDataValues(options.baseline,record.sourceBaseline);
     const overlayBaseline=refreshed?options.baseline:(sameSource?record.document:null)||options.baseline;
@@ -311,7 +312,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         const intro=element(`p`,`Save a data.json to reuse these choices next time.`);intro.style.margin=`0 0 6px`;
         choices.append(intro);body.append(choices);
         const finish=result=>{if(saving)return;finished=true;closeModal();resolve(result);};
-        choices.append(button(`Download data.json`,async()=>{
+        if(!options.requireGithubSave)choices.append(button(`Download data.json`,async()=>{
             if(saving)return;
             saving=true;
             try {

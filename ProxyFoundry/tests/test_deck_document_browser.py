@@ -31,6 +31,7 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
             page.wait_for_url('**/#deck/*/cards')
             page.get_by_role('heading',name=deck['name'],exact=True).wait_for()
             page.get_by_role('button',name='More').click()
+            assert page.get_by_role('button',name='Save complete data.json',exact=True).count()==0
             with page.expect_download() as download:
                 page.get_by_role('button',name='Export complete data.json',exact=True).click()
             saved=tmp_path/'round-trip.json';download.value.save_as(saved)
@@ -51,14 +52,30 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
               };
               const result=await files.saveGithubData({repo:'owner/cards',branch:'main',path:'data.json'},
                 'fixture',[],legacy,fetcher,[],null,legacy,document);
+              let writes=0;
+              await files.saveGithubData({repo:'owner/cards',branch:'main',path:'data.json'},
+                'fixture',[],result,async(url,options={})=>{
+                  if(options.method==='PUT'){writes++;return {ok:true,status:200};}
+                  return {ok:true,status:200,json:async()=>({sha:'a'.repeat(40),encoding:'base64',content:btoa(unescape(encodeURIComponent(JSON.stringify(result))))})};
+                },[],null,result,result);
               const remote=structuredClone(document);remote.deck.notes='Someone else changed this';
               let blocked=false;
               try{files.completeDataDocument(remote,document,remote,document);}catch(error){blocked=error.message.includes('changed');}
               const preserved=files.mergeCardDataDocument(document,[{name:'One Card',nickname:'Restored'}]);
-              return {version:result.version,large:calls.some(url=>url.includes('/git/blobs/')),blocked,
+              return {version:result.version,writes,large:calls.some(url=>url.includes('/git/blobs/')),blocked,
                 kept:preserved.deck.settings.showFlavorText===document.deck.settings.showFlavorText};
             }''',result)
-            assert merge_checks=={'version':2,'large':True,'blocked':True,'kept':True}
+            assert merge_checks=={'version':2,'writes':0,'large':True,'blocked':True,'kept':True}
+            page.evaluate('''document=>{
+              window.requiredSave=import('/site/artwork-review.js').then(({offerDataSave})=>
+                offerDataSave('fixture',[],{version:1,cards:[]},'https://github.com/owner/cards/blob/main/data.json',[],
+                  {title:'Required generation save',forceDocument:true,requireGithubSave:true,completeDocument:document}));
+            }''',result)
+            page.get_by_role('heading',name='Required generation save',exact=True).wait_for()
+            assert page.get_by_role('button',name='Download data.json',exact=True).count()==0
+            assert page.get_by_role('button',name='Update data.json on GitHub',exact=True).count()==1
+            page.evaluate("import('/site/ui.js').then(({closeModal})=>closeModal())")
+            assert page.evaluate('window.requiredSave.then(result=>result===undefined)')
             #A local-only image must receive a verified location before export.
             import io
             from PIL import Image

@@ -472,6 +472,7 @@ export const saveGithubData=async(location,token,changes,baseline=null,fetcher=f
         //Recheck the edited fields on every retry; never replace a concurrent rules edit.
         const merged=completeDataDocument(mergeCardDataDocument(original,changes,baseline,cards,tokenData,tokenBaseline),complete,original,baseline);
         if(complete)merged.deck.settings.dataJsonSource={kind:`github`,value:`https://github.com/${location.repo}/blob/${encodeURIComponent(location.branch)}/${location.path}`};
+        if(complete&&equalDataValues(original,merged))return merged;
         const update=await fetcher(url,{method:`PUT`,headers,body:JSON.stringify({message:`Update BulkProxyForge card data`,branch:location.branch,
             content:encodeContent(JSON.stringify(merged,null,2)+`\n`),...(existing?{sha:existing.sha}:{})})});
         recordDiagnostic(`GitHub data save`,JSON.stringify({repo:location.repo,path:location.path,branch:location.branch,

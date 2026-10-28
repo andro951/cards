@@ -1,7 +1,7 @@
 import {mountDeckCards,convertToToken} from './tokens.js';
 import {withGenerationScreen,generationScreen} from './generation-progress.js';
 import {downloadReview} from './review-export.js';
-import {isCompleteDeckDocument,importCompleteDeck,downloadCompleteDeck,saveCompleteDeck} from './deck-document.js';
+import {isCompleteDeckDocument,importCompleteDeck,downloadCompleteDeck} from './deck-document.js';
 import {startMetadata,ensureMetadata,pauseMetadata} from './metadata.js';
 import {deleteDeck} from './deletion.js';
 import {mountBackPicker} from './backs.js';
@@ -341,8 +341,6 @@ function deckMenu(d){
   $('.stack',$('#modal-host')).prepend(add);
   const complete=document.createElement('button');complete.type='button';complete.className='button';complete.textContent='Export complete data.json';
   complete.onclick=()=>attempt(async()=>{closeModal();await downloadCompleteDeck(d.id);});add.after(complete);
-  const saveData=document.createElement('button');saveData.type='button';saveData.className='button';saveData.textContent='Save complete data.json';
-  saveData.onclick=()=>attempt(async()=>{closeModal();await saveCompleteDeck(d.id);});complete.after(saveData);
   const refresh=document.createElement(`button`);refresh.type=`button`;refresh.className=`button`;refresh.textContent=`Refresh deck cards`;
   refresh.onclick=()=>attempt(()=>refreshDeckCards(d));add.after(refresh);bindGenerationButton(refresh,[d.id]);
   const saveStyle=$('#use-as-defaults');saveStyle.textContent='Create reusable style';
