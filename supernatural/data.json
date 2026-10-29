@@ -70369,6 +70369,19 @@
             "scryfall_id": "68b1c746-a4b8-4a45-9f0e-3962f0ae40e3"
           },
           "quantity": 1
+        },
+        {
+          "front": {
+            "name": "Phyrexian Germ",
+            "oracle_id": "a1c2af93-83c0-4974-b4db-abf95981d4e3",
+            "scryfall_id": "53c05e53-84c7-4796-ae02-d778faa5afa6"
+          },
+          "back": {
+            "name": "Robot",
+            "oracle_id": "0e3afe6f-c2a1-4a06-b7f7-5bcbf57c3d2c",
+            "scryfall_id": "c46f9a07-005c-44b7-8057-b2f00b274dd6"
+          },
+          "quantity": 2
         }
       ],
       "tokenTreatments": [],
@@ -76011,6 +76024,19 @@
         "scryfall_id": "68b1c746-a4b8-4a45-9f0e-3962f0ae40e3"
       },
       "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Phyrexian Germ",
+        "oracle_id": "a1c2af93-83c0-4974-b4db-abf95981d4e3",
+        "scryfall_id": "53c05e53-84c7-4796-ae02-d778faa5afa6"
+      },
+      "back": {
+        "name": "Robot",
+        "oracle_id": "0e3afe6f-c2a1-4a06-b7f7-5bcbf57c3d2c",
+        "scryfall_id": "c46f9a07-005c-44b7-8057-b2f00b274dd6"
+      },
+      "quantity": 2
     }
   ],
   "tokenTreatments": [],
