@@ -103,8 +103,14 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
               await ui.api('/api/decks/'+id+'/save',{revision:deck.revision,settings:{dataJsonSource:{kind:'github',value:url}}});
               await files.connectGithub('owner/cards','fixture-only',false);
               const original=window.fetch;let saved=null;
+              const {GenerationScreen}=await import('/site/generation-progress.js');
+              const screen=new GenerationScreen('Automatic save',1);let overlayCloses=0;
+              const close=screen.dialog.close.bind(screen.dialog);
+              screen.dialog.close=(...args)=>{overlayCloses++;return close(...args);};
               window.fetch=async(address,options={})=>{
                 if(String(address).startsWith('https://api.github.com/repos/owner/cards/contents/')) {
+                  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+                  if(!screen.dialog.open)throw new Error('Generation overlay disappeared during automatic save');
                   if(options.method==='PUT') {
                     const body=JSON.parse(options.body);
                     saved=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(body.content),c=>c.charCodeAt(0))));
@@ -115,23 +121,29 @@ def test_complete_data_json_import_and_export_from_deck_ui(tmp_path):
                 return original(address,options);
               };
               const owner=ui.work.begin({label:'Automatic generation save test',resources:['deck:'+id]});
+              screen.attach(owner);
               try {
                 await (await import('/site/deck-document.js')).saveGenerationData([id],{owner});
                 const symbol=saved.images[saved.deck.settings.symbols.uncommon];
-                return {vectors:Object.keys(saved.vectors).length,embedded:JSON.stringify(saved).includes('data:image/'),version:saved.version,symbolTransform:symbol.transform,symbolURL:symbol.url};
-              } finally {window.fetch=original;ui.work.finish(owner);await files.disconnectGithub('owner/cards');}
+                return {vectors:Object.keys(saved.vectors).length,embedded:JSON.stringify(saved).includes('data:image/'),version:saved.version,symbolTransform:symbol.transform,symbolURL:symbol.url,overlayCloses};
+              } finally {window.fetch=original;screen.close();ui.work.finish(owner);await files.disconnectGithub('owner/cards');}
             }''')
-            assert auto_save=={'vectors':1,'embedded':False,'version':2,'symbolTransform':'trim-transparent','symbolURL':symbol_url}
-            page.evaluate('''document=>{
+            assert auto_save=={'vectors':1,'embedded':False,'version':2,'symbolTransform':'trim-transparent','symbolURL':symbol_url,'overlayCloses':0}
+            page.evaluate('''async document=>{
+              const {GenerationScreen}=await import('/site/generation-progress.js');
+              window.promptScreen=new GenerationScreen('Connection prompt',1);
               window.requiredSave=import('/site/artwork-review.js').then(({offerDataSave})=>
                 offerDataSave('fixture',[],{version:1,cards:[]},'https://github.com/owner/cards/blob/main/data.json',[],
                   {title:'Required generation save',forceDocument:true,requireGithubSave:true,completeDocument:document}));
             }''',result)
             page.get_by_role('heading',name='Required generation save',exact=True).wait_for()
+            assert not page.locator('#generation-screen').is_visible()
             assert page.get_by_role('button',name='Download data.json',exact=True).count()==0
             assert page.get_by_role('button',name='Update data.json on GitHub',exact=True).count()==1
             page.evaluate("import('/site/ui.js').then(({closeModal})=>closeModal())")
             assert page.evaluate('window.requiredSave.then(result=>result===undefined)')
+            assert page.locator('#generation-screen').is_visible()
+            page.evaluate('window.promptScreen.close()')
             #A local-only image must receive a verified location before export.
             import io
             from PIL import Image

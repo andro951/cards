@@ -249,8 +249,6 @@ const githubGuideSnippet=(number,label)=>{
 export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],options={})=>{
     if(!changes.length&&!options.tokenData&&!options.forceDocument)
         return;
-    if(generationScreen.active?.dialog.open)
-        return generationScreen.active.review(()=>offerDataSave(deckId,changes,document,githubUrl,cards,options));
 
     if(!options.completeDocument){
         const complete=await completeDeckDocument(deckId,{owner:options.owner||generationScreen.active?.owner||null});
@@ -296,8 +294,8 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
         }
     }
 
-    options.beforePrompt?.();
-    return new Promise(resolve=>{
+    const prompt=()=>new Promise(resolve=>{
+        options.beforePrompt?.();
         let saving=false,finished=false;
         const title=options.title||`Save artwork choices for next time?`;
         modal(title,``,{onClose:()=>{if(saving)return false;if(!finished)resolve();return true;}});
@@ -438,6 +436,7 @@ export const offerDataSave=async(deckId,changes,document,githubUrl=``,cards=[],o
             Object.assign(control.style,{whiteSpace:`normal`,overflowWrap:`anywhere`,width:`100%`,boxSizing:`border-box`});
         }
     });
+    return generationScreen.active?.dialog.open?generationScreen.active.review(prompt):prompt();
 };
 const documentNode=text=>window.document.createTextNode(text);
 //#endregion

@@ -1,12 +1,13 @@
 import {api,job,modal,closeModal,setModalBusy,$,toast,downloadBlob,work,errorBox} from './ui.js';
 import {sourceRecord} from './artwork-files.js';
+import {generationScreen} from './generation-progress.js';
 
 export const isCompleteDeckDocument=value=>value?.version===2&&value?.format===`bulk-proxy-forge-deck`;
 
 export async function completeDeckDocument(id,{owner=null}={}){
     let plan=await api(`/api/decks/${id}/data-document`);
     if(plan.missing.length){
-        const configured=await new Promise(resolve=>{
+        const prompt=()=>new Promise(resolve=>{
             let done=false;
             const host=modal(`Add permanent image sources`,``,{onClose:()=>{if(!done)resolve(false);return true;}});
             const body=$(`.modal-body`,host);
@@ -35,6 +36,7 @@ export async function completeDeckDocument(id,{owner=null}={}){
             };
             body.append(save);
         });
+        const configured=await (generationScreen.active?.dialog.open?generationScreen.active.review(prompt):prompt());
         if(!configured)return null;
         plan=await api(`/api/decks/${id}/data-document`);
     }

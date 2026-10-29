@@ -137,7 +137,7 @@ export async function renderDecks(ids,{onUpdate=async()=>{},prepare=true,force=f
       if(prepare)await prepareAll();
       readyPlan=await api('/api/render-sessions',{deckIds:ids,force},'POST',owner);
       if(readyPlan.errors.length)throw new Error(readyPlan.errors.join('\n'));
-      await screen.review(()=>saveGenerationData(ids,{owner}));
+      await saveGenerationData(ids,{owner});
       if(owner.controller.signal.aborted)throw new Error('Generation cancelled before rendering.');
     }
     if(prepare&&!saveBeforeRender){
@@ -207,7 +207,7 @@ export async function renderCard(deckId,cardId,{onUpdate=async()=>{},force=false
     const plan=await api('/api/render-sessions/card',{deckId,cardId,force});
     if(await generationNeedsDataSave([deckId])){
         if(plan.errors.length)throw new Error(plan.errors.join('\n'));
-        await screen.review(()=>saveGenerationData([deckId],{owner}));
+        await saveGenerationData([deckId],{owner});
     }
     return runRenderPlan(plan,{label:'Render card',onUpdate,owner,idleMessage:'This card is already up to date',idleToast:'Cached image reused. No rendering needed.',successMessage:'Card image saved',successToast:null});
     },{label:'Generate card image',resources:['deck:'+deckId],kind:'generation'});
