@@ -159,6 +159,30 @@ def test_new_metadata_artist_does_not_force_a_second_preparation(tmp_path,monkey
     ws.prepare(deck['id'])
 
 
+@pytest.mark.parametrize('name,color',[('Takenuma, Abandoned Mire','B'),('Sokenzan, Crucible of Defiance','R')])
+@pytest.mark.parametrize('nickname',['Custom place',None,'same'])
+def test_legendary_land_readiness_uses_compiled_nickname_semantics(tmp_path,monkeypatch,name,color,nickname):
+    ws,deck,_,_=seeded(tmp_path)
+    sf={**deck['cards'][0]['scryfall'],'name':name,'type_line':'Legendary Land','colors':[],
+        'mana_cost':'','oracle_text':'{T}: Add {'+color+'}.','produced_mana':[color]}
+    sf.pop('power');sf.pop('toughness')
+    monkeypatch.setattr(ws.sources,'resolve_card',lambda *a,**k:copy.deepcopy(sf))
+    card=ws.sources.entry(sf);card['faces'][0]['semanticOverrides']={'nickname':name if nickname=='same' else nickname}
+    deck=ws.store.put('decks',{**deck,'cards':[card]},deck['revision'])
+    prepared=ws.prepare(deck['id'])
+    assert prepared['status']=='prepared' and prepared['summary']['errors']==0
+    assert len(ws.render_targets([deck['id']])['targets'])==1
+    data=copy.deepcopy(prepared['cards'][0]['faces'][0]['compiled']['data'])
+    monkeypatch.setattr(ws.compiler,'compile_face',lambda *a,**k:pytest.fail('Unchanged nicknamed land recompiled'))
+    repeated=ws.prepare(deck['id'])
+    assert repeated['status']=='prepared'
+    assert repeated['cards'][0]['faces'][0]['compiled']['data']==data
+    changed=ws.store.get('decks',deck['id'])
+    changed['cards'][0]['faces'][0]['semanticOverrides']['nickname']=None if nickname=='Custom place' else 'Another place'
+    ws.store.put('decks',changed,changed['revision'])
+    assert ws.deck(deck['id'])['status']=='draft'
+
+
 def test_github_changes_recompile_only_affected_cards(tmp_path,monkeypatch):
     ws,deck,_,metadata_transport=seeded(tmp_path)
     remote=Remote();original=remote.transport

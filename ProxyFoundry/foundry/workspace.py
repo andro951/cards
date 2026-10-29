@@ -339,8 +339,7 @@ class Workspace:
                         d['status']='draft';d['upgradeRequired']=True
                     else:
                         choice=f.get('templateOverride') or d.get('settings',{}).get('templateRules',{}).get(f['group'],'auto')
-                        identity_face=({**sf_face,'frame_effects':c['scryfall'].get('frame_effects')} if f['group'] in {'transform-front','transform-back'} else sf_face)
-                        try:template_key,template_version,_=self.compiler.template_identity(f['group'],choice,identity_face)
+                        try:template_key,template_version,_=self.compiler.template_identity_for_face(f['group'],choice,sf,sf_face,f.get('index',0),f)
                         except ValidationError:
                             d['status']='draft'
                         else:
@@ -893,8 +892,7 @@ class Workspace:
             selected.append(local.get(key) if source['mode']=='local' else index.get(key))
             group=type_group(face,sf,f.get('index',0))
             choice=f.get('templateOverride') or s.get('templateRules',{}).get(group,'auto')
-            identity_face=({**face,'frame_effects':sf.get('frame_effects')} if group in {'transform-front','transform-back'} else face)
-            templates.append(self.compiler.template_identity(group,choice,identity_face))
+            templates.append(self.compiler.template_identity_for_face(group,choice,sf,face,f.get('index',0),f))
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):templates.append(self.compiler.template_identity('token','auto'))
         if c.get('tokenSpec') is not None and s.get('templateRules',{}).get('token') not in {None,'auto'}:
             templates.append(self.compiler.template_identity('token',s['templateRules']['token']))

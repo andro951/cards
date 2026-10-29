@@ -2964,8 +2964,22 @@ def custom_data(template,sem,other_faces=None):
     return d
 
 
+def face_semantics(sf,face,index,options):
+    """Semantic inputs shared by compilation and template freshness checks."""
+    sem=semantic(sf,face,index)
+    for key in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
+        if key in options.get('semanticOverrides',{}):sem[key]=options['semanticOverrides'][key]
+    sem['nickname']=rules_nicknames.effective_nickname(sem['name'],sem.get('nickname'))
+    return sem
+
+
 class Compiler:
     def __init__(self,store):self.store=store
+    def template_identity_for_face(self,group,choice,sf,face,index,options):
+        sem=face_semantics(sf,face,index,options)
+        if group in {'transform-front','transform-back'}:
+            sem.update(color_indicator=face.get('color_indicator'),frame_effects=sf.get('frame_effects'))
+        return self.template_identity(group,choice,sem)
     def template_identity(self,group,choice,face=None):
         choice=RETIRED_BUILTINS.get(choice,choice)
         land_override_version=int(group in {'land','legendary-land','basic-land'} and face is not None and face.get('name') in LAND_FRAME_COLOR_OVERRIDES)
@@ -3042,10 +3056,7 @@ class Compiler:
         return 'custom:'+choice,fingerprint,1
     @timed('card.compile')
     def compile_face(self,sf,face,index,options,settings,art_id,*,art_origin='custom artwork',conversion_seed=False):
-        sem=semantic(sf,face,index)
-        for k in ('nickname','flavor_text','rarity','oracle_text','mana_cost','power','toughness','loyalty','defense'):
-            if k in options.get('semanticOverrides',{}):sem[k]=options['semanticOverrides'][k]
-        sem['nickname']=rules_nicknames.effective_nickname(sem['name'],sem.get('nickname'))
+        sem=face_semantics(sf,face,index,options)
         sem['flavor_text']=normalize_scryfall_inline_italics(sem.get('flavor_text'))
         for nested in ('flip_face','prepared_spell'):
             if nested in sem:
