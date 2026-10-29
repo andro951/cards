@@ -4,7 +4,7 @@ from pathlib import Path
 from .domain import ORDINARY_GROUPS,render_key,stable_hash,type_group,uid
 from .token_assignments import is_token
 
-VERSION=3
+VERSION=4
 SIGN=Path(__file__).resolve().parents[1]/'assets'/'substitutes'/'double-sided-substitute-sign.png'
 WALL=SIGN.with_name('double-sided-substitute-wall.png')
 # Battle's ordinary artBounds extend behind its title and rules frame. Keep
@@ -62,13 +62,20 @@ def build(workspace,deck,card,settings):
         wall=ingest_image(workspace.store,WALL.read_bytes());workspace._substitute_wall=wall
     if full_art(source):
         sf=card['scryfall'];face=(sf.get('card_faces') or [sf])[0]
-        standalone={**sf,**face,'layout':'normal'}
-        standalone.pop('card_faces',None);standalone.pop('_meld_result',None)
-        group=type_group(standalone,standalone,0)
+        # A normal art window still belongs to the original double-sided card.
+        # Keep its layout/frame effects so day/night and other DFC treatments
+        # are constructed by the same compiler path as a normal front.
+        group=type_group(face,sf,0)
+        if source.get('group') and source['group']!=group:
+            # Explicitly precompiled native fronts (for example a planeswalker
+            # in a synthetic transform pair) retain their supported card type.
+            sf={**sf,**face,'layout':'normal'}
+            sf.pop('card_faces',None);sf.pop('_meld_result',None)
+            face=sf;group=type_group(face,sf,0)
         options=copy.deepcopy(front)
         for key in ('compiled','lastRender','fit','rawCard'):options.pop(key,None)
         options['templateOverride']='normal' if group in ORDINARY_GROUPS else 'auto'
-        compiled=workspace.compiler.compile_face(standalone,standalone,0,options,settings,sign['id'],art_origin='Scryfall selected printing')
+        compiled=workspace.compiler.compile_face(sf,face,0,options,settings,sign['id'],art_origin='Scryfall selected printing')
         # Preserve the already-resolved rules, nickname and flavor overrides.
         for name in ('title','nickname','mana','type','rules','flavor','pt'):
             field=(compiled['data'].get('text') or {}).get(name)

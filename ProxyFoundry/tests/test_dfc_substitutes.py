@@ -73,6 +73,15 @@ def test_substitute_is_a_normal_frame_with_complete_uncropped_sign(tmp_path,styl
         assert data['text'][name]['text']==source['text'][name]['text']
     if nickname:assert data['text']['nickname']['text']==nickname
     if style=='auto':assert data['frames'][:-1]==source['frames']
+    #Full-art source fronts also rebuild through the normal DFC path, never a
+    #flattened single-face card that loses its sun/moon treatment.
+    options=copy.deepcopy(card['faces'][0])
+    for key in ('compiled','lastRender','fit','rawCard'):options.pop(key,None)
+    options['templateOverride']='auto'
+    sf=card['scryfall'];normal=ws.compiler.compile_face(sf,sf['card_faces'][0],0,options,prepared['settings'],art['id'])['data']
+    assert data['frames'][:-1]==normal['frames']
+    assert any(frame.get('src','').endswith('/sun.svg') for frame in data['frames'])
+    assert data['version']==normal['version']
     assert substitute['compiled']['artId']!=art['id']
     sign=data['frames'][-1]['bounds'];bounds=data['artBounds']
     assert sign['x']>=bounds['x']-1e-8 and sign['y']>=bounds['y']-1e-8
@@ -96,6 +105,25 @@ def assert_wall_fills_card(ws,substitute):
     assert data['artX']<=0
     assert data['artX']*2+data['artZoom']*wall['width']/data['width']==pytest.approx(1)
     if data.get('landscape'):assert data['artX']==pytest.approx(0)
+
+
+def test_old_full_art_placer_refreshes_without_rebuilding_main_faces(tmp_path,monkeypatch):
+    ws,deck,_=seed(tmp_path,'godzilla-card')
+    prepared=ws.prepare(deck['id']);card=prepared['cards'][0]
+    source_keys=[face['compiled']['renderKey'] for face in card['faces']]
+    card['substitute']['substituteVersion']=3
+    ws.store.put('decks',prepared,prepared['revision'])
+    original=ws.compiler.compile_face;calls=[]
+    def compile(sf,face,index,options,*args,**kwargs):
+        calls.append(options['templateOverride'])
+        assert sf['layout']=='transform' and len(sf['card_faces'])==2
+        return original(sf,face,index,options,*args,**kwargs)
+    monkeypatch.setattr(ws.compiler,'compile_face',compile)
+    monkeypatch.setattr(ws.sources,'resolve_card',lambda *a,**k:pytest.fail('Cached metadata refetched'))
+    updated=ws.prepare(deck['id'])['cards'][0]
+    assert calls==['auto']
+    assert [face['compiled']['renderKey'] for face in updated['faces']]==source_keys
+    assert substitutes.current(updated)
 
 
 def planeswalker_dfc():
