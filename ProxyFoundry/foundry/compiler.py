@@ -2583,9 +2583,11 @@ def _nickname_text(data,sem,group,force=False):
         'width':old.get('width',.8292),'height':old.get('height',.0543),
         'oneLine':True,'font':old.get('font','belerenb'),'size':old.get('size',.0381)}
     main=text['nickname']
-    # The native M15 title text is narrowed for mana before this overlay runs.
-    # Its physical title bar still spans the complete portrait title region.
-    title_width=.8292 if abs(main['x']-.0854)<.0001 else main['width']
+    # Native title text is narrowed for mana before this overlay runs. The
+    # physical strip stays centered across the complete portrait title region;
+    # planeswalkers use a slightly different inset from M15 cards.
+    title_width=(1-2*main['x'] if group=='planeswalker' else
+                 .8292 if abs(main['x']-.0854)<.0001 else main['width'])
     text['title']={
         'name':'Title','text':true_name,'x':main['x']+.0546,
         'y':main['y']+main['height']+.0064,'width':max(.1,title_width-.1092),'height':.0243,
@@ -2856,6 +2858,11 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
     code=_nickname_code(sem)
     main=data['text']['nickname']
     bounds={'x':main['x']-.036,'y':main['y']-.0117,'width':data['text']['title']['width']+.1814,'height':main['height']+.051}
+    if group=='planeswalker' and data.get('version') in {'planeswalkerRegular','planeswalkerTall'}:
+        # Join the addon's upper black edge (row 133 of 221) to the native
+        # planeswalker title's bottom black edge (row 192 of 2100). The M15
+        # offset otherwise paints this edge across the gold title bevel.
+        bounds['y']=192/2100-133/221*bounds['height']
     real_name_bar={
         'name':'Nickname Title',
         'src':f'/img/frames/m15/nickname/addons/m15NicknameTitle{code}.png',
@@ -2994,6 +3001,7 @@ class Compiler:
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
         regular_walker_rules_version=2*int(group=='planeswalker' and choice in {'auto','godzilla-card'} and face is not None
             and 1<=len(native.parse_planeswalker_abilities(face.get('oracle_text','')))<=3)
+        walker_nickname_version=int(group=='planeswalker' and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
@@ -3026,7 +3034,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
-            version+=green_palette_version+short_token_default_version+regular_walker_rules_version
+            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -3043,7 +3051,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
-            version+=green_palette_version+regular_walker_rules_version
+            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')

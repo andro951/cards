@@ -16,6 +16,41 @@ def setup(tmp_path):
 def card(name):
     return json.loads((Path(__file__).parent/'fixtures/godzilla_special'/(name+'.json')).read_text(encoding='utf-8'))
 
+
+@pytest.mark.parametrize('name',['Tezzeret-the-Seeker','Tezzeret'])
+@pytest.mark.parametrize('mana',['','{3}{W}{B}','{1}{W}{U}{B}{R}{G}'])
+def test_normal_planeswalker_true_name_spans_header_and_joins_title(setup,name,mana):
+    compiler,settings,art=setup;sf=card(name);sf['mana_cost']=mana
+    options={'templateOverride':'auto'}
+    plain=compiler.compile_face(sf,sf,0,options,settings,art)
+    result=compiler.compile_face(sf,sf,0,
+        {**options,'semanticOverrides':{'nickname':'Death, the Pale Horseman'}},settings,art)
+    data=result['data'];title=data['text']['title'];nickname=data['text']['nickname']
+    bars=[f for f in data['frames'] if f['name']=='Nickname Title']
+    assert bars
+    for frame in bars:
+        bounds=frame['bounds']
+        assert bounds['width']>.89
+        assert bounds['x']+bounds['width']/2==pytest.approx(.5001)
+        assert bounds['y']+133/221*bounds['height']==pytest.approx(192/2100)
+    assert title['x']+title['width']/2==pytest.approx(.5)
+    assert title['align']=='center'
+    assert nickname['width']==plain['data']['text']['title']['width']
+    assert [f for f in data['frames'] if f['name']!='Nickname Title']==plain['data']['frames']
+    for key,field in plain['data']['text'].items():
+        if key.startswith('ability') or key=='loyalty':
+            assert {k:v for k,v in data['text'][key].items() if k!='text'}=={k:v for k,v in field.items() if k!='text'}
+
+
+@pytest.mark.parametrize('style',['auto','normal'])
+def test_normal_planeswalker_nickname_refresh_is_scoped(setup,style):
+    compiler,_,_=setup;sf=card('Tezzeret-the-Seeker')
+    plain=compiler.template_identity_for_face('planeswalker',style,sf,sf,0,{})
+    renamed=compiler.template_identity_for_face('planeswalker',style,sf,sf,0,
+        {'semanticOverrides':{'nickname':'The Inventor'}})
+    assert renamed[0]==plain[0]
+    assert renamed[1:]==tuple(v+1 for v in plain[1:])
+
 @pytest.mark.parametrize('name,count,code',[('Tezzeret-the-Seeker',3,'U'),('Tezzeret',4,'L')])
 @pytest.mark.parametrize('nickname',[False,True])
 def test_planeswalker_native_nickname_frame_keeps_every_ability(setup,name,count,code,nickname):
