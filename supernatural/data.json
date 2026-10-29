@@ -38333,17 +38333,6 @@
               "marginY": 0,
               "frames": [
                 {
-                  "name": "Nickname Title",
-                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
-                  "masks": [],
-                  "bounds": {
-                    "x": 0.124,
-                    "y": 0.0405,
-                    "width": 0.8269000000000001,
-                    "height": 0.1053
-                  }
-                },
-                {
                   "name": "Sun",
                   "src": "/img/frames/m15/transform/icons/sun.svg",
                   "masks": [],
@@ -38424,6 +38413,17 @@
                       "name": "Border"
                     }
                   ]
+                },
+                {
+                  "name": "Nickname Title",
+                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0494,
+                    "y": 0.0405,
+                    "width": 0.9014,
+                    "height": 0.1053
+                  }
                 },
                 {
                   "name": "Substitute instruction sign",
@@ -38598,9 +38598,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Brutal Cathar",
-                  "x": 0.2146,
+                  "x": 0.14,
                   "y": 0.11290000000000001,
-                  "width": 0.6455000000000001,
+                  "width": 0.72,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -38680,7 +38680,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "858b9945790472fd4debf7a7434ebe8f4cf21acdb5adbef64e9009dfba1acbc2",
+            "renderKey": "2b464c55a1c48ecb58b546790937dfaf7e88b75ad16fdb922a05058e8671c870",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -38702,16 +38702,16 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 16,
+            "templateCacheVersion": 16,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "c9f598b074af415d49434958db113fee1491bc541c1e7a65d9b84d30faf23c0f"
+            "contentRenderKey": "b8768b3dda68350663af3b4ee03de5ac410f08259e3dec6334d7faade2bdf97a"
           },
           "sourceRenderKey": "c8db60d094e386a0fa0839f4105c56b39c46bfc24e54a0c76d75132e212633e1",
-          "substituteVersion": 4
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -43118,17 +43118,6 @@
               "marginY": 0,
               "frames": [
                 {
-                  "name": "Nickname Title",
-                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
-                  "masks": [],
-                  "bounds": {
-                    "x": 0.124,
-                    "y": 0.0405,
-                    "width": 0.8269000000000001,
-                    "height": 0.1053
-                  }
-                },
-                {
                   "name": "Transform Icon",
                   "src": "/img/frames/m15/transform/icons/default.png",
                   "masks": [],
@@ -43231,6 +43220,17 @@
                       "name": "Border"
                     }
                   ]
+                },
+                {
+                  "name": "Nickname Title",
+                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0494,
+                    "y": 0.0405,
+                    "width": 0.9014,
+                    "height": 0.1053
+                  }
                 },
                 {
                   "name": "Substitute instruction sign",
@@ -43405,9 +43405,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Cecil, Dark Knight",
-                  "x": 0.2146,
+                  "x": 0.14,
                   "y": 0.11290000000000001,
-                  "width": 0.6455000000000001,
+                  "width": 0.72,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -43487,7 +43487,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "d33b14db56c3afe20b2045b3e6c7da52783b57a8804ca136695522c35346a304",
+            "renderKey": "f9755344db0732826a3009d33302764c0ada4db7fc82609a15cbeb4bade302f8",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -43509,16 +43509,16 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 16,
+            "templateCacheVersion": 16,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "630e7df9b84443f9db3b1576d10df7c851074fdcaa2ebd1b0bc7b082bccfac8d"
+            "contentRenderKey": "84911d5700883055161518e9684c9eb046ef86f906ac5d56a154ab90132fa362"
           },
           "sourceRenderKey": "bcb8e6ca5eb1f7f731151fe9092b695561e1cdaf4a2ea5ca6144109ba99ac49d",
-          "substituteVersion": 4
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -58743,17 +58743,6 @@
               "marginY": 0,
               "frames": [
                 {
-                  "name": "Nickname Title",
-                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
-                  "masks": [],
-                  "bounds": {
-                    "x": 0.124,
-                    "y": 0.0405,
-                    "width": 0.8269000000000001,
-                    "height": 0.1053
-                  }
-                },
-                {
                   "name": "Transform Icon",
                   "src": "/img/frames/m15/transform/icons/default.png",
                   "masks": [],
@@ -58856,6 +58845,17 @@
                       "name": "Border"
                     }
                   ]
+                },
+                {
+                  "name": "Nickname Title",
+                  "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0494,
+                    "y": 0.0405,
+                    "width": 0.9014,
+                    "height": 0.1053
+                  }
                 },
                 {
                   "name": "Substitute instruction sign",
@@ -59030,9 +59030,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Sephiroth, Fabled SOLDIER",
-                  "x": 0.2146,
+                  "x": 0.14,
                   "y": 0.11290000000000001,
-                  "width": 0.6455000000000001,
+                  "width": 0.72,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -59112,7 +59112,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "9f29ccc8c5a5b26207a922d13c33b7148538d812d470adb78ed0f7d76365aefd",
+            "renderKey": "248132102a168a2ba520331d90cda30ec51a5120d31c49d87e2a51b42a7fcbb1",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -59134,16 +59134,16 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 16,
+            "templateCacheVersion": 16,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "9e91a648705e64670c5960f4890871bf3e79d135d803d54e95e5722bb22042cf"
+            "contentRenderKey": "81572314a5835612f433e3d6e9150609f4d3fceedd3d6287639cb88535058cde"
           },
           "sourceRenderKey": "8bc31614accb336b10093f6bc8ed8225226d5b64a6a41db253678328b7dae8f3",
-          "substituteVersion": 4
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -71698,7 +71698,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Brutal Cathar — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/f7ef4c018cd00862496c0d43e25b4a20d371dedd/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "32ba70bf3458fd26ebceef36dc20c2daf959d629235a6adb5de979a07b7f948a": {
@@ -72268,7 +72268,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/f7ef4c018cd00862496c0d43e25b4a20d371dedd/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "973561dfe88e962d0676307230ea8f02910453dd60ed01504ff30e1a5994d538": {
@@ -72776,7 +72776,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7"
+    "applicationCommit": "f7ef4c018cd00862496c0d43e25b4a20d371dedd"
   },
   "includesRenders": false,
   "vectors": {
