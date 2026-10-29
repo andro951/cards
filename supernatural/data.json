@@ -1146,8 +1146,8 @@
               "nickname": "Dean Winchester, Righteous Man",
               "flavor_text": "Saving the world was never the point. Saving the people in it was."
             },
-            "preparationKey": "784c85bd361553d9311ca2f93d08c62f37afe5bda002b1b1d67cd1d3dfcc6a65",
-            "preparedAt": 1793235345.2220001,
+            "preparationKey": "8098f216bfc5d63336afba2f14887fbc68ead243afce016dd210dddf24128c88",
+            "preparedAt": 1793242280.218,
             "compiled": {
               "name": "Syr Gwyn, Hero of Ashvale",
               "data": {
@@ -1657,8 +1657,8 @@
               "nickname": "Men of Letters War Room",
               "flavor_text": "Every apocalypse looks smaller once you put it on a map."
             },
-            "preparationKey": "fc7c29d5a49bee9601776b8d4a454f89562cfde1e45d9f14e7e6d9f62dfc4de2",
-            "preparedAt": 1793235345.464,
+            "preparationKey": "134bf2dc8b2725c86d5b24c251ef9ea87cd99efb4df946bb6050f2f79179c135",
+            "preparedAt": 1793242280.488,
             "compiled": {
               "name": "Command Tower",
               "data": {
@@ -2168,8 +2168,8 @@
               "nickname": "The Cosmic Crossroads",
               "flavor_text": "Every world meets somewhere. Few travelers survive the intersection."
             },
-            "preparationKey": "6236ccd3e308726e786410c425aefb4d14178d3a3a2339ff61dab3b6309e877c",
-            "preparedAt": 1793235345.7350001,
+            "preparationKey": "d16634dc13f38d66c57f4d981ee0c11e90ee722aad888cdff503b2d1736fbb61",
+            "preparedAt": 1793242280.828,
             "compiled": {
               "name": "Savai Triome",
               "data": {
@@ -2713,8 +2713,12 @@
               "nickname": "Men of Letters Archive",
               "flavor_text": "Centuries of monsters, catalogued one impossible case at a time."
             },
-            "preparationKey": "a7e40237959ba79bff1f31fd7a1183c454844c63610815429e3d740328c78473",
-            "preparedAt": 1793235345.987,
+            "preparationKey": "5af855757f5d63fdb6bd158cec2a60913123596af07534f067f2595f95ae826e",
+            "preparedAt": 1793242281.177,
+            "acceptedWarningKey": "c1f279885fecbd2cab71d4a1b326dadac0d6ab3f4b142c34ab29c6262a8915bf",
+            "acceptedArt": [
+              "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
+            ],
             "compiled": {
               "name": "Urza's Saga",
               "data": {
@@ -3053,11 +3057,7 @@
               "contentRenderKey": "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/075_urza_s_saga.png"
-            },
-            "acceptedWarningKey": "c1f279885fecbd2cab71d4a1b326dadac0d6ab3f4b142c34ab29c6262a8915bf",
-            "acceptedArt": [
-              "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
-            ]
+            }
           }
         ],
         "metadataSource": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
@@ -3217,8 +3217,8 @@
               "nickname": "Occult Black Market",
               "flavor_text": "Everything forbidden has a buyer. Everything cursed has a seller."
             },
-            "preparationKey": "a3c4f1de38d87331cf85e15dd9e4cbb9cdf7f7adf74a3c79a42de8a3b73e6fb8",
-            "preparedAt": 1793235346.163,
+            "preparationKey": "e2de8d94beca346ddfb396b652690ac7f87c3eae2c7157db6ebb02a60aef061b",
+            "preparedAt": 1793242281.404,
             "compiled": {
               "name": "High Market",
               "data": {
@@ -3708,8 +3708,8 @@
               "nickname": "Devil's Gate",
               "flavor_text": "Hell had a lock. Humanity had the bad luck to find the keyhole."
             },
-            "preparationKey": "a657ad16d7cb332bb7e2ca1c42e3f1d934b0c20fb0b2acb4bf24c75dc00c0323",
-            "preparedAt": 1793235346.3630002,
+            "preparationKey": "3f0e8c02848f32c5b4bbb0688f941f415ad3ebc614d8f54c640fa63de0ff7939",
+            "preparedAt": 1793242281.645,
             "compiled": {
               "name": "Bloodstained Mire",
               "data": {
@@ -4218,8 +4218,8 @@
               "nickname": "Kansas Backroads",
               "flavor_text": "Every hunt began somewhere between one town and the next."
             },
-            "preparationKey": "847bcb8c0182ccc13e2675224f7271614ad61c0b95a14e4c8940d6d9c76131df",
-            "preparedAt": 1793235346.5779998,
+            "preparationKey": "c70227e7353ae689e0c753f7ed49b67f6a7c89ba08b9319d8300f08f5d641dba",
+            "preparedAt": 1793242281.894,
             "compiled": {
               "name": "Arid Mesa",
               "data": {
@@ -4728,8 +4728,8 @@
               "nickname": "Stull Cemetery",
               "flavor_text": "Some graves hold bodies. Others hold doors."
             },
-            "preparationKey": "549939a6c2ccbab171c8f0cf8b19dd00c3d2748cfc8a682b8fd5a6e3ecca479b",
-            "preparedAt": 1793235346.7740002,
+            "preparationKey": "da21605a9afc034037475a264f295ea95a431b40a637828757132c9f00fa504b",
+            "preparedAt": 1793242282.152,
             "compiled": {
               "name": "Marsh Flats",
               "data": {
@@ -5243,8 +5243,8 @@
               "nickname": "Apocalypse Resistance Camp",
               "flavor_text": "They lost the world. They did not surrender the people in it."
             },
-            "preparationKey": "ef330e13f6938c9313ba486eaacda7b508844adfaf45929a169f86833bdc73ac",
-            "preparedAt": 1793235346.9980001,
+            "preparationKey": "0fec51b3e922d3fa580d6c9133dcd627a7cf73cce876972cd8ff6361a31ce638",
+            "preparedAt": 1793242282.437,
             "compiled": {
               "name": "Boros Garrison",
               "data": {
@@ -5755,8 +5755,8 @@
               "nickname": "Throne of Hell",
               "flavor_text": "The crown changes hands. Hell never does."
             },
-            "preparationKey": "855d2fe1c2b5e7317a38b051f30ad32020173d19e93ab54090558ace26403b2d",
-            "preparedAt": 1793235347.206,
+            "preparationKey": "1cf24976878f119695506cd26899c40a6b1f3b9fd0a35e07e41ac63b889a59bb",
+            "preparedAt": 1793242282.6569998,
             "compiled": {
               "name": "Rakdos Carnarium",
               "data": {
@@ -6269,8 +6269,8 @@
               "nickname": "St. Mary's Convent",
               "flavor_text": "The prayers stopped. The echoes didn’t."
             },
-            "preparationKey": "5dba93a48da9765b2d83cf851e94caa654aa4b8b721dd76561d6ba9e707b503e",
-            "preparedAt": 1793235347.376,
+            "preparationKey": "b41e5d6da8e68abf1266339514e1ec0e44fe9c95a8766c2746d4c6e46d75c471",
+            "preparedAt": 1793242282.8969998,
             "compiled": {
               "name": "Orzhov Basilica",
               "data": {
@@ -6785,8 +6785,8 @@
               "nickname": "Lucifer's Cage",
               "flavor_text": "Built to hold an archangel. Barely."
             },
-            "preparationKey": "de6a04cca80cb8c3fb5ac086e7efada76badc2009ef6ca9a6799a9232d91eaeb",
-            "preparedAt": 1793235347.584,
+            "preparationKey": "7fb733e80a76896747088fd1a0f8543f2924665d78f21d455aba96a7c0f9dfb0",
+            "preparedAt": 1793242283.1260002,
             "compiled": {
               "name": "Blood Crypt",
               "data": {
@@ -7301,8 +7301,8 @@
               "nickname": "Desecrated Holy Ground",
               "flavor_text": "Sanctity is easier to break than to restore."
             },
-            "preparationKey": "80cf46ee9149bb8c8ba63c9a55015afe3c3ccec457c11a408d7a19c0938ac1f3",
-            "preparedAt": 1793235347.798,
+            "preparationKey": "af861acdd2c24b30d4d26d36d6b33b5a8a95206b9648d4519aafc0e34d4d1bf9",
+            "preparedAt": 1793242283.415,
             "compiled": {
               "name": "Godless Shrine",
               "data": {
@@ -7817,8 +7817,8 @@
               "nickname": "British Men of Letters Armory",
               "flavor_text": "Knowledge became policy. Policy became a weapon."
             },
-            "preparationKey": "586ec933291b5996507669d20cc15a0336e3415eb39fde2030dc7286bf40e9d1",
-            "preparedAt": 1793235347.9390001,
+            "preparationKey": "8cc931d2c3bc888ed249e36e3911f0b73da1e3577ee002113261df0ca0e6622b",
+            "preparedAt": 1793242283.57,
             "compiled": {
               "name": "Sacred Foundry",
               "data": {
@@ -8340,8 +8340,8 @@
               "nickname": "Gates of Hell",
               "flavor_text": "Some doors are sealed for the sake of both sides."
             },
-            "preparationKey": "335b1ebe65716454eaa0739710ad3845ca2f1661de3e6489e4f89be14a3d2a9e",
-            "preparedAt": 1793235348.458,
+            "preparationKey": "ee95b068de877b987274962954b8121536a9dd0e0ae46f8efafb50e0dd7759ed",
+            "preparedAt": 1793242284.1430001,
             "compiled": {
               "name": "Temple of Malice",
               "data": {
@@ -8855,8 +8855,8 @@
               "nickname": "Bobby's Panic Room",
               "flavor_text": "When anything can wear a familiar face, iron walls feel comforting."
             },
-            "preparationKey": "9a1777e9885315396b28ffdb8851812fb92d9504048090d48c9d443887c44231",
-            "preparedAt": 1793235348.63,
+            "preparationKey": "0617662a271d30b18d5e0b01c9a9c807b293c5ccfa3036c69800ec953e49067e",
+            "preparedAt": 1793242284.345,
             "compiled": {
               "name": "Temple of Silence",
               "data": {
@@ -9370,8 +9370,8 @@
               "nickname": "Heaven's Garden",
               "flavor_text": "Every soul remembers peace differently. Heaven makes room for all of them."
             },
-            "preparationKey": "e21dbd8913cab3276c6398db801d83d8f02b435f77f98c384a3fe710977cfacf",
-            "preparedAt": 1793235348.7859998,
+            "preparationKey": "886fa8605ffe5887ada6897a95cf94ab7986ef30e7d651df8316f3686bf7aa7c",
+            "preparedAt": 1793242284.5049999,
             "compiled": {
               "name": "Temple of Triumph",
               "data": {
@@ -9885,8 +9885,8 @@
               "nickname": "Kingdom of Heaven",
               "flavor_text": "Paradise was vast, beautiful, and divided into private rooms."
             },
-            "preparationKey": "7ecd7dce8e5b57a1460eac4abef1803267032d5cc0f0c6a70dc389a32137a09f",
-            "preparedAt": 1793235348.961,
+            "preparationKey": "799395b168a35293ccd5ddaa2ddd4644dde66fbe2571fd4550888d28bc169249",
+            "preparedAt": 1793242284.6780002,
             "compiled": {
               "name": "Windbrisk Heights",
               "data": {
@@ -10380,8 +10380,8 @@
               "nickname": "The Bad Place",
               "flavor_text": "Nothing there evolved to welcome visitors."
             },
-            "preparationKey": "8760d266b6dc0971933a83e29331e9525ee43309fe3a96f601d08b1220027b6b",
-            "preparedAt": 1793235349.1020002,
+            "preparationKey": "fb458544ee17463dacebefe6b567a7cc17302c7d6055e617cbf226cd2afebeaa",
+            "preparedAt": 1793242284.8700001,
             "compiled": {
               "name": "Spinerock Knoll",
               "data": {
@@ -10882,8 +10882,8 @@
               "nickname": "Mystery Spot",
               "flavor_text": "Tuesday again."
             },
-            "preparationKey": "145f00baedb7ae8016c7d99844cb8764a0913d0280c6d93370d5f44cd3edf23c",
-            "preparedAt": 1793235349.274,
+            "preparationKey": "4ca5ad6b9a899059e0d4fb4e78ba8e4e2615991a4c3a53e72f937be9509a50b5",
+            "preparedAt": 1793242285.0579998,
             "compiled": {
               "name": "Clive's Hideaway",
               "data": {
@@ -11372,8 +11372,8 @@
               "nickname": "Hell",
               "flavor_text": "Hell had no shortage of rooms, only mercy."
             },
-            "preparationKey": "8daf6029d8f38ecb8db66aea9344cde9a2004705d2f722d6be3387ba29486ba0",
-            "preparedAt": 1793235349.4190001,
+            "preparationKey": "54aa7287a9069fb356a9eb95da626c07c9f8ad72b147ab9934be6f3fca1a919a",
+            "preparedAt": 1793242285.241,
             "compiled": {
               "name": "Mountain",
               "data": {
@@ -11844,8 +11844,8 @@
               "nickname": "Purgatory Wilds",
               "flavor_text": "Every path led deeper. Every shadow was hungry."
             },
-            "preparationKey": "6bbd722046cc1c5a5fd7518be71efcf006068e6ffa0680aac227102f9a2ae36d",
-            "preparedAt": 1793235349.569,
+            "preparationKey": "69cc83ddd67bf3ac799e93aa2c09484dbd2493188234f0281820e403b2a6c4e4",
+            "preparedAt": 1793242285.5609999,
             "compiled": {
               "name": "Swamp",
               "data": {
@@ -12316,8 +12316,8 @@
               "nickname": "Lawrence, Kansas",
               "flavor_text": "Before angels, demons, and prophecies, there was home."
             },
-            "preparationKey": "7565e625a2ce320de691ccd97e39d9d37e9beaf1be60aaadbfe4e18e96671b61",
-            "preparedAt": 1793235349.708,
+            "preparationKey": "b51af87003f1f17e9077289a487f65347f757345fc748ece622161d82fbbb1ee",
+            "preparedAt": 1793242285.724,
             "compiled": {
               "name": "Plains",
               "data": {
@@ -12802,8 +12802,8 @@
               "nickname": "Harvelle's Roadhouse",
               "flavor_text": "Hunters came for answers, whiskey, and the chance not to drink alone."
             },
-            "preparationKey": "02495acab871efb53227a0b8f201352bddcd6ec74c2079b6374b8555ea7bff8d",
-            "preparedAt": 1793235349.85,
+            "preparationKey": "6144577ba8500503d63dd3796a068fe09940670c231fa24892a230a8ea8456bf",
+            "preparedAt": 1793242285.889,
             "compiled": {
               "name": "Abandoned Air Temple",
               "data": {
@@ -13302,8 +13302,8 @@
               "nickname": "The Empty",
               "flavor_text": "Even angels whisper when they dream here."
             },
-            "preparationKey": "42b98df89a3ad01dc4038553d645c154db927c13a182317def14d3f386bc03cd",
-            "preparedAt": 1793235349.965,
+            "preparationKey": "f409f6965340deefade3afd21f07e2ea7c455286ef62b2069702a5d6af471a2d",
+            "preparedAt": 1793242286.008,
             "compiled": {
               "name": "Susur Secundi, Void Altar",
               "data": {
@@ -14038,8 +14038,8 @@
               "nickname": "Styne Laboratory",
               "flavor_text": "The family business was medicine stripped of mercy."
             },
-            "preparationKey": "e72eeb4448c1f4d4f6d306ad29fe594d4bdfd8361b6e9fa5bfb1e9469e2b3441",
-            "preparedAt": 1793235350.088,
+            "preparationKey": "0b73dc50411a3af37487f36b4c615ebbece66a959f97a736e18ea95288a78c51",
+            "preparedAt": 1793242286.144,
             "compiled": {
               "name": "Secluded Starforge",
               "data": {
@@ -14556,8 +14556,8 @@
               "nickname": "French Mistake Soundstage",
               "flavor_text": "Somewhere, their lives were only a television show. That was the weird part."
             },
-            "preparationKey": "c81e10a5893f00f5a235591d0a48159b16d1d7859630bd07cf96c2b5f1d9102c",
-            "preparedAt": 1793235350.211,
+            "preparationKey": "9c537ff7e0eb24307f7eedf69452911891224f0e1e73c5e824a585feb7174dab",
+            "preparedAt": 1793242286.275,
             "compiled": {
               "name": "Adagia, Windswept Bastion",
               "data": {
@@ -15271,8 +15271,8 @@
               "nickname": "Heaven's Armory",
               "flavor_text": "Heaven preached peace and kept excellent weapons."
             },
-            "preparationKey": "b931b089aeb0f26fdf6c5aa31340f9ca8ea5e5ee5816ca4bb1c2a0f40b4f6168",
-            "preparedAt": 1793235350.345,
+            "preparationKey": "dfe9735fa607a78660b44331fc31ede4874861d269df3c6de51f30f6f2c3a97d",
+            "preparedAt": 1793242286.4220002,
             "compiled": {
               "name": "Vault of the Archangel",
               "data": {
@@ -15777,8 +15777,8 @@
               "nickname": "The Veil",
               "flavor_text": "The dead passed through. The living only glimpsed the doorway."
             },
-            "preparationKey": "50e377a907fc5d51d6f7957c5fbe16f410406fc6b47444c91cfd6b832fdc1b8a",
-            "preparedAt": 1793235350.483,
+            "preparationKey": "eed38ecbdaf8a2272e1b68c9f628cb0b7bdea8e6daa0e52a0f35786fddd09d28",
+            "preparedAt": 1793242286.571,
             "compiled": {
               "name": "Takenuma, Abandoned Mire",
               "data": {
@@ -16301,8 +16301,8 @@
               "nickname": "Pamela's Séance Room",
               "flavor_text": "The candles were cheap. The consequences weren’t."
             },
-            "preparationKey": "7bda15fde6288a89d7aee22b16a521bf3d33924e9004968b0c3607cee27519c7",
-            "preparedAt": 1793235350.62,
+            "preparationKey": "e6c995c1e9325bf075b414562a5ddcf25f6448249415491db3a66b34134932f8",
+            "preparedAt": 1793242286.7020001,
             "compiled": {
               "name": "Sokenzan, Crucible of Defiance",
               "data": {
@@ -16803,8 +16803,8 @@
               "nickname": "The Road So Far",
               "flavor_text": "The miles changed. The mission didn’t."
             },
-            "preparationKey": "234bacbebecdecd42b9767aca1f19ccc089820c9740e83ea144d5bb409c41a5b",
-            "preparedAt": 1793235350.748,
+            "preparationKey": "1627beb42e5ea92d4d93dedc6cf4fb7995af093241ee622bcdfda2c6d19f4e7a",
+            "preparedAt": 1793242286.849,
             "compiled": {
               "name": "Horizon of Progress",
               "data": {
@@ -17307,8 +17307,8 @@
               "nickname": "Elysian Fields Hotel",
               "flavor_text": "The gods checked in under false names and never truly checked out."
             },
-            "preparationKey": "72266894611a714bd7824f3dbbd3e2ef0baed0da952f9ba587f7b2d300e78136",
-            "preparedAt": 1793235350.992,
+            "preparationKey": "f903d719da9c92240e976841dc5254a1fb8fc72fea41e710dab6d90335e792ec",
+            "preparedAt": 1793242287.127,
             "compiled": {
               "name": "Glittering Massif",
               "data": {
@@ -17828,8 +17828,8 @@
               "nickname": "Croatoan Wasteland",
               "flavor_text": "The infection spread faster than the warning signs could go up."
             },
-            "preparationKey": "712a3484d507e3a59b5d69a97d9c5ac166560e9c16d6d2958b0391c0395c5be8",
-            "preparedAt": 1793235351.246,
+            "preparationKey": "0de4ac88352d375e82d04dbde8b0c6bc68c162e9d34523282df83ebfa24cd305",
+            "preparedAt": 1793242287.389,
             "compiled": {
               "name": "Canyon Slough",
               "data": {
@@ -18344,8 +18344,8 @@
               "nickname": "Primordial Darkness",
               "flavor_text": "Before creation, there was only silence without an edge."
             },
-            "preparationKey": "78efefdb752bec0f291ccafee2fd755cbb0fb513f0f20c52086d516fa0ce3dd5",
-            "preparedAt": 1793235351.5059998,
+            "preparationKey": "b3803b504c8c74180d0d30b13ea0e0d3ec600ba26c5f28b6874c88ce36b7cafe",
+            "preparedAt": 1793242287.636,
             "compiled": {
               "name": "Umbral Expanse",
               "data": {
@@ -18859,8 +18859,8 @@
               "nickname": "Apocalypse World",
               "flavor_text": "When Heaven won, almost everyone else lost."
             },
-            "preparationKey": "268e1e5eee01c38cbfd468092d71005745201bb1c3fced7d9e5dd69e10318f57",
-            "preparedAt": 1793235351.732,
+            "preparationKey": "1f7ba281478dce7af8eb1df4f216c4cb8ecea8e73c4022765d2b108e66e2db22",
+            "preparedAt": 1793242287.876,
             "compiled": {
               "name": "Shattered Landscape",
               "data": {
@@ -19564,8 +19564,8 @@
             "originalArtist": "Igor Kieryluk",
             "artFilename": "105_germ.png",
             "semanticOverrides": {},
-            "preparationKey": "9cbbb77fa710fda3fde4cb7a704eb8faca4799074de03b5140153665dd80dd8e",
-            "preparedAt": 1793235351.907,
+            "preparationKey": "958a5dfd1181f697f2395251f6144f72bb7d1844a6d5e61479fef4ff4ecfefe7",
+            "preparedAt": 1793242288.075,
             "compiled": {
               "name": "Phyrexian Germ",
               "data": {
@@ -20129,8 +20129,8 @@
             "semanticOverrides": {
               "nickname": "Croatoan Infected"
             },
-            "preparationKey": "56121577a622f7ac4713ea3075767755cce11a266804785676dd19be5fb9739e",
-            "preparedAt": 1793235352.131,
+            "preparationKey": "1dac3385c0921c46f43709164e07bd36f980b0ebcddc2e9112460162b30e1d86",
+            "preparedAt": 1793242288.313,
             "compiled": {
               "name": "Phyrexian Mite",
               "data": {
@@ -20625,8 +20625,8 @@
             "semanticOverrides": {
               "nickname": "Power of Purgatory"
             },
-            "preparationKey": "88039217e27a6d33a6aaf8c96a56a65b1559ab23d5c1b8389397bb7c7dab3b4c",
-            "preparedAt": 1793235352.3470001,
+            "preparationKey": "0ba60453ded641cc05b9bb28dcc281f6e4fbccf2ca96ff3637c0b1abc8ddc47d",
+            "preparedAt": 1793242288.539,
             "compiled": {
               "name": "Sephiroth, One-Winged Angel Emblem",
               "data": {
@@ -21085,8 +21085,8 @@
             "semanticOverrides": {
               "nickname": "Death's Dominion"
             },
-            "preparationKey": "26606ad6ae1f2b2537e3b575060d5b98f3c3ce46225135f9146176ca0c7f11f8",
-            "preparedAt": 1793235352.549,
+            "preparationKey": "be8bb7617589f62cc6e3335e5ae0842eecfa38bc3bb817544be7a244d1fb0946",
+            "preparedAt": 1793242289.129,
             "compiled": {
               "name": "Kaya the Inexorable Emblem",
               "data": {
@@ -21652,8 +21652,8 @@
             "semanticOverrides": {
               "nickname": "Hard-Earned Experience"
             },
-            "preparationKey": "110c7d64bd422b4ba1828ac61cad40bfadb852f6714917195b5d3923f57c0d7b",
-            "preparedAt": 1793235352.76,
+            "preparationKey": "ecf8ca98f44279027be26598382f39f641a7159cfbc9064d556d49f79221b8f8",
+            "preparedAt": 1793242289.38,
             "compiled": {
               "name": "Experience",
               "data": {
@@ -22522,8 +22522,8 @@
             "group": "helper",
             "originalArtist": "Johan Grenier",
             "semanticOverrides": {},
-            "preparationKey": "45dbf0201321bc0bc55763b4484f011fe0dd52acc89462cc6828f196b37085bb",
-            "preparedAt": 1793235353.483,
+            "preparationKey": "95fe6520b8bd6d9b9e1d4ae66bbf6cc2c75508dc299cb59fd5eaca2007623ee7",
+            "preparedAt": 1793242289.783,
             "compiled": {
               "name": "Day",
               "data": {
@@ -22824,8 +22824,8 @@
             "group": "helper",
             "originalArtist": "Johan Grenier",
             "semanticOverrides": {},
-            "preparationKey": "45dbf0201321bc0bc55763b4484f011fe0dd52acc89462cc6828f196b37085bb",
-            "preparedAt": 1793235353.483,
+            "preparationKey": "95fe6520b8bd6d9b9e1d4ae66bbf6cc2c75508dc299cb59fd5eaca2007623ee7",
+            "preparedAt": 1793242289.783,
             "compiled": {
               "name": "Night",
               "data": {
@@ -23268,8 +23268,8 @@
             "semanticOverrides": {
               "nickname": "Crowley's Agent"
             },
-            "preparationKey": "9c02b6c56211a762aa9ca8eeaa6b63ef79f14fc505c7e190edbc3c9ac9a27126",
-            "preparedAt": 1793235353.6499999,
+            "preparationKey": "94636d8328a71bcd0c48ac5a948423bba16bbffab353ecbad1193eb2be29a0c9",
+            "preparedAt": 1793242289.96,
             "compiled": {
               "name": "Shapeshifter",
               "data": {
@@ -23783,8 +23783,8 @@
             "semanticOverrides": {
               "nickname": "Jefferson Starship"
             },
-            "preparationKey": "8aca195a536798b598632a154fa1ad61fb9f3f5745610da8d0fa22cc625ae924",
-            "preparedAt": 1793235353.8569999,
+            "preparationKey": "1c6ee747dd4903f2ec8a593d2b52c5af73f4f1b5f44451a82eabb0c5c0213e34",
+            "preparedAt": 1793242290.174,
             "compiled": {
               "name": "Shapeshifter",
               "data": {
@@ -24325,8 +24325,8 @@
             "semanticOverrides": {
               "nickname": "Judah Initiative Golem"
             },
-            "preparationKey": "7da94cd6a08bea537c1b6cd7a00e371dbaf1f21e999a6a14b8a455ae54b602d4",
-            "preparedAt": 1793235354.0649998,
+            "preparationKey": "5662a68e525818c13ba9cb7bab1081a4d847d7d1fdda1d6be482fc6f726530d6",
+            "preparedAt": 1793242290.493,
             "compiled": {
               "name": "Construct",
               "data": {
@@ -25243,8 +25243,8 @@
             "semanticOverrides": {
               "nickname": "Wayward Hunter"
             },
-            "preparationKey": "074d0b0a56135037cb1e762be63acdcef27449cf508516e5e429bafaf0657138",
-            "preparedAt": 1793235354.236,
+            "preparationKey": "8e55a00e1e82b95cf4a94cb09a51c7c5c0dfaa99f36a2ee30cd8122362b38376",
+            "preparedAt": 1793242290.71,
             "compiled": {
               "name": "Human Soldier",
               "data": {
@@ -25886,8 +25886,8 @@
             "semanticOverrides": {
               "nickname": "Fallen Seraph"
             },
-            "preparationKey": "7c4fbc5c114abe2a7cd01fd46ea41bbf5e3f5bd0225682ad39ef89333d5ee7c4",
-            "preparedAt": 1793235354.443,
+            "preparationKey": "a872230571ac18f3fc543c62ede57291992a4fe9a128d04650dccbf938333b5d",
+            "preparedAt": 1793242290.9129999,
             "compiled": {
               "name": "Angel",
               "data": {
@@ -27050,8 +27050,8 @@
             "semanticOverrides": {
               "nickname": "Resistance Fighter"
             },
-            "preparationKey": "e2e825c6df64411213c65d4399f47755abd9bcc878adb76d718554d4742685d0",
-            "preparedAt": 1793235354.591,
+            "preparationKey": "9ff12d2245830850a38e9f07a43c654d734713eb4482dda0c9911ba3f03c1b03",
+            "preparedAt": 1793242291.089,
             "compiled": {
               "name": "Soldier",
               "data": {
@@ -28119,8 +28119,8 @@
             "semanticOverrides": {
               "nickname": "Reaper"
             },
-            "preparationKey": "26265a7e5efcdab3d13cbe61c2b851e9629a56afd68c2e4c8f08c9e3681ac016",
-            "preparedAt": 1793235354.752,
+            "preparationKey": "924b3ed4a0106aac8fb701a7db9c5bee50dac1d879775d7303c4fe03791efcb1",
+            "preparedAt": 1793242291.318,
             "compiled": {
               "name": "Spirit",
               "data": {
@@ -28750,8 +28750,8 @@
             "semanticOverrides": {
               "nickname": "Séance Spirit"
             },
-            "preparationKey": "ade531cd9b5c77caafe8c88c9ddd0cefe048c3130b88f83b1612ac23ae2c95c5",
-            "preparedAt": 1793235354.903,
+            "preparationKey": "6857c16760c47f391449d1c2e882d95835ed2f171037ae74a56ee6cabcd32e22",
+            "preparedAt": 1793242291.5870001,
             "compiled": {
               "name": "Spirit",
               "data": {
@@ -32224,8 +32224,8 @@
             "semanticOverrides": {
               "nickname": "Occult Relic"
             },
-            "preparationKey": "e1c764cce8046e78bff9058a1479c12c955aa59941ed626441a696524d20f233",
-            "preparedAt": 1793235355.049,
+            "preparationKey": "02837b6f4f26456580f3f16eab3904d48dbb16fe08b2f90eaa8fc03e4e54208d",
+            "preparedAt": 1793242291.7910001,
             "compiled": {
               "name": "Treasure",
               "data": {
@@ -32820,8 +32820,8 @@
             "semanticOverrides": {
               "nickname": "Styne Experiment"
             },
-            "preparationKey": "3bfd9fd23003f0253c2b15efc5533c4dff1930d96bbe94b82b412602aef9384f",
-            "preparedAt": 1793235355.2089999,
+            "preparationKey": "d9ed3d3adaa6b767bba1a8794f2a4f33b93bca359aa8bdf4da0b8c8eb2f5af76",
+            "preparedAt": 1793242291.967,
             "compiled": {
               "name": "Robot",
               "data": {
@@ -34491,8 +34491,8 @@
             "semanticOverrides": {
               "nickname": "Croatoan Infection"
             },
-            "preparationKey": "7ea0b4f1e8ffb82667f97bfb690f128e7e122da91de742a052e42b15bde0cdfa",
-            "preparedAt": 1793235355.353,
+            "preparationKey": "77574e31859050bf1b67a0715ef6fef5b1d3f94d6e48e8c0e7f4578d992e0759",
+            "preparedAt": 1793242292.146,
             "compiled": {
               "name": "Poison Counter",
               "data": {
@@ -34953,8 +34953,8 @@
               "nickname": "Arthur Ketch, Men of Letters Operative",
               "flavor_text": "Efficiency came naturally. Conscience took longer."
             },
-            "preparationKey": "d14508dc6a772526b5ceb4b645ddb676d80ddd3e6d3c6f33c71ab56ba70aa961",
-            "preparedAt": 1793235355.4889998,
+            "preparationKey": "26a58fcf623221ffe4a5f7389f8025090d07f767004d885a00781ca39458adc4",
+            "preparedAt": 1793242292.2979999,
             "compiled": {
               "name": "Cloud, Midgar Mercenary",
               "data": {
@@ -35457,8 +35457,8 @@
               "nickname": "Linda Tran, Prophet's Protector",
               "flavor_text": "Prophets speak for Heaven. Mothers speak louder."
             },
-            "preparationKey": "3260a3040a590635573c9412436079f934e0f36b5f9016d51ca33f47834b3f2d",
-            "preparedAt": 1793235355.641,
+            "preparationKey": "6e54b372006775e7ca3d044d23ee3991cddcd0f8a6c19ca0a2ea923ebf94a7c2",
+            "preparedAt": 1793242292.4940002,
             "compiled": {
               "name": "Danitha, Benalia's Hope",
               "data": {
@@ -35953,8 +35953,8 @@
               "nickname": "Bobby Singer, Veteran Hunter",
               "flavor_text": "Salt, iron, lore, and stubbornness kept more hunters alive than miracles ever did."
             },
-            "preparationKey": "176c58ede2c1c9eb2a14235ce14f92ca3b88c7015b439470e98310b35d887cf7",
-            "preparedAt": 1793235355.773,
+            "preparationKey": "6892e116e39abbbf1f12cf1f2bfbadb490af08d0fde7fdffaac91ec484e60b39",
+            "preparedAt": 1793242292.6950002,
             "compiled": {
               "name": "Puresteel Paladin",
               "data": {
@@ -36447,8 +36447,8 @@
               "nickname": "Charlie Bradbury, Queen of Moondoor",
               "flavor_text": "Give her a locked door, a dead language, or a dragon. She’ll find a way in."
             },
-            "preparationKey": "95e5b4ca5e2983640a6c99f8ebe0a20fc49e08f26697c76c24c4400710befc1e",
-            "preparedAt": 1793235355.911,
+            "preparationKey": "4459d2af32a69a51ff45bd2b4e4e28999ce97c90451e63d87b6c5472b94db379",
+            "preparedAt": 1793242292.856,
             "compiled": {
               "name": "Stoneforge Mystic",
               "data": {
@@ -36950,8 +36950,8 @@
               "nickname": "Crowley, King of Hell",
               "flavor_text": "Every soul has a price. Crowley simply knows the exchange rate."
             },
-            "preparationKey": "e6f31ef01c644fdcd5a39e418967521ef13438fd7e1dc385cbe5e6feb0d0641d",
-            "preparedAt": 1793235356.062,
+            "preparationKey": "60b5c7fdab59d3759ac42ee727477bc3ed318c21fafefcb615045acb018e27a4",
+            "preparedAt": 1793242293.037,
             "compiled": {
               "name": "Vilis, Broker of Blood",
               "data": {
@@ -37518,8 +37518,8 @@
               "flavor_text": "He hunted monsters without forgetting that some of them were still people.",
               "oracle_text": "Whenever this creature enters or transforms into Garth, Monster Hunter, exile target creature an opponent controls until this creature leaves the battlefield.\nDaybound (If a player casts no spells during their own turn, it becomes night next turn.)"
             },
-            "preparationKey": "88a8d56864a25c9978fdd36808e4c286e5c6a4c5ef92c3025de98d03ce9dcc30",
-            "preparedAt": 1793235356.485,
+            "preparationKey": "bf2331af7f78b7b44908cd59c3fa272c8cc3f8570c09d1f92f2152224a34a8dc",
+            "preparedAt": 1793242293.431,
             "compiled": {
               "name": "Brutal Cathar",
               "data": {
@@ -37911,8 +37911,8 @@
               "nickname": "Garth, Friendly Werewolf",
               "flavor_text": "The moon changed what he was, not who he chose to be."
             },
-            "preparationKey": "88a8d56864a25c9978fdd36808e4c286e5c6a4c5ef92c3025de98d03ce9dcc30",
-            "preparedAt": 1793235356.485,
+            "preparationKey": "bf2331af7f78b7b44908cd59c3fa272c8cc3f8570c09d1f92f2152224a34a8dc",
+            "preparedAt": 1793242293.431,
             "compiled": {
               "name": "Moonrage Brute",
               "data": {
@@ -38337,10 +38337,21 @@
                   "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                   "masks": [],
                   "bounds": {
-                    "x": 0.049400000000000006,
+                    "x": 0.124,
                     "y": 0.0405,
-                    "width": 0.9014000000000001,
+                    "width": 0.8269000000000001,
                     "height": 0.1053
+                  }
+                },
+                {
+                  "name": "Sun",
+                  "src": "/img/frames/m15/transform/icons/sun.svg",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0594,
+                    "y": 0.0505,
+                    "width": 0.0734,
+                    "height": 0.0524
                   }
                 },
                 {
@@ -38356,17 +38367,17 @@
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskPinline.png",
+                      "src": "/img/frames/m15/transform/regular/maskPinlineFront.png",
                       "name": "Pinline"
                     }
                   ]
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
                       "src": "/img/frames/m15/regular/m15MaskType.png",
@@ -38376,40 +38387,40 @@
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskTitle.png",
+                      "src": "/img/frames/m15/transform/regular/maskTitle.png",
                       "name": "Title"
                     }
                   ]
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskRules.png",
+                      "src": "/img/frames/m15/transform/regular/maskRulesFront.png",
                       "name": "Rules"
                     }
                   ]
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskFrame.png",
+                      "src": "/img/frames/m15/transform/regular/maskFrameFront.png",
                       "name": "Frame"
                     }
                   ]
                 },
                 {
                   "name": "White Frame",
-                  "src": "/img/frames/m15/regular/m15FrameW.png",
+                  "src": "/img/frames/m15/transform/regular/frontW.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskBorder.png",
+                      "src": "/img/frames/m15/transform/regular/maskBorderFront.png",
                       "name": "Border"
                     }
                   ]
@@ -38442,7 +38453,7 @@
               "watermarkLeft": "none",
               "watermarkRight": "none",
               "watermarkOpacity": 0,
-              "version": "m15Regular",
+              "version": "m15TransformFront",
               "manaSymbols": [],
               "infoYear": "2013",
               "margins": false,
@@ -38587,9 +38598,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Brutal Cathar",
-                  "x": 0.14,
+                  "x": 0.2146,
                   "y": 0.11290000000000001,
-                  "width": 0.7200000000000001,
+                  "width": 0.6455000000000001,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -38631,12 +38642,25 @@
                   "oneLine": true,
                   "align": "center"
                 },
+                "reminder": {
+                  "name": "Reverse PT",
+                  "text": "",
+                  "x": 0.086,
+                  "y": 0.842,
+                  "width": 0.838,
+                  "height": 0.0362,
+                  "size": 0.0291,
+                  "oneLine": true,
+                  "color": "#666",
+                  "align": "right",
+                  "font": "belerenbsc"
+                },
                 "nickname": {
                   "name": "Nickname",
                   "text": "Garth, Monster Hunter",
-                  "x": 0.0854,
+                  "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7066,
+                  "width": 0.7547,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -38656,8 +38680,8 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "233348c65b5933173060881807b54a2808cf8fb2f81c0b8f36cf8ad5811e2168",
-            "group": "standard",
+            "renderKey": "858b9945790472fd4debf7a7434ebe8f4cf21acdb5adbef64e9009dfba1acbc2",
+            "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
               "warning": false,
@@ -38677,17 +38701,17 @@
               "missingCustomArtist": false
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
-            "templateKey": "builtin:normal",
-            "templateVersion": 11,
-            "templateCacheVersion": 11,
+            "templateKey": "auto:transform-front",
+            "templateVersion": 14,
+            "templateCacheVersion": 14,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "665c06ec44c623e3bde01bf231d2652103aecbbe03ceedd4198ca27bb8e8e39d"
+            "contentRenderKey": "c9f598b074af415d49434958db113fee1491bc541c1e7a65d9b84d30faf23c0f"
           },
           "sourceRenderKey": "c8db60d094e386a0fa0839f4105c56b39c46bfc24e54a0c76d75132e212633e1",
-          "substituteVersion": 3
+          "substituteVersion": 4
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -38858,8 +38882,8 @@
               "nickname": "Jack Kline, Nephilim",
               "flavor_text": "Born with the power to end worlds, he chose to save them."
             },
-            "preparationKey": "6814ea0fc7244640bcb8e28c72ab43245e0acd7e103396d9cbc116fd72c6fe60",
-            "preparedAt": 1793235356.633,
+            "preparationKey": "ccf6da39b911d7d05cf0a8fc2aacbd1bbf9f7031949a812735c1a97b89217211",
+            "preparedAt": 1793242293.586,
             "compiled": {
               "name": "Archangel of Thune",
               "data": {
@@ -39347,8 +39371,8 @@
               "nickname": "Rowena, Queen of Hell",
               "flavor_text": "Death was never the end of a spell—only another ingredient."
             },
-            "preparationKey": "2f037d7716823b7eb98827fbf8a5250d614b7ec3c2dde403b268ce52d001871f",
-            "preparedAt": 1793235356.838,
+            "preparationKey": "82c231b185c5c6bd996d175485d91c2f159918431964e3f8576540136a2741b9",
+            "preparedAt": 1793242294.161,
             "compiled": {
               "name": "Witch of the Moors",
               "data": {
@@ -39841,8 +39865,8 @@
               "nickname": "Donatello Redfield, Atheist Prophet",
               "flavor_text": "Faith was optional. The evidence was not."
             },
-            "preparationKey": "173d98d0ced5de53d836f8b8a4d7d63e1d08677768351f4fc698d11bc5b6da99",
-            "preparedAt": 1793235357.0019999,
+            "preparationKey": "7cc5bee1975c68c679df492c2a61e42d38c7d87ce80e25e619cda99e757671f3",
+            "preparedAt": 1793242294.33,
             "compiled": {
               "name": "Loran of the Third Path",
               "data": {
@@ -40325,8 +40349,8 @@
               "nickname": "Lucifer's Spear",
               "flavor_text": "Built to wound beings who had forgotten what pain felt like."
             },
-            "preparationKey": "47a515718634bf203ef8d6155a2122d37fd47b9501d09421f75ee36722952f97",
-            "preparedAt": 1793235357.1950002,
+            "preparationKey": "e240ac2da46d1f20e8eb115ff8e3907dc4416b8dacaa32f62b8015f7921c09a8",
+            "preparedAt": 1793242294.53,
             "compiled": {
               "name": "Argentum Armor",
               "data": {
@@ -40815,8 +40839,8 @@
               "nickname": "Archangel Blade",
               "flavor_text": "Even celestial blood answers to sharpened grace."
             },
-            "preparationKey": "f811f7edb6e7901a7fddd7770ff95d2949cbf95a43b308a12f1596ad1009cd23",
-            "preparedAt": 1793235357.352,
+            "preparationKey": "e2c1bf3151d5b6b3017a96552273a8446cf2575c9c9f2d3decfb0d4e2a6d9edd",
+            "preparedAt": 1793242294.692,
             "compiled": {
               "name": "Embercleave",
               "data": {
@@ -41290,8 +41314,8 @@
               "nickname": "The Colt",
               "flavor_text": "Legends argued about what it couldn’t kill. Hunters cared what it could."
             },
-            "preparationKey": "e1fe00004efbd6b071eaa62ead61d9491a6667a2c8c2f14b44883163662a8631",
-            "preparedAt": 1793235357.5059998,
+            "preparationKey": "4eeca8f60dfbe4d71f548c0e47816e70a9ff8dd55146a48ba61a7dab06aedd6d",
+            "preparedAt": 1793242294.823,
             "compiled": {
               "name": "Heartseeker",
               "data": {
@@ -41775,8 +41799,8 @@
               "nickname": "Kaia's Spear",
               "flavor_text": "Forged beyond this world, it knew where impossible things could bleed."
             },
-            "preparationKey": "b1a1df4fe04dff4c146d03ed7412a491c676e72807512a91c9b6044f0f9df7fa",
-            "preparedAt": 1793235357.6499999,
+            "preparationKey": "4894c6f33c31c6ce20b3ae89ba9700cfd5b816a20fb1d3dde3f3bfb9b786ae6b",
+            "preparedAt": 1793242294.961,
             "compiled": {
               "name": "Shadowspear",
               "data": {
@@ -42309,8 +42333,8 @@
               "nickname": "Cain, First Knight of Hell",
               "flavor_text": "He taught Hell what a knight could become."
             },
-            "preparationKey": "f2fd61168ba0add4ff129a01d8a03a9840f71d567eff086a2d3c0aecc26c2e40",
-            "preparedAt": 1793235358.02,
+            "preparationKey": "6c1828843f3153534a5c6d7729433d1ea2425aa3facf0a17b45c3ceaf5da1559",
+            "preparedAt": 1793242295.379,
             "compiled": {
               "name": "Cecil, Dark Knight",
               "data": {
@@ -42687,8 +42711,8 @@
               "nickname": "Cain, the Penitent",
               "flavor_text": "The hardest blade to master was the one he chose not to draw."
             },
-            "preparationKey": "f2fd61168ba0add4ff129a01d8a03a9840f71d567eff086a2d3c0aecc26c2e40",
-            "preparedAt": 1793235358.02,
+            "preparationKey": "6c1828843f3153534a5c6d7729433d1ea2425aa3facf0a17b45c3ceaf5da1559",
+            "preparedAt": 1793242295.379,
             "compiled": {
               "name": "Cecil, Redeemed Paladin",
               "data": {
@@ -43098,15 +43122,26 @@
                   "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                   "masks": [],
                   "bounds": {
-                    "x": 0.049400000000000006,
+                    "x": 0.124,
                     "y": 0.0405,
-                    "width": 0.9014000000000001,
+                    "width": 0.8269000000000001,
                     "height": 0.1053
                   }
                 },
                 {
+                  "name": "Transform Icon",
+                  "src": "/img/frames/m15/transform/icons/default.png",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0594,
+                    "y": 0.0505,
+                    "width": 0.0734,
+                    "height": 0.0524
+                  }
+                },
+                {
                   "name": "Black Legend Crown",
-                  "src": "/img/frames/m15/crowns/m15CrownB.png",
+                  "src": "/img/frames/m15/transform/crowns/regular/b.png",
                   "masks": [],
                   "bounds": {
                     "height": 0.1667,
@@ -43139,17 +43174,17 @@
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskPinline.png",
+                      "src": "/img/frames/m15/transform/regular/maskPinlineFront.png",
                       "name": "Pinline"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
                       "src": "/img/frames/m15/regular/m15MaskType.png",
@@ -43159,40 +43194,40 @@
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskTitle.png",
+                      "src": "/img/frames/m15/transform/regular/maskTitle.png",
                       "name": "Title"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskRules.png",
+                      "src": "/img/frames/m15/transform/regular/maskRulesFront.png",
                       "name": "Rules"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskFrame.png",
+                      "src": "/img/frames/m15/transform/regular/maskFrameFront.png",
                       "name": "Frame"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskBorder.png",
+                      "src": "/img/frames/m15/transform/regular/maskBorderFront.png",
                       "name": "Border"
                     }
                   ]
@@ -43225,7 +43260,7 @@
               "watermarkLeft": "none",
               "watermarkRight": "none",
               "watermarkOpacity": 0,
-              "version": "m15Regular",
+              "version": "m15TransformFront",
               "manaSymbols": [],
               "infoYear": "2013",
               "margins": false,
@@ -43370,9 +43405,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Cecil, Dark Knight",
-                  "x": 0.14,
+                  "x": 0.2146,
                   "y": 0.11290000000000001,
-                  "width": 0.7200000000000001,
+                  "width": 0.6455000000000001,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -43414,12 +43449,25 @@
                   "oneLine": true,
                   "align": "center"
                 },
+                "reminder": {
+                  "name": "Reverse PT",
+                  "text": "",
+                  "x": 0.086,
+                  "y": 0.842,
+                  "width": 0.838,
+                  "height": 0.0362,
+                  "size": 0.0291,
+                  "oneLine": true,
+                  "color": "#666",
+                  "align": "right",
+                  "font": "belerenbsc"
+                },
                 "nickname": {
                   "name": "Nickname",
                   "text": "Cain, First Knight of Hell",
-                  "x": 0.0854,
+                  "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7586,
+                  "width": 0.7547,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -43439,8 +43487,8 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "19ee72b5cd9c2eddeb67f70cc024db8b6a2e9741e295e7687d7f1159b199c396",
-            "group": "legendary",
+            "renderKey": "d33b14db56c3afe20b2045b3e6c7da52783b57a8804ca136695522c35346a304",
+            "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
               "warning": false,
@@ -43460,17 +43508,17 @@
               "missingCustomArtist": false
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
-            "templateKey": "builtin:normal",
-            "templateVersion": 11,
-            "templateCacheVersion": 11,
+            "templateKey": "auto:transform-front",
+            "templateVersion": 14,
+            "templateCacheVersion": 14,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "2be98b175f08320dca664a829c18504326a3340909a26e7e14b07bc95d19b960"
+            "contentRenderKey": "630e7df9b84443f9db3b1576d10df7c851074fdcaa2ebd1b0bc7b082bccfac8d"
           },
           "sourceRenderKey": "bcb8e6ca5eb1f7f731151fe9092b695561e1cdaf4a2ea5ca6144109ba99ac49d",
-          "substituteVersion": 3
+          "substituteVersion": 4
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -43639,8 +43687,8 @@
               "nickname": "Kevin Tran, Prophet of the Lord",
               "flavor_text": "Prophecy never asked whether he had time for homework."
             },
-            "preparationKey": "0a0f6bbbd8ed3da3f5710c8aea29eaf21eed7e8b819b238904ec763377c5ae52",
-            "preparedAt": 1793235358.4780002,
+            "preparationKey": "c7369257c8d49b80bb883b81629e7296233177a911e84c41ddb2bcc7aac847c2",
+            "preparedAt": 1793242295.5249999,
             "compiled": {
               "name": "Archivist of Oghma",
               "data": {
@@ -44139,8 +44187,8 @@
               "nickname": "Baby, the Impala",
               "flavor_text": "Home was four wheels, black paint, and whatever road came next."
             },
-            "preparationKey": "bd4f8cc635f8dce9c22c75541910d790df7b250130c28834e54e2a3e9ff6c292",
-            "preparedAt": 1793235358.631,
+            "preparationKey": "a2c0f563640b96207dde196eb1f80e2aa573f216bb5e74efc39464ee59c7eb8a",
+            "preparedAt": 1793242295.742,
             "compiled": {
               "name": "The Regalia",
               "data": {
@@ -44632,8 +44680,8 @@
               "nickname": "Men of Letters Key",
               "flavor_text": "One turn of the key, and a century of secrets opened."
             },
-            "preparationKey": "62d18ed5e59cae2fdf32a7c75560a8a6ba7201476ff09a725ecd4b389d76b0a7",
-            "preparedAt": 1793235358.768,
+            "preparationKey": "3bb10528f732958dc342d78b2afce49b606b880cf5fbeb79205b17da6d1e2089",
+            "preparedAt": 1793242295.8830001,
             "compiled": {
               "name": "Arcane Signet",
               "data": {
@@ -45111,8 +45159,8 @@
               "nickname": "Michael's Lance",
               "flavor_text": "Made for archangels. Fatal to nearly everything else."
             },
-            "preparationKey": "e907211b96c3e041a2e4c526d2f6c4d77811e42fa65c8e50ba72a4563314ecda",
-            "preparedAt": 1793235358.929,
+            "preparationKey": "6f8a585fabc17b96486eff4427828c74cc130375fe418b332b81ca0479ef71d0",
+            "preparedAt": 1793242296.0419998,
             "compiled": {
               "name": "Excalibur, Sword of Eden",
               "data": {
@@ -45589,8 +45637,8 @@
               "nickname": "Rod of Aaron",
               "flavor_text": "Divine power rarely arrives with instructions."
             },
-            "preparationKey": "2a74f1ed818ef5dfdbc7ae4fbe3ee6886affed762b5022fc273f55abf3ddb15b",
-            "preparedAt": 1793235359.08,
+            "preparationKey": "73e3d6c74d2259233d9695c51f5819d4cc5f97a63820e8675828dc73db71a142",
+            "preparedAt": 1793242296.187,
             "compiled": {
               "name": "Meteor Sword",
               "data": {
@@ -46074,8 +46122,8 @@
               "nickname": "Dean's Amulet",
               "flavor_text": "Some things become sacred because of who refuses to let them go."
             },
-            "preparationKey": "8019733ff457a874a8dc8ec9280dc2e00ab63253913df44e7e752e80d2f84524",
-            "preparedAt": 1793235359.231,
+            "preparationKey": "2afee0b39f0b146f4c11dad68f476e456bfa4d5f6c709977799ed897bebe36dc",
+            "preparedAt": 1793242296.325,
             "compiled": {
               "name": "Mox Amber",
               "data": {
@@ -46582,8 +46630,8 @@
               "nickname": "Angel Tablet",
               "flavor_text": "The Word of God was never meant to be easy reading."
             },
-            "preparationKey": "8139c331c09f2c374b452059ce5ad02a3575954c3c14290b18db221fe8303fe3",
-            "preparedAt": 1793235359.4550002,
+            "preparationKey": "6c4d384d89d651d98d751653c35862c48551c97c9f88c8b090775036323adce5",
+            "preparedAt": 1793242296.501,
             "compiled": {
               "name": "Mox Opal",
               "data": {
@@ -47087,8 +47135,8 @@
               "nickname": "Crossroads Contract",
               "flavor_text": "The ink dries long before the regret does."
             },
-            "preparationKey": "628a3d523321d8b9080bfe251c1de2182562dd496fc7215aac9821e5e87b5a19",
-            "preparedAt": 1793235359.6009998,
+            "preparationKey": "cc871533cd8ff2662593eb0c7de38de992c200748e47c083f6e0144ac6243974",
+            "preparedAt": 1793242296.655,
             "compiled": {
               "name": "Smothering Tithe",
               "data": {
@@ -47564,8 +47612,8 @@
               "nickname": "Ring of Death",
               "flavor_text": "The oldest promise is the simplest: everything ends."
             },
-            "preparationKey": "f70ec2b60749e90820b045d9cb5e4669ce6ac9d72322e7e3bc6c04975d0413a6",
-            "preparedAt": 1793235359.739,
+            "preparationKey": "98fdb9837a0ceb79e2acdff5ac6a588b8dca7ee7166c6ec7a07469c5376a5f5d",
+            "preparedAt": 1793242296.783,
             "compiled": {
               "name": "Sol Ring",
               "data": {
@@ -48044,8 +48092,8 @@
               "nickname": "Book of the Damned",
               "flavor_text": "Every forbidden answer leaves another stain on the page."
             },
-            "preparationKey": "9f3cfbed751d03292d93a4d80ec21f0523feca29802424a396a1b19d81753cd2",
-            "preparedAt": 1793235359.8830001,
+            "preparationKey": "d744f05e6fbab1a1758bcea01cf2ff99e26a12af8afba8cdd9f40e846e824feb",
+            "preparedAt": 1793242296.927,
             "compiled": {
               "name": "Sword of Light and Shadow",
               "data": {
@@ -48527,8 +48575,8 @@
               "nickname": "Ring of War",
               "flavor_text": "Slip it on, and every disagreement remembers how to become a war."
             },
-            "preparationKey": "0d3b9d654f3cd2c6158733bcf7769e5a2f4837e90fd11231f3f73638864dd480",
-            "preparedAt": 1793235360.038,
+            "preparationKey": "fcec9bc43861c378204b3367b5de131b6b0a957fabfc43696be9d93d3c0f481a",
+            "preparedAt": 1793242297.107,
             "compiled": {
               "name": "Talisman of Conviction",
               "data": {
@@ -49005,8 +49053,8 @@
               "nickname": "Ring of Pestilence",
               "flavor_text": "Where Pestilence passed, even the air learned to sicken."
             },
-            "preparationKey": "29a621dffd88dd5020e014c99f2a664f84b492da23d654e47bdf0f6e51fcc783",
-            "preparedAt": 1793235360.197,
+            "preparationKey": "43e43fe94e0dee3ab7669ab9803327ea08bac2ee52451f528f26bb0d8d1a1287",
+            "preparedAt": 1793242297.284,
             "compiled": {
               "name": "Talisman of Hierarchy",
               "data": {
@@ -49482,8 +49530,8 @@
               "nickname": "Ring of Famine",
               "flavor_text": "Hunger is easiest to command once it has already claimed you."
             },
-            "preparationKey": "c99d7cc9962bf453224c605d85fc7ff86f32900ebca60d6fca7716fd1799f34d",
-            "preparedAt": 1793235360.333,
+            "preparationKey": "77530f57639a9891a1ca2447b44aaccee2a941f9eefb37bf465f635754251619",
+            "preparedAt": 1793242297.4380002,
             "compiled": {
               "name": "Talisman of Indulgence",
               "data": {
@@ -49969,8 +50017,8 @@
               "nickname": "Bottled Grace",
               "flavor_text": "Even Heaven can be reduced to something small enough to steal."
             },
-            "preparationKey": "9fb09f1cd15e9524dc8a674a45dab1b7e9c5f821ecf1203ea4085d90eebebc3f",
-            "preparedAt": 1793235360.46,
+            "preparationKey": "3e1808c299bc1d8fa3c1abf529f08f8b87f57e6d0f0a1af1e6b552a3a3f902bd",
+            "preparedAt": 1793242297.619,
             "compiled": {
               "name": "The Mind Stone",
               "data": {
@@ -50444,8 +50492,8 @@
               "nickname": "The First Blade",
               "flavor_text": "It never asked Cain to kill. It only made killing easier."
             },
-            "preparationKey": "057db203d2b02f2a0056673c7693dd6f1e8c4aab5b047a349006b7c6b31674eb",
-            "preparedAt": 1793235360.585,
+            "preparationKey": "88b54a4cefa8ed8d7423d43637117ccd296de21dd5802ff24069478077a4ca71",
+            "preparedAt": 1793242297.772,
             "compiled": {
               "name": "Thornbite Staff",
               "data": {
@@ -50919,8 +50967,8 @@
               "nickname": "Souls of Purgatory",
               "flavor_text": "A million restless souls can power miracles—or monsters."
             },
-            "preparationKey": "c89f6d7fef4b69d94f80e222cc2b35cef8e5b9d87bce4f30a50f29f2e8035199",
-            "preparedAt": 1793235360.727,
+            "preparationKey": "ec285c946cd3d7c665d60721e5d3872b126ea3458cb556e03d4de5a823fb6fd3",
+            "preparedAt": 1793242297.9129999,
             "compiled": {
               "name": "Thran Dynamo",
               "data": {
@@ -51400,8 +51448,8 @@
               "nickname": "Resurrection Charm",
               "flavor_text": "Some protections only prove themselves after your heart stops."
             },
-            "preparationKey": "5d14478671dcdda1cb93b801b3625ef91ec7611feddff9d54f25769572ae8b42",
-            "preparedAt": 1793235360.852,
+            "preparationKey": "a0a16f2e9c0cde1d6b96289e7ad2e60bc954a3682a75ad2ca528523c71a69339",
+            "preparedAt": 1793242298.056,
             "compiled": {
               "name": "Resurrection Orb",
               "data": {
@@ -51887,8 +51935,8 @@
               "nickname": "Giant of the Bad Place",
               "flavor_text": "In the Bad Place, even the horizon could stand up and hunt you."
             },
-            "preparationKey": "051d2fae818ab5f798c9d1aa62d8adaa453102e6b4b07515b62af86579587403",
-            "preparedAt": 1793235360.982,
+            "preparationKey": "6186040aee713c586f53cf4719ba4b26b814886ed08561e5165996ee1f59f2e9",
+            "preparedAt": 1793242298.189,
             "compiled": {
               "name": "Stonehewer Giant",
               "data": {
@@ -52386,8 +52434,8 @@
               "nickname": "Jo Harvelle, Defiant Hunter",
               "flavor_text": "She stopped waiting for permission to become the hunter she already was."
             },
-            "preparationKey": "ca9a9c8fb9029f0ebc9575b306d9315b1dcf3fffcf6ea086971df00ab3ff9527",
-            "preparedAt": 1793235361.107,
+            "preparationKey": "5d8e0ff718a99c0ce6d8856303733a109033df52f9bf3da7f6102bec45d8610c",
+            "preparedAt": 1793242298.33,
             "compiled": {
               "name": "Aerith Gainsborough",
               "data": {
@@ -52883,8 +52931,8 @@
               "nickname": "Benny Lafitte, Purgatory Survivor",
               "flavor_text": "Purgatory taught him survival. Dean reminded him what survival was for."
             },
-            "preparationKey": "4c4fe2ef7507d6a065902b9bac3c132d7671633fb20e68d7f64662157a3070fe",
-            "preparedAt": 1793235361.259,
+            "preparationKey": "2add47a03367b69d255e4a642c16022c35de948e2b88075f2acfa9bcffc04814",
+            "preparedAt": 1793242298.479,
             "compiled": {
               "name": "Bloodthirsty Conqueror",
               "data": {
@@ -53375,8 +53423,8 @@
               "nickname": "Ellen Harvelle, Roadhouse Matriarch",
               "flavor_text": "The Roadhouse had one rule: hunters came home if she could help it."
             },
-            "preparationKey": "4e85a079307eef68c474cd968b5878d72afec41b9e790c0198748990f3c613bd",
-            "preparedAt": 1793235361.3939998,
+            "preparationKey": "24310aa5e5fbec949c85e4e1a0238a74c43894fea6eca0a006135ee3fc113d0c",
+            "preparedAt": 1793242298.633,
             "compiled": {
               "name": "Knight Exemplar",
               "data": {
@@ -53873,8 +53921,8 @@
               "nickname": "Billie, the New Death",
               "flavor_text": "Death doesn’t make exceptions. Billie makes appointments."
             },
-            "preparationKey": "f557685c171e126fba5bc35b219568763177deed2ab42c46e5aa5a1e98a73d94",
-            "preparedAt": 1793235361.53,
+            "preparationKey": "cdd28e9088ac0a6810d84c8aac6380ec67d511987dc88a050c086d744121bb9c",
+            "preparedAt": 1793242298.7859998,
             "compiled": {
               "name": "Vona, Butcher of Magan",
               "data": {
@@ -54417,8 +54465,8 @@
               "nickname": "Hell's Ledger",
               "flavor_text": "Hell remembers every favor, every debt, and every unpaid soul."
             },
-            "preparationKey": "21d0945ad905c63e28831c581a08961c996f81f9fbc846eda7de136ac2c4b008",
-            "preparedAt": 1793235361.652,
+            "preparationKey": "2c57abb678b61ce616b67efa63f406354554b0059fc66e8ca01d3734e36ef674",
+            "preparedAt": 1793242299.368,
             "compiled": {
               "name": "Black Market Connections",
               "data": {
@@ -54899,8 +54947,8 @@
               "nickname": "Book of Fate",
               "flavor_text": "Every ending is written somewhere. Finding yours is the dangerous part."
             },
-            "preparationKey": "b2cf54fa464875fbb44881f61dc9706ffb67bb627e433677957ebd0b9a25c035",
-            "preparedAt": 1793235361.867,
+            "preparationKey": "6c889e78e63be762bdfc7ffc88df1646dc0b91aabe642fd8ac69705482326e53",
+            "preparedAt": 1793242299.5900002,
             "compiled": {
               "name": "Demonic Tutor",
               "data": {
@@ -55376,8 +55424,8 @@
               "nickname": "Apalo of the Skies",
               "flavor_text": "Who needs boots when you have wings?"
             },
-            "preparationKey": "86f0ea54c8f5b79d5686e992f45fea656c9c3779ae42ba9fe62e941feeaf26a1",
-            "preparedAt": 1793235362.129,
+            "preparationKey": "069d9e87b21bbf1dc31513070d1e9f555ff885eea9214ccf9f3494e5586f7e34",
+            "preparedAt": 1793242299.8430002,
             "compiled": {
               "name": "Armored Skyhunter",
               "data": {
@@ -55876,8 +55924,8 @@
               "nickname": "Charlie, Rebel of Apocalypse World",
               "flavor_text": "In her world, surviving long enough to laugh was its own rebellion."
             },
-            "preparationKey": "64f569a9cd5290842d65a2ee3f0980f60814a6ba7af1716339402350f85d2e8d",
-            "preparedAt": 1793235362.353,
+            "preparationKey": "39e9646f8001938819a81b03f1c8a928ea62d76269f0055842171cb75ab32820",
+            "preparedAt": 1793242300.0670002,
             "compiled": {
               "name": "Nahiri, Forged in Fury",
               "data": {
@@ -56396,8 +56444,8 @@
               "nickname": "Tiamat Talisman",
               "flavor_text": "Wish carefully. The talisman has a sense of humor."
             },
-            "preparationKey": "55a7a4dc629d6455746179eb8fa87a2f0a13e4332bd22619f06acd57663a17f1",
-            "preparedAt": 1793235362.548,
+            "preparationKey": "4f585b22965cdb0838274c7b8c4ae4a28e749e4955b7a3f149e483979430db2c",
+            "preparedAt": 1793242300.274,
             "compiled": {
               "name": "Aettir and Priwen",
               "data": {
@@ -56882,8 +56930,8 @@
               "nickname": "Eileen Leahy, Men of Letters Legacy",
               "flavor_text": "She listened with her eyes and hunted with absolute precision."
             },
-            "preparationKey": "1407ca60c51a09dd4ab38607f7bb1a24116bd23e86d99b60690d6f9246d3dbf8",
-            "preparedAt": 1793235362.7289999,
+            "preparationKey": "29039fe5da4ce01266a6be0f764f7f2bedec8fd5654063d2fb3456b4b8df6788",
+            "preparedAt": 1793242300.4780002,
             "compiled": {
               "name": "Danitha Capashen, Paragon",
               "data": {
@@ -57363,8 +57411,8 @@
               "nickname": "John's Journal",
               "flavor_text": "When the boys didn’t know what they were hunting, John usually did."
             },
-            "preparationKey": "a7103816d41f3a518fbfed2625351cebd30c06641b886971dc16891a6ccd80d8",
-            "preparedAt": 1793235362.951,
+            "preparationKey": "51db481e7481e0b33ddac7f74984338057411c136bbbd8eb19fc1812ca27fbaf",
+            "preparedAt": 1793242300.6569998,
             "compiled": {
               "name": "Adaptive Omnitool",
               "data": {
@@ -57910,8 +57958,8 @@
               "nickname": "Castiel, Heaven's Rebel",
               "flavor_text": "Heaven demanded obedience. Castiel chose responsibility."
             },
-            "preparationKey": "29c126c65cb7f484962a22cce2a9582fa32810d06bb7b4c571ea53449e725dce",
-            "preparedAt": 1793235363.808,
+            "preparationKey": "6b140ec638d83935bc55830ef4c1b29f322ee884367e3ef62d7b5dabaa28428b",
+            "preparedAt": 1793242301.1790001,
             "compiled": {
               "name": "Sephiroth, Fabled SOLDIER",
               "data": {
@@ -58288,8 +58336,8 @@
               "nickname": "Godstiel, the New God",
               "flavor_text": "He swallowed Purgatory and mistook the weight for a crown."
             },
-            "preparationKey": "29c126c65cb7f484962a22cce2a9582fa32810d06bb7b4c571ea53449e725dce",
-            "preparedAt": 1793235363.808,
+            "preparationKey": "6b140ec638d83935bc55830ef4c1b29f322ee884367e3ef62d7b5dabaa28428b",
+            "preparedAt": 1793242301.1790001,
             "compiled": {
               "name": "Sephiroth, One-Winged Angel",
               "data": {
@@ -58699,15 +58747,26 @@
                   "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                   "masks": [],
                   "bounds": {
-                    "x": 0.049400000000000006,
+                    "x": 0.124,
                     "y": 0.0405,
-                    "width": 0.9014000000000001,
+                    "width": 0.8269000000000001,
                     "height": 0.1053
                   }
                 },
                 {
+                  "name": "Transform Icon",
+                  "src": "/img/frames/m15/transform/icons/default.png",
+                  "masks": [],
+                  "bounds": {
+                    "x": 0.0594,
+                    "y": 0.0505,
+                    "width": 0.0734,
+                    "height": 0.0524
+                  }
+                },
+                {
                   "name": "Black Legend Crown",
-                  "src": "/img/frames/m15/crowns/m15CrownB.png",
+                  "src": "/img/frames/m15/transform/crowns/regular/b.png",
                   "masks": [],
                   "bounds": {
                     "height": 0.1667,
@@ -58740,17 +58799,17 @@
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskPinline.png",
+                      "src": "/img/frames/m15/transform/regular/maskPinlineFront.png",
                       "name": "Pinline"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
                       "src": "/img/frames/m15/regular/m15MaskType.png",
@@ -58760,40 +58819,40 @@
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskTitle.png",
+                      "src": "/img/frames/m15/transform/regular/maskTitle.png",
                       "name": "Title"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskRules.png",
+                      "src": "/img/frames/m15/transform/regular/maskRulesFront.png",
                       "name": "Rules"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskFrame.png",
+                      "src": "/img/frames/m15/transform/regular/maskFrameFront.png",
                       "name": "Frame"
                     }
                   ]
                 },
                 {
                   "name": "Black Frame",
-                  "src": "/img/frames/m15/regular/m15FrameB.png",
+                  "src": "/img/frames/m15/transform/regular/frontB.png",
                   "masks": [
                     {
-                      "src": "/img/frames/m15/regular/m15MaskBorder.png",
+                      "src": "/img/frames/m15/transform/regular/maskBorderFront.png",
                       "name": "Border"
                     }
                   ]
@@ -58826,7 +58885,7 @@
               "watermarkLeft": "none",
               "watermarkRight": "none",
               "watermarkOpacity": 0,
-              "version": "m15Regular",
+              "version": "m15TransformFront",
               "manaSymbols": [],
               "infoYear": "2013",
               "margins": false,
@@ -58971,9 +59030,9 @@
                 "title": {
                   "name": "Title",
                   "text": "Sephiroth, Fabled SOLDIER",
-                  "x": 0.14,
+                  "x": 0.2146,
                   "y": 0.11290000000000001,
-                  "width": 0.7200000000000001,
+                  "width": 0.6455000000000001,
                   "height": 0.0243,
                   "oneLine": true,
                   "font": "mplantini",
@@ -59015,12 +59074,25 @@
                   "oneLine": true,
                   "align": "center"
                 },
+                "reminder": {
+                  "name": "Reverse PT",
+                  "text": "",
+                  "x": 0.086,
+                  "y": 0.842,
+                  "width": 0.838,
+                  "height": 0.0362,
+                  "size": 0.0291,
+                  "oneLine": true,
+                  "color": "#666",
+                  "align": "right",
+                  "font": "belerenbsc"
+                },
                 "nickname": {
                   "name": "Nickname",
                   "text": "Castiel, Heaven's Rebel",
-                  "x": 0.0854,
+                  "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7066,
+                  "width": 0.7547,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -59040,8 +59112,8 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "e659c61799c3db675fc3b04fda808f70f7f68396a347b6420cbaa732f3fa1cee",
-            "group": "legendary",
+            "renderKey": "9f29ccc8c5a5b26207a922d13c33b7148538d812d470adb78ed0f7d76365aefd",
+            "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
               "warning": false,
@@ -59061,17 +59133,17 @@
               "missingCustomArtist": false
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
-            "templateKey": "builtin:normal",
-            "templateVersion": 11,
-            "templateCacheVersion": 11,
+            "templateKey": "auto:transform-front",
+            "templateVersion": 14,
+            "templateCacheVersion": 14,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "b7db869739b7dbba23ef55205dc25338960fded19aec6c3b1bbbb100b3171e0b"
+            "contentRenderKey": "9e91a648705e64670c5960f4890871bf3e79d135d803d54e95e5722bb22042cf"
           },
           "sourceRenderKey": "8bc31614accb336b10093f6bc8ed8225226d5b64a6a41db253678328b7dae8f3",
-          "substituteVersion": 3
+          "substituteVersion": 4
         },
         "_preparationSymbols": [
           "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
@@ -59258,8 +59330,8 @@
               "nickname": "Mjölnir",
               "flavor_text": "When the hammer falls, arguments about worthiness end quickly."
             },
-            "preparationKey": "8186b63a15f018e1d8269b5526ef873d74f9ae245a74b0c5f60dcac31c3d70cc",
-            "preparedAt": 1793235363.96,
+            "preparationKey": "cfd82d960f6dfefa5ccfe561de9cbb264bc1efd6e056b720bc10ea288f7c2abb",
+            "preparedAt": 1793242301.33,
             "compiled": {
               "name": "The Reaver Cleaver",
               "data": {
@@ -59760,8 +59832,8 @@
               "nickname": "Death's Scythe",
               "flavor_text": "It does not kill. It decides that killing is complete."
             },
-            "preparationKey": "00e4f8ec22ecce94ecaae9b457b6286042993e4a1bbf4a99b4f15d1eac2c23df",
-            "preparedAt": 1793235364.172,
+            "preparationKey": "3f6ed3fab4f8017df726d862c40670f85fb78612d003ecf6906c1fdca0dc88b1",
+            "preparedAt": 1793242301.56,
             "compiled": {
               "name": "Kaldra Compleat",
               "data": {
@@ -60249,8 +60321,8 @@
               "nickname": "Castiel, Angel of the Lord",
               "flavor_text": "He fell from Heaven more than once, but never from his purpose."
             },
-            "preparationKey": "59056c5188fa4c340bdcae4ab385418237436ed79f9beebdf1643b1d6ed0827f",
-            "preparedAt": 1793235364.3609998,
+            "preparationKey": "9e8435a39bacdf9be315115e3c68dd2340f11a78e955995532746a9bf95a0249",
+            "preparedAt": 1793242301.767,
             "compiled": {
               "name": "Avacyn, Angel of Horror",
               "data": {
@@ -60746,8 +60818,8 @@
               "nickname": "Gabriel, the Trickster",
               "flavor_text": "The joke was always funniest just before reality changed."
             },
-            "preparationKey": "4affc40acf975c905946406c31f80d5c589c5f4c34e48137357f318749fb4044",
-            "preparedAt": 1793235364.5609999,
+            "preparationKey": "cb12e8db768165c9bb181b750b0c24ccd72a20c616a789930912ee3d4d6e2f3e",
+            "preparedAt": 1793242301.971,
             "compiled": {
               "name": "Lyra Dawnbringer",
               "data": {
@@ -61262,8 +61334,8 @@
               "nickname": "Lucifer, Fallen Archangel",
               "flavor_text": "He never needed a throne to believe Heaven belonged to him."
             },
-            "preparationKey": "df8af6fbb61825335571161786b11e71dc82b34832b9ee3967fc31620c1da448",
-            "preparedAt": 1793235364.763,
+            "preparationKey": "38b3ca5f5c89230a221e4955614abb14cc4efd62ac6221f554a0fb602c9f2fee",
+            "preparedAt": 1793242302.175,
             "compiled": {
               "name": "Ob Nixilis, the Ascended",
               "data": {
@@ -61765,8 +61837,8 @@
               "nickname": "Claire Novak, Wayward Hunter",
               "flavor_text": "She stopped waiting for angels to save her."
             },
-            "preparationKey": "628b1bececba7edb771ee43b53ee3ebb7e625ee943a6930252627d9a2c426bf7",
-            "preparedAt": 1793235364.9539998,
+            "preparationKey": "3fb188fc58af4e4984036e0b9bb977c44c615d9f598fb1abaa0815261ddb5db1",
+            "preparedAt": 1793242302.375,
             "compiled": {
               "name": "Éowyn, Fearless Knight",
               "data": {
@@ -62320,8 +62392,8 @@
               "nickname": "Pestilence, Bringer of Disease",
               "flavor_text": "He didn’t bring disease. He simply reminded the world how easily it spreads."
             },
-            "preparationKey": "d18e8134c12206a66b6f24898796f33ddede467f6deea3d5726703db414f208a",
-            "preparedAt": 1793235365.144,
+            "preparationKey": "8b0131b2ac0d693104b4d9078fd3cf9bfed5e83651c464a99a63f5a7f5b84c1e",
+            "preparedAt": 1793242302.5870001,
             "compiled": {
               "name": "Ria Ivor, Bane of Bladehold",
               "data": {
@@ -62862,8 +62934,8 @@
               "nickname": "Jody Mills, Wayward Matriarch",
               "flavor_text": "Anyone could become family. Anyone who threatened them became her problem."
             },
-            "preparationKey": "08d3ebaa1297b654c3d3d0abf27a36d56611dc5a1e9db3bacc7ed087d1353e59",
-            "preparedAt": 1793235365.308,
+            "preparationKey": "c7810f3816370f976fdac797ee684b1ae205e8ae60b2426135ac1eb960649a4f",
+            "preparedAt": 1793242302.7910001,
             "compiled": {
               "name": "Riders of the Mark",
               "data": {
@@ -63363,8 +63435,8 @@
               "nickname": "Donna Hanscum, Wayward Sheriff",
               "flavor_text": "She met the impossible with a smile, a shotgun, and an ‘okey-dokey.’"
             },
-            "preparationKey": "0338eff1db7df121d6ebfa7529ccdbca3065e967d7eed4c5492fe97ff75c940e",
-            "preparedAt": 1793235365.502,
+            "preparationKey": "3d1aa3df8a6a1d45c26642d002e215ff97a4af8f58282752959cda7ea9ae30c3",
+            "preparedAt": 1793242302.992,
             "compiled": {
               "name": "Rohirrim Chargers",
               "data": {
@@ -63883,8 +63955,8 @@
               "nickname": "Missouri Moseley, Spirit Medium",
               "flavor_text": "People lied. Spirits lied. Missouri had little patience for either."
             },
-            "preparationKey": "fc6fca0030120f5a27c34e19b9e0b61c445af2b3ecb007a258a95452f95c8b79",
-            "preparedAt": 1793235365.672,
+            "preparationKey": "28c440066548ace2e1a2168e3c7c8ccbdd7edecd2090c090f928b6ebcfbbc4c9",
+            "preparedAt": 1793242303.169,
             "compiled": {
               "name": "Thalia's Lancers",
               "data": {
@@ -64365,8 +64437,8 @@
               "nickname": "Rock-Salt Shotgun",
               "flavor_text": "It won’t kill a ghost. It will make one reconsider the room."
             },
-            "preparationKey": "2c3d1ca26b1c29824fbe265290c63454f1e85b615fb05d3b59d02539c42979e1",
-            "preparedAt": 1793235365.838,
+            "preparationKey": "1e95162781ba04d951dd57aa6dc6d93872990301b61093bbc848c50779a214bd",
+            "preparedAt": 1793242303.3569999,
             "compiled": {
               "name": "Viridian Longbow",
               "data": {
@@ -64846,8 +64918,8 @@
               "nickname": "Angel Blade",
               "flavor_text": "Small enough to hide. Sharp enough to kill Heaven."
             },
-            "preparationKey": "53cb834a4ebcb9eb8ac3f1189647eddf00198b038212149f8bb01d89ebe266d4",
-            "preparedAt": 1793235365.9980001,
+            "preparationKey": "d51234da6a44ab2f67bb4087e5fd02109c443016a668f2e23d9bac5ef5c2ff8c",
+            "preparedAt": 1793242303.555,
             "compiled": {
               "name": "Vorpal Sword",
               "data": {
@@ -65345,8 +65417,8 @@
               "nickname": "Loki's Hat",
               "flavor_text": "The best disguise is the one reality agrees to believe."
             },
-            "preparationKey": "df8995a66e9f509568cc8f7a0d54cb41b0f952d58ad652271638a49728353cb4",
-            "preparedAt": 1793235366.163,
+            "preparationKey": "c8629b221d071125f6b5276d92e1fe82c3a6f40fc3b707c260f585d09d98ed48",
+            "preparedAt": 1793242303.788,
             "compiled": {
               "name": "Helm of the Host",
               "data": {
@@ -65836,8 +65908,8 @@
               "nickname": "Balthazar, Thief of Heaven",
               "flavor_text": "Heaven had rules. Balthazar preferred souvenirs."
             },
-            "preparationKey": "35473762f1e0345a6b6c17805cd4991e77711e8859ca33c37173f1b6f2f5f994",
-            "preparedAt": 1793235366.303,
+            "preparationKey": "74aa085047c7f05ce175ce7be911d3d4aa89a51de655895edb3b536adef8ed2a",
+            "preparedAt": 1793242304.286,
             "compiled": {
               "name": "Astor, Bearer of Blades",
               "data": {
@@ -66359,8 +66431,12 @@
               "nickname": "Hunter's Manual",
               "flavor_text": "Rule one: there is always another rule you haven’t learned yet."
             },
-            "preparationKey": "af4622a1e3fcaad6283e6704fba892f2f33ba683d7356b5e4d4b0d39b046795a",
-            "preparedAt": 1793235366.47,
+            "preparationKey": "c799ec28ae63564baaaba62b5d5f12e6ac2e6ba17dbd8861acf08cc28fc93fa0",
+            "preparedAt": 1793242304.457,
+            "acceptedWarningKey": "604cbc9c4ffd80dc491df6bdbd37024aef4ec80351fe6392e237cbbbe07ae34f",
+            "acceptedArt": [
+              "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
+            ],
             "compiled": {
               "name": "Fighter Class",
               "data": {
@@ -66754,11 +66830,7 @@
               "contentRenderKey": "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/061_fighter_class.png"
-            },
-            "acceptedWarningKey": "604cbc9c4ffd80dc491df6bdbd37024aef4ec80351fe6392e237cbbbe07ae34f",
-            "acceptedArt": [
-              "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
-            ]
+            }
           }
         ],
         "metadataSource": "d54a8329-b940-42c9-8ace-1d74407d14cb",
@@ -66946,8 +67018,8 @@
               "nickname": "Bobby Singer, Resistance Leader",
               "flavor_text": "When the world ended, Bobby kept building places worth defending."
             },
-            "preparationKey": "e20d590af25356a39c9f6b1df771c1c1ff54114f0b12c45c3d840864a38f23e1",
-            "preparedAt": 1793235366.621,
+            "preparationKey": "9e50a37c67bb74296c1eeebc37c61c5ec79cf2f13622e35065040a05b60472cb",
+            "preparedAt": 1793242304.632,
             "compiled": {
               "name": "Captain America, Liberator",
               "data": {
@@ -67447,8 +67519,8 @@
               "nickname": "Monster-Making Formula",
               "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?"
             },
-            "preparationKey": "06b17a6012c832dc1104f4da1ddfd0752487476fb8e6f4e8c25502f99aabee3e",
-            "preparedAt": 1793235366.788,
+            "preparationKey": "3707369d1ade815e53e55e3a59dbe9a1eb7098252a6337aabe4875254a0b4192",
+            "preparedAt": 1793242304.8300002,
             "compiled": {
               "name": "Maskwood Nexus",
               "data": {
@@ -67959,8 +68031,8 @@
               "nickname": "Rufus Turner, Grizzled Hunter",
               "flavor_text": "Experience is what you get when the thing trying to kill you misses."
             },
-            "preparationKey": "b80a7931d3b9bc9651ace94692a4d021dbe64b7953cbfb45fd679a6a4f11f67a",
-            "preparedAt": 1793235366.867,
+            "preparationKey": "bbbf218f503e7fb8fd78b7b1aa04e550cc332e911f55f7c15dec5d0e81f4872e",
+            "preparedAt": 1793242304.9910002,
             "compiled": {
               "name": "Kelsien, the Plague",
               "data": {
@@ -68483,8 +68555,8 @@
               "nickname": "Death, the Pale Horseman",
               "flavor_text": "Kings, angels, gods—eventually, they all become his business."
             },
-            "preparationKey": "2f707a4e1d64fe27a756f4be319e78b7151b1d83e2c0219cc59198abf5344149",
-            "preparedAt": 1793235367.051,
+            "preparationKey": "96329d6e29489319a13beaebfd73292ad27767ce81ef120b750b867417baa1f8",
+            "preparedAt": 1793242305.084,
             "compiled": {
               "name": "Kaya the Inexorable",
               "data": {
@@ -68493,33 +68565,6 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
-                  {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
-                    "masks": [
-                      {
-                        "src": "builtin:generated-vector:77fe298b2924515a90d308011aeacd6fb1d0bfbc3eebb748f37a9fe469bb8c7d",
-                        "name": "Right Blend"
-                      }
-                    ],
-                    "bounds": {
-                      "x": 0.0507,
-                      "y": 0.025499999999999995,
-                      "width": 0.7662298507462687,
-                      "height": 0.1058
-                    }
-                  },
-                  {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.0507,
-                      "y": 0.025499999999999995,
-                      "width": 0.7662298507462687,
-                      "height": 0.1058
-                    }
-                  },
                   {
                     "name": "Native black frame outlines",
                     "src": "/img/frames/proxy-foundry/masks/walker-pinline-outline.png",
@@ -68539,6 +68584,33 @@
                     "name": "Multicolored Planeswalker Frame",
                     "src": "/img/frames/planeswalker/regular/planeswalkerFrameM.png",
                     "masks": []
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+                    "masks": [
+                      {
+                        "src": "builtin:generated-vector:77fe298b2924515a90d308011aeacd6fb1d0bfbc3eebb748f37a9fe469bb8c7d",
+                        "name": "Right Blend"
+                      }
+                    ],
+                    "bounds": {
+                      "x": 0.0507,
+                      "y": 0.027757078215901745,
+                      "width": 0.8988,
+                      "height": 0.1058
+                    }
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.0507,
+                      "y": 0.027757078215901745,
+                      "width": 0.8988,
+                      "height": 0.1058
+                    }
                   }
                 ],
                 "artSource": "/api/assets/a596095cebd60847ef81a45cf9d715ea2fc86d04fb63978e86046ff0eeebc816",
@@ -68706,7 +68778,7 @@
                     "text": "Kaya the Inexorable",
                     "x": 0.1413,
                     "y": 0.0984,
-                    "width": 0.5848298507462687,
+                    "width": 0.7174,
                     "height": 0.0243,
                     "oneLine": true,
                     "font": "mplantini",
@@ -68832,7 +68904,7 @@
                 "serialY": "",
                 "serialScale": ""
               },
-              "renderKey": "80cce17cc52b9e434e5a44b6d323b7dbf9231bb598435a1d5485c826276cf060",
+              "renderKey": "4b2092519ab20979a6840d50e6f40284fc3be36519439eecbfdb39000a47c57b",
               "group": "planeswalker",
               "recipe": "planeswalker_regular_3",
               "crop": {
@@ -68860,11 +68932,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:planeswalker",
-              "templateVersion": 16,
-              "templateCacheVersion": 16,
+              "templateVersion": 18,
+              "templateCacheVersion": 18,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "9d99fdb6f12ad3aac9b4f6619016ba7e528113bfa46df193d127e616ed98b91d",
+              "contentRenderKey": "587030df4e4082abc544f6c38d215249ce8c728d075d38584eac5999a769da47",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/012_kaya_the_inexorable.png"
             }
@@ -69047,8 +69119,8 @@
               "nickname": "Mick Davies, Defier of the Code",
               "flavor_text": "He learned the Code by heart, then learned when to break it."
             },
-            "preparationKey": "3cdc34a83c241ef5a7083b6325988678a0e3fcf74295cb0f9166670e720845bf",
-            "preparedAt": 1793235367.2380002,
+            "preparationKey": "f7a4d43b9a4413d1c4c7ac7b3bcc94cab34dd1f9d1411ebc58d6cf3f9953a6b5",
+            "preparedAt": 1793242305.262,
             "compiled": {
               "name": "Isshin, Two Heavens as One",
               "data": {
@@ -69546,8 +69618,8 @@
               "nickname": "Sam Winchester, Learned Hunter",
               "flavor_text": "Every monster leaves a pattern. Sam only needs enough time to find it."
             },
-            "preparationKey": "995e8edfff5eab5de6c5ce1b2c79b9d21c37aef8770c0b5c9db0d64366af2f66",
-            "preparedAt": 1793235367.447,
+            "preparationKey": "19a1ed753ca08ed3cf5a27adaeead03319b86047be07638a6c73098aed02d054",
+            "preparedAt": 1793242305.471,
             "compiled": {
               "name": "Imperial Recruiter",
               "data": {
@@ -69904,7 +69976,8 @@
         "standard": "godzilla-card",
         "legendary": "godzilla-card",
         "transform-back": "godzilla-card",
-        "transform-front": "godzilla-card"
+        "transform-front": "godzilla-card",
+        "planeswalker": "auto"
       },
       "disableAutofit": false,
       "refreshData": false,
@@ -70390,7 +70463,7 @@
       "artReviewSignature": "daa4a1a85c8da2ea700615eb28fee80b8ed685ea41636f340ee6380671cb5456",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/supernatural"
     },
-    "status": "ready",
+    "status": "prepared",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/15ae9c12-24e3-46eb-8bec-2e05ad1600e4",
     "stagedImport": true,
@@ -70425,7 +70498,10 @@
         "nickname": "Men of Letters Archive",
         "flavor_text": "Centuries of monsters, catalogued one impossible case at a time.",
         "artist": "ChatGPT",
-        "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+        "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
+        "accepted_art": [
+          "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
+        ]
       },
       {
         "name": "High Market",
@@ -71297,7 +71373,10 @@
         "nickname": "Hunter's Manual",
         "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
         "artist": "ChatGPT",
-        "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
+        "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api",
+        "accepted_art": [
+          "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
+        ]
       },
       {
         "name": "Captain America, Liberator",
@@ -71588,7 +71667,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Brutal Cathar — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/567f166f8434c8fa45544b8bb8e0deaeb26eb6c6/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "32ba70bf3458fd26ebceef36dc20c2daf959d629235a6adb5de979a07b7f948a": {
@@ -72158,7 +72237,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/567f166f8434c8fa45544b8bb8e0deaeb26eb6c6/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "973561dfe88e962d0676307230ea8f02910453dd60ed01504ff30e1a5994d538": {
@@ -72666,7 +72745,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "567f166f8434c8fa45544b8bb8e0deaeb26eb6c6"
+    "applicationCommit": "5a1ca4dfb38c3ac2bbfac80ac0e78c4cf79ec1f7"
   },
   "includesRenders": false,
   "vectors": {
