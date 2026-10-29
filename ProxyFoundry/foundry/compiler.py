@@ -1807,7 +1807,7 @@ def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
 STATION_TOKEN_LAYOUT_VERSION='arched-artifact-v2'
-VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v1'
+VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v2'
 
 
 def vertical_token_kind(data):
@@ -2939,7 +2939,12 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
         layers.append({'name':'Land true-name outline (8 units)',
             'src':'/img/frames/proxy-foundry/land-name-outline-8.png','masks':[],
             'bounds':{'x':bounds['x']-pad_x,'y':bounds['y']-pad_y,'width':bounds['width']+2*pad_x,'height':bounds['height']+2*pad_y}})
-    if ((group=='planeswalker' and data.get('version') in {'planeswalkerRegular','planeswalkerTall'})
+    if data.get('verticalToken'):
+        # The title/crown sit above the true name. Native Class/Saga panel
+        # backgrounds stay below it so they cannot cover half of the strip.
+        below_header=max((i+1 for i,frame in enumerate(frames) if frame.get('verticalTokenHeader')),default=0)
+        frames[below_header:below_header]=layers
+    elif ((group=='planeswalker' and data.get('version') in {'planeswalkerRegular','planeswalkerTall'})
             or group in {'transform-front','transform-back','meld'} and not (force or full_frame)):
         # Earlier frames draw on top. Keep the native pinline, including the
         # part embedded in the complete base, over the strip's upper edge and

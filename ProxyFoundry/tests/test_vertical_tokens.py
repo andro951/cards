@@ -44,6 +44,11 @@ def test_token_header_preserves_all_native_vertical_panels(workspace,index,nickn
     if nickname:
         assert data['text']['nickname']['text']==nickname
         assert data['text']['title']['text']==sem['name']
+        header_indices=[i for i,f in enumerate(data['frames']) if f.get('verticalTokenHeader')]
+        bar_indices=[i for i,f in enumerate(data['frames']) if f['name']=='Nickname Title']
+        body_indices=[i for i,f in enumerate(data['frames']) if f in body]
+        assert max(header_indices)<min(bar_indices)
+        assert max(bar_indices)<min(body_indices)
 
 
 @pytest.mark.parametrize('index',[0,1])
