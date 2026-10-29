@@ -71,7 +71,15 @@ def test_substitute_is_a_normal_frame_with_complete_uncropped_sign(tmp_path,styl
     assert not any('/godzilla/' in frame.get('src','') for frame in data['frames'])
     for name in ('title','mana','type','rules','pt'):
         assert data['text'][name]['text']==source['text'][name]['text']
-    if nickname:assert data['text']['nickname']['text']==nickname
+    if nickname:
+        assert data['text']['nickname']['text']==nickname
+        title=data['text']['title']
+        assert title['x']+title['width']/2==pytest.approx(.5)
+        bars=[f for f in data['frames'] if f['name']=='Nickname Title']
+        assert bars
+        for bar in bars:
+            assert bar['bounds']['width']==pytest.approx(.9014)
+            assert bar['bounds']['x']+bar['bounds']['width']/2==pytest.approx(.5001)
     if style=='auto':assert data['frames'][:-1]==source['frames']
     #Full-art source fronts also rebuild through the normal DFC path, never a
     #flattened single-face card that loses its sun/moon treatment.
@@ -109,9 +117,11 @@ def assert_wall_fills_card(ws,substitute):
 
 def test_old_full_art_placer_refreshes_without_rebuilding_main_faces(tmp_path,monkeypatch):
     ws,deck,_=seed(tmp_path,'godzilla-card')
+    deck['cards'][0]['faces'][0]['semanticOverrides']={'nickname':'Garth, Monster Hunter'}
+    ws.store.put('decks',deck,deck['revision'])
     prepared=ws.prepare(deck['id']);card=prepared['cards'][0]
     source_keys=[face['compiled']['renderKey'] for face in card['faces']]
-    card['substitute']['substituteVersion']=3
+    card['substitute']['substituteVersion']=4
     ws.store.put('decks',prepared,prepared['revision'])
     original=ws.compiler.compile_face;calls=[]
     def compile(sf,face,index,options,*args,**kwargs):

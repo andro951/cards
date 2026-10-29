@@ -26,6 +26,39 @@ def setup(tmp_path):
     Image.new('RGB',(100,140),'#456789').save(out,'PNG')
     return Compiler(store),ws.validate_settings({'artist':'Artist'}),ingest_image(store,out.getvalue())['id']
 
+
+@pytest.mark.parametrize('index',[0,1])
+@pytest.mark.parametrize('effects',[['sunmoondfc'],[]])
+@pytest.mark.parametrize('mana',['','{2}{W}','{W}{U}{B}{R}{G}'])
+def test_normal_nickname_bar_ignores_transform_icon_and_mana_insets(setup,index,effects,mana):
+    compiler,settings,art=setup;sf=card();sf['frame_effects']=effects
+    face=sf['card_faces'][index];face['mana_cost']=mana
+    plain=compiler.compile_face(sf,face,index,{},settings,art)['data']
+    data=compiler.compile_face(sf,face,index,
+        {'semanticOverrides':{'nickname':'Garth, Monster Hunter'}},settings,art)['data']
+    title=data['text']['title'];bars=[f for f in data['frames'] if f['name']=='Nickname Title']
+    assert title['x']+title['width']/2==pytest.approx(.5)
+    assert title['width']==pytest.approx(.72)
+    assert bars
+    for frame in bars:
+        bounds=frame['bounds']
+        assert bounds['width']==pytest.approx(.9014)
+        assert bounds['x']+bounds['width']/2==pytest.approx(.5001)
+    nickname=data['text']['nickname']
+    for key in ('x','y','width','height'):assert nickname[key]==plain['text']['title'][key]
+    assert [f for f in data['frames'] if f['name']!='Nickname Title']==plain['frames']
+
+
+@pytest.mark.parametrize('group',['transform-front','transform-back','meld'])
+def test_normal_nickname_bar_cache_refresh_does_not_affect_full_art_frames(setup,group):
+    compiler,_,_=setup;face={'nickname':'Garth, Monster Hunter'}
+    for style in ('auto','normal','godzilla-card'):
+        plain=compiler.template_identity(group,style,{})
+        renamed=compiler.template_identity(group,style,face)
+        assert renamed[0]==plain[0]
+        increment=0 if style=='godzilla-card' else 1
+        assert renamed[1:]==tuple(v+increment for v in plain[1:])
+
 @pytest.mark.parametrize('legendary,nickname',[(False,False),(False,True),(True,False),(True,True)])
 @pytest.mark.parametrize('index',[0,1])
 def test_both_sides_and_four_headers(setup,legendary,nickname,index):
