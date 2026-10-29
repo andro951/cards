@@ -28,6 +28,13 @@ export async function savedFolder(){
 export async function chooseFolder(){
   if(!window.showDirectoryPicker)throw new Error('This browser does not support direct folder access. Your browser workspace remains available.');
   const parent=await window.showDirectoryPicker({id:'bulk-proxy-forge',mode:'readwrite',startIn:'documents'});
+  //Selecting the workspace itself must reopen it, not create a nested empty one.
+  if(parent.name.toLowerCase()==='bulkproxyforge')return parent;
+  try{
+    await parent.getFileHandle('workspace.sqlite3');
+    return parent;
+  }
+  catch(error){if(error.name!=='NotFoundError')throw error;}
   const folder=await parent.getDirectoryHandle('BulkProxyForge',{create:true});
   return folder;
 }
