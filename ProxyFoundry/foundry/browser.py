@@ -229,13 +229,21 @@ class BrowserJobs:
     def _publish(self,job):
         now=time.monotonic()
         terminal=job['state'] in {'done','failed','cancelled'}
+        saved=False
         #Progress remains live; persisting every message stalls selected-folder IO.
         if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=(5 if getattr(self.store,'generation',None) else 1):
-            (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
-                json.dumps(job,ensure_ascii=False,default=str),encoding='utf-8')
+            try:
+                (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
+                    json.dumps({key:value for key,value in job.items() if key!='logWarning'},ensure_ascii=False,default=str),encoding='utf-8')
+                job.pop('logWarning',None);saved=True
+            except OSError as error:
+                #Diagnostic history is optional. A failed log must not fail the
+                #job, recurse while reporting that failure, or kill the engine.
+                job['logWarning']='Could not save progress log: '+str(error)
             self.last_log_write[job['id']]=now
         if terminal:self.last_log_write.pop(job['id'],None)
         self.publish({key:value for key,value in job.items() if key!='events'})
+        return saved
 
     def start(self,kind,operation,*,priority=0):
         if priority not in {0,1}:raise ValueError('Use foreground or background job priority.')
@@ -305,7 +313,8 @@ class BrowserJobs:
                     job['trace']+='\n'+traceback.format_exc()
         finally:
             if ident not in self.pending:
-                job['finishedAt']=time.time();self._publish(job);job.pop('result',None)
+                job['finishedAt']=time.time()
+                if self._publish(job):job.pop('result',None)
                 completed=[key for key,row in self.jobs.items() if row['state'] in {'done','failed','cancelled'}]
                 for key in completed[:-20]:self.jobs.pop(key)
 

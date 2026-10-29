@@ -243,6 +243,55 @@ def test_progress_is_live_but_disk_log_writes_are_batched(tmp_path,monkeypatch):
     assert saved['state']=='done' and saved['done']==120 and saved['result']=={'ok':True}
 
 
+@pytest.mark.parametrize('outcome',['success','failure','cancel'])
+def test_unwritable_progress_logs_do_not_kill_jobs_or_lose_results(tmp_path,monkeypatch,outcome):
+    original=Path.write_text;attempts=[];live=[]
+    def fail(path,*args,**kwargs):
+        if path.name.startswith('job-'):
+            attempts.append(path.name)
+            raise OSError(29,'Injected stale file state')
+        return original(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'write_text',fail)
+    jobs=BrowserJobs(Store(tmp_path),publish=lambda value:live.append(value.copy()))
+    def operation(progress,cancel):
+        progress(1,2,'Preparing');yield
+        if outcome=='failure':raise ValueError('Actual preparation failure')
+        progress(2,2,'Prepared');return {'preserved':'result'}
+    ident=jobs.start('Prepare deck',operation)['id']
+    jobs.run_pending(limit=1)
+    if outcome=='cancel':jobs.cancel(ident)
+    jobs.run_pending()
+    saved=jobs.get(ident)
+    assert saved['state']=={'success':'done','failure':'failed','cancel':'cancelled'}[outcome]
+    assert 'progress log' in saved['logWarning'] and live[-1]['state']==saved['state']
+    assert len(attempts)<=3
+    if outcome=='success':assert saved['result']=={'preserved':'result'}
+    if outcome=='failure':assert 'Actual preparation failure' in saved['error']
+    #The next task still runs in the same engine.
+    following=jobs.start('Next task',lambda update,cancel:42)['id'];jobs.run_pending()
+    assert jobs.get(following)['result']==42
+
+
+def test_progress_log_recovery_clears_warning_and_keeps_durable_result(tmp_path,monkeypatch):
+    import json
+    original=Path.write_text;fail=[True];now=[100]
+    def write(path,*args,**kwargs):
+        if path.name.startswith('job-') and fail[0]:raise OSError(29,'Injected log failure')
+        return original(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'write_text',write)
+    monkeypatch.setattr('foundry.browser.time.monotonic',lambda:now[0])
+    jobs=BrowserJobs(Store(tmp_path))
+    def operation(progress,cancel):
+        progress(1,2,'Preparing');yield
+        progress(2,2,'Prepared');return {'ok':True}
+    ident=jobs.start('Test',operation)['id'];jobs.run_pending(limit=1)
+    assert jobs.get(ident)['logWarning']
+    fail[0]=False;now[0]+=6;jobs.run_pending()
+    assert 'logWarning' not in jobs.get(ident)
+    assert 'result' not in jobs.jobs[ident]
+    assert json.loads((tmp_path/'logs'/('job-'+ident+'.json')).read_text())['result']=={'ok':True}
+
+
 def test_import_batch_checkpoints_once_and_foreground_remains_durable(tmp_path):
     from foundry.browser import BrowserStore
     snapshots=[]

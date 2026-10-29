@@ -140,6 +140,8 @@ else{
     if(data.type==='startup-timing')recordDiagnostic('startup timing',JSON.stringify(data));
     if(data.type==='cleanup-warning')window.dispatchEvent(new CustomEvent('pf-cleanup-warning',{detail:data.message}));
     if(data.type==='job'){
+      if(data.job.logWarning&&data.job.logWarning!==jobs.get(data.job.id)?.logWarning)
+        recordDiagnostic('job log warning',`${data.job.id}: ${data.job.logWarning}`);
       const completed=[...jobs].filter(([,job])=>['done','failed','cancelled'].includes(job.state));
       for(const [id] of completed.slice(0,Math.max(0,completed.length-19)))jobs.delete(id);
       jobs.set(data.job.id,{...data.job,cancelled:data.job.cancelled||jobs.get(data.job.id)?.cancelled||false});

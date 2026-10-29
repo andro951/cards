@@ -1,5 +1,7 @@
 # Slow-operation timing logs
 
+Job progress history (`logs/job-*.json`) is best effort. A filesystem failure there produces a `job log warning` in browser diagnostics while progress and completion continue. If the final history write fails, the result remains in the bounded in-memory job history; successful final writes release that memory as before. Diagnostic history can be unavailable after reload when its file could not be saved. Deck database checkpoints and image writes retain their required failure handling.
+
 Operations taking at least 0.1 seconds write a `TIMING` JSON entry to the rotating workspace `logs/app.log`, included in Settings → Download Diagnostics. Browser render totals also appear in the browser diagnostics JSON. Use a newly loaded website to capture a new run; older sessions do not have this instrumentation.
 
 Each new entry includes `storageType`: `browser` for browser-managed storage, `selected-folder` for a user-selected computer folder, or `local-folder` for the old local application. The diagnostics summary also includes `workspace.storageType`; earlier log entries are not backfilled.
