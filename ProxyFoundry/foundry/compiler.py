@@ -2887,7 +2887,12 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
         layers.append({'name':'Land true-name outline (8 units)',
             'src':'/img/frames/proxy-foundry/land-name-outline-8.png','masks':[],
             'bounds':{'x':bounds['x']-pad_x,'y':bounds['y']-pad_y,'width':bounds['width']+2*pad_x,'height':bounds['height']+2*pad_y}})
-    data.setdefault('frames',[])[0:0]=layers
+    if group=='planeswalker' and data.get('version') in {'planeswalkerRegular','planeswalkerTall'}:
+        # Earlier frames draw on top. Keep the native pinline, including the
+        # part embedded in the complete base, over the strip's upper edge and
+        # shoulders so it follows the existing art-window border.
+        frames.extend(layers)
+    else:frames[0:0]=layers
     return True
 
 
@@ -3001,7 +3006,7 @@ class Compiler:
                                         and len(set(face.get('colors') or [])&set('WUBRG'))==2)
         regular_walker_rules_version=2*int(group=='planeswalker' and choice in {'auto','godzilla-card'} and face is not None
             and 1<=len(native.parse_planeswalker_abilities(face.get('oracle_text','')))<=3)
-        walker_nickname_version=int(group=='planeswalker' and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
+        walker_nickname_version=2*int(group=='planeswalker' and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')

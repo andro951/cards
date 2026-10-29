@@ -19,8 +19,9 @@ def card(name):
 
 @pytest.mark.parametrize('name',['Tezzeret-the-Seeker','Tezzeret'])
 @pytest.mark.parametrize('mana',['','{3}{W}{B}','{1}{W}{U}{B}{R}{G}'])
-def test_normal_planeswalker_true_name_spans_header_and_joins_title(setup,name,mana):
-    compiler,settings,art=setup;sf=card(name);sf['mana_cost']=mana
+@pytest.mark.parametrize('colors',[['U'],['W','B']])
+def test_normal_planeswalker_true_name_spans_header_and_joins_title(setup,name,mana,colors):
+    compiler,settings,art=setup;sf=card(name);sf.update(mana_cost=mana,colors=colors)
     options={'templateOverride':'auto'}
     plain=compiler.compile_face(sf,sf,0,options,settings,art)
     result=compiler.compile_face(sf,sf,0,
@@ -28,6 +29,9 @@ def test_normal_planeswalker_true_name_spans_header_and_joins_title(setup,name,m
     data=result['data'];title=data['text']['title'];nickname=data['text']['nickname']
     bars=[f for f in data['frames'] if f['name']=='Nickname Title']
     assert bars
+    # The complete native frame and its separate pinline overlays draw above
+    # every strip layer, including on single-color frames without an overlay.
+    assert data['frames'][-len(bars):]==bars
     for frame in bars:
         bounds=frame['bounds']
         assert bounds['width']>.89
@@ -49,7 +53,7 @@ def test_normal_planeswalker_nickname_refresh_is_scoped(setup,style):
     renamed=compiler.template_identity_for_face('planeswalker',style,sf,sf,0,
         {'semanticOverrides':{'nickname':'The Inventor'}})
     assert renamed[0]==plain[0]
-    assert renamed[1:]==tuple(v+1 for v in plain[1:])
+    assert renamed[1:]==tuple(v+2 for v in plain[1:])
 
 @pytest.mark.parametrize('name,count,code',[('Tezzeret-the-Seeker',3,'U'),('Tezzeret',4,'L')])
 @pytest.mark.parametrize('nickname',[False,True])
