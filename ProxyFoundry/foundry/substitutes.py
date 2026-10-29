@@ -4,7 +4,7 @@ from pathlib import Path
 from .domain import ORDINARY_GROUPS,render_key,stable_hash,type_group,uid
 from .token_assignments import is_token
 
-VERSION=5
+VERSION=6
 SIGN=Path(__file__).resolve().parents[1]/'assets'/'substitutes'/'double-sided-substitute-sign.png'
 WALL=SIGN.with_name('double-sided-substitute-wall.png')
 # Battle's ordinary artBounds extend behind its title and rules frame. Keep

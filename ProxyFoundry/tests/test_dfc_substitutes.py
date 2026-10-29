@@ -121,7 +121,7 @@ def test_old_full_art_placer_refreshes_without_rebuilding_main_faces(tmp_path,mo
     ws.store.put('decks',deck,deck['revision'])
     prepared=ws.prepare(deck['id']);card=prepared['cards'][0]
     source_keys=[face['compiled']['renderKey'] for face in card['faces']]
-    card['substitute']['substituteVersion']=4
+    card['substitute']['substituteVersion']=5
     ws.store.put('decks',prepared,prepared['revision'])
     original=ws.compiler.compile_face;calls=[]
     def compile(sf,face,index,options,*args,**kwargs):

@@ -40,6 +40,7 @@ def test_normal_nickname_bar_ignores_transform_icon_and_mana_insets(setup,index,
     assert title['x']+title['width']/2==pytest.approx(.5)
     assert title['width']==pytest.approx(.72)
     assert bars
+    assert data['frames'][-len(bars):]==bars
     for frame in bars:
         bounds=frame['bounds']
         assert bounds['width']==pytest.approx(.9014)
@@ -56,7 +57,7 @@ def test_normal_nickname_bar_cache_refresh_does_not_affect_full_art_frames(setup
         plain=compiler.template_identity(group,style,{})
         renamed=compiler.template_identity(group,style,face)
         assert renamed[0]==plain[0]
-        increment=0 if style=='godzilla-card' else 1
+        increment=0 if style=='godzilla-card' else 2
         assert renamed[1:]==tuple(v+increment for v in plain[1:])
 
 @pytest.mark.parametrize('legendary,nickname',[(False,False),(False,True),(True,False),(True,True)])
