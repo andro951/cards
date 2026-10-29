@@ -22,6 +22,7 @@ from .compiler import apply_universal_frame_color_treatment,frame_treatment_colo
 from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
+from .compiler import vertical_token_kind,apply_vertical_token_layout,VERTICAL_TOKEN_LAYOUT_VERSION
 from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
@@ -325,9 +326,11 @@ class Workspace:
                         d['status']='draft'
                     if comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and f['group']=='station' and data.get('stationTokenLayoutVersion')!=STATION_TOKEN_LAYOUT_VERSION:
                         d['status']='draft'
+                    if (comp.get('recipe') in {'Deck-wide token','Card Tools copy token'} and (data.get('class') or data.get('saga'))
+                            and data.get('verticalTokenLayoutVersion')!=VERTICAL_TOKEN_LAYOUT_VERSION):d['status']='draft'
                     if (comp.get('recipe') in {'Deck-wide token','Card Tools copy token'}
                             and self._dual_token_color_source(sf,sf_face,{} if d['settings'].get('allCardsTokens') else c.get('tokenSpec') or {})):
-                        rounded=data.get('version') in {'tokenRegularM15','tokenTextlessM15'} or data.get('prepareToken') or data.get('stationToken')
+                        rounded=data.get('version') in {'tokenRegularM15','tokenTextlessM15'} or data.get('prepareToken') or data.get('stationToken') or data.get('verticalToken')
                         if data.get('tokenDualColorVersion')!=(TOKEN_DUAL_COLOR_VERSION if rounded else None):d['status']='draft'
                     if comp.get('generationVersion')!=PIPELINE_VERSION:
                         d['status']='draft';d['upgradeRequired']=True
@@ -814,7 +817,8 @@ class Workspace:
         style=spec.pop('token_frame_style',None) or DEFAULT_TOKEN_STYLE
         prepare_source=comp['data'] if comp['data'].get('version')=='prepare' else None
         station_source=comp['data'] if comp['data'].get('version')=='stationRegular' else None
-        structured_source=prepare_source if prepare_source is not None else station_source
+        vertical_source=comp['data'] if vertical_token_kind(comp['data']) else None
+        structured_source=next((source for source in (prepare_source,station_source,vertical_source) if source is not None),None)
         station_color=spec.get('frame_color')
         if structured_source is not None:style='token-classic'
         if structured_source is None and not isinstance(comp['data'].get('text',{}).get('rules',{}).get('text'),str):
@@ -845,6 +849,7 @@ class Workspace:
             if dual_colors and structured_source is not None:apply_universal_frame_color_treatment(comp['data'],sem)
             if prepare_source is not None:comp['data']=apply_prepare_token_layout(prepare_source,comp['data'],spec.get('frame_color','A'))
             elif station_source is not None:comp['data']=apply_station_token_layout(station_source,comp['data'],station_color)
+            elif vertical_source is not None:comp['data']=apply_vertical_token_layout(vertical_source,comp['data'],station_color)
             if finalize and comp.get('symbolId'):fit_set_symbol_to_bounds(comp['data'],self.store.asset(comp['symbolId']),recipe_label)
         if finalize:fit_token_art(comp['data'],str(self.store.asset_path(art_id)),autofit)
         if sem and (sem.get('nickname') or spec.get('force_nickname_frame') or str(comp.get('templateKey') or '').startswith('builtin:godzilla-')):
@@ -905,6 +910,8 @@ class Workspace:
             inputs['tokenConversionVersion']=4
             if sf.get('layout')=='prepare':inputs['prepareTokenLayoutVersion']=PREPARE_TOKEN_LAYOUT_VERSION
             if any(type_group(face,sf,i)=='station' for i,face in enumerate(faces)):inputs['stationTokenLayoutVersion']=STATION_TOKEN_LAYOUT_VERSION
+            if any(set(ingest.split_type_line(face.get('type_line',sf.get('type_line',''))).get('subtypes',[]))&{'Class','Saga'} for face in faces):
+                inputs['verticalTokenLayoutVersion']=VERTICAL_TOKEN_LAYOUT_VERSION
             if any(re.search(r'\{[^{}]+\}',str(face.get('mana_cost') or sf.get('mana_cost') or '')) for face in faces):
                 inputs['tokenManaSpacingVersion']=1
             token_spec=c.get('tokenSpec') or {}

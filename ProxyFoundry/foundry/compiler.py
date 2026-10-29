@@ -1634,6 +1634,7 @@ def fit_token_art(data,art_local_path,autofit=True):
     """Fit token artwork to the visible art window for the active token frame."""
     version=str(data.get('version') or '')
     bounds=(
+        data['artBounds'] if data.get('verticalToken') else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':.431} if data.get('prepareToken') or data.get('stationToken') else
         _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
@@ -1806,6 +1807,53 @@ def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
 STATION_TOKEN_LAYOUT_VERSION='arched-artifact-v2'
+VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v1'
+
+
+def vertical_token_kind(data):
+    if data.get('version')=='class' and isinstance(data.get('class'),dict):return 'class'
+    if data.get('version') in {'sagaRegular','sagaCreature'} and isinstance(data.get('saga'),dict):return 'saga'
+    return None
+
+
+def apply_vertical_token_layout(source,token,frame_code=None):
+    """Keep Class levels and Saga chapters below a token title/header."""
+    data=copy.deepcopy(source);kind=vertical_token_kind(data)
+    if kind is None:raise ValidationError('Unsupported vertical token layout.')
+    width=int(data['width']);height=int(data['height']);cutoff=round(.1124*height)
+    def clip(top):
+        y=0 if top else cutoff;h=cutoff if top else height-cutoff
+        svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"><rect y="{y}" width="{width}" height="{h}" fill="white"/></svg>'
+        return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
+    upper,lower=clip(True),clip(False);body=[];header=[]
+    for frame in data.get('frames',[]):
+        if frame.get('verticalTokenHeader') or frame.get('name')=='Nickname Title':continue
+        frame['masks']=[m for m in frame.get('masks',[]) if m.get('name')!='Native vertical panels']
+        if frame_code:
+            if str(frame.get('src','')).startswith('data:image') and any(_is_pinline_mask(m) for m in frame['masks']):
+                if frame_code!='M':
+                    code='A' if frame_code=='C' else frame_code
+                    frame['src']=(f'/img/frames/class/{code.lower()}.png' if kind=='class' else
+                                  _saga_color_frame_src('saga-creature' if data['version']=='sagaCreature' else 'saga',code))
+            else:frame['src']=_frame_effect_source(str(frame.get('src','')),frame_code)
+        frame['masks'].append({'name':'Native vertical panels','src':lower});body.append(frame)
+    for frame in token.get('frames',[]):
+        if 'Power/Toughness' in str(frame.get('name','')):continue
+        layer=copy.deepcopy(frame)
+        layer.setdefault('masks',[]).append({'name':'Token title only','src':upper})
+        layer['verticalTokenHeader']=True;header.append(layer)
+    data['frames']=[*header,*body]
+    text=data['text'];converted=token['text']
+    for key in ('title','mana'):text[key]=copy.deepcopy(converted[key])
+    text.pop('nickname',None);text['title']['width']=.8292
+    text['type']['text']=converted['type'].get('text','')
+    if 'pt' in text:text['pt']['text']=converted.get('pt',{}).get('text','')
+    elif converted.get('pt',{}).get('text'):
+        text['pt']=copy.deepcopy(converted['pt'])
+        data['frames'][0:0]=[copy.deepcopy(f) for f in token['frames'] if 'Power/Toughness' in str(f.get('name',''))]
+    if 'tokenColorOverride' in token:data['tokenColorOverride']=token['tokenColorOverride']
+    data.update(verticalToken=kind,verticalTokenLayoutVersion=VERTICAL_TOKEN_LAYOUT_VERSION)
+    return data
 
 
 def apply_prepare_token_layout(source,token,frame_code):
