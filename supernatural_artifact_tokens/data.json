@@ -929,7 +929,10 @@
       "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
       "artist": "ChatGPT",
       "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
-      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api",
+      "accepted_art": [
+        "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+      ]
     },
     {
       "name": "Black Market Connections",
@@ -953,7 +956,10 @@
       "flavor_text": "Centuries of monsters, catalogued one impossible case at a time.",
       "artist": "ChatGPT",
       "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
-      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
+      "accepted_art": [
+        "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+      ]
     }
   ],
   "artist": "",
@@ -9687,7 +9693,11 @@
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/061_fighter_class.png"
             },
             "preparationKey": "029a5374b51b8a82c682bb9492704b6693e52726650e4262bb637196c1b6d61f",
-            "preparedAt": 1793302813.163
+            "preparedAt": 1793302813.163,
+            "acceptedWarningKey": "0353ed1fcd16da0006aa9f6555c18004548d2928e556796ee41840c9ccbad087",
+            "acceptedArt": [
+              "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+            ]
           }
         ],
         "metadataSource": "d54a8329-b940-42c9-8ace-1d74407d14cb",
@@ -11343,7 +11353,11 @@
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/075_urza_s_saga.png"
             },
             "preparationKey": "69000419f20c0a26b0847c3289b324671309d6066804ef84013c6788f71ec96e",
-            "preparedAt": 1793302813.66
+            "preparedAt": 1793302813.66,
+            "acceptedWarningKey": "171b1060e16f77323da9c9a42ab5ff51235484e8176b3da99269bdf76a6115b0",
+            "acceptedArt": [
+              "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+            ]
           }
         ],
         "metadataSource": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
@@ -11846,7 +11860,7 @@
       "artReviewSignature": "6a581f3e65b3689f18cbb80d4af92b13f0a827df1502ce1ac51532c82b5a40be",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/supernatural_artifact_tokens"
     },
-    "status": "prepared",
+    "status": "ready",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/9a446e57-cf41-43dc-a8df-b73be700926d",
     "stagedImport": true,
@@ -12010,6 +12024,22 @@
         "flavor_text": "Eve’s greatest experiments began with one question: why stop at one monster?",
         "artist": "ChatGPT",
         "scryfall_url": "https://scryfall.com/card/clb/865/maskwood-nexus?utm_source=api"
+      },
+      {
+        "name": "Fighter Class",
+        "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
+        "scryfall_id": "d54a8329-b940-42c9-8ace-1d74407d14cb",
+        "accepted_art": [
+          "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+        ]
+      },
+      {
+        "name": "Urza's Saga",
+        "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+        "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
+        "accepted_art": [
+          "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+        ]
       }
     ],
     "id": "e86306fc-6a47-4888-96b5-7ccf855a8dee",
