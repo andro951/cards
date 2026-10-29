@@ -61,6 +61,18 @@ def test_individual_and_deck_conversion_is_idempotent_and_preserves_types(worksp
     twice=ws._apply_token_spec(staged,spec,workspace[1],'Token',sem=sem)
     assert twice['data']==once['data']
     assert twice['data']['text']['type']['text'].startswith('Legendary Enchantment')
+    crowns=[f for f in twice['data']['frames'] if '/crowns/m15Crown' in f.get('src','')]
+    outlines=[f for f in twice['data']['frames'] if f['name']=='Token crown outside outline']
+    assert crowns and all(f.get('opacity')==100 for f in crowns)
+    assert len(outlines)==1
+    outline=outlines[0];bounds=outline['bounds']
+    assert outline.get('opacity')==100
+    assert twice['data']['frames'].index(outline)<min(twice['data']['frames'].index(f) for f in crowns)
+    for crown in crowns:
+        inner=crown['bounds']
+        assert bounds['x']<inner['x'] and bounds['y']<inner['y']
+        assert bounds['x']+bounds['width']>inner['x']+inner['width']
+        assert bounds['y']+bounds['height']>inner['y']+inner['height']
 
 
 @pytest.mark.parametrize('scope',['card','deck','both'])

@@ -1807,7 +1807,7 @@ def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
 STATION_TOKEN_LAYOUT_VERSION='arched-artifact-v2'
-VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v2'
+VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v3'
 
 
 def vertical_token_kind(data):
@@ -1825,7 +1825,7 @@ def apply_vertical_token_layout(source,token,frame_code=None):
         y=0 if top else cutoff;h=cutoff if top else height-cutoff
         svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"><rect y="{y}" width="{width}" height="{h}" fill="white"/></svg>'
         return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
-    upper,lower=clip(True),clip(False);body=[];header=[]
+    upper,lower=clip(True),clip(False);body=[];header=[];crown_bounds=None
     for frame in data.get('frames',[]):
         if frame.get('verticalTokenHeader') or frame.get('name')=='Nickname Title':continue
         frame['masks']=[m for m in frame.get('masks',[]) if m.get('name')!='Native vertical panels']
@@ -1840,8 +1840,23 @@ def apply_vertical_token_layout(source,token,frame_code=None):
     for frame in token.get('frames',[]):
         if 'Power/Toughness' in str(frame.get('name','')):continue
         layer=copy.deepcopy(frame)
+        if re.fullmatch(r'/img/frames/m15/crowns/m15Crown[WUBRGMALC]Floating\.png',str(layer.get('src',''))):
+            # The shared two-color floating-crown helper uses 85% opacity.
+            # These headers need a solid crown underneath the color blend.
+            layer['opacity']=100
+            crown_bounds=layer.get('bounds')
         layer.setdefault('masks',[]).append({'name':'Token title only','src':upper})
         layer['verticalTokenHeader']=True;header.append(layer)
+    if crown_bounds:
+        # The bundled native outside contour has two pixels of padding around
+        # the 1408 x 215 crown. Preserve its scale and register that padding.
+        sx=crown_bounds['width']/1408;sy=crown_bounds['height']/215
+        header.insert(0,{'name':'Token crown outside outline',
+            'src':'/img/frames/proxy-foundry/compact-land/CrownOuterOutline.png',
+            'bounds':{'x':crown_bounds['x']-2*sx,'y':crown_bounds['y']-2*sy,
+                      'width':crown_bounds['width']+4*sx,'height':crown_bounds['height']+4*sy},
+            'opacity':100,'masks':[{'name':'Token title only','src':upper}],
+            'verticalTokenHeader':True})
     data['frames']=[*header,*body]
     text=data['text'];converted=token['text']
     for key in ('title','mana'):text[key]=copy.deepcopy(converted[key])
