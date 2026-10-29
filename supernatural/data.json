@@ -39,7 +39,10 @@
       "flavor_text": "Centuries of monsters, catalogued one impossible case at a time.",
       "artist": "ChatGPT",
       "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
-      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
+      "accepted_art": [
+        "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
+      ]
     },
     {
       "name": "High Market",
@@ -911,7 +914,10 @@
       "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
       "artist": "ChatGPT",
       "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
-      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
+      "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api",
+      "accepted_art": [
+        "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
+      ]
     },
     {
       "name": "Captain America, Liberator",
@@ -3047,7 +3053,11 @@
               "contentRenderKey": "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/075_urza_s_saga.png"
-            }
+            },
+            "acceptedWarningKey": "c1f279885fecbd2cab71d4a1b326dadac0d6ab3f4b142c34ab29c6262a8915bf",
+            "acceptedArt": [
+              "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
+            ]
           }
         ],
         "metadataSource": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
@@ -66744,7 +66754,11 @@
               "contentRenderKey": "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/061_fighter_class.png"
-            }
+            },
+            "acceptedWarningKey": "604cbc9c4ffd80dc491df6bdbd37024aef4ec80351fe6392e237cbbbe07ae34f",
+            "acceptedArt": [
+              "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
+            ]
           }
         ],
         "metadataSource": "d54a8329-b940-42c9-8ace-1d74407d14cb",
@@ -70363,7 +70377,7 @@
       "artReviewSignature": "daa4a1a85c8da2ea700615eb28fee80b8ed685ea41636f340ee6380671cb5456",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/supernatural"
     },
-    "status": "prepared",
+    "status": "ready",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/15ae9c12-24e3-46eb-8bec-2e05ad1600e4",
     "stagedImport": true,
@@ -71319,6 +71333,22 @@
         "flavor_text": "Every monster leaves a pattern. Sam only needs enough time to find it.",
         "artist": "ChatGPT",
         "scryfall_url": "https://scryfall.com/card/mh2/281/imperial-recruiter?utm_source=api"
+      },
+      {
+        "name": "Urza's Saga",
+        "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+        "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
+        "accepted_art": [
+          "1ab52e781947aeb56a831cdda42424eef89ea1d4f6e1f18b3e146ab379257676"
+        ]
+      },
+      {
+        "name": "Fighter Class",
+        "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
+        "scryfall_id": "d54a8329-b940-42c9-8ace-1d74407d14cb",
+        "accepted_art": [
+          "2a878f1257f5a2191b2a3050603e72e8541019d87aaba5acc13ffa5c493805ff"
+        ]
       }
     ],
     "id": "0a033c20-4e19-4bad-a0d7-b214ee046a48",
