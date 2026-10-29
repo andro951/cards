@@ -11865,6 +11865,19 @@
             "scryfall_id": "d54a8329-b940-42c9-8ace-1d74407d14cb"
           },
           "quantity": 1
+        },
+        {
+          "front": {
+            "name": "Smothering Tithe",
+            "oracle_id": "153376c9-dffd-458c-8ce3-a4c8269bc4e9",
+            "scryfall_id": "861b5889-0183-4bee-afeb-a4b2aa700a8e"
+          },
+          "back": {
+            "name": "Urza's Saga",
+            "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+            "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c"
+          },
+          "quantity": 1
         }
       ],
       "tokenTreatments": [],
@@ -13707,6 +13720,19 @@
         "name": "Fighter Class",
         "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
         "scryfall_id": "d54a8329-b940-42c9-8ace-1d74407d14cb"
+      },
+      "quantity": 1
+    },
+    {
+      "front": {
+        "name": "Smothering Tithe",
+        "oracle_id": "153376c9-dffd-458c-8ce3-a4c8269bc4e9",
+        "scryfall_id": "861b5889-0183-4bee-afeb-a4b2aa700a8e"
+      },
+      "back": {
+        "name": "Urza's Saga",
+        "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+        "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c"
       },
       "quantity": 1
     }
