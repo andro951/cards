@@ -67,12 +67,28 @@ def test_individual_and_deck_conversion_is_idempotent_and_preserves_types(worksp
     assert len(outlines)==1
     outline=outlines[0];bounds=outline['bounds']
     assert outline.get('opacity')==100
+    assert outline['src'].endswith('/CrownHeaderOutline.png')
+    assert not outline['masks']  # The new bottom stroke extends beyond the header crop.
     assert twice['data']['frames'].index(outline)<min(twice['data']['frames'].index(f) for f in crowns)
     for crown in crowns:
         inner=crown['bounds']
         assert bounds['x']<inner['x'] and bounds['y']<inner['y']
         assert bounds['x']+bounds['width']>inner['x']+inner['width']
         assert bounds['y']+bounds['height']>inner['y']+inner['height']
+
+
+def test_crown_contour_closes_the_visible_bottom_without_outlining_the_title_opening():
+    import io
+    from PIL import Image,ImageDraw
+    from scripts.build_vertical_token_crown_outline import header_outline
+    crown=Image.new('RGBA',(1408,215),'white')
+    ImageDraw.Draw(crown).rectangle((100,50,1307,150),fill=(0,0,0,0))
+    raw=io.BytesIO();crown.save(raw,'PNG')
+    outline=header_outline(raw.getvalue());alpha=outline.getchannel('A')
+    assert outline.size==(1412,219)
+    for x in (100,706,1300):assert alpha.getpixel((x,198))==255
+    assert alpha.getpixel((706,205))==0
+    assert alpha.getpixel((706,52))==0
 
 
 @pytest.mark.parametrize('scope',['card','deck','both'])

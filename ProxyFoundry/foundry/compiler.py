@@ -1807,7 +1807,7 @@ def build_token_data(sem,artist,autofit,flags,style=DEFAULT_TOKEN_STYLE):
 
 PREPARE_TOKEN_LAYOUT_VERSION='arched-v1'
 STATION_TOKEN_LAYOUT_VERSION='arched-artifact-v2'
-VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v3'
+VERTICAL_TOKEN_LAYOUT_VERSION='native-panels-v4'
 
 
 def vertical_token_kind(data):
@@ -1852,10 +1852,10 @@ def apply_vertical_token_layout(source,token,frame_code=None):
         # the 1408 x 215 crown. Preserve its scale and register that padding.
         sx=crown_bounds['width']/1408;sy=crown_bounds['height']/215
         header.insert(0,{'name':'Token crown outside outline',
-            'src':'/img/frames/proxy-foundry/compact-land/CrownOuterOutline.png',
+            'src':'/img/frames/proxy-foundry/compact-land/CrownHeaderOutline.png',
             'bounds':{'x':crown_bounds['x']-2*sx,'y':crown_bounds['y']-2*sy,
                       'width':crown_bounds['width']+4*sx,'height':crown_bounds['height']+4*sy},
-            'opacity':100,'masks':[{'name':'Token title only','src':upper}],
+            'opacity':100,'masks':[],
             'verticalTokenHeader':True})
     data['frames']=[*header,*body]
     text=data['text'];converted=token['text']
