@@ -232,7 +232,9 @@ class BrowserJobs:
         terminal=job['state'] in {'done','failed','cancelled'}
         saved=False
         #Progress remains live; persisting every message stalls selected-folder IO.
-        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=(5 if getattr(self.store,'generation',None) else 1):
+        #ZIP byte/heartbeat updates must not compete with the archive on a USB disk.
+        interval=30 if job.get('phase') in {'packaging','saving'} else 5 if getattr(self.store,'generation',None) else 1
+        if terminal or now-self.last_log_write.get(job['id'],-float('inf'))>=interval:
             try:
                 (self.store.home/'logs'/('job-'+job['id']+'.json')).write_text(
                     json.dumps({key:value for key,value in job.items() if key!='logWarning'},ensure_ascii=False,default=str),encoding='utf-8')

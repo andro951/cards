@@ -263,6 +263,24 @@ def test_slow_progress_log_writes_cannot_trigger_a_write_for_every_card(tmp_path
     assert jobs.get(ident)['result']=={'retained':121,'added':3}
 
 
+def test_zip_heartbeats_stay_live_without_contending_for_disk_on_every_update(tmp_path,monkeypatch):
+    now=[100.0];writes=[];live=[];original=Path.write_text
+    monkeypatch.setattr('foundry.browser.time.monotonic',lambda:now[0])
+    def slow_write(path,*args,**kwargs):
+        if path.name.startswith('job-'):writes.append(now[0]);now[0]+=1.5
+        return original(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'write_text',slow_write)
+    jobs=BrowserJobs(Store(tmp_path),publish=lambda value:live.append(value.copy()))
+    def save(update,cancel):
+        for index in range(120):
+            now[0]+=.5
+            update(1110,1110,{'message':'Saving paired ZIP','phase':'saving','savedBytes':index,'totalBytes':120});yield
+        return {'ok':True}
+    ident=jobs.start('Package paired order',save)['id'];jobs.run_pending()
+    assert len(writes)==4 and len(live)==123
+    assert jobs.get(ident)['events'][-1]['savedBytes']==119 and jobs.get(ident)['result']=={'ok':True}
+
+
 @pytest.mark.parametrize('outcome',['complete','cancel','failure'])
 def test_refresh_route_batches_metadata_saves_and_releases_them_on_every_exit(tmp_path,outcome):
     import json
