@@ -1,10 +1,11 @@
 """Physical-card order snapshots with explicit, stable FRONT/BACK pairs."""
 from __future__ import annotations
-import json,os,tempfile,time,zipfile
+import json,os,tempfile,time,zipfile,shutil
 from .domain import ConflictError,ValidationError,uid,stable_hash
 from .token_assignments import overview
 from . import substitutes
 from .job_progress import FIELDS
+from .transfer_batches import MAX_BATCH_BYTES
 class Orders:
     def __init__(self,workspace):self.ws=workspace;self.store=workspace.store;self.archive=None
     def plan(self,deck_ids,acknowledge=False):
@@ -81,7 +82,7 @@ class Orders:
         if cancel():raise ValidationError('Order packaging cancelled.')
         plan=self.plan(deck_ids)
         if plan['issues']:raise ValidationError('Review each crop/layout warning before packaging this order.')
-        ident=uid();dest=self.store.home/'orders'/(ident+'.zip');tmp=dest.with_suffix('.partial')
+        ident=uid();dest=self.store.home/'orders'/ident;parts=[]
         published=False
         try:
             with self.store.pin_assets(c[key] for c in plan['cards'] for key in ('frontAsset','backAsset')):
@@ -107,24 +108,36 @@ class Orders:
                             if status['state']=='done':break
                             yield {'delay':.05}
                     finally:self.archive('release-order-zip',task)
+                    parts=status['parts']
                 else:
-                    with zipfile.ZipFile(tmp,'w',zipfile.ZIP_STORED,allowZip64=True) as archive:
+                    dest.mkdir();archive=None;part_size=22;first=1
+                    def finish(last):
+                        nonlocal archive
+                        archive.close();archive=None
+                        filename=f'part-{len(parts)+1:03d}.zip'
+                        pending=dest/(filename+'.partial');target=dest/filename;os.replace(pending,target)
+                        parts.append({'filename':filename,'count':last-first+1,'firstCard':first,'lastCard':last,'zipBytes':target.stat().st_size})
+                    try:
                         for i,card in enumerate(plan['cards'],1):
                             if cancel():raise ValidationError('Order packaging cancelled.')
-                            archive.write(self.store.asset_path(card['frontAsset']),card['frontFile'])
-                            archive.write(self.store.asset_path(card['backAsset']),card['backFile'])
-                            progress(i,len(plan['cards']),'Packaging '+card['name'])
-                            yield
+                            amount=sum(self.store.asset_path(card[side+'Asset']).stat().st_size+76+2*len(card[side+'File']) for side in ('front','back'))
+                            if amount+22>MAX_BATCH_BYTES:raise ValidationError('A front/back pair exceeds the printer ZIP limit.')
+                            if archive and part_size+amount>MAX_BATCH_BYTES:finish(i-1);part_size=22;first=i
+                            if archive is None:archive=zipfile.ZipFile(dest/f'part-{len(parts)+1:03d}.zip.partial','w',zipfile.ZIP_STORED,allowZip64=False)
+                            for side in ('front','back'):archive.write(self.store.asset_path(card[side+'Asset']),card[side+'File'])
+                            part_size+=amount
+                            progress(i,len(plan['cards']),'Packaging '+card['name']);yield
+                        if archive:finish(len(plan['cards']))
+                    finally:
+                        if archive:archive.close()
             if cancel():raise ValidationError('Order packaging cancelled.')
             for deck in plan['decks']:
                 latest=self.store.get('decks',deck['id'])
                 if not latest or latest['revision']!=deck['revision']:
                     raise ConflictError('A selected deck changed while packaging. Review it and create the order again.')
-            if not self.archive:os.replace(tmp,dest)
-            manifest={**plan,'id':ident,'createdAt':time.time(),'pairing':'explicit-filename','snapshotHash':stable_hash(plan)}
+            manifest={**plan,'parts':parts,'id':ident,'createdAt':time.time(),'pairing':'explicit-filename','snapshotHash':stable_hash(plan)}
             self.store.put('orders',manifest)
             published=True
-            return {**manifest,'download':'/api/orders/'+ident+'/download','zipBytes':dest.stat().st_size}
+            return {**manifest,'download':'/api/orders/'+ident+'/download','zipBytes':sum(part['zipBytes'] for part in parts)}
         finally:
-            tmp.unlink(missing_ok=True)
-            if not published:dest.unlink(missing_ok=True)
+            if not published and dest.is_dir():shutil.rmtree(dest)

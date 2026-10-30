@@ -29,6 +29,9 @@ const extra64=values=>{
     return bytes;
 };
 const maximum=0xffffffffn;
+//Stay below decimal 2 GB, verified with Edge FileReader and the printer's reader.
+export const PRINTER_ZIP_LIMIT=1_999_999_999;
+export const storedEntryBytes=(name,size)=>size+76+2*new TextEncoder().encode(name).length;
 export class StoredZip {
     parts=[];
     entries=[];

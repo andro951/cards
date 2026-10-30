@@ -2,6 +2,7 @@
 import json,re,time
 from .domain import ValidationError,uid
 from .substitutes import render_faces
+from .images import print_size
 
 
 def allow_shared_render_files(db):
@@ -29,7 +30,7 @@ def _validate_render_row(store,row,decks):
     comp=(face or {}).get('compiled') or {}
     if comp.get('renderKey')!=row['key']:raise ValidationError('A rendered card changed or was deleted. Generate its image again.')
     data=comp.get('data') or {}
-    expected=[round(data['width']*(1+2*data.get('marginX',0))),round(data['height']*(1+2*data.get('marginY',0)))]
+    expected=print_size(data)
     if [row.get('width'),row.get('height')]!=expected:raise ValidationError('Wrong render receipt dimensions.')
     asset=store.asset_path(row['hash']);size=asset.stat().st_size
     if size!=row.get('bytes') or not 33<=size<=64*1024*1024:raise ValidationError('Incomplete rendered PNG.')

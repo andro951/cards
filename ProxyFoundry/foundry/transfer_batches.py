@@ -15,7 +15,7 @@ import zipfile
 
 from .domain import ValidationError
 
-MAX_BATCH_BYTES = 1024 ** 3  # Same 1 GiB boundary as the old whole-order guard.
+MAX_BATCH_BYTES = 1_999_999_999  # Decimal 2 GB; also below signed 32-bit ZIP offsets.
 MAX_CHUNK_BYTES = 1024 ** 2
 
 
@@ -131,7 +131,7 @@ class TransferBatches:
                             pair.append((info, Span(offset, info.file_size)))
                         pair_size = sum(span.size + 30 + 46 + 2 * len(info.filename) for info, span in pair)
                         if pair_size + 22 > self.limit:
-                            raise ValidationError(f'Card {number} and its back cannot fit in one 1 GB ZIP. Image quality was not changed.')
+                            raise ValidationError(f'Card {number} and its back cannot fit within the printer ZIP limit. Image quality was not changed.')
                         if pending and size + pair_size > self.limit:
                             self.views.append(_zip_view(pending))
                             pending, size = [], 22
@@ -170,6 +170,12 @@ class TransferBatches:
                else {'offset':part.offset,'length':part.size} for part in view.parts(offset,length)]
         return {'size':view.size,'length':length,'parts':parts,
                 'signature':{'size':self.signature[0],'modified':round(self.signature[1]/1_000_000)}}
+
+    def describe_view(self,batch):
+        self._check_source();view=self.views[batch]
+        parts=[{'base64':base64.b64encode(part).decode('ascii')} if isinstance(part,bytes)
+               else {'offset':part.offset,'length':part.size} for part in view.parts(0,view.size)]
+        return {'parts':parts,'size':view.size,'signature':{'size':self.signature[0],'modified':round(self.signature[1]/1_000_000)}}
 
     def read(self, batch, offset, length):
         view,length=self._range(batch,offset,length)

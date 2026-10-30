@@ -34,7 +34,10 @@ export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
 export const workspaceUrl=url=>url&&/^\/(api|runtime|img|fonts|js|css|creator)\//.test(url)?(window.__pfBasePath||'')+url:url;
 export const asset=id=>id?workspaceUrl('/api/assets/'+id):'';
-export const thumbnail=url=>workspaceUrl(/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url);
+export const thumbnail=url=>{
+  const base=window.__pfBasePath||'',path=base&&url?.startsWith(base+'/')?url.slice(base.length):url;
+  return workspaceUrl(/^\/api\/assets\/[0-9a-f]{64}$/.test(path||'')?path+'/thumbnail':url);
+};
 export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print','tokens-not-ready':'Tokens not ready',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -84,6 +87,8 @@ export async function downloadPost(path,data,filename){
 }
 export function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 export async function saveApiFile(path,name,options={}){
+  const order=/^\/api\/orders\/([-a-f0-9]{36})\/download$/.exec(path);
+  if(order&&window.__pfSaveOrder)return window.__pfSaveOrder(order[1],options);
   const onProgress=options?.onProgress;
   let total=Number(options?.bytes)||0,received=0;
   onProgress?.({received,total});

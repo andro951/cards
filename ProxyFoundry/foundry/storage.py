@@ -328,7 +328,10 @@ class Store:
             else:
                 body=json.loads(row['body'])
                 assets={c.get(key) for c in body.get('cards',[]) for key in ('frontAsset','backAsset')}
-                tasks=[{'file':'orders/'+ident+'.zip'}]+[{'asset':a} for a in assets if a]
+                if any(not re.fullmatch(r'part-[0-9]{3,5}\.zip',str(part.get('filename',''))) for part in body.get('parts',[])):
+                    raise ValidationError('Invalid saved order part.')
+                files=['orders/'+ident+'/'+part['filename'] for part in body.get('parts',[])] or ['orders/'+ident+'.zip']
+                tasks=[{'file':file} for file in files]+[{'asset':a} for a in assets if a]
             now=time.time()
             db.execute('INSERT OR REPLACE INTO documents VALUES (?,?,?,?,?,?,?)',
                        ('cleanup',queue_id,1,json.dumps({'tasks':tasks}),now,now,0))

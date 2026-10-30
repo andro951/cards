@@ -8,6 +8,7 @@ pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Actual C
 
 
 @pytest.mark.parametrize('storage',['browser','selected-folder'])
+@pytest.mark.parametrize('static_browser',['msedge'] if os.name=='nt' else [None],indirect=True)
 def test_native_paired_zip_download_and_cleanup(static_browser,tmp_path,storage):
     directory,context,origin=static_browser
     images=[]
@@ -76,9 +77,14 @@ def request(app,method,url,body,headers):
     assert result['count']==4 and page.evaluate('window.zipWorkers')==0
     saved=tmp_path/'paired.zip'
     def download():
-        with page.expect_download() as item:
-            page.evaluate("async path=>{const {saveApiFile}=await import('/site/ui.js');await saveApiFile(path,'paired.zip');}",result['download'])
-        item.value.save_as(saved)
+        data=page.evaluate("""async({path,id})=>{
+            const root=await navigator.storage.getDirectory();
+            window.showDirectoryPicker=async()=>root.getDirectoryHandle('export-download',{create:true});
+            const {saveApiFile}=await import('/site/ui.js');await saveApiFile(path,'paired.zip');
+            const target=await (await root.getDirectoryHandle('export-download')).getDirectoryHandle('BulkProxyForge_Order_'+id.slice(0,8));
+            return [...new Uint8Array(await (await (await target.getFileHandle('part-001.zip')).getFile()).arrayBuffer())];
+        }""",{'path':result['download'],'id':result['id']})
+        saved.write_bytes(bytes(data))
     download()
     expected=[images[0],images[1],images[0],images[1],images[2],images[3],images[4],images[5]]
     with zipfile.ZipFile(saved) as archive:
@@ -98,7 +104,7 @@ def request(app,method,url,body,headers):
         assert page.evaluate('window.zipOutcome')!='done'
         assert page.evaluate('window.zipWorkers')==0
         cleanup=page.evaluate("async()=>{const {api}=await import('/site/ui.js');return api('/api/__test__/zip/cleanup');}")
-        assert cleanup=={'orders':1,'files':[result['id']+'.zip'],'pins':0}
+        assert cleanup=={'orders':1,'files':[result['id']],'pins':0}
     page.reload(wait_until='domcontentloaded');page.locator('#import-deck').wait_for(timeout=90000)
     download();assert saved.read_bytes()==original
     assert not errors,errors

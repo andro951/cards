@@ -23,15 +23,17 @@ class NativeArchive:
     def __call__(self,operation,path,entries=None):
         if operation=='start-order-zip':
             self.entries=entries
-            with zipfile.ZipFile(self.app.store.home/path,'w',zipfile.ZIP_STORED) as archive:
+            folder=self.app.store.home/path;folder.mkdir()
+            with zipfile.ZipFile(folder/'part-001.zip','w',zipfile.ZIP_STORED) as archive:
                 for entry in entries:archive.write(self.app.store.home/entry['path'],entry['name'])
+            self.parts=[{'filename':'part-001.zip','count':len(entries)//2,'firstCard':1,'lastCard':len(entries)//2,'zipBytes':(folder/'part-001.zip').stat().st_size}]
             return {'id':'task'}
         assert path=='task'
         if operation=='release-order-zip':self.released=True;return {'ok':True}
         assert operation=='poll-order-zip'
         self.polls+=1
         if self.error and self.polls>1:return {'state':'failed','error':self.error}
-        return {'state':'done' if self.polls>1 else 'running','done':len(self.entries) if self.polls>1 else 2,'message':'Packaging'}
+        return {'state':'done' if self.polls>1 else 'running','done':len(self.entries) if self.polls>1 else 2,'message':'Packaging','parts':self.parts}
 
 
 def test_native_archive_keeps_exact_front_back_pairs_and_saved_download(app):
@@ -41,7 +43,7 @@ def test_native_archive_keeps_exact_front_back_pairs_and_saved_download(app):
     assert result['count']==3 and result['download']=='/api/orders/'+result['id']+'/download'
     assert app.store.get('orders',result['id'])['snapshotHash']==result['snapshotHash']
     raw=app.store.asset_path(app.fixture_deck['settings']['backAsset']).read_bytes()
-    with zipfile.ZipFile(app.store.home/'orders'/(result['id']+'.zip')) as archive:
+    with zipfile.ZipFile(app.store.home/'orders'/result['id']/'part-001.zip') as archive:
         assert archive.testzip() is None
         assert archive.namelist()==[side+f'/{index:06d}.png' for index in range(1,4) for side in ('FRONT','BACK')]
         assert all(archive.read(name)==raw for name in archive.namelist())
@@ -55,7 +57,7 @@ def test_save_bytes_and_finalization_reach_job_progress(app):
         {'state':'running','done':6,'message':'Saving paired ZIP','phase':'saving','saveStage':'writing','savedBytes':128,'totalBytes':256,'saveElapsedSeconds':2,'saveBytesPerSecond':64,'saveEtaSeconds':2},
         {'state':'running','done':6,'message':'Finalizing paired ZIP','phase':'saving','saveStage':'finalizing','savedBytes':256,'totalBytes':256,'saveElapsedSeconds':4,'saveEtaSeconds':None},
         {'state':'done','done':6,'message':'Paired ZIP saved','phase':'saving','saveStage':'complete','savedBytes':256,'totalBytes':256}])
-    def archive(operation,*args):return next(statuses) if operation=='poll-order-zip' else poll(operation,*args)
+    def archive(operation,*args):return {**next(statuses),'parts':native.parts} if operation=='poll-order-zip' else poll(operation,*args)
     app.orders.archive=archive
     jobs=BrowserJobs(app.store);ident=jobs.start('Package paired order',lambda update,cancel:app.orders.build_steps([app.fixture_deck['id']],progress=update,cancel=cancel))['id']
     jobs.run_pending(limit=1);status=jobs.get(ident)

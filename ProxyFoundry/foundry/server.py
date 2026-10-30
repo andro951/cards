@@ -27,7 +27,7 @@ from .images import ingest_image, rarity_variants, sanitize_svg, decode_image
 from .jobs import Jobs
 from .github_setup import import_github_setup, import_card_data_url, import_symbol_folder, parse_card_data_json, validate_card_data_for_deck
 from .orders import Orders
-from .transfer_batches import TransferBatches, MAX_CHUNK_BYTES
+from .transfer_batches import TransferBatches, MAX_CHUNK_BYTES, MAX_BATCH_BYTES
 from .runtime import Runtime
 from .storage import Store
 from .tools import CardTools
@@ -258,16 +258,32 @@ class App:
     def transfer(self, order_id, *, whole_file=False):
         d = self.store.get('orders', order_id)
         p = self.store.home / 'orders' / (order_id + '.zip')
-        if not d or not p.is_file(): raise ValidationError('This saved order package is missing. Build it again.')
-        batches = None if whole_file else TransferBatches(p, d['count'])
-        stat = p.stat()
-        signature = (stat.st_size, stat.st_mtime_ns)
+        if not d:raise ValidationError('This saved order package is missing. Build it again.')
+        files=[];signature=None;batches=None
+        if d.get('parts'):
+            for part in d['parts']:
+                name=part['filename']
+                if not re.fullmatch(r'part-[0-9]{3,5}\.zip',name):raise ValidationError('Invalid saved order part.')
+                path=self.store.home/'orders'/order_id/name
+                stat=path.stat()
+                if stat.st_size!=part['zipBytes']:raise ValidationError('The saved order part changed. Rebuild it.')
+                files.append({**part,'path':path,'signature':(stat.st_size,stat.st_mtime_ns)})
+            size=sum(part['zipBytes'] for part in files)
+        else:
+            if not p.is_file():raise ValidationError('This saved order package is missing. Build it again.')
+            printed={card.get(side+'Asset') for card in d.get('cards',[]) for side in ('front','back')}
+            with self.store.connect() as db:
+                landscape={row[0] for row in db.execute('SELECT id FROM assets WHERE width>height')}
+            if printed&landscape:
+                raise ValidationError('This older saved order contains landscape print images. Build a new order so battles and placers are saved in portrait. The original snapshot is unchanged.')
+            stat=p.stat();signature=(stat.st_size,stat.st_mtime_ns);size=stat.st_size
+            if not whole_file or size>MAX_BATCH_BYTES:batches=TransferBatches(p,d['count'])
         ident, secret = uid(), secrets.token_urlsafe(32)
         with self.lock:
             now = time.time()
             self.transfers = {k: v for k, v in self.transfers.items() if v['expires'] > now}
             self.transfers[ident] = {'secret': secret, 'expires': now + 3600, 'order': order_id,
-                                    'path': p, 'count': d['count'], 'zipBytes': signature[0], 'signature': signature, 'batches': batches}
+                                    'path':p,'count':d['count'],'zipBytes':size,'signature':signature,'batches':batches,'files':files,'wholeFile':whole_file}
         return {'id': ident, 'secret': secret, 'origin': self.origin}
 
     def authorized_transfer(self, ident, secret):
@@ -282,7 +298,7 @@ class App:
         d = self.store.get('orders', ident)
         if not d: raise ValidationError('Order not found.')
         p = self.store.home / 'orders' / (ident + '.zip')
-        return {**d, 'zipBytes': p.stat().st_size if p.is_file() else 0,
+        return {**d, 'zipBytes':sum(part['zipBytes'] for part in d['parts']) if d.get('parts') else p.stat().st_size if p.is_file() else 0,
                 'download': '/api/orders/' + ident + '/download'}
 
     def diagnostic_data(self):
@@ -550,7 +566,15 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(target)
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})', p): return self.respond(self.app.order(m[1]))
         if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/download', p):
-            self.app.order(m[1]); return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+            order=self.app.order(m[1])
+            if order.get('parts'):
+                if len(order['parts'])==1:return self.file(self.app.store.home/'orders'/m[1]/order['parts'][0]['filename'],'application/zip',order['parts'][0]['filename'])
+                return self.respond({'parts':[{'filename':part['filename'],'download':f"/api/orders/{m[1]}/parts/{index}"} for index,part in enumerate(order['parts'])]})
+            return self.file(self.app.store.home / 'orders' / (m[1] + '.zip'), 'application/zip', 'BulkProxyForge_Order_' + m[1][:8] + '.zip')
+        if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/parts/([0-9]{1,5})',p):
+            order=self.app.order(m[1]);index=int(m[2]);parts=order.get('parts') or []
+            if index>=len(parts):raise ValidationError('Order part not found.')
+            return self.file(self.app.store.home/'orders'/m[1]/parts[index]['filename'],'application/zip',parts[index]['filename'])
         if m := re.fullmatch(r'/api/review-downloads/([-a-f0-9]{36})/([A-Za-z0-9_.-]+\.(?:zip|png|jpg))', p):
             return self.file(self.app.ws.review_download_file(m[1],m[2]),filename=m[2])
         if m := re.fullmatch(r'/api/files/([A-Za-z0-9_.-]+\.(?:zip|png))', p):
@@ -561,19 +585,28 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
             if m[2] == 'metadata':
-                if t['batches'] is None:
-                    return self.respond({'count':t['count'],'zipBytes':t['zipBytes'],
-                                         'filename':'BulkProxyForge_Order.zip','protocolVersion':3})
+                native_parts=[{k:part[k] for k in ('filename','count','zipBytes','firstCard','lastCard')}|{'index':index} for index,part in enumerate(t['files'])] if t['files'] else t['batches'].metadata() if t['batches'] else None
+                if t['wholeFile']:
+                    return self.respond({'count':t['count'],'zipBytes':sum(part['zipBytes'] for part in native_parts) if native_parts else t['zipBytes'],
+                                         'filename':'BulkProxyForge_Order.zip','protocolVersion':3,**({'batches':native_parts} if native_parts else {})})
+                if t['files']:
+                    return self.respond({'count':t['count'],'zipBytes':t['zipBytes'],'filename':'BulkProxyForge_Order.zip','protocolVersion':2,'batches':native_parts})
                 return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'],
                                      'filename': 'BulkProxyForge_Order.zip', 'protocolVersion': 2,
                                      'batches': t['batches'].metadata()})
             if 'batch' not in q:  # Keep the original endpoint for 1.0 helpers/small orders.
+                if t['files']:
+                    if len(t['files'])!=1:raise ValidationError('Choose a ZIP part for this saved order.')
+                    return self.file(t['files'][0]['path'],'application/zip',allow_range=True)
                 return self.file(t['path'], 'application/zip', allow_range=True)
-            if t['batches'] is None:raise ValidationError('This order uses a direct whole-file handoff.')
+            if t['batches'] is None and not t['files']:raise ValidationError('This order uses a direct whole-file handoff.')
             indices = q['batch']
             if len(indices) != 1 or not re.fullmatch(r'[0-9]{1,5}', indices[0]):
                 raise ValidationError('Invalid ZIP batch index.')
             batch = int(indices[0])
+            if t['files']:
+                if batch>=len(t['files']):raise ValidationError('Invalid ZIP part index.')
+                return self.file(t['files'][batch]['path'],'application/zip',allow_range=True)
             match = re.fullmatch(r'bytes=(\d+)-(\d+)', self.headers.get('Range', ''))
             if not match: raise ValidationError('A bounded ZIP batch range is required.')
             start, end = map(int, match.groups())

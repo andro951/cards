@@ -47,7 +47,7 @@ export class WorkspaceFiles {
         return (await directory.getFileHandle(name)).getFile();
     }
     readSpans = async (path,spans,signature) => {
-        if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(path)||!Array.isArray(spans)||!spans.length||spans.length>16384)
+        if(!/^orders\/[a-f0-9-]{36}(?:\.zip|\/part-[0-9]{3,5}\.zip)$/.test(path)||!Array.isArray(spans)||!spans.length||spans.length>16384)
             throw new Error(`Invalid saved order range.`);
         const file=await this.file(path);
         if(!signature||file.size!==signature.size||Math.abs(file.lastModified-signature.modified)>1)
@@ -66,6 +66,35 @@ export class WorkspaceFiles {
             if(size>8*1024*1024)throw new Error(`Oversized saved order range.`);
         }
         return new Blob(parts,{type:`application/zip`});
+    }
+    nativeOrderFiles = async info => {
+        const rows=info.files||[info],sourceFiles=new Map(),result=[];
+        for(const row of rows){
+            if(!/^orders\/[a-f0-9-]{36}(?:\.zip|\/part-[0-9]{3,5}\.zip)$/.test(row.path)||!Number.isSafeInteger(row.size)||row.size<22||row.size>=2_000_000_000)
+                throw new Error(`Invalid printer ZIP part.`);
+            if(!sourceFiles.has(row.path))sourceFiles.set(row.path,await this.file(row.path));
+            const source=sourceFiles.get(row.path),signature=row.sourceSignature||{size:row.size,modified:row.modified};
+            if(source.size!==signature.size||Math.abs(source.lastModified-signature.modified)>1)throw new Error(`The saved order changed. Reopen it.`);
+            const parts=[];let size=0,headers=0;
+            if(row.view){
+                if(!Array.isArray(row.view)||row.view.length>50000)throw new Error(`Invalid ZIP view.`);
+                for(const span of row.view){
+                    if(typeof span.base64===`string`){
+                        if(span.base64.length>3*1024*1024)throw new Error(`Oversized ZIP header.`);
+                        const bytes=Uint8Array.from(atob(span.base64),c=>c.charCodeAt(0));headers+=bytes.length;
+                        if(headers>16*1024*1024)throw new Error(`Oversized ZIP headers.`);parts.push(bytes);size+=bytes.length;
+                    }else{
+                        if(!Number.isSafeInteger(span.offset)||!Number.isSafeInteger(span.length)||span.offset<0||span.length<1||span.offset+span.length>source.size)throw new Error(`Invalid ZIP file range.`);
+                        parts.push(source.slice(span.offset,span.offset+span.length));size+=span.length;
+                    }
+                }
+                if(size!==row.size)throw new Error(`Incomplete ZIP view.`);
+            }else parts.push(source);
+            const name=row.filename||source.name;
+            if(!/^[A-Za-z0-9_.-]+\.zip$/.test(name))throw new Error(`Invalid ZIP filename.`);
+            result.push(new File(parts,name,{type:`application/zip`,lastModified:source.lastModified}));
+        }
+        return result;
     }
     invalidate = path => {
         for(const key of this.directories.keys()) {
@@ -204,7 +233,7 @@ export class WorkspaceFiles {
     execute = async (operation,path,query,body) => {
         if(operation===`start-order-zip`) {
             const entries=JSON.parse(new TextDecoder().decode(body));
-            if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(path)||!Array.isArray(entries)||!entries.length||entries.length>20000)
+            if(!/^orders\/[a-f0-9-]{36}$/.test(path)||!Array.isArray(entries)||!entries.length||entries.length%2||entries.length>20000)
                 throw new Error(`Invalid paired ZIP plan.`);
             for(const entry of entries) {
                 this.parts(entry.path);
@@ -233,7 +262,7 @@ export class WorkspaceFiles {
                 await task.finished;this.orderZips.delete(path);return {ok:true};
             }
 
-            const fields=[`state`,`done`,`total`,`message`,`error`,`bytes`,`phase`,`saveStage`,`savedBytes`,`totalBytes`,`saveElapsedSeconds`,`saveBytesPerSecond`,`saveEtaSeconds`];
+            const fields=[`state`,`done`,`total`,`message`,`error`,`bytes`,`parts`,`phase`,`saveStage`,`savedBytes`,`totalBytes`,`saveElapsedSeconds`,`saveBytesPerSecond`,`saveEtaSeconds`];
             return Object.fromEntries(fields.filter(key=>task[key]!==undefined).map(key=>[key,task[key]]));
         }
 

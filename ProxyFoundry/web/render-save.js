@@ -1,4 +1,5 @@
 "use strict";
+import {portraitPrintOutput} from '../site/print-orientation.js';
 
 export class BrowserRenderSave {
     constructor(directory,api,generation=null){
@@ -46,6 +47,7 @@ export class BrowserRenderSave {
         }
     };
     save = async (target,output) => {
+        output=await portraitPrintOutput(output,target.printPortrait);
         const {blob,width,height}=output;
         if(!(blob instanceof Blob)||!blob.size||blob.size>64*1024*1024||width*height>48000000)
             throw new Error(`The renderer returned an invalid PNG.`);

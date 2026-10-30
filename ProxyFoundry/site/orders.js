@@ -29,7 +29,7 @@ export async function showOrders(deckId=null){
   const all=await api('/api/orders');
   if(epoch!==state.routeEpoch)return;
   const orders=deckId?all.filter(order=>order.decks.some(deck=>deck.id===deckId)):all;
-  $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">BUILT FOR THE TABLETOP</span><h1>Print orders</h1><p>Combine any number of decks. Each physical card gets an explicit front/back pair.</p></div><button class="button primary" id="new-order">＋ Create print order</button></div><section class="hero-strip"><div><h2>One order. Every back in the right place.</h2><p>Order packages are saved snapshots. Editing a deck later won’t change a ZIP you already built. The printer opens in a new tab when you’re ready.</p></div><div class="order-icon" aria-hidden="true">▱</div></section>${orders.length?`<section class="panel order-list">${orders.map(o=>`<div class="order-row"><div class="order-title"><h3>${o.count} cards · ${o.decks.length} deck${o.decks.length===1?'':'s'}</h3><p>${o.decks.map(d=>esc(d.name)).join(' · ')}</p><small>${date(o.createdAt)} · ${bytes(o.zipBytes)} · paired filenames</small></div><div class="actions"><a class="button small" href="${esc(o.download)}" download>Download ZIP</a><button class="button primary small" data-open-order="${o.id}">Open in TCGPlaytest ↗</button><button class="button quiet small" data-review-order="${o.id}">Review</button></div></div>`).join('')}</section>`:empty('Your first print order is a few clicks away','Generate your deck images, select the decks you want, and check the paired preview before you package them.',`<button class="button primary" id="empty-order">Choose decks</button>`)}`;
+  $('#main').innerHTML=`<div class="page-head"><div><span class="eyebrow">BUILT FOR THE TABLETOP</span><h1>Print orders</h1><p>Combine any number of decks. Each physical card gets an explicit front/back pair.</p></div><button class="button primary" id="new-order">＋ Create print order</button></div><section class="hero-strip"><div><h2>One order. Every back in the right place.</h2><p>Order packages are saved snapshots. Editing a deck later won’t change a ZIP you already built. The printer opens in a new tab when you’re ready.</p></div><div class="order-icon" aria-hidden="true">▱</div></section>${orders.length?`<section class="panel order-list">${orders.map(o=>`<div class="order-row"><div class="order-title"><h3>${o.count} cards · ${o.decks.length} deck${o.decks.length===1?'':'s'}</h3><p>${o.decks.map(d=>esc(d.name)).join(' · ')}</p><small>${date(o.createdAt)} · ${bytes(o.zipBytes)} · paired filenames</small></div><div class="actions"><a class="button small" href="${esc(o.download)}" download>Download ZIP folder</a><button class="button primary small" data-open-order="${o.id}">Open in TCGPlaytest ↗</button><button class="button quiet small" data-review-order="${o.id}">Review</button></div></div>`).join('')}</section>`:empty('Your first print order is a few clicks away','Generate your deck images, select the decks you want, and check the paired preview before you package them.',`<button class="button primary" id="empty-order">Choose decks</button>`)}`;
   if(state.bootstrap?.browser){
     $('.page-head .eyebrow')?.remove();$('.page-head p')?.remove();$('.hero-strip')?.remove();
     for(const button of $$('[data-open-order]'))button.textContent='Print Cards';
@@ -82,7 +82,7 @@ function reviewPlan(plan,ids,saved=false){
   // Collapse repeated quantities for preview only. The ZIP still contains every copy.
   const unique=new Map();for(const c of plan.cards){const key=[c.deckId,c.cardId,c.frontAsset,c.backAsset].join(':');if(!unique.has(key))unique.set(key,{...c,quantity:0});unique.get(key).quantity++;}
   const cards=[...unique.values()];let query='',page=0;const pageSize=36;
-  const host=modal(saved?'Saved order preview':'Review your paired order',`<div class="order-metrics"><div class="metric"><b>${plan.count}</b><span>physical cards</span></div><div class="metric"><b>${plan.decks.length}</b><span>selected decks</span></div><div class="metric"><b>${bytes(plan.zipBytes||plan.bytes)}</b><span>estimated package</span></div></div><div class="notice success">Front and back filenames are paired explicitly. TCGPlaytest does not need to infer an image order.</div>${plan.warnings?.length?`<details class="notice" open><summary>${plan.warnings.length} artwork or layout warnings</summary><ul>${plan.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>${!saved?'<label class="check-line"><input type="checkbox" id="ack-order-warnings"><span>I reviewed these warnings and accept the current crop/layout.<small>No artwork is automatically altered to hide a warning.</small></span></label>':''}`:''}<div class="toolbar"><label class="search"><input id="order-search" type="search" placeholder="Find a card in this order…" aria-label="Find a card in order"></label><span class="subtitle-line">Front ↔ Back · one tile per unique pair</span></div><div id="pair-grid"></div><div class="actions section-gap" id="pair-pages"></div>`,{size:'large',footer:saved?`<a class="button" href="/api/orders/${plan.id}/download" download>Download saved ZIP</a><button class="button primary" id="open-saved-order">Open in TCGPlaytest ↗</button>`:'<span class="footer-hint">Nothing is purchased automatically.</span><button class="button primary" id="build-order">Build paired ZIP</button>'});
+  const host=modal(saved?'Saved order preview':'Review your paired order',`<div class="order-metrics"><div class="metric"><b>${plan.count}</b><span>physical cards</span></div><div class="metric"><b>${plan.decks.length}</b><span>selected decks</span></div><div class="metric"><b>${bytes(plan.zipBytes||plan.bytes)}</b><span>estimated package</span></div></div><div class="notice success">Front and back filenames are paired explicitly. TCGPlaytest does not need to infer an image order.</div>${plan.warnings?.length?`<details class="notice" open><summary>${plan.warnings.length} artwork or layout warnings</summary><ul>${plan.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>${!saved?'<label class="check-line"><input type="checkbox" id="ack-order-warnings"><span>I reviewed these warnings and accept the current crop/layout.<small>No artwork is automatically altered to hide a warning.</small></span></label>':''}`:''}<div class="toolbar"><label class="search"><input id="order-search" type="search" placeholder="Find a card in this order…" aria-label="Find a card in order"></label><span class="subtitle-line">Front ↔ Back · one tile per unique pair</span></div><div id="pair-grid"></div><div class="actions section-gap" id="pair-pages"></div>`,{size:'large',footer:saved?`<a class="button" href="/api/orders/${plan.id}/download" download>Download ZIP folder</a><button class="button primary" id="open-saved-order">Open in TCGPlaytest ↗</button>`:'<span class="footer-hint">Nothing is purchased automatically.</span><button class="button primary" id="build-order">Build paired ZIP</button>'});
   function grid(){
     const filtered=cards.filter(c=>(c.name+' '+c.deckName).toLowerCase().includes(query.toLowerCase()));const max=Math.max(0,Math.ceil(filtered.length/pageSize)-1);page=Math.min(page,max);
     $('#pair-grid').innerHTML=`<div class="pair-grid">${filtered.slice(page*pageSize,(page+1)*pageSize).map(c=>`<article class="well"><div class="pair-images"><a href="/api/assets/${esc(c.frontAsset)}" target="_blank" rel="noopener"><img loading="lazy" decoding="async" src="${esc(thumbnail('/api/assets/'+c.frontAsset))}" alt="${esc(c.name)} front"></a><a href="/api/assets/${esc(c.backAsset)}" target="_blank" rel="noopener"><img loading="lazy" decoding="async" src="${esc(thumbnail('/api/assets/'+c.backAsset))}" alt="${esc(c.name)} back"></a></div><div class="pair-title">${c.quantity}× ${esc(c.name)}</div><div class="pair-subtitle">${esc(c.deckName)}</div></article>`).join('')}</div>`;
@@ -111,14 +111,14 @@ function orderReady(order){
     $('#save-order-later',host).onclick=()=>{closeModal();nav('orders');toast('Your print package is saved in this browser.');};
     return;
   }
-  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Download images ZIP · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">The helper will send this order as multiple ZIP batches, each at most 1 GB, into the same TCGPlaytest design. Original image quality is unchanged.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
+  const host=modal('Your print package is ready',`<div class="empty-state"><span class="success-check">✓</span><h2>${order.count} cards, correctly paired.</h2><p>${order.decks.map(d=>esc(d.name)).join(' · ')}</p><div class="actions"><a class="button" id="download-order" href="${esc(order.download)}" download>Save ZIP folder · ${bytes(order.zipBytes)}</a><button class="button primary" id="send-order">Open in TCGPlaytest ↗</button></div></div><div class="notice info">Proxy Foundry stays open. In the printer tab, choose Add or Replace if cards are already present, then review the print preview before checkout.</div>${order.zipBytes>1024**3?'<div class="notice">The helper sends the saved ZIP parts into the same TCGPlaytest design. Each part is below 2 GB; front/back pairs stay together.</div>':''}`,{footer:'<button class="button quiet" id="view-orders">View saved orders</button>'});
   $('#send-order').onclick=()=>attempt(()=>openOrder(order.id));
   $('#view-orders').onclick=()=>{closeModal();nav('orders');};
 }
 function choosePrintPath(order){
-  const host=modal('Print Cards',`<div class="well"><h3>Print once · no setup</h3><p>Download your card ZIP, then upload it on TCGPlaytest.</p><button class="button" id="manual-printer">2 · Open TCGPlaytest ↗</button><p class="muted">On the printer page, choose <b>Upload Deck ZIP</b> and select the ZIP you downloaded.</p><img src="/site/tcg-upload-guide.png" alt="TCGPlaytest design page showing the Upload Deck ZIP control" style="width:min(100%,330px);border-radius:9px;border:1px solid #59677a"></div><div class="well section-gap"><h3>Printing again later?</h3><p>Install the optional helper once to send future orders automatically.</p><button class="button" id="install-print-helper">Set up one-click printing</button></div>`,{size:'large'});
+  const host=modal('Print Cards',`<div class="well"><h3>Print once · no setup</h3><p>Save your ZIP folder, then upload its ZIP files on TCGPlaytest.</p><button class="button" id="manual-printer">2 · Open TCGPlaytest ↗</button><p class="muted">On the printer page, choose <b>Upload Deck ZIP</b> and upload each ZIP part in order, keeping the same design open.</p><img src="/site/tcg-upload-guide.png" alt="TCGPlaytest design page showing the Upload Deck ZIP control" style="width:min(100%,330px);border-radius:9px;border:1px solid #59677a"></div><div class="well section-gap"><h3>Printing again later?</h3><p>Install the optional helper once to send future orders automatically.</p><button class="button" id="install-print-helper">Set up one-click printing</button></div>`,{size:'large'});
   const download=document.createElement(`button`);download.id=`manual-zip`;download.type=`button`;download.className=`button primary`;
-  const label=`1 · Download card ZIP`;download.textContent=label;
+  const label=`1 · Save ZIP folder`;download.textContent=label;
   const progress=document.createElement(`div`);progress.hidden=true;progress.style.display=`none`;
   Object.assign(progress.style,{gap:`6px`,margin:`10px 0`,maxWidth:`480px`});
   const status=document.createElement(`span`);status.setAttribute(`role`,`status`);status.setAttribute(`aria-live`,`polite`);
@@ -129,18 +129,18 @@ function choosePrintPath(order){
     if(download.disabled)
       return;
 
-    download.disabled=true;download.setAttribute(`aria-busy`,`true`);download.textContent=`Downloading card ZIP…`;
-    progress.hidden=false;progress.style.display=`grid`;bar.removeAttribute(`value`);status.textContent=`Preparing card ZIP download…`;
+    download.disabled=true;download.setAttribute(`aria-busy`,`true`);download.textContent=`Saving ZIP folder…`;
+    progress.hidden=false;progress.style.display=`grid`;bar.removeAttribute(`value`);status.textContent=`Preparing ZIP folder…`;
     try{
       await saveApiFile(order.download||`/api/orders/${order.id}/download`,`BulkProxyForge_Order.zip`,{
         bytes:order.zipBytes,onProgress:({received,total,complete})=>{
-          if(complete){bar.value=100;status.textContent=`ZIP sent to your browser. Check Downloads.`;return;}
+          if(complete){bar.value=100;status.textContent=`ZIP folder saved to the location you chose.`;return;}
           const percent=total?Math.min(99,Math.floor(received/total*100)):0;
           if(total)bar.value=percent;
-          status.textContent=received?(total?`${percent}% · ${bytes(received)} / ${bytes(total)}`:`${bytes(received)} received`):`Preparing card ZIP download…`;
+          status.textContent=received?(total?`${percent}% · ${bytes(received)} / ${bytes(total)}`:`${bytes(received)} received`):`Preparing ZIP folder…`;
         }
       });
-    }catch(error){status.textContent=`Download failed: ${error.message} Click Download card ZIP to retry.`;throw error;}
+    }catch(error){status.textContent=`Download failed: ${error.message} Click Save ZIP folder to retry.`;throw error;}
     finally{download.disabled=false;download.setAttribute(`aria-busy`,`false`);download.textContent=label;}
   });
   $('#manual-printer',host).onclick=()=>window.open('https://www.tcgplaytest.com/?view=design','_blank','noopener');
@@ -148,14 +148,14 @@ function choosePrintPath(order){
 }
 async function openOrder(id){
   if(state.helper&&state.bootstrap?.browser){
-    if(!state.helperCapabilities?.includes('native-whole-zip'))
-      throw new Error('Direct ZIP handoff needs Print Helper 1.4.0. Download the updated helper, replace its extracted files, reload it in edge://extensions or chrome://extensions, then reload this page.');
+    if(!state.helperCapabilities?.includes('native-zip-parts'))
+      throw new Error('Direct ZIP handoff needs Print Helper 1.5.0. Download the updated helper, replace its extracted files, reload it in edge://extensions or chrome://extensions, then reload this page.');
     await openNativePrint({
       createTransfer:()=>api('/api/orders/'+id+'/transfer',{wholeFile:true}),
       register:registerOrder,
       getFile:(ident,secret)=>window.__pfPrintFile(ident,secret)
     });
-    toast('The complete saved ZIP is connected to TCGPlaytest. Keep this page open until the upload finishes.');
+    toast('The saved ZIP parts are connected to TCGPlaytest. Keep this page open until the upload finishes.');
     return;
   }
   if(!state.helper){

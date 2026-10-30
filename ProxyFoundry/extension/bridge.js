@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.4.0';
+  const VERSION = '1.5.0';
   const params = new URLSearchParams(location.search);
   const requestedSessionId = params.get('proxyFoundryOrder');
   if (!requestedSessionId) return;
@@ -9,7 +9,7 @@
   let metadata = null;
   let NEW_CARD_COUNT = 0;
   let batches = [], completedCards = 0;
-  let nativeFile = null;
+  let nativeFiles = [];
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   try {
@@ -82,7 +82,7 @@
   });
   closeBtn.addEventListener('click', () => {
     cancelled = true;
-    nativeFile = null;
+    nativeFiles = [];
     if (pendingChoiceResolve) {pendingChoiceResolve('cancel'); pendingChoiceResolve = null;}
     overlay.remove();
   });
@@ -96,7 +96,7 @@
   }
   function processingVisible() {
     const text = bodyText();
-    return /Applying Bleed Settings|Processing card|Preparing card\s+\d+\s+of\s+\d+|Uploading card\s+\d+\s+of\s+\d+/i.test(text);
+    return /Opening ZIP|Checking saved cards|Applying Bleed Settings|Processing card|(?:Opening|Preparing|Uploading) card\s+\d+\s+of\s+\d+/i.test(text);
   }
   function interactiveElements() {
     return [...document.querySelectorAll('button,[role="button"],a')].filter(el => {
@@ -234,16 +234,18 @@
     if (!Number.isSafeInteger(metadata.count) || metadata.count < 1 || !Number.isSafeInteger(metadata.zipBytes) || metadata.zipBytes < 22) throw new Error('The saved order metadata is invalid.');
     if(metadata.protocolVersion===3){
       NEW_CARD_COUNT=metadata.count;
-      batches=[{index:0,count:metadata.count,zipBytes:metadata.zipBytes,filename:metadata.filename}];
-      nativeFile=await receiveNativeFile();
-      debugEvent('Complete saved ZIP connected directly',{cards:NEW_CARD_COUNT,bytes:nativeFile.size});
+      batches=metadata.batches||[{index:0,count:metadata.count,zipBytes:metadata.zipBytes,filename:metadata.filename}];
+      if(!Array.isArray(batches)||!batches.length||batches.some((b,i)=>b.index!==i||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>=2_000_000_000||!Number.isSafeInteger(b.count)||b.count<1)||batches.reduce((sum,b)=>sum+b.count,0)!==metadata.count)
+        throw new Error('The printer ZIP parts do not match this order.');
+      nativeFiles=await receiveNativeFile();
+      debugEvent('Saved ZIP parts connected directly',{cards:NEW_CARD_COUNT,bytes:metadata.zipBytes,parts:nativeFiles.length});
       return;
     }
     batches=metadata.protocolVersion===2?metadata.batches:[{index:0,count:metadata.count,zipBytes:metadata.zipBytes,filename:metadata.filename}];
     if(!Array.isArray(batches)||!batches.length||batches.length>metadata.count)throw new Error('Invalid ZIP batches.');
     let total=0;
     for(const [i,b] of batches.entries()){
-      if(b.index!==i||!Number.isSafeInteger(b.count)||b.count<1||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>1024**3)throw new Error('Invalid or oversized ZIP batch.');
+      if(b.index!==i||!Number.isSafeInteger(b.count)||b.count<1||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>=2_000_000_000)throw new Error('Invalid or oversized ZIP batch.');
       total+=b.count;
     }
     if(total!==metadata.count)throw new Error('ZIP batches do not match the saved card count.');
@@ -255,7 +257,7 @@
       throw new Error('The original workspace tab is unavailable. Reopen this order from Bulk Proxy Forge.');
     const origin=new URL(source.origin);
     if(origin.origin!==source.origin||!['http:','https:'].includes(origin.protocol))throw new Error('Invalid workspace origin.');
-    log('Connecting the complete saved ZIP…','The file is passed directly from your workspace, without copying it into helper memory.');
+    log('Connecting the saved ZIP parts…','Files are passed directly from your workspace, without copying them into helper memory.');
     return new Promise((resolve,reject)=>{
       const channel=new MessageChannel();
       const finish=(error,file)=>{clearTimeout(timer);channel.port1.close();error?reject(error):resolve(file);};
@@ -264,8 +266,9 @@
         const result=event.data;
         if(cancelled){finish(new Error('Handoff cancelled.'));return;}
         if(!result?.ok){finish(new Error(result?.error||'The saved ZIP could not be opened.'));return;}
-        if(!(result.file instanceof File)||result.file.size!==metadata.zipBytes){finish(new Error('The saved ZIP does not match this order.'));return;}
-        finish(null,result.file);
+        const files=result.files||(result.file?[result.file]:[]);
+        if(files.length!==batches.length||files.some((file,index)=>!(file instanceof File)||file.size!==batches[index].zipBytes)){finish(new Error('The saved ZIP parts do not match this order.'));return;}
+        finish(null,files);
       };
       channel.port1.onmessageerror=()=>finish(new Error('The browser could not receive the saved ZIP.'));
       try{window.opener.postMessage({type:'PF_NATIVE_FILE_REQUEST',id:source.id,secret:source.secret},source.origin,[channel.port2]);}
@@ -274,7 +277,7 @@
   }
   async function createDeckZipFile(batch) {
     if(metadata.protocolVersion===3){
-      const file=nativeFile;nativeFile=null;
+      const file=nativeFiles[batch.index];nativeFiles[batch.index]=null;
       if(cancelled)throw new Error('Handoff cancelled.');
       if(!file||file.size!==batch.zipBytes)throw new Error('The saved ZIP is no longer available. Reopen the order.');
       return file;
@@ -501,7 +504,7 @@
     for(const batch of batches){
       if(cancelled)throw new Error('Handoff cancelled.');
       checkPrinterStorage();
-      log(metadata.protocolVersion===3?`Uploading the complete saved ZIP — ${batch.count} cards…`:`Preparing ZIP ${batch.index+1}/${batches.length} — ${batch.count} cards…`,
+      log(metadata.protocolVersion===3?`Uploading ZIP part ${batch.index+1}/${batches.length} — ${batch.count} cards…`:`Preparing ZIP ${batch.index+1}/${batches.length} — ${batch.count} cards…`,
         `${completedCards}/${NEW_CARD_COUNT} cards verified. Image bytes and front/back pairing are unchanged.`);
       await ensureFrontStep();
       const zipInput=await waitFor(findDeckZipInput,15000,'the Upload Deck ZIP control');
@@ -549,7 +552,7 @@
       }
       // Always use paired ZIPs, including empty/replaced decks. Never infer sequential backs.
       await appendDeckViaZip(0);
-    }catch(e){nativeFile=null;fail(e);}
+    }catch(e){nativeFiles=[];fail(e);}
   }
   run();
 })();

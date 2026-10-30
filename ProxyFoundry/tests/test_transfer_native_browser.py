@@ -30,7 +30,9 @@ def request(app,method,url,body,headers):
     if url=='/api/__test__/native-transfer':
         import base64
         import foundry.transfer_batches as batches
+        import foundry.server as server
         batches.MAX_BATCH_BYTES=6000
+        server.MAX_BATCH_BYTES=6000
         order=app.store.put('orders',{'count':5,'cards':[],'decks':[]})
         (app.store.home/'orders'/(order['id']+'.zip')).write_bytes(base64.b64decode('ZIP_DATA'))
         transfer=app.transfer(order['id'])
@@ -55,13 +57,13 @@ def request(app,method,url,body,headers):
         const error=await broken.json();
         const bootstrap=await api('/api/bootstrap');
         const denied=await workspaceFetch(path,{headers:{Range:'bytes=0-99'}});
-        const native=await window.__pfPrintFile(transfer.whole.id,transfer.whole.secret);
+        const nativeFiles=await window.__pfPrintFile(transfer.whole.id,transfer.whole.secret),native=nativeFiles[0];
         const nativeBytes=[...new Uint8Array(await native.slice(0,32).arrayBuffer())];
-        return {status:response.status,bytes,legacyStatus:legacy.status,legacyBytes,brokenStatus:broken.status,error:error.error,ready:bootstrap.browser,denied:denied.status,nativeFile:native instanceof File,nativeSize:native.size,nativeBytes};
+        return {status:response.status,bytes,legacyStatus:legacy.status,legacyBytes,brokenStatus:broken.status,error:error.error,ready:bootstrap.browser,denied:denied.status,nativeFile:native instanceof File,nativeSize:native.size,nativeBytes,nativeParts:nativeFiles.length};
     }''')
     assert result['status']==206 and result['bytes']==expected
     assert result['legacyStatus']==206 and result['legacyBytes']==list(source_zip.read_bytes()[:32])
     assert result['brokenStatus']==500 and 'I/O error' in result['error']
     assert result['ready'] is True and result['denied']==403
-    assert result['nativeFile'] is True and result['nativeSize']==source_zip.stat().st_size
-    assert result['nativeBytes']==list(source_zip.read_bytes()[:32])
+    assert result['nativeFile'] is True and result['nativeSize']==plan.views[0].size and result['nativeParts']==len(plan.views)
+    assert result['nativeBytes']==list(plan.read(0,0,32))

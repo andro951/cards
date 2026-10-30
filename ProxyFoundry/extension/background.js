@@ -1,5 +1,5 @@
 /* Public deck imports and paired ZIP transport run in this browser extension. */
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 const TARGET='https://www.tcgplaytest.com';
 const CHUNK=1024*1024;
 function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&(u.hostname.endsWith('.pages.dev')||u.hostname==='andro951.github.io'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}
@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
           if(!Array.isArray(meta.batches)||!meta.batches.length||meta.batches.length>meta.count)throw new Error('Invalid ZIP batches.');
           let count=0;
           for(const [i,b] of meta.batches.entries()){
-            if(b.index!==i||!Number.isSafeInteger(b.count)||b.count<1||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>1024**3)throw new Error('Invalid or oversized ZIP batch.');
+            if(b.index!==i||!Number.isSafeInteger(b.count)||b.count<1||!Number.isSafeInteger(b.zipBytes)||b.zipBytes<22||b.zipBytes>=2_000_000_000)throw new Error('Invalid or oversized ZIP batch.');
             count+=b.count;
           }
           if(count!==meta.count)throw new Error('ZIP batches do not match the saved card count.');

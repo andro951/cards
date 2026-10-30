@@ -70,7 +70,7 @@ async function runRenderPlan(plan,options={}){
             pipeline:!!generation,moreTargets,
             load:async target=>{
                 const detail=await measure('render.load-face',()=>api('/api/render-sessions/'+plan.id+'/'+target.key),{card:target.name,key:target.key});
-                target.saveTarget={key:target.key,deckId:detail.deckId,cardId:detail.cardId,faceId:detail.faceId};
+                target.saveTarget={key:target.key,deckId:detail.deckId,cardId:detail.cardId,faceId:detail.faceId,printPortrait:/battle/i.test(detail.data.version||'')};
                 return detail.data;
             },
             save:(target,output)=>measure('render.save',()=>onImage?onImage(target,output.blob):saver?saver.save(target.saveTarget,output):blobRequest('/api/render-sessions/'+plan.id+'/'+target.key,output.blob,'image/png'),{card:target.name,key:target.key,bytes:output.blob.size}),

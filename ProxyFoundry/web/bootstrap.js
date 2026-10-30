@@ -239,10 +239,27 @@ else{
     const response=await window.__pfWorkspaceFetch('/api/transfer/'+id+'/native-file',{headers:{'X-Proxy-Transfer-Token':secret}});
     const info=await response.json();
     if(!response.ok)throw new Error(info.error||'The saved order could not be opened.');
-    if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(info.path))throw new Error('Invalid saved order.');
-    const file=await files.file(info.path);
-    if(file.size!==info.size||Math.abs(file.lastModified-info.modified)>1)throw new Error('The saved order changed. Reopen it before retrying.');
-    return file;
+    return files.nativeOrderFiles(info);
+  };
+  window.__pfSaveOrder=async(id,{onProgress}={})=>{
+    //Open the picker before awaiting metadata, while the download click is active.
+    if(!window.showDirectoryPicker)throw new Error('Use a browser with folder saving, or open the saved order folder in your workspace.');
+    const destination=await window.showDirectoryPicker({mode:'readwrite',id:'bulk-proxy-forge-orders'});
+    const folder=await destination.getDirectoryHandle('BulkProxyForge_Order_'+id.slice(0,8),{create:true});
+    const {state}=await import('/site/ui.js');
+    const response=await window.__pfWorkspaceFetch('/api/orders/'+id+'/transfer',{method:'POST',headers:{'Content-Type':'application/json','X-Proxy-CSRF':state.csrf},body:JSON.stringify({wholeFile:true})});
+    const transfer=await response.json();if(!response.ok)throw new Error(transfer.error||'Could not open the saved order.');
+    const parts=await window.__pfPrintFile(transfer.id,transfer.secret);
+    const total=parts.reduce((sum,file)=>sum+file.size,0);let received=0;onProgress?.({received,total});
+    for(const file of parts){
+      let writer;
+      try{
+        writer=await (await folder.getFileHandle(file.name,{create:true})).createWritable();
+        for(let offset=0;offset<file.size;offset+=64*1024*1024){const chunk=file.slice(offset,offset+64*1024*1024);await writer.write(chunk);received+=chunk.size;onProgress?.({received,total});}
+        await writer.close();writer=null;
+      }finally{if(writer)await writer.abort().catch(()=>{});}
+    }
+    onProgress?.({received,total,complete:true});
   };
   window.addEventListener('message',async event=>{
     const data=event.data;

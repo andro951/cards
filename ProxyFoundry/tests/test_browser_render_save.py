@@ -38,16 +38,24 @@ def test_real_browser_save_recovers_stale_handle_and_preserves_existing_assets(t
                 const reopened=await BrowserRenderSave.open(null,root,{id:'second'});
                 await reopened.save(target,{blob,width:40,height:56});
                 const after=await handle.getFile();
-                return {rows:saver.rows.length,handles,preserved:before.lastModified===after.lastModified,bytes:await after.text()===await blob.text()};
+                const rows=saver.rows.length;
+                const canvas=new OffscreenCanvas(8,6),ctx=canvas.getContext('2d');ctx.fillStyle='red';ctx.fillRect(0,0,8,6);ctx.fillStyle='#00ff00';ctx.fillRect(0,0,1,1);ctx.fillStyle='blue';ctx.fillRect(7,5,1,1);
+                await reopened.save({...target,printPortrait:true},{blob:await canvas.convertToBlob(),width:8,height:6});
+                const battle=reopened.rows.at(-1),battleFolder=await reopened.assets.getDirectoryHandle(battle.hash.slice(0,2));
+                const bitmap=await createImageBitmap(await (await battleFolder.getFileHandle(battle.hash)).getFile());
+                const portrait=new OffscreenCanvas(6,8),pc=portrait.getContext('2d');pc.drawImage(bitmap,0,0);bitmap.close();
+                return {rows,handles,preserved:before.lastModified===after.lastModified,bytes:await after.text()===await blob.text(),rotation:{size:[battle.width,battle.height],green:[...pc.getImageData(0,7,1,1).data],blue:[...pc.getImageData(5,0,1,1).data]}};
             }''',base64.b64encode(out.getvalue()).decode())
-            assert result=={'rows':3,'handles':2,'preserved':True,'bytes':True}
+            assert result=={'rows':3,'handles':2,'preserved':True,'bytes':True,'rotation':{'size':[6,8],'green':[0,255,0,255],'blue':[0,0,255,255]}}
             browser.close()
     finally:server.shutdown();server.server_close()
 
 
 def test_direct_browser_save_validation_grouping_and_retry():
     out=io.BytesIO();Image.new('RGBA',(40,56),'blue').save(out,'PNG')
-    module='data:text/javascript;base64,'+base64.b64encode((ROOT/'web/render-save.js').read_bytes()).decode()
+    orientation='data:text/javascript;base64,'+base64.b64encode((ROOT/'site/print-orientation.js').read_bytes()).decode()
+    source=(ROOT/'web/render-save.js').read_text().replace('../site/print-orientation.js',orientation)
+    module='data:text/javascript;base64,'+base64.b64encode(source.encode()).decode()
     code='''
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';

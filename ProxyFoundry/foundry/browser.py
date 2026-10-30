@@ -589,6 +589,19 @@ class BrowserHandler(server.Handler):
         native=re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/native-file',path)
         if native:
             active=self.app.authorized_transfer(native[1],self.headers.get('X-Proxy-Transfer-Token'))
+            if active['files']:
+                files=[]
+                for part in active['files']:
+                    stat=part['path'].stat()
+                    if part['signature']!=(stat.st_size,stat.st_mtime_ns):raise ValidationError('The saved order changed. Reopen it.')
+                    files.append({'path':part['path'].relative_to(self.app.store.home).as_posix(),'filename':part['filename'],'size':stat.st_size,'modified':round(stat.st_mtime*1000)})
+                return self.respond({'files':files})
+            if active['batches']:
+                files=[]
+                for part in active['batches'].metadata():
+                    view=active['batches'].describe_view(part['index'])
+                    files.append({'path':active['path'].relative_to(self.app.store.home).as_posix(),'filename':part['filename'],'size':view['size'],'view':view['parts'],'sourceSignature':view['signature']})
+                return self.respond({'files':files})
             source=active['path'];stat=source.stat()
             if active['signature']!=(stat.st_size,stat.st_mtime_ns):
                 raise ValidationError('The saved order changed. Reopen it before retrying.')
@@ -597,6 +610,7 @@ class BrowserHandler(server.Handler):
         transfer=re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/zip',path)
         if transfer and 'batch' in query:
             active=self.app.authorized_transfer(transfer[1],self.headers.get('X-Proxy-Transfer-Token'))
+            if active['files']:return super().get(path,query)
             if active['batches'] is None:raise ValidationError('This order uses a direct whole-file handoff.')
             indices=query['batch'];requested=re.fullmatch(r'bytes=(\d+)-(\d+)',self.headers.get('Range',''))
             if len(indices)!=1 or not re.fullmatch(r'[0-9]{1,5}',indices[0]) or not requested:

@@ -19,8 +19,9 @@ def test_images_and_thumbnails_decode_inside_project_scope(static_browser):
       const paths=[ui.asset(image.id),ui.thumbnail('/api/assets/'+image.id)];
       const results=[];
       for(const src of paths){const img=document.createElement('img');img.src=src;document.body.append(img);await img.decode();results.push({path:new URL(img.src).pathname,width:img.naturalWidth,height:img.naturalHeight});}
-      return {results,external:ui.thumbnail('https://example.com/image.png'),twice:ui.workspaceUrl(paths[0])};
+      return {results,external:ui.thumbnail('https://example.com/image.png'),twice:ui.workspaceUrl(paths[0]),prefixedThumbnail:ui.thumbnail(paths[0])};
     }''',list(raw.getvalue()))
     assert all(item['path'].startswith('/cards/api/assets/') and item['width']>0 for item in result['results'])
     assert result['results'][0]['width']==120 and result['external']=='https://example.com/image.png'
     assert result['twice']==result['results'][0]['path']
+    assert result['prefixedThumbnail']==result['results'][1]['path']

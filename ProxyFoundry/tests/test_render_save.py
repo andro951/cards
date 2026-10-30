@@ -20,6 +20,16 @@ def test_render_save_keeps_exact_native_png_and_registers_valid_render(tmp_path)
     assert (store.home/result['file_path']).read_bytes()==raw
     assert workspace.store.render_get('a'*64)['asset_id']==result['asset_id']
 
+@pytest.mark.parametrize('name',['Battle','Battle substitute'])
+def test_battle_and_placer_persist_counterclockwise_portrait_pixels(tmp_path,name):
+    store=Store(tmp_path);workspace=Workspace(store)
+    image=Image.new('RGB',(8,6),'red');image.putpixel((0,0),(0,255,0));image.putpixel((7,5),(0,0,255))
+    raw=io.BytesIO();image.save(raw,'PNG')
+    result=workspace.save_render({'key':'a'*64,'name':name,'data':{'version':'battle'}},raw.getvalue(),[8,6])
+    with Image.open(store.asset_path(result['asset_id'])) as actual:
+        assert actual.size==(6,8)
+        assert actual.tobytes()==image.transpose(Image.Transpose.ROTATE_90).tobytes()
+
 
 @pytest.mark.parametrize('kind',['size','truncated','crc','jpeg'])
 def test_invalid_render_creates_no_asset_or_render(tmp_path,kind):

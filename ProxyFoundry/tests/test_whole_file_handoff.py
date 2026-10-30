@@ -3,6 +3,7 @@ import functools
 import hashlib
 import http.server
 import os
+import io,zipfile
 from pathlib import Path
 import threading
 
@@ -12,18 +13,22 @@ from test_print_bridge import fixture_zip,ROOT
 pytestmark=pytest.mark.skipif(os.environ.get('PF_BROWSER')!='1',reason='Real extension native-file handoff')
 
 
-@pytest.mark.parametrize('scenario',['small','large','add','replace','cancel','unavailable'])
+@pytest.mark.parametrize('scenario',['small','parts','add','replace','cancel','unavailable'])
 def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_path,scenario):
     from playwright.sync_api import sync_playwright,expect
-    large=scenario=='large'
+    large=False
     existing=2 if scenario in {'add','replace','cancel','unavailable'} else 0
-    if large:
-        setting=os.environ.get('PF_NATIVE_REAL_FILE')
-        if not setting:pytest.skip('Set PF_NATIVE_REAL_FILE for a read-only multi-GB saved order test.')
-        source=Path(setting);assert source.stat().st_size>2**32
-        count=1110
-    else:
-        source=tmp_path/'paired.zip';source.write_bytes(fixture_zip());count=2
+    source=tmp_path/'paired.zip';source.write_bytes(fixture_zip());sources=[source];count=2
+    if scenario=='parts':
+        original=fixture_zip()
+        for part in (1,2):
+            target=tmp_path/f'part-{part+1:03d}.zip'
+            with zipfile.ZipFile(io.BytesIO(original)) as old,zipfile.ZipFile(target,'w') as new:
+                for name in old.namelist():
+                    side,number=name.split('/');new.writestr(side+'/'+f'{int(number[:-4])+part*2:06d}.png',old.read(name))
+            sources.append(target)
+        count=6
+    source=sources[-1]
     size=source.stat().st_size
     offsets=[0,size-32]+([2429384400] if large else [])
     with source.open('rb') as f:
@@ -33,7 +38,7 @@ def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_pat
     directory=tmp_path/'site';directory.mkdir()
     (directory/'native-print.js').write_bytes((ROOT/'site/native-print.js').read_bytes())
     (directory/'index.html').write_text('''<!doctype html><meta name="proxy-foundry" content="workspace-v1">
-    <input type="file" id="file"><button id="start">Print Cards</button><p id="status"></p>
+    <input type="file" id="file" multiple><button id="start">Print Cards</button><p id="status"></p>
     <script type="module">
     import {openNativePrint} from './native-print.js';
     const id='c19329f1-200c-4ba4-b06c-bb1ed4af9af8',secret='native_test_secret_12345678901234567890';
@@ -42,13 +47,13 @@ def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_pat
       if(event.source!==window||event.origin!==location.origin||d?.type!=='PF_TRANSFER_REQUEST')return;
       if(d.kind!=='metadata')throw Error('ZIP bytes must never use extension messages');
       window.postMessage({source:'proxy-foundry-workspace',type:'PF_TRANSFER_REPLY',requestId:d.requestId,
-        ok:true,data:{count:CARD_COUNT,zipBytes:document.querySelector('#file').files[0].size,protocolVersion:3,filename:'Paired.zip'}},location.origin);
+        ok:true,data:{count:CARD_COUNT,zipBytes:[...document.querySelector('#file').files].reduce((s,f)=>s+f.size,0),protocolVersion:3,filename:'Paired.zip',batches:[...document.querySelector('#file').files].map((f,index)=>({index,count:2,zipBytes:f.size,filename:f.name}))}},location.origin);
     });
     document.querySelector('#start').onclick=async()=>{
       try{
         await openNativePrint({
           createTransfer:async()=>({id,secret,origin:location.origin}),
-          getFile:async()=>{window.fileRequests=(window.fileRequests||0)+1;FILE_ERROR return document.querySelector('#file').files[0];},
+          getFile:async()=>{window.fileRequests=(window.fileRequests||0)+1;FILE_ERROR return [...document.querySelector('#file').files];},
           register:transfer=>new Promise((resolve,reject)=>{
             const requestId=crypto.randomUUID();
             const listener=e=>{
@@ -78,7 +83,7 @@ def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_pat
       const file=e.target.files[0];tc.uploads++;tc.bytes=file.size;tc.name=file.name;
       tc.samples=[];for(const offset of OFFSETS)tc.samples.push([...new Uint8Array(await file.slice(offset,offset+32).arrayBuffer())]);
       if(file.size<1024*1024)tc.digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))].map(b=>b.toString(16).padStart(2,'0')).join('');
-      tc.count+=CARD_COUNT;document.querySelector('#counter').textContent=tc.count+' Cards';
+      tc.count+=2;document.querySelector('#counter').textContent=tc.count+' Cards';
       const busy=document.createElement('p');busy.textContent='Preparing card 1 of CARD_COUNT';document.body.append(busy);
       setTimeout(()=>busy.remove(),700);
     };
@@ -95,7 +100,7 @@ def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_pat
                 page.add_init_script("window.addEventListener('message',e=>{if(e.source===window&&e.data?.source==='proxy-foundry-helper'&&e.data.type==='PF_WORKSPACE_PONG')window.helperReady=e.data;})")
                 page.goto(f'http://127.0.0.1:{server.server_port}')
                 page.wait_for_function("window.helperReady?.capabilities.includes('native-whole-zip')")
-                page.locator('#file').set_input_files(str(source))
+                page.locator('#file').set_input_files([str(p) for p in sources])
                 with page.expect_popup() as popup:page.click('#start')
                 printer=popup.value
                 expect(page.locator('#status')).to_have_text('Connected',timeout=20000)
@@ -113,7 +118,7 @@ def test_real_extension_uploads_one_unchanged_native_file_without_chunks(tmp_pat
                     printer.locator('#pph-'+scenario).click()
                 expect(printer.locator('#pph-line')).to_contain_text(f'Uploaded {count} paired cards',timeout=25000)
                 result=printer.evaluate('tc')
-                assert result['uploads']==1 and result['bytes']==size and result['samples']==samples
+                assert result['uploads']==len(sources) and result['bytes']==size and result['samples']==samples
                 assert result['name']==source.name and result['checkout']==0
                 if not large:assert result['digest']==hashlib.sha256(source.read_bytes()).hexdigest()
                 assert result['cleared']==int(scenario=='replace')

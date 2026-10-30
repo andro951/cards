@@ -58,6 +58,16 @@ def ingest_image(store,raw,*,trim_transparent_padding=False):
             while len(cache)>128:cache.popitem(last=False)
     return asset
 
+def print_size(data):
+    size=[round(data['width']*(1+2*data.get('marginX',0))),round(data['height']*(1+2*data.get('marginY',0)))]
+    return size[::-1] if 'battle' in str(data.get('version','')).lower() and size[0]>size[1] else size
+
+def portrait_png(raw):
+    with Image.open(io.BytesIO(raw)) as image:
+        if image.width<=image.height:return raw
+        out=io.BytesIO();image.transpose(Image.Transpose.ROTATE_90).save(out,'PNG',compress_level=3)
+        return out.getvalue()
+
 def ingest_render_png(store,raw,expected_size):
     """Validate native canvas PNGs without recompressing their existing pixels."""
     if not raw or len(raw)>MAX_BYTES:raise ValidationError('Choose an image smaller than 64 MB.')

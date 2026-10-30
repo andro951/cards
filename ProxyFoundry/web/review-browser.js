@@ -158,7 +158,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
     }
     drawGrid();filterGrid();
     if(saved){
-      const download=node('a','Download ZIP','button');download.href='/api/orders/'+plan.id+'/download';download.download='';footer.append(download);
+      const download=node('a','Save ZIP folder','button');download.href='/api/orders/'+plan.id+'/download';download.download='';footer.append(download);
       footer.append(action('Open in TCGPlaytest',()=>openOrder(plan.id),'button primary'));
     }else{
       const progress=node('div');progress.id='order-build-progress';progress.hidden=true;
@@ -172,7 +172,7 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       const detail=node('small');progress.append(progressText,bar,saveText,saveBar,detail);
       const duration=seconds=>{const value=Math.max(0,Math.ceil(seconds));return value<60?`${value}s`:`${Math.floor(value/60)}m ${value%60}s`;};
       const cancel=action('Cancel build',()=>{});cancel.hidden=true;cancel.style.display='none';
-      const build=action('Build paired ZIP',async()=>{
+      const build=action('Build ZIP folder',async()=>{
         if(plan.issues?.length)throw new Error('Review each warning before building the ZIP.');
         build.disabled=true;setModalBusy(host,true);
         const controller=new AbortController();

@@ -7,7 +7,7 @@ from PIL import Image,ImageOps
 from .domain import *
 from .storage import Store,display_name
 from .network import Network,validate_remote_url
-from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_variants
+from .images import ingest_image,ingest_render_png,data_uri,decode_image,rarity_variants,print_size,portrait_png
 from .sources import Sources
 from .artwork import ArtworkIndex,build_review,face_key
 from .card_data import validate_entries,validate_targets,matches,merge_entries,identity,matching_keys,selector_key
@@ -291,6 +291,14 @@ class Workspace:
         frozen_recipe=reusable_recipe(d)
         if renders is None:
             renders=self.store.render_many(key for c in d['cards'] for f in substitutes.render_faces(c,d['settings']) for key in ((f.get('compiled') or {}).get('renderKey'),(f.get('lastRender') or {}).get('renderKey')))
+        #Repair older battle PNGs once, including their substitute faces. The
+        #render recipe/canvas stays landscape and its pixel data is only rotated.
+        for card in d['cards']:
+            for face in substitutes.render_faces(card,d['settings']):
+                comp=face.get('compiled') or {};key=comp.get('renderKey');render=renders.get(key)
+                if render and render['width']>render['height'] and 'battle' in str((comp.get('data') or {}).get('version','')).lower():
+                    target={'key':key,'deckId':d['id'],'cardId':card['id'],'faceId':face['id'],'deckName':d['name'],'name':face['name'],'data':comp['data']}
+                    renders[key]=self.save_render(target,self.store.asset_path(render['asset_id']).read_bytes(),[render['width'],render['height']])
         ready=0;errors=0;warns=0;total=0
         for c in d['cards']:
             nickname_rules=any(rules_nicknames.face_nicknames(c.get('scryfall',{}),c['faces']).values())
@@ -1511,6 +1519,8 @@ class Workspace:
         if target.get('deckId') and not self.store.get('decks',target['deckId']):
             raise ValidationError('This deck was deleted. Its images cannot be saved.')
         with self.store.render_save():
+            if 'battle' in str(target.get('data',{}).get('version','')).lower() and expected_size[0]>expected_size[1]:
+                raw=portrait_png(raw);expected_size=list(expected_size)[::-1]
             asset=ingest_render_png(self.store,raw,expected_size)
             result=self.store.render_put(target['key'],asset,deck_id=target.get('deckId'),card_id=target.get('cardId'),face_id=target.get('faceId'),deck_name=target.get('deckName') or 'Deck',face_name=target.get('name') or target.get('cardName') or 'Card')
         return result
