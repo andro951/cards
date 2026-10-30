@@ -48,9 +48,9 @@ def request(app,method,url,body,headers):
     # A controlled pause before writing makes cancellation deterministic without slowing normal ZIPs.
     zipper=directory/'site/order-zip-worker.js';source=zipper.read_text(encoding='utf-8')
     source=source.replace('const build=async({directory,path,entries})=>{','const build=async({directory,path,entries,hold=false,fail=false})=>{')
-    source=source.replace('await writer.write(archive);check();',
+    source=source.replace('await writer.write(chunk);check();',
         'if(hold){self.postMessage({testReady:true,state:`running`});while(!cancelled)await new Promise(resolve=>setTimeout(resolve,10));check();}'+
-        'await writer.write(archive);if(fail)throw new Error(`Injected disk failure`);check();')
+        'await writer.write(chunk);if(fail)throw new Error(`Injected disk failure`);check();')
     zipper.write_text(source,encoding='utf-8')
     if storage=='selected-folder':
         choice=directory/'web/storage-choice.js';source=choice.read_text(encoding='utf-8')

@@ -5,6 +5,7 @@ Pyodide runs this module in a dedicated Web Worker. No HTTP server is started.
 from __future__ import annotations
 
 from .timing import timed
+from .job_progress import update_fields
 import json
 import hashlib
 import mimetypes
@@ -281,8 +282,8 @@ class BrowserJobs:
             job['cancelled']=job['cancelled'] or self.cancelled(ident)
             return job['cancelled']
         def update(done,total,message):
-            job.update(done=done,total=total,message=str(message))
-            job['events'].append({'at':time.time(),'done':done,'total':total,'message':str(message)})
+            fields=update_fields(done,total,message);job.update(fields)
+            job['events'].append({'at':time.time(),**fields})
             job['events']=job['events'][-200:]
             self._publish(job)
         try:

@@ -166,31 +166,51 @@ export function showReview(initial,ids,saved,orderReady,openOrder){
       const progressText=node('span','Starting paired ZIP…');progressText.setAttribute('role','status');progressText.setAttribute('aria-live','polite');
       const bar=node('progress');bar.max=100;bar.setAttribute('aria-label','Paired ZIP build progress');
       Object.assign(bar.style,{width:'100%',height:'18px',accentColor:'#ed861e'});
-      const detail=node('small');progress.append(progressText,bar,detail);
+      const saveText=node('span','2 · Save ZIP · Waiting for packaging');saveText.setAttribute('role','status');saveText.setAttribute('aria-live','polite');
+      const saveBar=node('progress');saveBar.max=100;saveBar.value=0;saveBar.setAttribute('aria-label','Paired ZIP saving progress');
+      Object.assign(saveBar.style,{width:'100%',height:'18px',accentColor:'#ed861e'});
+      const detail=node('small');progress.append(progressText,bar,saveText,saveBar,detail);
+      const duration=seconds=>{const value=Math.max(0,Math.ceil(seconds));return value<60?`${value}s`:`${Math.floor(value/60)}m ${value%60}s`;};
       const cancel=action('Cancel build',()=>{});cancel.hidden=true;cancel.style.display='none';
       const build=action('Build paired ZIP',async()=>{
         if(plan.issues?.length)throw new Error('Review each warning before building the ZIP.');
         build.disabled=true;setModalBusy(host,true);
         const controller=new AbortController();
-        progress.hidden=false;progress.style.display='grid';progressText.textContent='Starting paired ZIP…';detail.textContent='';bar.removeAttribute('value');
+        progress.hidden=false;progress.style.display='grid';progressText.textContent='1 · Packaging cards…';detail.textContent='';bar.removeAttribute('value');
+        saveText.textContent='2 · Save ZIP · Waiting for packaging';saveBar.value=0;
         cancel.hidden=false;cancel.style.display='';cancel.disabled=false;
         cancel.onclick=()=>{controller.abort();cancel.disabled=true;progressText.textContent='Stopping ZIP build…';};
-        const update=job=>{
+        let latest=null,received=0;
+        const drawProgress=()=>{
+          const job=latest;if(!job)return;
           if(controller.signal.aborted)return;
           const total=Number(job.total)||0,done=Number(job.done)||0;
-          const percent=total?Math.min(job.state==='done'?100:99,Math.floor(done/total*100)):0;
+          const saving=job.phase==='saving'||total&&done===total&&/sav|finaliz/i.test(job.message||'');
+          const percent=total?Math.min(100,Math.floor(done/total*100)):0;
           if(total)bar.value=percent;
-          progressText.textContent=total?`${percent}% · ${done} / ${total} cards packaged`:'Starting paired ZIP…';
-          detail.textContent=job.message||'';
+          progressText.textContent=total?`1 · ${percent}% · ${done} / ${total} cards packaged`:'1 · Packaging cards…';
+          if(!saving){detail.textContent=job.message||'';return;}
+          const saved=Number(job.savedBytes)||0,size=Number(job.totalBytes)||0;
+          const finalized=job.saveStage==='complete'||job.state==='done';
+          const savedPercent=size?Math.min(finalized?100:99,Math.floor(saved/size*100)):0;
+          if(size)saveBar.value=savedPercent;else saveBar.removeAttribute('value');
+          saveText.textContent=`2 · Saving ZIP${size?` · ${savedPercent}% · ${bytes(saved)} / ${bytes(size)}`:''}`;
+          const elapsed=(Number(job.saveElapsedSeconds)||0)+(performance.now()-received)/1000;
+          if(job.saveStage==='finalizing'||finalized){detail.textContent=`${finalized?'File saved · recording print order':'Finalizing file'} · ${duration(elapsed)} elapsed`;return;}
+          const rate=Number(job.saveBytesPerSecond)||0,eta=job.saveEtaSeconds;
+          detail.textContent=`${rate?`${bytes(rate)}/s · `:''}${Number.isFinite(eta)?`about ${duration(eta)} remaining`:'Calculating time remaining…'} · ${duration(elapsed)} elapsed`;
         };
+        const update=job=>{latest=job;received=performance.now();drawProgress();};
+        const ticker=setInterval(drawProgress,1000);
         try{
           const out=await job('/api/orders/build',{deckIds:[...ids]},{label:'Build paired order',signal:controller.signal,onProgress:update});
-          bar.value=100;progressText.textContent='100% · ZIP ready';
+          bar.value=100;saveBar.value=100;progressText.textContent='100% · ZIP ready';
           setModalBusy(host,false);closeModal();orderReady(out);
         }catch(error){
           progressText.textContent=controller.signal.aborted?'ZIP build cancelled.': 'ZIP build failed.';
+          saveText.textContent=controller.signal.aborted?'2 · Saving cancelled.':'2 · Save incomplete.';
           detail.textContent=error.message;throw error;
-        }finally{setModalBusy(host,false);build.disabled=Boolean(plan.issues?.length);cancel.hidden=true;cancel.style.display='none';}
+        }finally{clearInterval(ticker);setModalBusy(host,false);build.disabled=Boolean(plan.issues?.length);cancel.hidden=true;cancel.style.display='none';}
       },'button primary');
       build.disabled=Boolean(plan.issues?.length);footer.append(progress,cancel,build);
     }

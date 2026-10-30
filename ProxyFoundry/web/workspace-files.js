@@ -212,7 +212,8 @@ export class WorkspaceFiles {
                 await task.finished;this.orderZips.delete(path);return {ok:true};
             }
 
-            return {state:task.state,done:task.done,total:task.total,message:task.message,error:task.error,bytes:task.bytes};
+            const fields=[`state`,`done`,`total`,`message`,`error`,`bytes`,`phase`,`saveStage`,`savedBytes`,`totalBytes`,`saveElapsedSeconds`,`saveBytesPerSecond`,`saveEtaSeconds`];
+            return Object.fromEntries(fields.filter(key=>task[key]!==undefined).map(key=>[key,task[key]]));
         }
 
         if(operation===`start-artwork`) {

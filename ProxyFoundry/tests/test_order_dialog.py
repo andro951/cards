@@ -162,7 +162,9 @@ def test_browser_zip_progress_is_visible_inside_review_and_recovers(bridge_page,
     build=page.get_by_role('button',name='Build paired ZIP',exact=True)
     build.click()
     progress=page.get_by_role('progressbar',name='Paired ZIP build progress')
+    saving=page.get_by_role('progressbar',name='Paired ZIP saving progress')
     expect(progress).to_be_visible();assert progress.get_attribute('value') is None
+    expect(saving).to_be_visible();assert saving.get_attribute('value')=='0'
     expect(page.locator('#modal-close')).to_be_disabled();expect(build).to_be_disabled()
     page.evaluate("buildProgress({state:'running',done:35,total:108,message:'Packaging Esika'})")
     assert progress.get_attribute('value')=='32'
@@ -172,8 +174,14 @@ def test_browser_zip_progress_is_visible_inside_review_and_recovers(bridge_page,
     assert bounds['x']>=0 and bounds['y']>=0 and bounds['x']+bounds['width']<=width and bounds['y']+bounds['height']<=900
     page.keyboard.press('Escape');expect(progress).to_be_visible()
     if outcome=='done':
-        page.evaluate("buildProgress({state:'running',done:108,total:108,message:'Saving ZIP'})")
-        assert progress.get_attribute('value')=='99','Do not finish the bar before the ZIP is saved.'
+        page.evaluate("buildProgress({state:'running',done:108,total:108,phase:'saving',savedBytes:600000000,totalBytes:1200000000,saveElapsedSeconds:20,saveBytesPerSecond:30000000,saveEtaSeconds:20,saveStage:'writing',message:'Saving ZIP'})")
+        assert progress.get_attribute('value')=='100'
+        assert saving.get_attribute('value')=='50'
+        expect(page.locator('#order-build-progress')).to_contain_text('572.2 MB / 1.1 GB')
+        expect(page.locator('#order-build-progress')).to_contain_text('about 20s remaining')
+        page.evaluate("buildProgress({state:'running',done:108,total:108,phase:'saving',savedBytes:1200000000,totalBytes:1200000000,saveStage:'finalizing',saveElapsedSeconds:40,message:'Finalizing ZIP'})")
+        assert saving.get_attribute('value')=='99','Do not finish the save bar before the file closes.'
+        expect(page.locator('#order-build-progress')).to_contain_text('Finalizing file')
         page.evaluate("finishBuild({id:'ready-order'})")
     else:
         if outcome=='cancelled':page.get_by_role('button',name='Cancel build',exact=True).click()

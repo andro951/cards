@@ -2,6 +2,7 @@
 import json,threading,time,traceback
 from concurrent.futures import ThreadPoolExecutor
 from .domain import uid,ValidationError
+from .job_progress import update_fields
 class Jobs:
     def __init__(self,store):self.store=store;self.pool=ThreadPoolExecutor(max_workers=2,thread_name_prefix='foundry');self.jobs={};self.lock=threading.Lock();self.condition=threading.Condition(self.lock)
     def start(self,kind,fn):
@@ -9,8 +10,8 @@ class Jobs:
         with self.lock:self.jobs[ident]=job
         def update(done,total,message):
             with self.lock:
-                job.update(done=done,total=total,message=str(message))
-                job['events'].append({'at':time.time(),'message':str(message),'done':done,'total':total})
+                fields=update_fields(done,total,message);job.update(fields)
+                job['events'].append({'at':time.time(),**fields})
                 job['events']=job['events'][-200:]
         def cancelled():
             with self.condition:

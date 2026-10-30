@@ -4,6 +4,7 @@ import json,os,tempfile,time,zipfile
 from .domain import ConflictError,ValidationError,uid,stable_hash
 from .token_assignments import overview
 from . import substitutes
+from .job_progress import FIELDS
 class Orders:
     def __init__(self,workspace):self.ws=workspace;self.store=workspace.store;self.archive=None
     def plan(self,deck_ids,acknowledge=False):
@@ -98,9 +99,11 @@ class Orders:
                             status=self.archive('poll-order-zip',task)
                             if status.get('error') or status['state'] in {'failed','cancelled'}:
                                 raise ValidationError(status.get('error') or 'Order packaging '+status['state']+'.')
-                            current=(status.get('done',0),status.get('message'))
+                            details={key:status[key] for key in FIELDS if key in status}
+                            current=(status.get('done',0),status.get('message'),details)
                             if current!=previous:
-                                progress(current[0]//2,len(plan['cards']),current[1] or 'Starting paired ZIP');previous=current
+                                message=current[1] or 'Starting paired ZIP'
+                                progress(current[0]//2,len(plan['cards']),{'message':message,**details} if details else message);previous=current
                             if status['state']=='done':break
                             yield {'delay':.05}
                     finally:self.archive('release-order-zip',task)
