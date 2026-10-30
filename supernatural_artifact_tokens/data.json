@@ -1126,17 +1126,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -1164,13 +1153,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/75fdfb0294db85c97e661ced7b0b70af221800460ecac09499bfd11872f9c265",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -1291,10 +1307,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -1417,18 +1433,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "e4f9fbd6584c86d5da9d543798d6093a8b4cd6fa69ad2075dc75c76df9e5e13e",
+              "renderKey": "3945760dc66ac8113116a42652f2155dda24c7a15be29e59cbd611e8091a86e8",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -1451,12 +1469,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "d8a7fe87d8ad7ed8403080f772777d2bb9853feffc4b674cac12634fc0f82eec",
+              "contentRenderKey": "e6bba7dea2fdb2829875a311a79bfb8b83986aba59e65c53fa44a063d27041ed",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/048_sol_ring.png"
             },
-            "preparationKey": "52795fbf25193298f9a5ccbd5dfe19de8272eb7d07e02f87e8e3f18424a7f85e",
-            "preparedAt": 1793302810.892
+            "preparationKey": "30e37eebe739d573d4f7ad8f9adc4b9482b3606f44e5ef202d5d060896579adb",
+            "preparedAt": 1793387424.297
           }
         ],
         "metadataSource": "8ee443cc-e17a-493b-9c93-1f9e141a30e4",
@@ -1622,17 +1640,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -1660,13 +1667,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/1b194dbb02adae8ea6c25037316ca2d438bdf1fcd6d13ae63f137bf002fa1038",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -1787,10 +1821,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -1913,18 +1947,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "de9971628434178c9d794fcc2902ed884c4bf73df2232f0f63c2a796f3eea5b0",
+              "renderKey": "e85c8454083e149dc5b7783da4b224fb246dcc0c19aad1e0959d3ebf6340bbf8",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -1947,12 +1983,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "88a5fcee1cbd5172bbffe105b81721f7038c1bacb0e50a35075bb5a008f65369",
+              "contentRenderKey": "9b77de20e2bc20fa173af7907799e247640fc2380b7352603776e3d57cb898d6",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/069_viridian_longbow.png"
             },
-            "preparationKey": "2b44fecf8485d720ab1208910c3abda8c1a25d2b446296d84c19cfe41ecd0259",
-            "preparedAt": 1793302811.4060001
+            "preparationKey": "1d83b169b562460a38b8e4b1746ee32020346efa03980480d1dc43ca06c12793",
+            "preparedAt": 1793387424.526
           }
         ],
         "metadataSource": "f4607634-6206-4c6c-b389-abcbfe969b65",
@@ -2128,17 +2164,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Black Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownBFloating.png",
                     "bounds": {
@@ -2166,13 +2191,40 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/c6efef318781d805997efa8a629bc74f435720ce7462331251c97a09706b4db6",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -2293,10 +2345,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -2419,18 +2471,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "bbf3ee2481fc61ee704d9410ed023a05f02fa869e0d797df6b2bf2fb628a4dff",
+              "renderKey": "292fa673cbc81cfa51832d53a167724271e5770dbe6e36fb794da91cc810e614",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -2453,12 +2507,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "577d0a4936aaa8b6aa68acba7098331da1ca1a7701e7106b856720ce19572444",
+              "contentRenderKey": "fb30c9c71893aee2326faccaefe0f189368f0fa001fc41e222b3b16a1ef258a4",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/066_vorpal_sword.png"
             },
-            "preparationKey": "71e2911cede1bcd4e4e33e51a8363ed2cbba2180c02f928610da3917a046fcca",
-            "preparedAt": 1793302811.0249999
+            "preparationKey": "9b7dca74a4b6d67071c0de17184be375039ec27b8b6309ac9d08e24282fec075",
+            "preparedAt": 1793387424.7350001
           }
         ],
         "metadataSource": "7adbe69f-326d-4b4f-850f-c57a1860d17c",
@@ -2623,17 +2677,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -2661,13 +2704,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/fad91caf6239b2a4c1ca19b7e7f25f7b82f49e98a54d4ed83939132afdebd20b",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -2788,10 +2858,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -2914,18 +2984,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "b35d09c5f9645f108616563039aa78d8eaceb9c2b2ae5b7f20dfa6dc857b4999",
+              "renderKey": "eff6ecc06e1127c9a70c244fc65e0bc847fcd57bd515ef6b2a60b9122e7b7b8f",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -2948,12 +3020,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "3516b4d85caca51a5d1a3bb086aeeca2f4e806ae8822135ae608933f5f846971",
+              "contentRenderKey": "422dc24585208c6143b77221fee7749fd914fec85bf8d67937459c273e69455b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/058_adaptive_omnitool.png"
             },
-            "preparationKey": "cdd981bb630ac2e7c5bb661ab81a6edb61f8ffa05fe585042795ad430c1ead4b",
-            "preparedAt": 1793302814.0870001
+            "preparationKey": "41ae4e310b9a243e9cad18bb64238906bdf3e9b599ab51e3570940526e31b398",
+            "preparedAt": 1793387424.926
           }
         ],
         "metadataSource": "9e84f840-d7c6-4a82-8891-3d12281020ee",
@@ -3130,17 +3202,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -3168,13 +3229,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/a5ee17e5727b5b2a79c336e74f113dee11418ec71f53b9e3c3212fdde1484af4",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -3295,10 +3383,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3421,18 +3509,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "329129d3242a846ede46629356834b36d4a281daf24691506d920cbce18f610c",
+              "renderKey": "e45c0291f053e32adb43bb0a18ee276f70e7239f24dd495d03b43d275a390e3c",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3455,12 +3545,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7a567a0cf6243c3a5787b0d5c5c695fe8222854119b7f9bcd18406997ae7df5e",
+              "contentRenderKey": "17c63754b90607fc1a418536c14578e397ee8150d88ca4cff25d8f6f51e75472",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/043_arcane_signet.png"
             },
-            "preparationKey": "99dc105207da24f2f392db3ffd98cb673d94bc5aece418580a66870e929e1f81",
-            "preparedAt": 1793302811.253
+            "preparationKey": "4974c2a2e0beaf3b245c2970358e798638f61216cf64ede2a0bbbb44447dd9b5",
+            "preparedAt": 1793387425.129
           }
         ],
         "metadataSource": "c6b6117c-faab-4bbb-b851-07bd8061ef03",
@@ -3636,17 +3726,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -3674,13 +3753,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/c2954f2087167a106d385468fc8105da55bf51b3ed448670bdc382569192d376",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -3801,10 +3907,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3927,18 +4033,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "239fc89d64653fee00e9681bf5762349653ae099a2335177562790b1ddc6447e",
+              "renderKey": "f7dd4118ce001c06c9d4629bd39b43ff0ae40ce660422e709b0e5e340ae50b3d",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3961,12 +4069,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "b620a5663008d2c91c245397783d8232d74789c928c99a6b17696c9a465b63fc",
+              "contentRenderKey": "0c4dbffdebe914675242fa00856671f8acdd87015f22ec80708aed904af3042d",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/055_resurrection_orb.png"
             },
-            "preparationKey": "014094d572bcf8d5e17836b24c403dff2b239f9276bd29e9271c74821eef0f6a",
-            "preparedAt": 1793302811.508
+            "preparationKey": "c219d8d68405ea8f3ab2bcf41b752ce599b4ef9c7fa021169ae6c8a9b96934e0",
+            "preparedAt": 1793387425.302
           }
         ],
         "metadataSource": "2d6209c8-9fa1-4f0a-ab65-ac2fedfcd09b",
@@ -4144,17 +4252,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -4182,13 +4279,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/c364a2e70a74ed1d7ca7d654670b3ee9eddb544cde099522e237fbb686f0fc83",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -4309,10 +4433,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -4435,18 +4559,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "386726c0846fa483f667f9ad310439e287b7055ca4eec058c19d4a29d3ba8b30",
+              "renderKey": "20a04ad1fa488d772d80bf881aea9706596d4633182c08f4778ddda8123bbfb9",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -4469,12 +4595,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "ec1326b58fce968434e67d3adaa29b230d7c11491565cfeca6305ed4f3ee9c2a",
+              "contentRenderKey": "3a394053b6dc65f368c8a6b0fcf3a97f1711f09eb6eea6b7476e64eef4699d75",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/041_talisman_of_conviction.png"
             },
-            "preparationKey": "aa81cb86dada5883d98e5554b3d2a656d018488ea3c5112b164e43cfe41befd1",
-            "preparedAt": 1793302811.681
+            "preparationKey": "32b88cc343b73dfac74648c84f79cfbc314971799b390aff2fbd74fa7389b401",
+            "preparedAt": 1793387425.473
           }
         ],
         "metadataSource": "a365885c-f7d9-4ea1-9125-5265055e5570",
@@ -4647,17 +4773,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -4685,13 +4800,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/3a8026a34f6ea57bb6485793d9446b77920749613980d5a886d1ff830fb91f0d",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -4812,10 +4954,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -4938,18 +5080,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "5ec2d370cfb7398dafc9935e2bb087d0d917a454529190bf97722b20f85eb1d0",
+              "renderKey": "719046dcb3c03d2b45e1bf5bbdaa5a00141771ba872067ce565ac9521ec9eca7",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -4972,12 +5116,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "4d82021e00b2e6f6fbaa030ace166ab22b4b084023f35d235ddfa0582db60044",
+              "contentRenderKey": "f82bed780c2e6d7af5a98d07b84157b84a0ca7fb2e3056cce285e75fa863e5d9",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/050_talisman_of_hierarchy.png"
             },
-            "preparationKey": "eefc4e11d8a1ab7561f464a9f181f02ebb2524ad1f47a6db2c5d98e3be536a55",
-            "preparedAt": 1793302811.768
+            "preparationKey": "0c55f8ce809fba7965d840053b83ff40deecc482e29526b2511d3d34c2999a35",
+            "preparedAt": 1793387425.666
           }
         ],
         "metadataSource": "0c959368-2f58-48de-b7a5-2bab408652b5",
@@ -5149,17 +5293,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -5187,13 +5320,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/75ef4f01702779ae7848bf42e9a657c0375901336ae7b0dbd5aa801502c2df4c",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -5314,10 +5474,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -5440,18 +5600,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "d4a05786db5b8ead08a8b746b710d245004ceee98551af615923ddf8dd34c5e5",
+              "renderKey": "a847405c0bad7459d3754031301bab5ffc94247d9d632eae4cd8bbd0bb85e768",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -5474,12 +5636,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "9c0ad179af48ff47faa62e7045c15989a7b2666d73791b3e3891f1f5692d536c",
+              "contentRenderKey": "7ce75f7fbb1eac1f9e4b4a0ff6eca21b851009a8056704297c3ea2600662aed9",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/051_talisman_of_indulgence.png"
             },
-            "preparationKey": "2be70c8a953e56dda554d11635695f85c9ca2920b4165e18d8afdc53ecf23da1",
-            "preparedAt": 1793302811.856
+            "preparationKey": "a92f6aae55267d6f1737522d95813680679be53d76f236cac6860451e919f3aa",
+            "preparedAt": 1793387425.8470001
           }
         ],
         "metadataSource": "36bd614f-ab3b-4ad1-ab5c-a7ca0a641f32",
@@ -5649,17 +5811,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -5687,13 +5838,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/9ffcde39c241d9ba420072dfd608583e4c6eeea54addce4fda65d33afa79e24a",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -5814,10 +5992,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -5940,18 +6118,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "a5b6caa2027b1ba65fc04f9bd0b7618fa070e7b52ea0a0c9b8e86a4a9d483ead",
+              "renderKey": "73464f822e88975633f5f9165fc2514a60f626ebb50ea8fd9769dda396902e4d",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -5974,12 +6154,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "902d64834452180a0cd1e52b93fd29dba6cec76ff325cdb41c94c7e7a236b1b0",
+              "contentRenderKey": "2f816fff32319a6eb6cbf531eb408391cddfe5011854441677608396a1b01b68",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/052_thornbite_staff.png"
             },
-            "preparationKey": "97c4e0baa0b2cbceff56f86e1066762b08dc2e7835162583ab2f1fb61c7bff66",
-            "preparedAt": 1793302815.6950002
+            "preparationKey": "16f0777c379412d3b0af6374343538bdee1f47e1fc24806e92ccf69266cb109d",
+            "preparedAt": 1793387426.033
           }
         ],
         "metadataSource": "c1ab3225-64a9-411e-b22b-1869e958b8e5",
@@ -6154,17 +6334,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -6192,13 +6361,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/8735c16fb11dfc3238db1e159df06d14f66a3c5f586edd3c3c916628c1ffea06",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -6319,10 +6515,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -6445,18 +6641,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "19ab856195a9a625f5f3862f806abfec5ba90c55e980bacc3302d1b5817c86f2",
+              "renderKey": "888abcb147149b018d1b07509df6c378cbb56ddb82c83be4379dd9629e75f180",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -6479,12 +6677,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "73cbe858a51a81e96198112f08677406a12d979e84d8f7bb39180e8ed635d5e7",
+              "contentRenderKey": "1cc64bea5e7bd4026b50546505e8a6d37f0281eecd8811f76cbb4fe6a875de6b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/049_sword_of_light_and_shadow.png"
             },
-            "preparationKey": "30ce4be449ab884d6617cacd561ed47243d2ac410ca350efe0aead96b9211be9",
-            "preparedAt": 1793302811.979
+            "preparationKey": "c2c511f7ccc9a40219a568dea96caebf893efeadf7e9700ea63e25687ef9b553",
+            "preparedAt": 1793387426.208
           }
         ],
         "metadataSource": "b378c8bf-85ed-4d28-aec9-4925d12bca4a",
@@ -6654,17 +6852,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -6692,13 +6879,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/714cb7d6bb1d0b4248fac5f3f001d837fff323b6dccc645ee3194c5b077d8259",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -6819,10 +7033,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -6945,18 +7159,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "6ba199c420cf432580f302534a6763ad1750eae433c2c53b9ef721fcc545f96a",
+              "renderKey": "06d17f06a0c3b5fc2e605c92ca5205adbd041a780fa8a5baeda0d32ac0689662",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -6979,12 +7195,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "c5e62185ca0cff51b755e88aaf4b698f5c8578850c435d26101130774237023c",
+              "contentRenderKey": "47e2e0b4686f164c37848dc40f4514c16503a05e7a4146b334c5cad72649fdfd",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/067_heartseeker.png"
             },
-            "preparationKey": "71174c16dfd4d0d9267952834b2ffb55f48ba9aeac9e237a41ccbdd3ce65f533",
-            "preparedAt": 1793302812.477
+            "preparationKey": "b308e87f5ca8062eeb7c67204edfac5aeaaa6d4b0b80f396dc79d711ee38b67a",
+            "preparedAt": 1793387426.37
           }
         ],
         "metadataSource": "a4f33c08-f3c3-4015-970d-ac0530f97c9c",
@@ -7169,17 +7385,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -7207,13 +7412,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/89661c22136e33e485eb63fe2719cdc491e99f988f27b091b69e9ba83ca4d001",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -7334,10 +7566,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -7460,18 +7692,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "dc2ad59d590dd9b8f3cd135e5fd330035c9acc4cd88041602df61c72e509923c",
+              "renderKey": "4058ea2edd2f293b88d35d520e643ab7f2d4acf7a78638a5af2fce8a59ed085e",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -7494,12 +7728,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7dbe43326f771800ec30a53b9e13e776856a6615f8d5e905d7053b95488fa82d",
+              "contentRenderKey": "1b3f740460d1acd552c3676d7e96734179dd575c1a504221b610524f4d5dadd2",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/6c31004cef62934cac24fd0210296bf733e236ba/supernatural_artifact_tokens/art/064_maskwood_nexus.png"
             },
-            "preparationKey": "40bd88a1e5450bcb338ede620bd7c6e3bc7628f4ca1eb440c5ba0cb3ef0eac57",
-            "preparedAt": 1793302812.392
+            "preparationKey": "d1ab58c8bbd985413b625bd5d40ac0ec96453d4cfdb52efa2bc8279f6b733cf5",
+            "preparedAt": 1793387426.543
           }
         ],
         "metadataSource": "1246c42d-57c0-4cba-959a-15ad89d8a50b",
@@ -7669,17 +7903,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -7707,13 +7930,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/8ef2b0906b2763584ad3277c8acd96cf3a76e7aa16c383cc0d1b4ab5446c0e62",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -7834,10 +8084,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -7960,18 +8210,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f7dc9a3143e182b81b803587c1e6314b1e784c02dabdf60c00b01990dd732c91",
+              "renderKey": "45169d90b82cbdb2b73a51d7397a4a004373c16376a2feadddc9d361406f1b3a",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -7994,12 +8246,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "350e84a259444e71414869422ec0eb51a2231abe02cdc488e5657ca5843bd28c",
+              "contentRenderKey": "1e959b0d80456411b4d0d4b3620cfdcdb262ccb6b0b810a88b62610e86677ded",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/042_thran_dynamo.png"
             },
-            "preparationKey": "89b7dcaca50d25d07e36b698ad76524372f7763686020d580b2c7e33247263ff",
-            "preparedAt": 1793302812.575
+            "preparationKey": "0cd55186a588f68feae518fe08116f051bd3146a4af5da5e2078a3a45a3dafbf",
+            "preparedAt": 1793387426.724
           }
         ],
         "metadataSource": "7ce5f12e-fc02-42f8-a5ca-b523050d4650",
@@ -8167,17 +8419,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -8205,13 +8446,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/6f6a1f9e1207005925279d4911dd0eb924bcf999daa50da1316a71054193283e",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -8332,10 +8600,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -8458,18 +8726,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "39ca60b2c669e1faad2a9c18693999c5470005d728693e08aaf30a6ac5cf7db3",
+              "renderKey": "963d9c5f7e6bad3d897d1295086a734f5f538c3a22564cdabefde83c98247983",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -8492,12 +8762,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "5515d37af86894bbafd75e7ebd782ad4da92aa0a6d740a2d3815efbea2cd6100",
+              "contentRenderKey": "2ea6bdac8acda928e27f5c04012ecc02f95c7d6525fc98a21e688c5c68309e68",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/065_argentum_armor.png"
             },
-            "preparationKey": "67a38e16d79229e8acb94d79f138bac06b7309181f338d1e3d066d255a74f0db",
-            "preparedAt": 1793302815.784
+            "preparationKey": "a3435cefc951acdefd6bca5dce5f33fe9855d76614592e0c53cf1385aaa0c865",
+            "preparedAt": 1793387426.915
           }
         ],
         "metadataSource": "fb1b7468-85f9-472e-9f7c-b268f84aea1c",
@@ -8670,17 +8940,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Artifact Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownAFloating.png",
                     "bounds": {
@@ -8708,13 +8967,40 @@
                   {
                     "name": "Artifact Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Artifact Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/9d6a9818c505e2858411c23ce66db54f1cff7e5288987134675ba6df6905572a",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -8835,10 +9121,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -8961,18 +9247,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "9d460b5f206525d3dc5ac9fc85f38b9de659f0156611b2b5f4c8798c177b6c55",
+              "renderKey": "d9c915c4dfdf9ba8f4b4bed96155bafc154c4f14b88f6fe23a4aeff55995a093",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -8995,12 +9283,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "d6ac239312edcbd4cef3eab83a99bd08d01cd0f70580b51a7aa1709c5e24fc0a",
+              "contentRenderKey": "cca3ad38bd145d86133aa14952af7e03780837b7c5074255b230410282b39f52",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/045_meteor_sword.png"
             },
-            "preparationKey": "e32ed398bbd6d8fc4e44a101e13122ab475746793fe9082f52bd24ddb7d9813f",
-            "preparedAt": 1793302812.9699998
+            "preparationKey": "1a364fe565ddfb11783400213c4511c932c0c106344a3bf3d54d0a5c6f628aeb",
+            "preparedAt": 1793387427.0700002
           }
         ],
         "metadataSource": "68b1c746-a4b8-4a45-9f0e-3962f0ae40e3",
@@ -9654,9 +9942,10 @@
                 },
                 "verticalToken": "class",
                 "verticalTokenLayoutVersion": "native-panels-v4",
+                "tokenTrueNameLayerVersion": 1,
                 "tokenDualColorVersion": 2
               },
-              "renderKey": "0353ed1fcd16da0006aa9f6555c18004548d2928e556796ee41840c9ccbad087",
+              "renderKey": "67063904fc2632cc70e8be49eb62fe84ab381341f675942f99e14fc949ebc2a1",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
@@ -9688,13 +9977,12 @@
               "templateCacheVersion": 11,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049",
+              "contentRenderKey": "cf632b6575b1d5a914e94844f5fd94e830e1c16c299f961b3e6c158d20ea94b5",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/061_fighter_class.png"
             },
-            "preparationKey": "029a5374b51b8a82c682bb9492704b6693e52726650e4262bb637196c1b6d61f",
-            "preparedAt": 1793302813.163,
-            "acceptedWarningKey": "0353ed1fcd16da0006aa9f6555c18004548d2928e556796ee41840c9ccbad087",
+            "preparationKey": "a73c9ab55c704fb35e3388dd3585b7298f22ccd1c3216f66c5192fd02ef309b6",
+            "preparedAt": 1793387427.371,
             "acceptedArt": [
               "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
             ]
@@ -9899,17 +10187,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "Black Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownBFloating.png",
                     "bounds": {
@@ -9937,13 +10214,40 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/431dd6a90531cb54e949b3dd9a42f89f9c022dcc2fac7d9d7fc6d557e587e981",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -10064,10 +10368,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -10190,18 +10494,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "c6f37880004657191a157b761d68279b0ea0dea5c8738c841921b34469751abe",
+              "renderKey": "eba9139cc8f8fa94604e86d74ddaa6c81bd8abed4b542d0fea302e5779235c09",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -10224,12 +10530,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "e210374e63080120158a526f2a0fb0f568719264f34115ef7c448983ba43a2ad",
+              "contentRenderKey": "8e3a7c26d05fc56d3f839aaa6572b58a6af4ff87d12b9254d8f9564cf3e4fafa",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/056_black_market_connections.png"
             },
-            "preparationKey": "b15aed3c3230131ceac87973df0099336d227865cbff28253d0d37a963a0dc0e",
-            "preparedAt": 1793302813.2350001
+            "preparationKey": "8cf2b37a6075a8558871c4cc4636c9a29331d31d77ea4d336f5ecfa092622d13",
+            "preparedAt": 1793387427.524
           }
         ],
         "metadataSource": "d13cb0d3-3452-4c1f-81ec-024b4c45bbad",
@@ -10429,17 +10735,6 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Nickname Title",
-                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.049400000000000006,
-                      "y": 0.0405,
-                      "width": 0.9014000000000001,
-                      "height": 0.1053
-                    }
-                  },
-                  {
                     "name": "White Legend Crown",
                     "src": "/img/frames/m15/crowns/m15CrownWFloating.png",
                     "bounds": {
@@ -10467,13 +10762,40 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Nickname Title",
+                    "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
+                    "masks": [],
+                    "bounds": {
+                      "x": 0.049400000000000006,
+                      "y": 0.0405,
+                      "width": 0.9014000000000001,
+                      "height": 0.1053
+                    }
+                  },
+                  {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/6f898b603ce6c1f3c0f3a33b610cb82fa55615095181817fae74090acfd93a1b",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -10594,10 +10916,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -10720,18 +11042,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "550ef6916f69843ffb782e9c3753fcb8877d1a49559197ab5db1ed8197b4cec0",
+              "renderKey": "8f8ab9a23203b221a73940b1da08a82ab759ca27f077b15caa123e671245efe8",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -10754,12 +11078,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "2c81fa5210a9e1edf7edb09219dd66a30a1dc399b41733fe6213b2f48e4350d0",
+              "contentRenderKey": "eaf7d8702ae7af80b0f3316ae27ad65a868bcb419cb3bb2dcfe00a922a6725fd",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/047_smothering_tithe.png"
             },
-            "preparationKey": "7bb0256274776dbb0e07a19a558bc9e461e82a387e309d153a6f2d1e2ab884f7",
-            "preparedAt": 1793302816.7900002
+            "preparationKey": "afd6ae2841a402f67e5202145b75cb67f2787b841952d8b07a07e45309a835ba",
+            "preparedAt": 1793387427.7180002
           }
         ],
         "metadataSource": "861b5889-0183-4bee-afeb-a4b2aa700a8e",
@@ -11314,9 +11638,10 @@
                   "width": 0.3947
                 },
                 "verticalToken": "saga",
-                "verticalTokenLayoutVersion": "native-panels-v4"
+                "verticalTokenLayoutVersion": "native-panels-v4",
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "171b1060e16f77323da9c9a42ab5ff51235484e8176b3da99269bdf76a6115b0",
+              "renderKey": "888bab113874fedb0d1fb282a3ab12731264eac1ae7a4015f90f6bed4ecd5ff3",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
@@ -11348,13 +11673,12 @@
               "templateCacheVersion": 13,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c",
+              "contentRenderKey": "3c977e03a1c0cb8e5ad18d66f3910ccd470f4cb015d136e94de65507a4af91e0",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/075_urza_s_saga.png"
             },
-            "preparationKey": "69000419f20c0a26b0847c3289b324671309d6066804ef84013c6788f71ec96e",
-            "preparedAt": 1793302813.66,
-            "acceptedWarningKey": "171b1060e16f77323da9c9a42ab5ff51235484e8176b3da99269bdf76a6115b0",
+            "preparationKey": "fed20794dfc2afcd5cf01b410858a8acf76dfa72e4d5bd2dfb15df9c8ba2ba31",
+            "preparedAt": 1793387427.921,
             "acceptedArt": [
               "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
             ]
@@ -11886,7 +12210,7 @@
       "artReviewSignature": "6a581f3e65b3689f18cbb80d4af92b13f0a827df1502ce1ac51532c82b5a40be",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/supernatural_artifact_tokens"
     },
-    "status": "ready",
+    "status": "prepared",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/9a446e57-cf41-43dc-a8df-b73be700926d",
     "stagedImport": true,
@@ -11897,7 +12221,10 @@
         "nickname": "Men of Letters Archive",
         "flavor_text": "Centuries of monsters, catalogued one impossible case at a time.",
         "artist": "ChatGPT",
-        "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api"
+        "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
+        "accepted_art": [
+          "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+        ]
       },
       {
         "name": "Argentum Armor",
@@ -12041,7 +12368,10 @@
         "nickname": "Hunter's Manual",
         "flavor_text": "Rule one: there is always another rule you haven’t learned yet.",
         "artist": "ChatGPT",
-        "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api"
+        "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api",
+        "accepted_art": [
+          "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+        ]
       },
       {
         "name": "Maskwood Nexus",
@@ -12212,7 +12542,7 @@
       "width": 1220,
       "height": 1134,
       "label": "Mythic set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/set_symbol/mythic.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/mythic.png",
       "transform": "trim-transparent"
     },
     "9d6a9818c505e2858411c23ce66db54f1cff7e5288987134675ba6df6905572a": {
@@ -12252,7 +12582,7 @@
       "width": 1228,
       "height": 1149,
       "label": "Common set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/set_symbol/common.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/common.png",
       "transform": "trim-transparent"
     },
     "b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f": {
@@ -12262,7 +12592,7 @@
       "width": 1226,
       "height": 1146,
       "label": "Uncommon set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/set_symbol/uncommon.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/uncommon.png",
       "transform": "trim-transparent"
     },
     "b6eda288765f6af0dc161e0ec9aafa88bebe2ba7d21a1da2ea95162abc64ed9e": {
@@ -12272,7 +12602,7 @@
       "width": 1254,
       "height": 1254,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/back_icon.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/back_icon.png",
       "transform": "image"
     },
     "c2954f2087167a106d385468fc8105da55bf51b3ed448670bdc382569192d376": {
@@ -12332,7 +12662,7 @@
       "width": 1226,
       "height": 1143,
       "label": "Rare set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/set_symbol/rare.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/rare.png",
       "transform": "trim-transparent"
     }
   },
@@ -12340,10 +12670,62 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "90265635da069820a29fc34c69c48a4ffdc53bc0"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {
+    "7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "0",
+              "width": "2010",
+              "height": "318",
+              "fill": "white"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
+    "5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "318",
+              "width": "2010",
+              "height": "2496",
+              "fill": "white"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
     "3f8fd28715260e4f8cafc19eb67c882908b1ad04acbba9f30eccc1f3299b254b": {
       "kind": "svg",
       "root": {
