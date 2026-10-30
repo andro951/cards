@@ -1143,6 +1143,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleM.png",
                     "masks": [],
@@ -1171,19 +1197,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/bf2fc6e810ea788da03b1f6c929591d556ccbb5c2c4669158455e3bc9e182e11",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -1304,10 +1339,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -1430,18 +1465,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "e5434add96db504f8b90c121ea60fde143945412e96a90f3bae6b59882963633",
+              "renderKey": "cf4e140cb3045f763c0abcca64107dd758deedfb69fb7e9e01897e47b313b86d",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -1464,12 +1501,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "324f7679ee99a585d448b5db7dc4986bdfce1156b3d1ee9d91644da4ff24b071",
+              "contentRenderKey": "d48d8b9d1e4ea377fc101a429338982269631e523e0878495e5131a730761bd1",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/001_syr_gwyn_hero_of_ashvale.png"
             },
-            "preparationKey": "f1fa0491b371436d3d0ee83914ea533b2ad03214c850395fe2ca98ff60b14272",
-            "preparedAt": 1793320446.7340002
+            "preparationKey": "6240381a71a412ecd861f3fc9190cea1373ec6a96d583b16be1aefb7a1e73ec4",
+            "preparedAt": 1793387492.395
           }
         ],
         "metadataSource": "a33add37-379d-4a90-9c04-529dff676986",
@@ -1698,6 +1735,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -1722,13 +1770,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/cd69dad6298877feff0b59653bf47ae1a85be1b537adb2883ff1269bf841a0ba",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -1849,10 +1902,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -1991,18 +2044,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "cc13d6c209f16958a0c3cfc8628ced4a322e3668d23d11a53e05d731d6b7c772",
+              "renderKey": "a096d6002c8d053f5ef228a4c6195ccd74d638ce502cc20ba8667aa1bb0ff8f1",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -2021,16 +2076,16 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 16,
-              "templateCacheVersion": 16,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "99ab3db70738ac34fcaaca1ec3c29b43ef8ac8dd7084a893d9b478e1b054c647",
+              "contentRenderKey": "317ff2b048903d8c73e248fd0527ec481f567ee507e1ca3aca87d1067c71c69f",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/027_cecil_dark_knight.png"
             },
-            "preparationKey": "df73204960b92daf7ca0612f4c9764c92ecde444bdf61252843a5191b7ee8467",
-            "preparedAt": 1793320447.563
+            "preparationKey": "dad532813f2de7f9085321d9e7083e43043f1a7072515f0019fae36f41875203",
+            "preparedAt": 1793387492.853
           },
           {
             "id": "519e0080-a0b6-4918-b19b-5c2f91eca568",
@@ -2053,6 +2108,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
@@ -2078,13 +2144,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/09d521f04828d473723cfd3ac9c92557fa1e72a80591536b92d317684c0e95bb",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -2205,10 +2276,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -2331,18 +2402,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "a0c7a760beb09229df4a4bf66aaf8deb79f0fe048f0c3acea014376945f6880e",
+              "renderKey": "e1b3f8b4387858b05948793cc9e27a541399275a9030ceb910a72b7a262fb433",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -2365,12 +2438,12 @@
               "templateCacheVersion": 18,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "c749033d50127030d7d56530d1605e889b78be81663801646cb526c9281942d4",
+              "contentRenderKey": "eb4bf97dc88c308b6b586671fabce1acc988bb67a4359227c620ac16c983c529",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/028_cecil_redeemed_paladin.png"
             },
-            "preparationKey": "df73204960b92daf7ca0612f4c9764c92ecde444bdf61252843a5191b7ee8467",
-            "preparedAt": 1793320447.563
+            "preparationKey": "dad532813f2de7f9085321d9e7083e43043f1a7072515f0019fae36f41875203",
+            "preparedAt": 1793387492.853
           }
         ],
         "metadataSource": "026e7167-d665-43d0-a51e-8df2d68cdb5e",
@@ -2551,6 +2624,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -2575,13 +2659,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/4a01357d6ba1daa47237b1e25e4ff7feb2bff39f71467fb4fc8fa78d6d1901d0",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -2702,10 +2791,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -2828,18 +2917,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "81bb095a8f4731f6a1b030c7277a48b26691b87b6f17707a0ef3a6ef80f33b85",
+              "renderKey": "f352881e66227cb920511baf46bc4683ad8cc66ad8af47fa617b1ecb210bba87",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -2862,12 +2953,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "6eb9027422c41a58199fa70b34ed5455f9c07d70195101fb1c527a797181fa0f",
+              "contentRenderKey": "c51bd2d389cbb10492ac3ced697617f1e4ed4672b0a0be7bcd9ab976ace82697",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/022_archivist_of_oghma.png"
             },
-            "preparationKey": "2f5e79561e657760c936e5654355550546bf7c4265747a47b6b78f85cffaf7d6",
-            "preparedAt": 1793320446.949
+            "preparationKey": "f0c8ce96ac05970b7781184e912b945cfa9f10be203ab80791c093c1252fbfc4",
+            "preparedAt": 1793387492.997
           }
         ],
         "metadataSource": "f6589e02-8c84-4069-88d1-ebcc8520cae1",
@@ -3047,6 +3138,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -3071,13 +3173,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/2c42c0de86b24ace4213670c47a8034d7168eb845b2dc2c5a864ad06556ce6f9",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -3198,10 +3305,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3324,18 +3431,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "8825331cddf151a2567085124c8aa21d583958b239c65ccd8ad76371f1d710f9",
+              "renderKey": "0087f8145d7d96a4d3e7b69db609a8ca40365f80b55ec3b90d24148506991bb5",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3358,12 +3467,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "4a9e4a6c4e830f65221dca536a87a0be59c071afe95ba672dea3ef2f1835eccb",
+              "contentRenderKey": "5a8dec0bbf4e88787ff41b14567fb39419be0af29476ece1e0b10e23bd9acadd",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/030_cloud_midgar_mercenary.png"
             },
-            "preparationKey": "ca413f63dbb385dee105a74d5f0bd9aeb8cd9519cf390a0b24ac6b853eea33af",
-            "preparedAt": 1793320446.829
+            "preparationKey": "04dd43e2f0da138b46d8b31de5ca3ff33c71c875b403bc23ede4d52be5bc50aa",
+            "preparedAt": 1793387493.169
           }
         ],
         "metadataSource": "2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5",
@@ -3543,6 +3652,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -3567,13 +3687,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/e236dd363f49fec9a7d123ef257df8a39a87775554e13e783794b26e94eb8714",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -3694,10 +3819,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3820,18 +3945,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "4736c618b439a68f2acb4cfe0fbdd69ede8ecaf75d74ea16542783d7016e28fe",
+              "renderKey": "c1a20a78d98654f2fe044071f7afe220b1cd92eb2e415e7b8427cae5001e27c9",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3854,12 +3981,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "553ca5bdff31fd40925ab518865ec746965f31f2849777f8e35a1efbea62a59e",
+              "contentRenderKey": "045364e85b14b067fb0973d70497f23ea0104b3baf8b56e9fa31375a6d889fdc",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/007_puresteel_paladin.png"
             },
-            "preparationKey": "f6a9fd509b4e74579aeb22198801a4ed1ef040cd7e9d62fa07b7bdee7126649b",
-            "preparedAt": 1793320447.656
+            "preparationKey": "54acd26c8728e46ce8ba2e903f58b53b1eb39f5bd93488a5a7fcee5df301de58",
+            "preparedAt": 1793387493.3270001
           }
         ],
         "metadataSource": "d8f8a324-006d-4cb8-9816-620a603b4229",
@@ -4037,6 +4164,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -4061,13 +4199,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/829cb4a7c122442ec7ab2db70be6c8f3a0b7a2be711fd3a35a5bb02e510fb5e2",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -4188,10 +4331,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -4314,18 +4457,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f1a0ac6159a3935eaeff0b39d281acd1b12ff3f00a9ed35501e01fb1d62762f5",
+              "renderKey": "3cdff395e6acdf5be7cc9f57a4ef91d321ba1610fcba7d47ab026fbfcab412ec",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -4348,12 +4493,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7fdd815620ea352f5cb943b5093dc6181c9554558aadb7a765a83035f9d465eb",
+              "contentRenderKey": "4f5765877ca1604463d1c030d72cd5de0f31b53fbae4ba406e280d9f6eb177c5",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/008_stoneforge_mystic.png"
             },
-            "preparationKey": "9d9b12d79d989e72cf6aa790571fa90bc805e2e8adaceba588566975261d8931",
-            "preparedAt": 1793320447.76
+            "preparationKey": "6c155c18dba8be0d11938ae2ec44683fb0893e075691c59c99683fed4f740757",
+            "preparedAt": 1793387493.541
           }
         ],
         "metadataSource": "4d3473d0-b46f-41f5-ac1e-ba217f7747d4",
@@ -4536,6 +4681,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -4560,13 +4716,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/bf32b68075c1a2a6f3ce024d03158d08ddca0042ff683e7f834cadaecb06a682",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -4687,10 +4848,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -4813,18 +4974,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "bdc3ad02b577b18c874ffa754a49fd7f8b4ea2657459a0dc48d8a56a14036b4a",
+              "renderKey": "0d6ed161d32035cf022e8d68dcf5a3dd697a2af62523ad22dd67b8cab0be4f09",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -4847,12 +5010,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7fea608ba0efd538c9bdddf10056f87efb74ac3b35b9c0a210dcc5770d52462e",
+              "contentRenderKey": "10c3dde9154d1bfd408c10ffd75277106b7f4b6628d12061b0772c3e04933363",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/020_aerith_gainsborough.png"
             },
-            "preparationKey": "cfd3567fe316bc42a1ef8c1cb62784f3f6a06693078760bf578fa810e9a08ac6",
-            "preparedAt": 1793320447.9390001
+            "preparationKey": "473d130e1229b0b77ac4d7e20f5afdb72f7462b0ad55c22d60ccf8eda07ac00e",
+            "preparedAt": 1793387493.687
           }
         ],
         "metadataSource": "e86328b6-ded2-41df-8b6e-4a770e7b171e",
@@ -5104,6 +5267,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -5128,13 +5302,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/c4d19a2a85da0cc8900c8ce12ab08f7d5a813ad54f1565dd77acf15a0b69605e",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -5255,10 +5434,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -5397,18 +5576,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "d190f82a09f45102f08012ce72e2d9df588f0dd63777a915c190fd546a3b642c",
+              "renderKey": "a6e31c081c63273673e17a3aff63523b776af7f6791bbdce7645bbaffad61eea",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -5427,16 +5608,16 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 16,
-              "templateCacheVersion": 16,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "452d1327c5673c59db5c323e52217e95161103af07cfed88a8a21b630c6a09e5",
+              "contentRenderKey": "af365621ff60a8ad74fa4600f378e46a886f26dffca65a6d4f2d779a7f410a46",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/015_brutal_cathar.png"
             },
-            "preparationKey": "c458f1cbaab6c8cc5dfdd348b6dd9388ea9edd95393f410ac3ef5e840381ebe0",
-            "preparedAt": 1793320448.3980002
+            "preparationKey": "e90cc5a59dfe6a5c57c0fdd913e2ab6524bb24f0e2b983bd2428a06b195a986c",
+            "preparedAt": 1793387494.02
           },
           {
             "id": "a8f1277c-efd6-4668-9ad1-3773b86b826b",
@@ -5459,6 +5640,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Red Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameR.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleR.png",
@@ -5484,13 +5676,18 @@
                   {
                     "name": "Red Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameR.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/38dc94e8876b1ba53309568934cc30e7ae280e31a206a65ffb7c7c5f4610fb03",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -5611,10 +5808,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -5737,18 +5934,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "96c639dcedfe2d18aef22ac354a3911645ced92599d52128b9856b2f32af01a4",
+              "renderKey": "8f2093a02bd5718bd9d6f7c5bf8a977ce6898d4c0c6b28b8da3404dc302b0d3c",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -5771,12 +5970,12 @@
               "templateCacheVersion": 19,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "5f714ecbe41e8c5ae8ef63366c7f86a36598d55dd00cddee0a129b5212430669",
+              "contentRenderKey": "0adbb279e0a2c610090b0c83571bae25def4e1a3b45c0fc0975f9ea9bbc7a327",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/016_moonrage_brute.png"
             },
-            "preparationKey": "c458f1cbaab6c8cc5dfdd348b6dd9388ea9edd95393f410ac3ef5e840381ebe0",
-            "preparedAt": 1793320448.3980002
+            "preparationKey": "e90cc5a59dfe6a5c57c0fdd913e2ab6524bb24f0e2b983bd2428a06b195a986c",
+            "preparedAt": 1793387494.02
           }
         ],
         "metadataSource": "0dbac7ce-a6fa-466e-b6ba-173cf2dec98e",
@@ -5957,6 +6156,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -5981,13 +6191,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/5a632d74d572cdffc9616d6dd5bb6454a026e1791326cccf6a3e888bc6a9a280",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f",
                 "setSymbolX": 0.8601990049751244,
@@ -6108,10 +6323,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -6234,18 +6449,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "de45f3049b651076cec1519c7092b7792421e03cf05c6926adecb4562081ce1c",
+              "renderKey": "0d7c6d0bb433920841d950c7314081c932d1b1bb52c0753c414f9407569e5340",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -6268,12 +6485,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "4bfeebf0a0bbb38e002fe05f9997b2ffa53a3007d9aef47fd174ad8f64d32048",
+              "contentRenderKey": "f7d8e19438d279a06419d56c93f975a6339ceee63c19725315da03b1322d387b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/026_danitha_capashen_paragon.png"
             },
-            "preparationKey": "71e77ac6e80e783787e42f497e0b097521395edf0ea71a4b254047fcb479b2fb",
-            "preparedAt": 1793320448.584
+            "preparationKey": "dfdc61f8f0b932a74d1bb4f597ef96723dbf8360b47ee509b981049e50ab74b4",
+            "preparedAt": 1793387494.207
           }
         ],
         "metadataSource": "a11f77e4-edb6-43c6-b8ca-d4f62d26d0c0",
@@ -6480,6 +6697,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleM.png",
                     "masks": [],
@@ -6508,19 +6751,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/973561dfe88e962d0676307230ea8f02910453dd60ed01504ff30e1a5994d538",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -6641,10 +6893,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -6767,18 +7019,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "c34775896512fc2c51e8bd902b35ab01d11f3d3c78b3b93c33f169e7945ca091",
+              "renderKey": "202ad9cbe80d7a12c60a4bb63df8337dea5d197d6e8a9e7b39b07db63b37ab1f",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -6801,12 +7055,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "4bd152c41970703017ea908143ff7171c5284c6b5b418c33edcc185335878125",
+              "contentRenderKey": "348df2170d725ae1104d46c5867142471f0e5711047d4c2ca6114cc10a370f59",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/021_kelsien_the_plague.png"
             },
-            "preparationKey": "9a1cb8acf758e795b3c0a949bb198639dc1e07810661ada7afb8e4b44227f720",
-            "preparedAt": 1793320448.6780002
+            "preparationKey": "6bcec2b68513504aa673245f36d22be9a62b0bfad522779343076ab5b6d6d535",
+            "preparedAt": 1793387494.34
           }
         ],
         "metadataSource": "039d25d4-ce26-4ecf-bbf5-42187cf0230a",
@@ -6982,6 +7236,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -7006,13 +7271,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/2b8ec5615936c140baf87849aa7911ca5ef27de208a8eb587690df46561f9d66",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -7133,10 +7403,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -7259,18 +7529,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "2432da6e79a49fc24f26b89ef92a6befcf29b6f0283cc2c3f793dd419b119820",
+              "renderKey": "7b719f64a11c307e688c2e7ea45ba19e7fbec66de4632cd5bdb60fc121bdc4cb",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -7293,12 +7565,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "8ebbe5ea970039d85d4d97201b610551dd66dd9aa6bed1e4b13fe3197d8882d3",
+              "contentRenderKey": "4404cc6f2041ab36693dff027df4979bc96a5526cea97f721359a186b262ffb7",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/024_knight_exemplar.png"
             },
-            "preparationKey": "2139bb247eb62a9f73856cb8534aefd681202a79cd88f231f179ad03ae25452b",
-            "preparedAt": 1793320448.8460002
+            "preparationKey": "520118de6336de7ee9eef2fb787b980128a9637f81ee48b38a556585f6ce673b",
+            "preparedAt": 1793387494.488
           }
         ],
         "metadataSource": "8400f1a7-ebf0-49b2-a51d-3b2056c05b61",
@@ -7476,6 +7748,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -7500,13 +7783,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/72aa3c31d47800064f6177ab16d2212687b82b56c83e6463db288a57f525d379",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -7627,10 +7915,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -7753,18 +8041,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "393f496062a41b5bc2694b0d85d5859fbd4c0e3e29f0b7a320f9d196defcb418",
+              "renderKey": "43f66dbff5e258adf305d6efb465a70d8b8e27e86d6cdc1d091f5e8aaa37192c",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -7787,12 +8077,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "6adc83fa1d5921a5e57ad4f6c5af2b427a5b271320cd9427382b0b38ff0095bd",
+              "contentRenderKey": "f32031d01e94d22315f474983053012a9fd9a611bf581a1980d2f9e1d6816b34",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/031_loran_of_the_third_path.png"
             },
-            "preparationKey": "1eaaae33d075fe55af17d7b8b23fdbc167e6c3c17388e8079efd54d9f29458df",
-            "preparedAt": 1793320448.99
+            "preparationKey": "a2cd6e1dbf608f72a8393d307807df4958d6af1d9365a929915345effa7c974e",
+            "preparedAt": 1793387494.6230001
           }
         ],
         "metadataSource": "9e83a0ef-4fea-45ba-86c0-130d6687f7fe",
@@ -8034,6 +8324,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -8058,13 +8359,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/dea99315750444bede1b3c35b78efec8cde57a4c2923e936897a6bc94fb013ef",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -8185,10 +8491,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -8327,18 +8633,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "8b41dda336564aac917420a84e12960c1e108903e8770257f999bc5b722e2830",
+              "renderKey": "f6831d9446576ebd6f9b3c0b35e0a0a6b1a95f7621c7cc3605bd9dedb48040ea",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -8357,16 +8665,16 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 16,
-              "templateCacheVersion": 16,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "3f4c4ae4cf23fb32fe012b5a2e3bb51ad4076a6acf36e0aee629d9050c2c0a0e",
+              "contentRenderKey": "92ce8c162da34bed1926ea5eee68ea3823a653514ebb56ef1454fad791600f89",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/032_sephiroth_fabled_soldier.png"
             },
-            "preparationKey": "cb0b71e0db41736f7eb455904930514d1e392a4ca3b76a6597067ec1d9a8d1e0",
-            "preparedAt": 1793320449.57
+            "preparationKey": "0e0bd3796c772b0c642d9709720eefceb5276ca9ab9e44b8995e3d76d4370835",
+            "preparedAt": 1793387495.0089998
           },
           {
             "id": "d99a14bb-04a9-4580-bfe8-16f3a5a0cda6",
@@ -8389,6 +8697,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
@@ -8414,13 +8733,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/cca44274a2c3589459073a86cc02901493a3d111442bf686a08077205225e72a",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -8541,10 +8865,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -8667,18 +8991,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "07836d1f30d21252bd8638b54a1cbaefdf1183e1549a6e6c4e79d3ad2c2c8aba",
+              "renderKey": "e9f5cc087d82446b8fb783188c7ee227208fc1c0ef291de670a1f1de66870aac",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -8701,12 +9027,12 @@
               "templateCacheVersion": 18,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "80e4ad3bec6b737483ce9685dd3d738e2306ea8f38e5537b940c82b32939db22",
+              "contentRenderKey": "1a6074e2ff782e5a52f2ea1f0f8ce92bb535a802b9fc059a912f13d756fb5dfc",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/033_sephiroth_one_winged_angel.png"
             },
-            "preparationKey": "cb0b71e0db41736f7eb455904930514d1e392a4ca3b76a6597067ec1d9a8d1e0",
-            "preparedAt": 1793320449.57
+            "preparationKey": "0e0bd3796c772b0c642d9709720eefceb5276ca9ab9e44b8995e3d76d4370835",
+            "preparedAt": 1793387495.0089998
           }
         ],
         "metadataSource": "85eaf5e7-77dc-4842-a70c-ce4ac7f724df",
@@ -8878,6 +9204,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -8902,13 +9239,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/80508259c84f1ab4d6fc74fc0ec23a22bd0f82f37b24337ed01da0e9a57e8764",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -9029,10 +9371,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -9155,18 +9497,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "04b6deff7644917c99a60e563977c5e4d918d4b6f8618c3e9fe75c52f160f1f9",
+              "renderKey": "e6b530f7fb70a5ca74db487bbe4de1512069f9352ba0c1d36d564463312e61d3",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -9189,12 +9533,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "f244226e395cfc388743d56a1bc59e559af8d73421a7bb0ed7e685e74001aee2",
+              "contentRenderKey": "7c63d9528d104208c68b0a600c7b0282f1817951ec415148279ccb4185c92094",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/038_armored_skyhunter.png"
             },
-            "preparationKey": "22a25ad9f95945121c0a73a07db8fed693e4f49550f45cb0ee22f997b3b0e695",
-            "preparedAt": 1793320449.7
+            "preparationKey": "c4068ab907b81b9c11fdbafabbdf85f57a77147125f9e7070ac4d2414f2b1f08",
+            "preparedAt": 1793387495.184
           }
         ],
         "metadataSource": "707e9d2e-3934-4b90-878d-4699ac1cbe89",
@@ -9380,6 +9724,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [
@@ -9424,19 +9794,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/d0bd04ca7fe11bb4c98bed58b75a232773a71c39fed21a2b01622b620fb744e8",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -9557,10 +9936,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -9683,18 +10062,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "2f9fbf18aa9c5b8100713a53b17ad18788c401a5ba5ec622719c8a8faa5b5fbd",
+              "renderKey": "9ca33b41d5c18f244430849db63aa897c058a6d8954f3c870ea6e791b41ed653",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -9717,12 +10098,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "3e94b49443b47db7b8a503a6ad806e5fca7e3a8e7fb61d0e3703a5b6e67cf03c",
+              "contentRenderKey": "8c9af8b5689f2a80adce879c86ae359727e32a8cef8718515c860bb4713acc6a",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/023_astor_bearer_of_blades.png"
             },
-            "preparationKey": "076b46cd8394179fd3bf70e5052d6d11c99dd8fa865d72dc218afc8e3c71ca74",
-            "preparedAt": 1793320449.831
+            "preparationKey": "d70b8b5745d4d0058e0e716eb5a0745d44f0e38091f2d05685abbe0337d83e86",
+            "preparedAt": 1793387495.318
           }
         ],
         "metadataSource": "40f3a0ba-b917-488b-adbf-60a0d3c58a56",
@@ -9935,6 +10316,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [
@@ -9979,19 +10386,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/80aaa9d146ebbd17e2a186c56cbe749dcfbd6e4c1690714715faeafd0a48820f",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -10112,10 +10528,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -10238,18 +10654,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "3d69acd8e31c6d91abda9116b56e0bb8623e4f77f90cb41a5272a71b8f507901",
+              "renderKey": "5b5525fd64045c7e89badfe78da67f46362531a6d88fd2136f7e4ecd48ae984d",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -10272,12 +10690,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7d1709f5046f17d0ed4793b1da4af826dd76adddee52e69cd4c9387dcd8f7655",
+              "contentRenderKey": "5b756d7338d25b43ed5cf4b1d8f46b64f7a10ace5549ec060d85cefbf94a96c3",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/034_ria_ivor_bane_of_bladehold.png"
             },
-            "preparationKey": "2fb07430cc0ee261ebfed66020f1ca1831f20c9d9d0f57af19194dec8596f32f",
-            "preparedAt": 1793320449.999
+            "preparationKey": "90b5be3151d3667f94ad9cd7d7752b1a160043752e9ac9bdd3adf916b16f882e",
+            "preparedAt": 1793387495.452
           }
         ],
         "metadataSource": "f7531ed3-235f-4368-98a8-e4e1947c53fb",
@@ -10462,6 +10880,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [
@@ -10506,19 +10950,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/6a1ff730d4951eb4c2fe322984d9e1aaeef88484e9a1bbfa9f1a20e82e16575f",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -10639,10 +11092,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -10765,18 +11218,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "2a402322f126f36485de5d1d47aacbbaf1d3df8f2f26e6a826ea9482ee172332",
+              "renderKey": "9567e2464ca3b7e7772a3de76bd1816651ec415f7c2da949fc7df319bd865bbc",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -10799,12 +11254,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "440f1c98bd7748e5ef46977fc0fa8821a36b693446a1b31bca75f7d187e93b44",
+              "contentRenderKey": "f0e9cdb43c964527f113841493a50290bbddb58265af7dcc1a31e8207b20cd4a",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/019_rohirrim_chargers.png"
             },
-            "preparationKey": "e4eb66052c5ae1d0820e535797c85b49313b22d2790aebb912391a985259593c",
-            "preparedAt": 1793320450.113
+            "preparationKey": "5916080fbf64352d219d5b29444246a2a9820e9ec141ac937230a39db30acb82",
+            "preparedAt": 1793387495.597
           }
         ],
         "metadataSource": "070df7db-bee4-456b-864e-69d493f09dc2",
@@ -10991,6 +11446,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [
@@ -11035,19 +11516,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/4236b10c8da27309645a6c6a9d883fba9394939dd0d034bbd9dd5f561517ca0b",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -11168,10 +11658,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -11294,18 +11784,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "32805197581a53e495cee5081299f0936cfcc9eae2f3c6cb7e15d7f424d8b084",
+              "renderKey": "5efa28bc73be7f9befe459f382e486584e8c58789c85eed37f599ddc48a2ae97",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -11328,12 +11820,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "f9b0558ed7bebcd5633058fbfe91fe0e78832fa640e9923d51eb8d27143ffcdd",
+              "contentRenderKey": "31cb8a72ce66da9d7bd8309ae29272eba0008098abefb27680d7a0f4427b0b6e",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/025_eowyn_fearless_knight.png"
             },
-            "preparationKey": "8c579f0bb5a0d90d07ecad662f10582465adbf78db3a631c0bb368d4e773c53d",
-            "preparedAt": 1793320450.66
+            "preparationKey": "54cf5c167745ef0a624780a25b703f18c0b7abd39d1634f84501854cd0727ff1",
+            "preparedAt": 1793387495.7350001
           }
         ],
         "metadataSource": "adffb389-c9a3-41c4-b078-292a2bcf870d",
@@ -11516,6 +12008,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -11540,13 +12043,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/f9038aac34942a992104359c6f9b2ce10c6e3c908ca8400e948d9b3712b9f944",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -11667,10 +12175,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -11793,18 +12301,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f9e61b4479c640df40a21b58e177fcfd87911caecd2b6e61ed0d3a908f9ad9a9",
+              "renderKey": "2cf21cae57d3d8ef0459413133b8ca2a4a3460b953487d66f891365c82147670",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -11827,12 +12337,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "b9dddc14bd1585c92dcefc580844ea50c5e07ac3655db6e9dd87aa33190cf9ec",
+              "contentRenderKey": "b6703d1146fc830dee63c689138725b89820dd661430d5bf7eeac79499ef5b1a",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/006_archangel_of_thune.png"
             },
-            "preparationKey": "c3761cf5f2c1e556d44032c6053c715b747d91389ba3e8acabcdec7046e35351",
-            "preparedAt": 1793320450.325
+            "preparationKey": "5d983227e8f7e44c0e5e5a1e62b123093858bf792bb63f45364449e95184555e",
+            "preparedAt": 1793387495.881
           }
         ],
         "metadataSource": "15c34447-b0f4-4fcc-b557-23c92850b31b",
@@ -12013,6 +12523,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -12037,13 +12558,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/d5f3823859834cc19f03eaa752baf88bb8f7f73eea0b4ac89e86cf8839eb295e",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -12164,10 +12690,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -12290,18 +12816,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "ce1b16459e0875e2d60d5ec7a9a7babe68662dec10cd64ff4a3e8c39d1de4004",
+              "renderKey": "69539920bf207e9271c9f6fd4315fbccbeac64e086a1c2e2cc173ec5c90dd20e",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -12324,12 +12852,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "7e4fd3cd355e6f14ed7b6eebf114263957ff6321c7c35d69b43c7046ba92666a",
+              "contentRenderKey": "c257dcb4ef6294aed204fd677c2b4aa7afdf72fc0020cd0ced3ea9f368866df0",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/017_bloodthirsty_conqueror.png"
             },
-            "preparationKey": "f2222c9009c3f30b856c6921057bc98ab69e6345eab034b3da50fe8efe3fb62d",
-            "preparedAt": 1793320450.7649999
+            "preparationKey": "4c7ad35560e23be5f747d4a65fe3eb2d73337600d99e0a2b9395cadd07709871",
+            "preparedAt": 1793387496.023
           }
         ],
         "metadataSource": "ce860ed4-a5bd-4347-9eab-dd716ea84db1",
@@ -12526,6 +13054,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -12550,13 +13089,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/0024b6bf25b0c38d77234896c0b53da0dbb8ba472d12bdfe342edf28bda184ae",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -12677,10 +13221,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -12803,18 +13347,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "0fd04ce5e8de6c71682ba4da54602c4ebf6a6fc41689a310bb5a50fb960af82f",
+              "renderKey": "17af188d29b7c3eef92cdd9e723dc990f2c870842b205d4db0e4f546f12bb986",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -12837,12 +13383,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "ddc3f0a7421648e9c7242c9e5925e63358648be8b200b1d8f02d0a471b128a64",
+              "contentRenderKey": "2634a0af23bbf53d76d0011be3aa3ad5d1e77ccdf9e1ded1efade4624e49434d",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/010_captain_america_liberator.png"
             },
-            "preparationKey": "74dd70abb6738cc63d9129d04584f3de008b125ddd0c6cd534bcf100eab13659",
-            "preparedAt": 1793320450.8860002
+            "preparationKey": "f8f1452cd4f40e4d466ecb857571a6828a1aa2802732b11675e50e445fcfcf72",
+            "preparedAt": 1793387496.5089998
           }
         ],
         "metadataSource": "bfa75d51-307f-45da-8fac-81bb32830ee9",
@@ -13030,6 +13576,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -13054,13 +13611,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/56d2aecfee1fc66d8ec4af7b143c1b84984be642e979228ca8e0b0954102b685",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -13181,10 +13743,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -13307,18 +13869,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "e0bae9ea5df2866e8a2f5fd21b208343dfa0e85370394e96c4163d2e840c51f9",
+              "renderKey": "abda14a659e22f4eb13c5f2a180215dab62cabd3f40519ccddbad0020c21e908",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -13341,12 +13905,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "d1f5a0bae5d4f43ac9ce69a4b7120027f1390d7de1a0e87ba4a444d764f78d5c",
+              "contentRenderKey": "b967054bbbd32d5482ff7196fb4be0840ce15f1c03c234859e5cd73578dfe2b1",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/035_danitha_benalia_s_hope.png"
             },
-            "preparationKey": "5ddb3c1d7f1599af4915067190c34902a453f15a32807ad2f20ba3421a8d43fc",
-            "preparedAt": 1793320450.999
+            "preparationKey": "86995da440ea0a6f34f4e5f8b4f04e5d84924274dff89a1995bb74e88eb1a6a5",
+            "preparedAt": 1793387496.686
           }
         ],
         "metadataSource": "845e5663-2959-44ae-b4c6-d6ea41f01d6e",
@@ -13527,6 +14091,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -13551,13 +14126,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/6d291909e8a596f9d6e042d8dc7f40d57eb8d86ac3fe61f1198c47d298a5938d",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -13678,10 +14258,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -13804,18 +14384,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "bcde6e4aba0a0e66f7077dd5bfa36c213a869592634ec65b7e3995b0117e815e",
+              "renderKey": "7642c060dc48e136cc225b9e0823d92d569596847fde38ae6525b333868860a1",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -13838,12 +14420,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "f2c7efd8449c196414daa386efa854f035e2bbec118575cce7e4c2a3ab1a0347",
+              "contentRenderKey": "617f9fcc9af19ce03cce16ebfcb79f4ed6763fd487b2fa2e34453b547825a519",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/014_lyra_dawnbringer.png"
             },
-            "preparationKey": "342cec28d44d30b3b646137d81b98033bef6d383ed12e8e5fbc67ef26ee16bf6",
-            "preparedAt": 1793320451.131
+            "preparationKey": "0ef59ea051df18ceeb068af61de76d1f0e4d651a21e63d35a0f4d084f8268857",
+            "preparedAt": 1793387496.831
           }
         ],
         "metadataSource": "f9fa30b6-3a33-46fd-8b32-ac1cfa41500d",
@@ -14025,6 +14607,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -14049,13 +14642,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/f88e2d2929ef1846ce0a048da8862d9dbcd32c294d59fc9b4ad926fb1b7000f2",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -14176,10 +14774,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -14302,18 +14900,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "c99f66c10a821f400c46ce692faaf4b33c1a570296fcfe849e250ff1eb07e92e",
+              "renderKey": "1d7161fdfd991ecf61660f947d4e3a4f9e351c66590d0b75bc69bf0751c531f1",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -14336,12 +14936,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "48024252566f6dc6c425628d752316c9d1ed00419c165beeb9484a543b6c1dcf",
+              "contentRenderKey": "bf801610361d8bca71c2171472c35f1d5b539774250de883341c57d42051ca0d",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/037_stonehewer_giant.png"
             },
-            "preparationKey": "17f2cba1f263124e1cdaf26fc620a16c961649a333f6e969b9003f22c66ad771",
-            "preparedAt": 1793320451.248
+            "preparationKey": "482a2762a0f2f4cfc0e61246ecb741f19a525feae4adabca14d2528115d7e8f7",
+            "preparedAt": 1793387496.966
           }
         ],
         "metadataSource": "0efda05d-01ea-4478-b075-00a31d7037f8",
@@ -14519,6 +15119,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -14543,13 +15154,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/73651e4f4e1680536fdafcc9ae086646d98dc94439a2699e66e984d39318fa0c",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -14670,10 +15286,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -14796,18 +15412,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "dd0fceb67f08cfcbbac6ff023727f38cdce26a13583e84de6b2d075717af496a",
+              "renderKey": "6c7d3f567ead167fd35a7a179f64f007011cef90d26ce19aebe99ff7d7f1bc20",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -14830,12 +15448,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "e9b5187f25ed56681c0fecd3f2e4cb95d5577944b72cbdce3e20ad6f52c023c7",
+              "contentRenderKey": "5cee5d54dd349c108217b0e35fc996043570127ccc4385055c3202caf5ec7643",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/029_thalia_s_lancers.png"
             },
-            "preparationKey": "597ca4af8863375b361949b0b1fe582b3dc850c5a5ea88d9762aa5887cb5c7ca",
-            "preparedAt": 1793320451.3830001
+            "preparationKey": "017e14b3452d4fa220929d6900efdcaaea20a2d913f1675c2f5e629480819885",
+            "preparedAt": 1793387497.107
           }
         ],
         "metadataSource": "9930d08d-5965-4c16-a84d-43c8ccf2ad0b",
@@ -15017,6 +15635,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [
@@ -15061,19 +15705,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/de1255ef9992c00341e391eaec02396ee7285389c6032b6617a74ade82097063",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -15194,10 +15847,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -15320,18 +15973,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "dbf41ba471e47a3e175eeeb0967c8eed31eaa3706dda083da86cab0547f0bf57",
+              "renderKey": "0a3036df3d3008c590558a9fed63b16160aba9005cf482bac5bcbb91e0fb0d70",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -15354,12 +16009,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "2bffca5793693a9c38ccd1ecdf0901a3b06f861dff14078c19e9b98b5fae228b",
+              "contentRenderKey": "f143e63b8b3997012373f2ec41656517f0394da2acebcf90cdaa895ebe475535",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/011_vona_butcher_of_magan.png"
             },
-            "preparationKey": "111ed98c6f4b9829064cc37df83726e068a7ae4f2cb352f10fa2b5a9b4e10e52",
-            "preparedAt": 1793320451.528
+            "preparationKey": "a16bceaac8209c74de8df62574d762a5af83c6de9848b1f481b7405f712ce60a",
+            "preparedAt": 1793387497.23
           }
         ],
         "metadataSource": "27beed9c-a42e-46de-8fbc-885da337ae75",
@@ -15532,6 +16187,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -15556,13 +16222,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/685480eea176a3e023cf8c83df34714e55f975b79aaad2b49ffad04926b6ce5c",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -15683,10 +16354,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -15809,18 +16480,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f7cbd5fb991fc673c7f918a03028a9ce0728929a41ce594cbda185a962228fa1",
+              "renderKey": "707f5105f7253449787273cacbdee509a694c09a6b6b2c0167a83bc29f3488f7",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -15843,12 +16516,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "9bafe9c7957960c95fe268bc596767aaa9cffe7ffb55cb92794796ac4297d804",
+              "contentRenderKey": "e7c7aa25751934aaa558814847a54ad477603fa4a0f562bc90cbcf25d0c8140d",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/005_witch_of_the_moors.png"
             },
-            "preparationKey": "960c275829872cf0f9e5c5a7af6be3312a6f60d56cfabf223d63102c64f47872",
-            "preparedAt": 1793320451.6729999
+            "preparationKey": "6f8cd5528d8309a5129436d7e41c0be85f293a31453b13f3f23ca6cabacfc666",
+            "preparedAt": 1793387497.3630002
           }
         ],
         "metadataSource": "d9367aa0-2da2-4ed5-b52a-c52e40a00adf",
@@ -16032,6 +16705,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [
@@ -16076,19 +16775,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/5967632435de1dc8b1088cda6656f6e52d9d6518a3485ae1bf5213f5ea403329",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -16209,10 +16917,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -16335,18 +17043,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "7d5874066cec3e4dd24e42cb5c0b45c0411f2ac8caa86f38380959e988eb8d00",
+              "renderKey": "1890b72d245f76849f1852198bd3f233b38b7a3363f103b60ffdf4a75face29b",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -16369,12 +17079,12 @@
               "templateCacheVersion": 10,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "baa52245cd3e24fe0bde55ac8b552f97c0296f074635091ccfda5fb2bd90195c",
+              "contentRenderKey": "b7b67a40d02848083c10456ab6bfba0d1bc72d01adebc3212e694e70968de33b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/009_nahiri_forged_in_fury.png"
             },
-            "preparationKey": "61c5211465c263d999181f07350208312682575c327ffe3c80868a54564b4d1d",
-            "preparedAt": 1793320451.8049998
+            "preparationKey": "933b3329f56666965da10a511ef6de375b63b1eed4f48f68871964dbc47cfade",
+            "preparedAt": 1793387497.512
           }
         ],
         "metadataSource": "90eb0859-d24e-4703-8930-1cd4ac1fb3b6",
@@ -16574,6 +17284,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "White Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
                     "masks": [],
@@ -16598,13 +17319,18 @@
                   {
                     "name": "White Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/afa0aeca7d194ff9d39573addaa464022b8bd0474e57681d2c720eac8eb9442e",
-                "artX": 0.03954179104477615,
-                "artY": -0.0002683013503908731,
-                "artZoom": 1.775,
+                "artX": 0,
+                "artY": -0.017412935323383085,
+                "artZoom": 1.929,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -16725,10 +17451,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -16851,18 +17577,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f9540fbae58ef194472eaa7a6be7e3c653cc3e90484fdf0ffb40f03489b552da",
+              "renderKey": "73320b9b90bab5e4c8e83a7ac54d264c829479f60f9aa7c4be15b4625ef35d9b",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1042,
                 "height": 1510,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000498,
-                "cropY": 0.060023,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000009,
+                "cropY": 0.033916,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -16885,12 +17613,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "420da9cdf3becae49d6a3fa063b6e997bfda561e85fc2451f06970b89a475f6f",
+              "contentRenderKey": "f20d6bd155737c55ce2c134d9339de10bf2931b1f3e1242a3ecae2347c452c95",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/013_ob_nixilis_the_ascended.png"
             },
-            "preparationKey": "aef89c94304cee458243a605d784dee4de7689798e7a4b9fad93d8d6fe89e83e",
-            "preparedAt": 1793320451.904
+            "preparationKey": "02adbd822d4d50acfa94e008aa3adbc658ee6ee27bc7147cc6cb76ee3d406a69",
+            "preparedAt": 1793387497.654
           }
         ],
         "metadataSource": "a022d35a-9d24-4818-9ff3-a522cfcb178e",
@@ -17090,6 +17818,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Red Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameR.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleR.png",
                     "masks": [],
@@ -17114,13 +17853,18 @@
                   {
                     "name": "Red Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameR.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/2297636e569a992309deeaf3963ad0df0a666af1d14d7c2d901c1dcdf315f0c8",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -17241,10 +17985,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -17367,18 +18111,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "09d10d2841c911855a1fc713ad6c6a54339fd74dacb310f0ab5db9a96b45992f",
+              "renderKey": "c3ab7359921cad41af9c5d1bdde8c6d865868e678b37a9021b7adad99b539074",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -17401,12 +18147,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "f706f4b4dd0de7206854327ec7aaf0d5949c14c244150443e6e46a3a2ad92607",
+              "contentRenderKey": "e31929a0383ef0a3d6404eb453a12e23030da149f662976a9974cc1341f9519f",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/018_riders_of_the_mark.png"
             },
-            "preparationKey": "dd55f081f370640f1b8356d8947048bcfe4dd25f5781062ddffe36b76887024f",
-            "preparedAt": 1793320452.072
+            "preparationKey": "0ec1e8010b2936702bf9e0b8c790c726c1f717b7e715be3a4593001e278cb96e",
+            "preparedAt": 1793387497.789
           }
         ],
         "metadataSource": "de77686e-c4c1-4d38-a05c-03eb7363fc0b",
@@ -17590,6 +18336,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -17614,13 +18371,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/237a6a776f9d9ae3aaec467d85c67e278bc80210b9821a2d179eb5aadf850b45",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -17741,10 +18503,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -17867,18 +18629,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "eb198925503d180da49f10d702c7be0ba19d0e4fd478bf797134e638e3c4327d",
+              "renderKey": "c05f121863de9c20df10661d1400dbe6ba38c20f36aab729709b3090de74cc9c",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -17901,12 +18665,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "2e7dd595b5dec366ffe50af6eb50842a4e372eae1cb655e14c86c9520047d201",
+              "contentRenderKey": "6cb7b874fa5208ef8e46bdba45384a7dc016649f2a6b7798f745c604ed57d1da",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/003_avacyn_angel_of_horror.png"
             },
-            "preparationKey": "0acb90a0b59701bebd46e6bee874335b91872016c8c5065e51cdbd10089ed6c5",
-            "preparedAt": 1793320452.1699998
+            "preparationKey": "40c15c7797f5f7a59bc6a9a90e7ce85ff5e28409b8261a22ff69c51bcb1b8131",
+            "preparedAt": 1793387497.927
           }
         ],
         "metadataSource": "ff65f46b-0f82-49b8-93b9-7ac0243ce941",
@@ -18093,6 +18857,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Black Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameB.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleB.png",
                     "masks": [],
@@ -18117,13 +18892,18 @@
                   {
                     "name": "Black Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameB.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/448484061edb744788a07d0b654f63dec6c1f4f839e7cff28fe564f41b91923a",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -18244,10 +19024,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -18370,18 +19150,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "061a9fd08f4448840e90ea7ba28c8eeb1d108d3de1aa5ee76efcf5d364ee1a0b",
+              "renderKey": "fed6e0138d1423e44dddcfb4fea8c9641270580871a471b9613835178978820c",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -18404,12 +19186,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "f0336fad1ea6440e87ff84c0f809a7e01e83dc90abccfe0c479672991315f299",
+              "contentRenderKey": "584a8edea7b59906412f58a4580b1e157fa3f22a2c7b3119d98c5e0a9c366867",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/004_vilis_broker_of_blood.png"
             },
-            "preparationKey": "53465498002839e7ff97d6788aef9d71a2f44af767c91166ca1745bac5963a2b",
-            "preparedAt": 1793320452.279
+            "preparationKey": "735d238ef971df1449700add4aa80f6771d215dcf5d0507ecc95416af9396228",
+            "preparedAt": 1793387498.06
           }
         ],
         "metadataSource": "ecdf2bd9-87b9-470a-ad2e-0ebf98560f87",
@@ -18592,6 +19374,17 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Red Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameR.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleR.png",
                     "masks": [],
@@ -18616,13 +19409,18 @@
                   {
                     "name": "Red Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameR.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/f9d51edbdbce25abf0fb25ea4931dfaef0cde3ea4188967b3b5c40df03a14bfa",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/9d07c8da8ef8a3668d5d4e9441436f95b36d43fcd0d2b84eaf93a0b660d97b9c",
                 "setSymbolX": 0.8601990049751244,
@@ -18743,10 +19541,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -18869,18 +19667,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "f08b4b356affe9dd0f7af709e4938a01c92c14830ee75a244bb87b92aef4566a",
+              "renderKey": "efa612e186a158fadeee3abf316d95dfc869887e91d537133e7b2559722a5ffa",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -18903,12 +19703,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "2f5b211c25326d86e0423e6c6d07fa7b9d36f813c94f3301d314cb0b72c8cf0b",
+              "contentRenderKey": "40b70de9f0752d5a20a5fedb84a387098c3b82d120813c35bac82aae6df02058",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/002_imperial_recruiter.png"
             },
-            "preparationKey": "1d84cd19a16cf9246c21b0baf5e1c18c3e8e4a4b2bd3ee71a55d16b018f4456b",
-            "preparedAt": 1793320452.408
+            "preparationKey": "66e9521056cc3c12b35ddf5a5b3dfd04c844aba69d8c6d7006db5952057010db",
+            "preparedAt": 1793387498.188
           }
         ],
         "metadataSource": "05bd329b-5707-42fc-af1c-084cc604e805",
@@ -19097,6 +19897,32 @@
                 "marginY": 0,
                 "frames": [
                   {
+                    "name": "Token Pinline",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
+                    "name": "Multicolored Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameM.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
+                  {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleM.png",
                     "masks": [],
@@ -19125,19 +19951,28 @@
                       {
                         "src": "/img/frames/token/short/m15MaskPinlineSuperShort.png",
                         "name": "Pinline"
+                      },
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
                       }
                     ]
                   },
                   {
                     "name": "Multicolored Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameM.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/1d87137cebeb3ddc2d169106430bf07d1d4efe4710d7cd901d1f60e97cbf9930",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/fc183226f4618fecd218ab0e9aaa41e0c35c15c5ba6b9327a09d53ad1250145f",
                 "setSymbolX": 0.8597014925373134,
@@ -19258,10 +20093,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -19384,18 +20219,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "d9e8b7b98d803c69f57876cda75fe93c69f7f9814bca277695237f176ae3e92d",
+              "renderKey": "d2254e8e8ca2fa10890699b9e616df315bdee4335a53516deed9865ae111e4d5",
               "group": "token",
               "recipe": "Deck-wide token",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -19418,12 +20255,12 @@
               "templateCacheVersion": 9,
               "nicknameIdentityVersion": 1,
               "nicknameRulesVersion": 2,
-              "contentRenderKey": "120159fbb9d5a5e552e8d9d32d2d0f4acc8a2907a0e2266584f318c559987cb4",
+              "contentRenderKey": "4b1f5f457e7edf19bfb15eaad43c8f0d21c6ad329d9ddbeea938cb3e99ad1ee8",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/036_isshin_two_heavens_as_one.png"
             },
-            "preparationKey": "a8dd19005b5ba59605ae7bbe1e4ea12c30501b495b3cef70a39f6a91e8a7291b",
-            "preparedAt": 1793320452.772
+            "preparationKey": "394a1c57d4c44f6e17d5ac51efe1a4cef1f8b01724c426538ef059eb33ea0bfe",
+            "preparedAt": 1793387498.391
           }
         ],
         "metadataSource": "a062a004-984e-4b62-960c-af7288f7a3e9",
@@ -20669,10 +21506,62 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "90265635da069820a29fc34c69c48a4ffdc53bc0"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {
+    "7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "0",
+              "width": "2010",
+              "height": "318",
+              "fill": "white"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
+    "5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "318",
+              "width": "2010",
+              "height": "2496",
+              "fill": "white"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
     "77fe298b2924515a90d308011aeacd6fb1d0bfbc3eebb748f37a9fe469bb8c7d": {
       "kind": "svg",
       "root": {
