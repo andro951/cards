@@ -89,8 +89,10 @@ def test_token_conversion_adds_nickname_without_replacing_selected_frame(tmp_pat
                                    art,'Deck-wide token',sem={**source,'types':['Creature'],
                                    'legendary':False,'nickname':'Alternate Name','name':'Test Card'})
     data=converted['data']
-    assert data['frames'][0]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
-    assert any('/img/frames/token/' in item['src'] for item in data['frames'][1:])
+    bar=next(i for i,f in enumerate(data['frames']) if f['src'].endswith('/nickname/addons/m15NicknameTitleB.png'))
+    assert any(f.get('tokenTrueNameHeader') for f in data['frames'][:bar])
+    assert data['version']=='tokenShort'
+    assert any('/proxy-foundry/token-short/' in f['src'] for f in data['frames'][bar+1:])
     assert not any('m15NicknameFrame' in item['src'] for item in data['frames'])
     assert data['text']['nickname']['text']=='Alternate Name'
 
@@ -222,7 +224,8 @@ def test_default_land_true_name_uses_approved_join_position(tmp_path,style):
 
 
 @pytest.mark.parametrize('choice',['auto','token-classic','token-full-art','token-borderless','godzilla-card'])
-def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp_path,choice):
+def test_nickname_sits_below_title_and_preserves_selected_token_frame(tmp_path,choice):
+    import copy
     store=Store(tmp_path);ws=Workspace(store);art=image(store)
     source=card(type_line='Token Creature - Spirit',layout='token')
     settings=ws.validate_settings({});compiler=Compiler(store)
@@ -233,8 +236,16 @@ def test_nickname_is_only_a_topmost_addon_and_preserves_selected_token_frame(tmp
         assert named['frames'][0]['src'].endswith('TitleJoinedB.png')
         assert named['frames'][1:]==[f for f in plain['frames'] if '/godzilla/Title' not in f['src']]
     else:
-        assert named['frames'][1:]==plain['frames']
-    assert named['frames'][0]['src'].endswith('TitleJoinedB.png' if choice=='godzilla-card' else '/nickname/addons/m15NicknameTitleB.png')
+        bar=next(i for i,f in enumerate(named['frames']) if f['name']=='Nickname Title')
+        assert any(f.get('tokenTrueNameHeader') for f in named['frames'][:bar])
+        restored=[]
+        for frame in named['frames']:
+            if frame.get('tokenTrueNameHeader') or frame['name']=='Nickname Title':continue
+            frame=copy.deepcopy(frame)
+            frame['masks']=[m for m in frame.get('masks',[]) if m.get('name')!='Token body below true name']
+            restored.append(frame)
+        assert restored==plain['frames']
+        assert named['frames'][bar]['src'].endswith('/nickname/addons/m15NicknameTitleB.png')
     assert named['text']['nickname']['text']=='Ghost' and named['text']['title']['text']==source['name']
     for field in ('type','rules','pt'):
         assert named['text'][field]==plain['text'][field]

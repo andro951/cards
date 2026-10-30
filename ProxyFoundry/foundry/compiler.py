@@ -34,6 +34,7 @@ DEFAULT_TOKEN_STYLE='token-full-art-short'
 MODERN_TOKEN_STYLES={'token-full-art','token-full-art-short'}
 TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
 TOKEN_DUAL_COLOR_VERSION=2
+TOKEN_TRUE_NAME_LAYER_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
@@ -2890,12 +2891,43 @@ def reserve_nickname_mana_space(data,sem):
     nickname['width']=max(0.25,right-left)
 
 
+def place_token_true_name_layers(data,layers):
+    """Keep every token title/crown above its separate subtitle strip."""
+    frames=data.setdefault('frames',[])
+    header_flags=('verticalTokenHeader','prepareTokenHeader','stationTokenHeader','tokenTrueNameHeader')
+    structured=any(any(frame.get(key) for key in header_flags) for frame in frames)
+    width=int(data['width']);height=int(data['height'])
+    cutoff=round(data['text']['title']['y']*height)
+    def clip(top):
+        y=0 if top else cutoff;h=cutoff if top else height-cutoff
+        svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"><rect y="{y}" width="{width}" height="{h}" fill="white"/></svg>'
+        return 'data:image/svg+xml;utf8,'+native.urllib.parse.quote(svg)
+    upper,lower=clip(True),clip(False);headers=[];body=[]
+    for frame in frames:
+        if frame.get('name')=='Nickname Title':continue
+        bounds=frame.get('bounds') or {}
+        header=(any(frame.get(key) for key in header_flags)
+                or bool(_crown_family_key(str(frame.get('src',''))))
+                or ('Crown' in str(frame.get('name','')) and bounds.get('y',1)<.2))
+        if header:headers.append(frame)
+        elif not structured and bounds.get('y',0)<cutoff/height:
+            # Split a complete token frame at the subtitle's top. The two
+            # complementary masks preserve its original alpha and color.
+            top=copy.deepcopy(frame);bottom=copy.deepcopy(frame)
+            top.setdefault('masks',[]).append({'name':'Token title above true name','src':upper})
+            bottom.setdefault('masks',[]).append({'name':'Token body below true name','src':lower})
+            top['tokenTrueNameHeader']=True;headers.append(top);body.append(bottom)
+        else:body.append(frame)
+    data['frames']=[*headers,*layers,*body]
+
+
 def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame=False):
     """Choose the Godzilla base independently, then overlay an actual nickname."""
     if full_frame or force:
         _apply_godzilla_frame(data,sem,refit)
     if not str(sem.get('nickname') or '').strip():return False
     if not _nickname_text(data,sem,group):return False
+    if group=='token':data['tokenTrueNameLayerVersion']=TOKEN_TRUE_NAME_LAYER_VERSION
     # Battle is landscape and keeps its existing two-name typography.
     if group=='battle':return True
     # The native legendary crown already contains its correctly joined subtitle.
@@ -2954,11 +2986,8 @@ def apply_nickname_treatment(data,sem,group,refit=False,*,force=False,full_frame
         layers.append({'name':'Land true-name outline (8 units)',
             'src':'/img/frames/proxy-foundry/land-name-outline-8.png','masks':[],
             'bounds':{'x':bounds['x']-pad_x,'y':bounds['y']-pad_y,'width':bounds['width']+2*pad_x,'height':bounds['height']+2*pad_y}})
-    if data.get('verticalToken'):
-        # The title/crown sit above the true name. Native Class/Saga panel
-        # backgrounds stay below it so they cannot cover half of the strip.
-        below_header=max((i+1 for i,frame in enumerate(frames) if frame.get('verticalTokenHeader')),default=0)
-        frames[below_header:below_header]=layers
+    if group=='token':
+        place_token_true_name_layers(data,layers)
     elif ((group=='planeswalker' and data.get('version') in {'planeswalkerRegular','planeswalkerTall'})
             or group in {'transform-front','transform-back','meld'} and not (force or full_frame)):
         # Earlier frames draw on top. Keep the native pinline, including the
@@ -3081,6 +3110,7 @@ class Compiler:
             and 1<=len(native.parse_planeswalker_abilities(face.get('oracle_text','')))<=3)
         walker_nickname_version=2*int(group=='planeswalker' and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
         dfc_nickname_version=2*int(group in {'transform-front','transform-back','meld'} and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
+        token_true_name_version=TOKEN_TRUE_NAME_LAYER_VERSION*int(group=='token' and bool((face or {}).get('nickname')))
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
@@ -3113,7 +3143,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
-            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version
+            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -3130,7 +3160,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
-            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version
+            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
