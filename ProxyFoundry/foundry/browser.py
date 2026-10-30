@@ -240,7 +240,9 @@ class BrowserJobs:
                 #Diagnostic history is optional. A failed log must not fail the
                 #job, recurse while reporting that failure, or kill the engine.
                 job['logWarning']='Could not save progress log: '+str(error)
-            self.last_log_write[job['id']]=now
+            #Start the quiet interval after IO completes. A slow folder write
+            #must not consume the interval and force another write on every card.
+            self.last_log_write[job['id']]=time.monotonic()
         if terminal:self.last_log_write.pop(job['id'],None)
         self.publish({key:value for key,value in job.items() if key!='events'})
         return saved
@@ -501,7 +503,7 @@ class BrowserHandler(server.Handler):
         if refresh:
             data=self.data()
             return self.respond(self.app.jobs.start('Refresh deck cards',
-                lambda update,cancel:self.app.ws.refresh_deck_steps(refresh[1],data,update,cancel)))
+                lambda update,cancel:self.app.store.batch_import_steps(self.app.ws.refresh_deck_steps(refresh[1],data,update,cancel))))
         if path == '/api/runtime/prepare':
             self.data()
             return self.respond(self.app.jobs.start('Load CardConjurer',self.app.runtime.prepare_steps,priority=1))

@@ -243,6 +243,55 @@ def test_progress_is_live_but_disk_log_writes_are_batched(tmp_path,monkeypatch):
     assert saved['state']=='done' and saved['done']==120 and saved['result']=={'ok':True}
 
 
+def test_slow_progress_log_writes_cannot_trigger_a_write_for_every_card(tmp_path,monkeypatch):
+    now=[100.0];writes=[];live=[];original=Path.write_text
+    monkeypatch.setattr('foundry.browser.time.monotonic',lambda:now[0])
+    def slow_write(path,*args,**kwargs):
+        if path.name.startswith('job-'):
+            writes.append(now[0]);now[0]+=1.5
+        return original(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'write_text',slow_write)
+    jobs=BrowserJobs(Store(tmp_path),publish=lambda value:live.append(value.copy()))
+    def refresh(update,cancel):
+        for index in range(124):
+            now[0]+=.013
+            update(index+1,124,'Checked existing card');yield
+        return {'retained':121,'added':3}
+    ident=jobs.start('Refresh deck cards',refresh)['id'];jobs.run_pending()
+    assert len(writes)==3
+    assert len([row for row in live if row['message']=='Checked existing card'])==124
+    assert jobs.get(ident)['result']=={'retained':121,'added':3}
+
+
+@pytest.mark.parametrize('outcome',['complete','cancel','failure'])
+def test_refresh_route_batches_metadata_saves_and_releases_them_on_every_exit(tmp_path,outcome):
+    import json
+    from foundry.browser import BrowserStore,request
+    from foundry.server import App
+    snapshots=[]
+    app=App(BrowserStore(tmp_path,lambda path:snapshots.append(Path(path).read_bytes())))
+    app.jobs=BrowserJobs(app.store);deck=app.ws.new_deck('Refresh batch')
+    def refresh(ident,payload,update,cancel):
+        for index in range(30):
+            app.store.put('refresh-cache',{'id':str(index)})
+            yield
+        if outcome=='failure':raise ValueError('Injected refresh failure')
+        return {'saved':True}
+    app.ws.refresh_deck_steps=refresh
+    response=request(app,'POST','/api/decks/'+deck['id']+'/refresh',b'{}')
+    ident=json.loads(response['body'])['id'];snapshots.clear()
+    app.jobs.run_pending(limit=1)
+    assert not snapshots
+    if outcome=='cancel':app.jobs.cancel(ident)
+    while app.jobs.run_pending(limit=1):pass
+    assert app.store._defer_checkpoint==0 and len(snapshots)==1
+    assert app.jobs.get(ident)['state']=={'complete':'done','cancel':'cancelled','failure':'failed'}[outcome]
+    #Cache entries may survive cancellation; no partial card list was published.
+    assert app.store.get('decks',deck['id'])['cards']==[]
+    assert len(app.store.list('refresh-cache'))==(1 if outcome=='cancel' else 30)
+    app.close()
+
+
 @pytest.mark.parametrize('outcome',['success','failure','cancel'])
 def test_unwritable_progress_logs_do_not_kill_jobs_or_lose_results(tmp_path,monkeypatch,outcome):
     original=Path.write_text;attempts=[];live=[]
