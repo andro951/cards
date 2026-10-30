@@ -82,9 +82,12 @@ def recipe_fingerprint(deck):
 
 
 def reusable_recipe(deck):
+    from .compiler import SHORT_TOKEN_ART_VERSION
     snapshot=deck.get('recipeSnapshot')
     return bool(snapshot and snapshot.get('fingerprint')==recipe_fingerprint(deck) and
                 all(face.get('compiled') and not face.get('error') and not has_retired_land_frame(face['compiled'].get('data') or {})
+                    and (face['compiled'].get('data',{}).get('version')!='tokenShort' or
+                         face['compiled']['data'].get('shortTokenArtVersion')==SHORT_TOKEN_ART_VERSION)
                     for card in deck['cards'] for face in stored_faces(card)))
 
 

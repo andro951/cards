@@ -1,7 +1,7 @@
 """Assemble the native Short token pack once, excluding its unused image areas."""
 import io,sys,urllib.request
 from pathlib import Path
-from PIL import Image,ImageChops
+from PIL import Image,ImageChops,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from foundry.domain import CC_REPO,CC_COMMIT
 ROOT=Path(__file__).resolve().parents[1]
@@ -26,7 +26,12 @@ def build():
     for code in 'WUBRGMALC':
         name='frameC.png' if code=='C' else f'tokenFrame{code}Short.png'
         frame=load('/img/frames/token/short/'+name)
-        coverage=Image.new('L',frame.size)
+        #The token pack's black outer border is outside its art window.
+        #Keep it even when artwork is fitted across the full canvas beneath it.
+        width,height=frame.size
+        coverage=Image.new('L',frame.size,255)
+        ImageDraw.Draw(coverage).rectangle((round(.04*width),round(.0286*height),
+            round(.96*width)-1,round(.9239*height)-1),fill=0)
         for mask in masks:
             coverage=ImageChops.lighter(coverage,mask.resize(frame.size,Image.Resampling.LANCZOS))
         frame.putalpha(ImageChops.multiply(frame.getchannel('A'),coverage))

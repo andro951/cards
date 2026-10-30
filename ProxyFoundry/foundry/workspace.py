@@ -947,6 +947,7 @@ class Workspace:
             return assets[ident]
         for f in c['faces']:
             comp=f.get('compiled') or {}
+            if comp.get('data',{}).get('version')=='tokenShort' and comp['data'].get('shortTokenArtVersion')!=SHORT_TOKEN_ART_VERSION:return False
             if has_retired_land_frame(comp.get('data') or {}):return False
             if has_untap_alias(comp.get('data') or {}):return False
             if has_touching_ability_badges(comp.get('data') or {}):return False

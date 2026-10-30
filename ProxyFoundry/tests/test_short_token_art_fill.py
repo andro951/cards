@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 import pytest
 from PIL import Image
 from foundry.compiler import Compiler,semantic,FULL_ART_NONLAND_BOUNDS,SHORT_TOKEN_ART_VERSION,fit_token_art
@@ -6,6 +7,16 @@ from foundry.workspace import Workspace
 from foundry.images import ingest_image
 from foundry.artwork import ArtworkIndex
 from test_pipeline import workspace
+
+
+@pytest.mark.parametrize('code',list('WUBRGMALC'))
+def test_short_token_frame_keeps_its_native_black_border(code):
+    with Image.open(Path(__file__).resolve().parents[1]/'assets/token-short'/('frame'+code+'.png')) as frame:
+        rgba=frame.convert('RGBA');width,height=rgba.size
+        for x,y in [(0,.5),(.02,.5),(.98,.5),(.5,0),(.5,.02),(.5,.97)]:
+            assert rgba.getpixel((int(x*width),int(y*height)))==(0,0,0,255)
+        #The border overlays the art; it must leave the central art window open.
+        assert rgba.getpixel((width//2,height//3))[3]==0
 
 
 def card(native=False):
@@ -74,7 +85,8 @@ def test_converted_token_refresh_is_scoped_to_the_selected_style(workspace,monke
 
 
 @pytest.mark.parametrize('scope',['card','deck','both'])
-def test_existing_converted_decks_refresh_the_art_fit_and_then_reuse_it(workspace,monkeypatch,scope):
+@pytest.mark.parametrize('frozen',[False,True])
+def test_existing_converted_decks_refresh_the_art_fit_and_then_reuse_it(workspace,monkeypatch,scope,frozen):
     import foundry.workspace as workspace_module
     import foundry.compiler as compiler_module
     store,art,settings=workspace;ws=Workspace(store);deck=ws.new_deck('Short token fill')
@@ -85,9 +97,16 @@ def test_existing_converted_decks_refresh_the_art_fit_and_then_reuse_it(workspac
     prepared=ws.prepare(deck['id']);face=prepared['cards'][0]['faces'][0]
     assert not face.get('error')
     assert_covers_canvas(face['compiled']['data'],(900,900))
+    if frozen:
+        from foundry.deck_document import recipe_fingerprint,reusable_recipe
+        prepared['recipeSnapshot']={'fingerprint':recipe_fingerprint(prepared)}
+        assert reusable_recipe(prepared)
+        store.put('decks',prepared,prepared['revision'])
     version=SHORT_TOKEN_ART_VERSION+1
     monkeypatch.setattr(workspace_module,'SHORT_TOKEN_ART_VERSION',version)
     monkeypatch.setattr(compiler_module,'SHORT_TOKEN_ART_VERSION',version)
+    if frozen:assert not reusable_recipe(prepared)
+    assert ws.deck(deck['id'])['status']=='draft'
     compile=ws.compiler.compile_face;calls=[]
     def tracked(*args,**kwargs):calls.append(1);return compile(*args,**kwargs)
     monkeypatch.setattr(ws.compiler,'compile_face',tracked)
