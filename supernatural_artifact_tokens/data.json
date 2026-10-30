@@ -931,7 +931,8 @@
       "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
       "scryfall_url": "https://scryfall.com/card/afr/222/fighter-class?utm_source=api",
       "accepted_art": [
-        "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+        "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049",
+        "cf632b6575b1d5a914e94844f5fd94e830e1c16c299f961b3e6c158d20ea94b5"
       ]
     },
     {
@@ -958,7 +959,8 @@
       "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
       "scryfall_url": "https://scryfall.com/card/mh2/259/urzas-saga?utm_source=api",
       "accepted_art": [
-        "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+        "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c",
+        "3c977e03a1c0cb8e5ad18d66f3910ccd470f4cb015d136e94de65507a4af91e0"
       ]
     }
   ],
@@ -9984,8 +9986,10 @@
             "preparationKey": "a73c9ab55c704fb35e3388dd3585b7298f22ccd1c3216f66c5192fd02ef309b6",
             "preparedAt": 1793387427.371,
             "acceptedArt": [
-              "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
-            ]
+              "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049",
+              "cf632b6575b1d5a914e94844f5fd94e830e1c16c299f961b3e6c158d20ea94b5"
+            ],
+            "acceptedWarningKey": "67063904fc2632cc70e8be49eb62fe84ab381341f675942f99e14fc949ebc2a1"
           }
         ],
         "metadataSource": "d54a8329-b940-42c9-8ace-1d74407d14cb",
@@ -11680,8 +11684,10 @@
             "preparationKey": "fed20794dfc2afcd5cf01b410858a8acf76dfa72e4d5bd2dfb15df9c8ba2ba31",
             "preparedAt": 1793387427.921,
             "acceptedArt": [
-              "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
-            ]
+              "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c",
+              "3c977e03a1c0cb8e5ad18d66f3910ccd470f4cb015d136e94de65507a4af91e0"
+            ],
+            "acceptedWarningKey": "888bab113874fedb0d1fb282a3ab12731264eac1ae7a4015f90f6bed4ecd5ff3"
           }
         ],
         "metadataSource": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
@@ -12210,7 +12216,7 @@
       "artReviewSignature": "6a581f3e65b3689f18cbb80d4af92b13f0a827df1502ce1ac51532c82b5a40be",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/supernatural_artifact_tokens"
     },
-    "status": "prepared",
+    "status": "ready",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/9a446e57-cf41-43dc-a8df-b73be700926d",
     "stagedImport": true,
@@ -12386,7 +12392,8 @@
         "oracle_id": "8a280ba8-6b7b-46dd-9c2b-6d0027cfff30",
         "scryfall_id": "d54a8329-b940-42c9-8ace-1d74407d14cb",
         "accepted_art": [
-          "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049"
+          "3707981f1379ccac6b27151e7a44bde34fb076d3017a92d20ea96498571a1049",
+          "cf632b6575b1d5a914e94844f5fd94e830e1c16c299f961b3e6c158d20ea94b5"
         ]
       },
       {
@@ -12394,7 +12401,8 @@
         "oracle_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
         "scryfall_id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
         "accepted_art": [
-          "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c"
+          "87643a782532351146eb5c2af151ffd5fa990e2d59c967d7f045734ff83a269c",
+          "3c977e03a1c0cb8e5ad18d66f3910ccd470f4cb015d136e94de65507a4af91e0"
         ]
       }
     ],
