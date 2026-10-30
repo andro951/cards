@@ -11,7 +11,7 @@ from test_print_bridge import bridge_page, ROOT
 pytestmark=pytest.mark.skipif(not(os.environ.get('PF_DOM')=='1' or os.environ.get('PF_BROWSER')=='1'),reason='Opt-in Chromium component tests')
 
 
-def start_batches(page,existing=0,fail_batch=None,wrong_count=False,cancel_after_first=False):
+def start_batches(page,existing=0,fail_batch=None,wrong_count=False,cancel_after_first=False,storage_error=False,slow_processing=False):
     archives=[]
     for i in range(3):
         b=io.BytesIO()
@@ -24,7 +24,7 @@ def start_batches(page,existing=0,fail_batch=None,wrong_count=False,cancel_after
     <button id="clear">Clear all cards</button><button id="back">Next Customize Back</button>
     <button id="preview">Next Preview</button><button id="checkout">Checkout</button>
     <style>button{min-width:50px;min-height:40px}</style></body></html>''')
-    page.evaluate('''({archives,existing,failBatch,wrongCount,cancelAfterFirst})=>{
+    page.evaluate('''({archives,existing,failBatch,wrongCount,cancelAfterFirst,storageError,slowProcessing})=>{
       window.tc={count:existing,uploads:[],requests:[],cleared:0,finished:0,preview:0,checkout:0};
       const draw=()=>document.querySelector('#counter').textContent=tc.count+' Cards';draw();
       document.querySelector('#clear').onclick=()=>{tc.count=0;tc.cleared++;draw()};
@@ -32,21 +32,23 @@ def start_batches(page,existing=0,fail_batch=None,wrong_count=False,cancel_after
       document.querySelector('#checkout').onclick=()=>tc.checkout++;
       document.querySelector('#zip').onchange=async e=>{
         const raw=[...new Uint8Array(await e.target.files[0].arrayBuffer())];tc.uploads.push(raw);
-        const busy=document.createElement('div');busy.textContent='Processing card';document.body.append(busy);
-        setTimeout(()=>{tc.count+=wrongCount?2:1;draw();busy.remove();
+        const busy=document.createElement('div');busy.id='site-busy';busy.textContent=slowProcessing?'Preparing card 1 of 1':'Processing card';document.body.append(busy);
+        if(storageError){const failure=document.createElement('div');failure.textContent='Saving on this device failed: FILE_ERROR_NO_SPACE';document.body.append(failure);}
+        setTimeout(()=>{tc.count+=wrongCount?2:1;draw();if(!slowProcessing)busy.remove();
           if(cancelAfterFirst)document.querySelector('#pph-close').click();},300);
+        if(slowProcessing)setTimeout(()=>busy.remove(),8000);
       };
       window.chrome={runtime:{sendMessage:async msg=>{
         if(msg.type==='PF_ORDER_METADATA')return {ok:true,protocolVersion:2,count:3,zipBytes:9999,batches:archives.map((b,index)=>({index,count:1,zipBytes:atob(b).length,filename:'batch-'+index+'.zip'}))};
         if(msg.type==='PF_ORDER_FINISHED'){tc.finished++;return {ok:true}};
         if(msg.type==='PF_ORDER_CHUNK'){
-          tc.requests.push({batch:msg.batch,uploads:tc.uploads.length,count:tc.count});
+          tc.requests.push({batch:msg.batch,uploads:tc.uploads.length,count:tc.count,busy:Boolean(document.querySelector('#site-busy'))});
           if(msg.batch===failBatch)return {ok:false,error:'Injected transfer failure'};
           const b=archives[msg.batch];return {ok:true,batch:msg.batch,offset:msg.offset,total:atob(b).length,length:atob(b).length,base64:b};
         }
         throw Error('Unexpected message');
       }}};
-    }''',{'archives':[base64.b64encode(b).decode() for b in archives],'existing':existing,'failBatch':fail_batch,'wrongCount':wrong_count,'cancelAfterFirst':cancel_after_first})
+    }''',{'archives':[base64.b64encode(b).decode() for b in archives],'existing':existing,'failBatch':fail_batch,'wrongCount':wrong_count,'cancelAfterFirst':cancel_after_first,'storageError':storage_error,'slowProcessing':slow_processing})
     script=(ROOT/'extension/bridge.js').read_text(encoding='utf-8').replace('new URLSearchParams(location.search)',"new URLSearchParams('?proxyFoundryOrder=fixture')")
     page.add_script_tag(content=script)
     return archives
@@ -78,6 +80,22 @@ def test_second_batch_failure_does_not_retry_or_send_third(bridge_page):
     assert [r['batch'] for r in result['requests']]==[0,1]
     assert len(result['uploads'])==1 and result['count']==1
     assert result['finished']==result['checkout']==result['preview']==0
+    assert not errors
+
+
+def test_printer_disk_full_stops_before_transferring_another_batch(bridge_page):
+    from playwright.sync_api import expect
+    page,errors=bridge_page;start_batches(page,storage_error=True)
+    expect(page.locator('#pph-line')).to_contain_text('TCGPlaytest browser storage is full',timeout=20000)
+    assert page.evaluate('tc.requests.length===1&&tc.uploads.length===1&&tc.checkout===0&&tc.finished===0')
+    assert not errors
+
+
+def test_preparing_card_progress_is_treated_as_an_active_upload(bridge_page):
+    from playwright.sync_api import expect
+    page,errors=bridge_page;start_batches(page,slow_processing=True)
+    expect(page.locator('#pph-line')).to_contain_text('Uploaded 3 paired cards',timeout=35000)
+    assert page.evaluate('tc.uploads.length===3&&tc.finished===1&&tc.requests.every(r=>!r.busy)')
     assert not errors
 
 

@@ -3,6 +3,7 @@ import hashlib
 import io
 import struct
 import zipfile
+from pathlib import Path
 
 import pytest
 from foundry.domain import ValidationError
@@ -34,6 +35,42 @@ def test_single_batch_is_the_original_archive_byte_for_byte(tmp_path):
     plan = TransferBatches(path, 5)
     assert len(plan.views) == 1
     assert read_all(plan, 0) == path.read_bytes()
+
+
+def test_native_descriptors_match_every_batch_range_without_reading_image_bytes(tmp_path,monkeypatch):
+    import base64
+    path=tmp_path/'order.zip';make_order(path)
+    plan=TransferBatches(path,5,limit=3000);raw=path.read_bytes()
+    expected={(i,offset):plan.read(i,offset,131) for i,view in enumerate(plan.views) for offset in range(0,view.size,131)}
+    def no_open(*args,**kwargs):pytest.fail('Describing a range must not read archive image bytes.')
+    monkeypatch.setattr(Path,'open',no_open)
+    for (batch,offset),data in expected.items():
+        descriptor=plan.describe(batch,offset,131)
+        reconstructed=b''.join(base64.b64decode(part['base64']) if 'base64' in part else raw[part['offset']:part['offset']+part['length']] for part in descriptor['parts'])
+        assert reconstructed==data and descriptor['length']==len(data)
+        assert descriptor['signature']['size']==len(raw)
+
+
+def test_browser_batch_auth_returns_only_authorized_file_spans(tmp_path,monkeypatch):
+    from foundry.storage import Store
+    from foundry.server import App
+    from foundry.browser import request as browser_request
+    import foundry.transfer_batches as mod
+    monkeypatch.setattr(mod,'MAX_BATCH_BYTES',3000)
+    app=App(Store(tmp_path))
+    try:
+        order=app.store.put('orders',{'count':5,'cards':[],'decks':[]})
+        path=app.store.home/'orders'/(order['id']+'.zip');make_order(path)
+        transfer=app.transfer(order['id']);route='/api/transfer/'+transfer['id']+'/zip?batch=1'
+        headers={'X-Proxy-Transfer-Token':transfer['secret'],'Range':'bytes=111-1500'}
+        monkeypatch.setattr(mod.ZipView,'read',lambda *args:pytest.fail('Archive bytes entered Python'))
+        reply=browser_request(app,'GET',route,headers=headers)
+        assert reply['status']==206 and reply['body']==b'' and reply['fileSpans']
+        assert reply['file']=='orders/'+order['id']+'.zip'
+        assert reply['headers']['Content-Range'].startswith('bytes 111-1500/')
+        assert browser_request(app,'GET',route,headers={'Range':'bytes=0-99'})['status']==403
+        assert browser_request(app,'GET',route,headers={**headers,'Range':'bytes=0-1048576'})['status']==400
+    finally:app.close()
 
 
 def test_multiple_zips_preserve_all_copies_pairs_and_source_bytes(tmp_path):

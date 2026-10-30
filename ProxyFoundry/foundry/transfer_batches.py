@@ -6,7 +6,7 @@ multi-gigabyte archives on disk. Each front/back pair stays in one batch.
 """
 from __future__ import annotations
 
-import bisect
+import base64,bisect
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -35,8 +35,7 @@ class ZipView:
             self.ends.append(size)
         self.size, self.count, self.first, self.last = size, count, first, last
 
-    def read(self, stream, offset, length):
-        result = bytearray()
+    def parts(self, offset, length):
         i = bisect.bisect_right(self.ends, offset)
         while length > 0 and i < len(self.segments):
             start = self.ends[i - 1] if i else 0
@@ -44,16 +43,21 @@ class ZipView:
             n = min(length, self.ends[i] - offset)
             segment = self.segments[i]
             if isinstance(segment, bytes):
-                chunk = segment[within:within + n]
+                yield segment[within:within + n]
             else:
-                stream.seek(segment.offset + within)
-                chunk = stream.read(n)
-            if len(chunk) != n:
-                raise ValidationError('The saved order was truncated. Stop and reopen it.')
-            result.extend(chunk)
+                yield Span(segment.offset + within,n)
             length -= n
             offset += n
             i += 1
+
+    def read(self, stream, offset, length):
+        result=bytearray()
+        for part in self.parts(offset,length):
+            if isinstance(part,bytes):chunk=part
+            else:
+                stream.seek(part.offset);chunk=stream.read(part.size)
+                if len(chunk)!=part.size:raise ValidationError('The saved order was truncated. Stop and reopen it.')
+            result.extend(chunk)
         return bytes(result)
 
 
@@ -150,14 +154,26 @@ class TransferBatches:
                  'filename': f'BulkProxyForge_{self.path.stem[:8]}_batch_{i + 1:04d}.zip'}
                 for i, view in enumerate(self.views)]
 
-    def read(self, batch, offset, length):
+    def _range(self,batch,offset,length):
         if type(batch) is not int or not 0 <= batch < len(self.views):
             raise ValidationError('Invalid ZIP batch index.')
         view = self.views[batch]
         if type(offset) is not int or type(length) is not int or offset < 0 or offset >= view.size or not 1 <= length <= MAX_CHUNK_BYTES:
             raise ValidationError('Invalid or oversized ZIP batch range.')
         self._check_source()
+        return view,min(length,view.size-offset)
+
+    def describe(self,batch,offset,length):
+        """Authorize a bounded native Blob view, without moving image bytes into Wasm."""
+        view,length=self._range(batch,offset,length)
+        parts=[{'base64':base64.b64encode(part).decode('ascii')} if isinstance(part,bytes)
+               else {'offset':part.offset,'length':part.size} for part in view.parts(offset,length)]
+        return {'size':view.size,'length':length,'parts':parts,
+                'signature':{'size':self.signature[0],'modified':round(self.signature[1]/1_000_000)}}
+
+    def read(self, batch, offset, length):
+        view,length=self._range(batch,offset,length)
         with self.path.open('rb') as stream:
-            data = view.read(stream, offset, min(length, view.size - offset))
+            data = view.read(stream, offset, length)
         self._check_source()
         return data

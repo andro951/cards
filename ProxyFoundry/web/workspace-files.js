@@ -46,6 +46,27 @@ export class WorkspaceFiles {
         const {directory,name}=await this.parent(path);
         return (await directory.getFileHandle(name)).getFile();
     }
+    readSpans = async (path,spans,signature) => {
+        if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(path)||!Array.isArray(spans)||!spans.length||spans.length>16384)
+            throw new Error(`Invalid saved order range.`);
+        const file=await this.file(path);
+        if(!signature||file.size!==signature.size||Math.abs(file.lastModified-signature.modified)>1)
+            throw new Error(`The saved order changed during transfer. Reopen it before retrying.`);
+        const parts=[];let size=0;
+        for(const span of spans) {
+            if(typeof span.base64===`string`) {
+                if(span.base64.length>Math.ceil(1024*1024/3)*4)throw new Error(`Oversized order header.`);
+                const raw=atob(span.base64),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));parts.push(bytes);size+=bytes.length;
+            }
+            else {
+                if(!Number.isSafeInteger(span.offset)||!Number.isSafeInteger(span.length)||span.offset<0||span.length<1||span.offset+span.length>file.size)
+                    throw new Error(`Invalid saved order range.`);
+                parts.push(file.slice(span.offset,span.offset+span.length));size+=span.length;
+            }
+            if(size>8*1024*1024)throw new Error(`Oversized saved order range.`);
+        }
+        return new Blob(parts,{type:`application/zip`});
+    }
     invalidate = path => {
         for(const key of this.directories.keys()) {
             if(key===`workspace/`+path||key.startsWith(`workspace/`+path+`/`))

@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.1.0';
+  const VERSION = '1.3.1';
   const params = new URLSearchParams(location.search);
   const requestedSessionId = params.get('proxyFoundryOrder');
   if (!requestedSessionId) return;
@@ -85,9 +85,16 @@
     overlay.remove();
   });
   function bodyText() {return document.body?.innerText || '';}
+  function checkPrinterStorage() {
+    const text=bodyText();
+    if(/FILE_ERROR_NO_SPACE|QuotaExceededError|not enough (?:disk|storage) space/i.test(text))
+      throw new Error('TCGPlaytest browser storage is full. Free space on the drive used by your browser profile, then review the existing printer cards before retrying. No further batches were sent.');
+    if(/Saving on this device failed/i.test(text))
+      throw new Error('TCGPlaytest could not save its cards on this device. Resolve the printer storage error and review its existing cards before retrying.');
+  }
   function processingVisible() {
     const text = bodyText();
-    return text.includes('Applying Bleed Settings') || text.includes('Processing card');
+    return /Applying Bleed Settings|Processing card|Preparing card\s+\d+\s+of\s+\d+|Uploading card\s+\d+\s+of\s+\d+/i.test(text);
   }
   function interactiveElements() {
     return [...document.querySelectorAll('button,[role="button"],a')].filter(el => {
@@ -213,6 +220,7 @@
     const started = Date.now();
     while (Date.now() - started < timeout) {
       if (cancelled) throw new Error('Handoff cancelled.');
+      checkPrinterStorage();
       const value = fn();if (value) return value;await sleep(interval);
     }
     throw new Error('Timed out waiting for ' + label);
@@ -236,6 +244,7 @@
     const parts=[];let offset=0;
     while (offset < batch.zipBytes) {
       if (cancelled) throw new Error('Handoff cancelled.');
+      checkPrinterStorage();
       const part=await chrome.runtime.sendMessage({type:'PF_ORDER_CHUNK',offset,...(metadata.protocolVersion===2?{batch:batch.index}:{})});
       if (!part?.ok) throw new Error(part?.error || 'The order transfer failed.');
       if (part.offset!==offset || part.total!==batch.zipBytes || !Number.isSafeInteger(part.length) || part.length<1 || part.length>1024*1024) throw new Error('The order chunk did not match its saved package.');
@@ -376,6 +385,7 @@
     const started=Date.now();
     while(Date.now()-started<timeoutMs){
       if(cancelled)throw new Error('Handoff cancelled.');
+      checkPrinterStorage();
       const dialog=findDeleteCardDialog();
       if(dialog){
         const deleteButton=findDeleteCardButton(dialog);
@@ -434,11 +444,13 @@
     if(!(finalState.confidentlyEmpty||(finalState.count===0&&finalState.explicitZero))){debugEvent('Could not prove current list is empty',finalState);throw new Error('I could not safely prove the existing cards were removed, so I stopped before uploading the new deck.');}
   }
   async function waitForUploadProcessing(minWaitMs=1800,timeoutMs=180000) {
-    const started=Date.now();let sawProcessing=false;
+    const started=Date.now();let sawProcessing=false,idleSince=null;
     while(Date.now()-started<timeoutMs){
       if(cancelled)throw new Error('Handoff cancelled.');
-      if(processingVisible())sawProcessing=true;
-      if(sawProcessing&&!processingVisible()&&Date.now()-started>minWaitMs)return;
+      checkPrinterStorage();
+      if(processingVisible()){sawProcessing=true;idleSince=null;}
+      else if(idleSince===null)idleSince=Date.now();
+      if(sawProcessing&&idleSince!==null&&Date.now()-idleSince>=1000&&Date.now()-started>minWaitMs)return;
       if(!sawProcessing&&Date.now()-started>7000)return;
       await sleep(350);
     }
@@ -450,6 +462,7 @@
     if(!Number.isSafeInteger(baseline)||baseline<0)throw new Error('Cannot determine the existing card count safely.');
     for(const batch of batches){
       if(cancelled)throw new Error('Handoff cancelled.');
+      checkPrinterStorage();
       log(`Preparing ZIP ${batch.index+1}/${batches.length} — ${batch.count} cards…`,
         `${completedCards}/${NEW_CARD_COUNT} cards verified. Image bytes and front/back pairing are unchanged.`);
       await ensureFrontStep();
@@ -486,6 +499,7 @@
       await loadDeckPayload();log('Completed renders loaded — preparing TCGPlaytest…');
       debugEvent('Initial page state',{url:location.href,title:document.title,readyState:document.readyState});
       await acceptCookies();await sleep(300);await enterDesignerIfNeeded();await sleep(450);
+      checkPrinterStorage();
       const state=detectExistingCards();debugEvent('Existing-card detection before upload',state);
       // Only skip the question when the editor explicitly reports 0 and no other detector sees a card.
       if(state.count>0||!state.confidentlyEmpty){

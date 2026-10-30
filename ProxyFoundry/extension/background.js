@@ -1,5 +1,5 @@
 /* Public deck imports and paired ZIP transport run in this browser extension. */
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const TARGET='https://www.tcgplaytest.com';
 const CHUNK=1024*1024;
 function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&(u.hostname.endsWith('.pages.dev')||u.hostname==='andro951.github.io'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}

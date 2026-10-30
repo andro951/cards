@@ -2,7 +2,7 @@
   if(window.__proxyFoundryWorkspaceBridge)return;
   if(!document.querySelector('meta[name="proxy-foundry"][content="workspace-v1"]'))return;
   window.__proxyFoundryWorkspaceBridge=true;
-  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.3.0',capabilities:['paired-zip-batches','deck-import']},location.origin);
+  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.3.1',capabilities:['paired-zip-batches','deck-import']},location.origin);
   chrome.runtime.onMessage.addListener((message,sender,respond)=>{
     if(message?.type!=='PF_BROWSER_TRANSFER')return;
     (async()=>{

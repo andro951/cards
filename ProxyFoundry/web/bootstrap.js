@@ -181,7 +181,7 @@ else{
       if(data.type==='error')recordDiagnostic('engine request failed',data.message);
       if(port){
         if(data.file){
-          try{data.body=await files.file(data.file);}
+          try{data.body=data.fileSpans?await files.readSpans(data.file,data.fileSpans,data.fileSignature):await files.file(data.file);}
           catch(error){data.type='error';data.message=`Saved workspace file could not be read: ${error.message}`;}
         }
         port.postMessage(data,data.body?.buffer?[data.body.buffer]:[]);port.close();

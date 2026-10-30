@@ -392,6 +392,13 @@ class BrowserHandler(server.Handler):
             if start>=size or end<start or end-start>=8*1024*1024:
                 raise ValidationError('Choose a valid bounded download range.')
             count=min(end,size-1)-start+1
+            if allow_range and self.app.store.home in path.parents:
+                self.send_bytes(b'',kind,206,filename=filename,headers={
+                    'Accept-Ranges':'bytes','Content-Range':f'bytes {start}-{start+count-1}/{size}'})
+                self.response.update(file=path.relative_to(self.app.store.home).as_posix(),
+                    fileSpans=[{'offset':start,'length':count}],
+                    fileSignature={'size':size,'modified':round(path.stat().st_mtime*1000)})
+                return
             with path.open('rb') as source:
                 source.seek(start)
                 content=source.read(count)
@@ -579,6 +586,19 @@ class BrowserHandler(server.Handler):
         return super().post(path, query)
 
     def get(self, path, query):
+        transfer=re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/zip',path)
+        if transfer and 'batch' in query:
+            active=self.app.authorized_transfer(transfer[1],self.headers.get('X-Proxy-Transfer-Token'))
+            indices=query['batch'];requested=re.fullmatch(r'bytes=(\d+)-(\d+)',self.headers.get('Range',''))
+            if len(indices)!=1 or not re.fullmatch(r'[0-9]{1,5}',indices[0]) or not requested:
+                raise ValidationError('A valid ZIP batch and bounded range are required.')
+            start,end=map(int,requested.groups())
+            view=active['batches'].describe(int(indices[0]),start,end-start+1)
+            self.send_bytes(b'','application/zip',206,headers={
+                'Accept-Ranges':'bytes','Content-Range':f"bytes {start}-{start+view['length']-1}/{view['size']}"})
+            self.response.update(file=active['path'].relative_to(self.app.store.home).as_posix(),
+                fileSpans=view['parts'],fileSignature=view['signature'])
+            return
         if path=='/api/generation/targets':
             generation=self.app.store.require_generation(query.get('id',[''])[0])
             try:after=max(0,int(query.get('after',['0'])[0]))

@@ -16,9 +16,16 @@ export function mountWorkspaceFiles(FS,owner) {
 
         const query=new URLSearchParams({owner,operation,path,...values});
         const request=new XMLHttpRequest();
-        request.open(body?`POST`:`GET`,`/workspace-io?${query}`,false);
-        request.responseType=`arraybuffer`;
-        request.send(body);
+        try {
+            request.open(body?`POST`:`GET`,`/workspace-io?${query}`,false);
+            request.responseType=`arraybuffer`;
+            request.send(body);
+        }
+        catch(error) {
+            //Emscripten can translate ErrnoError into Python OSError. Letting a
+            //browser NetworkError escape a filesystem syscall fatally traps Wasm.
+            throw new FS.ErrnoError(29);
+        }
         if(request.status!==200) {
             let code=29;
             if(request.status===404)
