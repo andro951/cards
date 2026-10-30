@@ -1,5 +1,6 @@
 import {$,$$,esc,state,api,attempt,toast,modal,closeModal,setModalBusy,errorBox,confirmAction,job,bytes,date,badge,empty,loading,thumbnail,nav,saveApiFile} from './ui.js';
 import {renderDecks} from './render.js';
+import {openNativePrint} from './native-print.js';
 export function setupHelper(){
   const host=modal('Connect the browser helper','');
   const body=$('.modal-body',host);
@@ -146,6 +147,17 @@ function choosePrintPath(order){
   $('#install-print-helper',host).onclick=setupHelper;
 }
 async function openOrder(id){
+  if(state.helper&&state.bootstrap?.browser){
+    if(!state.helperCapabilities?.includes('native-whole-zip'))
+      throw new Error('Direct ZIP handoff needs Print Helper 1.4.0. Download the updated helper, replace its extracted files, reload it in edge://extensions or chrome://extensions, then reload this page.');
+    await openNativePrint({
+      createTransfer:()=>api('/api/orders/'+id+'/transfer',{wholeFile:true}),
+      register:registerOrder,
+      getFile:(ident,secret)=>window.__pfPrintFile(ident,secret)
+    });
+    toast('The complete saved ZIP is connected to TCGPlaytest. Keep this page open until the upload finishes.');
+    return;
+  }
   if(!state.helper){
     const order=await api('/api/orders/'+id);
     if(state.bootstrap?.browser){choosePrintPath(order);return;}
@@ -155,10 +167,14 @@ async function openOrder(id){
   if(order.zipBytes>1024**3&&!state.helperCapabilities?.includes('paired-zip-batches'))throw new Error('Large orders need Print Helper 1.1.0. Reload the updated extension in edge://extensions or chrome://extensions, then reload this page. No uninstall is needed.');
   const transfer=await api('/api/orders/'+id+'/transfer',{});
   if(state.bootstrap?.browser)transfer.browser=true;
-  await new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{window.removeEventListener('message',listener);reject(new Error('The helper did not respond. Reconnect the helper and reopen the saved order.'));},40000);
-    function listener(e){if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;if(!['PF_WORKSPACE_OPENED','PF_WORKSPACE_ERROR'].includes(e.data.type))return;clearTimeout(timer);window.removeEventListener('message',listener);e.data.type==='PF_WORKSPACE_OPENED'?resolve():reject(new Error(e.data.error));}
-    window.addEventListener('message',listener);window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_OPEN',transfer},location.origin);
-  });
+  await registerOrder(transfer);
   toast('TCGPlaytest opened in a new tab. Keep this page open until the upload finishes.');
+}
+function registerOrder(transfer){
+  return new Promise((resolve,reject)=>{
+    const requestId=crypto.randomUUID();
+    const timer=setTimeout(()=>{window.removeEventListener('message',listener);reject(new Error('The helper did not respond. Reconnect the helper and reopen the saved order.'));},40000);
+    function listener(e){if(e.source!==window||e.origin!==location.origin||e.data?.source!=='proxy-foundry-helper')return;if(e.data.requestId!==requestId&&(transfer.wholeFile||e.data.requestId!==undefined))return;if(!['PF_WORKSPACE_OPENED','PF_WORKSPACE_ERROR'].includes(e.data.type))return;clearTimeout(timer);window.removeEventListener('message',listener);e.data.type==='PF_WORKSPACE_OPENED'?resolve(e.data):reject(new Error(e.data.error));}
+    window.addEventListener('message',listener);window.postMessage({source:'proxy-foundry-workspace',type:'PF_WORKSPACE_OPEN',requestId,transfer},location.origin);
+  });
 }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bulk Proxy Forge Print Helper",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Import public Archidekt and MTGGoldfish decks on this computer and send paired print orders to TCGPlaytest. Never checks out or pays.",
   "permissions": ["storage"],
   "host_permissions": ["http://127.0.0.1/*", "http://localhost/*", "https://*.pages.dev/*", "https://andro951.github.io/*", "https://archidekt.com/*", "https://www.mtggoldfish.com/*", "https://www.tcgplaytest.com/*"],

@@ -34,6 +34,7 @@ def request(app,method,url,body,headers):
         order=app.store.put('orders',{'count':5,'cards':[],'decks':[]})
         (app.store.home/'orders'/(order['id']+'.zip')).write_bytes(base64.b64decode('ZIP_DATA'))
         transfer=app.transfer(order['id'])
+        transfer['whole']=app.transfer(order['id'],whole_file=True)
         import js
         js.globalThis.__failOrderReads=True
         return {'status':200,'mime':'application/json','body':json.dumps(transfer).encode(),'headers':{}}
@@ -54,9 +55,13 @@ def request(app,method,url,body,headers):
         const error=await broken.json();
         const bootstrap=await api('/api/bootstrap');
         const denied=await workspaceFetch(path,{headers:{Range:'bytes=0-99'}});
-        return {status:response.status,bytes,legacyStatus:legacy.status,legacyBytes,brokenStatus:broken.status,error:error.error,ready:bootstrap.browser,denied:denied.status};
+        const native=await window.__pfPrintFile(transfer.whole.id,transfer.whole.secret);
+        const nativeBytes=[...new Uint8Array(await native.slice(0,32).arrayBuffer())];
+        return {status:response.status,bytes,legacyStatus:legacy.status,legacyBytes,brokenStatus:broken.status,error:error.error,ready:bootstrap.browser,denied:denied.status,nativeFile:native instanceof File,nativeSize:native.size,nativeBytes};
     }''')
     assert result['status']==206 and result['bytes']==expected
     assert result['legacyStatus']==206 and result['legacyBytes']==list(source_zip.read_bytes()[:32])
     assert result['brokenStatus']==500 and 'I/O error' in result['error']
     assert result['ready'] is True and result['denied']==403
+    assert result['nativeFile'] is True and result['nativeSize']==source_zip.stat().st_size
+    assert result['nativeBytes']==list(source_zip.read_bytes()[:32])

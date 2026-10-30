@@ -1,5 +1,5 @@
 /* Public deck imports and paired ZIP transport run in this browser extension. */
-const VERSION='1.3.1';
+const VERSION='1.4.0';
 const TARGET='https://www.tcgplaytest.com';
 const CHUNK=1024*1024;
 function workspaceOrigin(url){try{const u=new URL(url);if(!u.username&&!u.password&&((u.protocol==='http:'&&['127.0.0.1','localhost'].includes(u.hostname)&&u.port)||(u.protocol==='https:'&&(u.hostname.endsWith('.pages.dev')||u.hostname==='andro951.github.io'))))return u.origin;}catch{}throw new Error('Open the order from a supported Proxy Foundry workspace.');}
@@ -39,12 +39,21 @@ function validateTransfer(value,sender){
   const origin=workspaceOrigin(sender.url||sender.tab?.url||'');
   if(!Number.isInteger(sender.tab?.id)||sender.frameId!==0)throw new Error('Open the order from the main Proxy Foundry tab.');
   if(!value||value.origin!==origin||!/^[-a-f0-9]{36}$/.test(value.id)||!/^[-_A-Za-z0-9]{32,100}$/.test(value.secret))throw new Error('Invalid print transfer. Rebuild or reopen the order.');
-  return {origin,id:value.id,secret:value.secret,browser:value.browser===true,expires:Date.now()+60*60*1000,sourceTab:sender.tab.id};
+  return {origin,id:value.id,secret:value.secret,browser:value.browser===true,wholeFile:value.wholeFile===true,expires:Date.now()+60*60*1000,sourceTab:sender.tab.id};
 }
-async function getTransfer(sender){
+async function getTransfer(sender,ident){
   const u=new URL(sender.url||sender.tab?.url||'');
   if(u.origin!==TARGET||sender.frameId!==0||!Number.isInteger(sender.tab?.id))throw new Error('Print data is available only to its authorized TCGPlaytest tab.');
-  const key='transfer:'+sender.tab.id;const result=await chrome.storage.session.get(key);const t=result[key];
+  const key='transfer:'+sender.tab.id;const result=await chrome.storage.session.get(key);let t=result[key];
+  if(!t&&/^[-a-f0-9]{36}$/.test(ident||'')){
+    const pendingKey='pending:'+ident,pending=await chrome.storage.session.get(pendingKey);
+    const candidate=pending[pendingKey];
+    if(candidate&&candidate.expires>Date.now()){
+      const tab=await chrome.tabs.get(sender.tab.id);
+      if(tab.openerTabId!==candidate.sourceTab)throw new Error('Open the printer from its original Bulk Proxy Forge tab.');
+      t=candidate;await chrome.storage.session.set({[key]:t});await chrome.storage.session.remove(pendingKey);
+    }
+  }
   if(!t||t.expires<Date.now()){await chrome.storage.session.remove(key);throw new Error('Transfer expired. Open this order again from Proxy Foundry.');}
   t.expires=Date.now()+60*60*1000;await chrome.storage.session.set({[key]:t});return t;
 }
@@ -77,6 +86,11 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
       if(message.type==='PF_WORKSPACE_OPEN_ORDER'){
         const t=validateTransfer(message.transfer,sender);const meta=await request(t,'metadata');
         if(!Number.isSafeInteger(meta.count)||meta.count<1||!Number.isSafeInteger(meta.zipBytes)||meta.zipBytes<22)throw new Error('Invalid paired-order package.');
+        if(t.wholeFile){
+          if(!t.browser||meta.protocolVersion!==3)throw new Error('This workspace does not support direct saved-file handoff.');
+          await chrome.storage.session.set({['pending:'+t.id]:{...t,...meta}});
+          respond({ok:true,url:TARGET+'/?view=design&proxyFoundryOrder='+encodeURIComponent(t.id),count:meta.count});return;
+        }
         if(meta.protocolVersion===2){
           if(!Array.isArray(meta.batches)||!meta.batches.length||meta.batches.length>meta.count)throw new Error('Invalid ZIP batches.');
           let count=0;
@@ -90,9 +104,11 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
         try{await chrome.storage.session.set({['transfer:'+tab.id]:{...t,...meta}});await chrome.tabs.update(tab.id,{url:TARGET+'/?view=design&proxyFoundryOrder='+encodeURIComponent(t.id)});}catch(e){await chrome.tabs.remove(tab.id).catch(()=>{});throw e;}
         respond({ok:true,tabId:tab.id,count:meta.count});return;
       }
-      const t=await getTransfer(sender);
-      if(message.type==='PF_ORDER_METADATA'){respond({ok:true,count:t.count,zipBytes:t.zipBytes,filename:t.filename||'Proxy_Foundry_Order.zip',version:VERSION,protocolVersion:t.protocolVersion,batches:t.batches});return;}
+      const t=await getTransfer(sender,message.transferId);
+      if(message.type==='PF_ORDER_METADATA'){respond({ok:true,count:t.count,zipBytes:t.zipBytes,filename:t.filename||'Proxy_Foundry_Order.zip',version:VERSION,protocolVersion:t.protocolVersion,batches:t.batches,
+        ...(t.wholeFile?{nativeSource:{origin:t.origin,id:t.id,secret:t.secret}}:{})});return;}
       if(message.type==='PF_ORDER_CHUNK'){
+        if(t.wholeFile)throw new Error('Direct file handoff does not use ZIP chunks.');
         const batch=t.protocolVersion===2?message.batch:undefined;
         if(t.protocolVersion===2&&(!Number.isSafeInteger(batch)||batch<0||batch>=t.batches.length))throw new Error('Invalid ZIP batch.');
         const total=t.protocolVersion===2?t.batches[batch].zipBytes:t.zipBytes;

@@ -586,9 +586,18 @@ class BrowserHandler(server.Handler):
         return super().post(path, query)
 
     def get(self, path, query):
+        native=re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/native-file',path)
+        if native:
+            active=self.app.authorized_transfer(native[1],self.headers.get('X-Proxy-Transfer-Token'))
+            source=active['path'];stat=source.stat()
+            if active['signature']!=(stat.st_size,stat.st_mtime_ns):
+                raise ValidationError('The saved order changed. Reopen it before retrying.')
+            return self.respond({'path':source.relative_to(self.app.store.home).as_posix(),
+                                 'size':stat.st_size,'modified':round(stat.st_mtime*1000)})
         transfer=re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/zip',path)
         if transfer and 'batch' in query:
             active=self.app.authorized_transfer(transfer[1],self.headers.get('X-Proxy-Transfer-Token'))
+            if active['batches'] is None:raise ValidationError('This order uses a direct whole-file handoff.')
             indices=query['batch'];requested=re.fullmatch(r'bytes=(\d+)-(\d+)',self.headers.get('Range',''))
             if len(indices)!=1 or not re.fullmatch(r'[0-9]{1,5}',indices[0]) or not requested:
                 raise ValidationError('A valid ZIP batch and bounded range are required.')

@@ -2,7 +2,7 @@
   if(window.__proxyFoundryWorkspaceBridge)return;
   if(!document.querySelector('meta[name="proxy-foundry"][content="workspace-v1"]'))return;
   window.__proxyFoundryWorkspaceBridge=true;
-  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.3.1',capabilities:['paired-zip-batches','deck-import']},location.origin);
+  const post=(type,data={})=>window.postMessage({...data,source:'proxy-foundry-helper',type,version:'1.4.0',capabilities:['native-whole-zip','paired-zip-batches','deck-import']},location.origin);
   chrome.runtime.onMessage.addListener((message,sender,respond)=>{
     if(message?.type!=='PF_BROWSER_TRANSFER')return;
     (async()=>{
@@ -37,8 +37,8 @@
     }
     if(e.data.type!=='PF_WORKSPACE_OPEN'||opening)return;
     opening=true;
-    try{const r=await chrome.runtime.sendMessage({type:'PF_WORKSPACE_OPEN_ORDER',transfer:e.data.transfer});if(!r?.ok)throw new Error(r?.error||'Could not open the order.');post('PF_WORKSPACE_OPENED',{tabId:r.tabId});}
-    catch(err){post('PF_WORKSPACE_ERROR',{error:err.message||String(err)});}finally{opening=false;}
+    try{const r=await chrome.runtime.sendMessage({type:'PF_WORKSPACE_OPEN_ORDER',transfer:e.data.transfer});if(!r?.ok)throw new Error(r?.error||'Could not open the order.');post('PF_WORKSPACE_OPENED',{requestId:e.data.requestId,tabId:r.tabId,url:r.url});}
+    catch(err){post('PF_WORKSPACE_ERROR',{requestId:e.data.requestId,error:err.message||String(err)});}finally{opening=false;}
   });
   post('PF_WORKSPACE_PONG');
 })();

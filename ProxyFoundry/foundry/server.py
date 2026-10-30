@@ -255,17 +255,19 @@ class App:
             for path in missing:self.runtime.ensure(path)
         self._frame_assets_ready=ready|paths
 
-    def transfer(self, order_id):
+    def transfer(self, order_id, *, whole_file=False):
         d = self.store.get('orders', order_id)
         p = self.store.home / 'orders' / (order_id + '.zip')
         if not d or not p.is_file(): raise ValidationError('This saved order package is missing. Build it again.')
-        batches = TransferBatches(p, d['count'])
+        batches = None if whole_file else TransferBatches(p, d['count'])
+        stat = p.stat()
+        signature = (stat.st_size, stat.st_mtime_ns)
         ident, secret = uid(), secrets.token_urlsafe(32)
         with self.lock:
             now = time.time()
             self.transfers = {k: v for k, v in self.transfers.items() if v['expires'] > now}
             self.transfers[ident] = {'secret': secret, 'expires': now + 3600, 'order': order_id,
-                                    'path': p, 'count': d['count'], 'zipBytes': p.stat().st_size, 'batches': batches}
+                                    'path': p, 'count': d['count'], 'zipBytes': signature[0], 'signature': signature, 'batches': batches}
         return {'id': ident, 'secret': secret, 'origin': self.origin}
 
     def authorized_transfer(self, ident, secret):
@@ -559,11 +561,15 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/transfer/([-a-f0-9]{36})/(metadata|zip)', p):
             t = self.app.authorized_transfer(m[1], self.headers.get('X-Proxy-Transfer-Token'))
             if m[2] == 'metadata':
+                if t['batches'] is None:
+                    return self.respond({'count':t['count'],'zipBytes':t['zipBytes'],
+                                         'filename':'BulkProxyForge_Order.zip','protocolVersion':3})
                 return self.respond({'count': t['count'], 'zipBytes': t['zipBytes'],
                                      'filename': 'BulkProxyForge_Order.zip', 'protocolVersion': 2,
                                      'batches': t['batches'].metadata()})
             if 'batch' not in q:  # Keep the original endpoint for 1.0 helpers/small orders.
                 return self.file(t['path'], 'application/zip', allow_range=True)
+            if t['batches'] is None:raise ValidationError('This order uses a direct whole-file handoff.')
             indices = q['batch']
             if len(indices) != 1 or not re.fullmatch(r'[0-9]{1,5}', indices[0]):
                 raise ValidationError('Invalid ZIP batch index.')
@@ -729,7 +735,7 @@ class Handler(BaseHTTPRequestHandler):
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/pause', p): return self.respond(self.app.jobs.pause(m[1]))
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/resume', p): return self.respond(self.app.jobs.resume(m[1]))
         if m := re.fullmatch(r'/api/jobs/([-a-f0-9]{36})/cancel', p): return self.respond(self.app.jobs.cancel(m[1]))
-        if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1]))
+        if m := re.fullmatch(r'/api/orders/([-a-f0-9]{36})/transfer', p): return self.respond(self.app.transfer(m[1],whole_file=d.get('wholeFile') is True))
         if m := re.fullmatch(r'/api/templates/([-a-f0-9]{36})/delete', p): return self.respond(self.app.ws.delete_template(m[1], d.get('revision')))
         if m := re.fullmatch(r'/api/decks/([-a-f0-9]{36})/review-plan', p):
             return self.respond(self.app.ws.review_plan(m[1],d.get('cardId'),d.get('faceId')))

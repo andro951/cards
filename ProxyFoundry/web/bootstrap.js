@@ -234,6 +234,16 @@ else{
     if(data.type==='request')dispatchWorkspaceRequest(data,event.ports[0]);
   });
 
+  window.__pfPrintFile=async(id,secret)=>{
+    if(!/^[-a-f0-9]{36}$/.test(id)||!/^[-_A-Za-z0-9]{32,100}$/.test(secret))throw new Error('Invalid print transfer.');
+    const response=await window.__pfWorkspaceFetch('/api/transfer/'+id+'/native-file',{headers:{'X-Proxy-Transfer-Token':secret}});
+    const info=await response.json();
+    if(!response.ok)throw new Error(info.error||'The saved order could not be opened.');
+    if(!/^orders\/[a-f0-9-]{36}\.zip$/.test(info.path))throw new Error('Invalid saved order.');
+    const file=await files.file(info.path);
+    if(file.size!==info.size||Math.abs(file.lastModified-info.modified)>1)throw new Error('The saved order changed. Reopen it before retrying.');
+    return file;
+  };
   window.addEventListener('message',async event=>{
     const data=event.data;
     if(event.source!==window||event.origin!==location.origin||data?.source!=='proxy-foundry-helper'||data.type!=='PF_TRANSFER_REQUEST')return;

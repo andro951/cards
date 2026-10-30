@@ -73,6 +73,34 @@ def test_browser_batch_auth_returns_only_authorized_file_spans(tmp_path,monkeypa
     finally:app.close()
 
 
+def test_whole_file_handoff_does_not_plan_batches_and_authorizes_only_the_unchanged_order(tmp_path,monkeypatch):
+    import json
+    from foundry.storage import Store
+    from foundry.server import App
+    from foundry.browser import request as browser_request
+    import foundry.server as server
+    app=App(Store(tmp_path))
+    try:
+        order=app.store.put('orders',{'count':1110,'cards':[],'decks':[]})
+        path=app.store.home/'orders'/(order['id']+'.zip');make_order(path)
+        monkeypatch.setattr(server,'TransferBatches',lambda *a:pytest.fail('Whole-file transfers must not plan or scan batches.'))
+        opened=browser_request(app,'POST','/api/orders/'+order['id']+'/transfer',
+            body=json.dumps({'wholeFile':True}).encode(),headers={'X-Proxy-CSRF':app.csrf,'Content-Type':'application/json'})
+        assert opened['status']==200
+        transfer=json.loads(opened['body'])
+        route='/api/transfer/'+transfer['id'];headers={'X-Proxy-Transfer-Token':transfer['secret']}
+        metadata=browser_request(app,'GET',route+'/metadata',headers=headers)
+        assert json.loads(metadata['body'])=={'count':1110,'zipBytes':path.stat().st_size,'filename':'BulkProxyForge_Order.zip','protocolVersion':3}
+        descriptor=browser_request(app,'GET',route+'/native-file',headers=headers)
+        info=json.loads(descriptor['body']);assert info['path']=='orders/'+path.name and info['size']==path.stat().st_size
+        assert browser_request(app,'GET',route+'/native-file')['status']==403
+        assert browser_request(app,'GET',route+'/zip?batch=0',headers=headers)['status']==400
+        path.write_bytes(b'changed')
+        changed=browser_request(app,'GET',route+'/native-file',headers=headers)
+        assert changed['status']==400 and 'changed' in json.loads(changed['body'])['error']
+    finally:app.close()
+
+
 def test_multiple_zips_preserve_all_copies_pairs_and_source_bytes(tmp_path):
     path = tmp_path/'order.zip';files = make_order(path)
     original = hashlib.sha256(path.read_bytes()).hexdigest()
