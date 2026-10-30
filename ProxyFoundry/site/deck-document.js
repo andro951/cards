@@ -1,4 +1,4 @@
-import {api,job,modal,closeModal,setModalBusy,$,toast,downloadBlob,work,errorBox} from './ui.js';
+import {api,job,modal,closeModal,setModalBusy,$,toast,downloadBlob,work,errorBox,asset,thumbnail} from './ui.js';
 import {sourceRecord} from './artwork-files.js';
 import {generationScreen} from './generation-progress.js';
 
@@ -17,9 +17,9 @@ export async function completeDeckDocument(id,{owner=null}={}){
             for(const ident of plan.missing){
                 const row=document.createElement(`label`);row.className=`field`;
                 const title=document.createElement(`span`);title.textContent=plan.document.images[ident].label||`Custom image`;
-                const image=document.createElement(`img`);image.src=`/api/assets/${ident}/thumbnail`;image.alt=`Image needing a permanent source`;image.style.maxWidth=`100px`;image.style.maxHeight=`120px`;
+                const image=document.createElement(`img`);image.src=thumbnail('/api/assets/'+ident);image.alt=`Image needing a permanent source`;image.style.maxWidth=`100px`;image.style.maxHeight=`120px`;
                 const input=document.createElement(`input`);input.type=`url`;input.placeholder=`https://github.com/owner/repo/blob/main/image.png`;input.setAttribute(`aria-label`,`Permanent URL for image ${ident.slice(0,8)}`);
-                const original=document.createElement(`a`);original.className=`button small`;original.href=`/api/assets/${ident}`;original.download=`source-${ident.slice(0,8)}`;original.textContent=`Download source image`;
+                const original=document.createElement(`a`);original.className=`button small`;original.href=asset(ident);original.download=`source-${ident.slice(0,8)}`;original.textContent=`Download source image`;
                 row.append(title,image,original,input);body.append(row);inputs.set(ident,input);
             }
             const save=document.createElement(`button`);save.className=`button primary`;save.textContent=`Verify and save image sources`;

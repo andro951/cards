@@ -32,8 +32,9 @@ export function refreshGenerationButtons(){
 window.addEventListener('pf-generation-state',refreshGenerationButtons);
 export const bytes=n=>n>=1024**3?(n/1024**3).toFixed(1)+' GB':n>=1024**2?(n/1024**2).toFixed(1)+' MB':Math.ceil(n/1024)+' KB';
 export const date=t=>t?new Date(t*1000).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
-export const asset=id=>id?'/api/assets/'+id:'';
-export const thumbnail=url=>/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url;
+export const workspaceUrl=url=>url&&/^\/(api|runtime|img|fonts|js|css|creator)\//.test(url)?(window.__pfBasePath||'')+url:url;
+export const asset=id=>id?workspaceUrl('/api/assets/'+id):'';
+export const thumbnail=url=>workspaceUrl(/^\/api\/assets\/[0-9a-f]{64}$/.test(url||'')?url+'/thumbnail':url);
 export const humanStatus=s=>({draft:'Needs preparation',prepared:'Ready to render',ready:'Ready to print','tokens-not-ready':'Tokens not ready',attention:'Needs attention'}[s]||s||'Draft');
 export const badge=s=>`<span class="badge ${esc(s)}">${esc(humanStatus(s))}</span>`;
 export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -257,7 +258,7 @@ export async function uploadImage(file,{symbol=false,back=false}={}){
   const kind=symbol?'symbol':back?'back':'';
   return blobRequest('/api/uploads'+(kind?('?kind='+encodeURIComponent(kind)):''),blob,'image/png',{'X-Filename':encodeURIComponent(file.name.replace(/\.svg$/i,'.png'))});
 }
-export function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not decode image.'));i.src=src;});}
+export function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not decode image.'));i.src=workspaceUrl(src);});}
 export async function uploadFolder(files,onProgress=()=>{},source=null){
   const images=[...files].filter(f=>/\.(png|jpe?g|webp|gif)$/i.test(f.name));if(images.length>5000)throw new Error('Select at most 5,000 art images.');
   const result={},names={};let done=0;
