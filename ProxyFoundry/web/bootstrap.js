@@ -67,9 +67,27 @@ else{
   const announceOwner=()=>navigator.serviceWorker.controller?.postMessage({type:'owner',owner});
   announceOwner();navigator.serviceWorker.addEventListener('controllerchange',announceOwner);
   const worker=new Worker('/web/engine-worker.js?v='+buildId,{type:'module'});
-  const {savedFolder}=await import('/web/storage-choice.js');
+  const {savedFolder,rememberedLocation,chooseFolder,useFolder,useBrowserStorage}=await import('/web/storage-choice.js');
   startupStage='read-workspace-preference';
-  const folder=await savedFolder();
+  let folder=await savedFolder();
+  if(!folder&&rememberedLocation()?.kind==='folder'){
+    message.textContent='The saved workspace folder connection is missing. Reconnect your folder to open your saved decks.';
+    await new Promise(resolve=>{
+      const reconnect=document.createElement('button');reconnect.className='button primary';reconnect.textContent='Reconnect workspace folder';
+      reconnect.onclick=async()=>{
+        try{
+          const selected=await chooseFolder({existingOnly:true});await useFolder(selected);folder=selected;
+          reconnect.remove();alternative.remove();resolve();
+        }catch(error){if(error.name!=='AbortError')message.textContent=error.message;}
+      };
+      const alternative=document.createElement('button');alternative.className='button';alternative.textContent='Open separate browser workspace';
+      alternative.onclick=async()=>{
+        if(!window.confirm('Open the separate browser workspace? Your saved folder decks remain in their existing folder.'))return;
+        try{await useBrowserStorage();location.reload();}catch(error){message.textContent=error.message;}
+      };
+      startup.append(reconnect,alternative);
+    });
+  }
   startupStage='check-workspace-permission';
   if(folder&&await folder.queryPermission({mode:'readwrite'})!=='granted'){
     message.textContent='Reconnect your workspace folder to open your saved decks.';
