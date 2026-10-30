@@ -23,7 +23,7 @@ from . import rules_nicknames
 from . import github_data
 from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
 from .compiler import vertical_token_kind,apply_vertical_token_layout,VERTICAL_TOKEN_LAYOUT_VERSION
-from .compiler import TOKEN_TRUE_NAME_LAYER_VERSION
+from .compiler import TOKEN_TRUE_NAME_LAYER_VERSION,SHORT_TOKEN_ART_VERSION
 from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
@@ -321,6 +321,7 @@ class Workspace:
                     data=comp.get('data') or {}
                     if ('nickname' in data.get('text',{}) and (f['group']=='token' or comp.get('recipe') in {'Deck-wide token','Card Tools copy token'})
                             and data.get('tokenTrueNameLayerVersion')!=TOKEN_TRUE_NAME_LAYER_VERSION):d['status']='draft'
+                    if data.get('version')=='tokenShort' and data.get('shortTokenArtVersion')!=SHORT_TOKEN_ART_VERSION:d['status']='draft'
                     if frozen_recipe:pass
                     elif ((self._uses_normal_art_anchor(f,d['settings']) and data.get('normalArtAnchorVersion')!=NORMAL_ART_ANCHOR_VERSION)
                             or data.get('normalArtAnchorVersion')==1):
@@ -912,6 +913,8 @@ class Workspace:
         if c.get('tokenSpec') is not None or s.get('allCardsTokens'):
             inputs['tokenConversionVersion']=4
             if any(rules_nicknames.face_nicknames(sf,c['faces']).values()):inputs['tokenTrueNameLayerVersion']=TOKEN_TRUE_NAME_LAYER_VERSION
+            if any((f.get('templateOverride') if self._token_frame_spec(f.get('templateOverride')) else s.get('templateRules',{}).get('token','auto'))
+                   in {None,'auto','token-full-art-short'} for f in c['faces']):inputs['shortTokenArtVersion']=SHORT_TOKEN_ART_VERSION
             if sf.get('layout')=='prepare':inputs['prepareTokenLayoutVersion']=PREPARE_TOKEN_LAYOUT_VERSION
             if any(type_group(face,sf,i)=='station' for i,face in enumerate(faces)):inputs['stationTokenLayoutVersion']=STATION_TOKEN_LAYOUT_VERSION
             if any(set(ingest.split_type_line(face.get('type_line',sf.get('type_line',''))).get('subtypes',[]))&{'Class','Saga'} for face in faces):

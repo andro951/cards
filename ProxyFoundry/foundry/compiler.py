@@ -35,6 +35,7 @@ MODERN_TOKEN_STYLES={'token-full-art','token-full-art-short'}
 TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
 TOKEN_DUAL_COLOR_VERSION=2
 TOKEN_TRUE_NAME_LAYER_VERSION=1
+SHORT_TOKEN_ART_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
@@ -1637,12 +1638,15 @@ def fit_token_art(data,art_local_path,autofit=True):
     bounds=(
         data['artBounds'] if data.get('verticalToken') else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':.431} if data.get('prepareToken') or data.get('stationToken') else
+        FULL_ART_NONLAND_BOUNDS if version=='tokenShort' else
         _TOKEN_M15_ART_WINDOW_BOUNDS if version=='tokenRegularM15' else
         {**_TOKEN_M15_ART_WINDOW_BOUNDS,'height':0.6843} if version=='tokenTextlessM15' else
         {'x':0,'y':0,'width':1,'height':1} if version=='tokenTextlessBorderless' else
         _TOKEN_ART_BOUNDS
     )
     data['artBounds']=copy.deepcopy(bounds)
+    if version=='tokenShort':data['shortTokenArtVersion']=SHORT_TOKEN_ART_VERSION
+    else:data.pop('shortTokenArtVersion',None)
     if autofit:
         native.auto_fit(data,art_local_path)
         # Native fit rounds zoom to three decimals. Round upward when that
@@ -3111,6 +3115,8 @@ class Compiler:
         walker_nickname_version=2*int(group=='planeswalker' and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
         dfc_nickname_version=2*int(group in {'transform-front','transform-back','meld'} and choice in {'auto','normal'} and bool((face or {}).get('nickname')))
         token_true_name_version=TOKEN_TRUE_NAME_LAYER_VERSION*int(group=='token' and bool((face or {}).get('nickname')))
+        short_token_art_version=SHORT_TOKEN_ART_VERSION*int(group=='token' and choice in {'auto','token-full-art-short'}
+            and face is not None and bool(str(face.get('oracle_text') or '').strip() or str(face.get('flavor_text') or '').strip()))
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
@@ -3143,7 +3149,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
-            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version
+            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -3160,7 +3166,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
-            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version
+            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
