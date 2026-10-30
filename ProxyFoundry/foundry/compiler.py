@@ -36,6 +36,7 @@ TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
 TOKEN_DUAL_COLOR_VERSION=2
 TOKEN_TRUE_NAME_LAYER_VERSION=1
 SHORT_TOKEN_ART_VERSION=1
+DFC_TITLE_MANA_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
@@ -2884,6 +2885,22 @@ def apply_full_art_text(data):
             field['outlineWidth']=.0035
 
 
+def reserve_dfc_title_mana_space(data):
+    """Narrow the main name after all transform icon/header positioning."""
+    text=data.get('text') or {};mana=text.get('mana') or {}
+    cost=str(mana.get('text') or '')
+    if not native.mana_symbol_count(cost):return
+    title=text.get('nickname') if isinstance(text.get('nickname'),dict) else text.get('title')
+    if not isinstance(title,dict):return
+    # Match the renderer's mana discs (.78 of the font size) and inter-disc
+    # spacing (.04 on each side), with a small gap before the first disc.
+    count=native.mana_symbol_count(cost);size=float(mana.get('size') or 71/1638)*data['height']
+    spacing=size*.04+float(mana.get('manaSpacing') or 0)
+    cluster=count*size*.78+max(0,count-1)*2*spacing
+    right=float(mana.get('x') or 0)+float(mana.get('width',.9292))-cluster/data['width']-.01
+    title['width']=min(float(title.get('width',.8292)),max(.01,right-float(title.get('x',.0854))))
+
+
 def reserve_nickname_mana_space(data,sem):
     """Keep the alternate title out of the right-aligned mana symbols."""
     symbols=len(re.findall(r'\{[^{}]+\}',str(sem.get('mana_cost') or '')))
@@ -3117,6 +3134,8 @@ class Compiler:
         token_true_name_version=TOKEN_TRUE_NAME_LAYER_VERSION*int(group=='token' and bool((face or {}).get('nickname')))
         short_token_art_version=SHORT_TOKEN_ART_VERSION*int(group=='token' and choice in {'auto','token-full-art-short'}
             and face is not None and bool(str(face.get('oracle_text') or '').strip() or str(face.get('flavor_text') or '').strip()))
+        dfc_title_mana_version=DFC_TITLE_MANA_VERSION*int(group in GODZILLA_DFC_GROUPS|{'meld'} and choice in {'auto','normal','godzilla-card'}
+            and bool(native.mana_symbol_count((face or {}).get('mana_cost',''))))
         outline_colors=set((face or {}).get('colors') or [])&set('WUBRG')
         if group in {'land','legendary-land','basic-land'} and face is not None:
             types=face if 'types' in face else ingest.split_type_line(face.get('type_line') or 'Land')
@@ -3149,7 +3168,7 @@ class Compiler:
             dual_land_version=3*int(len(set(land_colors)&set('WUBRG'))==2)
         if choice=='auto':
             version=AUTO_TEMPLATE_VERSIONS.get(group,1)+(3 if group=='token' else 0)+devoid_version+indicator_version+marker_version+saga_version+compact_crown_version+title_edge_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
-            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version
+            version+=green_palette_version+short_token_default_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version+dfc_title_mana_version
             return 'auto:'+group,version,version
         if choice in BUILTIN_TEMPLATE_VERSIONS:
             version=BUILTIN_TEMPLATE_VERSIONS[choice]+(1 if choice.startswith('godzilla-') and group in GODZILLA_DFC_GROUPS else 0)+devoid_version+indicator_version+marker_version+saga_version+dual_land_version+compact_crown_version+title_edge_version+classic_colorless_version+land_override_version+colorless_land_version+gold_artifact_pt_version+token_mana_version+neutral_token_version+walker_type_outline_version+dual_outline_version+no_pt_rules_version
@@ -3166,7 +3185,7 @@ class Compiler:
             if choice=='godzilla-card' and group in {'planeswalker','modal-front','modal-back'}:version+=1
             if choice=='godzilla-card' and group=='planeswalker':version+=3
             if group=='token':version+=2
-            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version
+            version+=green_palette_version+regular_walker_rules_version+walker_nickname_version+dfc_nickname_version+token_true_name_version+short_token_art_version+dfc_title_mana_version
             return 'builtin:'+choice,version,version
         t=self.store.get('templates',choice)
         if not t:raise ValidationError('The selected template was deleted.')
@@ -3411,6 +3430,8 @@ class Compiler:
             reserve_nickname_mana_space(data,sem)
         if choice=='godzilla-card' and group in {'transform-front','transform-back'} and not options.get('rawCard'):
             apply_godzilla_transform_header(data,sem,group,sf,artist,not settings.get('disableAutofit',False),flags)
+        if group in GODZILLA_DFC_GROUPS|{'meld'} and choice in {'auto','normal','godzilla-card'} and not options.get('rawCard'):
+            reserve_dfc_title_mana_space(data)
         if choice=='godzilla-card':
             # Select material after native color and header assembly so later
             # passes cannot restore the nearly-white upstream artifact pieces.

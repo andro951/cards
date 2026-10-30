@@ -1,0 +1,67 @@
+{
+  "id": "0cbc43a3-8cba-4988-9de1-c89aedd79ada",
+  "name": "Ojer Kaslem, Deepest Growth // Temple of Cultivation",
+  "layout": "transform",
+  "rarity": "mythic",
+  "artist": "Ryan Pancoast",
+  "frame_effects": [
+    "legendary"
+  ],
+  "card_faces": [
+    {
+      "object": "card_face",
+      "name": "Ojer Kaslem, Deepest Growth",
+      "mana_cost": "{3}{G}{G}",
+      "type_line": "Legendary Creature — God",
+      "oracle_text": "Trample\nWhenever Ojer Kaslem deals combat damage to a player, reveal that many cards from the top of your library. You may put a creature card and/or a land card from among them onto the battlefield. Put the rest on the bottom in a random order.\nWhen Ojer Kaslem dies, return it to the battlefield tapped and transformed under its owner's control.",
+      "colors": [
+        "G"
+      ],
+      "power": "6",
+      "toughness": "5",
+      "artist": "Ryan Pancoast",
+      "artist_id": "89cc9475-dda2-4d13-bf88-54b92867a25c",
+      "illustration_id": "24797e2a-3b81-4ee1-83b2-c5d158f4ec9c",
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "normal": "https://cards.scryfall.io/normal/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "large": "https://cards.scryfall.io/large/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "png": "https://cards.scryfall.io/png/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.png?1783913744",
+        "art_crop": "https://cards.scryfall.io/art_crop/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "border_crop": "https://cards.scryfall.io/border_crop/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "thumb": "https://cards.scryfall.io/thumb/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "grid": "https://cards.scryfall.io/grid/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "display": "https://cards.scryfall.io/display/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "art": "https://cards.scryfall.io/art/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "crop": "https://cards.scryfall.io/crop/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "jpeg": "https://cards.scryfall.io/normal/front/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744"
+      }
+    },
+    {
+      "object": "card_face",
+      "name": "Temple of Cultivation",
+      "mana_cost": "",
+      "type_line": "Land",
+      "oracle_text": "(Transforms from Ojer Kaslem, Deepest Growth.)\n{T}: Add {G}.\n{2}{G}, {T}: Transform this land. Activate only if you control ten or more permanents and only as a sorcery.",
+      "colors": [],
+      "flavor_text": "Chimil gave the Oltec sacred lands. Ojer Kaslem brought them to life.",
+      "artist": "Ryan Pancoast",
+      "artist_id": "89cc9475-dda2-4d13-bf88-54b92867a25c",
+      "illustration_id": "bf18bf5f-768d-4dc0-b73e-381ff57bb7fc",
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "normal": "https://cards.scryfall.io/normal/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "large": "https://cards.scryfall.io/large/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "png": "https://cards.scryfall.io/png/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.png?1783913744",
+        "art_crop": "https://cards.scryfall.io/art_crop/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "border_crop": "https://cards.scryfall.io/border_crop/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744",
+        "thumb": "https://cards.scryfall.io/thumb/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "grid": "https://cards.scryfall.io/grid/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "display": "https://cards.scryfall.io/display/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "art": "https://cards.scryfall.io/art/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "crop": "https://cards.scryfall.io/crop/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.webp?1783913744",
+        "jpeg": "https://cards.scryfall.io/normal/back/0/c/0cbc43a3-8cba-4988-9de1-c89aedd79ada.jpg?1783913744"
+      }
+    }
+  ]
+}
