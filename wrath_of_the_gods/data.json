@@ -1040,7 +1040,7 @@
                     "text": "Esika, God of the Tree",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.6060905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -1116,7 +1116,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "ea131ef13b47198db4787cd1e64f8c9c6fb7207db8a794a5e75a3cdd45fdb62f",
+              "renderKey": "a1fc37b4df23d89d06819a1c616090fc051082c71b6aee7f4cf241c37faddbcc",
               "group": "modal-front",
               "recipe": "modal_dfc_front",
               "crop": {
@@ -1144,15 +1144,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-front",
-              "templateVersion": 5,
-              "templateCacheVersion": 5,
+              "templateVersion": 6,
+              "templateCacheVersion": 6,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "039966a0e1ce48e2c06e4b7d3635e6acce199b80ce3b5a774020f99b201df456",
+              "contentRenderKey": "0717d70ee67623f8c3ea73bd2d9c13e395522c9a11b04afbd4cfb3ad02fc8c3c",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/esika_god_of_the_tree.png"
             },
-            "preparationKey": "bb7c8726aec37cf02fb53d9b6b62aa5f99734bdb752fe304fa6ff74fe9fd4045",
-            "preparedAt": 1793320954.442
+            "preparationKey": "a86776a285843609b57cbdd0f29eeb16121f84b1542924412db594e62a11adcf",
+            "preparedAt": 1793387573.228
           },
           {
             "id": "e61177e8-b536-49f8-b505-b4b30ffbf3f9",
@@ -1431,7 +1431,7 @@
                     "text": "The Prismatic Bridge",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.50171452991453,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -1498,7 +1498,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "cbdb56f627a097502d7b51bc4a991eb847e6c6488df7ddf89f4824511e4a3ed8",
+              "renderKey": "be8c38d1e8758fab2c4080263e5bd098ea719eec7d10fce65f7ce85392fc9560",
               "group": "modal-back",
               "recipe": "modal_dfc_back",
               "crop": {
@@ -1526,15 +1526,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-back",
-              "templateVersion": 5,
-              "templateCacheVersion": 5,
+              "templateVersion": 6,
+              "templateCacheVersion": 6,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "87dcbea64bc82c8f6343c04a81e676c3dc55fb8f0dca58b1d6a03000f24c1c16",
+              "contentRenderKey": "bf3469371036fe397fdb1810a7fd0a7b464b9daacbdb625a0052590a64c932ee",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/the_prismatic_bridge.png"
             },
-            "preparationKey": "bb7c8726aec37cf02fb53d9b6b62aa5f99734bdb752fe304fa6ff74fe9fd4045",
-            "preparedAt": 1793320954.442
+            "preparationKey": "a86776a285843609b57cbdd0f29eeb16121f84b1542924412db594e62a11adcf",
+            "preparedAt": 1793387573.228
           }
         ],
         "metadataSource": "f6cd7465-9dd0-473c-ac5e-dd9e2f22f5f6",
@@ -1833,7 +1833,7 @@
                   "text": "Esika, God of the Tree",
                   "x": 0.1614,
                   "y": 0.0522,
-                  "width": 0.7534,
+                  "width": 0.6060905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -1909,7 +1909,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "1f24fda5923b4d5003920196bc270a9ad9a441f80f5d293c195b2ad5f0215900",
+            "renderKey": "812c57d9ea52ebd4de0996e984e6c44e75ce1f1103ac4a1315d1429adfaa7e3a",
             "group": "modal-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -1931,14 +1931,14 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:modal-front",
-            "templateVersion": 5,
-            "templateCacheVersion": 5,
+            "templateVersion": 6,
+            "templateCacheVersion": 6,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "4915dc4b12158bd3474fc74044ecef6119121ad6fa05cfabbd4fb75d52bb90f3",
+            "contentRenderKey": "28ec1657714e5454a174bf46f135c6129784ae527f5194f2706723985f7b2ad0",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "ea131ef13b47198db4787cd1e64f8c9c6fb7207db8a794a5e75a3cdd45fdb62f",
+          "sourceRenderKey": "a1fc37b4df23d89d06819a1c616090fc051082c71b6aee7f4cf241c37faddbcc",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -3051,9 +3051,9 @@
                   }
                 ],
                 "artSource": "/api/assets/65d692976b6bde8e95a9755a047a5d15231add0a86d677ceca3433bf084da44b",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/cb6cb623c68388fbc8beeb62fa3bf5ecb68ab36e5aa5959df5c4ed89b650e07a",
                 "setSymbolX": 0.8736318407960199,
@@ -3174,10 +3174,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3284,18 +3284,19 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "cec47ac297a94cd34b0822c77f8fad718c66bd7f4500b5ba5a648e967955b8f8",
+              "renderKey": "a4c7ee83a585e2f587fcee4721a1a3da0aee38b4946ef3f8dd512b1665863251",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3314,15 +3315,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "31fb9fd10e92abd9590ec35571b0230b925f5201ef73ff31ec9d114e7de4b50d",
+              "contentRenderKey": "78c1c96cd2624a5f96599d3d12d5e303ea1ce850901ec49cdbf338ac49e23774",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/pegasus.png"
             },
-            "preparationKey": "cfe65c5d2735f0f5a542b480c8d759b2ca33e9261acb8f454055db9a7fcfab13",
-            "preparedAt": 1793320953.611
+            "preparationKey": "99121543bf98c8ce71eb1b64a6dd0714cc963bdf2fbe9c5aea9c44c22c61cb1d",
+            "preparedAt": 1793387573.486
           }
         ],
         "metadataSource": "f130171f-a3e2-4dac-806a-1f2c428ac9fc",
@@ -3514,9 +3515,9 @@
                   }
                 ],
                 "artSource": "/api/assets/1a7db1fb916e52dcf527d31e535e54c66134bdfc35c2c40def4fbd97d75073a8",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/cb6cb623c68388fbc8beeb62fa3bf5ecb68ab36e5aa5959df5c4ed89b650e07a",
                 "setSymbolX": 0.8736318407960199,
@@ -3637,10 +3638,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -3747,18 +3748,19 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "b6d4118e0e2c1878a160428845b7e6f72c39591f7b8fb2717e291dc76119ccc6",
+              "renderKey": "82a957c61d9d77b01b0d27784d4565a3ebe25621028da37a34be68ca09d78bfc",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -3777,15 +3779,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "fd1acbf7a4b4be6e0a8f96da9d96130b3ef9f63e2063ce39d2e495594890899f",
+              "contentRenderKey": "ff17f459ed01c367bf9ea47b870499bb22c786fe1bbc5596a411893a6b5bf3c3",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/shapeshifter.png"
             },
-            "preparationKey": "04c890c716c5c88d5bb4d73dbec14a6fab0ad97b32eaac0eab5197942bab3eea",
-            "preparedAt": 1793320953.403
+            "preparationKey": "caa1267f25c5e0404d0693100caf13d47f33b8032532bce8e714076f8d7ce1f7",
+            "preparedAt": 1793387573.685
           }
         ],
         "metadataSource": "1186b536-e6c8-433d-a906-b29f334d619c",
@@ -6946,9 +6948,9 @@
                   }
                 ],
                 "artSource": "/api/assets/809fa975c6850758ae1612c100d5ca660012843884937e17d52fcc6f87647bc4",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/cb6cb623c68388fbc8beeb62fa3bf5ecb68ab36e5aa5959df5c4ed89b650e07a",
                 "setSymbolX": 0.8736318407960199,
@@ -7069,10 +7071,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -7179,18 +7181,19 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "e01558a866012098ef34a37ae04f0d50503692f7dc5197911b295c5c15d2e252",
+              "renderKey": "c5e04999fc0552043d9e1430e5503759b5ead67cb82c41c62e6e18bd8d4bc4ce",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -7209,15 +7212,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "5d5c392985e45ae1787c77efeed93247e2f006a362fb5bd082abd6d744a8fb1c",
+              "contentRenderKey": "bd5ebba294d16af198e772f0983402659eb035fb2bf35ca54a99b2b3f4398fb5",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/treasure.png"
             },
-            "preparationKey": "66b335c7ddd87a70b8dbdaa3bb1d186218644533269208203842fdf99095e3c3",
-            "preparedAt": 1793320954.624
+            "preparationKey": "999e2db5df6c734f5c013fc9485011812ea68cb8beb6eae44c9afcde27e7fe76",
+            "preparedAt": 1793387573.845
           }
         ],
         "metadataSource": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9",
@@ -16871,7 +16874,7 @@
                     "text": "Search for Azcanta",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6596786324786325,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -16924,7 +16927,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "61bda9db04c25d04cc162e625022c7306fdf5da327a7a7fc3cac95be9b3e89e6",
+              "renderKey": "b96d7e91882c5a8a575baecdea4152c3aca7b60c7bc3b43baeb30f3dd1bbb7c2",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -16952,15 +16955,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "c70228b796aa23b034d6258ec2f8eb248664bf72cce1ebae8391d0a7e846fe3e",
+              "contentRenderKey": "916eac0e79897d33ec2a6e2de3e801ffbb3db25764275dfba1ab906ac84efcb0",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/search_for_azcanta.png"
             },
-            "preparationKey": "0ab9c42c468b5efc71193d8367ed4c156cdcd366bacc9f97cc761da918e6f1fc",
-            "preparedAt": 1793320959.2419999
+            "preparationKey": "bae420f050bf52b23ec5643099eae708c8370003a98ee436f355329dd94b173c",
+            "preparedAt": 1793387574.293
           },
           {
             "id": "47841433-717b-49c6-81ef-06dff40146d1",
@@ -17313,8 +17316,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/azcanta_the_sunken_ruin.png"
             },
-            "preparationKey": "0ab9c42c468b5efc71193d8367ed4c156cdcd366bacc9f97cc761da918e6f1fc",
-            "preparedAt": 1793320959.2419999
+            "preparationKey": "bae420f050bf52b23ec5643099eae708c8370003a98ee436f355329dd94b173c",
+            "preparedAt": 1793387574.293
           }
         ],
         "metadataSource": "1a7e242e-bb48-4134-a1c2-6033713d658f",
@@ -17599,7 +17602,7 @@
                   "text": "Search for Azcanta",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6596786324786325,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -17652,7 +17655,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "4a8224baaae70950cabd8f41339971f79dc6bf75308d5ac819268873fb6e1fb9",
+            "renderKey": "31e4757fe18490b966c35dae9dc9c8cc21419aee82823560ac6d0f76ff13bbd7",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -17674,14 +17677,14 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 15,
-            "templateCacheVersion": 15,
+            "templateVersion": 16,
+            "templateCacheVersion": 16,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "bf77df6f4558ea7271a0c7426802269420570f19cc2fe622ac3471925d5f3fb3",
+            "contentRenderKey": "ee4efc1e2674e9cc56248ff99bb1af776bcf4159238c4e5b30eedb810b240a5f",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "61bda9db04c25d04cc162e625022c7306fdf5da327a7a7fc3cac95be9b3e89e6",
+          "sourceRenderKey": "b96d7e91882c5a8a575baecdea4152c3aca7b60c7bc3b43baeb30f3dd1bbb7c2",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -35763,7 +35766,7 @@
                     "text": "Ojer Kaslem, Deepest Growth",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -35828,7 +35831,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "42c91a32b486aa15a33d97679b4dfcf50fa1481ae2fe632f233db014daaf6010",
+              "renderKey": "49ab062108cb47aa5a3fd40b98e15feafb507979f6682d9766c9ae8b89026a82",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -35856,15 +35859,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "c462437a4559d79188d7ad27cceb73a90419208e3c7c407a9852707bdae3484b",
+              "contentRenderKey": "e481c6b9ce5f8a59e4a74cc0e49c4a4df1b7884b6063dec09d3aa5537f889100",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/ojer_kaslem_deepest_growth.png"
             },
-            "preparationKey": "fe7f89dd13121e6363f99b326b69af38c0ab485c2bcad1ff838948814bb3be71",
-            "preparedAt": 1793320970.071
+            "preparationKey": "0edc23f82abc073f498ac0c308bb3c6ccf5317a4b17b14c0954fb5bd90fc1c88",
+            "preparedAt": 1793387574.626
           },
           {
             "id": "c4ad5182-f5cb-4b8c-8ef5-d449b3ffe245",
@@ -36195,8 +36198,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/temple_of_cultivation.png"
             },
-            "preparationKey": "fe7f89dd13121e6363f99b326b69af38c0ab485c2bcad1ff838948814bb3be71",
-            "preparedAt": 1793320970.071
+            "preparationKey": "0edc23f82abc073f498ac0c308bb3c6ccf5317a4b17b14c0954fb5bd90fc1c88",
+            "preparedAt": 1793387574.626
           }
         ],
         "metadataSource": "0cbc43a3-8cba-4988-9de1-c89aedd79ada",
@@ -36492,7 +36495,7 @@
                   "text": "Ojer Kaslem, Deepest Growth",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -36557,7 +36560,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "c2e3b8698a483c6c801eb5c362c418decf05d884900f256f52c3a14ad113d76e",
+            "renderKey": "043ad37d91508f3ad15a760d9464a71ef048b7a808601715f9ccb6ce6cc670a0",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -36579,14 +36582,14 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "a2dc4e7fa6cf901bfb5c330593ffdea5c60a27d3151929eed1ba7654cc5dbe6b",
+            "contentRenderKey": "645dec0a671477f60f7fdda7afa126831959f621d548084a545e151bef8362d0",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "42c91a32b486aa15a33d97679b4dfcf50fa1481ae2fe632f233db014daaf6010",
+          "sourceRenderKey": "49ab062108cb47aa5a3fd40b98e15feafb507979f6682d9766c9ae8b89026a82",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -50062,47 +50065,50 @@
                 "marginY": 0,
                 "frames": [
                   {
-                    "name": "Temple Title Bar",
-                    "src": "builtin:generated-vector:7626478227c167462a71506fb6cd1cb92473f756fbf5f9a61ff9d2c841946d9e",
+                    "name": "Compact land native Godzilla title",
+                    "src": "/img/frames/proxy-foundry/godzilla/TitleM.png",
                     "masks": [],
                     "bounds": {
-                      "x": 0.052,
-                      "y": 0.041,
-                      "width": 0.896,
-                      "height": 0.075
+                      "x": 0.0494,
+                      "y": 0.0405,
+                      "width": 0.9014,
+                      "height": 0.0724
                     }
                   },
                   {
-                    "name": "Temple Type Bar",
-                    "src": "builtin:generated-vector:7626478227c167462a71506fb6cd1cb92473f756fbf5f9a61ff9d2c841946d9e",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.052,
-                      "y": 0.552,
-                      "width": 0.896,
-                      "height": 0.075
-                    }
+                    "name": "Gold Compact Pinline",
+                    "src": "builtin:generated-vector:d433f380db9763182067e1e01d5610374bfa7eda9bb3a266485c37245e98059e",
+                    "masks": [
+                      {
+                        "src": "/img/frames/proxy-foundry/compact-land/lower-pinline.svg",
+                        "name": "Pinline"
+                      },
+                      {
+                        "name": "Native compact pinline fade",
+                        "src": "/img/frames/proxy-foundry/compact-land/PinlineFade.png"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Neutral Compact Land Type",
+                    "src": "/img/frames/m15/boxTopper/short/ml.png",
+                    "masks": [
+                      {
+                        "src": "/img/frames/m15/boxTopper/short/type.png",
+                        "name": "Type"
+                      }
+                    ],
+                    "opacity": 72
                   },
                   {
                     "name": "50% Black Transparent Rules Fill",
                     "src": "builtin:generated-vector:7d32fcf33601a7c5c69dd51e7fa2a260cb15ad680dc5284a56cf05134c9831f2",
                     "masks": [],
                     "bounds": {
-                      "x": 0.07761194029850746,
-                      "y": 0.6268656716417911,
-                      "width": 0.8452736318407961,
-                      "height": 0.29637526652452023
-                    }
-                  },
-                  {
-                    "name": "Temple Rules Border",
-                    "src": "builtin:generated-vector:402830b76b7e873c7ea04b7ef9a4c1dda5bcf7d60c033489b6e4818a157ba610",
-                    "masks": [],
-                    "bounds": {
-                      "x": 0.063,
-                      "y": 0.615,
-                      "width": 0.874,
-                      "height": 0.31343283582089554
+                      "x": 0.07412935323383085,
+                      "y": 0.6687988628287136,
+                      "width": 0.8517412935323383,
+                      "height": 0.2537313432835821
                     }
                   },
                   {
@@ -50123,7 +50129,7 @@
                 "artRotate": 0,
                 "setSymbolSource": "/api/assets/e49509220a6e53314be0b7c7452367cd845b19ea75c18d654bb0fe9896f14792",
                 "setSymbolX": 0.8736318407960199,
-                "setSymbolY": 0.5692963752665245,
+                "setSymbolY": 0.6144278606965174,
                 "setSymbolZoom": 0.09699999999999999,
                 "watermarkSource": "builtin:transparent-pixel",
                 "watermarkX": 0.5,
@@ -50247,7 +50253,7 @@
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
-                  "y": 0.59142,
+                  "y": 0.63715,
                   "width": 0.12,
                   "height": 0.041,
                   "vertical": "center",
@@ -50293,26 +50299,30 @@
                     "name": "Type",
                     "text": "Enchantment Land",
                     "x": 0.0854,
-                    "y": 0.5664,
+                    "y": 0.61,
                     "width": 0.7782318407960198,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
                     "size": 0.0324,
                     "color": "white",
-                    "outlineWidth": 0.0035
+                    "outlineWidth": 0.0035,
+                    "shadowX": 0.0014,
+                    "shadowY": 0.001
                   },
                   "rules": {
                     "name": "Rules Text",
                     "text": "Hexproof\nThis land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.{flavor}It is the one chamber whose location never changes, the rotten, rancorous heart of Duskmourn itself.",
                     "x": 0.105,
-                    "y": 0.6303,
+                    "y": 0.6743,
                     "width": 0.79,
-                    "height": 0.2771855010660981,
-                    "size": 0.0315,
+                    "height": 0.24272906894100932,
+                    "size": 0.0285,
                     "color": "white",
                     "align": "left",
-                    "outlineWidth": 0.0035
+                    "outlineWidth": 0.0035,
+                    "bounded": true,
+                    "oneLine": false
                   }
                 },
                 "infoNumber": "",
@@ -50328,9 +50338,9 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "06ee88754b7435af0c262d363ec61736c28d82ab73cfc7410a09060d43dc6a11",
+              "renderKey": "0fd54e801c309ca7b66a1670ced1180e5e1b7727d4b277f18ee92cc122c5fd19",
               "group": "land",
-              "recipe": "land_five_color",
+              "recipe": "land_full_legendary",
               "crop": {
                 "width": 1024,
                 "height": 1536,
@@ -50359,12 +50369,12 @@
               "templateVersion": 24,
               "templateCacheVersion": 24,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "de86cbc7f838c680ac8623adef367a29a7fc6b88fd2ce9508ae96f2c388b5fb9",
+              "contentRenderKey": "8ddca83e31b70523f48b034f7277eeded951ddff9ed60a5c1f0896aeccac25d9",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d905091db416c5c5058b9e994264c377d46dd728/wrath_of_the_gods/art/valgavoths_lair.png"
             },
             "preparationKey": "06cf683b7a214eeb1b64ab84df258b101b73d989bb348fd18a815b2151c5cfb0",
-            "preparedAt": 1793320975.021
+            "preparedAt": 1793387574.756
           }
         ],
         "metadataSource": "65ff914e-3f3e-4b7a-b69d-73575b68fb8e",
@@ -58504,7 +58514,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Esika, God of the Tree — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/90265635da069820a29fc34c69c48a4ffdc53bc0/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "3267a778d715ac771c9c0e2e390c9fde87a194a539725d635543c395ed222db0": {
@@ -58974,7 +58984,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/90265635da069820a29fc34c69c48a4ffdc53bc0/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "989d2b6a84995dbd86bcb4da6b6534400e3795498bca1f39fd0bd80f56beee85": {
@@ -59444,7 +59454,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "90265635da069820a29fc34c69c48a4ffdc53bc0"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {
@@ -61217,291 +61227,6 @@
             },
             "text": null,
             "tail": null,
-            "children": []
-          }
-        ]
-      }
-    },
-    "7626478227c167462a71506fb6cd1cb92473f756fbf5f9a61ff9d2c841946d9e": {
-      "kind": "svg",
-      "root": {
-        "tag": "{http://www.w3.org/2000/svg}svg",
-        "attributes": {
-          "viewBox": "0 0 1000 100"
-        },
-        "text": "\n",
-        "tail": null,
-        "children": [
-          {
-            "tag": "{http://www.w3.org/2000/svg}defs",
-            "attributes": {},
-            "text": "\n  ",
-            "tail": "\n",
-            "children": [
-              {
-                "tag": "{http://www.w3.org/2000/svg}linearGradient",
-                "attributes": {
-                  "id": "rim",
-                  "x1": "0",
-                  "y1": "0",
-                  "x2": "1",
-                  "y2": "0"
-                },
-                "text": null,
-                "tail": "\n  ",
-                "children": [
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "0%",
-                      "stop-color": "#d4af37"
-                    },
-                    "text": null,
-                    "tail": null,
-                    "children": []
-                  },
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "100%",
-                      "stop-color": "#d4af37"
-                    },
-                    "text": null,
-                    "tail": null,
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "tag": "{http://www.w3.org/2000/svg}linearGradient",
-                "attributes": {
-                  "id": "fill",
-                  "x1": "0",
-                  "y1": "0",
-                  "x2": "0",
-                  "y2": "1"
-                },
-                "text": "\n    ",
-                "tail": "\n",
-                "children": [
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "0%",
-                      "stop-color": "#696969",
-                      "stop-opacity": "0.80"
-                    },
-                    "text": null,
-                    "tail": "\n    ",
-                    "children": []
-                  },
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "100%",
-                      "stop-color": "#505050",
-                      "stop-opacity": "0.76"
-                    },
-                    "text": null,
-                    "tail": "\n  ",
-                    "children": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "4",
-              "y": "4",
-              "width": "992",
-              "height": "92",
-              "rx": "28",
-              "fill": "none",
-              "stroke": "#040605",
-              "stroke-width": "8"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "10",
-              "y": "10",
-              "width": "980",
-              "height": "80",
-              "rx": "24",
-              "fill": "url(#fill)",
-              "stroke": "url(#rim)",
-              "stroke-width": "5.5"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "17",
-              "y": "17",
-              "width": "966",
-              "height": "66",
-              "rx": "18",
-              "fill": "none",
-              "stroke": "#ffffff",
-              "stroke-opacity": "0.35",
-              "stroke-width": "1.6"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          }
-        ]
-      }
-    },
-    "402830b76b7e873c7ea04b7ef9a4c1dda5bcf7d60c033489b6e4818a157ba610": {
-      "kind": "svg",
-      "root": {
-        "tag": "{http://www.w3.org/2000/svg}svg",
-        "attributes": {
-          "viewBox": "0 0 1000 1000"
-        },
-        "text": "\n",
-        "tail": null,
-        "children": [
-          {
-            "tag": "{http://www.w3.org/2000/svg}defs",
-            "attributes": {},
-            "text": "\n  ",
-            "tail": "\n",
-            "children": [
-              {
-                "tag": "{http://www.w3.org/2000/svg}linearGradient",
-                "attributes": {
-                  "id": "rim",
-                  "x1": "0",
-                  "y1": "0",
-                  "x2": "1",
-                  "y2": "0"
-                },
-                "text": null,
-                "tail": "\n  ",
-                "children": [
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "0%",
-                      "stop-color": "#d4af37"
-                    },
-                    "text": null,
-                    "tail": null,
-                    "children": []
-                  },
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}stop",
-                    "attributes": {
-                      "offset": "100%",
-                      "stop-color": "#d4af37"
-                    },
-                    "text": null,
-                    "tail": null,
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "tag": "{http://www.w3.org/2000/svg}filter",
-                "attributes": {
-                  "id": "glow",
-                  "x": "-8%",
-                  "y": "-8%",
-                  "width": "116%",
-                  "height": "116%"
-                },
-                "text": "\n    ",
-                "tail": "\n",
-                "children": [
-                  {
-                    "tag": "{http://www.w3.org/2000/svg}feGaussianBlur",
-                    "attributes": {
-                      "stdDeviation": "10"
-                    },
-                    "text": null,
-                    "tail": "\n  ",
-                    "children": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "8",
-              "y": "8",
-              "width": "984",
-              "height": "984",
-              "rx": "4",
-              "fill": "none",
-              "stroke": "#040605",
-              "stroke-width": "16"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "18",
-              "y": "18",
-              "width": "964",
-              "height": "964",
-              "rx": "2",
-              "fill": "none",
-              "stroke": "url(#rim)",
-              "stroke-width": "22",
-              "stroke-opacity": "0.42",
-              "filter": "url(#glow)"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "20",
-              "y": "20",
-              "width": "960",
-              "height": "960",
-              "rx": "2",
-              "fill": "none",
-              "stroke": "url(#rim)",
-              "stroke-width": "5.5"
-            },
-            "text": null,
-            "tail": "\n",
-            "children": []
-          },
-          {
-            "tag": "{http://www.w3.org/2000/svg}rect",
-            "attributes": {
-              "x": "28",
-              "y": "28",
-              "width": "944",
-              "height": "944",
-              "rx": "1",
-              "fill": "none",
-              "stroke": "#ffffff",
-              "stroke-opacity": "0.30",
-              "stroke-width": "1.8"
-            },
-            "text": null,
-            "tail": "\n",
             "children": []
           }
         ]
