@@ -95,7 +95,8 @@ def test_valgavoths_lair_is_land_family_with_five_color_mana_identity(tmp_path):
     result=Compiler(store).compile_face(card,card,0,{},settings,art,art_origin='Scryfall selected printing')
     data=result['data']
     assert result['group']=='land'
-    assert result['recipe']=='land_five_color'
+    assert result['recipe']=='land_full_legendary'
+    assert not any(str(f.get('name','')).startswith('Temple ') for f in data['frames'])
     assert data['text']['type']['text']=='Enchantment Land'
     assert result['templateKey']=='auto:land'
 

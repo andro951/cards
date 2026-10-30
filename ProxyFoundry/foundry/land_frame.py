@@ -9,6 +9,10 @@ PREFIX='/img/frames/proxy-foundry/compact-land/'
 ADDON_PREFIX='/img/frames/proxy-foundry/land-addons/'
 BASIC_NICKNAME_RAISE=24/2814
 
+
+def has_retired_land_frame(data):
+    return any(str(frame.get('name','')).startswith('Temple ') for frame in data.get('frames',[]) if isinstance(frame,dict))
+
 def apply_textless_land_adjustments(data,recipe,nickname):
     """Keep native basic/dual families, correcting only their masks/addons."""
     if recipe=='land_full_basic' and nickname:

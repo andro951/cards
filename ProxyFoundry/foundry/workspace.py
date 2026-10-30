@@ -24,6 +24,8 @@ from . import github_data
 from .compiler import center_short_token_rules,_token_frame_code,reserve_token_mana_space,apply_prepare_token_layout,PREPARE_TOKEN_LAYOUT_VERSION,apply_station_token_layout,STATION_TOKEN_LAYOUT_VERSION,apply_neutral_elemental_token
 from .compiler import vertical_token_kind,apply_vertical_token_layout,VERTICAL_TOKEN_LAYOUT_VERSION
 from .compiler import TOKEN_TRUE_NAME_LAYER_VERSION,SHORT_TOKEN_ART_VERSION
+from .compiler import land_template_seed
+from .land_frame import has_retired_land_frame
 from . import classic_token_frame
 from . import token_assignments
 from . import art_variants
@@ -319,6 +321,7 @@ class Workspace:
                     #Converted cards retain their source template identity. Refresh
                     #old modern token textless renders without invalidating other styles.
                     data=comp.get('data') or {}
+                    if has_retired_land_frame(data):d['status']='draft';d['upgradeRequired']=True
                     if ('nickname' in data.get('text',{}) and (f['group']=='token' or comp.get('recipe') in {'Deck-wide token','Card Tools copy token'})
                             and data.get('tokenTrueNameLayerVersion')!=TOKEN_TRUE_NAME_LAYER_VERSION):d['status']='draft'
                     if data.get('version')=='tokenShort' and data.get('shortTokenArtVersion')!=SHORT_TOKEN_ART_VERSION:d['status']='draft'
@@ -944,6 +947,7 @@ class Workspace:
             return assets[ident]
         for f in c['faces']:
             comp=f.get('compiled') or {}
+            if has_retired_land_frame(comp.get('data') or {}):return False
             if has_untap_alias(comp.get('data') or {}):return False
             if has_touching_ability_badges(comp.get('data') or {}):return False
             if nickname_rules and comp.get('nicknameRulesVersion')!=rules_nicknames.VERSION:return False
@@ -1462,9 +1466,7 @@ class Workspace:
                  'power':'3','toughness':'3','art':'/img/black.png','art_local_path':'','printed_type_line':'Token Creature — Beast'}
             return build_token_data(sem,'',False,[],kind)[1]
         if kind in {'land','legend-land'}:
-            sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':kind=='legend-land','basic':False,'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}
-            key='land_full_single' if kind=='land' else 'land_full_legendary'
-            return copy.deepcopy(native.recipe_data(key,sem,native.get_type_info(sem))['data'])
+            return land_template_seed(kind=='legend-land')
         return copy.deepcopy(native.LAYOUTS['creature']['data'])
     def render_targets(self,deck_ids,force=False):
         targets={};cached=0;errors=[]
@@ -1486,6 +1488,8 @@ class Workspace:
         targets={};cached=0;errors=[]
         for f in substitutes.render_faces(c,d.get('settings') or {}):
             comp=f.get('compiled')
+            if has_retired_land_frame((comp or {}).get('data') or {}):
+                raise ValidationError(f['name']+': prepare changes before rendering.')
             if f.get('error') or not comp:
                 errors.append(d['name']+' / '+f['name']+': '+str(f.get('error') or 'not prepared'));continue
             if not force and self.store.render_get(comp['renderKey']):cached+=1;continue

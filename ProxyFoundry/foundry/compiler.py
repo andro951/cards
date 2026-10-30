@@ -8,7 +8,7 @@ from .legacy import compiler as native,ingest
 from .credits import resolve_credit
 from .template_model import apply_regions, select_variant
 from .nickname_geometry import TITLE_BAR_HEIGHT
-from .land_frame import apply_compact_land_header,apply_textless_land_adjustments
+from .land_frame import apply_compact_land_header,apply_textless_land_adjustments,has_retired_land_frame
 from . import werewolf_frame
 from .artifact_frame import apply_artifact_gray
 from . import classic_token_frame
@@ -40,8 +40,6 @@ DFC_TITLE_MANA_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
  {'id':'normal','name':'Classic card','description':'Standard card frame, with a crown for legendary cards.','legendary':True,'groups':'ordinary'},
- # Soft retirement: restore this entry and remove RETIRED_BUILTINS to reconnect the rounded Temple land.
- # {'id':'land','name':'Full-art land','description':'Existing nonlegendary land frame. No compatible crown.','legendary':False,'groups':'ordinary'},
  {'id':'legend-land','name':'Full-art land','description':'Compact full-art frame with independent legendary crowns and true-name bars.','legendary':True,'groups':'ordinary'}]
 RETIRED_BUILTINS={'land':'legend-land'}
 BUILTINS.extend([
@@ -1150,9 +1148,9 @@ def apply_devoid_frame(data,sem):
 
 
 def choose_builtin(d,choice):
+    choice=RETIRED_BUILTINS.get(choice,choice)
     if choice=='auto':return d
     if type_group(d) not in ORDINARY_GROUPS:raise ValidationError('Use the automatic recipe or a compatible structural template.')
-    if choice=='land' and d.get('legendary'):raise ValidationError('Full-art land has no compatible legendary crown. Choose Classic or Crowned full art.')
     d=copy.deepcopy(d)
     if choice=='normal':
         pt='Creature' in d['types'] or bool({'Vehicle','Spacecraft'} & set(d['subtypes']))
@@ -1161,12 +1159,20 @@ def choose_builtin(d,choice):
             d['layout']=native.infer_layout(d if 'layout' not in d else {k:v for k,v in d.items() if k!='layout'},native.get_type_info(d))
         if not d.get('colors') and 'Artifact' not in d['types']:
             d['frame_color']='M';d['_neutral_classic']=True
-    elif choice in {'land','legend-land'}:
-        d['layout']='land_full_single' if choice=='land' else 'land_full_legendary'
+    elif choice=='legend-land':
+        d['layout']='land_full_legendary'
         if 'Land' not in d['types']:d['land_colors']=d.get('colors',[])
     else:raise ValidationError('Unknown built-in template.')
     return d
 
+
+def land_template_seed(legendary=False):
+    sem={'name':'My land template','types':['Land'],'subtypes':[],'legendary':legendary,'basic':False,
+         'colors':[],'land_colors':['G'],'oracle_text':'{T}: Add {G}.'}
+    data=copy.deepcopy(native.recipe_data('land_full_legendary',sem,native.get_type_info(sem))['data'])
+    if not legendary:native.remove_crown(data)
+    apply_compact_land_header(data,sem,_compact_land_bar_layers)
+    return data
 
 
 _TRANSFORM_FRONT_MASKS={
@@ -2093,11 +2099,13 @@ def build_custom_helper_data(sem,artist,autofit,flags):
     # recipe, while preserving the helper's actual Card type and face text.
     donor=copy.deepcopy(sem)
     donor.update(types=['Land'],subtypes=[],legendary=False,colors=[],
-                 land_colors=[],layout='land_full_single')
+                 land_colors=[],layout='land_full_legendary')
     try:
         data=native.build_one(donor,{'artist':artist},False,flagged_sagas=flags)['data']
     except native.BuildError as exc:
         raise ValidationError(str(exc)) from exc
+    native.remove_crown(data)
+    apply_compact_land_header(data,donor,_compact_land_bar_layers)
     data['text']['type']['text']=str(sem.get('printed_type_line') or 'Card')
     data['text']['mana']['text']=''
     data['text'].setdefault('pt',{})['text']=''
@@ -2394,20 +2402,6 @@ def build_class_data(sem,artist,autofit,flags):
     data['text']=text
     if autofit:native.auto_fit(data,sem['art_local_path'])
     return base,data,'class'
-
-
-def build_enchantment_land_data(sem,artist,autofit,flags):
-    """Use the ordinary land family while preserving the Enchantment Land type."""
-    base=copy.deepcopy(sem)
-    base['types']=[x for x in base.get('types',[]) if x!='Enchantment']
-    try:
-        data=native.build_one(copy.deepcopy(base),{'artist':artist},autofit,flagged_sagas=flags)['data']
-    except native.BuildError as exc:
-        raise ValidationError(str(exc)) from exc
-    if isinstance((data.get('text') or {}).get('type'),dict):
-        data['text']['type']['text']=native.get_type_info(sem)['normalized']
-    recipe=native.infer_layout(base,native.get_type_info(base))
-    return base,data,recipe
 
 
 _MODAL_FRAME_RE=re.compile(r'^(.*?/img/frames/modal/regular/(?:back/)?)([wubrgmalc])(\.png)$')
@@ -3299,14 +3293,10 @@ class Compiler:
             elif group=='class':
                 d0,data,recipe=build_class_data(sem,artist,not settings.get('disableAutofit',False),flags)
                 fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
-            elif choice=='auto' and group in {'land','legendary-land','basic-land'} and 'Land' in sem.get('types',[]) and 'Enchantment' in sem.get('types',[]):
-                d0,data,recipe=build_enchantment_land_data(sem,artist,not settings.get('disableAutofit',False),flags)
-                fit_set_symbol_to_bounds(data,self.store.asset(symbol_id),recipe)
             else:
                 d0=choose_builtin(sem,'auto' if choice.startswith('godzilla-') else choice)
                 if choice=='auto' and group in {'land','legendary-land'} and 'Land' in sem.get('types',[]) and sem.get('name') not in native.ORIGINAL_DUAL_LANDS:
-                    # The old rounded land recipe stays preserved in the vendor.
-                    # Remove this routing override to restore its automatic use.
+                    # All ordinary lands use the current compact family.
                     d0=choose_builtin(sem,'legend-land')
                 # Saga is the highest-priority structural card treatment. Do not
                 # let another type on the same line (notably Land on Urza's Saga)
@@ -3473,6 +3463,8 @@ class Compiler:
             from .planeswalker_frame import layout_planeswalker_abilities
             layout_planeswalker_abilities(data,sem)
         normalize_untap_aliases(data)
+        if has_retired_land_frame(data):
+            raise ValidationError('The retired rounded land frame is no longer supported. Choose the current Full-art land template.')
         key=render_key(data,art_id,template_cache_version);warning=crop_metrics(art['width'],art['height'],data)
         if (
             short_saga_cover_fit

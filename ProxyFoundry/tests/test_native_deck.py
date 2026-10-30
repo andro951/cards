@@ -135,7 +135,7 @@ def test_real_native_deck_and_dfc_pairing(tmp_path,use_workers):
             assert '/img/frames/m15/transform/regular/new/backL.png' in search_back
             lair=next(c for c in ready['cards'] if c['name']=="Valgavoth's Lair")
             assert lair['faces'][0]['compiled']['group']=='land'
-            assert lair['faces'][0]['compiled']['recipe']=='land_five_color'
+            assert lair['faces'][0]['compiled']['recipe']=='land_full_legendary'
             assert lair['faces'][0]['compiled']['data']['text']['type']['text']=='Enchantment Land'
             for card in list(ready['cards']):
                 for face in card['faces']:

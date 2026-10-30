@@ -6,6 +6,7 @@ import re
 from .domain import ValidationError,uid,quantity,CC_COMMIT,CC_REPO,PIPELINE_VERSION,validate_template
 from .backup import referenced_assets
 from .substitutes import stored_faces
+from .land_frame import has_retired_land_frame
 from .network import validate_remote_url
 from .images import decode_image,ingest_image,sanitize_svg
 from pathlib import Path
@@ -83,7 +84,8 @@ def recipe_fingerprint(deck):
 def reusable_recipe(deck):
     snapshot=deck.get('recipeSnapshot')
     return bool(snapshot and snapshot.get('fingerprint')==recipe_fingerprint(deck) and
-                all(face.get('compiled') and not face.get('error') for card in deck['cards'] for face in stored_faces(card)))
+                all(face.get('compiled') and not face.get('error') and not has_retired_land_frame(face['compiled'].get('data') or {})
+                    for card in deck['cards'] for face in stored_faces(card)))
 
 
 def is_complete(value):
