@@ -57298,12 +57298,14 @@
             "index": 0,
             "artistOverride": null,
             "artOverride": null,
-            "templateOverride": null,
+            "templateOverride": "token-classic",
             "group": "standard",
             "originalArtist": "James Kei",
             "acceptedArt": [
               "20d83eb604098befd34c894e2baa7624b24f3b574b65ad0a3678e1423375d2e3"
             ],
+            "preparationKey": "0a3fb30aefef19413185845cd7bbc6494a5c35870c69849636ac76b6386ed1a1",
+            "preparedAt": 1793333977.949,
             "compiled": {
               "name": "Nacatl War-Pride — Token",
               "data": {
@@ -57325,18 +57327,18 @@
                   },
                   {
                     "name": "Green Frame",
-                    "src": "/img/frames/proxy-foundry/token-short/frameG.png",
+                    "src": "/img/frames/token/m15/regular/g.png",
                     "masks": []
                   }
                 ],
                 "artSource": "/api/assets/40b137c55ba8e4127f5b34a8063f70e12cad2019d5d2563fd80d198ce02acfe7",
-                "artX": -0.37497562189054723,
-                "artY": -0.00019936034115136398,
-                "artZoom": 2.509,
+                "artX": 0.050746268656716415,
+                "artY": 0.12473347547974413,
+                "artZoom": 1.29,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/5ae4d42a63f743362607b44290e68d65f9292bd133f391027d3bd91c9042ccfb",
                 "setSymbolX": 0.8626865671641791,
-                "setSymbolY": 0.6819474058280028,
+                "setSymbolY": 0.6535181236673774,
                 "setSymbolZoom": 0.106,
                 "watermarkSource": "builtin:transparent-pixel",
                 "watermarkX": 0.5,
@@ -57345,7 +57347,7 @@
                 "watermarkLeft": "none",
                 "watermarkRight": "none",
                 "watermarkOpacity": 0,
-                "version": "tokenShort",
+                "version": "tokenRegularM15",
                 "manaSymbols": [],
                 "infoYear": "2013",
                 "margins": false,
@@ -57453,14 +57455,14 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0,
-                  "y": 0,
-                  "width": 1,
-                  "height": 1
+                  "x": 0.0767,
+                  "y": 0.1248,
+                  "width": 0.8476,
+                  "height": 0.5143
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
-                  "y": 0.7023952380952381,
+                  "y": 0.6743,
                   "width": 0.12,
                   "height": 0.041,
                   "vertical": "center",
@@ -57468,9 +57470,9 @@
                 },
                 "watermarkBounds": {
                   "x": 0.5,
-                  "y": 0.845795238095238,
+                  "y": 0.7762,
                   "width": 0.75,
-                  "height": 0.11910476190476191
+                  "height": 0.2305
                 },
                 "text": {
                   "mana": {
@@ -57500,7 +57502,7 @@
                     "font": "belerenbsc",
                     "size": 0.0381,
                     "align": "center",
-                    "color": "white",
+                    "color": "#fde367",
                     "outlineWidth": 0,
                     "shadowX": 0,
                     "shadowY": 0
@@ -57509,7 +57511,7 @@
                     "name": "Type",
                     "text": "Creature - Cat Warrior",
                     "x": 0.0854,
-                    "y": 0.6780952380952381,
+                    "y": 0.65,
                     "width": 0.7672865671641791,
                     "height": 0.0543,
                     "oneLine": true,
@@ -57524,12 +57526,10 @@
                     "name": "Rules Text",
                     "text": "This creature must be blocked by exactly one creature if able.\nWhenever this creature attacks, create X tokens that are copies of it and that are tapped and attacking, where X is the number of creatures defending player controls. Exile the tokens at the beginning of the next end step.",
                     "x": 0.086,
-                    "y": 0.7423952380952381,
+                    "y": 0.7143,
                     "width": 0.828,
-                    "height": 0.13440476190476192,
-                    "size": 0.0362,
-                    "oneLine": false,
-                    "align": "left",
+                    "height": 0.16249999999999998,
+                    "size": 0.0325,
                     "color": "black",
                     "outlineWidth": 0,
                     "shadowX": 0,
@@ -57563,20 +57563,19 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false,
-                "shortTokenArtVersion": 1
+                "noCorners": false
               },
-              "renderKey": "37742eb407e2290a57a40c20d27b165053825f574c2923351ad8b89bb9de0cd5",
+              "renderKey": "f2bf5e732a73ec3e185cb26015e88e0f17a8356aa4327012da183fbc808b784c",
               "group": "token",
               "recipe": "Card Tools copy token",
               "crop": {
                 "width": 1402,
                 "height": 1122,
-                "windowWidth": 2010,
-                "windowHeight": 2814,
-                "cropX": 0.428591,
-                "cropY": 0.00039,
-                "warning": true,
+                "windowWidth": 1704,
+                "windowHeight": 1447,
+                "cropX": 0.058004,
+                "cropY": 0.000129,
+                "warning": false,
                 "threshold": 0.2
               },
               "flags": [],
@@ -57593,16 +57592,14 @@
                 "missingCustomArtist": false
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
-              "templateKey": "auto:standard",
-              "templateVersion": 9,
-              "templateCacheVersion": 9,
+              "templateKey": "builtin:token-classic",
+              "templateVersion": 4,
+              "templateCacheVersion": 4,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "697fd8c247b2c97694040d309317e51ac5e793d2bb4562514fb40f91fd9f69fc",
+              "contentRenderKey": "3cb48f352486c9f2030b17d4459b7827fe52947b70a8faaa57a0a02f04184fbc",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/Nacatl_war_pride.png"
-            },
-            "preparationKey": "e3d62f3ff27295e3a05115c6816c077cfbc38d3e5aaa6b6c421a24f18504764c",
-            "preparedAt": 1793333918.559
+            }
           }
         ],
         "metadataSource": "d8d1d52f-2551-4f2e-a752-4332dc5ff1db",
@@ -57615,7 +57612,8 @@
           "5ae4d42a63f743362607b44290e68d65f9292bd133f391027d3bd91c9042ccfb",
           "b75d49b922456f7cc903b1cddc12b80f569c3d5732ef1560372b7c67321c8294",
           "04eb620ba85e0bef6c56a74ccdce6798f7d3f20a5d7430610c2ef95a0418c4ec"
-        ]
+        ],
+        "backOverride": null
       }
     ],
     "settings": {
