@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 import pytest
-from PIL import Image
+from PIL import Image,ImageChops
 from foundry.compiler import Compiler,semantic,FULL_ART_NONLAND_BOUNDS,SHORT_TOKEN_ART_VERSION,fit_token_art
 from foundry.workspace import Workspace
 from foundry.images import ingest_image
@@ -10,13 +10,24 @@ from test_pipeline import workspace
 
 
 @pytest.mark.parametrize('code',list('WUBRGMALC'))
-def test_short_token_frame_keeps_its_native_black_border(code):
+def test_short_token_frame_uses_the_rounded_textless_black_border(code):
     with Image.open(Path(__file__).resolve().parents[1]/'assets/token-short'/('frame'+code+'.png')) as frame:
         rgba=frame.convert('RGBA');width,height=rgba.size
         for x,y in [(0,.5),(.02,.5),(.98,.5),(.5,0),(.5,.02),(.5,.97)]:
             assert rgba.getpixel((int(x*width),int(y*height)))==(0,0,0,255)
         #The border overlays the art; it must leave the central art window open.
         assert rgba.getpixel((width//2,height//3))[3]==0
+        #The image itself stays rectangular. Native black corner pixels round
+        #the opening and keep the original partially covered edge pixels.
+        assert rgba.getpixel((60,60))==(0,0,0,255)
+        assert rgba.getpixel((80,61))==(0,0,0,52)
+        assert rgba.getpixel((90,60))[3]==0
+        assert rgba.getpixel((60,90))[3]==0
+        with Image.open(Path(__file__).resolve().parents[1]/'assets/token-short/border.png') as border:
+            assert border.getpixel((80,1740))[3]==0
+            for box in [(60,60,90,80),(1410,60,1440,80)]:
+                diff=ImageChops.difference(rgba.crop(box),border.convert('RGBA').crop(box))
+                assert all(channel.getbbox() is None for channel in diff.split())
 
 
 def card(native=False):

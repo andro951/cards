@@ -35,7 +35,7 @@ MODERN_TOKEN_STYLES={'token-full-art','token-full-art-short'}
 TOKEN_FRAME_STYLES=MODERN_TOKEN_STYLES|{'token-classic','token-borderless'}
 TOKEN_DUAL_COLOR_VERSION=2
 TOKEN_TRUE_NAME_LAYER_VERSION=1
-SHORT_TOKEN_ART_VERSION=2
+SHORT_TOKEN_ART_VERSION=3
 DFC_TITLE_MANA_VERSION=1
 BUILTINS=[
  {'id':'auto','name':'Card Tools · automatic','description':'Preserves every approved v58 type-specific recipe.','legendary':True,'groups':'all'},
