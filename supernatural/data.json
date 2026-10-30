@@ -20129,8 +20129,8 @@
             "semanticOverrides": {
               "nickname": "Croatoan Infected"
             },
-            "preparationKey": "9e2b809a5f4f937f73c104f2e9a8b054a8fea5bdf45cba64da73a27cb4627b71",
-            "preparedAt": 1793243402.3779998,
+            "preparationKey": "488c09f72555f3a6735768ec18caf7be4050f2d379f8f66004da711046f13df0",
+            "preparedAt": 1793387220.205,
             "compiled": {
               "name": "Phyrexian Mite",
               "data": {
@@ -20139,6 +20139,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Artifact Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
@@ -20164,13 +20175,18 @@
                   {
                     "name": "Artifact Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/21a65daa62ded78e14f1b4d4fecb7abba9119be354231e7704631760ea8f810e",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -20291,10 +20307,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -20417,18 +20433,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "a50006ad44912c8357ec3b18a627abd40b1a2e309b93f7a7dd30e5a6d70afa1d",
+              "renderKey": "f8b71542c4d1518071367738a731cddb6bf4db925bb82a7dc68b371ea6e75f19",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -20447,11 +20465,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "ea2ad4f4afc6c9ce169d8ee093d9e00333cc99cb8a8eb6841ba838cf96ab7def",
+              "contentRenderKey": "3d96254eb1f8ffb572a8905f10b20b2c886a7c2eff9b56bfa9d07a9893ed0b7b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/110_phyrexian_mite.png"
             }
@@ -23268,8 +23286,8 @@
             "semanticOverrides": {
               "nickname": "Crowley's Agent"
             },
-            "preparationKey": "ab2ae7ea18d6386d627c8707abf6d6b951b208f856bf72e32ba3c7f27d23c641",
-            "preparedAt": 1793243404.3070002,
+            "preparationKey": "34db806e8b235872ce6daae748bf2e14cd834e26ce4958bdc18ce51475b61acc",
+            "preparedAt": 1793387220.411,
             "compiled": {
               "name": "Shapeshifter",
               "data": {
@@ -23278,6 +23296,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Colorless Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameC.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleC.png",
@@ -23303,13 +23332,18 @@
                   {
                     "name": "Colorless Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameC.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/4329d065f6dcdc504ec4ce4cd09040a4b44f36762afc1eeaef495703ccfb5000",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -23430,10 +23464,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -23556,18 +23590,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "060a461c6c1b98e5650d96905c6d4037282dc9eaa74fb1e0c9e2c03eb1340f46",
+              "renderKey": "f55167294d359d7fe75259b7dbdafad57a079d9a57d28dccdd07b26c9b84cbda",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -23586,11 +23622,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "e50f2c846ae9a2085217f019b7e382945ebbfd0bc79432ca3033fb7e4a734816",
+              "contentRenderKey": "5cb7b784c645f9ec50b65307f5a5eafdc68b9cf66615a07e54878447a2e8658f",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/106_shapeshifter.png"
             }
@@ -23783,8 +23819,8 @@
             "semanticOverrides": {
               "nickname": "Jefferson Starship"
             },
-            "preparationKey": "f84c7e9820bb3233732a36c65eec947f87781913f0a0b9e6d5fbbed3ff9a70e2",
-            "preparedAt": 1793243404.499,
+            "preparationKey": "bfcab989575cd98dd6aef97ccab60abc516149e46b36ea33e1208bcd78e48035",
+            "preparedAt": 1793387220.6529999,
             "compiled": {
               "name": "Shapeshifter",
               "data": {
@@ -23793,6 +23829,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Blue Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameU.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleU.png",
@@ -23818,13 +23865,18 @@
                   {
                     "name": "Blue Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameU.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/6845b9e6839a74fb018b176b00c733ca7a70bd660b8255835c5dc159a750c0b1",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -23945,10 +23997,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -24071,18 +24123,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "521aad51b5e227eae9bc9b4bb6205e23c4bb2e50a8c9d3217b1cd6993d6ea932",
+              "renderKey": "d6656c37c9828447473f230a5300acc125fb34b65764ba7df3e75a2c85485ff9",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -24101,11 +24155,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "5e610c7b94f7cb81b5c72b1cf62a74349e23b1274cf4cd224ea2bfb350cf3df3",
+              "contentRenderKey": "c33512854baaaef737550391affb4a7300dde66c6aa461432c56be44ad7eeda8",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/107_shapeshifter.png"
             }
@@ -24325,8 +24379,8 @@
             "semanticOverrides": {
               "nickname": "Judah Initiative Golem"
             },
-            "preparationKey": "6b0427a25ca18877b723d3f28414c4cd00ce2f708b871806640b0e3fcddd2032",
-            "preparedAt": 1793243404.723,
+            "preparationKey": "0a53de4beed0b42308ea54388b2a550fc95fc15c367430e09c8a3b587bc65f37",
+            "preparedAt": 1793387220.888,
             "compiled": {
               "name": "Construct",
               "data": {
@@ -24335,6 +24389,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Artifact Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
@@ -24360,13 +24425,18 @@
                   {
                     "name": "Artifact Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/eac3c11ab25cd8fa38a960532bcaedc5ffd024e6b142380f6228015116717ee1",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -24487,10 +24557,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -24613,18 +24683,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "7a1cc02a33f82d22f4c5dc63ea80abafcc86a774e074a655f0c9103adf986061",
+              "renderKey": "955d77634cfef23c87cd9ed12fbd867e92ae232ce3b9f8d392cba7a6588aa6b4",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -24643,11 +24715,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "5f74c85f9272b2acde69a076d1460acae9325ebeb9271b33e94300b14ee009f5",
+              "contentRenderKey": "8aa568eebf0446a54ad79e4b4ac72f9e80796e1b17eadca9f75e553e3b08c79c",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/104_construct.png"
             }
@@ -25243,8 +25315,8 @@
             "semanticOverrides": {
               "nickname": "Wayward Hunter"
             },
-            "preparationKey": "c5f19b4b6c4e34de9fea10d184e6065278c8a72a28d17e0ebb443c552017b5e0",
-            "preparedAt": 1793243404.928,
+            "preparationKey": "aa8f141a79c7354515218d3a38146d7bd5b77e5a0c5914e2f88476216a086d5f",
+            "preparedAt": 1793387221.0819998,
             "compiled": {
               "name": "Human Soldier",
               "data": {
@@ -25253,6 +25325,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "White Token Frame",
+                    "src": "/img/frames/token/textless/tokenFrameWTextless.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
@@ -25278,7 +25361,12 @@
                   {
                     "name": "White Token Frame",
                     "src": "/img/frames/token/textless/tokenFrameWTextless.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/8476f8eab36647ce83400b7e1944a902976a76fc0e48c407186de6e639df6ccf",
@@ -25531,9 +25619,10 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "1a784fcbfad68b07a1eb0353d77aa8c2e0d1cc5f12bdf2ba8d54812837775ce9",
+              "renderKey": "c7bea1d0d61ebd8f584acb554c0977ecf747b2f896d23acdf19811d339282aa0",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -25561,11 +25650,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 12,
-              "templateCacheVersion": 12,
+              "templateVersion": 13,
+              "templateCacheVersion": 13,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "03640d94f16594b827bb163cbbf39b694a25c80c3b91c96ed670c3ef4d9e7883",
+              "contentRenderKey": "a64c54790334e3711f4f3256efb1de2e9376bbac16a6f1576b4695e302b0ece4",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/108_human_soldier.png"
             }
@@ -25886,8 +25975,8 @@
             "semanticOverrides": {
               "nickname": "Fallen Seraph"
             },
-            "preparationKey": "fa6ca1fafa045fc8c0135c95ed3ee96f7913109536f9df3280a7c157b93bd0be",
-            "preparedAt": 1793243405.1100001,
+            "preparationKey": "424a778c83e133e4a6bf05407efc02d786533383056cde6e68c4aa4bdbdda173",
+            "preparedAt": 1793387221.316,
             "compiled": {
               "name": "Angel",
               "data": {
@@ -25896,6 +25985,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "White Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
@@ -25921,13 +26021,18 @@
                   {
                     "name": "White Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/48c3d460192b03c5e6a4db17ae97c7194d6308878a652229569484632da98d29",
-                "artX": 0.03980099502487562,
-                "artY": 0.011727078891257996,
-                "artZoom": 1.7530000000000001,
+                "artX": -0.00026243781094524473,
+                "artY": -0.004884683724235934,
+                "artZoom": 1.906,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -26048,10 +26153,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -26174,18 +26279,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "c7d9a99f512d56176f7a1b524400677943b26655e12868e7fcf2f09268846e0b",
+              "renderKey": "abe7f44c8ade6aa00c5c20a0594eeabd5e6a277a5c670f90e95c4bfb90e3fda5",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
                 "width": 1055,
                 "height": 1491,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000216,
-                "cropY": 0.036097,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000413,
+                "cropY": 0.009799,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -26204,11 +26311,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "f61c6c04b6673ab69eb6735ebf6279b68c30d64603707a434b9358a0c56ed0c0",
+              "contentRenderKey": "a149d5676d165d7ac78aeacf370ebb7731b55584c849fc3898c2e5d27a73f922",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/111_angel.png"
             }
@@ -27050,8 +27157,8 @@
             "semanticOverrides": {
               "nickname": "Resistance Fighter"
             },
-            "preparationKey": "54964a3a17a2be017c52cf8275fe68d1d044674d4fd7ec3aade9007a9947326a",
-            "preparedAt": 1793243405.2710001,
+            "preparationKey": "6708132ff49884ba125f78233c042948bb35a5a5ad2159e79ddfe55c86524b09",
+            "preparedAt": 1793387221.5340002,
             "compiled": {
               "name": "Soldier",
               "data": {
@@ -27060,6 +27167,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "White Token Frame",
+                    "src": "/img/frames/token/textless/tokenFrameWTextless.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
@@ -27085,7 +27203,12 @@
                   {
                     "name": "White Token Frame",
                     "src": "/img/frames/token/textless/tokenFrameWTextless.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/fbf5a77f8df9f6a121c1d2661a4b3e1334f929a0a3878195512c44a98ec73ef8",
@@ -27338,9 +27461,10 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "df87a69bfd258a90da8c967e21005198c22a80cdb0b467a56b767de688bc208e",
+              "renderKey": "6f65276a59fa0ddbce13b6f34bdbc44f29c6bffe9b23e7f069b97efc70233d98",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -27368,11 +27492,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 12,
-              "templateCacheVersion": 12,
+              "templateVersion": 13,
+              "templateCacheVersion": 13,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "38ba87947b11f0c0f636c72688cd427fb779febe585267d1f7f2a9bacc2ef6bb",
+              "contentRenderKey": "5a1da54f87594719e044acdbeaffa3059208c2e686575325da5f9c9628435278",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/109_soldier.png"
             }
@@ -28119,8 +28243,8 @@
             "semanticOverrides": {
               "nickname": "Reaper"
             },
-            "preparationKey": "da9d7dbce7eed98bce7c2e3a849075904ab36ca0867b6f628a681822c84bced0",
-            "preparedAt": 1793243405.4529998,
+            "preparationKey": "e6c92a983a38b3225b0b1d8389265fa55ad466b82d666f71a0fab24fbf93a89f",
+            "preparedAt": 1793387221.822,
             "compiled": {
               "name": "Spirit",
               "data": {
@@ -28129,6 +28253,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "White Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameW.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleW.png",
@@ -28154,13 +28289,18 @@
                   {
                     "name": "White Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameW.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/765d76d221f699fffdd3113f35f6232b66480c98c7e94bb21bb3939a00dec87a",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -28281,10 +28421,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -28407,18 +28547,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "9305e8cebfc017603423bd381ca3223763b5a71e1a62d658f0e134780007fca6",
+              "renderKey": "8dbabaa4aa8b07530d324434704fd8cdef41e0fc29bc10dfda4cba70eb6bc39e",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -28437,11 +28579,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "16fa25d97ed8025e88e2864833bf8a972cefb7854f59ef985b39e0e95d3a98d4",
+              "contentRenderKey": "642c8387b0b2f632c84eb9e46c9bd726bc82a6f702ecc28486da6d694281d7ce",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/112_spirit.png"
             }
@@ -28750,8 +28892,8 @@
             "semanticOverrides": {
               "nickname": "Séance Spirit"
             },
-            "preparationKey": "aef99bc03b4d32f28183ea4556c9bdf7fccfd8ba769a17aead7077042b92e2a7",
-            "preparedAt": 1793243405.605,
+            "preparationKey": "0c68dba7702be21b49bde24874cfc3acb86d1432b4559e1cca3745f539e72eb7",
+            "preparedAt": 1793387222.064,
             "compiled": {
               "name": "Spirit",
               "data": {
@@ -28760,6 +28902,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Colorless Token Frame",
+                    "src": "/img/frames/token/textless/frameC.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleC.png",
@@ -28785,7 +28938,12 @@
                   {
                     "name": "Colorless Token Frame",
                     "src": "/img/frames/token/textless/frameC.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/474ee40568fed3f7624d9f4f10d4f735a06de4bcd11b08094a54cd57882f0e33",
@@ -29038,9 +29196,10 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "424cb5b75999be5f30981c8793592aa091e7e43da4515eb201e5cc443c6dea8c",
+              "renderKey": "9ea44061e5e23a1632971cabd7b817fe8d38b2f17807686fc130a456e1cadd04",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -29068,11 +29227,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 12,
-              "templateCacheVersion": 12,
+              "templateVersion": 13,
+              "templateCacheVersion": 13,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "3874a74770d480ae6cca0fa88472f09412210ccf7cec6b69c05ac7f7509250cd",
+              "contentRenderKey": "48b8346412e8192d4077cd34282943d6dfa8da857474fb660ecffa95423902a9",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/113_spirit.png"
             }
@@ -32224,8 +32383,8 @@
             "semanticOverrides": {
               "nickname": "Occult Relic"
             },
-            "preparationKey": "cb98baf24c755a6016cfd9c091ec5f0ff360d80ef7af9b56499dcb2f68127815",
-            "preparedAt": 1793243405.776,
+            "preparationKey": "56f4085720291d3c597a38bc4324c198b5aaab96fb5f016c7ed03de30bf994ad",
+            "preparedAt": 1793387223.779,
             "compiled": {
               "name": "Treasure",
               "data": {
@@ -32234,6 +32393,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Artifact Token Frame",
+                    "src": "/img/frames/proxy-foundry/token-short/frameA.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
@@ -32248,13 +32418,18 @@
                   {
                     "name": "Artifact Token Frame",
                     "src": "/img/frames/proxy-foundry/token-short/frameA.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/c8d1d5be0de28f58beaa1cc582dd51f49086c7281a62dd4871d39dcf3b0cf65b",
-                "artX": 0.03953731343283579,
-                "artY": 0.01572778962331198,
-                "artZoom": 1.745,
+                "artX": -0.0002636815920398305,
+                "artY": -0.0002636815920398305,
+                "artZoom": 1.897,
                 "artRotate": "0",
                 "setSymbolSource": "/api/assets/b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5",
                 "setSymbolX": 0.8601990049751244,
@@ -32375,10 +32550,10 @@
                   }
                 },
                 "artBounds": {
-                  "x": 0.04,
-                  "y": 0.0286,
-                  "width": 0.92,
-                  "height": 0.8953
+                  "x": 0,
+                  "y": 0,
+                  "width": 1,
+                  "height": 1
                 },
                 "setSymbolBounds": {
                   "x": 0.9213,
@@ -32501,18 +32676,20 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "shortTokenArtVersion": 3,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "b14784c95cd86809ed8ea316144b996431ca6d4a84edfc17162a83c82f838676",
+              "renderKey": "a38acb7e336f9459106c118c9dedee586a74710945efadd29bfae5ec9bd36e28",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
                 "width": 1060,
                 "height": 1484,
-                "windowWidth": 1849,
-                "windowHeight": 2519,
-                "cropX": 0.000503,
-                "cropY": 0.027111,
+                "windowWidth": 2010,
+                "windowHeight": 2814,
+                "cropX": 0.000408,
+                "cropY": 0.000408,
                 "warning": false,
                 "threshold": 0.2
               },
@@ -32531,11 +32708,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 13,
-              "templateCacheVersion": 13,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "8f827276fc763d4a3fdab0692a817c06f440f28c2a8d9b58aa4f5c43ba437456",
+              "contentRenderKey": "3bdf722cd1856a70fb305d457c89ddbd8b9504eaa18de28d77efa69bc04ff2bb",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/119_treasure.png"
             }
@@ -32820,8 +32997,8 @@
             "semanticOverrides": {
               "nickname": "Styne Experiment"
             },
-            "preparationKey": "062a589cb5f401f231b9655b8064a77b36117372d70e2d78a865e0000698191c",
-            "preparedAt": 1793243405.96,
+            "preparationKey": "4f8c96ade9691aed1a98f9d075a876aae5368787dd945971112c1a1e62e967a9",
+            "preparedAt": 1793387224.411,
             "compiled": {
               "name": "Robot",
               "data": {
@@ -32830,6 +33007,17 @@
                 "marginX": 0,
                 "marginY": 0,
                 "frames": [
+                  {
+                    "name": "Artifact Token Frame",
+                    "src": "/img/frames/token/textless/tokenFrameATextless.png",
+                    "masks": [
+                      {
+                        "name": "Token title above true name",
+                        "src": "builtin:generated-vector:7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69"
+                      }
+                    ],
+                    "tokenTrueNameHeader": true
+                  },
                   {
                     "name": "Nickname Title",
                     "src": "/img/frames/m15/nickname/addons/m15NicknameTitleA.png",
@@ -32855,7 +33043,12 @@
                   {
                     "name": "Artifact Token Frame",
                     "src": "/img/frames/token/textless/tokenFrameATextless.png",
-                    "masks": []
+                    "masks": [
+                      {
+                        "name": "Token body below true name",
+                        "src": "builtin:generated-vector:5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13"
+                      }
+                    ]
                   }
                 ],
                 "artSource": "/api/assets/3d1d3e51a5a6a13a86e664301d8c569674e8bc74d5f43bc8343e98ed0aaeb892",
@@ -33108,9 +33301,10 @@
                 "serialX": "",
                 "serialY": "",
                 "serialScale": "",
-                "noCorners": false
+                "noCorners": false,
+                "tokenTrueNameLayerVersion": 1
               },
-              "renderKey": "9497e2218cf19b4c2a1155641055c2ca6dadab99d14ec792ec564b59ce04b261",
+              "renderKey": "93764ae3d876a3b536e49b102e03d15dac5cc0f62d439187517658d2ced7f98b",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -33138,11 +33332,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 12,
-              "templateCacheVersion": 12,
+              "templateVersion": 13,
+              "templateCacheVersion": 13,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d7292193119ae553500c43ac4825f912cf17d79f2c2f1522b4cd8f0a955d1866",
+              "contentRenderKey": "610ac3597c1ab603843b473f9e2735dcfd27bf2675b82848088a66e5d5cf4deb",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/114_robot.png"
             }
@@ -37518,8 +37712,8 @@
               "flavor_text": "He hunted monsters without forgetting that some of them were still people.",
               "oracle_text": "Whenever this creature enters or transforms into Garth, Monster Hunter, exile target creature an opponent controls until this creature leaves the battlefield.\nDaybound (If a player casts no spells during their own turn, it becomes night next turn.)"
             },
-            "preparationKey": "9e6df7ebbbc8c629e5b7324bee5b90583bf2bc013ac339d8fde2886409c5fb84",
-            "preparedAt": 1793243407.245,
+            "preparationKey": "69ea33192c40588b79e6a11091f2d7cda311391298d520ddb38719c9df0c4dcb",
+            "preparedAt": 1793387226.7489998,
             "compiled": {
               "name": "Brutal Cathar",
               "data": {
@@ -37861,7 +38055,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "c8db60d094e386a0fa0839f4105c56b39c46bfc24e54a0c76d75132e212633e1",
+              "renderKey": "b646607f2f7b7de09ecda383ffb4be016b75f7a372c143c532151e3b3fb207db",
               "group": "transform-front",
               "recipe": "godzilla_dfc",
               "crop": {
@@ -37889,11 +38083,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "builtin:godzilla-card",
-              "templateVersion": 32,
-              "templateCacheVersion": 32,
+              "templateVersion": 33,
+              "templateCacheVersion": 33,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d4bbad7bb07456fb9ebf8f5b2fa64401cb0d5532a596553ae6d02d4171123642",
+              "contentRenderKey": "09f386eca4c7e66211e2009aa787641f6ec8491dc3acc329b2f61620adfa34b2",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/015_brutal_cathar.png"
             }
@@ -37911,8 +38105,8 @@
               "nickname": "Garth, Friendly Werewolf",
               "flavor_text": "The moon changed what he was, not who he chose to be."
             },
-            "preparationKey": "9e6df7ebbbc8c629e5b7324bee5b90583bf2bc013ac339d8fde2886409c5fb84",
-            "preparedAt": 1793243407.245,
+            "preparationKey": "69ea33192c40588b79e6a11091f2d7cda311391298d520ddb38719c9df0c4dcb",
+            "preparedAt": 1793387226.7489998,
             "compiled": {
               "name": "Moonrage Brute",
               "data": {
@@ -38660,7 +38854,7 @@
                   "text": "Garth, Monster Hunter",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6596786324786325,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -38680,7 +38874,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "2b464c55a1c48ecb58b546790937dfaf7e88b75ad16fdb922a05058e8671c870",
+            "renderKey": "59b5b59c5e601aac520eab6db5b9c97a7676f1550399b036666d6c49aa27d8af",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -38702,15 +38896,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 16,
-            "templateCacheVersion": 16,
+            "templateVersion": 17,
+            "templateCacheVersion": 17,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "b8768b3dda68350663af3b4ee03de5ac410f08259e3dec6334d7faade2bdf97a"
+            "contentRenderKey": "5de2f28f0b22c67d75bc05aa5260967de87a545d3eac483d212a2664f795b67a"
           },
-          "sourceRenderKey": "c8db60d094e386a0fa0839f4105c56b39c46bfc24e54a0c76d75132e212633e1",
+          "sourceRenderKey": "b646607f2f7b7de09ecda383ffb4be016b75f7a372c143c532151e3b3fb207db",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -42333,8 +42527,8 @@
               "nickname": "Cain, First Knight of Hell",
               "flavor_text": "He taught Hell what a knight could become."
             },
-            "preparationKey": "449b88e5357c7f921ba80b16420277bc165f7337b4f5dc4d133cbd7a724b9f1f",
-            "preparedAt": 1793243409.184,
+            "preparationKey": "676d0800411ea07e1cdb603bbb46cb6a8749628470996abddaa344e9217fdd45",
+            "preparedAt": 1793387227.904,
             "compiled": {
               "name": "Cecil, Dark Knight",
               "data": {
@@ -42572,7 +42766,7 @@
                     "text": "Cecil, Dark Knight",
                     "x": 0.14,
                     "y": 0.11290000000000001,
-                    "width": 0.7200000000000001,
+                    "width": 0.72,
                     "height": 0.0243,
                     "oneLine": true,
                     "font": "mplantini",
@@ -42661,7 +42855,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "bcb8e6ca5eb1f7f731151fe9092b695561e1cdaf4a2ea5ca6144109ba99ac49d",
+              "renderKey": "b852ff3aa74c0e7650845de4846d2b84614d47b5c684f638537cfb6463ffed15",
               "group": "transform-front",
               "recipe": "godzilla_dfc",
               "crop": {
@@ -42689,11 +42883,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "builtin:godzilla-card",
-              "templateVersion": 32,
-              "templateCacheVersion": 32,
+              "templateVersion": 33,
+              "templateCacheVersion": 33,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "1870edb8b7dfb289464de5c69abdb6ef5217ea2d1e39f31feb2e3d68a1dcd97c",
+              "contentRenderKey": "023241a6cae2e5a844335353ac8cbf3c16b61574ad2a5920dddb267a9dc8f550",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/027_cecil_dark_knight.png"
             }
@@ -42711,8 +42905,8 @@
               "nickname": "Cain, the Penitent",
               "flavor_text": "The hardest blade to master was the one he chose not to draw."
             },
-            "preparationKey": "449b88e5357c7f921ba80b16420277bc165f7337b4f5dc4d133cbd7a724b9f1f",
-            "preparedAt": 1793243409.184,
+            "preparationKey": "676d0800411ea07e1cdb603bbb46cb6a8749628470996abddaa344e9217fdd45",
+            "preparedAt": 1793387227.904,
             "compiled": {
               "name": "Cecil, Redeemed Paladin",
               "data": {
@@ -42976,7 +43170,7 @@
                     "text": "Cecil, Redeemed Paladin",
                     "x": 0.14,
                     "y": 0.11290000000000001,
-                    "width": 0.7200000000000001,
+                    "width": 0.72,
                     "height": 0.0243,
                     "oneLine": true,
                     "font": "mplantini",
@@ -43065,7 +43259,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "9011ffafb638ce06338de0f2ea6be04c30ab39810744943153f9f0a39ef37183",
+              "renderKey": "e68df1178402fc0d05fcd63f09acfa463200ee00ed878eedc4d6106f9415c800",
               "group": "transform-back",
               "recipe": "godzilla_dfc",
               "crop": {
@@ -43097,7 +43291,7 @@
               "templateCacheVersion": 32,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "ad9d72d1c1b7ad95a422dc1f9ce7f068e022850d58e75d5a83b4821fb0fc84c7",
+              "contentRenderKey": "18813e5452c3f0423dc4eea660e12a2729c2b5d232205719917b976b545802e4",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/028_cecil_redeemed_paladin.png"
             }
@@ -43467,7 +43661,7 @@
                   "text": "Cain, First Knight of Hell",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.7118666666666666,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -43487,7 +43681,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "f9755344db0732826a3009d33302764c0ada4db7fc82609a15cbeb4bade302f8",
+            "renderKey": "c840dfb6e7a0014cf07fd9f18ac7262fa3b491849e366193f3b2af56e833a97f",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -43509,15 +43703,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 16,
-            "templateCacheVersion": 16,
+            "templateVersion": 17,
+            "templateCacheVersion": 17,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "84911d5700883055161518e9684c9eb046ef86f906ac5d56a154ab90132fa362"
+            "contentRenderKey": "31fe7ad1574691e115ea0920aa9bcddacf7bbbeef3a99c9adaa600dc180e0720"
           },
-          "sourceRenderKey": "bcb8e6ca5eb1f7f731151fe9092b695561e1cdaf4a2ea5ca6144109ba99ac49d",
+          "sourceRenderKey": "b852ff3aa74c0e7650845de4846d2b84614d47b5c684f638537cfb6463ffed15",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -57958,8 +58152,8 @@
               "nickname": "Castiel, Heaven's Rebel",
               "flavor_text": "Heaven demanded obedience. Castiel chose responsibility."
             },
-            "preparationKey": "9fb9a0ff58d4ab0a9e43c9b706d50758b129fc26c1bd4060d0847b793719010f",
-            "preparedAt": 1793243414.748,
+            "preparationKey": "9d060e1db06cb45bd8505f005c295b9be16a7b190677890c6d5e49e3f3e7c1c3",
+            "preparedAt": 1793387228.767,
             "compiled": {
               "name": "Sephiroth, Fabled SOLDIER",
               "data": {
@@ -58197,7 +58391,7 @@
                     "text": "Sephiroth, Fabled SOLDIER",
                     "x": 0.14,
                     "y": 0.11290000000000001,
-                    "width": 0.7200000000000001,
+                    "width": 0.72,
                     "height": 0.0243,
                     "oneLine": true,
                     "font": "mplantini",
@@ -58286,7 +58480,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "8bc31614accb336b10093f6bc8ed8225226d5b64a6a41db253678328b7dae8f3",
+              "renderKey": "8b1f613335f8a1e26c8cc52f4071aeb3f2a078815ec03a16d625824341142b7e",
               "group": "transform-front",
               "recipe": "godzilla_dfc",
               "crop": {
@@ -58314,11 +58508,11 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "builtin:godzilla-card",
-              "templateVersion": 32,
-              "templateCacheVersion": 32,
+              "templateVersion": 33,
+              "templateCacheVersion": 33,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "526a9958dbcf8c2158750465399f46ed2f9c6208431ef1bf16a31b70160525a1",
+              "contentRenderKey": "714a6f00f22762d3aeedb556e1ffddb50e025c755f0707a0e11eab411ea57a2f",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/032_sephiroth_fabled_soldier.png"
             }
@@ -58336,8 +58530,8 @@
               "nickname": "Godstiel, the New God",
               "flavor_text": "He swallowed Purgatory and mistook the weight for a crown."
             },
-            "preparationKey": "9fb9a0ff58d4ab0a9e43c9b706d50758b129fc26c1bd4060d0847b793719010f",
-            "preparedAt": 1793243414.748,
+            "preparationKey": "9d060e1db06cb45bd8505f005c295b9be16a7b190677890c6d5e49e3f3e7c1c3",
+            "preparedAt": 1793387228.767,
             "compiled": {
               "name": "Sephiroth, One-Winged Angel",
               "data": {
@@ -58601,7 +58795,7 @@
                     "text": "Sephiroth, One-Winged Angel",
                     "x": 0.14,
                     "y": 0.11290000000000001,
-                    "width": 0.7200000000000001,
+                    "width": 0.72,
                     "height": 0.0243,
                     "oneLine": true,
                     "font": "mplantini",
@@ -58690,7 +58884,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "9b7341e4b65a2fb2bbb968d2b298a10f5e1a42f8fa41bd998938c16823459c56",
+              "renderKey": "3f8578ad85f66bb56d84c33e21e99db470c47b44c6d95ab78755a4e670af95f1",
               "group": "transform-back",
               "recipe": "godzilla_dfc",
               "crop": {
@@ -58722,7 +58916,7 @@
               "templateCacheVersion": 32,
               "nicknameRulesVersion": 2,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "4395d8c72dc3a2c827ab8bc742a363d9b68f2a962441779706ea32fc2ffa7ff7",
+              "contentRenderKey": "3ce5a92a4648b080e376d7e8bcada17cce1b938f89c69af986ecf0103ff81c1f",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/033_sephiroth_one_winged_angel.png"
             }
@@ -59092,7 +59286,7 @@
                   "text": "Castiel, Heaven's Rebel",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6596786324786325,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -59112,7 +59306,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "248132102a168a2ba520331d90cda30ec51a5120d31c49d87e2a51b42a7fcbb1",
+            "renderKey": "f597b46351a25dea3867e390a4cac1e7bc057fbe64bbb6f05b626eb79c63a1f9",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -59134,15 +59328,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 16,
-            "templateCacheVersion": 16,
+            "templateVersion": 17,
+            "templateCacheVersion": 17,
             "nicknameRulesVersion": 2,
             "nicknameIdentityVersion": 1,
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null,
-            "contentRenderKey": "81572314a5835612f433e3d6e9150609f4d3fceedd3d6287639cb88535058cde"
+            "contentRenderKey": "38a2351189dbba8aa66fac62f75e0b8e680adfb77cbf60f19e7cb2cae9edbcde"
           },
-          "sourceRenderKey": "8bc31614accb336b10093f6bc8ed8225226d5b64a6a41db253678328b7dae8f3",
+          "sourceRenderKey": "8b1f613335f8a1e26c8cc52f4071aeb3f2a078815ec03a16d625824341142b7e",
           "substituteVersion": 6
         },
         "_preparationSymbols": [
@@ -71486,7 +71680,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Captain America, Liberator artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/010_captain_america_liberator.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/010_captain_america_liberator.png",
       "transform": "raw"
     },
     "09d521f04828d473723cfd3ac9c92557fa1e72a80591536b92d317684c0e95bb": {
@@ -71496,7 +71690,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Cecil, Redeemed Paladin artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/028_cecil_redeemed_paladin.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/028_cecil_redeemed_paladin.png",
       "transform": "raw"
     },
     "0aa957054dae5800b900fb64758622dfe097dbb3799f62b367841f5d08273848": {
@@ -71506,7 +71700,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Fighter Class artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/061_fighter_class.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/061_fighter_class.png",
       "transform": "raw"
     },
     "0e6b41bfb4ad33af54fa7ae9eb0a22531d36a2e74a332b3df45f5c38d97db4e7": {
@@ -71578,7 +71772,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Viridian Longbow artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/069_viridian_longbow.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/069_viridian_longbow.png",
       "transform": "raw"
     },
     "1d87137cebeb3ddc2d169106430bf07d1d4efe4710d7cd901d1f60e97cbf9930": {
@@ -71588,7 +71782,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Isshin, Two Heavens as One artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/036_isshin_two_heavens_as_one.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/036_isshin_two_heavens_as_one.png",
       "transform": "raw"
     },
     "1fcc2f074c93437b1d51941b5dd7557d3de766a9962d9712b233f4762cc74069": {
@@ -71618,7 +71812,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Riders of the Mark artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/018_riders_of_the_mark.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/018_riders_of_the_mark.png",
       "transform": "raw"
     },
     "237a6a776f9d9ae3aaec467d85c67e278bc80210b9821a2d179eb5aadf850b45": {
@@ -71628,7 +71822,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Avacyn, Angel of Horror artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/003_avacyn_angel_of_horror.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/003_avacyn_angel_of_horror.png",
       "transform": "raw"
     },
     "2790cd3b9a4921af9c0cd54e6343efd66627eef525c0975d35b237115f79e648": {
@@ -71658,7 +71852,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Knight Exemplar artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/024_knight_exemplar.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/024_knight_exemplar.png",
       "transform": "raw"
     },
     "2be9ed41d6525a9a99a0d046bb10f3b5837d4c219d6f1551fdd64181b14c5f45": {
@@ -71678,7 +71872,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Cloud, Midgar Mercenary artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/030_cloud_midgar_mercenary.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/030_cloud_midgar_mercenary.png",
       "transform": "raw"
     },
     "2f203b57d1474f377c39c7ce586d1fde8132dcd534d042e7c00d30ae16b79dd4": {
@@ -71698,7 +71892,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Brutal Cathar — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/f7ef4c018cd00862496c0d43e25b4a20d371dedd/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "32ba70bf3458fd26ebceef36dc20c2daf959d629235a6adb5de979a07b7f948a": {
@@ -71718,7 +71912,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Moonrage Brute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/016_moonrage_brute.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/016_moonrage_brute.png",
       "transform": "raw"
     },
     "3a8026a34f6ea57bb6485793d9446b77920749613980d5a886d1ff830fb91f0d": {
@@ -71728,7 +71922,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Talisman of Hierarchy artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/050_talisman_of_hierarchy.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/050_talisman_of_hierarchy.png",
       "transform": "raw"
     },
     "3d1d3e51a5a6a13a86e664301d8c569674e8bc74d5f43bc8343e98ed0aaeb892": {
@@ -71758,7 +71952,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Éowyn, Fearless Knight artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/025_eowyn_fearless_knight.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/025_eowyn_fearless_knight.png",
       "transform": "raw"
     },
     "431dd6a90531cb54e949b3dd9a42f89f9c022dcc2fac7d9d7fc6d557e587e981": {
@@ -71768,7 +71962,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Black Market Connections artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/056_black_market_connections.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/056_black_market_connections.png",
       "transform": "raw"
     },
     "4329d065f6dcdc504ec4ce4cd09040a4b44f36762afc1eeaef495703ccfb5000": {
@@ -71788,7 +71982,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Vilis, Broker of Blood artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/004_vilis_broker_of_blood.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/004_vilis_broker_of_blood.png",
       "transform": "raw"
     },
     "461e50e5be98192699f4e8ac2175dbad796762697047901db1d899de19a87082": {
@@ -71828,7 +72022,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Archivist of Oghma artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/022_archivist_of_oghma.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/022_archivist_of_oghma.png",
       "transform": "raw"
     },
     "4a54410ff104ffba3aac752e3df0f0f1529556b0d3327875d82f008cd993912c": {
@@ -71898,7 +72092,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Danitha, Benalia's Hope artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/035_danitha_benalia_s_hope.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/035_danitha_benalia_s_hope.png",
       "transform": "raw"
     },
     "5967632435de1dc8b1088cda6656f6e52d9d6518a3485ae1bf5213f5ea403329": {
@@ -71908,7 +72102,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Nahiri, Forged in Fury artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/009_nahiri_forged_in_fury.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/009_nahiri_forged_in_fury.png",
       "transform": "raw"
     },
     "5a632d74d572cdffc9616d6dd5bb6454a026e1791326cccf6a3e888bc6a9a280": {
@@ -71918,7 +72112,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Danitha Capashen, Paragon artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/026_danitha_capashen_paragon.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/026_danitha_capashen_paragon.png",
       "transform": "raw"
     },
     "620a7c47563dea4c397bcfcec5eb90c5a3189b4be3e8bb2c9a38fecad18dcf07": {
@@ -71978,7 +72172,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Witch of the Moors artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/005_witch_of_the_moors.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/005_witch_of_the_moors.png",
       "transform": "raw"
     },
     "6a1ff730d4951eb4c2fe322984d9e1aaeef88484e9a1bbfa9f1a20e82e16575f": {
@@ -71988,7 +72182,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Rohirrim Chargers artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/019_rohirrim_chargers.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/019_rohirrim_chargers.png",
       "transform": "raw"
     },
     "6d291909e8a596f9d6e042d8dc7f40d57eb8d86ac3fe61f1198c47d298a5938d": {
@@ -71998,7 +72192,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Lyra Dawnbringer artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/014_lyra_dawnbringer.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/014_lyra_dawnbringer.png",
       "transform": "raw"
     },
     "6e7a50d7538d73b43fd1608e1463464118b9059a05da55901cf737dadd470281": {
@@ -72018,7 +72212,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Argentum Armor artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/065_argentum_armor.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/065_argentum_armor.png",
       "transform": "raw"
     },
     "6f898b603ce6c1f3c0f3a33b610cb82fa55615095181817fae74090acfd93a1b": {
@@ -72028,7 +72222,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Smothering Tithe artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/047_smothering_tithe.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/047_smothering_tithe.png",
       "transform": "raw"
     },
     "714cb7d6bb1d0b4248fac5f3f001d837fff323b6dccc645ee3194c5b077d8259": {
@@ -72038,7 +72232,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Heartseeker artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/067_heartseeker.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/067_heartseeker.png",
       "transform": "raw"
     },
     "72aa3c31d47800064f6177ab16d2212687b82b56c83e6463db288a57f525d379": {
@@ -72048,7 +72242,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Loran of the Third Path artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/031_loran_of_the_third_path.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/031_loran_of_the_third_path.png",
       "transform": "raw"
     },
     "73651e4f4e1680536fdafcc9ae086646d98dc94439a2699e66e984d39318fa0c": {
@@ -72058,7 +72252,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Thalia's Lancers artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/029_thalia_s_lancers.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/029_thalia_s_lancers.png",
       "transform": "raw"
     },
     "7522fa75be7ccea4b5cdd06975b463bc32778954d9a0a8784d1a8f217053903b": {
@@ -72078,7 +72272,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Talisman of Indulgence artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/051_talisman_of_indulgence.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/051_talisman_of_indulgence.png",
       "transform": "raw"
     },
     "75fdfb0294db85c97e661ced7b0b70af221800460ecac09499bfd11872f9c265": {
@@ -72088,7 +72282,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Sol Ring artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/048_sol_ring.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/048_sol_ring.png",
       "transform": "raw"
     },
     "7621c7ad6e6deb14724f2cf437f63933c0f4ef04eff1c61a427e548a27c40486": {
@@ -72168,7 +72362,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Armored Skyhunter artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/038_armored_skyhunter.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/038_armored_skyhunter.png",
       "transform": "raw"
     },
     "80aaa9d146ebbd17e2a186c56cbe749dcfbd6e4c1690714715faeafd0a48820f": {
@@ -72178,7 +72372,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Ria Ivor, Bane of Bladehold artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/034_ria_ivor_bane_of_bladehold.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/034_ria_ivor_bane_of_bladehold.png",
       "transform": "raw"
     },
     "81752f4ca23f865f647785abae59670d478a2ee0f8136307b8295196a7523ada": {
@@ -72198,7 +72392,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Stoneforge Mystic artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/008_stoneforge_mystic.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/008_stoneforge_mystic.png",
       "transform": "raw"
     },
     "8476f8eab36647ce83400b7e1944a902976a76fc0e48c407186de6e639df6ccf": {
@@ -72218,7 +72412,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Sword of Light and Shadow artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/049_sword_of_light_and_shadow.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/049_sword_of_light_and_shadow.png",
       "transform": "raw"
     },
     "89661c22136e33e485eb63fe2719cdc491e99f988f27b091b69e9ba83ca4d001": {
@@ -72228,7 +72422,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Maskwood Nexus artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/064_maskwood_nexus.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/6c31004cef62934cac24fd0210296bf733e236ba/supernatural_artifact_tokens/art/064_maskwood_nexus.png",
       "transform": "raw"
     },
     "8ef2b0906b2763584ad3277c8acd96cf3a76e7aa16c383cc0d1b4ab5446c0e62": {
@@ -72238,7 +72432,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Thran Dynamo artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/042_thran_dynamo.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/042_thran_dynamo.png",
       "transform": "raw"
     },
     "91bf5d09adcefb81ce15287c7dd7731a2120ea9ebf5f6558e110e244e345850d": {
@@ -72268,7 +72462,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/f7ef4c018cd00862496c0d43e25b4a20d371dedd/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "973561dfe88e962d0676307230ea8f02910453dd60ed01504ff30e1a5994d538": {
@@ -72278,7 +72472,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Kelsien, the Plague artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/021_kelsien_the_plague.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/021_kelsien_the_plague.png",
       "transform": "raw"
     },
     "9798c6323160bccd3dfe71155ff267e994c0899b6d5197e992c06fef84e26fbd": {
@@ -72308,7 +72502,7 @@
       "width": 1220,
       "height": 1134,
       "label": "Mythic set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/set_symbol/mythic.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/mythic.png",
       "transform": "trim-transparent"
     },
     "9d6a9818c505e2858411c23ce66db54f1cff7e5288987134675ba6df6905572a": {
@@ -72318,7 +72512,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Meteor Sword artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/045_meteor_sword.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/045_meteor_sword.png",
       "transform": "raw"
     },
     "9ffcde39c241d9ba420072dfd608583e4c6eeea54addce4fda65d33afa79e24a": {
@@ -72328,7 +72522,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Thornbite Staff artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/052_thornbite_staff.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/052_thornbite_staff.png",
       "transform": "raw"
     },
     "a2f4ae3e7762036b39fa5a4fd0afcbb5f9c948395936ba5dfe7b1f0f2bb2cd53": {
@@ -72368,7 +72562,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Arcane Signet artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/043_arcane_signet.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/043_arcane_signet.png",
       "transform": "raw"
     },
     "a8b33c2a80ae7d4e32bfd6ec10e3dc381f8981b84475d4896c83861321486bf0": {
@@ -72398,7 +72592,7 @@
       "width": 1042,
       "height": 1510,
       "label": "Ob Nixilis, the Ascended artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/013_ob_nixilis_the_ascended.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/013_ob_nixilis_the_ascended.png",
       "transform": "raw"
     },
     "b356c77b67c08f39fec33d9bff322732e969908f612ff082685b686f09a09ae5": {
@@ -72408,7 +72602,7 @@
       "width": 1228,
       "height": 1149,
       "label": "Common set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/set_symbol/common.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/common.png",
       "transform": "trim-transparent"
     },
     "b609f409482daaf3bebfa40e888a44ab84624553f4b4145b35f9e8ecc6fb0c5f": {
@@ -72418,7 +72612,7 @@
       "width": 1226,
       "height": 1146,
       "label": "Uncommon set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/set_symbol/uncommon.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/uncommon.png",
       "transform": "trim-transparent"
     },
     "b6eda288765f6af0dc161e0ec9aafa88bebe2ba7d21a1da2ea95162abc64ed9e": {
@@ -72428,7 +72622,7 @@
       "width": 1254,
       "height": 1254,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/back_icon.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/back_icon.png",
       "transform": "image"
     },
     "ba03de21fe50fee11bf4aa7d68159e61ce010df06efe07820dddd751974303a5": {
@@ -72458,7 +72652,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Syr Gwyn, Hero of Ashvale artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/001_syr_gwyn_hero_of_ashvale.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/001_syr_gwyn_hero_of_ashvale.png",
       "transform": "raw"
     },
     "bf32b68075c1a2a6f3ce024d03158d08ddca0042ff683e7f834cadaecb06a682": {
@@ -72468,7 +72662,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Aerith Gainsborough artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/020_aerith_gainsborough.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/020_aerith_gainsborough.png",
       "transform": "raw"
     },
     "bfd83b60a821fbecb69feccc39f26cf8a916e48a34089fac894bf08ea9b03d96": {
@@ -72488,7 +72682,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Resurrection Orb artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/055_resurrection_orb.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/055_resurrection_orb.png",
       "transform": "raw"
     },
     "c364a2e70a74ed1d7ca7d654670b3ee9eddb544cde099522e237fbb686f0fc83": {
@@ -72498,7 +72692,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Talisman of Conviction artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/041_talisman_of_conviction.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/041_talisman_of_conviction.png",
       "transform": "raw"
     },
     "c4d19a2a85da0cc8900c8ce12ab08f7d5a813ad54f1565dd77acf15a0b69605e": {
@@ -72508,7 +72702,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Brutal Cathar artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/015_brutal_cathar.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/015_brutal_cathar.png",
       "transform": "raw"
     },
     "c6efef318781d805997efa8a629bc74f435720ce7462331251c97a09706b4db6": {
@@ -72518,7 +72712,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Vorpal Sword artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/066_vorpal_sword.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/066_vorpal_sword.png",
       "transform": "raw"
     },
     "c8d1d5be0de28f58beaa1cc582dd51f49086c7281a62dd4871d39dcf3b0cf65b": {
@@ -72548,7 +72742,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Sephiroth, One-Winged Angel artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/033_sephiroth_one_winged_angel.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/033_sephiroth_one_winged_angel.png",
       "transform": "raw"
     },
     "cd69dad6298877feff0b59653bf47ae1a85be1b537adb2883ff1269bf841a0ba": {
@@ -72558,7 +72752,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Cecil, Dark Knight artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/027_cecil_dark_knight.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/027_cecil_dark_knight.png",
       "transform": "raw"
     },
     "d0bd04ca7fe11bb4c98bed58b75a232773a71c39fed21a2b01622b620fb744e8": {
@@ -72568,7 +72762,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Astor, Bearer of Blades artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/023_astor_bearer_of_blades.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/023_astor_bearer_of_blades.png",
       "transform": "raw"
     },
     "d5f3823859834cc19f03eaa752baf88bb8f7f73eea0b4ac89e86cf8839eb295e": {
@@ -72578,7 +72772,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Bloodthirsty Conqueror artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/017_bloodthirsty_conqueror.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/017_bloodthirsty_conqueror.png",
       "transform": "raw"
     },
     "d7816a536c44ba8b1ba4c5d16cd081f2d830262be597e2b2ebe802a55ab2b969": {
@@ -72608,7 +72802,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Vona, Butcher of Magan artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/011_vona_butcher_of_magan.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/011_vona_butcher_of_magan.png",
       "transform": "raw"
     },
     "dea99315750444bede1b3c35b78efec8cde57a4c2923e936897a6bc94fb013ef": {
@@ -72618,7 +72812,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Sephiroth, Fabled SOLDIER artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/032_sephiroth_fabled_soldier.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/032_sephiroth_fabled_soldier.png",
       "transform": "raw"
     },
     "e236dd363f49fec9a7d123ef257df8a39a87775554e13e783794b26e94eb8714": {
@@ -72628,7 +72822,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Puresteel Paladin artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/007_puresteel_paladin.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/007_puresteel_paladin.png",
       "transform": "raw"
     },
     "e428ab8f90d5409e65aa57c5a213bb267d2a9b2aeac9740398740712410a875f": {
@@ -72698,7 +72892,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Stonehewer Giant artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/037_stonehewer_giant.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/037_stonehewer_giant.png",
       "transform": "raw"
     },
     "f9038aac34942a992104359c6f9b2ce10c6e3c908ca8400e948d9b3712b9f944": {
@@ -72708,7 +72902,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Archangel of Thune artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/006_archangel_of_thune.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/006_archangel_of_thune.png",
       "transform": "raw"
     },
     "f910f591932b2f469fa41da00be0b73bb77b74f0fe4b2e6960f41614690411d7": {
@@ -72718,7 +72912,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Urza's Saga artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/075_urza_s_saga.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/075_urza_s_saga.png",
       "transform": "raw"
     },
     "f9d51edbdbce25abf0fb25ea4931dfaef0cde3ea4188967b3b5c40df03a14bfa": {
@@ -72728,7 +72922,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Imperial Recruiter artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/002_imperial_recruiter.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/art/002_imperial_recruiter.png",
       "transform": "raw"
     },
     "fad91caf6239b2a4c1ca19b7e7f25f7b82f49e98a54d4ed83939132afdebd20b": {
@@ -72738,7 +72932,7 @@
       "width": 1060,
       "height": 1484,
       "label": "Adaptive Omnitool artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/art/058_adaptive_omnitool.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/9659711f58c0f983f64a23e1f010a69e576e1fa6/supernatural_artifact_tokens/art/058_adaptive_omnitool.png",
       "transform": "raw"
     },
     "fb7354c3773ab30785b01ce633f0e02c23d0a1e3b2ec06361bae522ba2299a96": {
@@ -72768,7 +72962,7 @@
       "width": 1226,
       "height": 1143,
       "label": "Rare set symbol",
-      "url": "https://raw.githubusercontent.com/andro951/cards/d174e1946e16e5dc0ea68812f60f68c8cb4a1514/supernatural/set_symbol/rare.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/596321a74bfc3ab817dc94e3c3a394988c0921ec/supernatural_helm_tokens/set_symbol/rare.png",
       "transform": "trim-transparent"
     }
   },
@@ -72776,7 +72970,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "f7ef4c018cd00862496c0d43e25b4a20d371dedd"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {
@@ -75568,6 +75762,58 @@
               "width": "1000",
               "height": "1000",
               "fill": "url(#legendLandTri)"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
+    "7c1de7d2012acb76fcddab3548fc0100f4da624cdd776a389accdf45fb117d69": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "0",
+              "width": "2010",
+              "height": "318",
+              "fill": "white"
+            },
+            "text": null,
+            "tail": null,
+            "children": []
+          }
+        ]
+      }
+    },
+    "5d932d8d0d90dbcc2ebf584176c90d6d0662eef7da59cf5d8d84ced557d6cd13": {
+      "kind": "svg",
+      "root": {
+        "tag": "{http://www.w3.org/2000/svg}svg",
+        "attributes": {
+          "width": "2010",
+          "height": "2814"
+        },
+        "text": null,
+        "tail": null,
+        "children": [
+          {
+            "tag": "{http://www.w3.org/2000/svg}rect",
+            "attributes": {
+              "y": "318",
+              "width": "2010",
+              "height": "2496",
+              "fill": "white"
             },
             "text": null,
             "tail": null,
