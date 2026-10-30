@@ -51577,9 +51577,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "51b459a60be82b57fe886ce575dbcfd409838d2b2343391e06951367540622d1",
+              "renderKey": "2fdf58181b60b08122510a371cff40c9111ab3e509005ac7c94bb5c880a68665",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -51607,15 +51607,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "f545cc359076991d08f11b4ee2ebd7c00a2bea2a07e71ddbaacd90d83c2a111a",
+              "contentRenderKey": "d416107975f80cedac525548b023c5cc0299e64ca7665e685d8533c2dcaf67b9",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/cat_soldier_1_1_vigilance.png"
             },
-            "preparationKey": "679589d14d93ffd63c3f2a257334a184d2193e81ecef114de23b0fc989cc2936",
-            "preparedAt": 1793343351.175
+            "preparationKey": "8d0689b73b4bb23f429154ce995a6fe4ead518c374e752e6203293c7e889fc19",
+            "preparedAt": 1793384980.9539998
           }
         ],
         "metadataSource": "921d6192-6b6d-4aa1-be80-bc0b9f503e33",
@@ -54214,9 +54214,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "2521d9aaf7181c6265a5a1d665108debb5a47e9b2cbb71b206d9f3720dab2697",
+              "renderKey": "50b813c0963ccef2961ca870dc4aca5d4178dbbf53268b717322866fb398f583",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
@@ -54244,15 +54244,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "6bb6082f6b38b6674f1644f67d2dfb3505b154b93e9b4e42b9062d90d315aac5",
+              "contentRenderKey": "69fb085794bf46b51711ff8f9378f8dac065736f795075c8deaec095fb90249d",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/cat_1_1_lifelink.png"
             },
-            "preparationKey": "8ad0ccad70341725cf6a23359da25ff19d23d54e1418c365fedf06d7f2f41573",
-            "preparedAt": 1793343351.3630002
+            "preparationKey": "8ecc54ee7000066acd79750bfc64259bf43a4d52d4381284648facdfa63a2e0a",
+            "preparedAt": 1793384981.134
           }
         ],
         "metadataSource": "255dcc91-7b3d-4b58-85f3-b21be805966e",
@@ -55201,9 +55201,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "968a8a693966cb492442fa1ea5de48f4384008f15c224f07cbbef53b8c29432d",
+              "renderKey": "94f88348d04c9030a771548f1621e1768072b24b2c35ba8765ea031ff8bf72eb",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -55231,15 +55231,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "7166900d68d26b44095f5c35d141bc923bf0e6f24117d578fba692a08cb3d8cb",
+              "contentRenderKey": "2d498077b2d11499eb2727db700d5a6084ef840295e336c1d362a11213933f32",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/changeling_1_1.png"
             },
-            "preparationKey": "1febaacb4bfd28242688ee7c93d85940cae6f578bcab6344f9e7c254992ca347",
-            "preparedAt": 1793343351.5649998
+            "preparationKey": "e90632400784c158ea0ba5d93dea677dc7ca92030b25e915938fac9ef116edba",
+            "preparedAt": 1793384981.3059998
           }
         ],
         "metadataSource": "c2963ce1-f9d8-437a-9489-e0913a8b8d26",
@@ -55712,9 +55712,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "ec6ca2e203a2a348eeb9c62864444563a4741ca4bcad7200479ac3097cb21201",
+              "renderKey": "cf96dc438aeb2233a0b7245fe742f7b3e8b0a40a253be47907ffec5826d34397",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -55742,15 +55742,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "9c90d57ca1ce9e99afcfc6a2cd08629f5089708420ff21348d30f79da49aa092",
+              "contentRenderKey": "98ed60f9a18d6f3d6ec5ac232334c40874b037fd7f092b95e6cb5e7a965a4324",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/angel_3_3_flying.png"
             },
-            "preparationKey": "43ee1091b7d258227b19c2c4c76762214c5159aaa752c10d7233a8d202e54353",
-            "preparedAt": 1793343351.739
+            "preparationKey": "4664553f32be11b2befb6db5f77860e239c37b7cd95dabce37883c819e1572cc",
+            "preparedAt": 1793384981.476
           }
         ],
         "metadataSource": "e1e5dbd5-5fba-4d09-aa27-359505042651",
@@ -56189,9 +56189,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "e874f1969afe5c4c6f00e4e9540832c471c837203637eab7e3d15b03d31f6f67",
+              "renderKey": "060bd179ffe6eac79de7b61555acfb2ef0d7970805a9408ad229d3f1cb0edf87",
               "group": "token",
               "recipe": "token_full_art_short_rules",
               "crop": {
@@ -56219,15 +56219,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "2a053d422d34345ad54f8bf1dc2d2aa41ae6e370eee1f24a63a9a42f55682d61",
+              "contentRenderKey": "312708cde87facfb343ea9ae2b31655fdf8d2c8af87ff6f270f273d3715ab584",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/ajanis_pridemate_2_2.png"
             },
-            "preparationKey": "ad80215010cd1a024fe166a7aec22fb995401a29a587427f2fb89302746154eb",
-            "preparedAt": 1793343351.815
+            "preparationKey": "5dc8b11b4b34f5ff2e0205658967d17274722a4580de8c9fd053756943b16b15",
+            "preparedAt": 1793384981.551
           }
         ],
         "metadataSource": "7801c326-d740-4cec-9268-05348ace8302",
@@ -57091,9 +57091,9 @@
                 "serialY": "",
                 "serialScale": "",
                 "noCorners": false,
-                "shortTokenArtVersion": 2
+                "shortTokenArtVersion": 3
               },
-              "renderKey": "e264ce8843bf31b5ee0a2ef929ab4f01a358fa38155606b5b48bc9da6ad424ae",
+              "renderKey": "383520a1e08d723a646501796d32dc68cc5b133f8999dbcb14226eefa9620e15",
               "group": "token",
               "recipe": "token_full_art_short_short",
               "crop": {
@@ -57121,15 +57121,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:token",
-              "templateVersion": 15,
-              "templateCacheVersion": 15,
+              "templateVersion": 16,
+              "templateCacheVersion": 16,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d809c61c521aa6f007619d53c335504c8292aa251f506b97c47d9049b3afdea2",
+              "contentRenderKey": "845b7bb6fb369d722a43d399bdc6d5372481b384d6c992ac14c7e6c210e9c4c6",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/4f0219c7aa3a42f18df2c7ba025fc92660c91f50/cats/art/rat_1_1_deathtouch.png"
             },
-            "preparationKey": "477b685acc6125c315b38ac0e770fd3e477ec7f05c7dc6736e3dacbc65f1aee0",
-            "preparedAt": 1793343352.018
+            "preparationKey": "280128d7028dc486c15b6dd0d9fb891280325d76d4fa00854d7d38e559bd8241",
+            "preparedAt": 1793384981.7340002
           }
         ],
         "metadataSource": "c1788d4c-31b8-4f73-8275-5470316e7ad4",
@@ -58655,7 +58655,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Thaumatic Compass — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/536611dc441dc957e4e55e8c82c916db51ac4c5b/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "3386a82374a461aa2debf9bd02b6ba5e5cfa09eb97ff05027d6b2d7740dcb1c2": {
@@ -59085,7 +59085,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/536611dc441dc957e4e55e8c82c916db51ac4c5b/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "9d2b5ed9f766dc6e9eb12b349a545e0b1500b1a362ea7f8ce361c2472bb9fec1": {
@@ -59573,7 +59573,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "536611dc441dc957e4e55e8c82c916db51ac4c5b"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {

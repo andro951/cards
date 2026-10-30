@@ -42460,7 +42460,7 @@
       "artReviewSignature": "c3dbd196e5daa5f253ca00462aa07c2ff3cedd4b7241280905347dd792e7d1f3",
       "githubSetupFolder": "https://github.com/andro951/cards/tree/main/krascade"
     },
-    "status": "prepared",
+    "status": "ready",
     "notes": "",
     "importedSource": "https://scryfall.com/@andro951/decks/cad1d1df-d4ee-4859-912f-e39e491e9716",
     "stagedImport": true,
@@ -43816,7 +43816,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "bea686b6668b9f33991189ca8fbb45d8e62e4d62"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {

@@ -1582,7 +1582,7 @@
                     "text": "Bruce Banner",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.7104666666666667,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -1658,7 +1658,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "78fb36fbfb14f143c7414d971841cc30bd1e4bddd8bd42e1040ffc99ba7d7e15",
+              "renderKey": "a957e9390848ebd09e159af648c786f12fdf555a3e782886fe1b35e100a04f52",
               "group": "modal-front",
               "recipe": "modal_dfc_front",
               "crop": {
@@ -1686,15 +1686,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-front",
-              "templateVersion": 5,
-              "templateCacheVersion": 5,
+              "templateVersion": 6,
+              "templateCacheVersion": 6,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d9b30e545a2270eaae4d04dc0c683f54e68a186ee8258040b15d1f2fac68c01d",
+              "contentRenderKey": "ea7ea3d7b1e44446d881ddbc5be83f2949ae7094c2685eaed1c6b0e607cd9560",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/bruce_banner.png"
             },
-            "preparationKey": "b4b6cc14cf7bc83e84fc906879a4661c598d9d1fd7ad9eb90c4ce2009be8beaa",
-            "preparedAt": 1793231669.3059998
+            "preparationKey": "a091170f725482df0321422d3b764bcd0e4e9817ecf814085f074c3ce162c1ac",
+            "preparedAt": 1793387015.219
           },
           {
             "id": "3dc5440e-836e-4787-832a-efa93ad076e8",
@@ -2005,7 +2005,7 @@
                     "text": "The Incredible Hulk",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.50171452991453,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -2084,7 +2084,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "341cc1206d29ef0d6c00e9ad080f7da9188cef6d5713c008b5e05636ba88fe09",
+              "renderKey": "7b7c1a8f720ebda616b1930fa71601cea48ce80f4212e6243f0f351d4c60ace4",
               "group": "modal-back",
               "recipe": "modal_dfc_back",
               "crop": {
@@ -2112,15 +2112,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-back",
-              "templateVersion": 7,
-              "templateCacheVersion": 7,
+              "templateVersion": 8,
+              "templateCacheVersion": 8,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "a693b0c7ac1f52f774bb617b08bdbe86334f9d7abb67b20e79798683d6145da3",
+              "contentRenderKey": "937f6d64ae8755f0c14e55346c347d7a7a2e55c556f7cfac206345e57eb738c2",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_incredible_hulk.png"
             },
-            "preparationKey": "b4b6cc14cf7bc83e84fc906879a4661c598d9d1fd7ad9eb90c4ce2009be8beaa",
-            "preparedAt": 1793231669.3059998
+            "preparationKey": "a091170f725482df0321422d3b764bcd0e4e9817ecf814085f074c3ce162c1ac",
+            "preparedAt": 1793387015.219
           }
         ],
         "metadataSource": "e0dbbdcf-84e1-494f-8b8c-0a094f603fa9",
@@ -2419,7 +2419,7 @@
                   "text": "Bruce Banner",
                   "x": 0.1614,
                   "y": 0.0522,
-                  "width": 0.7534,
+                  "width": 0.7104666666666667,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -2495,7 +2495,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "f746b720e256fe879babbbe5572f8369933207a64eb81c84bc0b45323e645f79",
+            "renderKey": "3d542772f2a8ddaeeba57e551dfee505e4d32e33a83f3446a677dc175a0cb792",
             "group": "modal-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -2517,15 +2517,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:modal-front",
-            "templateVersion": 5,
-            "templateCacheVersion": 5,
+            "templateVersion": 6,
+            "templateCacheVersion": 6,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "2da74cf6320d5ddde021dfac422560add7cf048d48c3fe7c87c6cd8138948fd0",
+            "contentRenderKey": "6f63e12f2326a65627b948ac6caccdb148a8884c14ac772972d203a69fe1ce01",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "78fb36fbfb14f143c7414d971841cc30bd1e4bddd8bd42e1040ffc99ba7d7e15",
-          "substituteVersion": 3
+          "sourceRenderKey": "a957e9390848ebd09e159af648c786f12fdf555a3e782886fe1b35e100a04f52",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -3947,7 +3947,7 @@
                     "text": "Geier Reach Bandit",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6596786324786325,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -4012,7 +4012,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "48c6b0c38207e227f4241760a7c89ad895242022aa30573b1c6449960150ce4a",
+              "renderKey": "c7f0bb769d64015132caead97b498a7054cc5e71395294d061b26a10b88ba3d4",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -4040,15 +4040,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "c5dd783e18f27f5801f4e1272f49f3c30e30098e10c983a3ae7c6ac485ddc39b",
+              "contentRenderKey": "6e714fd85d435a5d063dfd524351bc6ea89d96658463fdc39e9fea2ec6480b4c",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/geier_reach_bandit.png"
             },
-            "preparationKey": "e60edd7a1df62c5b8b13d775003dee2da6f3228aceb2ad634a38cff0fec95936",
-            "preparedAt": 1793231669.552
+            "preparationKey": "73a9f27764ec6eba8859e5c8d7dfbfa9a359df82e47e1159825bda409d184f32",
+            "preparedAt": 1793387015.831
           },
           {
             "id": "e00831bd-1ecb-4b35-bdfc-cc39114741f1",
@@ -4408,8 +4408,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/vildin_pack_alpha.png"
             },
-            "preparationKey": "e60edd7a1df62c5b8b13d775003dee2da6f3228aceb2ad634a38cff0fec95936",
-            "preparedAt": 1793231669.552
+            "preparationKey": "73a9f27764ec6eba8859e5c8d7dfbfa9a359df82e47e1159825bda409d184f32",
+            "preparedAt": 1793387015.831
           }
         ],
         "metadataSource": "f0af234d-ce14-49ac-b877-00b0dd1f11e2",
@@ -4683,7 +4683,7 @@
                   "text": "Geier Reach Bandit",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6596786324786325,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -4748,7 +4748,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "72beb1fbad6c629c7e8afd370cbcf2b3932e523a003db4ac7d4be5cf9e1c0873",
+            "renderKey": "e06462304c468020803e3f8c77c72969174fb5f130591a5fb5c81dcd7f01b8c1",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -4770,15 +4770,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "8d0ffe2efaa6cbdbb55beaccb780d670406a886f39b2f63a8afb3b432a23c9f3",
+            "contentRenderKey": "d7efd357f96dc8d754b5337844b5dc567cf5bf2bf1b4c8974e345ca021d18460",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "48c6b0c38207e227f4241760a7c89ad895242022aa30573b1c6449960150ce4a",
-          "substituteVersion": 3
+          "sourceRenderKey": "c7f0bb769d64015132caead97b498a7054cc5e71395294d061b26a10b88ba3d4",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -5312,7 +5312,7 @@
                     "text": "Tovolar, Dire Overlord",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -5377,7 +5377,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "ff5f02983edbdf258b32497e99ec0a562f9b8c1d14bb31c44502d7e38e5275ce",
+              "renderKey": "240b0a4b6b1cf0509fed7ec48015da92bea13789aa655404636b640360c17c09",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -5405,15 +5405,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 16,
-              "templateCacheVersion": 16,
+              "templateVersion": 17,
+              "templateCacheVersion": 17,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "fbe6f4c8d829850ef9228d256bcaa0374356bc29ed99e5bba46358971f09f2df",
+              "contentRenderKey": "4a086b1bda1abeb7cb54dababc85ee24da05a72ce0ab7ed9d9f7c3fe02d59880",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/tovolar_dire_overlord.png"
             },
-            "preparationKey": "7a32fe734f80e0f03f8574d9eb8d1582d80636e1ce956acc4c269245b7d88b22",
-            "preparedAt": 1793231669.6590002
+            "preparationKey": "484cdea8a865cab8d424eba8476530a3f45dac5cfbdad9cf4c7b7ecf3b88f58d",
+            "preparedAt": 1793387016.286
           },
           {
             "id": "053203c7-5440-49d6-9d33-d946b032e02b",
@@ -5842,8 +5842,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/tovolar_the_midnight_scourge.png"
             },
-            "preparationKey": "7a32fe734f80e0f03f8574d9eb8d1582d80636e1ce956acc4c269245b7d88b22",
-            "preparedAt": 1793231669.6590002
+            "preparationKey": "484cdea8a865cab8d424eba8476530a3f45dac5cfbdad9cf4c7b7ecf3b88f58d",
+            "preparedAt": 1793387016.286
           }
         ],
         "metadataSource": "f953fad3-0cd1-48aa-8ed9-d7d2e293e6e2",
@@ -6160,7 +6160,7 @@
                   "text": "Tovolar, Dire Overlord",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -6225,7 +6225,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "b46f0d97a4ac958fe69d01c7f06a4371e6e3b11696d623c428bdfd5b0ec9d677",
+            "renderKey": "60fa889a443a5eade3a1f147b5eefd1e8409602baa0e139ea231364dbee40253",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -6247,15 +6247,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 16,
-            "templateCacheVersion": 16,
+            "templateVersion": 17,
+            "templateCacheVersion": 17,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "1ac2c841e38e1a2c09adc496cfe2dddcb80272b24e0bdaa43e6fcdc9ceb49909",
+            "contentRenderKey": "07641284ff0b6574dd65aeccf9c95438b16de2f6e4f9681705741945f68f7321",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "ff5f02983edbdf258b32497e99ec0a562f9b8c1d14bb31c44502d7e38e5275ce",
-          "substituteVersion": 3
+          "sourceRenderKey": "240b0a4b6b1cf0509fed7ec48015da92bea13789aa655404636b640360c17c09",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -8758,7 +8758,7 @@
                     "text": "Elesh Norn",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -8823,7 +8823,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "3295b97732f91ca8855951f3702449c27d4052cabf43ffaf8aa545ef12f9e842",
+              "renderKey": "9f5f2f531a64d4b4818f067d5292c2611617fffd2e90ff1b83a4529bf2afe2c7",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -8851,15 +8851,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "035ccad0a86bd0c131e63589efcbfbe9cf029edc6ea314e051bd6405ded49117",
+              "contentRenderKey": "5f514fbc363231ff406eedd262c86960bf641eb50905d1cf063b976a833dcb63",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/elesh_norn.png"
             },
-            "preparationKey": "973e7787016de44973e18fc55cc4e5810dc34ee8ae76773859c25d9e850f0f99",
-            "preparedAt": 1793231670.032
+            "preparationKey": "646d250890011a8a83386c5e4fcc0c56d6bfb139796576c6089d21946193b11b",
+            "preparedAt": 1793387016.64
           },
           {
             "id": "efe0fb00-01bc-4da9-852e-2b89df58ee89",
@@ -9208,8 +9208,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_argent_etchings.png"
             },
-            "preparationKey": "973e7787016de44973e18fc55cc4e5810dc34ee8ae76773859c25d9e850f0f99",
-            "preparedAt": 1793231670.032,
+            "preparationKey": "646d250890011a8a83386c5e4fcc0c56d6bfb139796576c6089d21946193b11b",
+            "preparedAt": 1793387016.64,
             "acceptedWarningKey": "f306a37db05e34eb5c58a68b422e46192f49f7b98af1356fed87b81c2b27ca25"
           }
         ],
@@ -9506,7 +9506,7 @@
                   "text": "Elesh Norn",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -9571,7 +9571,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "af3fea04568814690e6ea0b6c0cb34c772634aefe550cbec0d5d04510f393060",
+            "renderKey": "b7702c42bd54bc283793ccc21a4792f7a99abee6e1d16f552940b774a132b523",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -9593,15 +9593,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "7ad762c5764acf9d2fd7384b1773a5d89b8f69c8dab7df1d9ef79c8605be651b",
+            "contentRenderKey": "b655fa7a0837caa396b9e915fe3f499b9ff304c605370ee9947da96bb67c217c",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "3295b97732f91ca8855951f3702449c27d4052cabf43ffaf8aa545ef12f9e842",
-          "substituteVersion": 3
+          "sourceRenderKey": "9f5f2f531a64d4b4818f067d5292c2611617fffd2e90ff1b83a4529bf2afe2c7",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -10083,7 +10083,7 @@
                     "text": "Sheoldred",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -10148,7 +10148,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "94d7b322f8380c7c7e9559dac28f84f48f13ab121e3014275305477bde752f4b",
+              "renderKey": "3e3d94fb134fc8230a91059ca7039c73f130eeef94994cb312da61758da43c9c",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -10176,15 +10176,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d8956ff667a3cc59a24d14695d594728707baaebe896b80f48cceaacde920e33",
+              "contentRenderKey": "dea2b17eb9e905c6461f85539a98478f247117fd150c357d7e76c029ca1a0878",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/sheoldred.png"
             },
-            "preparationKey": "d4149f592af9b1a466592c736a87fb68b612a2c2999c2d14e51d246594c78289",
-            "preparedAt": 1793231670.134
+            "preparationKey": "087f084a5333a77b8b2acafe71b67f839ddc482ee0fe2793cc3342101c37f5af",
+            "preparedAt": 1793387016.996
           },
           {
             "id": "18a29db0-b566-4f08-a8ea-aa0005223670",
@@ -10533,8 +10533,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_true_scriptures.png"
             },
-            "preparationKey": "d4149f592af9b1a466592c736a87fb68b612a2c2999c2d14e51d246594c78289",
-            "preparedAt": 1793231670.134,
+            "preparationKey": "087f084a5333a77b8b2acafe71b67f839ddc482ee0fe2793cc3342101c37f5af",
+            "preparedAt": 1793387016.996,
             "acceptedWarningKey": "9a775b4338136764e644ba34c564f068183221355c842723f898a6bf313e92b3"
           }
         ],
@@ -10831,7 +10831,7 @@
                   "text": "Sheoldred",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -10896,7 +10896,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "9dbbc960026e7667fda4cb32826ecf19417b9f54abe3027e82f143d5c16ee7c4",
+            "renderKey": "b5e0b40f3cf219d239b5ee947959721099938072312fdfe6ffefec14c7c58e16",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -10918,15 +10918,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "f185a6a3c97877a38abbf50e1f2151c614fa2cd0213498f8752d348bd1895e39",
+            "contentRenderKey": "3d9daa47f93c116f0a3c8c1203f045ea590dc3a6c6bbeb64c745828afebf9169",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "94d7b322f8380c7c7e9559dac28f84f48f13ab121e3014275305477bde752f4b",
-          "substituteVersion": 3
+          "sourceRenderKey": "3e3d94fb134fc8230a91059ca7039c73f130eeef94994cb312da61758da43c9c",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -11415,7 +11415,7 @@
                     "text": "Vorinclex",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -11480,7 +11480,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "207ea38e629358d33be978bfe3930b2f48858cd533cf2a926304f69e5fca883a",
+              "renderKey": "5970f8aa9aedf72970065f61b1086c3c00d352491c20c22b74926145791c99b6",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -11508,15 +11508,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "f32c621c5af08ce56e9c16336aabde5d69ac3f53ceaa66be9628c37063b2fd2b",
+              "contentRenderKey": "44b83f3d6dd098a8b9bd3f9a2bee330426b905cdddf588b5f61ed0f2f312521b",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/vorinclex.png"
             },
-            "preparationKey": "3aac8953f3be25d61f443784502a72765483759f71a21b32c5d385b616457650",
-            "preparedAt": 1793231670.246
+            "preparationKey": "d7744e7d449418d924f93b8b8e040f8275aec3a0a64656163b9e1ad44442bd46",
+            "preparedAt": 1793387017.344
           },
           {
             "id": "d88e63d4-9333-4287-9b81-4c08d0f55f88",
@@ -11865,8 +11865,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_grand_evolution.png"
             },
-            "preparationKey": "3aac8953f3be25d61f443784502a72765483759f71a21b32c5d385b616457650",
-            "preparedAt": 1793231670.246,
+            "preparationKey": "d7744e7d449418d924f93b8b8e040f8275aec3a0a64656163b9e1ad44442bd46",
+            "preparedAt": 1793387017.344,
             "acceptedWarningKey": "f8d20133e426c4f1546374adad9590bfe8e3fd30a128a6a9c738eacb7784e65a"
           }
         ],
@@ -12163,7 +12163,7 @@
                   "text": "Vorinclex",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -12228,7 +12228,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "b1d7e3e02425a3a26f8a3da193cf8cda5d3748de3752cf3b8bfc6afa83093416",
+            "renderKey": "61018ae9475eae6912f383771160cc5ceecb33f0ba2458acf4b45d0289d617d9",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -12250,15 +12250,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "33084dbd43ee74b271bbb464b8cae761f926ea6fb3be8496252996509e2dcaf1",
+            "contentRenderKey": "6cb011af5edf45bce22cd4b827bee530739607a158bf914261db790937056537",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "207ea38e629358d33be978bfe3930b2f48858cd533cf2a926304f69e5fca883a",
-          "substituteVersion": 3
+          "sourceRenderKey": "5970f8aa9aedf72970065f61b1086c3c00d352491c20c22b74926145791c99b6",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -12744,7 +12744,7 @@
                     "text": "Jin-Gitaxias",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6074905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -12809,7 +12809,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "4d96c9100019550074b91b46c60b30bf43757690098930bda1f479a9467d9aed",
+              "renderKey": "30eb3153d2525e5f24327f9db3d4ec0f7233209fa07c5d4020b7bfae9b4fa745",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -12837,15 +12837,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "9e51d197aa168a13f0cf983f40d26fd8e82da2b650dfb475a54a0d787cf976fa",
+              "contentRenderKey": "a477d88669c3aedb4734be304f120a562bf2c5487fbce63060e70c5cf7f3299a",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/jin_gitaxias.png"
             },
-            "preparationKey": "f63e27630807cc929f9d8b06686fa9a366d9e1dc3f076b4e55ffafdc30464322",
-            "preparedAt": 1793231670.345
+            "preparationKey": "05fe8f27c76e1a41def55658f4b51bd0d394157073d986f4cdcb505839e75b1b",
+            "preparedAt": 1793387018.089
           },
           {
             "id": "bbd0730b-2a0d-4c06-a5dd-48741f2e0a2f",
@@ -13194,8 +13194,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_great_synthesis.png"
             },
-            "preparationKey": "f63e27630807cc929f9d8b06686fa9a366d9e1dc3f076b4e55ffafdc30464322",
-            "preparedAt": 1793231670.345,
+            "preparationKey": "05fe8f27c76e1a41def55658f4b51bd0d394157073d986f4cdcb505839e75b1b",
+            "preparedAt": 1793387018.089,
             "acceptedWarningKey": "43a098672c0b52ec0c924eee03d53e8e2b18a5a5063bd298358c90974552ad36"
           }
         ],
@@ -13492,7 +13492,7 @@
                   "text": "Jin-Gitaxias",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6074905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -13557,7 +13557,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "5d17ac56c244c5a5c45ba35dbe6e5a7075d4fff1af26671c233d6e92e018cd31",
+            "renderKey": "90b01b1ea33f3415f7c69903d7684c77b05c88a183f4d5d0ff630fac7a70be33",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -13579,15 +13579,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "7cedc93e0bc8a583ba6b78f6df39fb9bb1c74ef3ec26b77a77e9f4899a9bb347",
+            "contentRenderKey": "847871447f36d043d72ff2ba51378eb69a9e4471a39dfab07394336b38e713a3",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "4d96c9100019550074b91b46c60b30bf43757690098930bda1f479a9467d9aed",
-          "substituteVersion": 3
+          "sourceRenderKey": "30eb3153d2525e5f24327f9db3d4ec0f7233209fa07c5d4020b7bfae9b4fa745",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -16705,7 +16705,7 @@
                     "text": "Esika, God of the Tree",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.6060905982905983,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -16781,7 +16781,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "f0deb0b2172ecde5a42fbbecf9fd4ce6b04be506621ca5040a6cfb95bfdddfd8",
+              "renderKey": "545662d234da86db5a34883e07db7549ebce576e8afbad1173292b2954b14ace",
               "group": "modal-front",
               "recipe": "modal_dfc_front",
               "crop": {
@@ -16809,15 +16809,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-front",
-              "templateVersion": 5,
-              "templateCacheVersion": 5,
+              "templateVersion": 6,
+              "templateCacheVersion": 6,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "e48b1ed83c4d60b905c9bd770dd90f21649a7c623f805605e646daa32ecb0a46",
+              "contentRenderKey": "59070a71bffe32afbde3607333ad289117b7b7dd2b289d5330d79ea284259afd",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/esika_god_of_the_tree.png"
             },
-            "preparationKey": "94081d1bd978b55688f762aec2670d176a22c0850397e684aa149f38886ee2a0",
-            "preparedAt": 1793231670.809
+            "preparationKey": "bff2f9f6be5f81318df8bf65bc98f85e2adbfaf57c46860546441404f066f526",
+            "preparedAt": 1793387018.501
           },
           {
             "id": "bbb00084-c81a-459c-a938-bbee6d9f2bdb",
@@ -17096,7 +17096,7 @@
                     "text": "The Prismatic Bridge",
                     "x": 0.1614,
                     "y": 0.0522,
-                    "width": 0.7534,
+                    "width": 0.50171452991453,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -17163,7 +17163,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "bc0e04bb49ee3fa91a7ed6f8528d0a1fbe53148ca92c10a7679fc2581a6797e4",
+              "renderKey": "2568813c73fbd264cdc3e60ae7cf326766fdd047c3cbdc12fc98632953e02ab1",
               "group": "modal-back",
               "recipe": "modal_dfc_back",
               "crop": {
@@ -17191,15 +17191,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:modal-back",
-              "templateVersion": 5,
-              "templateCacheVersion": 5,
+              "templateVersion": 6,
+              "templateCacheVersion": 6,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "361cba4008b349e186e2d3f2802ff2acbeb960c49332ab80df17585a12f0ab00",
+              "contentRenderKey": "c12352d7154859c5bcca1c3ab6b932c494f8b4abc3946d4e346eba9b1bcf67ac",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/the_prismatic_bridge.png"
             },
-            "preparationKey": "94081d1bd978b55688f762aec2670d176a22c0850397e684aa149f38886ee2a0",
-            "preparedAt": 1793231670.809
+            "preparationKey": "bff2f9f6be5f81318df8bf65bc98f85e2adbfaf57c46860546441404f066f526",
+            "preparedAt": 1793387018.501
           }
         ],
         "metadataSource": "f6cd7465-9dd0-473c-ac5e-dd9e2f22f5f6",
@@ -17498,7 +17498,7 @@
                   "text": "Esika, God of the Tree",
                   "x": 0.1614,
                   "y": 0.0522,
-                  "width": 0.7534,
+                  "width": 0.6060905982905983,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -17574,7 +17574,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "8f6fe0f55ad351a6a6f0e74b1c3c3a3953c71785395393ee9537bfe17dc16073",
+            "renderKey": "56f88c56f8812b36983ad09e60645c19d6ef2cc5f2afeef61b46540ddb69b747",
             "group": "modal-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -17596,15 +17596,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:modal-front",
-            "templateVersion": 5,
-            "templateCacheVersion": 5,
+            "templateVersion": 6,
+            "templateCacheVersion": 6,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "44b773445a0cbc9607d5b14d41ea2fe609a5a5e4d9c1383d06d02abc9ff2e7b3",
+            "contentRenderKey": "e9ccdc74eb07373c128d3ec9147f81bb88fa9ba57113d5eade7383a52a92ffd4",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "f0deb0b2172ecde5a42fbbecf9fd4ce6b04be506621ca5040a6cfb95bfdddfd8",
-          "substituteVersion": 3
+          "sourceRenderKey": "545662d234da86db5a34883e07db7549ebce576e8afbad1173292b2954b14ace",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -31545,7 +31545,7 @@
                     "text": "Thing in the Ice",
                     "x": 0.16,
                     "y": 0.0522,
-                    "width": 0.7547,
+                    "width": 0.6596786324786325,
                     "height": 0.0543,
                     "oneLine": true,
                     "font": "belerenb",
@@ -31610,7 +31610,7 @@
                 "serialScale": "",
                 "noCorners": false
               },
-              "renderKey": "9abba752972b4043a36bec7380a0ac2e1da4f08ecbf6c1769150902dfb1bdc52",
+              "renderKey": "53ca7671a21d6eec70b3b946d0c71bd44739f3da202c66bfe17c24b2d54ec5b0",
               "group": "transform-front",
               "recipe": "m15_transform_front",
               "crop": {
@@ -31638,15 +31638,15 @@
               },
               "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
               "templateKey": "auto:transform-front",
-              "templateVersion": 14,
-              "templateCacheVersion": 14,
+              "templateVersion": 15,
+              "templateCacheVersion": 15,
               "nicknameIdentityVersion": 1,
-              "contentRenderKey": "d5c5ab0d74e2b497b02c0edbd571a7b29a615972cb37aae1711bc88ec3687654",
+              "contentRenderKey": "cc31ee6f47f59d3444911005d051eadeb50b7db081f733a481f5933b146b0048",
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/thing_in_the_ice.png"
             },
-            "preparationKey": "ff9f10cabb4b6f214a946209ddadec56faf7c30c7459bad6f90f31e9fe924b44",
-            "preparedAt": 1793231672.655
+            "preparationKey": "90bb91b16e9213d5bd4c7e8e932c18a9d2b07501b9fb9efe770d40ac26d1c099",
+            "preparedAt": 1793387018.922
           },
           {
             "id": "e1c658f0-c5aa-4682-82e1-5ce494802c42",
@@ -32006,8 +32006,8 @@
               "artOrigin": "GitHub folder",
               "exportArtUrl": "https://raw.githubusercontent.com/andro951/cards/967b4e0e9d1dafac7acf6e6b54427a008615f76e/hulk_pack/art/awoken_horror.png"
             },
-            "preparationKey": "ff9f10cabb4b6f214a946209ddadec56faf7c30c7459bad6f90f31e9fe924b44",
-            "preparedAt": 1793231672.655
+            "preparationKey": "90bb91b16e9213d5bd4c7e8e932c18a9d2b07501b9fb9efe770d40ac26d1c099",
+            "preparedAt": 1793387018.922
           }
         ],
         "metadataSource": "7269d533-cb3f-498e-b97f-eb6c49e170c3",
@@ -32281,7 +32281,7 @@
                   "text": "Thing in the Ice",
                   "x": 0.16,
                   "y": 0.0522,
-                  "width": 0.7547,
+                  "width": 0.6596786324786325,
                   "height": 0.0543,
                   "oneLine": true,
                   "font": "belerenb",
@@ -32346,7 +32346,7 @@
               "serialScale": "",
               "noCorners": false
             },
-            "renderKey": "a3c38e0225e0473953b344686a0d77e70cb908bfc5f83f1f54aa5b825c52af90",
+            "renderKey": "08beac377bcd83bcc0a0b9bd02683c14432044f48969ad912d5f69d9fa9526e6",
             "group": "transform-front",
             "recipe": "DFC substitute",
             "crop": {
@@ -32368,15 +32368,15 @@
             },
             "generationVersion": "card-tools-v58/credits-v2/pipeline-v35",
             "templateKey": "auto:transform-front",
-            "templateVersion": 14,
-            "templateCacheVersion": 14,
+            "templateVersion": 15,
+            "templateCacheVersion": 15,
             "nicknameIdentityVersion": 1,
-            "contentRenderKey": "9d0d6e4d0747a26526f77ae766ea34294b8b8791b13f553a3964f2ecda07d5c8",
+            "contentRenderKey": "e33735ce32debb94f134ba108ec0d77ac09f89132f070cd91f710fb73a2b3e18",
             "artOrigin": "Bundled substitute sign and wall",
             "exportArtUrl": null
           },
-          "sourceRenderKey": "9abba752972b4043a36bec7380a0ac2e1da4f08ecbf6c1769150902dfb1bdc52",
-          "substituteVersion": 3
+          "sourceRenderKey": "53ca7671a21d6eec70b3b946d0c71bd44739f3da202c66bfe17c24b2d54ec5b0",
+          "substituteVersion": 6
         },
         "_preparationSymbols": [
           "5c5b83bdb709fb3b0d854501384824fd2d0889f1bf4153e8f6009c846b49880c",
@@ -59050,7 +59050,7 @@
       "width": 1484,
       "height": 1060,
       "label": "Bruce Banner — substitute artwork",
-      "url": "https://raw.githubusercontent.com/andro951/cards/bea686b6668b9f33991189ca8fbb45d8e62e4d62/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-wall.png",
       "transform": "raw"
     },
     "3252314b4073ae0b222ca54c13a72e18447806f985b768e5999c02cc45a6b2e2": {
@@ -59510,7 +59510,7 @@
       "width": 1402,
       "height": 1122,
       "label": "Custom image",
-      "url": "https://raw.githubusercontent.com/andro951/cards/bea686b6668b9f33991189ca8fbb45d8e62e4d62/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
+      "url": "https://raw.githubusercontent.com/andro951/cards/c6e386eba9ac1ad1f9883775ae78f717ad16b62f/ProxyFoundry/assets/substitutes/double-sided-substitute-sign.png",
       "transform": "raw"
     },
     "9622c63f56470ec5c97025ccf73846b7b35d5c69788305f51c3e50f6b0aa3584": {
@@ -59970,7 +59970,7 @@
     "pipeline": "card-tools-v58/credits-v2/pipeline-v35",
     "repository": "Investigamer/cardconjurer",
     "commit": "2fcddba8966156d484cedf54d8214996748dd5e1",
-    "applicationCommit": "bea686b6668b9f33991189ca8fbb45d8e62e4d62"
+    "applicationCommit": "c6e386eba9ac1ad1f9883775ae78f717ad16b62f"
   },
   "includesRenders": false,
   "vectors": {
